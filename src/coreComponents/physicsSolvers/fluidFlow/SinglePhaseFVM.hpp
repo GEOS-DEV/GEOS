@@ -29,8 +29,8 @@ namespace geosx
 /**
  * @class SinglePhaseFVM
  *
- * class to perform a single phase finite volume solve 
- * using only cell-centered variables 
+ * class to perform a single phase finite volume solve
+ * using only cell-centered variables
  * works with both TPFA and MPFA
  */
 template< typename BASE = SinglePhaseBase >
@@ -137,7 +137,7 @@ public:
    */
   template< typename _BASE=BASE >
   static
-  typename std::enable_if< std::is_same<_BASE, SinglePhaseBase>::value, string >::type
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseBase >::value, string >::type
   CatalogName()
   {
     return "SinglePhaseFVM";
@@ -145,7 +145,7 @@ public:
 
   template< typename _BASE=BASE >
   static
-  typename std::enable_if< std::is_same<_BASE, SinglePhaseProppantBase>::value, string >::type
+  typename std::enable_if< std::is_same< _BASE, SinglePhaseProppantBase >::value, string >::type
   CatalogName()
   {
     return "SinglePhaseProppantFVM";
@@ -161,7 +161,14 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
-  
+
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
@@ -174,13 +181,13 @@ public:
   CalculateResidualNorm( DomainPartition const * const domain,
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
-  
+
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
+
   /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value
@@ -190,7 +197,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void 
+  virtual void
   AssembleFluxTerms( real64 const time_n,
                      real64 const dt,
                      DomainPartition const * const domain,
@@ -201,8 +208,7 @@ public:
   /**@}*/
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-  } viewKeysSinglePhaseFVM;
+  {} viewKeysSinglePhaseFVM;
 
   viewKeyStruct & viewKeys()
   { return viewKeysSinglePhaseFVM; }
@@ -211,8 +217,7 @@ public:
   { return viewKeysSinglePhaseFVM; }
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysSinglePhaseFVM;
+  {} groupKeysSinglePhaseFVM;
 
   groupKeyStruct & groupKeys()
   { return groupKeysSinglePhaseFVM; }

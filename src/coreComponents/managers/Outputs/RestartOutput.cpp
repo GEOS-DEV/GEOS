@@ -32,19 +32,18 @@ using namespace cxx_utilities;
 
 RestartOutput::RestartOutput( std::string const & name,
                               Group * const parent ):
-  OutputBase( name, parent)
-{
-}
+  OutputBase( name, parent )
+{}
 
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::Execute(real64 const GEOSX_UNUSED_PARAM( time_n ),
-                            real64 const GEOSX_UNUSED_PARAM( dt ),
-                            integer const cycleNumber,
-                            integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                            real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                            DomainPartition * domain)
+void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                             real64 const GEOSX_UNUSED_PARAM( dt ),
+                             integer const cycleNumber,
+                             integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                             real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                             DomainPartition * domain )
 {
   GEOSX_MARK_FUNCTION;
   ProblemManager* problemManager = domain->GetProblemManager();
@@ -52,7 +51,7 @@ void RestartOutput::Execute(real64 const GEOSX_UNUSED_PARAM( time_n ),
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
   char fileName[200] = {0};
-  sprintf(fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber);
+  sprintf( fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber );
 
   problemManager->prepareToWrite();
   FunctionManager::Instance().prepareToWrite();

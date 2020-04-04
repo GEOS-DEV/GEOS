@@ -27,11 +27,11 @@
 #include <numpy/arrayobject.h>
 #endif
 
+#include "EventManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
 #include "managers/EventManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
@@ -39,37 +39,27 @@ namespace geosx
 class PhysicsSolverManager;
 class DomainPartition;
 
-class ProblemManager : public ObjectManagerBase
+class ProblemManager : public dataRepository::Group
 {
 public:
-  explicit ProblemManager( const std::string& name,
+  explicit ProblemManager( const std::string & name,
                            Group * const parent );
 
   ~ProblemManager() override;
 
   /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-  const static string CatalogName() 
-  { return "Problem"; }
-  virtual const string getCatalogName() const override final
-  { return ProblemManager::CatalogName(); }
-  ///@}
-
-  /**
    * This function is used to inform the schema generator of any
    * deviations between the xml and GEOS data structures.
    */
-  virtual void SetSchemaDeviations(xmlWrapper::xmlNode schemaRoot,
-                                   xmlWrapper::xmlNode schemaParent,
-                                   integer documentationType) override;
+  virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int argc, char* argv[]);
+  void ParseCommandLineInput();
 
-  static bool ParseRestart( int argc, char* argv[], std::string& restartFileName );
+  static bool ParseRestart( std::string & restartFileName );
 
   void InitializePythonInterpreter();
 
@@ -103,16 +93,16 @@ public:
   void ApplyInitialConditions();
 
   const string & getProblemName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.problemName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   const string & getInputFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.inputFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   const string & getRestartFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.restartFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   const string & getSchemaFileName() const
-  { return GetGroup<Group>(groupKeys.commandLine)->getReference<string>(viewKeys.schemaFileName); }
+  { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult;

@@ -24,6 +24,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
 #
 # Add gtest C++ based tests
 #

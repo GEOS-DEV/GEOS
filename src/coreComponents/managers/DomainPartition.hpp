@@ -35,7 +35,7 @@ class SiloFile;
 namespace dataRepository {
 namespace keys {
 
-string const partitionManager("partitionManager");
+string const partitionManager( "partitionManager" );
 
 } /* end of namespace keys */
 } /* end of namespace dataRepository */
@@ -51,10 +51,10 @@ public:
   ~DomainPartition() override;
 
   DomainPartition() = delete;
-  DomainPartition( DomainPartition const &) = delete;
-  DomainPartition( DomainPartition &&) = delete;
-  DomainPartition& operator=( DomainPartition const & ) = delete;
-  DomainPartition& operator=( DomainPartition && ) = delete;
+  DomainPartition( DomainPartition const & ) = delete;
+  DomainPartition( DomainPartition && ) = delete;
+  DomainPartition & operator=( DomainPartition const & ) = delete;
+  DomainPartition & operator=( DomainPartition && ) = delete;
 
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
@@ -69,22 +69,22 @@ public:
 
   void SetupCommunications( bool use_nonblocking );
 
-  void AddNeighbors(const unsigned int idim,
-                    MPI_Comm& cartcomm,
-                    int* ncoords);
+  void AddNeighbors( const unsigned int idim,
+                     MPI_Comm & cartcomm,
+                     int * ncoords );
   ///@}
 
-  void ReadSilo( const SiloFile& siloFile,
+  void ReadSilo( const SiloFile & siloFile,
                  const int cycleNum,
                  const realT problemTime,
                  const bool isRestart );
 
-  void WriteFiniteElementMesh( SiloFile& siloFile,
+  void WriteFiniteElementMesh( SiloFile & siloFile,
                                const int cycleNum,
                                const realT problemTime,
                                const bool isRestart );
 
-  void ReadFiniteElementMesh( const SiloFile& siloFile,
+  void ReadFiniteElementMesh( const SiloFile & siloFile,
                               const int cycleNum,
                               const realT problemTime,
                               const bool isRestart );

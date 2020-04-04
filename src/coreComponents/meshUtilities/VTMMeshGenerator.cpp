@@ -49,9 +49,9 @@ VTMMeshGenerator::VTMMeshGenerator( string const & name, Group * const parent ):
      }
    */
 
-  registerWrapper<string>(keys::filePath)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("path to the vtm file");
+  registerWrapper< string >( keys::filePath )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "path to the vtm file" );
 }
 
 VTMMeshGenerator::~VTMMeshGenerator()
@@ -65,7 +65,7 @@ VTMMeshGenerator::~VTMMeshGenerator()
 /**
  * @param domain
  */
-void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
+void VTMMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   //  lvector numElements;
   //
@@ -81,8 +81,8 @@ void VTMMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PAR
 
 void VTMMeshGenerator::PostProcessInput()
 {
-  m_fileName = this->getReference<string>(keys::filePath);
-  m_vtmFile.Load(m_fileName, true, false);
+  m_fileName = this->getReference< string >( keys::filePath );
+  m_vtmFile.Load( m_fileName, true, false );
 }
 
 
@@ -99,112 +99,117 @@ Group * VTMMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( childK
 
 void VTMMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
-    /// Basic mesh registration
-    Group * const meshBodies = domain->getMeshBodies();
-    MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
-    MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel(std::string("Level0"));
-    NodeManager * nodeManager = meshLevel0->getNodeManager();
-    CellBlockManager * elementManager = domain->GetCellManager();
+  /// Basic mesh registration
+  Group * const meshBodies = domain->getMeshBodies();
+  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( this->getName() );
+  MeshLevel * const meshLevel0 = meshBody->RegisterMeshLevel( std::string( "Level0" ));
+  NodeManager * nodeManager = meshLevel0->getNodeManager();
+  CellBlockManager * elementManager = domain->GetCellManager();
 
-    /// Region registrations
-    for( localIndex rankBlockIndex = 0 ; rankBlockIndex < m_vtmFile.NumRankBlocks(); rankBlockIndex++) {
-        const auto & rankBlock = m_vtmFile.GetRankBlock(rankBlockIndex); 
-        for( localIndex meshBlockIndex = 0 ; meshBlockIndex < rankBlock.NumMeshBlocks(); meshBlockIndex++) {
-            const auto & meshBlock = rankBlock.GetMeshBlock(meshBlockIndex);
-            if( meshBlock.IsARegionBlock() ) {
-                const auto & mesh = meshBlock.mesh();
-                /// Write nodes
-                nodeManager->resize(mesh.NumVertices());
-                arrayView2d<real64, nodes::REFERENCE_POSITION_USD> const & X = nodeManager->referencePosition();
-                for( localIndex a=0 ; a< mesh.NumVertices() ; ++a )
-                {
-                  for( int i = 0; i < 3; ++i )
-                  {
-                    X(a, i) = mesh.Vertex(a)[i];
-                  }
-                }
-                /// Cell blocks registrations
-                if( mesh.NumHex() > 0) {
-                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("HEX");
-                    cellBlock -> SetElementType("C3D8");
-                    auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells());
-                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0) );
-
-                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                    {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
-                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
-                      cellToVertex[k][6] = mesh.CellVertexIndex(k,7);
-                      cellToVertex[k][7] = mesh.CellVertexIndex(k,6);
-                    }
-                }
-                if( mesh.NumTetra() > 0) {
-                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("TETRA");
-                    cellBlock -> SetElementType("C3D4");
-                    auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells());
-                    cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell(0) );
-
-                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                    {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
-                    }
-                }
-                if( mesh.NumPrism() > 0) {
-                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("WEDGE");
-                    cellBlock -> SetElementType("C3D6");
-                    auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize( mesh.NumCells());
-                    cellToVertex.resize(mesh.NumCells(), mesh.NumVerticesInCell(0));
-
-                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                    {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
-                      cellToVertex[k][5] = mesh.CellVertexIndex(k,5);
-                    }
-                }
-                if( mesh.NumPyr() > 0) {
-                    CellBlock * cellBlock = elementManager->GetGroup(keys::cellBlocks)->RegisterGroup<CellBlock>("PYR");
-                    cellBlock -> SetElementType("C3D5");
-                    auto & cellToVertex = cellBlock->nodeList();
-                    cellBlock->resize(mesh.NumCells());
-                    cellToVertex.resize(mesh.NumCells(), mesh.NumVerticesInCell(0));
-
-                    for( localIndex k=0 ; k<mesh.NumCells() ; ++k )
-                    {
-                      cellToVertex[k][0] = mesh.CellVertexIndex(k,0);
-                      cellToVertex[k][1] = mesh.CellVertexIndex(k,1);
-                      cellToVertex[k][2] = mesh.CellVertexIndex(k,2);
-                      cellToVertex[k][3] = mesh.CellVertexIndex(k,3);
-                      cellToVertex[k][4] = mesh.CellVertexIndex(k,4);
-                    }
-                }
-            }
+  /// Region registrations
+  for( localIndex rankBlockIndex = 0; rankBlockIndex < m_vtmFile.NumRankBlocks(); rankBlockIndex++ )
+  {
+    const auto & rankBlock = m_vtmFile.GetRankBlock( rankBlockIndex );
+    for( localIndex meshBlockIndex = 0; meshBlockIndex < rankBlock.NumMeshBlocks(); meshBlockIndex++ )
+    {
+      const auto & meshBlock = rankBlock.GetMeshBlock( meshBlockIndex );
+      if( meshBlock.IsARegionBlock() )
+      {
+        const auto & mesh = meshBlock.mesh();
+        /// Write nodes
+        nodeManager->resize( mesh.NumVertices());
+        arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+        for( localIndex a=0; a< mesh.NumVertices(); ++a )
+        {
+          for( int i = 0; i < 3; ++i )
+          {
+            X( a, i ) = mesh.Vertex( a )[i];
+          }
         }
+        /// Cell blocks registrations
+        if( mesh.NumHex() > 0 )
+        {
+          CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "HEX" );
+          cellBlock->SetElementType( "C3D8" );
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( mesh.NumCells());
+          cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell( 0 ) );
+
+          for( localIndex k=0; k<mesh.NumCells(); ++k )
+          {
+            cellToVertex[k][0] = mesh.CellVertexIndex( k, 0 );
+            cellToVertex[k][1] = mesh.CellVertexIndex( k, 1 );
+            cellToVertex[k][2] = mesh.CellVertexIndex( k, 3 );
+            cellToVertex[k][3] = mesh.CellVertexIndex( k, 2 );
+            cellToVertex[k][4] = mesh.CellVertexIndex( k, 4 );
+            cellToVertex[k][5] = mesh.CellVertexIndex( k, 5 );
+            cellToVertex[k][6] = mesh.CellVertexIndex( k, 7 );
+            cellToVertex[k][7] = mesh.CellVertexIndex( k, 6 );
+          }
+        }
+        if( mesh.NumTetra() > 0 )
+        {
+          CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "TETRA" );
+          cellBlock->SetElementType( "C3D4" );
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( mesh.NumCells());
+          cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell( 0 ) );
+
+          for( localIndex k=0; k<mesh.NumCells(); ++k )
+          {
+            cellToVertex[k][0] = mesh.CellVertexIndex( k, 0 );
+            cellToVertex[k][1] = mesh.CellVertexIndex( k, 1 );
+            cellToVertex[k][2] = mesh.CellVertexIndex( k, 2 );
+            cellToVertex[k][3] = mesh.CellVertexIndex( k, 3 );
+          }
+        }
+        if( mesh.NumPrism() > 0 )
+        {
+          CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "WEDGE" );
+          cellBlock->SetElementType( "C3D6" );
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( mesh.NumCells());
+          cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell( 0 ));
+
+          for( localIndex k=0; k<mesh.NumCells(); ++k )
+          {
+            cellToVertex[k][0] = mesh.CellVertexIndex( k, 0 );
+            cellToVertex[k][1] = mesh.CellVertexIndex( k, 1 );
+            cellToVertex[k][2] = mesh.CellVertexIndex( k, 2 );
+            cellToVertex[k][3] = mesh.CellVertexIndex( k, 3 );
+            cellToVertex[k][4] = mesh.CellVertexIndex( k, 4 );
+            cellToVertex[k][5] = mesh.CellVertexIndex( k, 5 );
+          }
+        }
+        if( mesh.NumPyr() > 0 )
+        {
+          CellBlock * cellBlock = elementManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( "PYR" );
+          cellBlock->SetElementType( "C3D5" );
+          auto & cellToVertex = cellBlock->nodeList();
+          cellBlock->resize( mesh.NumCells());
+          cellToVertex.resize( mesh.NumCells(), mesh.NumVerticesInCell( 0 ));
+
+          for( localIndex k=0; k<mesh.NumCells(); ++k )
+          {
+            cellToVertex[k][0] = mesh.CellVertexIndex( k, 0 );
+            cellToVertex[k][1] = mesh.CellVertexIndex( k, 1 );
+            cellToVertex[k][2] = mesh.CellVertexIndex( k, 2 );
+            cellToVertex[k][3] = mesh.CellVertexIndex( k, 3 );
+            cellToVertex[k][4] = mesh.CellVertexIndex( k, 4 );
+          }
+        }
+      }
     }
+  }
 }
 
-void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_PARAM( elementType ),
+void VTMMeshGenerator::GetElemToNodesRelationInBox( const std::string & GEOSX_UNUSED_PARAM( elementType ),
                                                     const int GEOSX_UNUSED_PARAM( index )[],
-                                                    const int& GEOSX_UNUSED_PARAM( iEle ),
+                                                    const int & GEOSX_UNUSED_PARAM( iEle ),
                                                     int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
                                                     const int GEOSX_UNUSED_PARAM( node_size ) )
 
-{
-
-}
+{}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTMMeshGenerator, std::string const &, Group * const )
 }

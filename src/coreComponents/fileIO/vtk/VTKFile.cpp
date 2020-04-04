@@ -67,13 +67,12 @@ static std::unordered_map< std::type_index, string > geosxToVTKTypeMap =
 }
 class CustomVTUXMLWriter
 {
-  public:
+public:
   CustomVTUXMLWriter() = delete;
-  CustomVTUXMLWriter( string const & fileName ) :
-      m_outFile( fileName, std::ios::binary ),
-      m_spaceCount(0)
-  {
-  }
+  CustomVTUXMLWriter( string const & fileName ):
+    m_outFile( fileName, std::ios::binary ),
+    m_spaceCount( 0 )
+  {}
 
   /*!
    * @brief Write the header of the VTU file with the XML version
@@ -89,9 +88,9 @@ class CustomVTUXMLWriter
    * @param[in[ args list of pair {paramaters,value}
    * @details This function also handle the spacing for good looking file
    */
-  void OpenXMLNode( string const & nodeName, std::initializer_list< std::pair< string, string > > const & args)
+  void OpenXMLNode( string const & nodeName, std::initializer_list< std::pair< string, string > > const & args )
   {
-    for( int i = 0 ; i < m_spaceCount ; i++)
+    for( int i = 0; i < m_spaceCount; i++ )
     {
       m_outFile << " ";
     }
@@ -129,14 +128,10 @@ class CustomVTUXMLWriter
     if( binary )
     {
       localIndex totalNumberOfConnectivities = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                        auto const * const elemRegion )
+      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
       {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          totalNumberOfConnectivities += elemSubRegion->size() * elemSubRegion->numNodesPerElement();
-        });
-      });
+        totalNumberOfConnectivities += elemSubRegion.size() * elemSubRegion.numNodesPerElement();
+      } );
       WriteSize( totalNumberOfConnectivities, sizeof( localIndex ) );
       WriteBinaryConnectivities( elemManager );
     }
@@ -180,24 +175,24 @@ class CustomVTUXMLWriter
   }
 
   template< typename T >
-  void WriteCellData(  string const & fieldName, ElementRegionManager const * const elemManager, bool binary)
+  void WriteCellData( string const & fieldName, ElementRegionManager const * const elemManager, bool binary )
   {
     if( binary )
     {
-      WriteCellBinaryData<T>( fieldName, elemManager );
+      WriteCellBinaryData< T >( fieldName, elemManager );
     }
     else
     {
-      WriteCellAsciiData<T>( fieldName, elemManager );
+      WriteCellAsciiData< T >( fieldName, elemManager );
     }
   }
 
   template< typename T >
-  void WriteNodeData(  Wrapper< T > const & dataView, bool binary)
+  void WriteNodeData( Wrapper< T > const & dataView, bool binary )
   {
     if( binary )
     {
-      WriteNodeBinaryData( dataView ); 
+      WriteNodeBinaryData( dataView );
     }
     else
     {
@@ -225,392 +220,380 @@ class CustomVTUXMLWriter
   void CloseXMLNode( string const & nodeName )
   {
     m_spaceCount -=2;
-    for( int i = 0 ; i < m_spaceCount ; i++)
+    for( int i = 0; i < m_spaceCount; i++ )
     {
       m_outFile << " ";
     }
     m_outFile << "</" << nodeName << ">\n";
   }
 
-  private:
+private:
 
-    void WriteBinaryVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
+  void WriteBinaryVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
+  {
+    std::stringstream stream;
+    std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
+    for( localIndex i = 0; i < vertices.size( 0 ); ++i )
     {
-      std::stringstream stream;
-      std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
-      for ( localIndex i = 0; i < vertices.size( 0 ); ++i )
+      real64_array vertex( 3 );
+      for( localIndex j = 0; j < 3; ++j )
       {
-        real64_array vertex(3);
-        for ( localIndex j = 0; j < 3; ++j )
+        vertex[j] = vertices( i, j );
+      }
+      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.data() ), 3 * sizeof( real64 ) );
+    }
+    DumpBuffer( stream );
+  }
+
+  void WriteAsciiVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
+  {
+    for( localIndex i = 0; i < vertices.size( 0 ); ++i )
+    {
+      m_outFile << vertices( i, 0 ) << " " << vertices( i, 1 ) << "" << vertices( i, 2 ) << "\n";
+    }
+  }
+
+  void WriteBinaryConnectivities( ElementRegionManager const * const elemManager )
+  {
+    std::stringstream stream;
+    integer multiplier = FindMultiplier( sizeof( localIndex ) );
+    localIndex_array connectivityFragment( multiplier );
+    integer countConnectivityFragment = 0;
+
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      auto & connectivities = elemSubRegion.nodeList();
+      if( type == 12 )   // Special case for hexahedron because of the internal ordering
+      {
+        for( localIndex i = 0; i < elemSubRegion.size(); i++ )
         {
-          vertex[j] = vertices( i, j );
+          for( integer j = 0; j < elemSubRegion.numNodesPerElement(); j++ )
+          {
+            if( j == 2 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][3];
+            }
+            else if( j == 3 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][2];
+            }
+            else if( j == 6 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][7];
+            }
+            else if( j == 7 )
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][6];
+            }
+            else
+            {
+              connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
+            }
+            if( countConnectivityFragment == multiplier )
+            {
+              stream <<
+                stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+              countConnectivityFragment = 0;
+            }
+          }
         }
-          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( vertex.data() ), 3 * sizeof( real64 ) );
       }
-      DumpBuffer( stream );
-    }
-
-    void WriteAsciiVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
-    {
-      for ( localIndex i = 0; i < vertices.size( 0 ); ++i )
+      else
       {
-        m_outFile << vertices( i, 0 ) << " " << vertices( i, 1 ) << "" << vertices( i, 2 ) << "\n";
+        for( localIndex i = 0; i < elemSubRegion.size(); i++ )
+        {
+          for( integer j = 0; j < elemSubRegion.numNodesPerElement(); j++ )
+          {
+            connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
+            if( countConnectivityFragment == multiplier )
+            {
+              stream <<
+                stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
+              countConnectivityFragment = 0;
+            }
+          }
+        }
       }
-    }
+    } );
+    stream <<
+      stringutilities::EncodeBase64(
+      reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * ( countConnectivityFragment) );
+    DumpBuffer( stream );
+  }
 
-    void WriteBinaryConnectivities( ElementRegionManager const * const elemManager )
+  void WriteAsciiConnectivities( ElementRegionManager const * const elemManager )
+  {
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
-      std::stringstream stream;
-      integer multiplier = FindMultiplier( sizeof( localIndex ) );
-      localIndex_array connectivityFragment( multiplier );
-      integer countConnectivityFragment = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                               auto const * const elemRegion )
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      auto & connectivities = elemSubRegion.nodeList();
+      if( type == 12 )   // Special case for hexahedron because of the internal ordering
       {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+        for( localIndex i = 0; i < connectivities.size() / 8; i++ )
         {
-          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-          auto & connectivities = elemSubRegion->nodeList();
-          if( type == 12 ) // Special case for hexahedron because of the internal ordering
-          {
-            for( localIndex i = 0 ; i < elemSubRegion->size() ; i++ )
-            {
-              for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
-              {
-                if( j == 2 )
-                {
-                  connectivityFragment[countConnectivityFragment++] = connectivities[i][3];
-                }
-                else if( j == 3 )
-                {
-                  connectivityFragment[countConnectivityFragment++] = connectivities[i][2];
-                }
-                else if( j == 6 )
-                {
-                  connectivityFragment[countConnectivityFragment++] = connectivities[i][7];
-                }
-                else if( j == 7 )
-                {
-                  connectivityFragment[countConnectivityFragment++] = connectivities[i][6];
-                }
-                else
-                {
-                  connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
-                }
-                if( countConnectivityFragment == multiplier )
-                {
-                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
-                  countConnectivityFragment = 0;
-                }
-              }
-            }
-          }
-          else
-          {
-            for( localIndex i = 0 ; i < elemSubRegion->size() ; i++ )
-            {
-              for( integer j = 0; j < elemSubRegion->numNodesPerElement(); j++ )
-              {
-                connectivityFragment[countConnectivityFragment++] = connectivities[i][j];
-                if( countConnectivityFragment == multiplier )
-                {
-                  stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * multiplier );
-                  countConnectivityFragment = 0;
-                }
-              }
-            }
-          }
-        });
-      });
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( connectivityFragment.data() ), sizeof( localIndex ) * ( countConnectivityFragment) );
-      DumpBuffer( stream );
-    }
-
-    void WriteAsciiConnectivities( ElementRegionManager const * const elemManager )
-    {
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-          auto & connectivities = elemSubRegion->nodeList();
-          if( type == 12 ) // Special case for hexahedron because of the internal ordering
-          {
-            for( localIndex i = 0; i < connectivities.size() / 8  ; i++ )
-            {
-              m_outFile << connectivities[i][0] << " ";
-              m_outFile << connectivities[i][1] << " ";
-              m_outFile << connectivities[i][3] << " ";
-              m_outFile << connectivities[i][2] << " ";
-              m_outFile << connectivities[i][4] << " ";
-              m_outFile << connectivities[i][5] << " ";
-              m_outFile << connectivities[i][7] << " ";
-              m_outFile << connectivities[i][6] << " ";
-              m_outFile << "\n";
-            }
-          }
-          else
-          {
-            for( localIndex i = 0; i < connectivities.size()  ; i++ )
-            {
-                m_outFile << connectivities.data()[i] <<" ";
-            }
-            m_outFile << "\n";
-          }
-        });
-      });
-    }
-
-    void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
-    {
-      localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
-          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-          {
-            m_outFile << curOffset << "\n";
-            curOffset += offSetForOneCell;
-          }
-        });
-      });
-    }
-
-    void WriteBinaryOffsets( ElementRegionManager const * const elemManager )
-    {
-      std::stringstream stream;
-      integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
-      localIndex_array offsetFragment( multiplier );
-      integer countOffsetFragmentIndex = 0;
-      localIndex curOffset = elemManager->GetRegion(0)->GetSubRegion(0)->numNodesPerElement();
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          localIndex offSetForOneCell = elemSubRegion->numNodesPerElement();
-          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-          {
-            offsetFragment[countOffsetFragmentIndex++] = curOffset;   
-            curOffset += offSetForOneCell;
-            if( countOffsetFragmentIndex == multiplier )
-            {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
-              countOffsetFragmentIndex = 0;
-            }
-          }
-        });
-      });
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( countOffsetFragmentIndex) );
-      DumpBuffer( stream );
-    }
-
-    void WriteAsciiTypes( ElementRegionManager const * const elemManager )
-    {
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-          {
-            m_outFile <<  type << "\n";
-          }
-        });
-      });
-    }
-
-    void WriteBinaryTypes( ElementRegionManager const * const elemManager )
-    {
-      std::stringstream stream;
-      integer multiplier = FindMultiplier( sizeof( integer ) ); // We do not write all the data at once to avoid creating a big table each time.
-      integer_array typeFragment( multiplier );
-      integer countTypeFragmentIndex = 0;
-      elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
-      {
-        elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-        {
-          integer type = geosxToVTKCellTypeMap.at( elemSubRegion->GetElementTypeString() );
-          for( localIndex i =  0; i < elemSubRegion->size(); i++ )
-          {
-            typeFragment[countTypeFragmentIndex++] = type;   
-            if( countTypeFragmentIndex == multiplier )
-            {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( integer ) * multiplier );
-              countTypeFragmentIndex = 0;
-            }
-          }
-        });
-      });
-      stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( localIndex ) * ( countTypeFragmentIndex) );
-      DumpBuffer( stream );
-    }
-
-    template< typename T >
-    void WriteCellAsciiData( string const & fieldName,
-                             ElementRegionManager const * const elemManager )
-    {
-      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-      {
-        typename T::ViewTypeConst const & dataView = elemSubRegion->template getReference<T>(fieldName);
-        for ( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
-        {
-          LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
+          m_outFile << connectivities[i][0] << " ";
+          m_outFile << connectivities[i][1] << " ";
+          m_outFile << connectivities[i][3] << " ";
+          m_outFile << connectivities[i][2] << " ";
+          m_outFile << connectivities[i][4] << " ";
+          m_outFile << connectivities[i][5] << " ";
+          m_outFile << connectivities[i][7] << " ";
+          m_outFile << connectivities[i][6] << " ";
           m_outFile << "\n";
         }
-      });
-    }
-
-    template< typename ARRAY_TYPE >
-    void WriteCellBinaryData( string const & fieldName, ElementRegionManager const * const elemManager )
-    {
-      using VALUE_TYPE = typename ARRAY_TYPE::value_type;
-
-      std::stringstream stream;
-      WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( VALUE_TYPE ) );
-      integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );// We do not write all the data at once to avoid creating a big table each time.
-      std::vector< VALUE_TYPE > dataFragment( multiplier );
-      integer countDataFragment = 0;
-      elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const * const elemSubRegion )
+      }
+      else
       {
-
-        typename ARRAY_TYPE::ViewTypeConst const & dataView = elemSubRegion->getReference<ARRAY_TYPE>(fieldName);
-        if ( elemSubRegion->size() > 0 )
+        for( localIndex i = 0; i < connectivities.size(); i++ )
         {
-          for( localIndex ei = 0; ei < elemSubRegion->size(); ++ei )
-          {
-            LvArray::forValuesInSlice( dataView[ei],
-                                       [&]( VALUE_TYPE const & value )
-            {
-              dataFragment[ countDataFragment++ ] = value;
-              if( countDataFragment == multiplier )
-              {
-                stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
-                countDataFragment = 0;
-              }
-            });
-          }
+          m_outFile << connectivities.data()[i] <<" ";
         }
-        else
-        {
-          real64 nanArray[3] = { std::nan("0"), std::nan("0"), std::nan("0") };
-          for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
-          {
-            stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray ), sizeof( real64 ) * 3 );
-          }
-        }
-      });
-
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * ( countDataFragment ) );
-      DumpBuffer( stream );
-    }
-
-    template< typename ARRAY_TYPE >
-    void WriteNodeAsciiData( Wrapper< ARRAY_TYPE > const & dataView )
-    {
-      typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
-      for( localIndex i = 0; i < array.size( 0 ); i++ )
-      {
-        LvArray::forValuesInSlice( array[ i ], [this]( auto const & value ) { m_outFile << value << " "; } );
         m_outFile << "\n";
       }
-    }
+    } );
+  }
 
-    template< typename ARRAY_TYPE >
-    void WriteNodeBinaryData( Wrapper< ARRAY_TYPE > const & dataView )
+  void WriteAsciiOffsets( ElementRegionManager const * const elemManager )
+  {
+    localIndex curOffset = elemManager->GetRegion( 0 )->GetSubRegion( 0 )->numNodesPerElement();
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      localIndex offSetForOneCell = elemSubRegion.numNodesPerElement();
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
+      {
+        m_outFile << curOffset << "\n";
+        curOffset += offSetForOneCell;
+      }
+    } );
+  }
+
+  void WriteBinaryOffsets( ElementRegionManager const * const elemManager )
+  {
+    std::stringstream stream;
+    integer multiplier = FindMultiplier( sizeof( integer ) );   // We do not write all the data at once to avoid
+                                                                // creating a big table each time.
+    localIndex_array offsetFragment( multiplier );
+    integer countOffsetFragmentIndex = 0;
+    localIndex curOffset = elemManager->GetRegion( 0 )->GetSubRegion( 0 )->numNodesPerElement();
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      localIndex offSetForOneCell = elemSubRegion.numNodesPerElement();
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
+      {
+        offsetFragment[countOffsetFragmentIndex++] = curOffset;
+        curOffset += offSetForOneCell;
+        if( countOffsetFragmentIndex == multiplier )
+        {
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * multiplier );
+          countOffsetFragmentIndex = 0;
+        }
+      }
+    } );
+    stream <<
+      stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( offsetFragment.data() ), sizeof( localIndex ) * ( countOffsetFragmentIndex) );
+    DumpBuffer( stream );
+  }
+
+  void WriteAsciiTypes( ElementRegionManager const * const elemManager )
+  {
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
+      {
+        m_outFile <<  type << "\n";
+      }
+    } );
+  }
+
+  void WriteBinaryTypes( ElementRegionManager const * const elemManager )
+  {
+    std::stringstream stream;
+    integer multiplier = FindMultiplier( sizeof( integer ) );   // We do not write all the data at once to avoid
+                                                                // creating a big table each time.
+    integer_array typeFragment( multiplier );
+    integer countTypeFragmentIndex = 0;
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      integer type = geosxToVTKCellTypeMap.at( elemSubRegion.GetElementTypeString() );
+      for( localIndex i =  0; i < elemSubRegion.size(); i++ )
+      {
+        typeFragment[countTypeFragmentIndex++] = type;
+        if( countTypeFragmentIndex == multiplier )
+        {
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( integer ) * multiplier );
+          countTypeFragmentIndex = 0;
+        }
+      }
+    } );
+    stream <<
+      stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( typeFragment.data() ), sizeof( localIndex ) * ( countTypeFragmentIndex) );
+    DumpBuffer( stream );
+  }
+
+  template< typename T >
+  void WriteCellAsciiData( string const & fieldName,
+                           ElementRegionManager const * const elemManager )
+  {
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
+    {
+      typename T::ViewTypeConst const & dataView = elemSubRegion.getReference< T >( fieldName );
+      for( localIndex ei = 0; ei < elemSubRegion.size(); ++ei )
+      {
+        LvArray::forValuesInSlice( dataView[ei], [this]( auto const & value ) { m_outFile << value << " "; } );
+        m_outFile << "\n";
+      }
+    } );
+  }
+
+  template< typename ARRAY_TYPE >
+  void WriteCellBinaryData( string const & fieldName, ElementRegionManager const * const elemManager )
+  {
+    using VALUE_TYPE = typename ARRAY_TYPE::value_type;
+
+    std::stringstream stream;
+    WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >(), sizeof( VALUE_TYPE ) );
+    integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );  // We do not write all the data at once to avoid
+                                                                  // creating a big table each time.
+    std::vector< VALUE_TYPE > dataFragment( multiplier );
+    integer countDataFragment = 0;
+    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
     {
 
-      std::stringstream stream;
-      typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
-
-      using VALUE_TYPE = typename ARRAY_TYPE::value_type;
-      
-      integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );// We do not write all the data at once to avoid creating a big table each time.
-      
-      std::vector< VALUE_TYPE > dataFragment( multiplier );
-      
-      integer countDataFragment = 0;
-      WriteSize( array.size(), sizeof( VALUE_TYPE ) );
-      for( localIndex i = 0; i < array.size( 0 ); i++ )
+      typename ARRAY_TYPE::ViewTypeConst const & dataView = elemSubRegion.getReference< ARRAY_TYPE >( fieldName );
+      if( elemSubRegion.size() > 0 )
       {
-        LvArray::forValuesInSlice( array[ i ],
-          [&]( VALUE_TYPE const & value )
+        for( localIndex ei = 0; ei < elemSubRegion.size(); ++ei )
+        {
+          LvArray::forValuesInSlice( dataView[ei],
+                                     [&]( VALUE_TYPE const & value )
           {
-            dataFragment[countDataFragment++] = value;
+            dataFragment[ countDataFragment++ ] = value;
             if( countDataFragment == multiplier )
             {
-              stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
+              stream <<
+                stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
               countDataFragment = 0;
             }
-          }
-        );
+          } );
+        }
       }
-
-      stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
-      DumpBuffer( stream );
-    }
-
-    /*!
-     * @brief This function is used to compute the minimum number of value of a certain type
-     * that can be continously encoded into a base64 to be properly written into the VTU file.
-     */
-    integer FindMultiplier( integer typeSize )
-    {
-      integer multiplier = 1;
-      while( ( multiplier * typeSize) % 6 )
+      else
       {
-        multiplier++;
+        real64 nanArray[3] = { std::nan( "0" ), std::nan( "0" ), std::nan( "0" ) };
+        for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
+        {
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray ), sizeof( real64 ) * 3 );
+        }
       }
-      return multiplier;
-    }
+    } );
 
-    void DumpBuffer( std::stringstream const & stream )
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * ( countDataFragment ) );
+    DumpBuffer( stream );
+  }
+
+  template< typename ARRAY_TYPE >
+  void WriteNodeAsciiData( Wrapper< ARRAY_TYPE > const & dataView )
+  {
+    typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
+    for( localIndex i = 0; i < array.size( 0 ); i++ )
     {
-      m_outFile << stream.rdbuf() << '\n';
+      LvArray::forValuesInSlice( array[ i ], [this]( auto const & value ) { m_outFile << value << " "; } );
+      m_outFile << "\n";
     }
-  private:
-    /// vtu output file
-    std::ofstream m_outFile;
+  }
 
-    /// Space counter to have well indented XML file
-    int m_spaceCount;
+  template< typename ARRAY_TYPE >
+  void WriteNodeBinaryData( Wrapper< ARRAY_TYPE > const & dataView )
+  {
+
+    std::stringstream stream;
+    typename ARRAY_TYPE::ViewTypeConst const & array = dataView.reference();
+
+    using VALUE_TYPE = typename ARRAY_TYPE::value_type;
+
+    integer multiplier = FindMultiplier( sizeof( VALUE_TYPE ) );  // We do not write all the data at once to avoid
+                                                                  // creating a big table each time.
+
+    std::vector< VALUE_TYPE > dataFragment( multiplier );
+
+    integer countDataFragment = 0;
+    WriteSize( array.size(), sizeof( VALUE_TYPE ) );
+    for( localIndex i = 0; i < array.size( 0 ); i++ )
+    {
+      LvArray::forValuesInSlice( array[ i ],
+                                 [&]( VALUE_TYPE const & value )
+      {
+        dataFragment[countDataFragment++] = value;
+        if( countDataFragment == multiplier )
+        {
+          stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
+          countDataFragment = 0;
+        }
+      }
+                                 );
+    }
+
+    stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataFragment.data() ), sizeof( VALUE_TYPE ) * countDataFragment );
+    DumpBuffer( stream );
+  }
+
+  /*!
+   * @brief This function is used to compute the minimum number of value of a certain type
+   * that can be continously encoded into a base64 to be properly written into the VTU file.
+   */
+  integer FindMultiplier( integer typeSize )
+  {
+    integer multiplier = 1;
+    while( ( multiplier * typeSize) % 6 )
+    {
+      multiplier++;
+    }
+    return multiplier;
+  }
+
+  void DumpBuffer( std::stringstream const & stream )
+  {
+    m_outFile << stream.rdbuf() << '\n';
+  }
+private:
+  /// vtu output file
+  std::ofstream m_outFile;
+
+  /// Space counter to have well indented XML file
+  int m_spaceCount;
 };
 
 template<>
-inline void CustomVTUXMLWriter::WriteCellBinaryData<r1_array>( string const & fieldName,
-                                                               ElementRegionManager const * const elemManager )
+inline void CustomVTUXMLWriter::WriteCellBinaryData< r1_array >( string const & fieldName,
+                                                                 ElementRegionManager const * const elemManager )
 {
   std::stringstream stream;
   string outputString;
   WriteSize( elemManager->getNumberOfElements< CellElementSubRegion >() * 3, sizeof( real64 ) );
-  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
   {
-    arrayView1d<R1Tensor const> const & dataView = elemSubRegion->template getReference<array1d<R1Tensor>>(fieldName);
+    arrayView1d< R1Tensor const > const & dataView = elemSubRegion.getReference< array1d< R1Tensor > >( fieldName );
 
-    if ( dataView.size() > 0 )
+    if( dataView.size() > 0 )
     {
-      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+      for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
       {
         stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( dataView[ei].Data() ), sizeof( real64 ) * 3 );
       }
     }
     else
     {
-      real64_array nanArray(3);
-      nanArray[0] = nanArray[1] = nanArray[2] = std::nan("0");
-      for( localIndex ei = 0; ei  < elemSubRegion->size(); ei++)
+      real64_array nanArray( 3 );
+      nanArray[0] = nanArray[1] = nanArray[2] = std::nan( "0" );
+      for( localIndex ei = 0; ei  < elemSubRegion.size(); ei++ )
       {
         stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( nanArray.data() ), sizeof( real64 ) * 3 );
       }
     }
-  });
+  } );
 
   DumpBuffer( stream );
 }
@@ -622,7 +605,7 @@ inline void CustomVTUXMLWriter::WriteNodeBinaryData( Wrapper< r1_array > const &
   auto & viewRef = dataView.reference();
   string outputString;
   WriteSize( viewRef.size() * 3, sizeof( real64 ) );
-  for( localIndex i = 0; i < viewRef.size(); i++)
+  for( localIndex i = 0; i < viewRef.size(); i++ )
   {
     stream <<stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( viewRef[i].Data() ), sizeof( real64 ) * 3 );
   }
@@ -633,27 +616,27 @@ VTKFile::VTKFile( string const & name ):
   m_baseName( name ),
   m_binary( false )
 {
-  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   if( mpiRank == 0 )
   {
     // Declaration of XML version
-    auto declarationNode = m_rootFile.append_child(pugi::node_declaration);
-    declarationNode.append_attribute("version") = "1.0";
+    auto declarationNode = m_rootFile.append_child( pugi::node_declaration );
+    declarationNode.append_attribute( "version" ) = "1.0";
 
     // Declaration of the node VTKFile
-    auto vtkFileNode = m_rootFile.append_child("VTKFile");
-    vtkFileNode.append_attribute("type") = "Collection";
-    vtkFileNode.append_attribute("version") = "0.1";
+    auto vtkFileNode = m_rootFile.append_child( "VTKFile" );
+    vtkFileNode.append_attribute( "type" ) = "Collection";
+    vtkFileNode.append_attribute( "version" ) = "0.1";
     //vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
     //vtkFileNode.append_attribute("compressor") = "vtkZLibDataCompressor";
 
     // Declaration of the node Collection
-    vtkFileNode.append_child("Collection");
+    vtkFileNode.append_child( "Collection" );
     mode_t mode = 0733;
     mkdir( name.c_str(), mode );
 
     string pvdFileName = name + ".pvd";
-    m_rootFile.save_file(pvdFileName.c_str());
+    m_rootFile.save_file( pvdFileName.c_str());
   }
 
 }
@@ -661,13 +644,13 @@ VTKFile::VTKFile( string const & name ):
 void VTKFile::Write( double const timeStep,
                      DomainPartition const & domain )
 {
-  int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
-  int const mpiSize = MpiWrapper::Comm_size(MPI_COMM_GEOSX);
-  ElementRegionManager const * elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
-  NodeManager const * nodeManager = domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
+  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  ElementRegionManager const * elemManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  NodeManager const * nodeManager = domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
   string timeStepFolderName = m_baseName + "/" + std::to_string( timeStep );
-  if( mpiRank == 0 )    
-  {                     
+  if( mpiRank == 0 )
+  {
     // Create a directory for this time step
     mode_t mode = 0733;
     mkdir( timeStepFolderName.c_str(), mode );
@@ -677,168 +660,176 @@ void VTKFile::Write( double const timeStep,
   if( m_binary )
   {
     format = "binary";
-  }  
+  }
   else
   {
     format = "ascii";
   }
 
-  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > cellFields; // First : field name, Second : type,
+                                                                                  // Third : field dimension;
   // Find all cell fields to export
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    elemRegion->forElementSubRegions([&]( auto const * const subRegion )
+    for( auto const & wrapperIter : subRegion.wrappers() )
     {
-      for( auto const & wrapperIter : subRegion->wrappers() )
+      WrapperBase const * const wrapper = wrapperIter.second;
+
+      if( wrapper->getPlotLevel() < m_plotLevel )
       {
-        WrapperBase const * const wrapper = wrapperIter.second;
-
-        if( wrapper->getPlotLevel() < m_plotLevel )
+        // the field name is the key to the map
+        string const fieldName = wrapper->getName();
+        std::type_info const & typeID = wrapper->get_typeid();
+        rtTypes::TypeIDs fieldType = rtTypes::typeID( wrapper->get_typeid());
+        if( !geosxToVTKTypeMap.count( typeID ) )
+          continue;
+        int dimension = 0;
+        if( fieldType == rtTypes::TypeIDs::r1_array_id )
         {
-          // the field name is the key to the map
-          string const fieldName = wrapper->getName();
-          std::type_info const & typeID = wrapper->get_typeid();
-          rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-          if( !geosxToVTKTypeMap.count( typeID ) )
-            continue;
-          int dimension = 0;
-          if( fieldType == rtTypes::TypeIDs::r1_array_id )
-          {
-            dimension = 3;
-          }
-          else
-          {
-            dimension = 1;
-          }
-          cellFields.insert(std::make_tuple(fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType) );
+          dimension = 3;
         }
+        else
+        {
+          dimension = 1;
+        }
+        cellFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
       }
-    });
-  });
+    }
+  } );
 
-  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type, Third : field dimension;
+  std::set< std::tuple< string, string, integer, rtTypes::TypeIDs > > nodeFields; // First : field name, Second : type,
+                                                                                  // Third : field dimension;
   // Find all node fields to export
   for( auto const & wrapperIter : nodeManager->wrappers() )
   {
     WrapperBase const * const wrapper = wrapperIter.second;
     if( wrapper->getPlotLevel() < m_plotLevel )
-    {  
-       string const fieldName = wrapper->getName();
-       std::type_info const & typeID = wrapper->get_typeid();
-       if( !geosxToVTKTypeMap.count( typeID ) )
-         continue;
-       int dimension = 0;
-       rtTypes::TypeIDs fieldType = rtTypes::typeID(wrapper->get_typeid());
-       if( fieldType == rtTypes::TypeIDs::r1_array_id )
-       {
-         dimension = 3;
-       }
-       else
-       {
-         dimension = 1;
-       }
-       nodeFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
+    {
+      string const fieldName = wrapper->getName();
+      std::type_info const & typeID = wrapper->get_typeid();
+      if( !geosxToVTKTypeMap.count( typeID ) )
+        continue;
+      int dimension = 0;
+      rtTypes::TypeIDs fieldType = rtTypes::typeID( wrapper->get_typeid());
+      if( fieldType == rtTypes::TypeIDs::r1_array_id )
+      {
+        dimension = 3;
+      }
+      else
+      {
+        dimension = 1;
+      }
+      nodeFields.insert( std::make_tuple( fieldName, geosxToVTKTypeMap.at( typeID ), dimension, fieldType ) );
     }
   }
-  if( mpiRank == 0 )    
-  {                     
+  if( mpiRank == 0 )
+  {
     /// Add the new entry to the pvd root file
-    auto collectionNode = m_rootFile.child("VTKFile").child("Collection");
-    auto dataSetNode = collectionNode.append_child("DataSet");
-    dataSetNode.append_attribute("timestep") = std::to_string( timeStep ).c_str();
-    dataSetNode.append_attribute("group") = "";
-    dataSetNode.append_attribute("part") = "0";
+    auto collectionNode = m_rootFile.child( "VTKFile" ).child( "Collection" );
+    auto dataSetNode = collectionNode.append_child( "DataSet" );
+    dataSetNode.append_attribute( "timestep" ) = std::to_string( timeStep ).c_str();
+    dataSetNode.append_attribute( "group" ) = "";
+    dataSetNode.append_attribute( "part" ) = "0";
     string pvtuFileName = timeStepFolderName + "/root.pvtu";
-    dataSetNode.append_attribute("file") = pvtuFileName.c_str();
+    dataSetNode.append_attribute( "file" ) = pvtuFileName.c_str();
 
     /// Create the pvtu file for this time step
     pugi::xml_document pvtuFile;
 
     // Declaration of XML version
-    auto declarationNode = pvtuFile.append_child(pugi::node_declaration);
-    declarationNode.append_attribute("version") = "1.0";
+    auto declarationNode = pvtuFile.append_child( pugi::node_declaration );
+    declarationNode.append_attribute( "version" ) = "1.0";
 
     // Declaration of the node VTKFile
-    auto vtkFileNode = pvtuFile.append_child("VTKFile");
-    vtkFileNode.append_attribute("type") = "PUnstructuredGrid";
-    vtkFileNode.append_attribute("version") = "0.1";
+    auto vtkFileNode = pvtuFile.append_child( "VTKFile" );
+    vtkFileNode.append_attribute( "type" ) = "PUnstructuredGrid";
+    vtkFileNode.append_attribute( "version" ) = "0.1";
     if( m_binary )
     {
-      vtkFileNode.append_attribute("byteOrder") = "LittleEndian";
+      vtkFileNode.append_attribute( "byteOrder" ) = "LittleEndian";
     }
 
     // Declaration of the node PUnstructuredGrid
-    auto pUnstructureGridNode = vtkFileNode.append_child("PUnstructuredGrid");
-    pUnstructureGridNode.append_attribute("GhostLevel") = "1";
+    auto pUnstructureGridNode = vtkFileNode.append_child( "PUnstructuredGrid" );
+    pUnstructureGridNode.append_attribute( "GhostLevel" ) = "1";
 
     // Declaration the node PPoints
-    auto pPointsNode = pUnstructureGridNode.append_child("PPoints");
+    auto pPointsNode = pUnstructureGridNode.append_child( "PPoints" );
     // .... and the data array containg the positions
     CreatePDataArray( pPointsNode, geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ), "Position", 3, format );
-    
+
     // Declare all the point fields
-    auto pPointDataNode = pUnstructureGridNode.append_child("PPointData");
+    auto pPointDataNode = pUnstructureGridNode.append_child( "PPointData" );
     for( auto & nodeField : nodeFields )
     {
-      CreatePDataArray(pPointDataNode, std::get<1>(nodeField), std::get<0>(nodeField), std::get<2>(nodeField), format);
+      CreatePDataArray( pPointDataNode, std::get< 1 >( nodeField ), std::get< 0 >( nodeField ), std::get< 2 >( nodeField ), format );
     }
 
     // Declaration of the node PCells
-    auto pCellsNode = pUnstructureGridNode.append_child("PCells");
+    auto pCellsNode = pUnstructureGridNode.append_child( "PCells" );
     // .... and its data array defining the connectivities, types, and offsets
-    CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "connectivity", 1, format ); //TODO harcoded for the moment
+    CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "connectivity", 1, format ); //TODO
+                                                                                                                                // harcoded
+                                                                                                                                // for
+                                                                                                                                // the
+                                                                                                                                // moment
     CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ), "offsets", 1, format );
     CreatePDataArray( pCellsNode, geosxToVTKTypeMap.at( std::type_index( typeid( integer ) ) ), "types", 1, format );
 
     // Find all the cell fields to output
-    auto pCellDataNode = pUnstructureGridNode.append_child("PCellData");
+    auto pCellDataNode = pUnstructureGridNode.append_child( "PCellData" );
     for( auto & cellField : cellFields )
     {
-      CreatePDataArray(pCellDataNode, std::get<1>(cellField), std::get<0>(cellField), std::get<2>(cellField), format);
+      CreatePDataArray( pCellDataNode, std::get< 1 >( cellField ), std::get< 0 >( cellField ), std::get< 2 >( cellField ), format );
     }
 
     // Declaration of the "Piece" nodes refering to the vtu files
-    for( int i = 0 ;  i < mpiSize ; i++ )
+    for( int i = 0; i < mpiSize; i++ )
     {
-      auto curPieceNode = pUnstructureGridNode.append_child("Piece");
-      string fileName = std::to_string(i) + ".vtu";
-      curPieceNode.append_attribute("Source") = fileName.c_str();
+      auto curPieceNode = pUnstructureGridNode.append_child( "Piece" );
+      string fileName = std::to_string( i ) + ".vtu";
+      curPieceNode.append_attribute( "Source" ) = fileName.c_str();
     }
 
     // Save the files
     string pvdFileName = m_baseName + ".pvd";
-    m_rootFile.save_file(pvdFileName.c_str());
-    pvtuFile.save_file(pvtuFileName.c_str());
+    m_rootFile.save_file( pvdFileName.c_str());
+    pvtuFile.save_file( pvtuFileName.c_str());
   }
-  
-  string vtuFileName = timeStepFolderName + "/" + std::to_string(mpiRank) + ".vtu";
+
+  string vtuFileName = timeStepFolderName + "/" + std::to_string( mpiRank ) + ".vtu";
   CustomVTUXMLWriter vtuWriter( vtuFileName );
   vtuWriter.WriteHeader();
-  vtuWriter.OpenXMLNode( "VTKFile", { {"type", "UnstructuredGrid"},
-                                      {"version", "0.1"},
-                                      {"byte_order", "LittleEndian"} } );
-  vtuWriter.OpenXMLNode( "UnstructuredGrid",{} );
+  vtuWriter.OpenXMLNode( "VTKFile", {
+      {"type", "UnstructuredGrid"},
+      {"version", "0.1"},
+      {"byte_order", "LittleEndian"}
+    } );
+  vtuWriter.OpenXMLNode( "UnstructuredGrid", {} );
 
   // Declaration of the node Piece and the basic informations of the mesh
   localIndex totalNumberOfCells = elemManager->getNumberOfElements< CellElementSubRegion >();
   localIndex totalNumberOfSubRegion = 0;
   elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+                                                                    CellElementRegion const & elemRegion )
   {
-    totalNumberOfSubRegion += elemRegion->numSubRegions();
-  });
-  vtuWriter.OpenXMLNode( "Piece", { { "NumberOfPoints", std::to_string(nodeManager->size() ) },
-                                    { "NumberOfCells", std::to_string( totalNumberOfCells ) } } );
+    totalNumberOfSubRegion += elemRegion.numSubRegions();
+  } );
+  vtuWriter.OpenXMLNode( "Piece", {
+      { "NumberOfPoints", std::to_string( nodeManager->size() ) },
+      { "NumberOfCells", std::to_string( totalNumberOfCells ) }
+    } );
 
   // Definition of node Points
-  vtuWriter.OpenXMLNode( "Points",{} );
+  vtuWriter.OpenXMLNode( "Points", {} );
 
   // Definition of the node DataArray that will contain all the node coordinates
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ) },
-                                        { "Name", "Position" },
-                                        { "NumberOfComponents", "3" },
-                                        { "format", format } } );
+  vtuWriter.OpenXMLNode( "DataArray", {
+      { "type", geosxToVTKTypeMap.at( std::type_index( typeid( real64 ) ) ) },
+      { "Name", "Position" },
+      { "NumberOfComponents", "3" },
+      { "format", format }
+    } );
   vtuWriter.WriteVertices( nodeManager->referencePosition(), m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
   vtuWriter.CloseXMLNode( "Points" );
@@ -847,18 +838,20 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "PointData", {} );
   for( auto & nodeField : nodeFields )
   {
-    WrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get<0>( nodeField ) );
-    vtuWriter.OpenXMLNode( "DataArray", { { "type", std::get<1>( nodeField ) },
-                                          { "Name", std::get<0>( nodeField ) },
-                                          { "NumberOfComponents", std::to_string( std::get<2>( nodeField ) ) },
-                                          { "format", format } } );
-    rtTypes::ApplyArrayTypeLambda1( std::get<3>( nodeField ),
+    WrapperBase const * const wrapper = nodeManager->getWrapperBase( std::get< 0 >( nodeField ) );
+    vtuWriter.OpenXMLNode( "DataArray", {
+        { "type", std::get< 1 >( nodeField ) },
+        { "Name", std::get< 0 >( nodeField ) },
+        { "NumberOfComponents", std::to_string( std::get< 2 >( nodeField ) ) },
+        { "format", format }
+      } );
+    rtTypes::ApplyArrayTypeLambda1( std::get< 3 >( nodeField ),
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
-      const Wrapper< cType > & view = Wrapper<cType>::cast( *wrapper );
+      const Wrapper< cType > & view = Wrapper< cType >::cast( *wrapper );
       vtuWriter.WriteNodeData( view, m_binary );
-    });
+    } );
     vtuWriter.CloseXMLNode( "DataArray" );
   }
   vtuWriter.CloseXMLNode( "PointData" );
@@ -867,49 +860,43 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "Cells", {} );
 
   // Definition of the node DataArray that will contain the connectivities
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
-                                        { "Name", "connectivity" },
-                                        { "NumberOfComponents", "1" },
-                                        { "format", format } } );
-  
+  vtuWriter.OpenXMLNode( "DataArray", {
+      { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
+      { "Name", "connectivity" },
+      { "NumberOfComponents", "1" },
+      { "format", format }
+    } );
+
   vtuWriter.WriteCellConnectivities( elemManager, m_binary );
 
-  /*
-  elemManager->forElementRegionsComplete< ElementRegion >( [&]( localIndex const er,
-                                                                auto const * const elemRegion )
-  {
-    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-    {
-      vtuWriter.WriteCellConnectivities( elemSubRegion->GetElementTypeString(), elemSubRegion->nodeList(), m_binary );
-    });
-  });
-  */
   vtuWriter.CloseXMLNode( "DataArray" );
 
 
-  array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number of cells, Third value : cell Types
-  elemManager->forElementRegionsComplete< CellElementRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( er ),
-                                                                    auto const * const elemRegion )
+  array1d< std::tuple< integer, localIndex, string > > subRegionsInfo; // First value : cell size, Second value : number
+                                                                       // of cells, Third value : cell Types
+
+  elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elemSubRegion )
   {
-    elemRegion->template forElementSubRegions< CellElementSubRegion >( [&]( auto const * const elemSubRegion )
-    {
-      subRegionsInfo.push_back( std::make_tuple( elemSubRegion->numNodesPerElement(), elemSubRegion->size(), elemSubRegion->GetElementTypeString() ) );
-    });
-  });
+    subRegionsInfo.push_back( std::make_tuple( elemSubRegion.numNodesPerElement(), elemSubRegion.size(), elemSubRegion.GetElementTypeString() ) );
+  } );
 
   // Definition of the node DataArray that will contain the offsets
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
-                                        { "Name", "offsets" },
-                                        { "NumberOfComponents", "1" },
-                                        { "format", format } } );
+  vtuWriter.OpenXMLNode( "DataArray", {
+      { "type", geosxToVTKTypeMap.at( std::type_index( typeid( localIndex ) ) ) },
+      { "Name", "offsets" },
+      { "NumberOfComponents", "1" },
+      { "format", format }
+    } );
   vtuWriter.WriteCellOffsets( elemManager, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
 
   // Definition of the node DataArray that will contain the cell types
-  vtuWriter.OpenXMLNode( "DataArray", { { "type", geosxToVTKTypeMap.at( std::type_index( typeid( integer ) ) ) },
-                                        { "Name", "types" },
-                                        { "NumberOfComponents", "1" },
-                                        { "format", format } } );
+  vtuWriter.OpenXMLNode( "DataArray", {
+      { "type", geosxToVTKTypeMap.at( std::type_index( typeid( integer ) ) ) },
+      { "Name", "types" },
+      { "NumberOfComponents", "1" },
+      { "format", format }
+    } );
   vtuWriter.WriteCellTypes( elemManager, m_binary );
   vtuWriter.CloseXMLNode( "DataArray" );
 
@@ -918,16 +905,18 @@ void VTKFile::Write( double const timeStep,
   vtuWriter.OpenXMLNode( "CellData", {} );
   for( auto & cellField : cellFields )
   {
-    vtuWriter.OpenXMLNode( "DataArray", { { "type", std::get<1>( cellField )  },
-                                           { "Name", std::get<0>( cellField )  },
-                                           { "NumberOfComponents", std::to_string( std::get<2>( cellField )  ) },
-                                           { "format", format } } );
-    rtTypes::ApplyArrayTypeLambda1( std::get<3>( cellField ),
+    vtuWriter.OpenXMLNode( "DataArray", {
+        { "type", std::get< 1 >( cellField )  },
+        { "Name", std::get< 0 >( cellField )  },
+        { "NumberOfComponents", std::to_string( std::get< 2 >( cellField )  ) },
+        { "format", format }
+      } );
+    rtTypes::ApplyArrayTypeLambda1( std::get< 3 >( cellField ),
                                     [&]( auto type ) -> void
     {
       using cType = decltype(type);
-      vtuWriter.WriteCellData<cType>( std::get<0>( cellField ), elemManager, m_binary );
-    });
+      vtuWriter.WriteCellData< cType >( std::get< 0 >( cellField ), elemManager, m_binary );
+    } );
     vtuWriter.CloseXMLNode( "DataArray" );
   }
   vtuWriter.CloseXMLNode( "CellData" );

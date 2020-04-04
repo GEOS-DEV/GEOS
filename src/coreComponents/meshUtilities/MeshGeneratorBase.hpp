@@ -42,25 +42,25 @@ public:
 
   static string CatalogName() { return "MeshGeneratorBase"; }
 
-  virtual void GenerateElementRegions( DomainPartition& domain ) = 0;
+  virtual void GenerateElementRegions( DomainPartition & domain ) = 0;
 
   virtual void GenerateMesh( DomainPartition * const domain ) = 0;
 
   // virtual void GenerateNodesets( xmlWrapper::xmlNode const & targetNode,
   //                                NodeManager * nodeManager ) = 0;
 
-  virtual void GetElemToNodesRelationInBox ( const std::string& elementType,
+  virtual void GetElemToNodesRelationInBox ( const std::string & elementType,
                                              const int index[],
-                                             const int& iEle,
+                                             const int & iEle,
                                              int nodeIDInBox[],
-                                             const int size) = 0;
+                                             const int size ) = 0;
 
   virtual void RemapMesh( DomainPartition * const domain ) = 0;
 
   int m_delayMeshDeformation = 0;
 
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
 };
 }

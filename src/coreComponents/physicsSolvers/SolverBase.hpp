@@ -61,8 +61,8 @@ public:
 
   SolverBase() = delete;
   SolverBase( SolverBase const & ) = delete;
-  SolverBase& operator=( SolverBase const & ) = delete;
-  SolverBase& operator=( SolverBase&& ) = delete;
+  SolverBase & operator=( SolverBase const & ) = delete;
+  SolverBase & operator=( SolverBase && ) = delete;
 
   static string CatalogName() { return "SolverBase"; }
 
@@ -84,28 +84,28 @@ public:
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
-  ParallelMatrix       & getSystemMatrix()       { return m_matrix; }
+  ParallelMatrix & getSystemMatrix()       { return m_matrix; }
   ParallelMatrix const & getSystemMatrix() const { return m_matrix; }
 
   /**
    * @brief Getter for system rhs vector
    * @return a reference to linear system right-hand side of this solver
    */
-  ParallelVector       & getSystemRhs()       { return m_rhs; }
+  ParallelVector & getSystemRhs()       { return m_rhs; }
   ParallelVector const & getSystemRhs() const { return m_rhs; }
 
   /**
    * @brief Getter for system solution vector
    * @return a reference to solution vector of this solver
    */
-  ParallelVector       & getSystemSolution()       { return m_solution; }
+  ParallelVector & getSystemSolution()       { return m_solution; }
   ParallelVector const & getSystemSolution() const { return m_solution; }
 
   /**
    * @brief Getter for degree-of-freedom manager
    * @return a reference to degree-of-freedom manager of this solver
    */
-  DofManager       & getDofManager()       { return m_dofManager; }
+  DofManager & getDofManager()       { return m_dofManager; }
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
@@ -134,26 +134,26 @@ public:
 
 
   /**
-     * @brief entry function to perform a solver step
-     * @param [in]  time_n time at the beginning of the step
-     * @param [in]  dt the perscribed timestep
-     * @param [out] return the timestep that was achieved during the step.
-     *
-     * T
-     */
+   * @brief entry function to perform a solver step
+   * @param [in]  time_n time at the beginning of the step
+   * @param [in]  dt the perscribed timestep
+   * @param [out] return the timestep that was achieved during the step.
+   *
+   * T
+   */
   virtual void SetNextDt( real64 const & currentDt,
-                          real64 & nextDt);
+                          real64 & nextDt );
 
   /**
-       * @brief entry function to perform a solver step
-       * @param [in]  time_n time at the beginning of the step
-       * @param [in]  dt the perscribed timestep
-       * @param [out] return the timestep that was achieved during the step.
-       *
-       * T
-       */
+   * @brief entry function to perform a solver step
+   * @param [in]  time_n time at the beginning of the step
+   * @param [in]  dt the perscribed timestep
+   * @param [out] return the timestep that was achieved during the step.
+   *
+   * T
+   */
   void SetNextDtBasedOnNewtonIter( real64 const & currentDt,
-                                   real64 & nextDt);
+                                   real64 & nextDt );
 
 
   /**
@@ -483,17 +483,17 @@ public:
    * Returns the requirement for the next time-step to the event executing the solver.
    */
   virtual real64 GetTimestepRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) override
-		  {return m_nextDt;};
+  {return m_nextDt;};
   /**@}*/
 
   real64 GetTimestepRequest()
-      {return m_nextDt;};
+  {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
   virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -535,34 +535,16 @@ public:
 
   string_array const & getTargetRegions() const {return m_targetRegions;}
 
-private:
-
-  template<bool IS_CONST>
-  using SubregionFunc = std::function<void ( add_const_if_t<ElementSubRegionBase, IS_CONST> * )>;
-
-  template<bool IS_CONST>
-  using SubregionFuncComplete = std::function<void ( localIndex, localIndex,
-                                                     add_const_if_t<ElementRegionBase, IS_CONST> *,
-                                                     add_const_if_t<ElementSubRegionBase, IS_CONST> * )>;
-
-public:
-
-  template<typename MESH, typename LAMBDA>
-  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
-                          std::is_convertible<LAMBDA, SubregionFunc<std::is_const<MESH>::value>>::value,
-                          void>::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  template< typename MESH, typename LAMBDA >
+  void applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegions( m_targetRegions, std::forward<LAMBDA>(lambda) );
+    mesh->getElemManager()->template forElementSubRegions< ElementSubRegionBase >( m_targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
-  template<typename MESH, typename LAMBDA>
-  typename std::enable_if<std::is_same<typename std::remove_cv<MESH>::type, MeshLevel>::value &&
-                          std::is_convertible<LAMBDA, SubregionFuncComplete<std::is_const<MESH>::value>>::value,
-                          void>::type
-  applyToSubRegions( MESH * const mesh, LAMBDA && lambda ) const
+  template< typename MESH, typename LAMBDA >
+  void applyToSubRegionsComplete( MESH * const mesh, LAMBDA && lambda ) const
   {
-    mesh->getElemManager()->forElementSubRegionsComplete( m_targetRegions, std::forward<LAMBDA>(lambda) );
+    mesh->getElemManager()->template forElementSubRegionsComplete< ElementSubRegionBase >( m_targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
 protected:
@@ -588,10 +570,10 @@ protected:
 
   string getDiscretizationName() const {return m_discretizationName;}
 
-  template<typename BASETYPE>
+  template< typename BASETYPE >
   static BASETYPE const * GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name );
 
-  template<typename BASETYPE>
+  template< typename BASETYPE >
   static BASETYPE * GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name );
 
   SystemSolverParameters m_systemSolverParameters;
@@ -620,33 +602,33 @@ protected:
 
 };
 
-template<typename BASETYPE>
+template< typename BASETYPE >
 BASETYPE const * SolverBase::GetConstitutiveModel( dataRepository::Group const * dataGroup, string const & name )
 {
   Group const * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE const * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  BASETYPE const * const model = constitutiveModels->GetGroup< BASETYPE >( name );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
 
-template<typename BASETYPE>
+template< typename BASETYPE >
 BASETYPE * SolverBase::GetConstitutiveModel( dataRepository::Group * dataGroup, string const & name )
 {
   Group * const constitutiveModels =
     dataGroup->GetGroup( constitutive::ConstitutiveManager::groupKeyStruct::constitutiveModelsString );
   GEOSX_ERROR_IF( constitutiveModels == nullptr, "Target group does not contain constitutive models" );
 
-  BASETYPE * const model = constitutiveModels->GetGroup<BASETYPE>( name );
+  BASETYPE * const model = constitutiveModels->GetGroup< BASETYPE >( name );
   GEOSX_ERROR_IF( model == nullptr, "Target group does not contain model " << name );
 
   return model;
 }
 
-} /* namespace ANST */
+} // namespace geosx
 
 
 #endif /* GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_ */

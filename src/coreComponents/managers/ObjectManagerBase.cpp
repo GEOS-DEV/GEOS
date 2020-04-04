@@ -26,30 +26,33 @@ using namespace dataRepository;
 
 ObjectManagerBase::ObjectManagerBase( std::string const & name,
                                       Group * const parent ):
-  Group(name,parent),
-  m_sets(groupKeyStruct::setsString,this),
+  Group( name, parent ),
+  m_sets( groupKeyStruct::setsString, this ),
+  m_neighborGroup( groupKeyStruct::neighborDataString, this ),
   m_localToGlobalMap(),
-  m_globalToLocalMap()
+  m_globalToLocalMap(),
+  m_isExternal(),
+  m_ghostRank(),
+  m_neighborData()
 {
-
   RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterGroup(m_ObjectManagerBaseGroupKeys.neighborData);
+  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup, false );
 
-  registerWrapper(viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
-    setApplyDefaultValue(-1)->
-    setDescription("Array that contains a map from localIndex to globalIndex.");
+  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Array that contains a map from localIndex to globalIndex." );
 
-  registerWrapper(viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
+  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
 
-  registerWrapper(viewKeyStruct::isExternalString, &m_isExternal, false );
+  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal, false );
 
-  registerWrapper(viewKeyStruct::ghostRankString, &m_ghostRank, false )->
-      setApplyDefaultValue(-2)->
-      setPlotLevel(PlotLevel::LEVEL_0);
+  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+    setApplyDefaultValue( -2 )->
+    setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper< array1d<integer> >( viewKeyStruct::domainBoundaryIndicatorString );
+  registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString );
 
-  m_sets.registerWrapper<SortedArray<localIndex>>( this->m_ObjectManagerBaseViewKeys.externalSet );
+  m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -57,20 +60,20 @@ ObjectManagerBase::~ObjectManagerBase()
 
 
 
-ObjectManagerBase::CatalogInterface::CatalogType& ObjectManagerBase::GetCatalog()
+ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::GetCatalog()
 {
   static ObjectManagerBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
-void ObjectManagerBase::CreateSet( const std::string& newSetName )
+void ObjectManagerBase::CreateSet( const std::string & newSetName )
 {
-  m_sets.registerWrapper<SortedArray<localIndex>>(newSetName);
+  m_sets.registerWrapper< SortedArray< localIndex > >( newSetName );
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
-                                                   const array2d<localIndex>& map,
-                                                   const std::string& setName )
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+                                                   const array2d< localIndex > & map,
+                                                   const std::string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
@@ -78,11 +81,11 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   localIndex const numObjects = size();
   GEOSX_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
 
-  if ( setName == "all" )
+  if( setName == "all" )
   {
     newset.reserve( numObjects );
 
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
       newset.insert( ka );
     }
@@ -90,9 +93,9 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   else
   {
     localIndex const mapSize = map.size( 1 );
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
-      if ( std::all_of( &map(ka, 0), &map(ka, 0) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      if( std::all_of( &map( ka, 0 ), &map( ka, 0 ) + mapSize, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
         newset.insert( ka );
       }
@@ -100,9 +103,9 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
-                                                   const array1d<localIndex_array>& map,
-                                                   const std::string& setName )
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
+                                                   const array1d< localIndex_array > & map,
+                                                   const std::string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
@@ -110,20 +113,20 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   localIndex const numObjects = size();
   GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
-  if ( setName == "all" )
+  if( setName == "all" )
   {
     newset.reserve( numObjects );
 
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
       newset.insert( ka );
     }
   }
   else
   {
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
-      if ( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      if( std::all_of( map[ka].begin(), map[ka].end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
         newset.insert( ka );
       }
@@ -131,9 +134,9 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   }
 }
 
-void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex const> const & inputSet,
+void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
                                                    ArrayOfArraysView< localIndex const > const & map,
-                                                   const std::string& setName )
+                                                   const std::string & setName )
 {
   SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
   newset.clear();
@@ -141,22 +144,22 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   localIndex const numObjects = size();
   GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
 
-  if ( setName == "all" )
+  if( setName == "all" )
   {
     newset.reserve( numObjects );
 
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
       newset.insert( ka );
     }
   }
   else
   {
-    for( localIndex ka=0 ; ka<numObjects ; ++ka )
+    for( localIndex ka=0; ka<numObjects; ++ka )
     {
       localIndex const * const values = map[ka];
-      localIndex const numValues = map.sizeOfArray(ka);
-      if ( std::all_of( values, values + numValues, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      localIndex const numValues = map.sizeOfArray( ka );
+      if( std::all_of( values, values + numValues, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
         newset.insert( ka );
       }
@@ -164,10 +167,10 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView<localIndex co
   }
 }
 
-void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& objectList ) const
+void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
-  arrayView1d<integer const > const & isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
-  for( localIndex k=0 ; k<size() ; ++k )
+  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
@@ -176,10 +179,10 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array& o
   }
 }
 
-void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array& objectList ) const
+void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
-  arrayView1d<integer const> const & isDomainBoundary = this->getReference<integer_array>(m_ObjectManagerBaseViewKeys.domainBoundaryIndicator);
-  for( localIndex k=0 ; k<size() ; ++k )
+  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
     {
@@ -194,38 +197,39 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
   GEOSX_MARK_FUNCTION;
 
   m_globalToLocalMap.clear();
-  for( localIndex k=0 ; k<size() ; ++k )
+  localIndex const N = size();
+  m_globalToLocalMap.reserve( N );
+  for( localIndex k = 0; k < N; ++k )
   {
-    m_globalToLocalMap[m_localToGlobalMap[k]] = k;
+    updateGlobalToLocalMap( k );
   }
-
 }
 
 localIndex ObjectManagerBase::PackSize( string_array const & wrapperNames,
-                                        arrayView1d<localIndex const> const & packList,
+                                        arrayView1d< localIndex const > const & packList,
                                         integer const recursive,
                                         bool on_device ) const
 {
   localIndex packedSize = 0;
   buffer_unit_type * junk;
-  packedSize += this->PackPrivate<false>( junk,
-                                          wrapperNames,
-                                          packList,
-                                          recursive,
-                                          on_device );
+  packedSize += this->PackPrivate< false >( junk,
+                                            wrapperNames,
+                                            packList,
+                                            recursive,
+                                            on_device );
 
   return packedSize;
 }
 
 localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
-                                    arrayView1d<localIndex const> const & packList,
+                                    arrayView1d< localIndex const > const & packList,
                                     integer const recursive,
                                     bool on_device ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += this->PackPrivate<true>( buffer, wrapperNames, packList, recursive, on_device );
+  packedSize += this->PackPrivate< true >( buffer, wrapperNames, packList, recursive, on_device );
 
   return packedSize;
 }
@@ -233,53 +237,53 @@ localIndex ObjectManagerBase::Pack( buffer_unit_type * & buffer,
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
                                            string_array const & wrapperNames,
-                                           arrayView1d<localIndex const> const & packList,
+                                           arrayView1d< localIndex const > const & packList,
                                            integer const recursive,
                                            bool on_device ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
-  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
-  packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
 
   localIndex const numPackedIndices = packList.size();
-  packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string("Wrappers") );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
 
 
     string_array wrapperNamesForPacking;
     if( wrapperNames.size()==0 )
     {
-      SortedArray<localIndex> exclusionList;
-      ViewPackingExclusionList(exclusionList);
+      SortedArray< localIndex > exclusionList;
+      ViewPackingExclusionList( exclusionList );
       wrapperNamesForPacking.resize( this->wrappers().size() );
       localIndex count = 0;
-      for( localIndex k=0 ; k<this->wrappers().size() ; ++k )
+      for( localIndex k=0; k<this->wrappers().size(); ++k )
       {
-        if( exclusionList.count(k) == 0)
+        if( exclusionList.count( k ) == 0 )
         {
           wrapperNamesForPacking[count++] = wrappers().values()[k].first;
         }
       }
-      wrapperNamesForPacking.resize(count);
+      wrapperNamesForPacking.resize( count );
     }
     else
     {
       wrapperNamesForPacking = wrapperNames;
     }
 
-    packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperNamesForPacking.size() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperNamesForPacking.size() );
     for( auto const & wrapperName : wrapperNamesForPacking )
     {
-      dataRepository::WrapperBase const * const wrapper = this->getWrapperBase(wrapperName);
+      dataRepository::WrapperBase const * const wrapper = this->getWrapperBase( wrapperName );
       if( wrapper!=nullptr )
       {
-        packedSize += bufferOps::Pack<DOPACK>( buffer, wrapperName );
-        if(DOPACK)
+        packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
+        if( DOPACK )
         {
           packedSize += wrapper->PackByIndex( buffer, packList, on_device );
         }
@@ -290,7 +294,7 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
       }
       else
       {
-        packedSize += bufferOps::Pack<DOPACK>( buffer, string("nullptr") );
+        packedSize += bufferOps::Pack< DOPACK >( buffer, string( "nullptr" ) );
       }
     }
   }
@@ -299,31 +303,31 @@ localIndex ObjectManagerBase::PackPrivate( buffer_unit_type * & buffer,
 
   if( recursive > 0 )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
-    packedSize += bufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
-      packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device);
+      packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
+      packedSize += keyGroupPair.second->Pack( buffer, wrapperNames, packList, recursive, on_device );
     }
   }
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, this->getName() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
   return packedSize;
 }
 
 
 
-localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
-                                      arrayView1d<localIndex> & packList,
+localIndex ObjectManagerBase::Unpack( buffer_unit_type const * & buffer,
+                                      arrayView1d< localIndex > & packList,
                                       integer const recursive,
                                       bool on_device )
 {
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF_NE( groupName, this->getName() );
 
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
@@ -334,19 +338,19 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
 
     string wrappersLabel;
-    unpackedSize += bufferOps::Unpack( buffer, wrappersLabel);
-    GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "ObjectManagerBase::Unpack(): wrapper label incorrect");
+    unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
+    GEOSX_ERROR_IF_NE( wrappersLabel, "Wrappers" );
 
     localIndex numWrappers;
-    unpackedSize += bufferOps::Unpack( buffer, numWrappers);
-    for( localIndex a=0 ; a<numWrappers ; ++a )
+    unpackedSize += bufferOps::Unpack( buffer, numWrappers );
+    for( localIndex a=0; a<numWrappers; ++a )
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
       if( wrapperName != "nullptr" )
       {
-        WrapperBase * const wrapper = this->getWrapperBase(wrapperName);
-        unpackedSize += wrapper->UnpackByIndex(buffer,packList,on_device);
+        WrapperBase * const wrapper = this->getWrapperBase( wrapperName );
+        unpackedSize += wrapper->UnpackByIndex( buffer, packList, on_device );
       }
     }
   }
@@ -355,65 +359,63 @@ localIndex ObjectManagerBase::Unpack( buffer_unit_type const *& buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF_NE( subGroups, "SubGroups" );
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF_NE( numSubGroups, this->GetSubGroups().size() );
 
-    for( auto const & index : this->GetSubGroups() )
+    for( localIndex i = 0; i < this->numSubGroups(); ++i )
     {
-      GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup(subGroupName)->Unpack(buffer,packList,recursive,on_device);
+      unpackedSize += this->GetGroup( subGroupName )->Unpack( buffer, packList, recursive, on_device );
     }
   }
 
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF_NE( groupName, this->getName() );
 
   return unpackedSize;
 }
 
-template<bool DOPACK>
+template< bool DOPACK >
 localIndex ObjectManagerBase::PackParentChildMapsPrivate( buffer_unit_type * & buffer,
-                                                          arrayView1d<localIndex const> const & packList ) const
+                                                          arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  localIndex_array const * const
-  parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::parentIndexString) );
-    packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                           *parentIndex,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           this->m_localToGlobalMap );
+    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                             parentIndex,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             this->m_localToGlobalMap );
   }
 
-  localIndex_array const * const
-  childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::childIndexString) );
-    packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                           *childIndex,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           this->m_localToGlobalMap );
+    arrayView1d< localIndex const > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::childIndexString ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                             childIndex,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             this->m_localToGlobalMap );
   }
 
   return packedSize;
 }
+
 template
-localIndex ObjectManagerBase::PackParentChildMapsPrivate<true>( buffer_unit_type * & buffer,
-                                                                arrayView1d<localIndex const> const & packList ) const;
+localIndex ObjectManagerBase::PackParentChildMapsPrivate< true >( buffer_unit_type * & buffer,
+                                                                  arrayView1d< localIndex const > const & packList ) const;
 template
-localIndex ObjectManagerBase::PackParentChildMapsPrivate<false>( buffer_unit_type * & buffer,
-                                                                 arrayView1d<localIndex const> const & packList ) const;
+localIndex ObjectManagerBase::PackParentChildMapsPrivate< false >( buffer_unit_type * & buffer,
+                                                                   arrayView1d< localIndex const > const & packList ) const;
 
 
 localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & buffer,
@@ -421,31 +423,29 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
 {
   localIndex unpackedSize = 0;
 
-  localIndex_array * const
-  parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
+    localIndex_array & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
     GEOSX_ERROR_IF( shouldBeParentIndexString != viewKeyStruct::parentIndexString,
-                   "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString);
+                    "value read from buffer is:"<<shouldBeParentIndexString<<". It should be "<<viewKeyStruct::parentIndexString );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *parentIndex,
+                                       parentIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
   }
 
-  localIndex_array * const
-  childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
+    localIndex_array & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
     GEOSX_ERROR_IF( shouldBeChildIndexString != viewKeyStruct::childIndexString,
-                   "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString);
+                    "value read from buffer is:"<<shouldBeChildIndexString<<". It should be "<<viewKeyStruct::childIndexString );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *childIndex,
+                                       childIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
@@ -458,22 +458,22 @@ localIndex ObjectManagerBase::UnpackParentChildMaps( buffer_unit_type const * & 
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
-                                        arrayView1d<localIndex const> const & packList ) const
+                                        arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.getName() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, m_sets.getName() );
 
-  packedSize += bufferOps::Pack<DOPACK>( buffer, m_sets.wrappers().size() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, m_sets.wrappers().size() );
   for( auto const & wrapperIter : m_sets.wrappers() )
   {
     string const & setName = wrapperIter.first;
-    SortedArrayView<localIndex const> const & currentSet = m_sets.getReference<SortedArray<localIndex> >(setName);
-    packedSize += bufferOps::Pack<DOPACK>( buffer, setName );
-    packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                           currentSet,
-                                           packList,
-                                           SortedArray<globalIndex>(),
-                                           m_localToGlobalMap );
+    SortedArrayView< localIndex const > const & currentSet = m_sets.getReference< SortedArray< localIndex > >( setName );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, setName );
+    packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                             currentSet,
+                                             packList,
+                                             SortedArray< globalIndex >(),
+                                             m_localToGlobalMap );
   }
   return packedSize;
 }
@@ -485,22 +485,22 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
 //                                               arrayView1d<localIndex const> const & );
 
 
-localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
+localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const * & buffer )
 {
   localIndex unpackedSize = 0;
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
-  GEOSX_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match");
+  GEOSX_ERROR_IF( name != m_sets.getName(), "ObjectManagerBase::UnpackSets(): group names do not match" );
 
   localIndex numUnpackedSets;
   unpackedSize += bufferOps::Unpack( buffer, numUnpackedSets );
-  for( localIndex a=0 ; a<numUnpackedSets ; ++a )
+  for( localIndex a=0; a<numUnpackedSets; ++a )
   {
     string setName;
     unpackedSize += bufferOps::Unpack( buffer, setName );
-    SortedArray<localIndex> & targetSet = m_sets.getReference<SortedArray<localIndex> >(setName);
+    SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( setName );
 
-    SortedArray<globalIndex> junk;
+    SortedArray< globalIndex > junk;
     unpackedSize += bufferOps::Unpack( buffer,
                                        targetSet,
                                        junk,
@@ -513,96 +513,94 @@ localIndex ObjectManagerBase::UnpackSets( buffer_unit_type const *& buffer )
 }
 
 
-localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d<localIndex> const & packList,
-                                integer const recursive ) const
+localIndex ObjectManagerBase::PackGlobalMapsSize( arrayView1d< localIndex > const & packList,
+                                                  integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackGlobalMapsPrivate<false>( junk, packList, recursive);
+  return PackGlobalMapsPrivate< false >( junk, packList, recursive );
 }
 
 localIndex ObjectManagerBase::PackGlobalMaps( buffer_unit_type * & buffer,
-                            arrayView1d<localIndex> const & packList,
-                            integer const recursive ) const
+                                              arrayView1d< localIndex > const & packList,
+                                              integer const recursive ) const
 {
-  return PackGlobalMapsPrivate<true>( buffer, packList, recursive);
+  return PackGlobalMapsPrivate< true >( buffer, packList, recursive );
 }
 
 template< bool DOPACK >
 localIndex ObjectManagerBase::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                                     arrayView1d<localIndex const> const & packList,
+                                                     arrayView1d< localIndex const > const & packList,
                                                      integer const recursive ) const
 {
-  localIndex packedSize = bufferOps::Pack<DOPACK>( buffer, this->getName() );
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
-  packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::localToGlobalMapString) );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString ) );
 
-  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
-  packedSize += bufferOps::Pack<DOPACK>( buffer, rank );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
-  packedSize += bufferOps::Pack<DOPACK>( buffer, numPackedIndices );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
 
   if( numPackedIndices > 0 )
   {
     globalIndex_array globalIndices;
-    globalIndices.resize(numPackedIndices);
-    for( localIndex a=0 ; a<numPackedIndices ; ++a )
+    globalIndices.resize( numPackedIndices );
+    for( localIndex a=0; a<numPackedIndices; ++a )
     {
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
     }
-    packedSize += bufferOps::Pack<DOPACK>( buffer, globalIndices );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
   }
 
-  array1d<localIndex> const * const
-  parentIndices = this->getPointer<array1d<localIndex>>( viewKeyStruct::parentIndexString );
-  if( parentIndices != nullptr )
+  if( this->hasWrapper( viewKeys().parentIndex ) )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string(viewKeyStruct::parentIndexString) );
-    packedSize += bufferOps::Pack<DOPACK>( buffer,
-                                           *parentIndices,
-                                           packList,
-                                           this->m_localToGlobalMap,
-                                           this->m_localToGlobalMap );
+    arrayView1d< localIndex const > const & parentIndex = this->getReference< localIndex_array >( viewKeys().parentIndex );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::parentIndexString ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer,
+                                             parentIndex,
+                                             packList,
+                                             this->m_localToGlobalMap,
+                                             this->m_localToGlobalMap );
   }
-
 
 
 
   if( recursive > 0 )
   {
-    packedSize += bufferOps::Pack<DOPACK>( buffer, string("SubGroups") );
-    packedSize += bufferOps::Pack<DOPACK>( buffer, this->GetSubGroups().size() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "SubGroups" ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, this->GetSubGroups().size() );
     for( auto const & keyGroupPair : this->GetSubGroups() )
     {
-      packedSize += bufferOps::Pack<DOPACK>( buffer, keyGroupPair.first );
-      ObjectManagerBase const * const subObjectManager = Group::group_cast<ObjectManagerBase const *>(keyGroupPair.second);
+      packedSize += bufferOps::Pack< DOPACK >( buffer, keyGroupPair.first );
+      ObjectManagerBase const * const subObjectManager = Group::group_cast< ObjectManagerBase const * >( keyGroupPair.second );
       if( subObjectManager )
       {
-        packedSize += subObjectManager->PackGlobalMapsPrivate<DOPACK>( buffer, packList, recursive );
+        packedSize += subObjectManager->PackGlobalMapsPrivate< DOPACK >( buffer, packList, recursive );
       }
     }
   }
 
-  packedSize += PackSets<DOPACK>(buffer, packList );
+  packedSize += PackSets< DOPACK >( buffer, packList );
 
   return packedSize;
 }
 
-localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer,
+localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffer,
                                                 localIndex_array & packList,
                                                 integer const recursive )
 {
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match");
+  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match" );
 
   string localToGlobalString;
-  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString);
-  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect");
+  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString, "ObjectManagerBase::Unpack(): label incorrect" );
 
-  int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX );
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -612,7 +610,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   if( numUnpackedIndices > 0 )
   {
     localIndex_array unpackedLocalIndices;
-    unpackedLocalIndices.resize(numUnpackedIndices);
+    unpackedLocalIndices.resize( numUnpackedIndices );
 
     globalIndex_array globalIndices;
     unpackedSize += bufferOps::Unpack( buffer, globalIndices );
@@ -620,12 +618,12 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     globalIndex_array newGlobalIndices;
     newGlobalIndices.reserve( numUnpackedIndices );
     localIndex const oldSize = this->size();
-    for( localIndex a = 0 ; a < numUnpackedIndices ; ++a )
+    for( localIndex a = 0; a < numUnpackedIndices; ++a )
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      unordered_map<globalIndex,localIndex>::iterator iterG2L =
-        m_globalToLocalMap.find(globalIndices[a]);
+      unordered_map< globalIndex, localIndex >::iterator iterG2L =
+        m_globalToLocalMap.find( globalIndices[a] );
       if( iterG2L == m_globalToLocalMap.end() )
       {
         // object does not exist on this domain
@@ -634,22 +632,22 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
         // add the global index of the new object to the globalToLocal map
         m_globalToLocalMap[globalIndices[a]] = newLocalIndex;
 
-        unpackedLocalIndices(a) = newLocalIndex;
+        unpackedLocalIndices( a ) = newLocalIndex;
 
-        newGlobalIndices.push_back(globalIndices[a]);
+        newGlobalIndices.push_back( globalIndices[a] );
 
         ++numNewIndices;
 
         GEOSX_ERROR_IF( packList.size() != 0,
-                       "ObjectManagerBase::Unpack(): packList specified, "
-                       "but a new globalIndex is unpacked");
+                        "ObjectManagerBase::Unpack(): packList specified, "
+                        "but a new globalIndex is unpacked" );
       }
       else
       {
         // object already exists on this domain
         // get the local index of the node
         localIndex b = iterG2L->second;
-        unpackedLocalIndices(a) = b;
+        unpackedLocalIndices( a ) = b;
         if( ( sendingRank < rank && m_ghostRank[b] <= -1) || ( sendingRank < m_ghostRank[b] ) )
         {
           m_ghostRank[b] = sendingRank;
@@ -662,10 +660,10 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
     this->resize( newSize );
 
     // add the new indices to the maps.
-    for( int a=0 ; a<numNewIndices ; ++a )
+    for( int a=0; a<numNewIndices; ++a )
     {
       localIndex const b = oldSize + a;
-      m_localToGlobalMap[b] = newGlobalIndices(a);
+      m_localToGlobalMap[b] = newGlobalIndices( a );
       m_ghostRank[b] = sendingRank;
     }
 
@@ -674,14 +672,14 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   }
 
 
-  arrayView1d<localIndex> * const parentIndices = this->getPointer<array1d<localIndex>>( viewKeyStruct::parentIndexString );
-  if( parentIndices != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
+    array1d< localIndex > & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect");
+    GEOSX_ERROR_IF( parentIndicesString != viewKeyStruct::parentIndexString, "ObjectManagerBase::Unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
-                                       *parentIndices,
+                                       parentIndex,
                                        packList,
                                        this->m_globalToLocalMap,
                                        this->m_globalToLocalMap );
@@ -692,24 +690,24 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match");
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
 
     decltype( this->GetSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups");
+    GEOSX_ERROR_IF( numSubGroups != this->GetSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->GetSubGroups() )
     {
       GEOSX_UNUSED_VAR( index );
       string subGroupName;
       unpackedSize += bufferOps::Unpack( buffer, subGroupName );
-      unpackedSize += this->GetGroup<ObjectManagerBase>(subGroupName)->
-                      UnpackGlobalMaps(buffer,packList, recursive);
+      unpackedSize += this->GetGroup< ObjectManagerBase >( subGroupName )->
+                        UnpackGlobalMaps( buffer, packList, recursive );
     }
   }
 
 
-  unpackedSize += UnpackSets(buffer );
+  unpackedSize += UnpackSets( buffer );
 
 
   return unpackedSize;
@@ -717,13 +715,13 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const *& buffer
 
 
 
-void ObjectManagerBase::ViewPackingExclusionList( SortedArray<localIndex> & exclusionList ) const
+void ObjectManagerBase::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::localToGlobalMapString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::globalToLocalMapString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::ghostRankString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::parentIndexString));
-  exclusionList.insert(this->getWrapperIndex(viewKeyStruct::childIndexString));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::parentIndexString ));
+  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::childIndexString ));
 
 }
 
@@ -731,7 +729,7 @@ void ObjectManagerBase::ViewPackingExclusionList( SortedArray<localIndex> & excl
 localIndex ObjectManagerBase::GetNumberOfGhosts() const
 {
   localIndex rval = 0;
-  for( localIndex i=0 ; i<size() ; ++i )
+  for( localIndex i=0; i<size(); ++i )
   {
     if( m_ghostRank[i] > -1 )
     {
@@ -745,7 +743,7 @@ localIndex ObjectManagerBase::GetNumberOfGhosts() const
 localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 {
   localIndex rval = 0;
-  for( localIndex i=0 ; i<size() ; ++i )
+  for( localIndex i=0; i<size(); ++i )
   {
     if( m_ghostRank[i] <= -1 )
     {
@@ -758,21 +756,17 @@ localIndex ObjectManagerBase::GetNumberOfLocalIndices() const
 
 void ObjectManagerBase::SetReceiveLists()
 {
-  map<int,localIndex_array>  receiveIndices;
-  for( localIndex a=0 ; a<size() ; ++a )
+  for( std::pair< int const, NeighborData > & pair : m_neighborData )
+  {
+    pair.second.ghostsToReceive().clear();
+  }
+
+  for( localIndex a=0; a<size(); ++a )
   {
     if( m_ghostRank[a] > -1 )
     {
-      receiveIndices[m_ghostRank[a]].push_back(a);
+      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().push_back( a );
     }
-  }
-
-  for( map<int,localIndex_array>::const_iterator iter=receiveIndices.begin() ; iter!=receiveIndices.end() ; ++iter )
-  {
-    Group * const neighborData = GetGroup(m_ObjectManagerBaseGroupKeys.neighborData)->GetGroup( std::to_string( iter->first ) );
-
-    localIndex_array & nodeAdjacencyList = neighborData->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.ghostsToReceive );
-    nodeAdjacencyList = iter->second;
   }
 }
 
@@ -780,34 +774,31 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
                                         int const GEOSX_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
-
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 
   if( size()+1 > capacity() )
   {
-    reserve( static_cast<localIndex>( size() * m_overAllocationFactor ) );
+    reserve( static_cast< localIndex >( size() * m_overAllocationFactor ) );
   }
 
   // the new indices are tacked on to the end of the arrays
-  newIndex = size() ;
+  newIndex = size();
   this->resize( newIndex + 1 );
 
   // copy the fields
   CopyObject( indexToSplit, newIndex );
 
-  localIndex_array * const
-  parentIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
-  if( parentIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.parentIndex ) )
   {
-    (*parentIndex)[newIndex] = indexToSplit;
+    arrayView1d< localIndex > const & parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
+    parentIndex[newIndex] = indexToSplit;
   }
 
-  localIndex_array * const
-  childIndex = this->getPointer<localIndex_array>( m_ObjectManagerBaseViewKeys.childIndex );
-  if( childIndex != nullptr )
+  if( this->hasWrapper( m_ObjectManagerBaseViewKeys.childIndex ) )
   {
-    (*childIndex)[indexToSplit] = newIndex;
+    arrayView1d< localIndex > const & childIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.childIndex );
+    childIndex[indexToSplit] = newIndex;
   }
 
   m_localToGlobalMap[newIndex] = -1;
@@ -827,10 +818,10 @@ integer ObjectManagerBase::SplitObject( localIndex const indexToSplit,
 
 }
 
-void ObjectManagerBase::inheritGhostRankFromParent( std::set<localIndex> const & indices )
+void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const & indices )
 {
-  arrayView1d<localIndex const> const &
-  parentIndex = this->getReference<localIndex_array>( m_ObjectManagerBaseViewKeys.parentIndex );
+  arrayView1d< localIndex const > const &
+  parentIndex = this->getReference< localIndex_array >( m_ObjectManagerBaseViewKeys.parentIndex );
 
   for( auto const a : indices )
   {
@@ -846,25 +837,19 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
     wrapper.second->copy( source, destination );
   }
 
-  for( localIndex i=0 ; i<m_sets.wrappers().size() ; ++i )
+  for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
   {
-    SortedArray<localIndex> & targetSet = m_sets.getReference< SortedArray<localIndex> >(i);
-    if( targetSet.count(source) > 0 )
+    SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
+    if( targetSet.count( source ) > 0 )
     {
-      targetSet.insert(destination);
+      targetSet.insert( destination );
     }
   }
 }
 
 void ObjectManagerBase::SetMaxGlobalIndex()
 {
-  globalIndex maxGlobalIndexLocally = -1;
-
-  for( localIndex a=0 ; a<m_localToGlobalMap.size() ; ++a )
-  {
-    maxGlobalIndexLocally = std::max( maxGlobalIndexLocally, m_localToGlobalMap[a] );
-  }
-  MpiWrapper::allReduce( &maxGlobalIndexLocally,
+  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
                          &m_maxGlobalIndex,
                          1,
                          MPI_MAX,
@@ -877,11 +862,11 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 {
   for( auto const & targetIndex : targetIndices )
   {
-    SortedArray<localIndex> eraseList;
+    SortedArray< localIndex > eraseList;
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      for( localIndex a=0; a<downmap.size( 1 ); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
         if( compositeLocalIndex==targetIndex )
@@ -891,17 +876,17 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
       }
       if( !hasTargetIndex )
       {
-        eraseList.insert(compositeIndex);
+        eraseList.insert( compositeIndex );
       }
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase(val);
+      upmap[targetIndex].erase( val );
     }
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
@@ -911,10 +896,10 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
     // indices are valid.
     SortedArray< localIndex > eraseList;
     localIndex pos = 0;
-    for( auto const & compositeIndex : upmap.getIterableSet(targetIndex) )
+    for( auto const & compositeIndex : upmap.getIterableSet( targetIndex ) )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0 ; a<downmap.size(1) ; ++a )
+      for( localIndex a=0; a<downmap.size( 1 ); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
         if( compositeLocalIndex==targetIndex )
@@ -925,7 +910,7 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
 
       if( !hasTargetIndex )
       {
-        eraseList.insert(pos);
+        eraseList.insert( pos );
       }
 
       ++pos;
@@ -935,17 +920,17 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
   }
 }
 
-void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
-                                    array1d<SortedArray<localIndex> > & upmap,
+void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices,
+                                    array1d< SortedArray< localIndex > > & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
   for( auto const & targetIndex : targetIndices )
   {
-    SortedArray<localIndex> eraseList;
+    SortedArray< localIndex > eraseList;
     for( auto const & compositeIndex : upmap[targetIndex] )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0 ; a<downmap[compositeIndex].size() ; ++a )
+      for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
         if( compositeLocalIndex==targetIndex )
@@ -955,12 +940,12 @@ void ObjectManagerBase::CleanUpMap( std::set<localIndex> const & targetIndices,
       }
       if( !hasTargetIndex )
       {
-        eraseList.insert(compositeIndex);
+        eraseList.insert( compositeIndex );
       }
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase(val);
+      upmap[targetIndex].erase( val );
     }
   }
 }
@@ -973,10 +958,10 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   {
     SortedArray< localIndex > eraseList;
     localIndex pos = 0;
-    for( localIndex const compositeIndex : upmap.getIterableSet(targetIndex) )
+    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
     {
       bool hasTargetIndex = false;
-      for( localIndex a=0 ; a<downmap[compositeIndex].size() ; ++a )
+      for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
       {
         localIndex const compositeLocalIndex = downmap[compositeIndex][a];
         if( compositeLocalIndex==targetIndex )
@@ -987,13 +972,13 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert(pos);
+        eraseList.insert( pos );
       }
 
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
+    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
   }
 }
 
@@ -1021,15 +1006,15 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
       }
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.values(), eraseList.size() );
+    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
   }
 }
 
 
-void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set<localIndex> const & targetIndices )
+void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d<localIndex const> const &
-  childFaceIndices = getReference<array1d<localIndex>>( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const &
+  childFaceIndices = getReference< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::childIndexString );
 
   for( localIndex const targetIndex : targetIndices )
   {

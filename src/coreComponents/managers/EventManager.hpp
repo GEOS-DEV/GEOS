@@ -25,7 +25,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const Events("Events");
+string const Events( "Events" );
 }
 }
 
@@ -58,7 +58,7 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(DomainPartition * domain);
+  void Run( DomainPartition * domain );
 
 private:
   struct viewKeyStruct
@@ -74,7 +74,7 @@ private:
 public:
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
 private:
 

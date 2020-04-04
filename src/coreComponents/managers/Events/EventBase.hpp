@@ -47,10 +47,10 @@ public:
    * If the event forecast is equal to 1, then signal the targets to prepare for execution
    * during the next cycle.
    */
-  virtual void SignalToPrepareForExecution(real64 const time,
-                                           real64 const dt,  
-                                           integer const cycle,
-                                           DomainPartition * domain) override;
+  virtual void SignalToPrepareForExecution( real64 const time,
+                                            real64 const dt,
+                                            integer const cycle,
+                                            DomainPartition * domain ) override;
   /**
    * If the event forecast is equal to 0, then call the step function on its target and/or children.
    */
@@ -102,29 +102,29 @@ public:
   virtual void CheckEvents(real64 const time, 
                            real64 const dt,
                            integer const cycle,
-                           DomainPartition * domain);
+                           DomainPartition * domain );
 
   /// Method to estimate the timing of the event
   virtual void EstimateEventTiming(real64 const time, 
                                    real64 const dt,
                                    integer const cycle,
-                                   DomainPartition * domain) = 0;
+                                   DomainPartition * domain ) = 0;
 
   /**
    * This method will collect time-step size requests from its
    * targets and/or children.
    */
-  virtual real64 GetTimestepRequest(real64 const time) override;
+  virtual real64 GetTimestepRequest( real64 const time ) override;
 
 
   /**
    * This method is used to get event-specifit dt requests
    */
-  virtual real64 GetEventTypeDtRequest(real64 const GEOSX_UNUSED_PARAM( time ) ) { return std::numeric_limits<real64>::max(); }
+  virtual real64 GetEventTypeDtRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) { return std::numeric_limits< real64 >::max(); }
 
 
   /// This method is used to count the number of events/sub-events
-  void GetExecutionOrder(array1d<integer> & eventCounters);
+  void GetExecutionOrder( array1d< integer > & eventCounters );
 
   /**
    * This method is used to determine how to handle the timestamp for an event
@@ -132,7 +132,7 @@ public:
    * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    * will be time + dt.
    */
-  void SetProgressIndicator(array1d<integer> & eventCounters);
+  void SetProgressIndicator( array1d< integer > & eventCounters );
 
 
 
@@ -160,18 +160,18 @@ public:
     dataRepository::ViewKey targetExactStartStop = { "targetExactStartStop" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
-    } viewKeys;
+  } viewKeys;
 
   ///Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, dataRepository::Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   /// Access functions
   integer GetForecast(){ return m_eventForecast; }
-  void SetForecast(integer forecast){ m_eventForecast = forecast; }
+  void SetForecast( integer forecast ){ m_eventForecast = forecast; }
 
   integer GetExitFlag();
-  void SetExitFlag(integer flag){ m_exitFlag = flag; }
+  void SetExitFlag( integer flag ){ m_exitFlag = flag; }
 
   integer GetEventCount() const { return m_eventCount; }
   real64  GetEventProgress() const { return m_eventProgress; }

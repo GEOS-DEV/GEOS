@@ -2,7 +2,7 @@
 set( mpiCommunications_tests
      testNeighborCommunicator.cpp )
 
-set( dependencyList gtest managers finiteVolume )
+set( dependencyList gtest trilinos managers finiteVolume )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

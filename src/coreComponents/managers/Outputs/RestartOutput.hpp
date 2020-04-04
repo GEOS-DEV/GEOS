@@ -36,7 +36,7 @@ class RestartOutput : public OutputBase
 public:
   /// Main constructor
   RestartOutput( std::string const & name,
-              Group * const parent );
+                 Group * const parent );
 
   /// Destructor
   virtual ~RestartOutput() override;
@@ -59,7 +59,7 @@ public:
                         real64 const eventProgress,
                         DomainPartition * domain ) override
   {
-    Execute(time_n, 0, cycleNumber, eventCounter, eventProgress, domain);
+    Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
   struct viewKeyStruct

@@ -19,6 +19,7 @@
 #ifndef GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
 #define GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
 
+// UNCRUSTIFY-OFF
 
 namespace geosx
 {
@@ -69,5 +70,7 @@ struct host_device_static_if<true>
   geosx::host_device_static_if<condition>::if_function( [&] () -> void
 
 #define end_static_if );
+
+// UNCRUSTIFY-ON
 
 #endif /* GEOSX_CODINGUTILITIES_STATIC_IF_HPP_ */

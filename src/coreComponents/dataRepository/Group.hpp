@@ -184,10 +184,9 @@ public:
   void PrintDataHierarchy( integer indent = 0 );
 
   /**
-   * @brief Generates a table formatted string containing all input options.
-   * @return a string containing a well formatted table containing input options.
+   * @brief @return a table formatted string containing all input options.
    */
-  string dumpInputOptions();
+  string dumpInputOptions() const;
 
   ///@}
 
@@ -554,61 +553,46 @@ public:
   ///@{
 
   /** @cond DO_NOT_DOCUMENT */
-  template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
-  { return false; }
+  template< typename CASTTYPE, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE & container, LAMBDA && lambda )
+  {
+    using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, CASTTYPE const, CASTTYPE >;
+    T * const castedContainer = dynamic_cast< T * >( &container );
 
-  template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const GEOSX_UNUSED_PARAM( group ), LAMBDA && GEOSX_UNUSED_PARAM( lambda ) )
-  { return false; }
+    if( castedContainer != nullptr )
+    {
+      lambda( *castedContainer );
+      return true;
+    }
+
+    return false;
+  }
   /** @endcond */
 
   /**
    * @brief Apply a given functor to a container if the container can be
    *        cast to one of the specified types.
-   * @tparam CONTAINERTYPE the type of container
    * @tparam CASTTYPE      the first type that will be used in the attempted casting of container
    * @tparam CASTTYPES     a variadic list of types that will be used in the attempted casting of container
+   * @tparam CONTAINERTYPE the type of container
    * @tparam LAMBDA        the type of lambda function to call in the function
    * @param[in] container  a pointer to the container which will be passed to the lambda function
    * @param[in] lambda     the lambda function to call in the function
    * @return               a boolean to indicate whether the lambda was successfully applied to the container.
    */
-  template< typename CONTAINERTYPE, typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE const * const container, LAMBDA && lambda )
+  template< typename T0, typename T1, typename ... CASTTYPES, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE & container, LAMBDA && lambda )
   {
-    bool rval = false;
-    CASTTYPE const * const castedContainer = details::DynamicCast< CASTTYPE const * >( container );
-    if( castedContainer!= nullptr )
-    {
-      lambda( castedContainer );
-      rval = true;
-    }
-    else
-    {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
-    }
-    return rval;
-  }
+    using T = std::conditional_t< std::is_const< CONTAINERTYPE >::value, T0 const, T0 >;
+    T * const castedContainer = details::DynamicCast< T * >( &container );
 
-  /**
-   * @copydoc applyLambdaToContainer(CONTAINERTYPE const * const, LAMBDA &&)
-   */
-  template< typename CONTAINERTYPE, typename CASTTYPE, typename ... CASTTYPES, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE * const container, LAMBDA && lambda )
-  {
-    bool rval = false;
-    CASTTYPE * const castedContainer = details::DynamicCast< CASTTYPE * >( container );
-    if( castedContainer!= nullptr )
+    if( castedContainer != nullptr )
     {
-      lambda( castedContainer );
-      rval = true;
+      lambda( *castedContainer );
+      return true;
     }
-    else
-    {
-      rval = applyLambdaToContainer< CONTAINERTYPE, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
-    }
-    return rval;
+
+    return applyLambdaToContainer< T1, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
   }
   ///@}
 
@@ -637,7 +621,7 @@ public:
   {
     for( auto & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second, [&]( auto & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -652,7 +636,7 @@ public:
   {
     for( auto const & subGroupIter : m_subGroups )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( subGroupIter.second, [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second, [&]( auto const & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -672,7 +656,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -687,7 +671,7 @@ public:
   {
     for( string const & subgroupName : subgroupNames )
     {
-      applyLambdaToContainer< Group, GROUPTYPE, GROUPTYPES... >( GetGroup( subgroupName ), [&]( auto const * const castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto const & castedSubGroup )
       {
         lambda( castedSubGroup );
       } );
@@ -745,8 +729,8 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                   std::forward< LAMBDA >( lambda ));
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
+                                                                      std::forward< LAMBDA >( lambda ));
     }
   }
 
@@ -762,8 +746,8 @@ public:
   {
     for( auto const & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< WrapperBase, Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
-                                                                                   std::forward< LAMBDA >( lambda ));
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( *wrapperIter.second,
+                                                                      std::forward< LAMBDA >( lambda ));
     }
   }
 
@@ -1220,7 +1204,7 @@ public:
    *
    * These functions can be used to get referece/pointer access to the data
    * stored by wrappers in this group. They are essentially just shortcuts for
-   * @p Group::getWrapper() and @p Wrapper<T>::getReference()/getPointer().
+   * @p Group::getWrapper() and @p Wrapper<T>::getReference().
    * An additional template parameter can be provided to cast the return pointer
    * or reference to a base class pointer or reference (e.g. Array to ArrayView).
    */
@@ -1237,7 +1221,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T, typename LOOKUP_TYPE >
-  typename Wrapper< T >::ViewTypeConst
+  traits::ViewTypeConst< T >
   getReference( LOOKUP_TYPE const & lookup ) const
   {
     Wrapper< T > const * const wrapper = getWrapper< T >( lookup );
@@ -1283,7 +1267,7 @@ public:
    * @note An error will be raised if wrapper does not exist or type cast is invalid.
    */
   template< typename T >
-  typename Wrapper< T >::ViewTypeConst
+  traits::ViewTypeConst< T >
   getReference( char const * const name ) const
   { return getReference< T >( string( name ) ); }
 
@@ -1294,52 +1278,6 @@ public:
   T & getReference( char const * const name )
   { return getReference< T >( string( name ) ); }
 
-  /**
-   * @brief Look up a wrapper and get reference to wrapped object.
-   * @tparam T           return value type
-   * @tparam LOOKUP_TYPE type of value used for wrapper lookup
-   * @param lookup       value for wrapper lookup
-   * @return             pointer to @p T
-   *
-   * @note @p nullptr will be returned if wrapper does not exist or type cast is invalid.
-   */
-  template< typename T, typename LOOKUP_TYPE >
-  T const * getPointer( LOOKUP_TYPE const & lookup ) const
-  {
-    T const * rval = nullptr;
-    Wrapper< T > const * wrapper = getWrapper< T >( lookup );
-    if( wrapper != nullptr )
-    {
-      rval = wrapper->getPointer();
-    }
-    return rval;
-  }
-
-  /**
-   * @copydoc getPointer(LOOKUP_TYPE const &) const
-   */
-  template< typename T, typename LOOKUP_TYPE >
-  T * getPointer( LOOKUP_TYPE const & lookup )
-  { return const_cast< T * >( const_cast< Group const * >(this)->getPointer< T >( lookup )); }
-
-  /**
-   * @copybrief getPointer(LOOKUP_TYPE const &) const
-   * @tparam T           return value type
-   * @param name         name of the wrapper
-   * @return             pointer to @p T
-   *
-   * @note nullptr will be returned if wrapper does not exist or type cast is invalid.
-   */
-  template< typename T >
-  T const * getPointer( char const * const name ) const
-  { return getPointer< T >( string( name ) ); }
-
-  /**
-   * @copydoc getPointer(char const * const) const
-   */
-  template< typename T >
-  T * getPointer( char const * const name )
-  { return getPointer< T >( string( name ) ); }
   //END_SPHINX_INCLUDE_GET_WRAPPER
 
   ///@}
@@ -1415,6 +1353,25 @@ public:
     return m_parent->GetSubGroups().getIndex( this->m_name );
   }
 
+  /**
+   * @brief Check whether this Group is resized when its parent is resized.
+   * @return @p true if Group is resized with parent group, @p false otherwise
+   */
+  integer sizedFromParent() const
+  {
+    return m_sizedFromParent;
+  }
+
+  /**
+   * @brief Set whether this wrapper is resized when its parent is resized.
+   * @param val an int that is converted into a bool
+   * @return a pointer to this Group
+   */
+  Group * setSizedFromParent( int val )
+  {
+    m_sizedFromParent = val;
+    return this;
+  }
   /**
    * @brief Get flags that control restart output of this group.
    * @return the current value of restart flags
@@ -1555,6 +1512,9 @@ private:
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
 
+  /// Specification that this group will have the same m_size as m_parent.
+  integer m_sizedFromParent;
+
   /// The container for the collection of all wrappers continued in "this" Group.
   wrapperMap m_wrappers;
 
@@ -1575,9 +1535,11 @@ private:
   /// Verbosity flag for group logs
   integer m_logLevel;
 
-  RestartFlags m_restart_flags; ///< Restart flag for this group...and
-                                ///< subsequently all wrappers in this group
-  InputFlags m_input_flags;     ///< Input flag for this group
+  /// Restart flag for this group... and subsequently all wrappers in this group.
+  RestartFlags m_restart_flags;
+
+  /// Input flag for this group.
+  InputFlags m_input_flags;
 
   /// Reference to the conduit::Node that mirrors this group
   conduit::Node & m_conduitNode;
@@ -1600,6 +1562,7 @@ template< typename T >
 T * Group::RegisterGroup( std::string const & name,
                           std::unique_ptr< Group > newObject )
 {
+  newObject->m_parent = this;
   return details::DynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
 }
 
@@ -1609,6 +1572,10 @@ T * Group::RegisterGroup( std::string const & name,
                           T * newObject,
                           bool const takeOwnership )
 {
+  if( takeOwnership )
+  {
+    newObject->m_parent = this;
+  }
   return details::DynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
 }
 

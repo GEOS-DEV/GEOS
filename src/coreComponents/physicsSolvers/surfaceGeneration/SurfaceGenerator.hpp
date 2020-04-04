@@ -27,14 +27,14 @@ namespace geosx
 
 struct ModifiedObjectLists
 {
-  std::set<localIndex> newNodes;
-  std::set<localIndex> newEdges;
-  std::set<localIndex> newFaces;
-  std::set<localIndex> modifiedNodes;
-  std::set<localIndex> modifiedEdges;
-  std::set<localIndex> modifiedFaces;
-  map< std::pair<localIndex,localIndex>, std::set<localIndex> > newElements;
-  map< std::pair<localIndex,localIndex>, std::set<localIndex> > modifiedElements;
+  std::set< localIndex > newNodes;
+  std::set< localIndex > newEdges;
+  std::set< localIndex > newFaces;
+  std::set< localIndex > modifiedNodes;
+  std::set< localIndex > modifiedEdges;
+  std::set< localIndex > modifiedFaces;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > newElements;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > modifiedElements;
 
   void clearNewFromModified();
 
@@ -59,7 +59,7 @@ class ElementRegionBase;
 class SurfaceGenerator : public SolverBase
 {
 public:
-  SurfaceGenerator( const std::string& name,
+  SurfaceGenerator( const std::string & name,
                     Group * const parent );
   ~SurfaceGenerator() override;
 
@@ -85,8 +85,8 @@ public:
     SolverStep( time_n, dt, cycleNumber, domain );
   }
 
-  virtual real64 SolverStep( real64 const& time_n,
-                             real64 const& dt,
+  virtual real64 SolverStep( real64 const & time_n,
+                             real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition * domain ) override;
 
@@ -95,7 +95,7 @@ public:
 
   int SeparationDriver( DomainPartition * domain,
                         MeshLevel * const mesh,
-                        std::vector<NeighborCommunicator> & neighbors,
+                        std::vector< NeighborCommunicator > & neighbors,
                         int const tileColor,
                         int const numTileColors,
                         const bool prefrac,
@@ -107,7 +107,7 @@ public:
    * @param[in] indexList the list of local indices that need new global indices
    */
   void AssignNewGlobalIndicesSerial( ObjectManagerBase & object,
-                                     std::set<localIndex> const & indexList );
+                                     std::set< localIndex > const & indexList );
 
 
   /**
@@ -117,7 +117,7 @@ public:
    */
   void
   AssignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                                map< std::pair<localIndex,localIndex>, std::set<localIndex> > const & indexList );
+                                map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & indexList );
 
   // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
 
@@ -143,7 +143,7 @@ private:
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
                               ElementRegionManager & elementManager,
-                              const bool prefrac);
+                              const bool prefrac );
 
   /**
    * @brief
@@ -159,13 +159,13 @@ private:
    */
   realT CalculateEdgeSIF ( DomainPartition * domain,
                            const localIndex edgeID,
-                           localIndex& trailFaceID,
+                           localIndex & trailFaceID,
                            NodeManager & nodeManager,
                            EdgeManager & edgeManager,
                            FaceManager & faceManager,
                            ElementRegionManager & elementManager,
-                           R1Tensor& vecTipNorm,
-                           R1Tensor& vecTip );
+                           R1Tensor & vecTipNorm,
+                           R1Tensor & vecTip );
 
   /**
    * @brief
@@ -176,10 +176,10 @@ private:
    * @return
    */
   void CalculateNodeAndFaceSIF ( DomainPartition * domain,
-                           NodeManager & nodeManager,
-                           EdgeManager & edgeManager,
-                           FaceManager & faceManager,
-                           ElementRegionManager & elementManager);
+                                 NodeManager & nodeManager,
+                                 EdgeManager & edgeManager,
+                                 FaceManager & faceManager,
+                                 ElementRegionManager & elementManager );
 
   /**
    * @brief Function to calculate f_disconnect and f_u.
@@ -196,17 +196,17 @@ private:
    * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
    */
   int CalculateElementForcesOnEdge ( DomainPartition * domain,
-                           const localIndex edgeID,
-                           realT edgeLength,
-                           localIndex_array & nodeIndices,
-                           NodeManager & nodeManager,
-                           EdgeManager & edgeManager,
-                           ElementRegionManager & elementManager,
-                           R1Tensor& vecTipNorm,
-                           R1Tensor& fNode,
-                           realT& GdivBeta,
-                           bool threeNodesPinched,
-                           bool calculatef_u);
+                                     const localIndex edgeID,
+                                     realT edgeLength,
+                                     localIndex_array & nodeIndices,
+                                     NodeManager & nodeManager,
+                                     EdgeManager & edgeManager,
+                                     ElementRegionManager & elementManager,
+                                     R1Tensor & vecTipNorm,
+                                     R1Tensor & fNode,
+                                     realT & GdivBeta,
+                                     bool threeNodesPinched,
+                                     bool calculatef_u );
 
   /**
    * @brief
@@ -221,14 +221,14 @@ private:
    * @param edgeMode
    */
   void MarkRuptureFaceFromEdge ( const localIndex edgeID,
-                                 localIndex& trailFaceID,
+                                 localIndex & trailFaceID,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
                                  ElementRegionManager & elementManager,
-                                 R1Tensor& vecTipNorm,
-                                 R1Tensor& vecTip,
-                                 ModifiedObjectLists& modifiedObjects,
+                                 R1Tensor & vecTipNorm,
+                                 R1Tensor & vecTip,
+                                 ModifiedObjectLists & modifiedObjects,
                                  const int edgeMode );
 
   /**
@@ -244,7 +244,7 @@ private:
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
                                  ElementRegionManager & elementManager,
-                                 ModifiedObjectLists& modifiedObjects);
+                                 ModifiedObjectLists & modifiedObjects );
 
   /**
    *
@@ -259,8 +259,8 @@ private:
                                 EdgeManager & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager & elementManager,
-                                std::vector<std::set<localIndex> >& nodesToRupturedFaces,
-                                std::vector<std::set<localIndex> >& edgesToRupturedFaces );
+                                std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                                std::vector< std::set< localIndex > > & edgesToRupturedFaces );
 
   /**
    *
@@ -269,8 +269,8 @@ private:
    * @param iFace
    */
   int CheckOrphanElement( ElementRegionManager & elementManager,
-                           FaceManager & faceManager,
-                           localIndex iFace);
+                          FaceManager & faceManager,
+                          localIndex iFace );
 
   /**
    *
@@ -310,10 +310,10 @@ private:
                     EdgeManager & edgeManager,
                     FaceManager & faceManager,
                     ElementRegionManager & elemManager,
-                    std::vector<std::set<localIndex> >& nodesToRupturedFaces,
-                    std::vector<std::set<localIndex> >& edgesToRupturedFaces,
+                    std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                    std::vector< std::set< localIndex > > & edgesToRupturedFaces,
                     ElementRegionManager & elementManager,
-                    ModifiedObjectLists& modifiedObjects,
+                    ModifiedObjectLists & modifiedObjects,
                     const bool prefrac );
 
   /**
@@ -336,12 +336,12 @@ private:
                            const EdgeManager & edgeManager,
                            const FaceManager & faceManager,
                            ElementRegionManager & elemManager,
-                           const std::vector<std::set<localIndex> >& nodesToRupturedFaces,
-                           const std::vector<std::set<localIndex> >& edgesToRupturedFaces,
-                           std::set<localIndex>& separationPathFaces,
-                           map<localIndex, int>& edgeLocations,
-                           map<localIndex, int>& faceLocations,
-                           map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+                           const std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                           const std::vector< std::set< localIndex > > & edgesToRupturedFaces,
+                           std::set< localIndex > & separationPathFaces,
+                           map< localIndex, int > & edgeLocations,
+                           map< localIndex, int > & faceLocations,
+                           map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
 
   /**
@@ -365,20 +365,20 @@ private:
                         EdgeManager & edgeManager,
                         FaceManager & faceManager,
                         ElementRegionManager & elementManager,
-                        ModifiedObjectLists& modifiedObjects,
-                        std::vector<std::set<localIndex> >& nodesToRupturedFaces,
-                        std::vector<std::set<localIndex> >& edgesToRupturedFaces,
-                        const std::set<localIndex>& separationPathFaces,
-                        const map<localIndex, int>& edgeLocations,
-                        const map<localIndex, int>& faceLocations,
-                        const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+                        ModifiedObjectLists & modifiedObjects,
+                        std::vector< std::set< localIndex > > & nodesToRupturedFaces,
+                        std::vector< std::set< localIndex > > & edgesToRupturedFaces,
+                        const std::set< localIndex > & separationPathFaces,
+                        const map< localIndex, int > & edgeLocations,
+                        const map< localIndex, int > & faceLocations,
+                        const map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
   void MapConsistencyCheck( const localIndex nodeID,
                             NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             ElementRegionManager const & elementManager,
-                            const map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+                            const map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -392,14 +392,14 @@ private:
    * @param elemLocations
    * @return
    */
-  bool SetLocations( const std::set<localIndex>& separationPathFaces,
+  bool SetLocations( const std::set< localIndex > & separationPathFaces,
                      ElementRegionManager & elemManager,
                      const FaceManager & faceManager,
-                     const std::set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
-                     const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
-                     map<localIndex, int>& edgeLocations,
-                     map<localIndex, int>& faceLocations,
-                     map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+                     const std::set< std::pair< CellElementSubRegion *, localIndex > > & nodesToElements,
+                     const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
+                     map< localIndex, int > & edgeLocations,
+                     map< localIndex, int > & faceLocations,
+                     map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -416,15 +416,15 @@ private:
    * @return
    */
   bool SetElemLocations( const int side,
-                         const std::pair<CellElementSubRegion*, localIndex >& elem,
-                         const std::set<localIndex>& separationPathFaces,
+                         const std::pair< CellElementSubRegion *, localIndex > & elem,
+                         const std::set< localIndex > & separationPathFaces,
                          ElementRegionManager & elemManager,
                          const FaceManager & faceManager,
-                         const std::set< std::pair<CellElementSubRegion*, localIndex> >& nodesToElements,
-                         const map< localIndex, std::pair<localIndex, localIndex> >& localFacesToEdges,
-                         map<localIndex, int>& edgeLocations,
-                         map<localIndex, int>& faceLocations,
-                         map< std::pair<CellElementSubRegion*, localIndex >, int>& elemLocations );
+                         const std::set< std::pair< CellElementSubRegion *, localIndex > > & nodesToElements,
+                         const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
+                         map< localIndex, int > & edgeLocations,
+                         map< localIndex, int > & faceLocations,
+                         map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations );
 
   /**
    *
@@ -450,7 +450,7 @@ private:
   void CalculateKinkAngles ( FaceManager & faceManager,
                              EdgeManager & edgeManager,
                              NodeManager & nodeManager,
-                             ModifiedObjectLists& modifiedObjects,
+                             ModifiedObjectLists & modifiedObjects,
                              const bool prefrac );
 
   /**
@@ -458,9 +458,9 @@ private:
    * @param ModifiedObjectLists
    */
   void SynchronizeTipSets ( FaceManager & faceManager,
-                           EdgeManager & edgeManager,
-                           NodeManager & nodeManager,
-                           ModifiedObjectLists& receivedObjects);
+                            EdgeManager & edgeManager,
+                            NodeManager & nodeManager,
+                            ModifiedObjectLists & receivedObjects );
 
 
 //  void setDegreeFromCrackTip( NodeManager & nodeManager,
@@ -521,7 +521,8 @@ private:
     constexpr static auto fractureRegionNameString = "fractureRegion";
     constexpr static auto mpiCommOrderString = "mpiCommOrder";
 
-    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive relation.
+    //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
+    // relation.
     constexpr static auto rockToughnessString = "rockToughness";
     constexpr static auto K_IC_00String = "K_IC_00";
     constexpr static auto K_IC_01String = "K_IC_01";
@@ -562,7 +563,7 @@ private:
   int m_mpiCommOrder;
 
   /// set of separable faces
-  SortedArray<localIndex> m_separableFaceSet;
+  SortedArray< localIndex > m_separableFaceSet;
 
   /// copy of the original node->face mapping prior to any separation
   ArrayOfSets< localIndex > m_originalNodetoFaces;
@@ -571,10 +572,10 @@ private:
   ArrayOfSets< localIndex > m_originalNodetoEdges;
 
   /// copy of the original face->edge mapping prior to any separation
-  ArrayOfArrays< localIndex>  m_originalFaceToEdges;
+  ArrayOfArrays< localIndex >  m_originalFaceToEdges;
 
   /// collection of faces that have been used for separation of each node
-  array1d< SortedArray<localIndex> > m_usedFacesForNode;
+  array1d< SortedArray< localIndex > > m_usedFacesForNode;
 
   /// copy of the original face->elemRegion mapping prior to any separation
   array2d< localIndex > m_originalFacesToElemRegion;

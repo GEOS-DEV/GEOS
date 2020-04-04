@@ -16,8 +16,8 @@
  * @file CompositionalMultiphaseWell.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WELLS_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_WELLS_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELLSOLVER_HPP_
 
 #include "WellSolverBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
@@ -30,7 +30,7 @@ namespace dataRepository
 {
 class Group;
 }
-  
+
 namespace constitutive
 {
 class MultiFluidBase;
@@ -59,13 +59,13 @@ public:
     static constexpr integer CONTROL = 0;
     static constexpr integer MASSBAL = 1;
   };
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseWell( const string& name,
+  CompositionalMultiphaseWell( const string & name,
                                Group * const parent );
 
   /// deleted default constructor
@@ -93,9 +93,9 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName() { return "CompositionalMultiphaseWell"; }
-  
-  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
-  
+
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
 
   /**
    * @defgroup Solver Interface Functions
@@ -109,7 +109,7 @@ public:
   CalculateResidualNorm( DomainPartition const * const domain,
                          DofManager const & dofManager,
                          ParallelVector const & rhs ) override;
-    
+
   virtual bool
   CheckSystemSolution( DomainPartition const * const domain,
                        DofManager const & dofManager,
@@ -121,11 +121,11 @@ public:
                        ParallelVector const & solution,
                        real64 const scalingFactor,
                        DomainPartition * const domain ) override;
-  
-  virtual void 
+
+  virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
 
-  virtual void 
+  virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition * const domain ) override;
@@ -154,11 +154,7 @@ public:
 
   virtual localIndex NumFluidComponents() const override { return m_numComponents; }
 
-  /**
-   * @brief Get the number of fluid phases
-   * @return the number of phases
-   */
-  localIndex NumFluidPhases() const { return m_numPhases; }
+  virtual localIndex NumFluidPhases() const override { return m_numPhases; }
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -175,22 +171,6 @@ public:
                                   DofManager const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs ) override;
-
-  /**
-   * @brief assembles the perforation rate terms 
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void AssemblePerforationTerms( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const matrix,
-                                         ParallelVector * const rhs ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -242,7 +222,7 @@ public:
 
     static constexpr auto resRelPermNameString  = "wellRelPermName";
     static constexpr auto resRelPermIndexString = "elementRelPermIndex";
-    
+
     // primary solution field
     static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
     static constexpr auto deltaPressureString = CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString;
@@ -254,7 +234,8 @@ public:
     // saturations
     static constexpr auto phaseVolumeFractionString = CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString;
     static constexpr auto dPhaseVolumeFraction_dPressureString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString;
-    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
+    static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
+      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
 
     // mixture density
     static constexpr auto mixtureDensityString = "wellElementMixtureDensity";
@@ -263,8 +244,9 @@ public:
 
     // global component fractions
     static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
-    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
-    
+    static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
+      CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
+
     // perforation rates and derivatives
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
@@ -278,7 +260,13 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
-  
+
+  /**
+   * @brief Compute all the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputePerforationRates( WellElementSubRegion * const subRegion );
+
   /**
    * @brief Setup stored reservoir views into domain data for the current step
    */
@@ -289,7 +277,7 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void InitializeWells( DomainPartition * const domain ) override;
-  
+
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
@@ -303,23 +291,17 @@ private:
   void ResizeFields( WellElementSubRegion * const subRegion );
 
   /**
-   * @brief Compute the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
-
-  /**
    * @brief Save all the rates and pressures in the well for reporting purposes
    * @param well the well with its perforations
    */
   void RecordWellData( WellElementSubRegion const * const subRegion );
-  
+
   /// the max number of fluid phases
   localIndex m_numPhases;
 
   /// the number of fluid components
   localIndex m_numComponents;
-  
+
   /// the (uniform) temperature
   real64 m_temperature;
 
@@ -331,54 +313,45 @@ private:
 
   /// index of the rel perm constitutive model in the flow solver
   localIndex m_resRelPermIndex;
-  
+
+
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_resPressure;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>> m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resGlobalCompDensity;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_deltaResGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resGlobalCompDensity;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resCompFrac;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResCompFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor<arrayView2d<real64>> m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor<arrayView3d<real64>> m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseMob_dCompDens;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseFrac_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseDens;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseDens_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseDens_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseVisc;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseVisc;
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_dResPhaseVisc_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseVisc_dComp;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_resPhaseCompFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 > > m_dResPhaseCompFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_resPhaseCompFrac;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor<arrayView5d<real64>> m_dResPhaseCompFrac_dComp;
-
-  ElementRegionManager::MaterialViewAccessor<arrayView2d<real64>> m_resTotalDens;
-
-  ElementRegionManager::MaterialViewAccessor<arrayView3d<real64>> m_resPhaseRelPerm;
-  ElementRegionManager::MaterialViewAccessor<arrayView4d<real64>> m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseRelPerm;
+  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
- 
+
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELL_HPP_
