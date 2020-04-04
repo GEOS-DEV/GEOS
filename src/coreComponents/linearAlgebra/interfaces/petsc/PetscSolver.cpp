@@ -69,11 +69,19 @@ void PetscSolver::solve_direct( PetscMatrix & mat,
   PC prec;
   GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp, &prec ) );
   GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCLU ) );
-  GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
+  if( MpiWrapper::Comm_size( comm ) == 1 )
+  {
+    GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERPETSC ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( prec, MATSOLVERSUPERLU_DIST ) );
+  }
 
   // solve system
   GEOSX_LAI_CHECK_ERROR( KSPSetFromOptions( ksp ) );
   GEOSX_LAI_CHECK_ERROR( KSPSolve( ksp, rhs.unwrapped(), sol.unwrapped() ) );
+  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
 }
 
 void PetscSolver::solve_krylov( PetscMatrix & mat,
@@ -204,6 +212,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   KSPConvergedReason result;
   GEOSX_LAI_CHECK_ERROR( KSPGetConvergedReason( ksp, &result ) );
   GEOSX_WARNING_IF( result < 0, "PetscSolver: Krylov convergence not achieved" );
+  GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
 
   // reset verbosity option
   GEOSX_LAI_CHECK_ERROR( PetscOptionsClearValue( nullptr, "-ksp_monitor" ) );

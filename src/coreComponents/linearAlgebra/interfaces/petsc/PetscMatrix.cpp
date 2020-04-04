@@ -64,9 +64,16 @@ void PetscMatrix::createWithLocalSize( localIndex const localRows,
 
   // set up matrix
   GEOSX_LAI_CHECK_ERROR( MatCreate( comm, &m_mat ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetType( m_mat, MATMPIAIJ ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetType( m_mat, MATAIJ ) );
   GEOSX_LAI_CHECK_ERROR( MatSetSizes( m_mat, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE ) );
-  GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
+  if( MpiWrapper::Comm_size( comm ) == 1 )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSeqAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
+  }
   GEOSX_LAI_CHECK_ERROR( MatSetUp( m_mat ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
 }
@@ -85,9 +92,16 @@ void PetscMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   // set up matrix
   GEOSX_LAI_CHECK_ERROR( MatCreate( comm, &m_mat ) );
-  GEOSX_LAI_CHECK_ERROR( MatSetType( m_mat, MATMPIAIJ ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetType( m_mat, MATAIJ ) );
   GEOSX_LAI_CHECK_ERROR( MatSetSizes( m_mat, PETSC_DECIDE, PETSC_DECIDE, globalRows, globalCols ) );
-  GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
+  if( MpiWrapper::Comm_size( comm ) == 1 )
+  {
+    GEOSX_LAI_CHECK_ERROR( MatSeqAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( MatMPIAIJSetPreallocation( m_mat, maxEntriesPerRow, nullptr, maxEntriesPerRow, nullptr ) );
+  }
   GEOSX_LAI_CHECK_ERROR( MatSetUp( m_mat ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE ) );
 }
