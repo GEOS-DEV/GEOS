@@ -54,19 +54,16 @@ public:
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
     static constexpr int ndof = NUM_DOF_PER_NODE * NUM_NODES_PER_ELEM;
 
+//    GEOSX_HOST_DEVICE
     StackVariables():
-      elementLocalDofIndex( ndof ),
-      R( ndof ),
-      dRdU( ndof, ndof )
-    {
-      dRdU = 0.0;
-      R = 0.0;
-    }
+      elementLocalDofIndex{0},
+      R{0.0},
+      dRdU{{0.0}}
+    {}
 
-    stackArray1d< globalIndex, ndof >   elementLocalDofIndex;
-    stackArray1d< real64, ndof >        R;
-    stackArray2d< real64, ndof *ndof >  dRdU;
-
+    globalIndex elementLocalDofIndex[ndof];
+    real64      R[ndof];
+    real64      dRdU[ndof][ndof];
   };
 
 
@@ -78,11 +75,6 @@ public:
     m_rhs( inputRhs )
   {}
 
-  arrayView1d< globalIndex const > m_dofNumber;
-  ParallelMatrix & m_matrix;
-  ParallelVector & m_rhs;
-  arrayView2d< localIndex const, cells::NODE_MAP_USD > elemsToNodes;
-
   void initializeNonElementViews( MeshLevel & GEOSX_UNUSED_PARAM( mesh ) )
   {}
 
@@ -90,12 +82,13 @@ public:
   void initializeElementSubRegionViews( ELEMENT_SUBREGION_TYPE & elementSubRegion )
   {
     elemsToNodes = elementSubRegion.nodeList();
+    elemGhostRank = elementSubRegion.ghostRank();
   }
 
 
 
   template< typename STACK_VARIABLE_TYPE >
-  GEOSX_HOST_DEVICE
+//  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void preKernel( localIndex const k,
                   STACK_VARIABLE_TYPE & stack ) const
@@ -112,7 +105,7 @@ public:
   }
 
   template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
-  GEOSX_HOST_DEVICE
+//  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                      localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -121,7 +114,7 @@ public:
   {}
 
   template< typename STACK_VARIABLE_TYPE >
-  GEOSX_HOST_DEVICE
+//  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                         localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -129,7 +122,7 @@ public:
   {}
 
   template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
-  GEOSX_HOST_DEVICE
+//  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -138,19 +131,67 @@ public:
   {}
 
   template< typename STACK_VARIABLE_TYPE >
-  GEOSX_HOST_DEVICE
+//  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 postKernel( STACK_VARIABLE_TYPE const & stack ) const
   {
-    m_matrix.insert( stack.elementLocalDofIndex.data(),
-                     stack.elementLocalDofIndex.data(),
-                     stack.dRdU.data(),
+    m_matrix.insert( stack.elementLocalDofIndex,
+                     stack.elementLocalDofIndex,
+                     &(stack.dRdU[0][0]),
                      stack.ndof,
                      stack.ndof );
     return 0;
   }
 
+
+  template< typename CONSTITUTIVE_TYPE >
+  typename CONSTITUTIVE_TYPE::KernelWrapper createConstitutiveUpdate( CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM( constitutive ) )
+  {
+    return typename CONSTITUTIVE_TYPE::KernelWrapper();
+  };
+
+
+  arrayView1d< globalIndex const > m_dofNumber;
+  ParallelMatrix & m_matrix;
+  ParallelVector & m_rhs;
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > elemsToNodes;
+  arrayView1d< integer const > elemGhostRank;
+
+
 };
+
+template< typename POLICY,
+          int NUM_NODES_PER_ELEM,
+          int NUM_QUADRATURE_POINTS,
+          typename KERNEL_CLASS,
+          typename CONSTITUTIVE_UPDATE >
+real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
+                                            KERNEL_CLASS const & kernelClass,
+                                            CONSTITUTIVE_UPDATE & constitutiveWrapper )
+{
+  RAJA::ReduceMax< serialReduce, real64 > maxForce( 0 );
+
+  forAll< POLICY >( numElems,
+                    [=] ( localIndex const k )
+      {
+        typename KERNEL_CLASS:: template StackVariables< NUM_NODES_PER_ELEM, 3 > stack;
+
+        if( kernelClass.elemGhostRank[k] < 0 )
+        {
+          kernelClass.preKernel( k, stack );
+          for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+          {
+            kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
+
+            kernelClass.stiffnessKernel( k, q, stack );
+
+            kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
+          }
+          maxForce.max( kernelClass.postKernel( stack ) );
+        }
+      } );
+  return maxForce.get();
+}
 
 template< typename POLICY, typename KERNEL_CLASS = FiniteElementRegionLoopKernelBase >
 static
@@ -164,7 +205,7 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
 {
   KERNEL_CLASS kernelClass( inputDofNumber, inputMatrix, inputRhs );
 
-  RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
+  real64 maxForce = 0;
 
 
   kernelClass.initializeNonElementViews( mesh );
@@ -177,7 +218,7 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
     localIndex const numElems = elementSubRegion.size();
 //      typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
-    arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
+    kernelClass.initializeElementSubRegionViews( elementSubRegion );
 
     localIndex const
     numQuadraturePointsPerElem = feDiscretization == nullptr ?
@@ -195,39 +236,47 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
       constitutive::SolidBase * const
       solidBase = elementSubRegion.GetConstitutiveModels()->template GetGroup< constitutive::SolidBase >( solidMaterialName );
 
-      kernelClass.initializeElementSubRegionViews( elementSubRegion );
 
       constitutive::constitutiveUpdatePassThru( solidBase, [&]( auto & castedConstitutiveRelation )
       {
         using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
-        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveWrapper = castedConstitutiveRelation.createKernelWrapper();
 
-        forAll< POLICY >( numElems,
-                          [=] GEOSX_HOST_DEVICE ( localIndex const k )
-            {
 
-              typename KERNEL_CLASS:: template StackVariables< NUM_NODES_PER_ELEM, 3 > stack;
+        typename CONSTITUTIVE_TYPE::KernelWrapper
+        constitutiveWrapper = kernelClass.createConstitutiveUpdate( castedConstitutiveRelation );
 
-              if( elemGhostRank[k] < 0 )
-              {
-                kernelClass.preKernel( k, stack );
-                for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-                {
-                  kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
-
-                  kernelClass.stiffnessKernel( k, q, stack );
-
-                  kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
-                }
-                maxForce.max( kernelClass.postKernel( stack ) );
-              }
-            } );
+        maxForce = std::max( maxForce,
+                             FiniteElementRegionLoopKernelLaunch< POLICY,
+                                                                  NUM_NODES_PER_ELEM,
+                                                                  NUM_QUADRATURE_POINTS >( numElems,
+                                                                                           kernelClass,
+                                                                                           constitutiveWrapper ) );
+//        forAll< POLICY >( numElems,
+//                          [=] GEOSX_DEVICE ( localIndex const k )
+//            {
+//
+//              typename KERNEL_CLASS:: template StackVariables< NUM_NODES_PER_ELEM, 3 > stack;
+//
+//              if( elemGhostRank[k] < 0 )
+//              {
+//                kernelClass.preKernel( k, stack );
+//                for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+//                {
+//                  kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
+//
+//                  kernelClass.stiffnessKernel( k, q, stack );
+//
+//                  kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
+//                }
+//                maxForce.max( kernelClass.postKernel( stack ) );
+//              }
+//            } );
       } );
     } );
   } );
 
-  return maxForce.get();
+  return maxForce;
 }
 }
 }

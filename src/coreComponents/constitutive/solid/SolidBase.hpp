@@ -49,6 +49,11 @@ namespace constitutive
 class SolidBaseUpdates
 {
 protected:
+  /// default constructor
+  SolidBaseUpdates():
+    m_stress()
+  {}
+
   /**
    * @brief constructor
    * @param[in] stress The stress data from the constitutive model class.
@@ -68,9 +73,6 @@ protected:
    * @param source Object to move resources from
    */
   SolidBaseUpdates( SolidBaseUpdates && source ) = default;
-
-  /// Deleted default constructor
-  SolidBaseUpdates() = delete;
 
   /// Deleted copy assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates const & ) = delete;

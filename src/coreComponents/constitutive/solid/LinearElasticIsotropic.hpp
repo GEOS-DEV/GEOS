@@ -36,6 +36,14 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+  /// default constructor
+  LinearElasticIsotropicUpdates():
+    SolidBaseUpdates(),
+    m_bulkModulus(),
+    m_shearModulus()
+  {}
+
+
   /**
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
@@ -58,9 +66,6 @@ public:
 
   /// Default move constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates && ) = default;
-
-  /// Deleted default constructor
-  LinearElasticIsotropicUpdates() = delete;
 
   /// Deleted copy assignment operator
   LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates const & ) = delete;
@@ -381,9 +386,16 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelWrapper()
+  LinearElasticIsotropicUpdates createKernelWrapper( bool const includeState = true )
   {
-    return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    if( includeState )
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    }
+    else
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, decltype(m_stress)() );
+    }
   }
 
 protected:

@@ -38,6 +38,18 @@ namespace constitutive
 class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+  /// default constructor
+  LinearElasticTransverseIsotropicUpdates():
+    SolidBaseUpdates(),
+    m_c11( ),
+    m_c13( ),
+    m_c33( ),
+    m_c44( ),
+    m_c66( )
+  {}
+
+
+
   /**
    * @brief Constructor
    * @param[in] c11 The 11 component of the Voigt stiffness tensor.
@@ -67,9 +79,6 @@ public:
 
   /// Default move constructor
   LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates && ) = default;
-
-  /// Deleted default constructor
-  LinearElasticTransverseIsotropicUpdates() = delete;
 
   /// Deleted copy assignment operator
   LinearElasticTransverseIsotropicUpdates & operator=( LinearElasticTransverseIsotropicUpdates const & ) = delete;

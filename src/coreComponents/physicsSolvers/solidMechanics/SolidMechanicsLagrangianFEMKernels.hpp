@@ -300,6 +300,7 @@ public:
     using StackVariablesBase = physicsLoopInterface::
                                  FiniteElementRegionLoopKernelBase::
                                  StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
+
     template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
     struct StackVariables : StackVariablesBase< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
     {
@@ -308,7 +309,9 @@ public:
       using StackVariablesBase< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >::numNodesPerElem;
       using StackVariablesBase< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >::ndof;
 
+//      GEOSX_HOST_DEVICE
       StackVariables():
+        StackVariablesBase< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >(),
         R_InertiaMassDamping( ndof ),
         dRdU_InertiaMassDamping( ndof, ndof ),
         R_StiffnessDamping( ndof ),
@@ -373,7 +376,7 @@ public:
     }
 
     template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void preKernel( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
@@ -394,7 +397,7 @@ public:
     }
 
     template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
-    GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void updateKernel( localIndex const k,
                        localIndex const q,
@@ -419,7 +422,7 @@ public:
     }
 
     template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void stiffnessKernel( localIndex const k,
                           localIndex const q,
@@ -430,26 +433,21 @@ public:
         for( localIndex b=0; b<STACK_VARIABLE_TYPE::numNodesPerElem; ++b )
         {
           real64 const (&c)[6][6] = stack.constitutiveStiffness;
-          stack.dRdU( a*3+0,
-                      b*3+0 ) -= ( c[0][0]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
-          stack.dRdU( a*3+0, b*3+1 ) -= ( c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] + c[0][1]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
-          stack.dRdU( a*3+0, b*3+2 ) -= ( c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] + c[0][2]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
-
-          stack.dRdU( a*3+1, b*3+0 ) -= ( c[0][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] + c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
-          stack.dRdU( a*3+1,
-                      b*3+1 ) -= ( c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[1][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
-          stack.dRdU( a*3+1, b*3+2 ) -= ( c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] + c[1][2]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
-
-          stack.dRdU( a*3+2, b*3+0 ) -= ( c[0][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] + c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
-          stack.dRdU( a*3+2, b*3+1 ) -= ( c[1][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] + c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
-          stack.dRdU( a*3+2,
-                      b*3+2 ) -= ( c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[2][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] + c[0][1]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
+          stack.dRdU[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] + c[0][2]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] + c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
+          stack.dRdU[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[1][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] + c[1][2]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] + c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] + c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
+          stack.dRdU[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] + c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] + c[2][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
         }
       }
     }
 
     template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
-    GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void integrationKernel( localIndex const k,
                             localIndex const q,
@@ -471,7 +469,7 @@ public:
     }
 
     template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 postKernel( STACK_VARIABLE_TYPE const & stack ) const
     {
@@ -483,18 +481,26 @@ public:
       meanForce /= stack.ndof;
 
 
-      m_matrix.add( stack.elementLocalDofIndex.data(),
-                    stack.elementLocalDofIndex.data(),
-                    stack.dRdU.data(),
+      m_matrix.add( stack.elementLocalDofIndex,
+                    stack.elementLocalDofIndex,
+                    &(stack.dRdU[0][0]),
                     stack.ndof,
                     stack.ndof );
 
-      m_rhs.add( stack.elementLocalDofIndex.data(),
-                 stack.R.data(),
+      m_rhs.add( stack.elementLocalDofIndex,
+                 stack.R,
                  stack.ndof );
 
       return meanForce;
     }
+
+
+    template< typename CONSTITUTIVE_TYPE >
+    typename CONSTITUTIVE_TYPE::KernelWrapper createConstitutiveUpdate( CONSTITUTIVE_TYPE & constitutive )
+    {
+      return constitutive.createKernelWrapper();
+    };
+
 
   };
 

@@ -39,6 +39,10 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
+  LinearElasticAnisotropicUpdates():
+    SolidBaseUpdates(),
+    m_stiffnessView()
+  {}
 
   /**
    * @brief Constructor
