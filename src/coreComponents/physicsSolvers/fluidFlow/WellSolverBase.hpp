@@ -143,14 +143,14 @@ public:
    * @param subRegion the well subRegion whose controls are requested
    * @return a pointer to the controls
    */
-  WellControls * GetWellControls( WellElementSubRegion const * const subRegion );
+  WellControls & GetWellControls( WellElementSubRegion const & subRegion );
 
   /**
    * @brief const getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a pointer to the const controls
    */
-  WellControls const * GetWellControls( WellElementSubRegion const * const subRegion ) const;
+  WellControls const & GetWellControls( WellElementSubRegion const & subRegion ) const;
 
   /**
    * @defgroup Solver Interface Functions
@@ -160,6 +160,9 @@ public:
   /**@{*/
 
   virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -252,13 +255,15 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void UpdateStateAll( DomainPartition * const domain );
+  virtual void UpdateStateAll( DomainPartition & domain );
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  virtual void UpdateState( WellElementSubRegion * const subRegion ) = 0;
+  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+
+  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -266,17 +271,7 @@ public:
     static constexpr auto gravityCoefString = FlowSolverBase::viewKeyStruct::gravityCoefString;
 
     // misc inputs
-    static constexpr auto fluidNameString      = "wellFluidName";
-    static constexpr auto resFluidIndexString  = "resFluidIndex";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    // gravity term precomputed values
-    ViewKey gravityCoef = { gravityCoefString };
-
-    // misc inputs
-    ViewKey fluidName  = { fluidNameString };
-    ViewKey resFluidIndex  = { resFluidIndexString };
+    static constexpr auto fluidNamesString  = "fluidNames";
 
   } viewKeysWellSolverBase;
 
@@ -292,6 +287,7 @@ private:
   void PrecomputeData( DomainPartition * const domain );
 
 protected:
+  virtual void PostProcessInput() override;
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
@@ -317,11 +313,8 @@ protected:
   /// name of the flow solver
   string m_flowSolverName;
 
-  /// name of the fluid constitutive model
-  string m_fluidName;
-
-  /// index of the fluid constitutive model in the flow solver class
-  localIndex m_resFluidIndex;
+  /// names of the fluid constitutive models
+  array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
   localIndex m_numDofPerWellElement;

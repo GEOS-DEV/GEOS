@@ -609,36 +609,51 @@ public:
 
   /**
    * @copybrief forSubGroups(LAMBDA)
-   * @tparam GROUPTYPE  the first type that will be used in the attempted casting of group.
-   * @tparam GROUPTYPES a variadic list of types that will be used in the attempted casting of group.
-   * @tparam LAMBDA     the type of functor to call
+   * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
+   * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
+   * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
+   * loop
+   * @tparam LAMBDA           type of functor callable with an index in lookup container and a reference to casted
+   * subgroup
+   * @param[in] subGroupKeys  container with subgroup lookup keys (e.g. names or indices) to apply the functor to
    * @param[in] lambda        the functor to call
-   * @param[in] subgroupNames list of subgroup names to apply the functor to
    */
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forSubGroups( string_array const & subgroupNames, LAMBDA lambda )
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA lambda )
   {
-    for( string const & subgroupName : subgroupNames )
+    localIndex counter = 0;
+    for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto & castedSubGroup )
       {
-        lambda( castedSubGroup );
+        lambda( counter, castedSubGroup );
       } );
+      ++counter;
     }
   }
 
   /**
-   * @copydoc forSubGroups(string_array const &, LAMBDA)
+   * @copybrief forSubGroups(LAMBDA)
+   * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
+   * @tparam GROUPTYPES       a variadic list of types that will be used in the attempted casting of group.
+   * @tparam LOOKUP_CONTAINER type of container of subgroup lookup keys (names or indices), must support range-based for
+   * loop
+   * @tparam LAMBDA           type of functor callable with an index in lookup container and a reference to casted
+   * subgroup
+   * @param[in] subGroupKeys  container with subgroup lookup keys (e.g. names or indices) to apply the functor to
+   * @param[in] lambda        the functor to call
    */
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forSubGroups( string_array const & subgroupNames, LAMBDA lambda ) const
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forSubGroups( LOOKUP_CONTAINER const & subGroupKeys, LAMBDA lambda ) const
   {
-    for( string const & subgroupName : subgroupNames )
+    localIndex counter = 0;
+    for( auto const & subgroup : subGroupKeys )
     {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroupName ), [&]( auto const & castedSubGroup )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *GetGroup( subgroup ), [&]( auto const & castedSubGroup )
       {
-        lambda( castedSubGroup );
+        lambda( counter, castedSubGroup );
       } );
+      ++counter;
     }
   }
   ///@}
