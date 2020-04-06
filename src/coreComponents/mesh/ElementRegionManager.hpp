@@ -176,15 +176,15 @@ public:
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forElementRegions( string_array const & targetRegions, LAMBDA && lambda )
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     Group * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-  void forElementRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
     Group const * const elementRegions = this->GetGroup( groupKeyStruct::elementRegionsGroup );
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
@@ -195,13 +195,15 @@ public:
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion, WellElementRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+                               WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
-    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion, WellElementRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+                               WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
 
@@ -234,30 +236,67 @@ public:
     }
   }
 
+
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
+  {
+    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+                               WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
+  {
+    forElementRegionsComplete< CellElementRegion, FaceElementRegion, EmbeddedSurfaceRegion,
+                               WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
+  {
+    forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
+                                                                          auto & elementRegion )
+    {
+      lambda( targetIndex, elementRegion.getIndexInParent(), elementRegion );
+    } );
+  }
+
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
+  {
+    forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
+                                                                          auto const & elementRegion )
+    {
+      lambda( targetIndex, elementRegion.getIndexInParent(), elementRegion );
+    } );
+  }
+
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename LAMBDA >
-  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
-                                                                                                                        std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename LAMBDA >
-  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
-                                                                                                                        std::forward< LAMBDA >( lambda ) );
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -284,36 +323,35 @@ public:
                                                    auto const & subRegion )
     {
       lambda( subRegion );
-    }
-      );
+    } );
   }
 
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda )
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
-                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
+                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                   localIndex const,
                                                                                                                    localIndex const,
                                                                                                                    ElementRegionBase &,
                                                                                                                    auto & subRegion )
     {
-      lambda( subRegion );
-    }
-                                                                      );
+      lambda( targetIndex, subRegion );
+    } );
   }
 
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegions( string_array const & targetRegions, LAMBDA && lambda ) const
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
     forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
-                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
+                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                   localIndex const,
                                                                                                                    localIndex const,
                                                                                                                    ElementRegionBase const &,
                                                                                                                    auto const & subRegion )
     {
-      lambda( subRegion );
-    }
-                                                                      );
+      lambda( targetIndex, subRegion );
+    } );
   }
 
   template< typename LAMBDA >
@@ -330,15 +368,15 @@ public:
                                   WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename LAMBDA >
-  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda )
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
                                                                                                                                 std::forward< LAMBDA >( lambda ) );
   }
 
-  template< typename LAMBDA >
-  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda ) const
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
     forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
                                                                                                                                 std::forward< LAMBDA >( lambda ) );
@@ -384,10 +422,10 @@ public:
   }
 
 
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda )
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    forElementRegions( targetRegions, [&] ( ElementRegionBase & elementRegion )
+    forElementRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase & elementRegion )
     {
       localIndex const er = elementRegion.getIndexInParent();
 
@@ -397,16 +435,16 @@ public:
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
         {
-          lambda( er, esr, elementRegion, castedSubRegion );
+          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
         } );
       }
     } );
   }
 
-  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-  void forElementSubRegionsComplete( string_array const & targetRegions, LAMBDA && lambda ) const
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    forElementRegions( targetRegions, [&] ( ElementRegionBase const & elementRegion )
+    forElementRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase const & elementRegion )
     {
       localIndex const er = elementRegion.getIndexInParent();
 
@@ -416,7 +454,7 @@ public:
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
         {
-          lambda( er, esr, elementRegion, castedSubRegion );
+          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
         } );
       }
     } );
@@ -440,13 +478,27 @@ public:
 
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  ConstructFullMaterialViewAccessor( string const & name,
+  ConstructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm ) const;
 
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
-  ConstructFullMaterialViewAccessor( string const & name,
+  ConstructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm );
+
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  ConstructMaterialViewAccessor( string const & viewName,
+                                 arrayView1d< string const > const & regionNames,
+                                 arrayView1d< string const > const & materialNames,
+                                 bool const allowMissingViews = false ) const;
+
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  ConstructMaterialViewAccessor( string const & viewName,
+                                 arrayView1d< string const > const & regionNames,
+                                 arrayView1d< string const > const & materialNames,
+                                 bool const allowMissingViews = false );
 
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
@@ -728,6 +780,93 @@ ElementRegionManager::
         }
       }
     }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor< LHS >
+ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
+                                                     arrayView1d< string const > const & regionNames,
+                                                     arrayView1d< string const > const & materialNames,
+                                                     bool const allowMissingViews ) const
+{
+  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
+  ElementViewAccessor< LHS > accessor;
+
+  // Resize the accessor to all regions and subregions
+  accessor.resize( numRegions() );
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
+  {
+    accessor[kReg].resize( GetRegion( kReg )->numSubRegions() );
+  }
+
+  subGroupMap const & regionMap = GetRegions();
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex k = 0; k < regionNames.size(); ++k )
+  {
+    localIndex const er = regionMap.getIndex( regionNames[k] );
+    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+    ElementRegionBase const & region = *GetRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                           ElementSubRegionBase const & subRegion )
+    {
+      dataRepository::Group const & constitutiveGroup = *subRegion.GetConstitutiveModels();
+      dataRepository::Group const * const constitutiveRelation = constitutiveGroup.GetGroup( materialNames[k] );
+      GEOSX_ERROR_IF( constitutiveRelation == nullptr,
+                      "Material " << materialNames[k] << " not found in " << regionNames[k] << '/' << subRegion.getName() );
+      dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation->getWrapper< VIEWTYPE >( viewName );
+      GEOSX_ERROR_IF( !allowMissingViews && wrapper == nullptr, "Material " << materialNames[k] << " does not contain " << viewName );
+      if( wrapper != nullptr )
+      {
+        accessor[er][esr] = wrapper->reference();
+      }
+    } );
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor< LHS >
+ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
+                                                     arrayView1d< string const > const & regionNames,
+                                                     arrayView1d< string const > const & materialNames,
+                                                     bool const allowMissingViews )
+{
+  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
+  ElementViewAccessor< LHS > accessor;
+
+  // Resize the accessor to all regions and subregions
+  accessor.resize( numRegions() );
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
+  {
+    accessor[kReg].resize( GetRegion( kReg )->numSubRegions() );
+  }
+
+  subGroupMap const & regionMap = GetRegions();
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex k = 0; k < regionNames.size(); ++k )
+  {
+    localIndex const er = regionMap.getIndex( regionNames[k] );
+    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+    ElementRegionBase & region = *GetRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    {
+      dataRepository::Group & constitutiveGroup = *subRegion.GetConstitutiveModels();
+      dataRepository::Group * const constitutiveRelation = constitutiveGroup.GetGroup( materialNames[k] );
+      GEOSX_ERROR_IF( constitutiveRelation == nullptr,
+                      "Material " << materialNames[k] << " not found in " << regionNames[k] << '/' << subRegion.getName() );
+      dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation->getWrapper< VIEWTYPE >( viewName );
+      GEOSX_ERROR_IF( !allowMissingViews && wrapper == nullptr, "Material " << materialNames[k] << " does not contain " << viewName );
+      if( wrapper != nullptr )
+      {
+        accessor[er][esr] = wrapper->reference();
+      }
+    } );
   }
   return accessor;
 }
