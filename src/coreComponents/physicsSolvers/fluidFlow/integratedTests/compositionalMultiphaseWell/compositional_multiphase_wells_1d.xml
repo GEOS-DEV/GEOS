@@ -18,9 +18,9 @@
                                  logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="297.15"
                                  useMass="0">
     </CompositionalMultiphaseFlow>
@@ -28,8 +28,8 @@
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
-                                 wellFluidName="fluid1"
-                                 wellRelPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 relPermNames="{relperm}"
                                  wellTemperature="297.15"
                                  useMass="0">
         <WellControls name="wellControls1"
