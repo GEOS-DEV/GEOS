@@ -90,7 +90,7 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time step to be written
    * @param[in] domain the computation domain of this rank
    */
-  void Write( real64 time, DomainPartition const * const domain  ) const;
+  void Write( real64 time, DomainPartition const & domain  ) const;
 
   private:
 
@@ -117,7 +117,7 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time-step
    * @param[in] domain the computation domain for this rank
    */
-  void WriteCellElementRegions( double time, DomainPartition const * const domain ) const;
+  void WriteCellElementRegions( double time, DomainPartition const & domain ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
@@ -127,14 +127,14 @@ class VTKPolyDataWriterInterface
    * the second value is a table with the same size than the total number of element in the CellElementRegion
    * containg the type of the cells.
    */
-  std::tuple< vtkSmartPointer< vtkCellArray >,  std::vector< int> > GetVTKCells( CellElementRegion const * const er ) const;
+  std::tuple< vtkSmartPointer< vtkCellArray >,  std::vector< int> > GetVTKCells( CellElementRegion const & er ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
    * the vertices coordinates of \p nodeManager
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
-  vtkSmartPointer< vtkPoints > GetVTKPoints( NodeManager const * const nodeManager ) const;
+  vtkSmartPointer< vtkPoints > GetVTKPoints( NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the well representation
@@ -142,13 +142,13 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time-step
    * @param[in] domain the computation domain for this rank
    */
-  void WriteWellFiles( double time, DomainPartition const * const domain ) const;
+  void WriteWellFiles( double time, DomainPartition const & domain ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
    * the cells connectivities of \p es
    */
-  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const * const esr , NodeManager const * const nodeManager) const;
+  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const & esr , NodeManager const & nodeManager) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.
@@ -157,21 +157,21 @@ class VTKPolyDataWriterInterface
    * @param[in] domain the computation domain for this rank
    * @param[in] vtmWrite a writer specialized for the VTM file format
    */
-  void WriteVTMFile( double time, DomainPartition const * const domain, VTKVTMWriter const& vtmWriter ) const;
+  void WriteVTMFile( double time, DomainPartition const & domain, VTKVTMWriter const & vtmWriter ) const;
 
   /*!
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointdata a VTK object containing all the fields associated with the nodes
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
-  void WriteNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const * const nodeManager) const;
+  void WriteNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const & nodeManager) const;
 
   /*!
    * @brief Writes all the fields associated to the cellss of \p er if their plotlevel is <= m_plotLevel
    * @param[in] celldata a VTK object containing all the fields associated with the cells
    * @param[in] er CellElementRegion being written
    */
-  void WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const * const er ) const;
+  void WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const & er ) const;
 
   /*!
    * @brief Writes a field from \p wrapperBase
@@ -183,7 +183,7 @@ class VTKPolyDataWriterInterface
    * @param[in,out] a counter that is incremented each time a value is written. This is useful
    * for CellElementSubRegion.
    */
-  void WriteField( WrapperBase const * const wrapperBase, vtkSmartPointer < VTKGEOSXData > data, localIndex size, localIndex & count ) const;
+  void WriteField( WrapperBase const & wrapperBase, vtkSmartPointer < VTKGEOSXData > data, localIndex size, localIndex & count ) const;
 
   private:
 

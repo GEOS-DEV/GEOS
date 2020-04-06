@@ -67,7 +67,7 @@ void VTKOutput::Execute( real64 const time_n,
 {
   DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
   m_writerInterface.SetPlotLevel( m_plotLevel );
-  m_writerInterface.Write( time_n, domainPartition );
+  m_writerInterface.Write( time_n, *domainPartition );
 }
 
 
