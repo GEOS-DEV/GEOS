@@ -28,7 +28,7 @@ namespace geosx
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
       buffer_unit_type * buffer = m_buffer_call();
-      collect_with_time( time_n, dt, buffer );
+      Collect( time_n, dt, buffer );
     }
 
     void RegisterBufferCall( std::function<buffer_unit_type*()> buffer_call )
@@ -67,10 +67,8 @@ namespace geosx
       : TimeHistoryCollector(name,parent)
       , m_scalar_path("")
     {
-      // it would be best to allow multiple targets, but
-      // i don't know how required_nonunique works and it isn't used anywhere else
       registerWrapper(ScalarCollector<VALUE_T>::viewKeysStruct::scalarPath, &m_scalar_path, false)->
-        setInputFlag(InputFlags::OPTIONAL)->
+        setInputFlag(InputFlags::REQUIRED)->
         setDescription("A scalar value to collect for time history output.");
     }
 
@@ -94,15 +92,38 @@ namespace geosx
     string m_scalar_path;
   };
 
+
+  class ArrayCollector : public TimeHistoryCollector
+  {
+    public:
+    ArrayCollector ( string const & name, Group * parent )
+    : TimeHistoryCollector( name, parent )
+    {
+      registerWrapper(ArrayCollector<ARRAY_T>::viewKeysStruct::m_array_path, &m_array_path, false)->
+       setInputFlag(InputFlags::REQUIRED)->
+       setDescription("The path of an array to collect for time history output.");
+    }
+
+    static string CatalogName() { return "ArrayCollector"; }
+
+    struct viewKeysStruct
+    {
+      static constexpr auto arrayPath = "target";
+    } arrayCollectorKeys;
+
+  protected:
+    string m_array_path;
+  };
+
   template < typename ARRAY_T, typename ENABLE = void >
-  class ArrayTimeHistoryCollector;
+  class ArrayCollectorT;
 
   template <typename ARRAY_T >
-  class ArrayTimeHistoryCollector< ARRAY_T, typename std::enable_if< is_array< ARRAY_T > && can_history_io< ARRAY_T::value_type> >::type > : public TimeHistoryCollector
+  class ArrayCollectorT< ARRAY_T, typename std::enable_if< is_array< ARRAY_T > && can_history_io< ARRAY_T::value_type> >::type > : public ArrayCollector
   {
   public:
-    ArrayTimeHistoryCollector ( string const & name, Group * parent )
-    : TimeHistoryCollector( name, parent )
+    ArrayCollectorT ( string const & name, Group * parent )
+    : ArrayCollector( name, parent )
     { }
 
     virtual HistoryMetadata GetMetadata( ) const override
@@ -116,22 +137,49 @@ namespace geosx
       typename ARRAY_T::view_type & av = Group::getReference(m_array_path);
       bufferOps::PackDevice<true>(buffer,av);
     }
-  private:
+  };
+
+
+
+  class IndexedArrayCollector : public TimeHistoryCollector
+  {
+  public:
+    IndexedArrayCollector ( string const & name, Group * parent ) :
+      TimeHistoryCollector( name, parent )
+    {
+      registerWrapper(ArrayCollector<ARRAY_T>::viewKeysStruct::m_array_path, &m_array_path, false)->
+       setInputFlag(InputFlags::REQUIRED)->
+       setDescription("The path of an array to collect for time history output.");
+      registerWrapper(ArrayCollector<ARRAY_T>::viewKeysStruct::m_probe_path, &m_probe_path, false)->
+       setInputFlag(InputFlags::REQUIRED)->
+       setDescription("The path of a probe to supply indices for time history collection.");
+    }
+
+    static string CatalogName() { return "ArrayIndexedCollector"; }
+
+    struct viewKeysStruct
+    {
+      static constexpr auto arrayPath = "target";
+    } arrayCollectorKeys;
+
+  protected:
+    string m_probe_path;
     string m_array_path;
   };
 
+
   template < typename ARRAY_T, typename INDEX_ARRAY_T, typename ENABLE = void >
-  class ArrayIndexedTimeHistoryCollector;
+  class IndexedArrayCollectorT;
 
   template <typename ARRAY_T, typename INDEX_ARRAY_T >
-  class ArrayIndexedTimeHistoryCollector< ARRAY_T, INDEX_ARRAY_T, typename std::enable_if< is_array< ARRAY_T > &&
+  class IndexedArrayCollectorT< ARRAY_T, INDEX_ARRAY_T, typename std::enable_if< is_array< ARRAY_T > &&
                                                                                            can_history_io< ARRAY_T::value_type> &&
                                                                                            is_array< INDEX_ARRAY_T > &&
-                                                                                           LvArray::is_integer< typename INDEX_ARRAY_T::value_type >::value >::type > : public TimeHistoryCollector
+                                                                                           LvArray::is_integer< typename INDEX_ARRAY_T::value_type >::value >::type > : public IndexedArrayCollector
   {
   public:
-    ArrayIndexedTimeHistoryCollector ( string const & name, Group * parent ) :
-      TimeHistoryCollector( name, parent )
+    IndexedArrayCollectorT ( string const & name, Group * parent )
+      : IndexedArrayCollector( name, parent )
     { }
 
     virtual HistoryMetadata GetMetadata( ) const override
@@ -149,9 +197,7 @@ namespace geosx
       typename ARRAY_T::view_type & av = Group::getReference(m_array_path);
       bufferOps::PackByIndexDevice<true>(buffer,av,idxv.size( ));
     }
-  private:
-    string m_probe_path;
-    string m_array_path;
+
   };
 }
 
