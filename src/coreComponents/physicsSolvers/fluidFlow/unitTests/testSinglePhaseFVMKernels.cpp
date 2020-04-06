@@ -74,7 +74,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const dt )
 {
   localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-  localIndex constexpr fluidIndex = 0;
 
   typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
@@ -106,18 +105,18 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                                                                                     seri[0],
                                                                                     sesri[0],
                                                                                     sei[0] );
-  auto densView        = AccessorHelper< FULL >::template makeMaterialAccessor< 2 >( dens,
-                                                                                     stencilSize,
-                                                                                     seri[0],
-                                                                                     sesri[0],
-                                                                                     sei[0],
-                                                                                     fluidIndex );
-  auto dDens_dPresView = AccessorHelper< FULL >::template makeMaterialAccessor< 2 >( dDens_dPres,
-                                                                                     stencilSize,
-                                                                                     seri[0],
-                                                                                     sesri[0],
-                                                                                     sei[0],
-                                                                                     fluidIndex );
+  auto densView        = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dens,
+                                                                                    stencilSize,
+                                                                                    seri[0],
+                                                                                    sesri[0],
+                                                                                    sei[0],
+                                                                                    1 );
+  auto dDens_dPresView = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dDens_dPres,
+                                                                                    stencilSize,
+                                                                                    seri[0],
+                                                                                    sesri[0],
+                                                                                    sei[0],
+                                                                                    1 );
 
   array1d< real64 > flux( numElems );
   array2d< real64 > fluxJacobian( numElems, stencilSize );
@@ -136,7 +135,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                        dDens_dPresView.toViewConst(),
                        mobView.toViewConst(),
                        dMob_dPresView.toViewConst(),
-                       fluidIndex,
                        dt,
                        flux,
                        fluxJacobian );

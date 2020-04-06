@@ -110,17 +110,6 @@ void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group *
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
-localIndex RelativePermeabilityBase::numFluidPhases() const
-{
-  return integer_conversion< localIndex >( m_phaseNames.size());
-}
-
-string const & RelativePermeabilityBase::phaseName( localIndex ip ) const
-{
-  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
-  return m_phaseNames[ip];
-}
-
 } // namespace constitutive
 
 } // namespace geosx

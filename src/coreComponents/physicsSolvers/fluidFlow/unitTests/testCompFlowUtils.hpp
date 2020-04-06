@@ -55,7 +55,7 @@ void checkDerivative( arraySlice1d< real64 const > const & valueEps,
                       real64 const absTol,
                       string const & name,
                       string const & var,
-                      string_array const & labels )
+                      arrayView1d< string const > const & labels )
 {
   localIndex const size = labels.size( 0 );
 
@@ -75,7 +75,7 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       real64 const absTol,
                       string const & name,
                       string const & var,
-                      string_array const & labels,
+                      arrayView1d< string const > const & labels,
                       Args ... label_lists )
 {
   localIndex const size = labels.size( 0 );
@@ -95,7 +95,7 @@ void checkDerivative( ArraySlice< real64 const, DIM > const & valueEps,
                       real64 const relTol,
                       string const & name,
                       string const & var,
-                      string_array const & labels,
+                      arrayView1d< string const > const & labels,
                       Args ... label_lists )
 { return checkDerivative( valueEps, value, deriv, eps, relTol, DEFAULT_ABS_TOL, name, var, labels, label_lists ... ); }
 

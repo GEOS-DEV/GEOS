@@ -68,15 +68,6 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
-real64 WellControls::GetInjectionStream( localIndex ic ) const
-{
-  real64 compFrac = -1;
-  if( ic < m_injectionStream.size())
-  {
-    compFrac = m_injectionStream[ic];
-  }
-  return compFrac;
-}
 
 void WellControls::SetControl( Control control,
                                real64 const & val )

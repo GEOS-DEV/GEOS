@@ -86,26 +86,22 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name,
                                             Group * const parent,
                                             std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< CompositionalMultiphaseFluid > newModel = std::make_unique< CompositionalMultiphaseFluid >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< CompositionalMultiphaseFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
 
-  newModel->m_componentNames   = this->m_componentNames;
-  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
+  fluid.m_equationsOfState             = m_equationsOfState;
+  fluid.m_componentCriticalPressure    = m_componentCriticalPressure;
+  fluid.m_componentCriticalTemperature = m_componentCriticalTemperature;
+  fluid.m_componentAcentricFactor      = m_componentAcentricFactor;
+  fluid.m_componentVolumeShift         = m_componentVolumeShift;
+  fluid.m_componentBinaryCoeff         = m_componentBinaryCoeff;
 
-  newModel->m_phaseNames           = this->m_phaseNames;
-  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-  newModel->m_equationsOfState     = this->m_equationsOfState;
-
-  newModel->m_componentCriticalPressure    = this->m_componentCriticalPressure;
-  newModel->m_componentCriticalTemperature = this->m_componentCriticalTemperature;
-  newModel->m_componentAcentricFactor      = this->m_componentAcentricFactor;
-  newModel->m_componentVolumeShift         = this->m_componentVolumeShift;
-  newModel->m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
-
-  newModel->createFluid();
-
-  clone = std::move( newModel );
+  fluid.createFluid();
 }
 
 void CompositionalMultiphaseFluid::PostProcessInput()
