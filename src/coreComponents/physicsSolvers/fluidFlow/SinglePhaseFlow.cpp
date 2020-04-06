@@ -579,19 +579,6 @@ void SinglePhaseFlow::ExplicitStepSetup( real64 const & time_n,
 
       referencePressure = fluid->referencePressure();
 
-      // ron apply initial mass condition in the explicit solver; at March 26, 2020
-      bool m_InitialMassFlag = true;
-      if (m_InitialMassFlag)
-      {
-        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];
-        arrayView1d<real64> const & vol  = m_volume[er][esr];
-        arrayView1d<real64> const & mass = m_mass[er][esr];
-        forall_in_range<RAJA::seq_exec>( 0, subRegion->size(), GEOSX_LAMBDA ( localIndex const ei )
-        {
-          mass[ei] = dens[ei][0] * vol[ei] * poro[ei];
-        });
-      }
-
 //      if (m_explicitSolverInitializationFlag)
 //      {
 //        arrayView2d<real64> const & dens = m_density[er][esr][m_fluidIndex];

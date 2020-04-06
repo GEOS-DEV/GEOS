@@ -118,7 +118,7 @@ public:
 		stress /= numConstitutivePointsPerParentIndex;
 		real64 p = stress.Trace() / 3.0;
 		*/
-		real64 p = 1e6;
+		real64 p = 1e10;
 
 		real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
 		real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
@@ -129,14 +129,14 @@ public:
 	real64 compressibility()
 	{
 		real64 bulkModulus;
-		real64 p = 1e6;
+		real64 p = 1e10;
 		bulkModulus = (1 + m_defaultEin) / m_defaultKappa * pat * sqrt( p / pat );
 		return 1 / bulkModulus;
 	}
 	real64 compressibility() const
 	{
 		real64 bulkModulus;
-		real64 p = 1e6;
+		real64 p = 1e10;
 		bulkModulus = (1 + m_defaultEin) / m_defaultKappa * pat * sqrt( p / pat );
 		return 1 / bulkModulus;
 	}
