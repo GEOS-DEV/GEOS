@@ -20,9 +20,8 @@ namespace geosx
       m_collector_path( ),
       m_format( ),
       m_filename( ),
-      m_restart(false),
-      m_io(nullptr),
-      m_collector(nullptr)
+      m_record_count(false),
+      m_io(nullptr)
     {
 
       registerWrapper(viewKeys::timeHistoryOutputTarget, &m_collector_path, false)->
@@ -39,8 +38,8 @@ namespace geosx
         setInputFlag(InputFlags::OPTIONAL)->
         setDescription("The output file format for time history output.");
 
-      registerWrapper(viewKeys::timeHistoryRestart, &m_restart, false)->
-        setApplyDefaultValue(false)->
+      registerWrapper(viewKeys::timeHistoryRestart, &m_record_count, false)->
+        setApplyDefaultValue(0)->
         setInputFlag(InputFlags::FALSE)->
         setRestartFlags(RestartFlags::WRITE_AND_READ)->
         setDescription("The current history record to be written, on restart from an earlier time allows use to remove invalid future history.");
@@ -51,18 +50,13 @@ namespace geosx
 
     virtual void SetupDirectoryStructure() override
     {
-      // todo: right now if the collector isn't associated with an output operation it will not be able to retrieve a valid
-      //       write buffer, and so will be unable to actually collect
       Group * tmp = this->GetGroupByPath(m_collector_path);
-      m_collector = Group::group_cast<TimeHistoryCollector*>(tmp);
-      GEOSX_ERROR_IF(m_collector == nullptr, "The target of a time history output event must be a collector! " << m_collector_path);
-      m_collector->RegisterBufferCall([this]() { return this->m_io->GetBufferHead( ); });
-      m_io = new HDFHistIO( m_filename,  m_collector->GetMetadata( ) );
-      // its okay for the file to already have this data specificaiton inside it if we are restarting
-      //  (write_head > 0) isn't an exact 1-to-1 on that though, as we *could* init the file and file prior to
-      //  doing any writes on the file, an IS_RESTART flag of some sort would be nice
-      m_io->Init( m_restart );
-      m_restart = true;
+      TimeHistoryCollector * collector = Group::group_cast<TimeHistoryCollector*>(tmp);
+      GEOSX_ERROR_IF(collector == nullptr, "The target of a time history output event must be a collector! " << m_collector_path);
+      // switch based on m_format, always hdf for now
+      m_io = std::make_unique<HDFHistIO>( m_filename, collector->GetMetadata( ), m_record_count );
+      collector->RegisterBufferCall([this]() { return this->m_io->GetBufferHead( ); });
+      m_io->Init( m_record_count > 0 );
     }
 
     /// This method will be called by the event manager if triggered
@@ -73,6 +67,7 @@ namespace geosx
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
+      m_record_count += m_io->GetBufferedCount( );
       m_io->Write( );
     }
 
@@ -103,10 +98,9 @@ namespace geosx
       string m_format;
       string m_filename;
 
-      integer m_restart;
+      integer m_record_count;
 
-      BufferedHistoryIO * m_io;
-      TimeHistoryCollector * m_collector;
+      std::unique_ptr<BufferedHistoryIO> m_io;
   };
 }
 

@@ -12,7 +12,8 @@ namespace geosx
   public:
 
     BufferedHistoryIO(): m_buffered_count(0), m_data_buffer(0) {}
-    // BufferedHistoryIO(size_t init_size) : m_buffered_count(0), m_data_buffer(init_size) {}
+
+    virtual ~BufferedHistoryIO() {}
 
     buffer_unit_type * GetBufferHead( )
     {
@@ -25,6 +26,7 @@ namespace geosx
     virtual void Init( bool exists_okay ) = 0;
     virtual void Write( ) = 0;
 
+    localIndex GetBufferedCount( ) { return m_buffered_count; }
   protected:
     virtual void resizeBuffer( ) = 0;
 

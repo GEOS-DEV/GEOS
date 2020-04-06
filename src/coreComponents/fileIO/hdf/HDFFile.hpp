@@ -144,6 +144,7 @@ class HDFHistIO : public BufferedHistoryIO
              const localIndex * dims,
              string const & name,
              std::type_index type_id,
+             localIndex write_head = 0,
              localIndex init_alloc = 4 ) :
     BufferedHistoryIO(),
     m_filename(filename),
@@ -151,7 +152,7 @@ class HDFHistIO : public BufferedHistoryIO
     m_global_idx_offset(0),
     m_global_idx_count(0),
     m_write_limit(init_alloc),
-    m_write_head(0),
+    m_write_head(write_head),
     m_hdf_type(GetHDFDataType(type_id)),
     m_type_size(H5Tget_size(m_hdf_type)),
     m_type_count(1),
@@ -166,9 +167,11 @@ class HDFHistIO : public BufferedHistoryIO
     }
   }
 
-  HDFHistIO( string const & filename, const HistoryMetadata & spec ) :
-    HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType() )
+  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4 ) :
+    HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc )
   { }
+
+  virtual ~HDFHistIO() { }
 
   virtual void Init( bool exists_okay ) override
   {
@@ -247,6 +250,7 @@ class HDFHistIO : public BufferedHistoryIO
     H5Dclose(dataset);
 
     m_write_head += m_buffered_count;
+    EmptyBuffer( );
   }
 
   inline void ResizeFileIfNeeded( )
@@ -297,117 +301,6 @@ class HDFHistIO : public BufferedHistoryIO
     array1d<hsize_t> m_dims;
     string m_name;
 };
-
-
-// // this and the spec likely also need to be added into the data repo to some extent
-// class HDFTableIO : public BufferedHistoryIO
-// {
-// public:
-//   HDFTableIO( ) : BufferedHistoryIO( ) { }
-
-//   virtual void Init( string const & target_name, DataSpec * spec, bool exists_okay ) override
-//   {
-//     HDFFile target( target_name );
-//     localIndex data_count = spec->getDiscreteDataCount();
-
-//     std::vector<const char*> data_name_ptrs(data_count);
-//     std::vector<hid_t> hdf_data_types(data_count);
-
-//     std::type_index const * data_types = spec->getDataTypes();
-//     string const * data_names = spec->getDataNames();
-//     size_t const * data_sizes = spec->getDataSizes();
-//     size_t const * type_sizes = spec->getTypeSizes();
-//     size_t const * data_counts = spec->getDataSubcounts();
-
-//     for( localIndex col = 0; col < data_count; ++col )
-//     {
-//       hsize_t dims[2] = { integer_conversion<hsize_t>(data_counts[col]), integer_conversion<hsize_t>(data_sizes[col] / ( data_counts[col] * type_sizes[col] )) };
-//       hdf_data_types[col] =  dims[1] == 1 ? GetHDFArrayDataType(data_types[col],1,&dims[0]) : GetHDFArrayDataType(data_types[col],2,&dims[0]);
-//       data_name_ptrs[col] = data_names[col].c_str();
-//     }
-
-//     bool in_target = CheckInTarget( target, spec );
-
-//     if ( !in_target )
-//     {
-//       H5TBmake_table(spec->getTitle().c_str(),
-//                      target,
-//                      spec->getID().c_str(),
-//                      spec->getDiscreteDataCount(),
-//                      0,
-//                      spec->getTotalDataSize(),
-//                      &data_name_ptrs[0],
-//                      spec->getDataOffsets(),
-//                      &hdf_data_types[0],
-//                      40,
-//                      nullptr,
-//                      0,
-//                      nullptr);
-//     }
-//     else if ( in_target && !exists_okay )
-//     {
-//       GEOSX_ERROR( "HDFTableIO: A table with the same hdf_id already exists in the write target!");
-//     }
-//     else
-//     {
-//       GEOSX_ERROR_IF( ! CheckCompatible( target, spec ), "HDFTableIO: A table with the same hdf_id already exists in the write target, but is not compatible with the specification.");
-//     }
-//   }
-
-//   virtual void Write( string const & target_name, DataSpec const * spec ) override
-//   {
-//     HDFFile target( target_name );
-//     // MPI::Reduce(m_need_file_realloc)
-//     // if (m_need_file_realloc)
-//     // m_target_row_limit *= 2;
-//     // H5TBreserve(m_target_row_limit)
-//     // if ( do_verify ) hdf_tbl->Verify( target );
-//     H5TBappend_records(target,spec->getID().c_str(),m_buffered_count,spec->getTotalDataSize(),spec->getDataOffsets(),spec->getDataSizes(),&m_data_buffer[0]);
-//     EmptyBuffer();
-//   }
-
-//   virtual void ClearAfter( string const & target_name, DataSpec const * spec, localIndex last_good ) override
-//   {
-//     HDFFile target( target_name );
-//     hsize_t num_cols = 0;
-//     hsize_t num_rows = 0;
-//     char const * hdf_id = spec->getID().c_str();
-//     H5TBget_table_info(target,hdf_id,&num_cols,&num_rows);
-//     H5TBdelete_record(target,hdf_id,last_good, num_rows - last_good);
-//   }
-
-//   inline void Verify( HDFTarget & target, DataSpec const * spec) const
-//   {
-//     GEOSX_ERROR_IF( ! (CheckInTarget(target, spec) && CheckCompatible(target, spec)), "HDFTable: Compatible table not found in the write target. Make sure to CreateInTarget().");
-//   }
-
-//   inline bool CheckInTarget( HDFTarget & target, DataSpec const * spec ) const
-//   {
-//     htri_t exists = 0;
-//     H5E_BEGIN_TRY {
-//       exists = H5Gget_objinfo(target, spec->getID().c_str(), 0, NULL);
-//     } H5E_END_TRY
-//     return ( exists  == 0 );
-//   }
-
-//   inline bool CheckCompatible( HDFTarget & target, DataSpec const * spec ) const
-//   {
-//     hsize_t o_col_count = 0;
-//     char const * hdf_id = spec->getID().c_str();
-//     H5TBget_table_info(target,hdf_id,&o_col_count,NULL);
-//     if ( integer_conversion<localIndex>(o_col_count) != spec->getDiscreteDataCount() ) return false;
-//     std::vector<size_t> o_col_sizes(o_col_count);
-//     H5TBget_field_info(target,hdf_id,NULL,&o_col_sizes[0],NULL,NULL);
-//     size_t const * col_sizes = spec->getDataSizes();
-//     for( size_t col = 0; col < o_col_count; ++col)
-//     {
-//       if( o_col_sizes[col] != col_sizes[col] ) return false;
-//     }
-//     return true;
-//   }
-// };
-
-
 
 }
 
