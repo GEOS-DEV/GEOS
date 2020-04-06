@@ -17,15 +17,8 @@ namespace geosx
   public:
     TimeHistoryCollector( string const & name, Group * parent );
 
-    virtual void AddToSpec( DataSpec & data_spec ) const = 0;
+    virtual HistoryMetadata GetMetadata( ) const = 0;
     virtual void Collect( real64 const time_n, real64 const dt, buffer_unit_type *& buffer ) = 0;
-
-    void InitSpec( DataSpec & data_spec ) const
-    {
-      data_spec.Append<real64>(1,1,"Time");
-      AddToSpec(data_spec);
-      data_spec.Finalize( );
-    }
 
     virtual void Execute( real64 const time_n,
                           real64 const dt,
@@ -81,9 +74,9 @@ namespace geosx
         setDescription("A scalar value to collect for time history output.");
     }
 
-    virtual void AddToSpec( DataSpec & data_spec ) const override
+    virtual HistoryMetadata GetMetadata( ) const override
     {
-      data_spec.Append(1,1,sizeof(VALUE_T),typeid(VALUE_T),m_data_title);
+      return HistoryMetadata(m_data_title,1,std::type_index(typeid(VALUE_T)));
     }
     virtual void Collect( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt), buffer_unit_type *& buffer ) override
     {
@@ -112,10 +105,10 @@ namespace geosx
     : TimeHistoryCollector( name, parent )
     { }
 
-    virtual void AddToSpec ( DataSpec & data_spec ) const override
+    virtual HistoryMetadata GetMetadata( ) const override
     {
       typename ARRAY_T::view_type & av = Group::getReference(m_array_path);
-      AppendArraySpec(data_spec,av);
+      return ArrayMetadata(m_data_title,av);
     }
 
     virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt), buffer_unit_type *& buffer ) override
@@ -141,18 +134,18 @@ namespace geosx
       TimeHistoryCollector( name, parent )
     { }
 
-    virtual void AddToSpec ( DataSpec & data_spec ) const override
+    virtual HistoryMetadata GetMetadata( ) const override
     {
       // Probe<INDEX_ARRAY_T> & probe = Group::getReference(m_probe_path);
-      typename INDEX_ARRAY_T::view_type /*&*/ idxv;// = Group::GetGroupByPath(m_probe_path).getReference(Probe<INDEX_ARRAY_T>::viewKeysStruct::indicesKey);
+      typename INDEX_ARRAY_T::view_type /*&*/ idxv;// = probe.getReference(Probe<INDEX_ARRAY_T>::viewKeysStruct::indicesKey);
       typename ARRAY_T::view_type & av = Group::getReference(m_array_path);
-      AppendArrayIndicesSpec(data_spec,av,idxv.size( ));
+      return ArrayIndicesMetadata(m_data_title,av,idxv.size( ));
     }
 
     virtual void Collect ( real64 const GEOSX_UNUSED_PARAM(time_n), real64 const GEOSX_UNUSED_PARAM(dt), buffer_unit_type *& buffer ) override
     {
       // Probe<INDEX_ARRAY_T> & probe = Group::getReference(m_probe_path);
-      typename INDEX_ARRAY_T::view_type /*&*/ idxv;// = Group::GetGroupByPath(m_probe_path).getReference(Probe<INDEX_ARRAY_T>::viewKeysStruct::indicesKey);
+      typename INDEX_ARRAY_T::view_type /*&*/ idxv;// = probe.getReference(Probe<INDEX_ARRAY_T>::viewKeysStruct::indicesKey);
       typename ARRAY_T::view_type & av = Group::getReference(m_array_path);
       bufferOps::PackByIndexDevice<true>(buffer,av,idxv.size( ));
     }

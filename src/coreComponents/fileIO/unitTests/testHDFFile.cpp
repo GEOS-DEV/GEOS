@@ -1,46 +1,39 @@
 #include "managers/Outputs/TimeHistoryOutput.hpp"
 #include "fileIO/hdf/HDFFile.hpp"
-#include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
+#include "managers/initialization.hpp"
+
 #include <gtest/gtest.h>
-
-
-// todo: template
-#define DIM 1
-#define ARR_TYPE real64
-#define IND_TYPE localIndex
 
 using namespace geosx;
 
-TEST( testHDFIO, SingleValueTable )
+TEST( testHDFIO, SingleValueHistory )
 {
-  DataSpec spec;
-  spec.SetTitleID("Time History", "time_hist");
-  spec.Append<real64>(1,1,"Time");
-  spec.Finalize();
+  string filename("single_value");
+  HistoryMetadata spec("Time History", 1, std::type_index(typeid(real64)));
 
   real64 time = 0.0;
-  HDFTableIO io;
+  HDFHistIO io( filename, spec );
+  io.Init( true );
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
     time += 0.333;
-    buffer_unit_type * buffer = io.GetBufferHead( &spec );
+    buffer_unit_type * buffer = io.GetBufferHead( );
     memcpy(buffer,&time,sizeof(real64));
   }
 
-  string filename( "single_value" );
-  io.Init( filename, &spec, false );
-  io.Write( filename, &spec );
+  io.Write( );
 
   //read and check the data using hdf api
-  remove( filename.c_str() );
+  // remove( filename.c_str() );
 }
 
-TEST( testHDFIO, ArrayTableIO )
+TEST( testHDFIO, ArrayHistory )
 {
   srand(time(NULL));
 
   {
+    string filename("array1d_history");
     Array<real64, 1> arr(4096);
     real64 count = 0.0;
     forValuesInSlice(arr.toSlice(),[&count](real64 & value)
@@ -48,24 +41,20 @@ TEST( testHDFIO, ArrayTableIO )
         value = count++;
       });
 
-    DataSpec spec;
-    spec.SetTitleID("Array1d History", "arr1_hist");
-    AppendArraySpec(spec,arr,"Array1d Data");
-    spec.Finalize();
+    HistoryMetadata spec = ArrayMetadata("Array1d History",arr);
+    HDFHistIO io( filename, spec );
+    io.Init( true );
 
-    HDFTableIO io;
+    buffer_unit_type * buffer = io.GetBufferHead( );
+    bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
 
-    buffer_unit_type * buffer = io.GetBufferHead( &spec );
-    bufferOps::PackDevice<true>(buffer,arr);
-
-    string filename( "array1d_value" );
-    io.Init( filename, &spec, false );
-    io.Write( filename, &spec );
+    io.Write( );
 
     //read and check the data using hdf api
-    remove( filename.c_str() );
+    // remove( filename.c_str() );
   }
   {
+    string filename("array2d_history");
     Array<real64, 2> arr(1024,4);
     real64 count = 0.0;
     forValuesInSlice(arr.toSlice(),[&count](real64 & value)
@@ -73,29 +62,25 @@ TEST( testHDFIO, ArrayTableIO )
         value = count++;
       });
 
-    DataSpec spec;
-    spec.SetTitleID("Array2d History", "arr2_hist");
-    AppendArraySpec(spec,arr,"Array2d Data");
-    spec.Finalize();
+    HistoryMetadata spec = ArrayMetadata("Array2d History",arr);
+    HDFHistIO io(filename,spec);
+    io.Init( true );
 
-    HDFTableIO io;
+    buffer_unit_type * buffer = io.GetBufferHead( );
+    bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
 
-    buffer_unit_type * buffer = io.GetBufferHead( &spec );
-    bufferOps::PackDevice<true>(buffer,arr);
-
-    string filename( "array2d_value" );
-    io.Init( filename, &spec, false );
-    io.Write( filename, &spec );
+    io.Write( );
 
     //read and check the data using hdf api
-    remove( filename.c_str() );
+    // remove( filename.c_str() );
   }
 }
 
-TEST( testHDFIO, IdxArrayTable )
+TEST( testHDFIO, IdxArrayHistory )
 {
   srand(time(NULL));
   {
+    string filename("array1d_idx_history");
     Array<localIndex, 1> idx(256);
     Array<real64, 2> arr(1024,4);
     real64 count = 0.0;
@@ -108,18 +93,22 @@ TEST( testHDFIO, IdxArrayTable )
         value = rand() % 1024;
       });
 
-    DataSpec spec;
-    spec.SetTitleID("Array1d History", "arr1_hist");
-    AppendArrayIndicesSpec(spec,arr,"Array1d Data",idx.size());
-    spec.Finalize();
+    HistoryMetadata spec = ArrayIndicesMetadata("Array1d Idx History",arr,idx.size( ));
+    HDFHistIO io( filename, spec );
+    io.Init( true );
 
-    HDFTableIO io;
+    buffer_unit_type * buffer = io.GetBufferHead( );
+    bufferOps::PackByIndexDevice<true>(buffer,arr.toViewConst( ),idx.toViewConst( ) );
 
-    buffer_unit_type * buffer = io.GetBufferHead( &spec );
-    bufferOps::PackByIndexDevice<true>(buffer,arr,idx);
-
-    string filename( "array1d_value" );
-    io.Init( filename, &spec, false );
-    io.Write( filename, &spec );
+    io.Write( );
   }
+}
+
+int main( int ac, char * av[] )
+{
+  ::testing::InitGoogleTest( &ac, av );
+  geosx::basicSetup( ac, av );
+  int const result = RUN_ALL_TESTS();
+  geosx::basicCleanup();
+  return result;
 }

@@ -11,22 +11,23 @@ namespace geosx
   {
   public:
 
-    BufferedHistoryIO(): m_buffered_count(0), m_data_buffer() {}
+    BufferedHistoryIO(): m_buffered_count(0), m_data_buffer(0) {}
+    // BufferedHistoryIO(size_t init_size) : m_buffered_count(0), m_data_buffer(init_size) {}
 
-    virtual buffer_unit_type * GetBufferHead( DataSpec const * spec )
+    buffer_unit_type * GetBufferHead( )
     {
-      size_t data_size = spec->getTotalDataSize(); //bytes
-      m_data_buffer.resize(m_data_buffer.size() + data_size);
-      buffer_unit_type * row_head = &m_data_buffer[m_buffered_count*data_size];
+      size_t osize = m_data_buffer.size();
+      resizeBuffer();
       m_buffered_count++;
-      return row_head;
+      return &m_data_buffer[osize];
     }
 
-    virtual void Init( const string & m_write_target_name, DataSpec * spec, bool exists_okay ) = 0;
-    virtual void Write( const string & m_write_target_name, DataSpec const * spec ) = 0;
-    virtual void ClearAfter( const string & m_write_target_name, DataSpec const * spec, localIndex last_good ) = 0;
+    virtual void Init( bool exists_okay ) = 0;
+    virtual void Write( ) = 0;
 
   protected:
+    virtual void resizeBuffer( ) = 0;
+
     void EmptyBuffer( bool dealloc = false )
     {
       m_buffered_count = 0;
