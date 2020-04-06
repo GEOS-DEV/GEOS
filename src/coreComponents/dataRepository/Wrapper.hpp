@@ -461,11 +461,6 @@ public:
     return wrapperHelpers::size( *m_data );
   }
 
-  virtual localIndex size( int dim ) const override final
-  {
-    return wrapperHelpers::size( *m_data, dim );
-  }
-
   virtual void resize( int ndims, localIndex const * const dims ) override final
   {
     wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
