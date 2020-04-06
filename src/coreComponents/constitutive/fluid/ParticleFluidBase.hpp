@@ -79,22 +79,6 @@ public:
     static constexpr auto isCollisionalSlipString    = "isCollisionalSlip";
 
     static constexpr auto proppantPackPermeabilityString    = "proppantPackPermeability";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey settlingFactor  = { settlingFactorString };
-    ViewKey dSettlingFactor_dPressure = { dSettlingFactor_dPressureString };
-    ViewKey dSettlingFactor_dProppantConcentration = { dSettlingFactor_dProppantConcentrationString };
-    ViewKey dSettlingFactor_dComponentConcentration = { dSettlingFactor_dComponentConcentrationString };
-
-    ViewKey collisionFactor  = { collisionFactorString };
-    ViewKey collisionFactor_dProppantConcentration = { dCollisionFactor_dProppantConcentrationString };
-
-    ViewKey maxProppantConcentration   = { maxProppantConcentrationString };
-
-    ViewKey isCollisionalSlip   = { isCollisionalSlipString };
-    ViewKey proppantPackPermeability   = { proppantPackPermeabilityString };
-
   } viewKeysParticleFluidBase;
 
 protected:

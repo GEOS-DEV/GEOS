@@ -627,7 +627,7 @@ void ProblemManager::ApplyNumericalMethods()
     SolverBase const * const solver = m_physicsSolverManager->GetGroup< SolverBase >( solverIndex );
 
     string const numericalMethodName = solver->getDiscretization();
-    string_array const & targetRegions = solver->getTargetRegions();
+    arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
     FiniteElementDiscretizationManager const *
       feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );

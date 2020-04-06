@@ -33,6 +33,7 @@ class Group;
 
 namespace constitutive
 {
+class ConstitutiveManager;
 class MultiFluidBase;
 }
 class WellElementSubRegion;
@@ -130,23 +131,37 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
 
-  virtual void
-  SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
-
   /**@}*/
 
   /**
    * @brief Recompute mixture densities using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void UpdateMixtureDensity( WellElementSubRegion * const subRegion );
+  void UpdateMixtureDensity( WellElementSubRegion & subRegion, localIndex const targetIndex );
+
+  /**
+   * @brief Recompute component fractions from primary variables (component densities)
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  void UpdateComponentFraction( WellElementSubRegion & subRegion ) const;
+
+  /**
+   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  void UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
+
+  /**
+   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  void UpdatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void UpdateState( WellElementSubRegion * const subRegion ) override;
+  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
 
@@ -212,6 +227,8 @@ public:
                                     ParallelMatrix * const matrix,
                                     ParallelVector * const rhs ) override;
 
+  arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
+
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr auto dofFieldString = "compositionalWellVars";
@@ -220,8 +237,7 @@ public:
     static constexpr auto temperatureString = "wellTemperature";
     static constexpr auto useMassFlagString = "useMass";
 
-    static constexpr auto resRelPermNameString  = "wellRelPermName";
-    static constexpr auto resRelPermIndexString = "elementRelPermIndex";
+    static constexpr auto relPermNamesString  = "relPermNames";
 
     // primary solution field
     static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
@@ -251,43 +267,6 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    // inputs
-    ViewKey temperature = { temperatureString };
-    ViewKey useMassFlag = { useMassFlagString };
-
-    ViewKey resRelPermName  = { resRelPermNameString };
-    ViewKey resRelPermIndex = { resRelPermIndexString };
-
-    // primary solution field
-    ViewKey pressure               = { pressureString };
-    ViewKey deltaPressure          = { deltaPressureString };
-    ViewKey globalCompDensity      = { globalCompDensityString };
-    ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-    ViewKey mixtureRate            = { mixtureConnRateString };
-    ViewKey deltaMixtureRate       = { deltaMixtureConnRateString };
-
-    // saturation
-    ViewKey phaseVolFrac        = { phaseVolumeFractionString };
-    ViewKey dPhaseVolFrac_dPres = { dPhaseVolumeFraction_dPressureString };
-    ViewKey dPhaseVolFrac_dComp = { dPhaseVolumeFraction_dGlobalCompDensityString };
-
-    // mixture density
-    ViewKey mixtureDensity        = { mixtureDensityString };
-    ViewKey dMixtureDensity_dPres = { dMixtureDensity_dPressureString };
-    ViewKey dMixtureDensity_dComp = { dMixtureDensity_dGlobalCompDensityString };
-
-    // global component fractions
-    ViewKey globalComponentFrac        = { globalCompFractionString };
-    ViewKey dGlobalComponentFrac_dComp = { dGlobalCompFraction_dGlobalCompDensityString };
-
-    // perforation rates
-    ViewKey compPerforationRate        = { compPerforationRateString };
-    ViewKey dCompPerforationRate_dPres = { dCompPerforationRate_dPresString };
-    ViewKey dCompPerforationRate_dComp = { dCompPerforationRate_dCompString };
-
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -295,9 +274,28 @@ public:
 
 protected:
 
+  virtual void PostProcessInput() override;
+
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
+
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param meshLevel reference to the mesh
+   * @param cm        reference to the global constitutive model manager
+   *
+   * This function will produce an error if one of the well constitutive models
+   * (fluid, relperm) is incompatible with the corresponding models in reservoir
+   * regions connected to that particular well.
+   */
+  void ValidateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief Checks injection streams for validity (compositions sum to one)
+   * @param meshLevel reference to the mesh
+   */
+  void ValidateInjectionStreams( MeshLevel const & meshLevel ) const;
 
 private:
 
@@ -305,7 +303,7 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void ComputePerforationRates( WellElementSubRegion * const subRegion );
+  void ComputePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
@@ -328,13 +326,13 @@ private:
    * @brief Resize the allocated multidimensional fields
    * @param well the well for which the fields are resized
    */
-  void ResizeFields( WellElementSubRegion * const subRegion );
+  void ResizeFields( WellElementSubRegion & subRegion );
 
   /**
    * @brief Save all the rates and pressures in the well for reporting purposes
    * @param well the well with its perforations
    */
-  void RecordWellData( WellElementSubRegion const * const subRegion );
+  void RecordWellData( WellElementSubRegion const & subRegion );
 
   /// the max number of fluid phases
   localIndex m_numPhases;
@@ -348,11 +346,8 @@ private:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// name of the rel perm constitutive model
-  string m_resRelPermName;
-
-  /// index of the rel perm constitutive model in the flow solver
-  localIndex m_resRelPermIndex;
+  /// list of relative permeability model names per target region
+  array1d< string > m_relPermModelNames;
 
 
   /// views into reservoir primary variable fields
@@ -376,18 +371,18 @@ private:
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseVisc;
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseVisc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_resPhaseCompFrac;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_resPhaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 > > m_dResPhaseCompFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_resPhaseRelPerm;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseRelPerm;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

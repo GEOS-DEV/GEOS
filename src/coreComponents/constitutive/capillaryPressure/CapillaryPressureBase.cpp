@@ -118,17 +118,6 @@ void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * co
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
-localIndex CapillaryPressureBase::numFluidPhases() const
-{
-  return integer_conversion< localIndex >( m_phaseNames.size());
-}
-
-string const & CapillaryPressureBase::phaseName( localIndex ip ) const
-{
-  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
-  return m_phaseNames[ip];
-}
-
 } // namespace constitutive
 
 } // namespace geosx
