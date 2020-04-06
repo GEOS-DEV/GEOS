@@ -65,6 +65,6 @@ class VTKPVDWriter
   string const m_fileName;
 };
 }
-};
+}
 
 #endif

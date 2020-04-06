@@ -90,6 +90,6 @@ class VTKVTMWriter
   string const m_fileName;
 };
 }
-};
+}
 
 #endif

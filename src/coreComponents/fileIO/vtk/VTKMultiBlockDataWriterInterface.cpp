@@ -80,51 +80,51 @@ std::tuple< vtkSmartPointer< vtkCellArray >,  std::vector< int> > VTKPolyDataWri
   cellsArray->SetNumberOfCells( er.getNumberOfElements< CellElementRegion >() );
   std::vector< int > cellType;
   cellType.reserve( er.getNumberOfElements< CellElementRegion >() );
-  er.forElementSubRegions<CellElementSubRegion>([&](CellElementSubRegion const * const esr )->void
+  er.forElementSubRegions<CellElementSubRegion>([&](CellElementSubRegion const & esr )->void
   {
-    for( localIndex c = 0; c < esr->size(); c++ )
+    for( localIndex c = 0; c < esr.size(); c++ )
     {
-      std::vector< vtkIdType > connectivity(esr->numNodesPerElement() );
-      if( esr->GetElementTypeString() == "C3D8" )
+      std::vector< vtkIdType > connectivity(esr.numNodesPerElement() );
+      if( esr.GetElementTypeString() == "C3D8" )
       {
-        connectivity[0] = esr->nodeList(c,0);
-        connectivity[1] = esr->nodeList(c,1);
-        connectivity[2] = esr->nodeList(c,3);
-        connectivity[3] = esr->nodeList(c,2);
-        connectivity[4] = esr->nodeList(c,4);
-        connectivity[5] = esr->nodeList(c,5);
-        connectivity[6] = esr->nodeList(c,7);
-        connectivity[7] = esr->nodeList(c,6);
+        connectivity[0] = esr.nodeList(c,0);
+        connectivity[1] = esr.nodeList(c,1);
+        connectivity[2] = esr.nodeList(c,3);
+        connectivity[3] = esr.nodeList(c,2);
+        connectivity[4] = esr.nodeList(c,4);
+        connectivity[5] = esr.nodeList(c,5);
+        connectivity[6] = esr.nodeList(c,7);
+        connectivity[7] = esr.nodeList(c,6);
         cellType.push_back( VTK_HEXAHEDRON );
       }
-      else if( esr->GetElementTypeString() == "C3D4")
+      else if( esr.GetElementTypeString() == "C3D4")
       {
-        connectivity[0] = esr->nodeList(c,0);
-        connectivity[1] = esr->nodeList(c,1);
-        connectivity[2] = esr->nodeList(c,2);
-        connectivity[3] = esr->nodeList(c,3);
+        connectivity[0] = esr.nodeList(c,0);
+        connectivity[1] = esr.nodeList(c,1);
+        connectivity[2] = esr.nodeList(c,2);
+        connectivity[3] = esr.nodeList(c,3);
         cellType.push_back( VTK_TETRA );
       }
-      else if( esr->GetElementTypeString() == "C3D6")
+      else if( esr.GetElementTypeString() == "C3D6")
       {
-        connectivity[0] = esr->nodeList(c,0);
-        connectivity[1] = esr->nodeList(c,1);
-        connectivity[2] = esr->nodeList(c,2);
-        connectivity[3] = esr->nodeList(c,3);
-        connectivity[4] = esr->nodeList(c,4);
-        connectivity[5] = esr->nodeList(c,5);
+        connectivity[0] = esr.nodeList(c,0);
+        connectivity[1] = esr.nodeList(c,1);
+        connectivity[2] = esr.nodeList(c,2);
+        connectivity[3] = esr.nodeList(c,3);
+        connectivity[4] = esr.nodeList(c,4);
+        connectivity[5] = esr.nodeList(c,5);
         cellType.push_back( VTK_WEDGE );
       }
-      else if( esr->GetElementTypeString() == "C3D5")
+      else if( esr.GetElementTypeString() == "C3D5")
       {
-        connectivity[0] = esr->nodeList(c,0);
-        connectivity[1] = esr->nodeList(c,1);
-        connectivity[2] = esr->nodeList(c,2);
-        connectivity[3] = esr->nodeList(c,3);
-        connectivity[4] = esr->nodeList(c,4);
+        connectivity[0] = esr.nodeList(c,0);
+        connectivity[1] = esr.nodeList(c,1);
+        connectivity[2] = esr.nodeList(c,2);
+        connectivity[3] = esr.nodeList(c,3);
+        connectivity[4] = esr.nodeList(c,4);
         cellType.push_back( VTK_PYRAMID );
       }
-      cellsArray->InsertNextCell( esr->numNodesPerElement(), connectivity.data() );
+      cellsArray->InsertNextCell( esr.numNodesPerElement(), connectivity.data() );
     }
   });
   return std::make_tuple(cellsArray, cellType);
@@ -184,9 +184,9 @@ void VTKPolyDataWriterInterface::WriteNodeFields( vtkSmartPointer< vtkPointData 
 void VTKPolyDataWriterInterface::WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const & er ) const
 {
   std::unordered_set< string > allFields;
-  er.forElementSubRegions<CellElementSubRegion>([&]( auto const * const esr )
+  er.forElementSubRegions<CellElementSubRegion>([&]( auto const & esr )
   {
-    for( auto const & wrapperIter : esr->wrappers() )
+    for( auto const & wrapperIter : esr.wrappers() )
     {
       auto const * const wrapper = wrapperIter.second;
       if( wrapper->getPlotLevel() <= m_plotLevel )
@@ -203,10 +203,10 @@ void VTKPolyDataWriterInterface::WriteCellFields( vtkSmartPointer< vtkCellData >
     data->SetName( field.c_str() );
 
     localIndex count = 0;
-    er.forElementSubRegions<CellElementSubRegion>([&]( auto const * const esr )
+    er.forElementSubRegions<CellElementSubRegion>([&]( auto const & esr )
     {
-       auto const & wrapper = *esr->getWrapperBase( field ) ;
-       WriteField( wrapper, data, esr->size(), count);
+       auto const & wrapper = *esr.getWrapperBase( field ) ;
+       WriteField( wrapper, data, esr.size(), count);
     });
     celldata->AddArray( data );
   }
@@ -216,17 +216,17 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( double time, DomainPar
   string timeStepSubFolder = VTKPolyDataWriterInterface::GetTimeStepSubFolder( time );
   int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   ElementRegionManager const * const  elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
-  elemManager->forElementRegions<CellElementRegion>([&](CellElementRegion const * const er)->void
+  elemManager->forElementRegions<CellElementRegion>([&](CellElementRegion const & er)->void
   {
     vtkSmartPointer< vtkUnstructuredGrid > vtkUg = vtkUnstructuredGrid::New();
     vtkSmartPointer< vtkXMLUnstructuredGridWriter > vtkUgWriter = vtkXMLUnstructuredGridWriter::New();
     auto VTKPoints = GetVTKPoints( *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     vtkUg->SetPoints( VTKPoints );
-    auto VTKCells = GetVTKCells( *er );
+    auto VTKCells = GetVTKCells( er );
     vtkUg->SetCells( std::get<1>(VTKCells).data(), std::get<0>(VTKCells) );
-    WriteCellFields( vtkUg->GetCellData(), *er );
+    WriteCellFields( vtkUg->GetCellData(), er );
     WriteNodeFields( vtkUg->GetPointData(),*domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
-    string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er->getName() + ".vtu";
+    string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
     vtkUgWriter->SetFileName( vtuFilePath.c_str() );
     vtkUgWriter->SetInputData( vtkUg );
     vtkUgWriter->SetDataModeToAscii();
@@ -239,16 +239,16 @@ void VTKPolyDataWriterInterface::WriteWellFiles( double time, DomainPartition co
   string timeStepSubFolder = VTKPolyDataWriterInterface::GetTimeStepSubFolder( time );
   int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
   ElementRegionManager const * const  elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
-  elemManager->forElementRegions<WellElementRegion>([&](WellElementRegion const * const er)->void
+  elemManager->forElementRegions<WellElementRegion>([&](WellElementRegion const & er)->void
       {
-      auto esr = er->GetSubRegion(0)->group_cast<WellElementSubRegion const *>();
+      auto esr = er.GetSubRegion(0)->group_cast<WellElementSubRegion const *>();
       auto VTKWell = GetWell( *esr, *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
       vtkSmartPointer<vtkUnstructuredGrid> ug = vtkUnstructuredGrid::New();
       ug->SetPoints(std::get<0>(VTKWell));
       ug->SetCells(VTK_LINE, std::get<1>(VTKWell));
       vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtuWriter =vtkXMLUnstructuredGridWriter::New();
       vtuWriter->SetInputData( ug );
-      string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er->getName() + ".vtu";
+      string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
       vtuWriter->SetFileName( vtuFilePath.c_str() );
       vtuWriter->SetDataModeToAscii();
       vtuWriter->Write();
@@ -264,26 +264,26 @@ void VTKPolyDataWriterInterface::WriteVTMFile( double time, DomainPartition cons
     // Cells
     vtmWriter.AddBlock( CellElementRegion::CatalogName() );
     ElementRegionManager const * const  elemManager = domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
-    elemManager->forElementRegions<CellElementRegion>([&](CellElementRegion const * const er)->void
+    elemManager->forElementRegions<CellElementRegion>([&](CellElementRegion const & er)->void
         {
 
-        vtmWriter.AddSubBlock( CellElementRegion::CatalogName(), er->getName() );
+        vtmWriter.AddSubBlock( CellElementRegion::CatalogName(), er.getName() );
         for(int i = 0; i < mpiSize; i++ )
         {
-        vtmWriter.AddDataToSubBlock(CellElementRegion::CatalogName(), er->getName(), std::to_string(time) + "/" + std::to_string( i ) + "_" + er->getName() + ".vtu", i );
+        vtmWriter.AddDataToSubBlock(CellElementRegion::CatalogName(), er.getName(), std::to_string(time) + "/" + std::to_string( i ) + "_" + er.getName() + ".vtu", i );
         }
         });
 
     // Wells
     vtmWriter.AddBlock( WellElementRegion::CatalogName() );
-    elemManager->forElementRegions<WellElementRegion>([&](WellElementRegion const * const er)->void
-        {
-        vtmWriter.AddSubBlock( WellElementRegion::CatalogName(), er->getName() );
-        for(int i = 0; i < mpiSize; i++ )
-        {
-        vtmWriter.AddDataToSubBlock( WellElementRegion::CatalogName(), er->getName(), std::to_string(time) + "/" + std::to_string( i ) +"_" + er->getName() + ".vtu", i );
-        }
-        });
+    elemManager->forElementRegions<WellElementRegion>([&](WellElementRegion const & er)->void
+    {
+      vtmWriter.AddSubBlock( WellElementRegion::CatalogName(), er.getName() );
+      for(int i = 0; i < mpiSize; i++ )
+      {
+        vtmWriter.AddDataToSubBlock( WellElementRegion::CatalogName(), er.getName(), std::to_string(time) + "/" + std::to_string( i ) +"_" + er.getName() + ".vtu", i );
+      }
+    });
 
     vtmWriter.Save();
   }
