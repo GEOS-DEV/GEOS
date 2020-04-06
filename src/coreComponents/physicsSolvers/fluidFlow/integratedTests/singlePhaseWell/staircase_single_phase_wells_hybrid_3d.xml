@@ -17,14 +17,14 @@
     <SinglePhaseHybridFVM name="SinglePhaseFlow"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
+                     fluidNames="{water}"
+                     solidNames="{rock}"
                      targetRegions="{Channel}">
     </SinglePhaseHybridFVM>
 
     <SinglePhaseWell name="SinglePhaseWell"
                      logLevel="1"
-                     wellFluidName="water"
+                     fluidNames="{water}"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"
                       type="producer"

@@ -9,7 +9,7 @@
                                   logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="granite"
+                                  solidMaterialNames="{granite}"
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-3"
                                  newtonMaxIter="8"/>
@@ -18,7 +18,7 @@
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      solidMaterialName="granite"
+                      solidMaterialNames="{granite}"
                       rockToughness="1e5"
                       nodeBasedSIF="1"
                       logLevel="1"

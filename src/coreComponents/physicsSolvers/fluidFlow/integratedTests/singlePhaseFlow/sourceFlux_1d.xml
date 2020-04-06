@@ -7,8 +7,8 @@
 	             name="SinglePhaseFlow"
                      logLevel="0"
                      discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
+                     fluidNames="{water}"
+                     solidNames="{rock}"
                      targetRegions="{Region1}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
