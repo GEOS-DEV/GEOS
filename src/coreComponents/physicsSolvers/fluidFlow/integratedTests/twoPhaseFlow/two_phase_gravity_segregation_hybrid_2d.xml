@@ -10,6 +10,7 @@
                                  targetRegions="{Region1}"
                                  fluidName="fluid1"
                                  solidName="rock"
+				 initialDt="1e3"
                                  relPermName="relperm">
       <NonlinearSolverParameters lineSearchAction="0"
                                  newtonTol="1.0e-10"
@@ -24,25 +25,24 @@
                   xCoords="{0, 20}"
                   yCoords="{0, 1}"
                   zCoords="{0, 100}"
-                  nx="{2}"
+                  nx="{20}"
                   ny="{1}"
-                  nz="{50}"
+                  nz="{100}"
                   cellBlockNames="{block1}"/>
   </Mesh>
 
   <Events maxTime="1e8">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e7"
+                   timeFrequency="5e6"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput"/>
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e7"
                    target="/Solvers/twophaseflow"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e7"
+                   timeFrequency="5e6"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
   </Events>
@@ -66,8 +66,8 @@
                              referencePressure="1e6"
 			     referencePhaseDensity="{800,10}"
                              referencePhaseViscosity="{0.001,0.0001}"
-			     phaseCompressibility="{1e-9,1e-7}"
-			     phaseViscosibility="{1e-12,1e-11}"/>
+			     phaseCompressibility="{1e-11,1e-9}"
+			     phaseViscosibility="{1e-12,1e-12}"/>
 
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0.0"
@@ -76,7 +76,7 @@
     <BrooksCoreyRelativePermeability name="relperm"
                                      phaseNames="{oil, gas}"
                                      phaseMinVolumeFraction="{0.0, 0.0}"
-                                     phaseRelPermExponent="{2.0, 3.0}"
+                                     phaseRelPermExponent="{2.0, 2.0}"
                                      phaseRelPermMaxValue="{1.0, 1.0}"/>
   </Constitutive>
 
@@ -122,23 +122,41 @@
                fieldName="pressure"
                scale="5e6"/>
 
-    <FieldSpecification name="initialFacePressure"
+    <FieldSpecification name="initialFaceOilPressure"
                initialCondition="1"
                setNames="{all}"
                objectPath="faceManager"
-               fieldName="facePressure"
-               scale="0"/>
+               fieldName="facePhasePotential"
+	       component="0"	       
+               scale="1e7"/>
 
+    <FieldSpecification name="initialFaceGasPressure"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="faceManager"
+               fieldName="facePhasePotential"
+	       component="1"	       
+               scale="1e6"/>
     
     <!-- Initial saturation -->
 
-    <FieldSpecification name="initialSaturation"
+    <FieldSpecification name="initialOilSaturation"
                initialCondition="1"
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
-               fieldName="wettingPhaseSaturation"
+               fieldName="phaseSaturation"
+	       component="0"
                scale="0.5"/>
 
+    <FieldSpecification name="initialGasSaturation"
+               initialCondition="1"
+               setNames="{all}"
+               objectPath="ElementRegions/Region1/block1"
+               fieldName="phaseSaturation"
+	       component="1"
+               scale="0.5"/>
+
+    
   </FieldSpecifications>
 
   <Outputs>

@@ -124,6 +124,28 @@ void ImmiscibleTwoPhaseFluid::PostProcessInput()
                     "ImmiscibleTwoPhaseFluid: invalid reference phase viscosity: " << m_referencePhaseViscosity[ip] );
   }
 
+  m_phaseFraction = 0;
+  m_dPhaseFraction_dPressure = 0;
+  m_dPhaseFraction_dTemperature = 0;
+  m_dPhaseFraction_dGlobalCompFraction = 0;
+
+  m_dPhaseDensity_dTemperature = 0;
+  m_dPhaseDensity_dGlobalCompFraction = 0;
+
+  m_dPhaseViscosity_dTemperature = 0;
+  m_dPhaseViscosity_dGlobalCompFraction = 0;
+
+  m_phaseCompFraction = 0;
+  m_dPhaseCompFraction_dPressure = 0;
+  m_dPhaseCompFraction_dTemperature = 0;
+  m_dPhaseCompFraction_dGlobalCompFraction = 0;
+
+  m_totalDensity = 0;
+  m_dTotalDensity_dPressure = 0;
+  m_dTotalDensity_dTemperature = 0;
+  m_dTotalDensity_dGlobalCompFraction = 0;
+
+
 }
 
 void ImmiscibleTwoPhaseFluid::InitializePostSubGroups( Group * const group )
@@ -137,87 +159,20 @@ void ImmiscibleTwoPhaseFluid::PointUpdate( real64 const & pressure,
                                            localIndex const k,
                                            localIndex const q )
 {
-  m_phaseFraction = 0;
-  m_dPhaseFraction_dPressure = 0;
-  m_dPhaseFraction_dTemperature = 0;
-  m_dPhaseFraction_dGlobalCompFraction = 0;
-
-  m_dPhaseDensity_dTemperature = 0;
-  m_dPhaseDensity_dGlobalCompFraction = 0;
-
-  m_dPhaseViscosity_dTemperature = 0;
-  m_dPhaseViscosity_dGlobalCompFraction = 0;
-
-  m_phaseCompFraction = 0;
-  m_dPhaseCompFraction_dPressure = 0;
-  m_dPhaseCompFraction_dTemperature = 0;
-  m_dPhaseCompFraction_dGlobalCompFraction = 0;
-
-  m_totalDensity = 0;
-  m_dTotalDensity_dPressure = 0;
-  m_dTotalDensity_dTemperature = 0;
-  m_dTotalDensity_dGlobalCompFraction = 0;
-
-  Compute( numFluidComponents(),
-           numFluidPhases(),
-           m_useMass,
-           m_phaseNames,
-           m_componentMolarWeight,
-           pressure,
-           temperature,
-           composition,
-           m_phaseFraction[k][q],
-           m_dPhaseFraction_dPressure[k][q],
-           m_dPhaseFraction_dTemperature[k][q],
-           m_dPhaseFraction_dGlobalCompFraction[k][q],
-           m_phaseDensity[k][q],
-           m_dPhaseDensity_dPressure[k][q],
-           m_dPhaseDensity_dTemperature[k][q],
-           m_dPhaseDensity_dGlobalCompFraction[k][q],
-           m_phaseViscosity[k][q],
-           m_dPhaseViscosity_dPressure[k][q],
-           m_dPhaseViscosity_dTemperature[k][q],
-           m_dPhaseViscosity_dGlobalCompFraction[k][q],
-           m_phaseCompFraction[k][q],
-           m_dPhaseCompFraction_dPressure[k][q],
-           m_dPhaseCompFraction_dTemperature[k][q],
+  Compute( pressure, temperature, composition,
+           m_phaseFraction[k][q], m_dPhaseFraction_dPressure[k][q], m_dPhaseFraction_dTemperature[k][q], m_dPhaseFraction_dGlobalCompFraction[k][q],
+           m_phaseDensity[k][q], m_dPhaseDensity_dPressure[k][q], m_dPhaseDensity_dTemperature[k][q], m_dPhaseDensity_dGlobalCompFraction[k][q],
+           m_phaseViscosity[k][q], m_dPhaseViscosity_dPressure[k][q], m_dPhaseViscosity_dTemperature[k][q], m_dPhaseViscosity_dGlobalCompFraction[k][q],
+           m_phaseCompFraction[k][q], m_dPhaseCompFraction_dPressure[k][q], m_dPhaseCompFraction_dTemperature[k][q],
            m_dPhaseCompFraction_dGlobalCompFraction[k][q],
-           m_totalDensity[k][q],
-           m_dTotalDensity_dPressure[k][q],
-           m_dTotalDensity_dTemperature[k][q],
-           m_dTotalDensity_dGlobalCompFraction[k][q],
-           m_referencePressure,
-           m_referencePhaseDensity,
-           m_referencePhaseViscosity,
-           m_phaseCompressibility,
-           m_phaseViscosibility );
+           m_totalDensity[k][q], m_dTotalDensity_dPressure[k][q], m_dTotalDensity_dTemperature[k][q], m_dTotalDensity_dGlobalCompFraction[k][q] );
+
 }
 
 void ImmiscibleTwoPhaseFluid::BatchUpdate( arrayView1d< real64 const > const & pressure,
                                            arrayView1d< real64 const > const & temperature,
                                            arrayView2d< real64 const > const & composition )
 {
-  m_phaseFraction = 0;
-  m_dPhaseFraction_dPressure = 0;
-  m_dPhaseFraction_dTemperature = 0;
-  m_dPhaseFraction_dGlobalCompFraction = 0;
-
-  m_dPhaseDensity_dTemperature = 0;
-  m_dPhaseDensity_dGlobalCompFraction = 0;
-
-  m_dPhaseViscosity_dTemperature = 0;
-  m_dPhaseViscosity_dGlobalCompFraction = 0;
-
-  m_phaseCompFraction = 0;
-  m_dPhaseCompFraction_dPressure = 0;
-  m_dPhaseCompFraction_dTemperature = 0;
-  m_dPhaseCompFraction_dGlobalCompFraction = 0;
-
-  m_totalDensity = 0;
-  m_dTotalDensity_dPressure = 0;
-  m_dTotalDensity_dTemperature = 0;
-  m_dTotalDensity_dGlobalCompFraction = 0;
-
   MultiFluidBase::BatchUpdateKernel< ImmiscibleTwoPhaseFluid, RAJA::seq_exec >( pressure,
                                                                                 temperature,
                                                                                 composition,

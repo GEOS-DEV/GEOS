@@ -190,9 +190,9 @@ public:
     static constexpr auto relPermIndexString = "relPermIndex";
 
     // primary variables
-    static constexpr auto wettingPhaseSatString = "wettingPhaseSaturation";
-    static constexpr auto deltaWettingPhaseSatString = "deltaWettingPhaseSaturation";
-    static constexpr auto phaseSatString = "phaseSaturation"; // currently only used to update relperms
+    static constexpr auto phaseSatString = "phaseSaturation";
+    static constexpr auto deltaPhaseSatString = "deltaPhaseSaturation";
+    static constexpr auto newPhaseSatString = "newPhaseSaturation";
 
     // intermediate fields
     static constexpr auto phaseMobilityString = "phaseMobility";
@@ -226,9 +226,7 @@ protected:
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
-
-protected:
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Resize the allocated multidimensional fields
@@ -237,10 +235,10 @@ protected:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( MeshLevel * const meshLevel );
+  virtual void ResizeFields( MeshLevel * const meshLevel );
 
   /**
-   * @brief Function to update all constitutive models
+   * @brief Function to update the solid model
    * @param dataGroup group that contains the fields
    */
   void UpdateSolidModel( Group * const dataGroup ) const;
@@ -252,7 +250,7 @@ protected:
   void UpdatePhaseMobility( Group * const dataGroup ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Function to update relative permeability
    * @param dataGroup the group storing the required fields
    */
   void UpdateRelPermModel( Group * const dataGroup ) const;
@@ -273,8 +271,9 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_wettingPhaseSat;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaWettingPhaseSat;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseSat;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaPhaseSat;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_newPhaseSat;
 
   /// views into auxiliary data
 
@@ -301,12 +300,6 @@ protected:
 
   /// map from the phase indices to the row indices
   array1d< localIndex > m_phaseToRow;
-
-  /// index of the wetting phase in the MaterialViewAccessors
-  localIndex m_ipw;
-
-  /// index of the non-wetting phase in the MaterialViewAccessors
-  localIndex m_ipnw;
 
 };
 

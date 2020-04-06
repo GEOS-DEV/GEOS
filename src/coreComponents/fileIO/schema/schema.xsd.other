@@ -1153,7 +1153,9 @@
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
-		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => TwoPhaseHybridFVM, SinglePhaseHybridFVM-->
+		<!--deltaFacePhasePotential => An array that holds the accumulated phase potential updates at the faces. => TwoPhaseHybridFVM-->
+		<xsd:attribute name="deltaFacePhasePotential" type="real64_array2d" />
+		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -1171,7 +1173,9 @@
 		<xsd:attribute name="faceCenter" type="r1_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
-		<!--facePressure => An array that holds the pressures at the faces. => TwoPhaseHybridFVM, SinglePhaseHybridFVM-->
+		<!--facePhasePotential => An array that holds the phase potentials at the faces. => TwoPhaseHybridFVM-->
+		<xsd:attribute name="facePhasePotential" type="real64_array2d" />
+		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
@@ -1195,10 +1199,6 @@
 		<xsd:attribute name="ruptureState" type="integer_array" />
 		<!--ruptureTime => Time that the face was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-		<!--sumTransmissibility => (no description available)-->
-		<xsd:attribute name="sumTransmissibility" type="real64_array" />
-		<!--weightedGravityCoef => (no description available)-->
-		<xsd:attribute name="weightedGravityCoef" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

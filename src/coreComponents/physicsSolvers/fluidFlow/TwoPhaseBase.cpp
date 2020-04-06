@@ -31,6 +31,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "physicsSolvers/fluidFlow/TwoPhaseBaseKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -40,14 +41,13 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace TwoPhaseBaseKernels;
 
 
 TwoPhaseBase::TwoPhaseBase( const std::string & name,
                             Group * const parent ):
   FlowSolverBase( name, parent )
 {
-  m_ipw  = -1;
-  m_ipnw = -1;
   m_numDofPerCell = 2;
 
   this->registerWrapper( viewKeyStruct::relPermNameString, &m_relPermName, false )->
@@ -74,10 +74,10 @@ void TwoPhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-      // wetting phase saturation
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::wettingPhaseSatString )->setPlotLevel( PlotLevel::LEVEL_0 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaWettingPhaseSatString );
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseSatString );
+      // phase saturation
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseSatString )->setPlotLevel( PlotLevel::LEVEL_0 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::newPhaseSatString );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaPhaseSatString );
 
       // auxiliary variables
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseMobilityString );
@@ -89,7 +89,6 @@ void TwoPhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::phaseDensityOldString );
 
     } );
-
   }
 }
 
@@ -99,7 +98,7 @@ void TwoPhaseBase::UpdateFluidModel( Group * const dataGroup ) const
 
   MultiFluidBase * const fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidName );
 
-  arrayView1d< real64 const > const & pres  =
+  arrayView1d< real64 const > const & pres =
     dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres =
     dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
@@ -121,7 +120,7 @@ void TwoPhaseBase::UpdateSolidModel( Group * const dataGroup ) const
 
   ConstitutiveBase * const solid = GetConstitutiveModel< ConstitutiveBase >( dataGroup, m_solidName );
 
-  arrayView1d< real64 const > const & pres  =
+  arrayView1d< real64 const > const & pres =
     dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres =
     dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
@@ -138,24 +137,26 @@ void TwoPhaseBase::UpdateRelPermModel( Group * const dataGroup ) const
 
   RelativePermeabilityBase * const relPerm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermName );
 
-  arrayView1d< real64 const > const & sat =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::wettingPhaseSatString );
-  arrayView1d< real64 const > const & dSat =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaWettingPhaseSatString );
-
-  // in this function, I recompute the phase saturations
-  // TODO: find a better way to do that (maybe work with the array2d phaseSat everywhere)
-
-  arrayView2d< real64 > const & phaseSat =
+  arrayView2d< real64 const > const & phaseSat =
     dataGroup->getReference< array2d< real64 > >( viewKeyStruct::phaseSatString );
+  arrayView2d< real64 const > const & dPhaseSat =
+    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaPhaseSatString );
+
+  // ultimately, we may want to switch to old sat / new sat in the solvers as it seems more convenient
+  arrayView2d< real64 > const & newPhaseSat =
+    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::newPhaseSatString );
+
+  localIndex constexpr numPhases = NUM_PHASES;
 
   forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
   {
-    phaseSat[a][m_ipw]  = sat[a] + dSat[a];
-    phaseSat[a][m_ipnw] = 1-phaseSat[a][m_ipw];
+    for( localIndex ip = 0; ip < numPhases; ++ip )
+    {
+      newPhaseSat[a][ip]  = phaseSat[a][ip] + dPhaseSat[a][ip];
+    }
   } );
 
-  relPerm->BatchUpdate( phaseSat );
+  relPerm->BatchUpdate( newPhaseSat );
 }
 
 void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
@@ -172,6 +173,12 @@ void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
   arrayView4d< real64 const > const & dPhaseRelPerm_dSat =
     relPerm->getReference< array4d< real64 > >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
+  // phase densities
+  arrayView3d< real64 const > const & phaseDens =
+    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseDensityString );
+  arrayView3d< real64 const > const & dPhaseDens_dPres =
+    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
+
   // phase viscosities
   arrayView3d< real64 const > const & phaseVisc =
     fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseViscosityString );
@@ -186,24 +193,16 @@ void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
   arrayView2d< real64 > const & dPhaseMob_dSat =
     dataGroup->getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dSaturationString );
 
-  // note: unlike in the other flow solvers, the phase mobilities computed here do not include densities
-  // we do not include densities here to be able to easily compute the mobility ratios in the flux terms
-
-  localIndex constexpr numPhases  = NUM_PHASES;
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
-  {
-    for( localIndex ip = 0; ip < numPhases; ++ip )
-    {
-      phaseMob[a][ip]        = phaseRelPerm[a][0][ip] / phaseVisc[a][0][ip];
-      dPhaseMob_dPres[a][ip] = -phaseRelPerm[a][0][ip] * dPhaseVisc_dPres[a][0][ip]
-                               / (phaseVisc[a][0][ip] * phaseVisc[a][0][ip]);
-      dPhaseMob_dSat[a][ip]  =   dPhaseRelPerm_dSat[a][0][ip][ip] / phaseVisc[a][0][ip];
-    }
-
-    // this is needed because we need the derivative wrt the wetting-phase saturation
-    dPhaseMob_dSat[a][m_ipnw] *= -1;
-
-  } );
+  PhaseMobilityKernel::Launch( dataGroup->size(),
+                               phaseDens,
+                               dPhaseDens_dPres,
+                               phaseVisc,
+                               dPhaseVisc_dPres,
+                               phaseRelPerm,
+                               dPhaseRelPerm_dSat,
+                               phaseMob,
+                               dPhaseMob_dPres,
+                               dPhaseMob_dSat );
 }
 
 void TwoPhaseBase::UpdateState( Group * dataGroup ) const
@@ -247,7 +246,6 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
                   "Number of fluid phases differs between fluid model '" << m_fluidName
                                                                          << "' and relperm model '" << m_relPermName << "'" );
 
-
   for( localIndex ip = 0; ip < numPhases; ++ip )
   {
     string const & phase_fl = fluid->phaseName( ip );
@@ -256,27 +254,28 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
                                                     << "' does not match phase '"   << phase_rp << "' in relperm model '" << m_relPermName << "'" );
   }
 
-
+  localIndex wettingPhaseSat = -1;
+  localIndex nonWettingPhaseSat = -1;
   // determine the indices of the wetting and non-wetting phases
   if( (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "gas") ||
       (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "water") )
   {
-    m_ipw  = 0;
-    m_ipnw = 1;
+    wettingPhaseSat    = 0;
+    nonWettingPhaseSat = 1;
   }
   else if( (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "gas") ||
            (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "water") )
   {
-    m_ipw  = 1;
-    m_ipnw = 0;
+    wettingPhaseSat    = 1;
+    nonWettingPhaseSat = 0;
   }
-  GEOSX_ERROR_IF( m_ipw == -1 || m_ipnw == -1,
+  GEOSX_ERROR_IF( wettingPhaseSat == -1 || nonWettingPhaseSat == -1,
                   "TwoPhaseBase: the accepted phase names are water, oil, and gas" );
 
   // fill the array mapping the phase index to the row offset in the residual
   m_phaseToRow.resize( NUM_PHASES );
-  m_phaseToRow[m_ipw]    = RowOffset::WETTING;
-  m_phaseToRow[m_ipnw] = RowOffset::NONWETTING;
+  m_phaseToRow[wettingPhaseSat] = RowOffset::WETTING;
+  m_phaseToRow[nonWettingPhaseSat] = RowOffset::NONWETTING;
 
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
@@ -287,12 +286,13 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
 
 void TwoPhaseBase::ResizeFields( MeshLevel * const meshLevel )
 {
-  localIndex constexpr numPhases  = NUM_PHASES;
+  localIndex constexpr numPhases = NUM_PHASES;
 
   applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase & subRegion )
   {
-    // this is currently only used to compute the phase relative permeabilities
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseSatString ).resizeDimension< 1 >( numPhases );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::newPhaseSatString ).resizeDimension< 1 >( numPhases );
+    subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaPhaseSatString ).resizeDimension< 1 >( numPhases );
 
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString ).resizeDimension< 1 >( numPhases );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString ).resizeDimension< 1 >( numPhases );
@@ -316,7 +316,7 @@ void TwoPhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const r
   //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::wettingPhaseSatString );
+  fieldNames["elems"].push_back( viewKeyStruct::phaseSatString );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -401,15 +401,16 @@ void TwoPhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time
                                          ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const & dPres = m_deltaPressure[er][esr];
-    arrayView1d< real64 const > const & dSat  = m_deltaWettingPhaseSat[er][esr];
+    arrayView2d< real64 const > const & dPhaseSat = m_deltaPhaseSat[er][esr];
 
     arrayView1d< real64 > const & pres = m_pressure[er][esr];
-    arrayView1d< real64 > const & sat  = m_wettingPhaseSat[er][esr];
+    arrayView2d< real64 > const & phaseSat = m_phaseSat[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
-      sat[ei]  += dSat[ei];
+      phaseSat[ei][0] += dPhaseSat[ei][0];
+      phaseSat[ei][1] += dPhaseSat[ei][1];
     } );
   } );
 }
@@ -469,8 +470,8 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
+  localIndex constexpr numDof = NUM_DOF;
   localIndex constexpr numPhases = NUM_PHASES;
-  localIndex constexpr numDof    = NUM_DOF;
 
   string const dofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
 
@@ -487,8 +488,8 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
     arrayView2d< real64 const > const & pvMult           = m_pvMult[er][esr][m_solidIndex];
     arrayView2d< real64 const > const & dPvMult_dPres    = m_dPvMult_dPres[er][esr][m_solidIndex];
 
-    arrayView1d< real64 const > const & sat              = m_wettingPhaseSat[er][esr];
-    arrayView1d< real64 const > const & dSat             = m_deltaWettingPhaseSat[er][esr];
+    arrayView2d< real64 const > const & phaseSat         = m_phaseSat[er][esr];
+    arrayView2d< real64 const > const & dPhaseSat        = m_deltaPhaseSat[er][esr];
 
     arrayView3d< real64 const > const & phaseDens        = m_phaseDens[er][esr][m_fluidIndex];
     arrayView3d< real64 const > const & dPhaseDens_dPres = m_dPhaseDens_dPres[er][esr][m_fluidIndex];
@@ -509,19 +510,18 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
         stackArray1d< real64, numPhases >          localAccum( numPhases );
         stackArray2d< real64, numPhases * numDof > localAccumJacobian( numPhases, numDof );
 
-        real64 const poreVolNew        = volume[ei] * porosityRef[ei] * pvMult[ei][0];
-        real64 const dPoreVolNew_dPres = volume[ei] * porosityRef[ei] * dPvMult_dPres[ei][0];
-        real64 const poreVolOld        = volume[ei] * porosityOld[ei];
-
-        stackArray1d< real64, numPhases > satNew( numPhases );
-        stackArray1d< real64, numPhases > satOld( numPhases );
-        stackArray1d< real64, numPhases > dSatNew_dS( numPhases );
-        satNew[m_ipw]      = sat[ei] + dSat[ei];
-        satNew[m_ipnw]     = 1 - satNew[m_ipw];
-        satOld[m_ipw]      = sat[ei];
-        satOld[m_ipnw]     = 1 - satOld[m_ipw];
-        dSatNew_dS[m_ipw]  = 1;
-        dSatNew_dS[m_ipnw] = -1;
+        AccumulationKernel::Compute( volume[ei],
+                                     porosityOld[ei],
+                                     porosityRef[ei],
+                                     pvMult[ei][0],
+                                     dPvMult_dPres[ei][0],
+                                     phaseSat[ei],
+                                     dPhaseSat[ei],
+                                     phaseDensOld[ei],
+                                     phaseDens[ei][0],
+                                     dPhaseDens_dPres[ei][0],
+                                     localAccum,
+                                     localAccumJacobian );
 
         // dof numbers
         dofColIndices[dp] = dofNumber[ei] + dp;
@@ -529,17 +529,7 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
 
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {
-          localIndex const rowId = m_phaseToRow[ip];
-          eqnRowIndices[rowId] = dofNumber[ei] + m_phaseToRow[ip];
-
-          // residual
-          localAccum[rowId]  = poreVolNew * phaseDens[ei][0][ip] * satNew[ip];
-          localAccum[rowId] -= poreVolOld * phaseDensOld[ei][ip] * satOld[ip];
-
-          // jacobian
-          localAccumJacobian[rowId][dp] = ( dPoreVolNew_dPres * phaseDens[ei][0][ip]
-                                            + poreVolNew        * dPhaseDens_dPres[ei][0][ip] ) * satNew[ip];
-          localAccumJacobian[rowId][dS] =   poreVolNew        * phaseDens[ei][0][ip]          * dSatNew_dS[ip];
+          eqnRowIndices[ip] = dofNumber[ei] + m_phaseToRow[ip];
         }
 
         // add contribution to global residual and jacobian
@@ -580,8 +570,8 @@ bool TwoPhaseBase::CheckSystemSolution( DomainPartition const * const domain,
 
     arrayView1d< real64 const > const & pres  = m_pressure[er][esr];
     arrayView1d< real64 const > const & dPres = m_deltaPressure[er][esr];
-    arrayView1d< real64 const > const & sat   = m_wettingPhaseSat[er][esr];
-    arrayView1d< real64 const > const & dSat  = m_deltaWettingPhaseSat[er][esr];
+    arrayView2d< real64 const > const & phaseSat  = m_phaseSat[er][esr];
+    arrayView2d< real64 const > const & dPhaseSat = m_deltaPhaseSat[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const ei )
     {
@@ -603,8 +593,8 @@ bool TwoPhaseBase::CheckSystemSolution( DomainPartition const * const domain,
       // extract solution and apply to dS
       {
         localIndex const lid = solution.getLocalRowID( elemDofNumber[ei] + ColOffset::DSAT );
-        real64 const newSat  = sat[ei] + dSat[ei] + scalingFactor * localSolution[lid];
-        if( newSat < 0.0 || newSat > 1.0 )
+        real64 const newPhaseSat  = phaseSat[ei][0] + dPhaseSat[ei][0] + scalingFactor * localSolution[lid];
+        if( newPhaseSat < 0.0 || newPhaseSat > 1.0 )
         {
           localCheck = 0;
         }
@@ -641,17 +631,19 @@ void TwoPhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
                                          ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 > const & dPres = m_deltaPressure[er][esr];
-    arrayView1d< real64 > const & dSat  = m_deltaWettingPhaseSat[er][esr];
+    arrayView2d< real64 > const & dPhaseSat  = m_deltaPhaseSat[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      dPres[ei] = 0.0;
-      dSat[ei]  = 0.0;
+      dPres[ei]   = 0.0;
+      dPhaseSat[ei][0] = 0.0;
+      dPhaseSat[ei][1] = 0.0;
     } );
 
     UpdateState( &subRegion );
   } );
 }
+
 
 void TwoPhaseBase::ResetViews( DomainPartition * const domain )
 {
@@ -661,16 +653,15 @@ void TwoPhaseBase::ResetViews( DomainPartition * const domain )
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
-
   // primary variables
   m_pressure =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::pressureString );
   m_deltaPressure =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::deltaPressureString );
-  m_wettingPhaseSat =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::wettingPhaseSatString );
-  m_deltaWettingPhaseSat =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::deltaWettingPhaseSatString );
+  m_phaseSat =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::phaseSatString );
+  m_deltaPhaseSat =
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::deltaPhaseSatString );
 
   // auxiliary data
   m_phaseMob =
@@ -681,17 +672,22 @@ void TwoPhaseBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::dPhaseMobility_dSaturationString );
 
   m_pvMult =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-                                                                                                constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
+      ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
+      constitutiveManager );
   m_dPvMult_dPres =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
-                                                                                                constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
+      ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
+      constitutiveManager );
+
   m_phaseDens =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseDensityString,
-                                                                                                constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
+      MultiFluidBase::viewKeyStruct::phaseDensityString,
+      constitutiveManager );
   m_dPhaseDens_dPres =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString,
-                                                                                                constitutiveManager );
+    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
+      MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString,
+      constitutiveManager );
 
   // backup data
   m_porosityOld =
@@ -713,30 +709,26 @@ void TwoPhaseBase::BackupFields( DomainPartition * const domain )
                                          ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d< real64 const > const & poroRef       = m_porosityRef[er][esr];
-    arrayView2d< real64 const > const & pvMult        = m_pvMult[er][esr][m_solidIndex];
 
-    arrayView3d< real64 const > const & phaseDens     = m_phaseDens[er][esr][m_fluidIndex];
+    arrayView1d< real64 const > const & poroRef   = m_porosityRef[er][esr];
+    arrayView1d< real64 > const & poroOld         = m_porosityOld[er][esr];
+    arrayView2d< real64 const > const & pvMult    = m_pvMult[er][esr][m_solidIndex];
 
-    arrayView2d< real64 > const & phaseDensOld         = m_phaseDensOld[er][esr];
-    arrayView1d< real64 > const & poroOld              = m_porosityOld[er][esr];
+    arrayView3d< real64 const > const & phaseDens = m_phaseDens[er][esr][m_fluidIndex];
+    arrayView2d< real64 > const & phaseDensOld    = m_phaseDensOld[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
-
         poroOld[ei] = poroRef[ei] * pvMult[ei][0];
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {
           phaseDensOld[ei][ip] = phaseDens[ei][0][ip];
         }
-
       }
     } );
   } );
 }
-
-
 
 } /* namespace geosx */
