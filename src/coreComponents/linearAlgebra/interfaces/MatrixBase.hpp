@@ -656,10 +656,14 @@ protected:
    * @brief Clear a row, and optionally set diagonal element to <tt>diagValue</tt>.
    * @param row globalIndex of the row to be cleared.
    * @param diagValue (Optional) set diagonal element to desired value.
+   * @param keepDiag if @p true, @p diagValue is ignored and original diagonal is preserved
+   * @return original diagonal value if matrix is square; zero otherwise
    *
+   * @note @p diagValue and @p keepDiag are ignored if the matrix is not square
    */
-  virtual void clearRow( globalIndex const row,
-                         real64 const diagValue ) = 0;
+  virtual real64 clearRow( globalIndex const row,
+                           bool const keepDiag = false,
+                           real64 const diagValue = 0.0 ) = 0;
 
   ///@}
 
@@ -801,7 +805,7 @@ protected:
    * >> M = spconvert(filename_root)
    */
   virtual void write( string const & filename,
-                      LAIOutputFormat const format ) const = 0;
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;
 
   ///@}
 

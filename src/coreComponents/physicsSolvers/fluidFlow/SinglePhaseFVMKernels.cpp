@@ -13,102 +13,17 @@
  */
 
 /**
- * @file SinglePhaseKernels.cpp
+ * @file SinglePhaseFVMKernels.cpp
  */
 
-#include "SinglePhaseKernels.hpp"
+#include "SinglePhaseFVMKernels.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseKernels
+namespace SinglePhaseFVMKernels
 {
 
-/******************************** MobilityKernel ********************************/
-
-void
-MobilityKernel::Compute( real64 const & dens,
-                         real64 const & dDens_dPres,
-                         real64 const & visc,
-                         real64 const & dVisc_dPres,
-                         real64 & mob,
-                         real64 & dMob_dPres )
-{
-  mob = dens / visc;
-  dMob_dPres = dDens_dPres / visc - mob / visc * dVisc_dPres;
-}
-
-void
-MobilityKernel::Compute( real64 const & dens,
-                         real64 const & visc,
-                         real64 & mob )
-{
-  mob = dens / visc;
-}
-
-void MobilityKernel::Launch( localIndex begin, localIndex end,
-                             arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & dDens_dPres,
-                             arrayView2d< real64 const > const & visc,
-                             arrayView2d< real64 const > const & dVisc_dPres,
-                             arrayView1d< real64 > const & mob,
-                             arrayView1d< real64 > const & dMob_dPres )
-{
-  forall_in_range( begin, end, [=] ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             dDens_dPres[a][0],
-             visc[a][0],
-             dVisc_dPres[a][0],
-             mob[a],
-             dMob_dPres[a] );
-  } );
-}
-
-void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
-                             arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & dDens_dPres,
-                             arrayView2d< real64 const > const & visc,
-                             arrayView2d< real64 const > const & dVisc_dPres,
-                             arrayView1d< real64 > const & mob,
-                             arrayView1d< real64 > const & dMob_dPres )
-{
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             dDens_dPres[a][0],
-             visc[a][0],
-             dVisc_dPres[a][0],
-             mob[a],
-             dMob_dPres[a] );
-  } );
-}
-
-void MobilityKernel::Launch( localIndex begin, localIndex end,
-                             arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & visc,
-                             arrayView1d< real64 > const & mob )
-{
-  forall_in_range( begin, end, [=] ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             visc[a][0],
-             mob[a] );
-  } );
-}
-
-void MobilityKernel::Launch( SortedArrayView< localIndex const > targetSet,
-                             arrayView2d< real64 const > const & dens,
-                             arrayView2d< real64 const > const & visc,
-                             arrayView1d< real64 > const & mob )
-{
-  forall_in_set( targetSet.values(), targetSet.size(), [=] ( localIndex const a )
-  {
-    Compute( dens[a][0],
-             visc[a][0],
-             mob[a] );
-  } );
-}
 
 inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
                                                  localIndex const stencilSize,
@@ -157,7 +72,7 @@ void FluxKernel::
 #endif
                                     ParallelMatrix * const jacobian,
                                     ParallelVector * const residual,
-                                    CRSMatrixView< real64, localIndex, localIndex const > const & )
+                                    CRSMatrixView< real64, localIndex > const & )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -169,7 +84,7 @@ void FluxKernel::
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
     // working arrays
     stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
@@ -242,7 +157,7 @@ void FluxKernel::
 #endif
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual,
-                                CRSMatrixView< real64, localIndex, localIndex const > const & dR_dAper )
+                                CRSMatrixView< real64, localIndex > const & dR_dAper )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -259,7 +174,7 @@ void FluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
-  forall_in_range< serialPolicy >( 0, stencil.size(), [=] ( localIndex iconn )
+  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
     localIndex const numFluxElems = stencil.stencilSize( iconn );
     localIndex const stencilSize  = numFluxElems;
@@ -361,7 +276,6 @@ void FluxKernel::
 }
 
 
-} // namespace SinglePhaseFlowKernels
-
+} // namespace SinglePhaseFVMKernels
 
 } // namespace geosx

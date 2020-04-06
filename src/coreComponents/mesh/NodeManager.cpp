@@ -86,14 +86,14 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 
   ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, numEdges, [&]( localIndex const edgeID )
+  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
   {
     toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
     toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
   } );
 
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges( 0 );
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     totalNodeEdges += toEdgesTemp.sizeOfArray( nodeID );
   } );
@@ -107,7 +107,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
     localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
@@ -129,7 +129,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 
   ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
 
-  forall_in_range< parallelHostPolicy >( 0, numFaces, [&]( localIndex const faceID )
+  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
   {
     localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
     for( localIndex a = 0; a < numFaceNodes; ++a )
@@ -139,7 +139,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   } );
 
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces( 0 );
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     totalNodeFaces += toFacesTemp.sizeOfArray( nodeID );
   } );
@@ -152,7 +152,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + GetFaceMapOverallocation() );
   }
 
-  forall_in_range< parallelHostPolicy >( 0, numNodes, [&]( localIndex const nodeID )
+  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const faces = toFacesTemp[ nodeID ];
     localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );
@@ -181,12 +181,12 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   array1d< localIndex > sizeOfArrays( size());
 
   elementRegionManager->
-    forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const * const subRegion )
+    forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
-    for( localIndex k=0; k<subRegion->size(); ++k )
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+    for( localIndex k=0; k<subRegion.size(); ++k )
     {
-      for( localIndex a=0; a<subRegion->numIndependentNodesPerElement(); ++a )
+      for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
       {
         localIndex nodeIndex = elemToNodeMap( k, a );
         ++sizeOfArrays[nodeIndex];
@@ -207,13 +207,13 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( kReg );
 
     elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const kSubReg,
-                                                                        CellElementSubRegion const * const subRegion )
+                                                                        CellElementSubRegion const & subRegion )
     {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion->nodeList();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
 
-      for( localIndex k=0; k<subRegion->size(); ++k )
+      for( localIndex k=0; k<subRegion.size(); ++k )
       {
-        for( localIndex a=0; a<subRegion->numIndependentNodesPerElement(); ++a )
+        for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
         {
           localIndex nodeIndex = elemToNodeMap( k, a );
 
@@ -280,7 +280,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toEdgesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toEdgesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString ) );
@@ -288,7 +288,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                            m_toFacesRelation.toArrayOfArraysView(),
                                            m_unmappedGlobalIndicesInToFaces,
                                            packList,
-                                           this->m_localToGlobalMap,
+                                           this->localToGlobalMap(),
                                            m_toFacesRelation.RelatedObjectLocalToGlobal() );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString ) );
@@ -314,7 +314,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toEdgesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToEdges,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toEdgesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 
@@ -324,7 +324,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toFacesRelation,
                                      packList,
                                      m_unmappedGlobalIndicesInToFaces,
-                                     this->m_globalToLocalMap,
+                                     this->globalToLocalMap(),
                                      m_toFacesRelation.RelatedObjectGlobalToLocal(),
                                      overwriteUpMaps );
 

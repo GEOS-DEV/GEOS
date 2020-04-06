@@ -27,7 +27,6 @@
 #include <numpy/arrayobject.h>
 #endif
 
-#include "ObjectManagerBase.hpp"
 #include "EventManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/SchemaUtilities.hpp"
@@ -38,23 +37,13 @@ namespace geosx
 class PhysicsSolverManager;
 class DomainPartition;
 
-class ProblemManager : public ObjectManagerBase
+class ProblemManager : public dataRepository::Group
 {
 public:
   explicit ProblemManager( const std::string & name,
                            Group * const parent );
 
   ~ProblemManager() override;
-
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-  const static string CatalogName()
-  { return "Problem"; }
-  virtual const string getCatalogName() const override final
-  { return ProblemManager::CatalogName(); }
-  ///@}
 
   /**
    * This function is used to inform the schema generator of any
@@ -66,9 +55,9 @@ public:
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  void ParseCommandLineInput( int argc, char * argv[] );
+  void ParseCommandLineInput();
 
-  static bool ParseRestart( int argc, char * argv[], std::string & restartFileName );
+  static bool ParseRestart( std::string & restartFileName );
 
   void InitializePythonInterpreter();
 

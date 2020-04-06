@@ -68,22 +68,19 @@ void TestMeshImport( string const & inputStringMesh,
   if( !propertyToTest.empty() )
   {
     auto centerProperty =  elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( propertyToTest );
-    elemManager->forElementRegions( [&]( ElementRegionBase * const elemRegion )->void
+    elemManager->forElementSubRegionsComplete< ElementSubRegionBase >(
+      [&]( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & elemSubRegion )
     {
-      localIndex er = elemRegion->getIndexInParent();
-      elemRegion->forElementSubRegionsIndex( [&]( localIndex const esr, auto * const elemSubRegion )
+      elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
+      for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
       {
-        elemSubRegion->CalculateElementGeometricQuantities( nodeManager, faceManager );
-        for( localIndex ei = 0; ei < elemSubRegion->size(); ei++ )
-        {
-          R1Tensor center = elemSubRegion->getElementCenter()[ ei ];
-          R1Tensor centerFromProperty( centerProperty[er][esr][ei][0],
-                                       centerProperty[er][esr][ei][1],
-                                       centerProperty[er][esr][ei][2] );
-          center -= centerFromProperty;
-          GEOSX_ERROR_IF_GT_MSG( center.L2_Norm(), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
-        }
-      } );
+        R1Tensor center = elemSubRegion.getElementCenter()[ ei ];
+        R1Tensor centerFromProperty( centerProperty[er][esr][ei][0],
+                                     centerProperty[er][esr][ei][1],
+                                     centerProperty[er][esr][ei][2] );
+        center -= centerFromProperty;
+        GEOSX_ERROR_IF_GT_MSG( center.L2_Norm(), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+      }
     } );
   }
 }

@@ -44,13 +44,15 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
 
   arrayView1d< globalIndex const > const & DofNumber =  nodeManager->getReference< globalIndex_array >( DofKey );
 
+  arrayView1d< globalIndex const > const & localToGlobal = nodeManager->localToGlobalMap();
+
   for( localIndex a=0; a<nodeManager->size(); ++a )
   {
     if( DofNumber[a] >= 0 )
     {
       for( int d=0; d<nDofPerNode; ++d )
       {
-        globalIndex const rowIndex    = nodeManager->m_localToGlobalMap[a]*nDofPerNode + d;
+        globalIndex const rowIndex    = localToGlobal[a]*nDofPerNode + d;
         globalIndex const columnIndex = DofNumber[a] + d;
 
         permutationMatrix.insert( rowIndex, columnIndex, 1.0 );
@@ -80,11 +82,14 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
   permutationMatrix.createWithLocalSize( nRows, nCols, 1, MPI_COMM_GEOSX );
   permutationMatrix.open();
 
-  elemManager->forElementSubRegions( [&]( ElementSubRegionBase const * const elementSubRegion )
+  elemManager->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & elementSubRegion )
   {
-    localIndex const numElems = elementSubRegion->size();
+    localIndex const numElems = elementSubRegion.size();
     arrayView1d< globalIndex const > const &
-    DofNumber = elementSubRegion->getReference< array1d< globalIndex > >( DofKey );
+    DofNumber = elementSubRegion.getReference< array1d< globalIndex > >( DofKey );
+
+    arrayView1d< globalIndex const > const & localToGlobal = elementSubRegion.localToGlobalMap();
+
 
     for( localIndex k=0; k<numElems; ++k )
     {
@@ -92,7 +97,7 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
       {
         for( int d=0; d<nDofPerCell; ++d )
         {
-          globalIndex const rowIndex    = elementSubRegion->m_localToGlobalMap[k] * nDofPerCell + d;
+          globalIndex const rowIndex    = localToGlobal[k] * nDofPerCell + d;
           globalIndex const columnIndex = DofNumber[k]*nDofPerCell + d;
 
           permutationMatrix.insert( rowIndex, columnIndex, 1.0 );

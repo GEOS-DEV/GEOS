@@ -224,8 +224,9 @@ public:
 
   virtual void transpose( EpetraMatrix & dst ) const override;
 
-  virtual void clearRow( globalIndex const row,
-                         real64 const diagValue ) override;
+  virtual real64 clearRow( globalIndex const row,
+                           bool const keepDiag = false,
+                           real64 const diagValue = 0.0 ) override;
 
   virtual localIndex maxRowLength() const override;
 
@@ -270,7 +271,7 @@ public:
   virtual void print( std::ostream & os = std::cout ) const override;
 
   virtual void write( string const & filename,
-                      LAIOutputFormat const format ) const override;
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 
   ///@}
 
