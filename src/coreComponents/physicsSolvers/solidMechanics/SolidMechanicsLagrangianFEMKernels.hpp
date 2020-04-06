@@ -293,13 +293,21 @@ struct ExplicitKernel
  */
 struct ImplicitKernel
 {
-  class FiniteElementRegionLoopKernel : public physicsLoopInterface::FiniteElementRegionLoopKernelBase
+  template< typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE >
+  class FiniteElementRegionLoopKernel : public physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>
   {
 public:
+    using physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::m_dofNumber;
+    using physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::m_matrix;
+    using physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::m_rhs;
+    using physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::elemsToNodes;
+    using physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::constitutiveUpdate;
+
     template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
-    using StackVariablesBase = physicsLoopInterface::
-                                 FiniteElementRegionLoopKernelBase::
-                                 StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
+    using StackVariablesBase = typename physicsLoopInterface::
+                                        FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>::
+                                        template StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
 
     template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
     struct StackVariables : StackVariablesBase< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
@@ -344,36 +352,28 @@ public:
 
     FiniteElementRegionLoopKernel( arrayView1d< globalIndex const > const & inputDofNumber,
                                    ParallelMatrix & inputMatrix,
-                                   ParallelVector & inputRhs ):
-      FiniteElementRegionLoopKernelBase( inputDofNumber, inputMatrix, inputRhs )
+                                   ParallelVector & inputRhs,
+                                   NodeManager const & nodeManager,
+                                   SUBREGION_TYPE & elementSubRegion,
+                                   CONSTITUTIVE_TYPE & inputConstitutiveType ):
+      physicsLoopInterface::FiniteElementRegionLoopKernelBase<SUBREGION_TYPE,CONSTITUTIVE_TYPE>( inputDofNumber,
+                                                                                                        inputMatrix,
+                                                                                                        inputRhs,
+                                                                                                        nodeManager,
+                                                                                                        elementSubRegion,
+                                                                                                        inputConstitutiveType,
+                                                                                                        inputConstitutiveType.createKernelWrapper() ),
+      m_disp(nodeManager.totalDisplacement()),
+      m_uhat(nodeManager.incrementalDisplacement()),
+      dNdX(elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+      detJ(elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )
     {}
 
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > m_disp;
-    arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > m_uhat;
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+    arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
 
-    arrayView3d< R1Tensor const > dNdX;
-    arrayView2d< real64 const > detJ;
-
-
-    void initializeNonElementViews( MeshLevel & mesh )
-    {
-      NodeManager const & nodeManager = *(mesh.getNodeManager());
-
-      m_disp = nodeManager.totalDisplacement();
-      m_uhat = nodeManager.incrementalDisplacement();
-
-    }
-
-    template< typename ELEMENT_SUBREGION_TYPE >
-    void initializeElementSubRegionViews( ELEMENT_SUBREGION_TYPE & elementSubRegion )
-    {
-      FiniteElementRegionLoopKernelBase::initializeElementSubRegionViews( elementSubRegion );
-
-      dNdX = elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
-
-      detJ = elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ );
-
-    }
+    arrayView3d< R1Tensor const > const dNdX;
+    arrayView2d< real64 const > const detJ;
 
     template< typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
@@ -396,13 +396,12 @@ public:
 
     }
 
-    template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
+    template< typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void updateKernel( localIndex const k,
                        localIndex const q,
-                       STACK_VARIABLE_TYPE & stack,
-                       CONSTITUTIVE_UPDATE const & constitutiveUpdate ) const
+                       STACK_VARIABLE_TYPE & stack ) const
     {
       real64 strainInc[6] = {0};
       for( localIndex a = 0; a < STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
@@ -446,13 +445,12 @@ public:
       }
     }
 
-    template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
+    template< typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void integrationKernel( localIndex const k,
                             localIndex const q,
-                            STACK_VARIABLE_TYPE & stack,
-                            CONSTITUTIVE_UPDATE const & constitutiveUpdate ) const
+                            STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a = 0; a < STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
       {
@@ -493,14 +491,6 @@ public:
 
       return meanForce;
     }
-
-
-    template< typename CONSTITUTIVE_TYPE >
-    typename CONSTITUTIVE_TYPE::KernelWrapper createConstitutiveUpdate( CONSTITUTIVE_TYPE & constitutive )
-    {
-      return constitutive.createKernelWrapper();
-    };
-
 
   };
 

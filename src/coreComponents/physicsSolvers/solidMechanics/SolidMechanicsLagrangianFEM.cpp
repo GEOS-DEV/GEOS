@@ -997,14 +997,13 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
 
   matrix.open();
 
-  physicsLoopInterface::
-    FiniteElementRegionLoop< serialPolicy >( *mesh,
-                                             m_targetRegions,
-                                             m_solidMaterialName,
-                                             nullptr,
-                                             dofNumber,
-                                             matrix,
-                                             rhs );
+  physicsLoopInterface::FiniteElementRegionLoop< serialPolicy >( *mesh,
+                                                                 m_targetRegions,
+                                                                 m_solidMaterialName,
+                                                                 nullptr,
+                                                                 dofNumber,
+                                                                 matrix,
+                                                                 rhs );
   matrix.close();
 
 
@@ -1040,10 +1039,11 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
   GEOSX_UNUSED_VAR( dt );
 //  GEOSX_UNUSED_VAR( numericalMethodManager )
 //  GEOSX_UNUSED_VAR( feDiscretizationManager )
-  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel;
+//  template< typename T >
+//  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel<T>;
 
   m_maxForce = physicsLoopInterface::
-                 FiniteElementRegionLoop< serialPolicy, LoopKernel >( *mesh,
+                 FiniteElementRegionLoop< serialPolicy, SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel >( *mesh,
                                                                       m_targetRegions,
                                                                       m_solidMaterialName,
                                                                       feDiscretization,

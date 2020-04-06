@@ -43,6 +43,8 @@ discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
   }
 }
 
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE >
 class FiniteElementRegionLoopKernelBase
 {
 public:
@@ -69,23 +71,33 @@ public:
 
   FiniteElementRegionLoopKernelBase( arrayView1d< globalIndex const > const & inputDofNumber,
                                      ParallelMatrix & inputMatrix,
-                                     ParallelVector & inputRhs ):
+                                     ParallelVector & inputRhs,
+                                     NodeManager const & GEOSX_UNUSED_PARAM(nodeManager),
+                                     SUBREGION_TYPE & elementSubRegion,
+                                     CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM(inputConstitutiveType),
+                                     typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
     m_dofNumber( inputDofNumber ),
     m_matrix( inputMatrix ),
-    m_rhs( inputRhs )
+    m_rhs( inputRhs ),
+    elemsToNodes( elementSubRegion.nodeList() ),
+    elemGhostRank( elementSubRegion.ghostRank() ),
+    constitutiveUpdate( inputConstitutiveUpdate )
   {}
 
-  void initializeNonElementViews( MeshLevel & GEOSX_UNUSED_PARAM( mesh ) )
+  FiniteElementRegionLoopKernelBase( arrayView1d< globalIndex const > const & inputDofNumber,
+                                     ParallelMatrix & inputMatrix,
+                                     ParallelVector & inputRhs,
+                                     NodeManager const & nodeManager,
+                                     SUBREGION_TYPE & elementSubRegion,
+                                     CONSTITUTIVE_TYPE & inputConstitutiveType ):
+    FiniteElementRegionLoopKernelBase( inputDofNumber,
+                                       inputMatrix,
+                                       inputRhs,
+                                       nodeManager,
+                                       elementSubRegion,
+                                       inputConstitutiveType,
+                                       typename CONSTITUTIVE_TYPE::KernelWrapper() )
   {}
-
-  template< typename ELEMENT_SUBREGION_TYPE >
-  void initializeElementSubRegionViews( ELEMENT_SUBREGION_TYPE & elementSubRegion )
-  {
-    elemsToNodes = elementSubRegion.nodeList();
-    elemGhostRank = elementSubRegion.ghostRank();
-  }
-
-
 
   template< typename STACK_VARIABLE_TYPE >
 //  GEOSX_HOST_DEVICE
@@ -104,13 +116,12 @@ public:
 
   }
 
-  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
+  template< typename STACK_VARIABLE_TYPE >
 //  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                      localIndex const GEOSX_UNUSED_PARAM( q ),
-                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ),
-                     CONSTITUTIVE_UPDATE const & GEOSX_UNUSED_PARAM( constitutiveUpdate )  ) const
+                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -121,13 +132,12 @@ public:
                         STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
   {}
 
-  template< typename STACK_VARIABLE_TYPE, typename CONSTITUTIVE_UPDATE >
+  template< typename STACK_VARIABLE_TYPE >
 //  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
-                          STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ),
-                          CONSTITUTIVE_UPDATE const & GEOSX_UNUSED_PARAM( constitutiveUpdate ) ) const
+                          STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -143,19 +153,12 @@ public:
     return 0;
   }
 
-
-  template< typename CONSTITUTIVE_TYPE >
-  typename CONSTITUTIVE_TYPE::KernelWrapper createConstitutiveUpdate( CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM( constitutive ) )
-  {
-    return typename CONSTITUTIVE_TYPE::KernelWrapper();
-  };
-
-
-  arrayView1d< globalIndex const > m_dofNumber;
+  arrayView1d< globalIndex const > const m_dofNumber;
   ParallelMatrix & m_matrix;
   ParallelVector & m_rhs;
-  arrayView2d< localIndex const, cells::NODE_MAP_USD > elemsToNodes;
-  arrayView1d< integer const > elemGhostRank;
+  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
+  arrayView1d< integer const > const elemGhostRank;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
 
 
 };
@@ -163,11 +166,9 @@ public:
 template< typename POLICY,
           int NUM_NODES_PER_ELEM,
           int NUM_QUADRATURE_POINTS,
-          typename KERNEL_CLASS,
-          typename CONSTITUTIVE_UPDATE >
+          typename KERNEL_CLASS >
 real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
-                                            KERNEL_CLASS const & kernelClass,
-                                            CONSTITUTIVE_UPDATE & constitutiveWrapper )
+                                            KERNEL_CLASS const & kernelClass )
 {
   RAJA::ReduceMax< serialReduce, real64 > maxForce( 0 );
 
@@ -181,11 +182,11 @@ real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
           kernelClass.preKernel( k, stack );
           for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
           {
-            kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
+            kernelClass.updateKernel( k, q, stack );
 
             kernelClass.stiffnessKernel( k, q, stack );
 
-            kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
+            kernelClass.integrationKernel( k, q, stack );
           }
           maxForce.max( kernelClass.postKernel( stack ) );
         }
@@ -193,7 +194,9 @@ real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
   return maxForce.get();
 }
 
-template< typename POLICY, typename KERNEL_CLASS = FiniteElementRegionLoopKernelBase >
+
+template< typename POLICY,
+          template< typename T1, typename T2> class KERNEL_CLASS = FiniteElementRegionLoopKernelBase >
 static
 real64 FiniteElementRegionLoop( MeshLevel & mesh,
                                 string_array const & targetRegions,
@@ -203,22 +206,18 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
                                 ParallelMatrix & inputMatrix,
                                 ParallelVector & inputRhs )
 {
-  KERNEL_CLASS kernelClass( inputDofNumber, inputMatrix, inputRhs );
 
   real64 maxForce = 0;
 
-
-  kernelClass.initializeNonElementViews( mesh );
-
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
-  elementRegionManager.forElementSubRegions< CellElementSubRegion >( targetRegions,
-                                                                     [&] ( auto & elementSubRegion )
+
+  elementRegionManager.forElementSubRegions<CellElementSubRegion>( targetRegions,
+                                                                   [&] ( auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
-//      typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
-
-    kernelClass.initializeElementSubRegionViews( elementSubRegion );
+      typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
     localIndex const
     numQuadraturePointsPerElem = feDiscretization == nullptr ?
@@ -236,42 +235,26 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
       constitutive::SolidBase * const
       solidBase = elementSubRegion.GetConstitutiveModels()->template GetGroup< constitutive::SolidBase >( solidMaterialName );
 
-
       constitutive::constitutiveUpdatePassThru( solidBase, [&]( auto & castedConstitutiveRelation )
       {
         using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
+        KERNEL_CLASS<SUBREGIONTYPE,CONSTITUTIVE_TYPE> kernelClass( inputDofNumber,
+                                                                   inputMatrix,
+                                                                   inputRhs,
+                                                                   nodeManager,
+                                                                   elementSubRegion,
+                                                                   castedConstitutiveRelation );
 
-
-        typename CONSTITUTIVE_TYPE::KernelWrapper
-        constitutiveWrapper = kernelClass.createConstitutiveUpdate( castedConstitutiveRelation );
+//        typename CONSTITUTIVE_TYPE::KernelWrapper
+//        constitutiveWrapper = createConstitutiveUpdate<SUBREGIONTYPE,KERNEL_CLASS >( castedConstitutiveRelation );
 
         maxForce = std::max( maxForce,
                              FiniteElementRegionLoopKernelLaunch< POLICY,
                                                                   NUM_NODES_PER_ELEM,
                                                                   NUM_QUADRATURE_POINTS >( numElems,
-                                                                                           kernelClass,
-                                                                                           constitutiveWrapper ) );
-//        forAll< POLICY >( numElems,
-//                          [=] GEOSX_DEVICE ( localIndex const k )
-//            {
-//
-//              typename KERNEL_CLASS:: template StackVariables< NUM_NODES_PER_ELEM, 3 > stack;
-//
-//              if( elemGhostRank[k] < 0 )
-//              {
-//                kernelClass.preKernel( k, stack );
-//                for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-//                {
-//                  kernelClass.updateKernel( k, q, stack, constitutiveWrapper );
-//
-//                  kernelClass.stiffnessKernel( k, q, stack );
-//
-//                  kernelClass.integrationKernel( k, q, stack, constitutiveWrapper );
-//                }
-//                maxForce.max( kernelClass.postKernel( stack ) );
-//              }
-//            } );
+                                                                                           kernelClass ) );
+
       } );
     } );
   } );
