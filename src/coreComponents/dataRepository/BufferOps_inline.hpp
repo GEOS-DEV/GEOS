@@ -121,10 +121,8 @@ typename std::enable_if< is_packable< T >, localIndex >::type
 Pack( buffer_unit_type * & buffer,
       ArrayView< T, NDIM, USD > const & var )
 {
-  //metadata
   localIndex sizeOfPackedChars = PackPointer< DO_PACKING >( buffer, var.dims(), NDIM );
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, var.strides(), NDIM );
-
   const localIndex length = var.size();
   T const * const data = var.data();
   sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, length );
@@ -139,7 +137,6 @@ localIndex Pack( buffer_unit_type * & buffer,
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
-
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfArray( a ) );
     T const * const data = var[a];
     sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, var.sizeOfArray( a ) );
@@ -155,7 +152,6 @@ localIndex Pack( buffer_unit_type * & buffer,
   sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.size() );
   for( localIndex a=0 ; a<var.size() ; ++a )
   {
-
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, var.sizeOfSet( a ) );
     T const * const data = var[a];
     sizeOfPackedChars += PackPointer< DO_PACKING >( buffer, data, var.sizeOfSet( a ) );

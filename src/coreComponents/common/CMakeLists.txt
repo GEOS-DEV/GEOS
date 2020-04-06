@@ -51,10 +51,6 @@ if( ENABLE_CALIPER )
   set( dependencyList ${dependencyList} caliper )
 endif()
 
-# if ( ENABLE_HDF5 )
-#   set( dependencyList ${dependencyList} hdf5 )
-# endif ()
-
 blt_add_library( NAME                  common
                  SOURCES               ${common_sources}
                  HEADERS               ${common_headers}
