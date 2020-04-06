@@ -163,6 +163,13 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
+
+  virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
                            DomainPartition * const domain,
