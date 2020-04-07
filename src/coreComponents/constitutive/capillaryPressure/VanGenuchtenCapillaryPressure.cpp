@@ -34,22 +34,22 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( std::string const 
                                                               Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString, &m_phaseCapPressureExponentInv, false )->
+  registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString, &m_phaseCapPressureExponentInv )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Inverse of capillary power law exponent for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureMultiplierString, &m_phaseCapPressureMultiplier, false )->
+  registerWrapper( viewKeyStruct::phaseCapPressureMultiplierString, &m_phaseCapPressureMultiplier )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Entry pressure value for each phase" );
 
-  registerWrapper( viewKeyStruct::capPressureEpsilonString, &m_capPressureEpsilon, false )->
+  registerWrapper( viewKeyStruct::capPressureEpsilonString, &m_capPressureEpsilon )->
     setApplyDefaultValue( 1e-6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(

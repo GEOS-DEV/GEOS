@@ -39,7 +39,7 @@
     static constexpr int id = CONDUIT_TYPE ## _ID; \
     static constexpr int sizeOfConduitType = sizeof( type ); \
     static constexpr int numConduitValues = sizeof( T ) / sizeOfConduitType; \
-    static_assert( sizeof( T ) % sizeOfConduitType == 0, "T cannot be made made up of CONDUIT_TYPE." ); \
+    static_assert( sizeof( T ) % sizeOfConduitType == 0, #T " cannot be made made up of " #CONDUIT_TYPE "." ); \
   }
 
 namespace geosx
@@ -85,6 +85,8 @@ template< typename T >
 using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::remove_pointer_t< T > > >;
 
 extern conduit::Node rootConduitNode;
+
+std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
 
 void writeTree( std::string const & path );
 

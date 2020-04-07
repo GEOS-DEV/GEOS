@@ -27,33 +27,6 @@ namespace geosx
 namespace stringutilities
 {
 
-void toLower( std::string & theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
-}
-std::string lowercase( std::string theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
-  return theString;
-}
-
-void toUpper( std::string & theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
-}
-std::string uppercase( std::string theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
-  return theString;
-}
-
-bool ieq( std::string strA, std::string strB )
-{
-  toLower( strA ); toLower( strB ); return strA == strB;
-}
-
-
-
 /**
  * String tokenizing function
  **/
@@ -109,60 +82,6 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
   }
   return tokens;
 }
-
-/**
- * String tokenizing function using a character sequence,
- * ie. Tokenize "1.0000 HPO4-- +1.0000 Cu++" with " +" gives {"1.0000
- * HPO4--","1.0000 Cu++"}
- **/
-string_array TokenizeSeq( const std::string & str, const std::string & seq )
-{
-  string_array tokens;
-
-  if( str.length() == 0 )
-  {
-    tokens.push_back( str );
-  }
-  else
-  {
-
-    size_t lastPos = 0;
-
-    size_t newPos = lastPos;
-    while( (newPos=str.find( seq, lastPos )) != std::string::npos )
-    {
-      tokens.push_back( str.substr( lastPos, newPos-lastPos ));
-      lastPos = newPos + seq.size();
-    }
-    tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
-  }
-  return tokens;
-}
-
-/**
- * Split string at deliminator
- **/
-string_array Split( const std::string & str, const std::string & delimiters )
-{
-  string_array tokens;
-
-  if( str.length() == 0 )
-  {
-    tokens.push_back( str );
-  }
-  else
-  {
-
-    size_t pos = str.find_first_of( delimiters, 0 );
-
-    tokens.push_back( str.substr( 0, pos ));
-    pos++;
-    if( pos < str.size())
-      tokens.push_back( str.substr( pos ));
-  }
-  return tokens;
-}
-
 
 integer FindBase64StringLength( integer dataSize )
 {

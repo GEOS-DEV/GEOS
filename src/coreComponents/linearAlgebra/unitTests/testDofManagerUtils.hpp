@@ -304,7 +304,7 @@ void makeSparsityFEM( MeshLevel const * const mesh,
   // perform assembly loop over elements
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using NodeMapType = TYPEOFREF( subRegion ) ::NodeMapType;
+    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     typename NodeMapType::ViewTypeConst const &
     nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
@@ -354,7 +354,7 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
   // perform assembly loop over elements
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using NodeMapType = TYPEOFREF( subRegion ) ::NodeMapType;
+    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     typename NodeMapType::ViewTypeConst const &
     nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
@@ -448,7 +448,7 @@ void makeSparsityFlux( MeshLevel const * const mesh,
   // perform assembly loop over elements
   elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using FaceMapType = TYPEOFREF( subRegion ) ::FaceMapType;
+    using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
     typename FaceMapType::ViewTypeConst const &
     faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString );
 

@@ -53,7 +53,7 @@ public:
    */
   void SetPlotLevel( const int plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
+    m_plotLevel = dataRepository::toPlotLevel( plotLevel );
   }
 
   /*!

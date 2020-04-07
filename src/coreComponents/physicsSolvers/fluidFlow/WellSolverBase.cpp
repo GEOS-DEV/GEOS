@@ -36,7 +36,7 @@ WellSolverBase::WellSolverBase( std::string const & name,
   m_numDofPerWellElement( 0 ),
   m_numDofPerResElement( 0 )
 {
-  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames, false )->
+  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of fluid constitutive object to use for this solver." );
 }

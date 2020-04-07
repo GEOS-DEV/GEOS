@@ -25,19 +25,17 @@ using namespace constitutive;
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   CellBlock( name, parent )
 {
-  registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping, 0 )->
+  registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::constitutiveMapString,
-                   &m_constitutiveMapView, 0 );
+  registerWrapper( viewKeyStruct::constitutiveMapString, &m_constitutiveMapView );
 
-  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0 );
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX );
 
 
-  registerWrapper( viewKeyStruct::constitutivePointVolumeFraction,
-                   &m_constitutivePointVolumeFraction, 0 );
+  registerWrapper( viewKeyStruct::constitutivePointVolumeFraction, &m_constitutivePointVolumeFraction );
 
-  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX, 0 )->setSizedFromParent( 1 );
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX )->setSizedFromParent( 1 );
 
 }
 
@@ -72,7 +70,7 @@ void CellElementSubRegion::CopyFromCellBlock( CellBlock * source )
       using fieldType = decltype(type);
       dataRepository::Wrapper< fieldType > & field = dataRepository::Wrapper< fieldType >::cast( *wrapper );
       const fieldType & fieldref = field.reference();
-      this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ), 0 ); //TODO remove const_cast
+      this->registerWrapper( wrapper->getName(), &const_cast< fieldType & >( fieldref ) ); //TODO remove const_cast
 //      auto const & origFieldRef = field.reference();
 //      fieldType & fieldRef = this->registerWrapper<fieldType>( wrapper->getName() )->reference();
 //      fieldRef.resize( origFieldRef.size() );

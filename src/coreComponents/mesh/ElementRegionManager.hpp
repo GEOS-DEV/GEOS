@@ -26,7 +26,7 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "FaceElementRegion.hpp"
-#include "fileIO/schema/SchemaUtilities.hpp"
+#include "fileIO/schema/schemaUtilities.hpp"
 #include "wells/WellElementRegion.hpp"
 #include "EmbeddedSurfaceRegion.hpp"
 

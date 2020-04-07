@@ -45,37 +45,37 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   m_nDims( 3 ),
   m_polylineHeadNodeId( -1 )
 {
-  registerWrapper( keys::nodeCoords, &m_inputPolyNodeCoords, false )->
+  registerWrapper( keys::nodeCoords, &m_inputPolyNodeCoords )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Physical coordinates of the well polyline nodes" );
 
-  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap, false )->
+  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Connectivity of the polyline segments" );
 
-  registerWrapper( keys::radius, &m_radius, false )->
+  registerWrapper( keys::radius, &m_radius )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Radius of the well" );
 
-  registerWrapper( keys::nElems, &m_numElemsPerSegment, false )->
+  registerWrapper( keys::nElems, &m_numElemsPerSegment )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Number of well elements per polyline segment" );
 
-  registerWrapper( keys::wellRegionName, &m_wellRegionName, false )->
+  registerWrapper( keys::wellRegionName, &m_wellRegionName )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Name of the well element region" );
 
-  registerWrapper( keys::wellControlsName, &m_wellControlsName, false )->
+  registerWrapper( keys::wellControlsName, &m_wellControlsName )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Name of the set of constraints associated with this well" );
 
-  registerWrapper( keys::meshBodyName, &m_meshBodyName, false )->
+  registerWrapper( keys::meshBodyName, &m_meshBodyName )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Name of the reservoir mesh associated with this well" );

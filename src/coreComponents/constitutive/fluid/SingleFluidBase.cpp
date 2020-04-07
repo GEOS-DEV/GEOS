@@ -30,20 +30,20 @@ SingleFluidBase::SingleFluidBase( std::string const & name, Group * const parent
   : ConstitutiveBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, false )->
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Default value for density." );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity, false )->
+  registerWrapper( viewKeyStruct::defaultViscosityString, &m_defaultViscosity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Default value for viscosity." );
 
-  registerWrapper( viewKeyStruct::densityString, &m_density, false )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::densityString, &m_density )->setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure, false );
+  registerWrapper( viewKeyStruct::dDens_dPresString, &m_dDensity_dPressure );
 
-  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString, &m_dViscosity_dPressure, false );
+  registerWrapper( viewKeyStruct::viscosityString, &m_viscosity )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dVisc_dPresString, &m_dViscosity_dPressure );
 }
 
 SingleFluidBase::~SingleFluidBase() = default;

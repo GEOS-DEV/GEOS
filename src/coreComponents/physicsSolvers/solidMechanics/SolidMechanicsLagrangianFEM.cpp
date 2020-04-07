@@ -48,8 +48,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   m_newmarkBeta( 0.25 ),
   m_massDamping( 0.0 ),
   m_stiffnessDamping( 0.0 ),
-  m_timeIntegrationOptionString(),
-  m_timeIntegrationOption( timeIntegrationOption::ExplicitDynamic ),
+  m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
   m_useVelocityEstimateForQS( 0 ),
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
@@ -63,42 +62,39 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
 
-  registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma, false )->
+  registerWrapper( viewKeyStruct::newmarkGammaString, &m_newmarkGamma )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of :math:`\\gamma` in the Newmark Method for Implicit Dynamic time integration option" );
 
-  registerWrapper( viewKeyStruct::newmarkBetaString, &m_newmarkBeta, false )->
+  registerWrapper( viewKeyStruct::newmarkBetaString, &m_newmarkBeta )->
     setApplyDefaultValue( 0.25 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of :math:`\\beta` in the Newmark Method for Implicit Dynamic time integration option. "
                     "This should be pow(newmarkGamma+0.5,2.0)/4.0 unless you know what you are doing." );
 
-  registerWrapper( viewKeyStruct::massDampingString, &m_massDamping, false )->
+  registerWrapper( viewKeyStruct::massDampingString, &m_massDamping )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of mass based damping coefficient. " );
 
-  registerWrapper( viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping, false )->
+  registerWrapper( viewKeyStruct::stiffnessDampingString, &m_stiffnessDamping )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of stiffness based damping coefficient. " );
 
-  registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption, false )->
-    setInputFlag( InputFlags::FALSE )->
-    setDescription( "Time integration enum class value." );
-
-  registerWrapper( viewKeyStruct::timeIntegrationOptionStringString, &m_timeIntegrationOptionString, false )->
+  registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( m_timeIntegrationOption )->
     setDescription( "Time integration method. Options are: \n QuasiStatic \n ImplicitDynamic \n ExplicitDynamic" );
 
-  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS, false )->
+  registerWrapper( viewKeyStruct::useVelocityEstimateForQSString, &m_useVelocityEstimateForQS )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag to indicate the use of the incremental displacement from the previous step as an "
                     "initial estimate for the incremental displacement of the current step." );
 
-  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, false )->
+  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves )->
     setApplyDefaultValue( 10 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value to indicate how many resolves may be executed after some other event is executed. "
@@ -106,7 +102,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
                     "However if a new surface is generated, then the mechanics solve must be executed again due to the "
                     "change in topology." );
 
-  registerWrapper( viewKeyStruct::strainTheoryString, &m_strainTheory, false )->
+  registerWrapper( viewKeyStruct::strainTheoryString, &m_strainTheory )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Indicates whether or not to use "
@@ -115,16 +111,16 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain" );
 
-  registerWrapper( viewKeyStruct::solidMaterialNamesString, &m_solidMaterialNames, false )->
+  registerWrapper( viewKeyStruct::solidMaterialNamesString, &m_solidMaterialNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The name of the material that should be used in the constitutive updates" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0 )->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
-  registerWrapper( viewKeyStruct::maxForce, &m_maxForce, false )->
+  registerWrapper( viewKeyStruct::maxForce, &m_maxForce )->
     setInputFlag( InputFlags::FALSE )->
     setDescription( "The maximum force contribution in the problem domain." );
 }
@@ -137,11 +133,6 @@ void SolidMechanicsLagrangianFEM::PostProcessInput()
 
   m_linearSolverParameters.amg.isSymmetric = true;
   m_linearSolverParameters.dofsPerNode = 3;
-
-  if( !m_timeIntegrationOptionString.empty() )
-  {
-    SetTimeIntegrationOption( m_timeIntegrationOptionString );
-  }
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
@@ -423,7 +414,7 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
-  if( m_timeIntegrationOption == timeIntegrationOption::ExplicitDynamic )
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitDynamic )
   {
     dtReturn = ExplicitStep( time_n, dt, cycleNumber, Group::group_cast< DomainPartition * >( domain ) );
 
@@ -433,8 +424,8 @@ real64 SolidMechanicsLagrangianFEM::SolverStep( real64 const & time_n,
     }
 
   }
-  else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic ||
-           m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic ||
+           m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     int const maxNumResolves = m_maxNumResolves;
     int locallyFractured = 0;
@@ -828,7 +819,7 @@ SolidMechanicsLagrangianFEM::
 
   localIndex const numNodes = nodeManager.size();
 
-  if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+  if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64 const, nodes::ACCELERATION_USD > const & a_n = nodeManager.acceleration();
     arrayView1d< R1Tensor > const & vtilde   = nodeManager.getReference< array1d< R1Tensor > >( solidMechanicsViewKeys.vTilde );
@@ -848,7 +839,7 @@ SolidMechanicsLagrangianFEM::
       }
     } );
   }
-  else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
+  else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     if( m_useVelocityEstimateForQS==1 )
     {
@@ -918,7 +909,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   arrayView2d< real64, nodes::VELOCITY_USD > const & v_n = nodeManager->velocity();
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat  = nodeManager->incrementalDisplacement();
 
-  if( this->m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+  if( this->m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     arrayView2d< real64, nodes::ACCELERATION_USD > const & a_n = nodeManager->acceleration();
     arrayView1d< R1Tensor const > const & vtilde    = nodeManager->getReference< r1_array >( solidMechanicsViewKeys.vTilde );
@@ -936,7 +927,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
       }
     } );
   }
-  else if( this->m_timeIntegrationOption == timeIntegrationOption::QuasiStatic && dt > 0.0 )
+  else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic && dt > 0.0 )
   {
     RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
                                         [=] ( localIndex const a )

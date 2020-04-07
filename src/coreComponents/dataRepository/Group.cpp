@@ -61,10 +61,10 @@ Group::CatalogInterface::CatalogType & Group::GetCatalog()
 }
 
 WrapperBase * Group::registerWrapper( string const & name,
-                                      WrapperBase * const wrapper )
+                                      std::unique_ptr< WrapperBase > wrapper )
 {
   return m_wrappers.insert( name,
-                            wrapper,
+                            wrapper.release(),
                             true );
 }
 
@@ -561,7 +561,7 @@ void Group::enableLogLevelInput()
 {
   string const logLevelString = "logLevel";
 
-  registerWrapper( logLevelString, &m_logLevel, false )->
+  registerWrapper( logLevelString, &m_logLevel )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Log level" );

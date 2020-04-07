@@ -36,7 +36,7 @@ GaussQuadrature< dim >::GaussQuadrature( std::string const & name, Group * const
   m_degree( 0 ),
   m_n_gauss_points( 0 )
 {
-  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+  registerWrapper( viewKeyStruct::degreeString, &m_degree )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Quadrature degree" );
 }

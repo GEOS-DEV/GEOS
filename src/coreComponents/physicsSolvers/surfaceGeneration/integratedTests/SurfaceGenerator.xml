@@ -172,7 +172,7 @@
   </Functions>
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="siloOutput" plotLevel="3" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

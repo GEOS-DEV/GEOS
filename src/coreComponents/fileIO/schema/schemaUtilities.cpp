@@ -13,37 +13,32 @@
  */
 
 /**
- * @file SchemaUtilities.cpp
+ * @file schemaUtilities.cpp
  */
 
-#include "SchemaUtilities.hpp"
+/// Source includes
+#include "schemaUtilities.hpp"
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/InputFlags.hpp"
 
+/// System includes
+#include <regex>
+
 namespace geosx
 {
 
 using namespace dataRepository;
 
-
-SchemaUtilities::SchemaUtilities()
+namespace schemaUtilities
 {
-  // TODO Auto-generated constructor stub
-
-}
-
-SchemaUtilities::~SchemaUtilities()
-{
-  // TODO Auto-generated destructor stub
-}
 
 
-void SchemaUtilities::ConvertDocumentationToSchema( std::string const & fname,
-                                                    Group * const group,
-                                                    integer documentationType )
+void ConvertDocumentationToSchema( std::string const & fname,
+                                   Group * const group,
+                                   integer documentationType )
 {
   GEOSX_LOG_RANK_0( "Generating XML Schema..." );
 
@@ -75,7 +70,7 @@ void SchemaUtilities::ConvertDocumentationToSchema( std::string const & fname,
 }
 
 
-void SchemaUtilities::BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
+void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   rtTypes::typeRegex typeRegex;
   std::string advanced_match_string = ".*[\\[\\]`$].*|";
@@ -105,10 +100,10 @@ void SchemaUtilities::BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 }
 
 
-void SchemaUtilities::SchemaConstruction( Group * const group,
-                                          xmlWrapper::xmlNode schemaRoot,
-                                          xmlWrapper::xmlNode schemaParent,
-                                          integer documentationType )
+void SchemaConstruction( Group * const group,
+                         xmlWrapper::xmlNode schemaRoot,
+                         xmlWrapper::xmlNode schemaParent,
+                         integer documentationType )
 {
   // Get schema details
   InputFlags schemaType = group->getInputFlags();
@@ -229,13 +224,18 @@ void SchemaUtilities::SchemaConstruction( Group * const group,
             // Basic attributes
             xmlWrapper::xmlNode attributeNode = targetTypeDefNode.append_child( "xsd:attribute" );
             attributeNode.append_attribute( "name" ) = attributeName.c_str();
-            attributeNode.append_attribute( "type" ) = (rtTypes::typeNames( wrapper->get_typeid()).c_str());
+
+            std::string const wrappedTypeName = rtTypes::typeNames( wrapper->get_typeid() );
+            std::string const xmlSafeName = std::regex_replace( wrappedTypeName, std::regex( "::" ), "_" );
+            GEOSX_LOG_VAR( wrappedTypeName );
+            GEOSX_LOG_VAR( xmlSafeName );
+            attributeNode.append_attribute( "type" ) = xmlSafeName.c_str();
 
             // (Optional) Default Value
             if( (flag == InputFlags::OPTIONAL_NONUNIQUE) || (flag == InputFlags::REQUIRED_NONUNIQUE))
             {
               GEOSX_LOG_RANK_0( attributeName << " has an invalid input flag" );
-              GEOSX_ERROR( "SchemaUtilities::SchemaConstruction: duplicate xml attributes are not allowed" );
+              GEOSX_ERROR( "SchemaConstruction: duplicate xml attributes are not allowed" );
             }
             else if( flag == InputFlags::OPTIONAL )
             {
@@ -271,4 +271,5 @@ void SchemaUtilities::SchemaConstruction( Group * const group,
   }
 }
 
-}
+} /// namespace schemaUtilities
+} /// namespace geosx

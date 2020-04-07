@@ -31,7 +31,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
   SolidBase( name, parent ),
   m_defaultStiffness( 6, 6 )
 {
-  registerWrapper( viewKeyStruct::defaultStiffnessString, &m_defaultStiffness, false )->
+  registerWrapper( viewKeyStruct::defaultStiffnessString, &m_defaultStiffness )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Default Elastic Stiffness Tensor in Voigt notation (6x6 matrix)" );
@@ -39,7 +39,7 @@ LinearElasticAnisotropic::LinearElasticAnisotropic( std::string const & name, Gr
   m_defaultStiffness.resize( 6, 6 );
 
   // These are temporary until we figure out how to read in multidim arrays from input.
-  registerWrapper( viewKeyStruct::stiffnessString, &m_stiffness, 0 )->
+  registerWrapper( viewKeyStruct::stiffnessString, &m_stiffness )->
     setApplyDefaultValue( 0 )->
     setDescription( "Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)" );
 

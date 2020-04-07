@@ -40,49 +40,49 @@ LinearElasticTransverseIsotropic::LinearElasticTransverseIsotropic( std::string 
   m_c44(),
   m_c66()
 {
-  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverse, &m_defaultYoungsModulusTransverse, 0 )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusTransverse, &m_defaultYoungsModulusTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Bulk Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultYoungsModulusAxial, &m_defaultYoungsModulusAxial, 0 )->
+  registerWrapper( viewKeyStruct::defaultYoungsModulusAxial, &m_defaultYoungsModulusAxial )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverse, &m_defaultPoissonTransverse, 0 )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioTransverse, &m_defaultPoissonTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverse, &m_defaultPoissonAxialTransverse, 0 )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverse, &m_defaultPoissonAxialTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverse, &m_defaultShearModulusAxialTransverse, 0 )->
+  registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverse, &m_defaultShearModulusAxialTransverse )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
 
 
-  registerWrapper( viewKeyStruct::c11, &m_c11, 0 )->
+  registerWrapper( viewKeyStruct::c11, &m_c11 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c13, &m_c13, 0 )->
+  registerWrapper( viewKeyStruct::c13, &m_c13 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c33, &m_c33, 0 )->
+  registerWrapper( viewKeyStruct::c33, &m_c33 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c44, &m_c44, 0 )->
+  registerWrapper( viewKeyStruct::c44, &m_c44 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::c66, &m_c66, 0 )->
+  registerWrapper( viewKeyStruct::c66, &m_c66 )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 

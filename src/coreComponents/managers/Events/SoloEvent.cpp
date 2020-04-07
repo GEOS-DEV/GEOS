@@ -31,17 +31,17 @@ SoloEvent::SoloEvent( const std::string & name,
   m_targetCycle( -1 ),
   m_targetExactTimestep( 0 )
 {
-  registerWrapper( viewKeyStruct::targetTimeString, &m_targetTime, false )->
+  registerWrapper( viewKeyStruct::targetTimeString, &m_targetTime )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Targeted time to execute the event." );
 
-  registerWrapper( viewKeyStruct::targetCycleString, &m_targetCycle, false )->
+  registerWrapper( viewKeyStruct::targetCycleString, &m_targetCycle )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Targeted cycle to execute the event." );
 
-  registerWrapper( viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep, false )->
+  registerWrapper( viewKeyStruct::targetExactTimestepString, &m_targetExactTimestep )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription(
