@@ -180,43 +180,41 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
   m_rockToughness( 1.0e99 ),
   m_mpiCommOrder( 0 )
 {
-  this->registerWrapper( viewKeyStruct::failCriterionString,
-                         &this->m_failCriterion,
-                         0 );
+  this->registerWrapper( viewKeyStruct::failCriterionString, &this->m_failCriterion );
 
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames, 0 )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
-  registerWrapper( viewKeyStruct::rockToughnessString, &m_rockToughness, 0 )->
+  registerWrapper( viewKeyStruct::rockToughnessString, &m_rockToughness )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Rock toughness of the solid material" );
 
-  registerWrapper( viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF, 0 )->
+  registerWrapper( viewKeyStruct::nodeBasedSIFString, &m_nodeBasedSIF )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rock toughness of the solid material" );
 
-  registerWrapper( viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder, 0 )->
+  registerWrapper( viewKeyStruct::mpiCommOrderString, &m_mpiCommOrder )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag to enable MPI consistent communication ordering" );
 
-  this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+  this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
 
-  registerWrapper( viewKeyStruct::tipNodesString, &m_tipNodes, 0 )->
+  registerWrapper( viewKeyStruct::tipNodesString, &m_tipNodes )->
     setDescription( "Set containing all the nodes at the fracture tip" );
 
-  registerWrapper( viewKeyStruct::tipEdgesString, &m_tipEdges, 0 )->
+  registerWrapper( viewKeyStruct::tipEdgesString, &m_tipEdges )->
     setDescription( "Set containing all the tip edges" );
 
-  registerWrapper( viewKeyStruct::tipFacesString, &m_tipFaces, 0 )->
+  registerWrapper( viewKeyStruct::tipFacesString, &m_tipFaces )->
     setDescription( "Set containing all the tip faces" );
 
-  registerWrapper( viewKeyStruct::trailingFacesString, &m_trailingFaces, 0 )->
+  registerWrapper( viewKeyStruct::trailingFacesString, &m_trailingFaces )->
     setDescription( "Set containing all the trailing faces" );
 
-  this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+  this->registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
 
@@ -405,7 +403,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     m_originalNodetoEdges = nodeManager->edgeList();
     m_originalFaceToEdges = faceManager->edgeList();
 
-    nodeManager->registerWrapper( "usedFaces", &m_usedFacesForNode, 0 );
+    nodeManager->registerWrapper( "usedFaces", &m_usedFacesForNode );
     m_usedFacesForNode.resize( nodeManager->size() );
 
     m_originalFacesToElemRegion = faceManager->elementRegionList();

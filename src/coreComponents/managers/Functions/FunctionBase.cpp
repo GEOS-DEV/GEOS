@@ -33,7 +33,7 @@ FunctionBase::FunctionBase( const std::string & name,
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames, 0 )->
+  registerWrapper( keys::inputVarNames, &m_inputVarNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setSizedFromParent( 0 )->
     setDescription( "Name of fields are input to function." );

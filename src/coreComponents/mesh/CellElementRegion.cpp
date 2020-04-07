@@ -29,10 +29,10 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
+  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames )->
     setInputFlag( InputFlags::OPTIONAL );
 
-  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio )->
     setInputFlag( InputFlags::OPTIONAL );
 }
 

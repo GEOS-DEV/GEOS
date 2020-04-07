@@ -42,24 +42,17 @@ NodeManager::NodeManager( std::string const & name,
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 )
 {
-  registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition, false );
+  registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
 
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
 
-  this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false );
+  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
 
-  this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false );
+  this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );
 
-  this->registerWrapper( viewKeyStruct::elementRegionListString,
-                         &(elementRegionList()),
-                         false );
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString, &elementSubRegionList() );
 
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
-                         &(elementSubRegionList()),
-                         false );
-
-  this->registerWrapper( viewKeyStruct::elementListString,
-                         &(elementList()),
-                         false );
+  this->registerWrapper( viewKeyStruct::elementListString, &elementList() );
 
 }
 

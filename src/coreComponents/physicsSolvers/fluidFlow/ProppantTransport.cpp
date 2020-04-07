@@ -51,34 +51,34 @@ ProppantTransport::ProppantTransport( const std::string & name,
                                       Group * const parent ):
   FlowSolverBase( name, parent )
 {
-  this->registerWrapper( viewKeyStruct::proppantNamesString, &m_proppantModelNames, false )->setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::proppantNamesString, &m_proppantModelNames )->setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of proppant constitutive object to use for this solver." );
 
-  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->setApplyDefaultValue( 0.0 )->
+  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor )->setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Bridging factor used for bridging/screen-out calculation" );
 
-  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->setApplyDefaultValue( 0.6 )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration )->setApplyDefaultValue( 0.6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum proppant concentration" );
 
-  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter, false )->setApplyDefaultValue( 0.4e-3 )->
+  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter )->setApplyDefaultValue( 0.4e-3 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant diameter" );
 
-  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->setApplyDefaultValue( 2500.0 )->
+  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity )->setApplyDefaultValue( 2500.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant density" );
 
-  registerWrapper( viewKeyStruct::criticalShieldsNumberString, &m_criticalShieldsNumber, false )->setApplyDefaultValue( 0.0 )->
+  registerWrapper( viewKeyStruct::criticalShieldsNumberString, &m_criticalShieldsNumber )->setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Critical Shields number" );
 
-  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->setApplyDefaultValue( 0.03 )->
+  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient )->setApplyDefaultValue( 0.03 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Friction coefficient" );
 
-  registerWrapper( viewKeyStruct::updateProppantPackingString, &m_updateProppantPacking, false )->setApplyDefaultValue( 0 )->
+  registerWrapper( viewKeyStruct::updateProppantPackingString, &m_updateProppantPacking )->setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag that enables/disables proppant-packing update" );
 

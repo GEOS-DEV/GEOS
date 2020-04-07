@@ -42,11 +42,11 @@ FlowProppantTransportSolver::FlowProppantTransportSolver( const std::string & na
   m_proppantSolverName(),
   m_flowSolverName()
 {
-  registerWrapper( viewKeyStruct::proppantSolverNameString, &m_proppantSolverName, 0 )->
+  registerWrapper( viewKeyStruct::proppantSolverNameString, &m_proppantSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the proppant transport solver to use in the flowProppantTransport solver" );
 
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the flowProppantTransport solver" );
 

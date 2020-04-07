@@ -141,13 +141,6 @@
 #define GEOSX_INFO( msg ) LVARRAY_INFO( msg )
 
 /**
- * @brief Check a predicate and report a warning in debug builds.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
- */
-#define GEOSX_CHECK( EXP, msg ) LVARRAY_CHECK( EXP, msg )
-
-/**
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison

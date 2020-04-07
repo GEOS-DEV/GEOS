@@ -126,7 +126,7 @@ void ElementRegionManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   for( string const & name: names )
   {
     ElementRegionBase * const elementRegion = GetRegion( name );
-    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
+    schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
   }
 }
 

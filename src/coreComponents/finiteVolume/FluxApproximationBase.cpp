@@ -34,23 +34,23 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::fieldNameString, &m_fieldName, false )->
+  registerWrapper( viewKeyStruct::fieldNameString, &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of primary solution field" );
 
-  registerWrapper( viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName, false )->
+  registerWrapper( viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of boundary (face) field" );
 
-  registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName, false )->
+  registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of coefficient field" );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of regions to build the stencil for" );
 
-  registerWrapper( viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol, false )->
+  registerWrapper( viewKeyStruct::areaRelativeToleranceString, &m_areaRelTol )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( 1.0e-8 )->
     setDescription( "Relative tolerance for area calculations." );

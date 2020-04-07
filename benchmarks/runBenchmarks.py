@@ -582,7 +582,7 @@ def main():
     if errorCollectionDir is not None:
         createDirectory( errorCollectionDir, True )
         for benchmark in benchmarks:
-            if benchmark.status != Status.SUCCESS:
+            if benchmark.status != Status.SUCCESS and os.path.isfile( benchmark.getOutputFile() ):
                 outputFile = benchmark.getOutputFile()
                 newLocation = os.path.join( errorCollectionDir, os.path.relpath( outputFile, outputDir ) )
                 shutil.copy2( outputFile, newLocation )

@@ -50,16 +50,16 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_temperature( 0.0 ),
   m_useMass( false )
 {
-  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
+  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Temperature" );
 
-  this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
+  this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Use mass formulation instead of molar" );
 
-  this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames, false )->
+  this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Names of relative permeability constitutive models to use" );
 }

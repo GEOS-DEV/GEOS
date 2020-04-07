@@ -232,32 +232,32 @@ template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 /// Alias for 4D array.
-template< typename T >
-using array4d = Array< T, 4 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T >
-using arrayView4d = ArrayView< T, 4 >;
+template< typename T, int USD=3 >
+using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T >
-using arraySlice4d = ArraySlice< T, 4 >;
+template< typename T, int USD=4 >
+using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
 /// Alias for 5D array.
-template< typename T >
-using array5d = Array< T, 5 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T >
-using arrayView5d = ArrayView< T, 5 >;
+template< typename T, int USD=4 >
+using arrayView5d = ArrayView< T, 5, USD >;
 
 /// Alias for 5D array slice.
-template< typename T >
-using arraySlice5d = ArraySlice< T, 5 >;
+template< typename T, int USD=4 >
+using arraySlice5d = ArraySlice< T, 5, 4 >;
 
 /// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
@@ -722,7 +722,9 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )}
+      {"mapPair_array", constructArrayRegex( rs, 1 )},
+      {"geosx_TimeIntegrationOption", rs},
+      {"geosx_dataRepository_PlotLevel", ri}
     };
 
 public:

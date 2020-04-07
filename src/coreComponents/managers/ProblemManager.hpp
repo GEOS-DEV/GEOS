@@ -29,7 +29,7 @@
 
 #include "EventManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
-#include "fileIO/schema/SchemaUtilities.hpp"
+#include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
 {

@@ -48,51 +48,51 @@ ParticleFluid::ParticleFluid( std::string const & name, Group * const parent ):
   ParticleFluidBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModelString, false )->
+  registerWrapper( viewKeyStruct::particleSettlingModelString, &m_particleSettlingModelString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Particle settling velocity model" );
 
-  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->
+  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity )->
     setApplyDefaultValue( 1400.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant density" );
 
-  registerWrapper( viewKeyStruct::fluidViscosityString, &m_fluidViscosity, false )->
+  registerWrapper( viewKeyStruct::fluidViscosityString, &m_fluidViscosity )->
     setApplyDefaultValue( 0.001 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter, false )->
+  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter )->
     setApplyDefaultValue( 200e-6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant diameter" );
 
-  registerWrapper( viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient, false )->
+  registerWrapper( viewKeyStruct::hinderedSettlingCoefficientString, &m_hinderedSettlingCoefficient )->
     setApplyDefaultValue( 5.9 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Hindered settling coefficient" );
 
-  registerWrapper( viewKeyStruct::collisionAlphaString, &m_collisionAlpha, false )->
+  registerWrapper( viewKeyStruct::collisionAlphaString, &m_collisionAlpha )->
     setApplyDefaultValue( 1.27 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Collision alpha coefficient" );
 
-  registerWrapper( viewKeyStruct::slipConcentrationString, &m_slipConcentration, false )->
+  registerWrapper( viewKeyStruct::slipConcentrationString, &m_slipConcentration )->
     setApplyDefaultValue( 0.1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Slip concentration" );
 
-  registerWrapper( viewKeyStruct::collisionBetaString, &m_collisionBeta, false )->
+  registerWrapper( viewKeyStruct::collisionBetaString, &m_collisionBeta )->
     setApplyDefaultValue( 1.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Collision beta coefficient" );
 
-  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->
+  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor )->
     setApplyDefaultValue( 3.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Bridging factor" );
 
-  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity, false )->
+  registerWrapper( viewKeyStruct::sphericityString, &m_sphericity )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Sphericity" );

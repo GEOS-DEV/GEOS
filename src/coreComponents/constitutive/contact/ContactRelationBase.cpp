@@ -39,11 +39,11 @@ ContactRelationBase::ContactRelationBase( string const & name,
   m_apertureFunction( nullptr ),
   m_apertureTolerance( 1.0e-99 )
 {
-  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness, 0 )->
+  registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
-  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance, 0 )->
+  registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance )->
     setApplyDefaultValue( 1.0e-9 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value to be used to avoid floating point errors in expressions involving aperture. "
@@ -63,19 +63,12 @@ ContactRelationBase::~ContactRelationBase()
 Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )
 {
-  Group * rval = nullptr;
-
   FunctionBase::CatalogInterface::CatalogType const & functionCatalog = FunctionBase::GetCatalog();
-  if( functionCatalog.count( catalogKey ) )
-  {
-    m_apertureFunction = (FunctionBase::CatalogInterface::Factory( catalogKey, childName, this )).release();
-    rval =  FunctionManager::Instance().RegisterGroup( childName, m_apertureFunction, 1 );
-  }
-  else
-  {
-    GEOSX_ERROR( catalogKey<<" is an invalid key ContactRelationBase child group." );
-  }
-  return rval;
+  GEOSX_ERROR_IF( !functionCatalog.count( catalogKey ), catalogKey << " is an invalid key ContactRelationBase child group." );
+
+  m_apertureFunction = FunctionManager::Instance().RegisterGroup( childName, FunctionBase::CatalogInterface::Factory( catalogKey, childName, this ) );
+
+  return m_apertureFunction;
 }
 
 

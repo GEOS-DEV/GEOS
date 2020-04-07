@@ -36,15 +36,15 @@ SolidBase::SolidBase( string const & name,
   m_stress( 0, 0, 6 ),
   m_postProcessed( false )
 {
-  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity, 0 )->
+  registerWrapper( viewKeyStruct::defaultDensityString, &m_defaultDensity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Default Material Density" );
 
-  registerWrapper( viewKeyStruct::densityString, &m_density, 0 )->
+  registerWrapper( viewKeyStruct::densityString, &m_density )->
     setApplyDefaultValue( -1 )->
     setDescription( "Material Density" );
 
-  registerWrapper( viewKeyStruct::stressString, &m_stress, 0 )->
+  registerWrapper( viewKeyStruct::stressString, &m_stress )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Material Stress" );
 }

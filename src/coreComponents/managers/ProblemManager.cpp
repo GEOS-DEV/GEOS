@@ -69,8 +69,7 @@ ProblemManager::ProblemManager( const std::string & name,
 
   // Mandatory groups that read from the xml
   RegisterGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager.Key(),
-                                              &FieldSpecificationManager::get(),
-                                              false );//->setRestartFlags(RestartFlags::NO_WRITE);
+                                              &FieldSpecificationManager::get() );//->setRestartFlags(RestartFlags::NO_WRITE);
 
 
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
@@ -85,9 +84,7 @@ ProblemManager::ProblemManager( const std::string & name,
   // The function manager is handled separately
   m_functionManager = &FunctionManager::Instance();
   // Mandatory groups that read from the xml
-  RegisterGroup< FunctionManager >( groupKeys.functionManager.Key(),
-                                    m_functionManager,
-                                    false );
+  RegisterGroup< FunctionManager >( groupKeys.functionManager.Key(), m_functionManager );
 
   // Command line entries
   commandLine->registerWrapper< string >( viewKeys.inputFileName.Key() )->
@@ -312,10 +309,10 @@ void ProblemManager::GenerateDocumentation()
     RegisterDataOnMeshRecursive( domain->getMeshBodies() );
 
     // Generate schema
-    SchemaUtilities::ConvertDocumentationToSchema( schemaName.c_str(), this, 0 );
+    schemaUtilities::ConvertDocumentationToSchema( schemaName.c_str(), this, 0 );
 
     // Generate non-schema documentation
-    SchemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1 );
+    schemaUtilities::ConvertDocumentationToSchema((schemaName + ".other").c_str(), this, 1 );
   }
 }
 
@@ -337,20 +334,20 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   DomainPartition * domain  = getDomainPartition();
 
   m_functionManager->GenerateDataStructureSkeleton( 0 );
-  SchemaUtilities::SchemaConstruction( m_functionManager, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( m_functionManager, schemaRoot, targetChoiceNode, documentationType );
 
   FieldSpecificationManager & bcManager = FieldSpecificationManager::get();
   bcManager.GenerateDataStructureSkeleton( 0 );
-  SchemaUtilities::SchemaConstruction( &bcManager, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( &bcManager, schemaRoot, targetChoiceNode, documentationType );
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  SchemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
 
   MeshManager * meshManager = this->GetGroup< MeshManager >( groupKeys.meshManager );
   meshManager->GenerateMeshLevels( domain );
   ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
   elementManager->GenerateDataStructureSkeleton( 0 );
-  SchemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
 
 
   // Add entries that are only used in the pre-processor
@@ -360,7 +357,7 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   Group * includedFile = IncludedList->RegisterGroup< Group >( "File" );
   includedFile->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  SchemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
   Group * parameterList = this->RegisterGroup< Group >( "Parameters" );
   parameterList->setInputFlags( InputFlags::OPTIONAL );
@@ -371,7 +368,7 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Input parameter definition for the preprocessor" );
 
-  SchemaUtilities::SchemaConstruction( parameterList, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( parameterList, schemaRoot, targetChoiceNode, documentationType );
 
   Group * benchmarks = this->RegisterGroup< Group >( "Benchmarks" );
   benchmarks->setInputFlags( InputFlags::OPTIONAL );
@@ -409,7 +406,7 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
       setDescription( "Repeat the benchmark N times, scaling the number of nodes in the benchmark by these values." );
   }
 
-  SchemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );
+  schemaUtilities::SchemaConstruction( benchmarks, schemaRoot, targetChoiceNode, documentationType );
 }
 
 

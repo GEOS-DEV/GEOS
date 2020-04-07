@@ -35,18 +35,18 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent, false )->
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "MinimumRel perm power law exponent for each phase" );
 
 
-  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for each phase" );

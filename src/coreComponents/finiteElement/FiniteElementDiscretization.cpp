@@ -42,9 +42,9 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::basis, &m_basisName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::basis, &m_basisName )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::quadrature, &m_quadratureName )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::parentSpace, &m_parentSpace )->setInputFlag( InputFlags::REQUIRED );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()

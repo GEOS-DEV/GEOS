@@ -61,16 +61,16 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
+  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of surface densities for each phase" );
 
-  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
+  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles )->
     setInputFlag( InputFlags::REQUIRED )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
 }
