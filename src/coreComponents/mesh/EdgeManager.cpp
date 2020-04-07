@@ -36,25 +36,25 @@ EdgeManager::EdgeManager( std::string const & name,
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->registerWrapper( viewKeyStruct::nodeListString, &this->m_toNodesRelation, 0 );
-  this->registerWrapper( viewKeyStruct::faceListString, &this->m_toFacesRelation, 0 );
+  this->registerWrapper( viewKeyStruct::nodeListString, &this->m_toNodesRelation );
+  this->registerWrapper( viewKeyStruct::faceListString, &this->m_toFacesRelation );
 
   m_toNodesRelation.resize( 0, 2 );
   // TODO Auto-generated constructor stub
 
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges, 0 )->
+  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString, &m_edgesToFractureConnectorsEdges )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of edge local indices to the fracture connector local indices." )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges, 0 )->
+  registerWrapper( viewKeyStruct::fractureConnectorEdgesToEdgesString, &m_fractureConnectorsEdgesToEdges )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of fracture connector local indices to edge local indices." )->
     setSizedFromParent( 0 );
 
   registerWrapper( viewKeyStruct::fractureConnectorsEdgesToFaceElementsIndexString,
-                   &m_fractureConnectorEdgesToFaceElements, 0 )->
+                   &m_fractureConnectorEdgesToFaceElements )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of fracture connector local indices face element local indices" )->
     setSizedFromParent( 0 );

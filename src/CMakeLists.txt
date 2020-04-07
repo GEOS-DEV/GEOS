@@ -1,5 +1,3 @@
-message( "Entering /src/CMakeLists.txt")
-
 cmake_minimum_required(VERSION 3.9)
 
 ################################
@@ -142,11 +140,9 @@ endif()
 
 
 install( DIRECTORY ../examples/ 
-	 DESTINATION examples
-	 )
+     DESTINATION examples
+     )
 
 install( DIRECTORY ../scripts/ 
-	 DESTINATION scripts
-	 )
-
-message( "Exiting /src/CMakeLists.txt")
+     DESTINATION scripts
+     )

@@ -55,21 +55,21 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   // getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
 
 //START_SPHINX_INCLUDE_00
-  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature, false )->
+  this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Temperature" );
 
-  this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass, false )->
+  this->registerWrapper( viewKeyStruct::useMassFlagString, &m_useMass )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Use mass formulation instead of molar" );
 
-  this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames, false )->
+  this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Name of the relative permeability constitutive model to use" );
 
-  this->registerWrapper( viewKeyStruct::capPressureNamesString, &m_capPressureModelNames, false )->
+  this->registerWrapper( viewKeyStruct::capPressureNamesString, &m_capPressureModelNames )->
     setApplyDefaultValue( "" )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
