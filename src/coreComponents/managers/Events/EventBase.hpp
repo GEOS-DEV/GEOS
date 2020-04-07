@@ -150,7 +150,6 @@ public:
    */
   virtual real64 GetTimestepRequest( real64 const time ) override;
 
-
   /**
    * @brief Get event-specifit dt requests.
    * @param time The current simulation time.
@@ -178,7 +177,6 @@ public:
    * @param eventCounters The event count for each event/sub-event.
    */
   void SetProgressIndicator( array1d< integer > & eventCounters );
-
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -214,18 +212,6 @@ public:
   static CatalogInterface::CatalogType & GetCatalog();
 
   /**
-   * @brief Get the forecast for this event.
-   * @return The forecast.
-   */
-  integer GetForecast(){ return m_eventForecast; }
-
-  /**
-   * @brief Set the forecast for this event.
-   * @param forecast The forecast.
-   */
-  void SetForecast( integer forecast ){ m_eventForecast = forecast; }
-
-  /**
    * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
    * @return The sum of the exit flags for the event/sub-events.
    */
@@ -238,46 +224,76 @@ public:
   void SetExitFlag( integer flag ){ m_exitFlag = flag; }
 
   /**
-   * @brief Get the event count.
-   * @return The event count.
-   */
-  integer GetEventCount() const { return m_eventCount; }
-
-  /**
-   * @brief Get the event progress.
-   * @return The event progress.
-   */
-  real64  GetEventProgress() const { return m_eventProgress; }
-
-  /**
    * @brief Get the current time increment request for this event.
    * @return The current time increment request.
    */
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
-   * @brief Get the time the event began.
-   * @return The time the event began.
+   * @brief Forecast statuses.
+   *
+   * This enum is kept public only for debugging purpose.
    */
-  real64  GetBeginTime() const { return m_beginTime; }
+  enum class ForeCast : integer
+  {
+    READY_FOR_EXEC,
+    PREPARE_FOR_EXEC,
+    IDLE
+  };
 
   /**
-   * @brief Get the time the event ended.
-   * @return The time the event ended.
+   * @brief Forecasts accessors
+   * @return The forecast.
+   *
+   * The `GetForecast` getter only exists for debugging purpose.
+   * Prefer the predicate functions below.
    */
-  real64  GetEndTime() const { return m_endTime; }
+  ///@{
+  ForeCast getForecast() const
+  { return m_eventForecast; }
+
+  bool isReadyForExec() const
+  { return m_eventForecast == ForeCast::READY_FOR_EXEC; }
+
+  bool isPreparingForExec() const
+  { return m_eventForecast == ForeCast::PREPARE_FOR_EXEC; }
+
+  bool isIdle() const
+  { return m_eventForecast == ForeCast::IDLE; }
+
+protected:
+
+  void setForecast( ForeCast forecast )
+  { m_eventForecast = forecast; }
+
+  /**
+   * @brief Sets the forecast
+   * @param forecast The forecast provided as an integer.
+   *
+   * If the forecast is 0 or below, the event is considered being READY_FOR_EXEC.
+   * If it equals 1, it is in PREPARE_FOR_EXEC status. Above, the event is IDLE.
+   */
+  void setForecast( integer forecast );
+  ///@}
+
+  /**
+   * @brief Is the event active?
+   * @param time The time at which we want to check if the event is active.
+   * @return True if acrive, false otherwise.
+   */
+  bool isActive( real64 const time ) const
+  { return ( time >= m_beginTime ) && ( time < m_endTime ); }
 
   /**
    * @brief Get the target of this event.
    * @return The target of this event.
    */
-  ExecutableGroup * GetEventTarget() const { return m_target; }
+  ExecutableGroup * GetEventTarget() const
+  { return m_target; }
 
-
-protected:
-  /// The last time the event occured.
+  /// The last time the event occurred.
   real64 m_lastTime;
-  /// The last cycle the event occured.
+  /// The last cycle the event occurred.
   integer m_lastCycle;
 
 private:
@@ -290,7 +306,7 @@ private:
   integer m_targetExactStartStop;
   integer m_currentSubEvent;
   integer m_targetExecFlag;
-  integer m_eventForecast;
+  ForeCast m_eventForecast;
   integer m_exitFlag;
   integer m_eventCount;
   integer m_timeStepEventCount;
@@ -300,6 +316,15 @@ private:
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
 };
+
+/**
+ * @brief Prints a ForeCast to standard streams.
+ * @param os The out stream
+ * @param obj The forcast
+ * @return The stream
+ */
+std::ostream & operator<<( std::ostream & os,
+                           const EventBase::ForeCast & obj );
 
 } /* namespace geosx */
 

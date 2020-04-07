@@ -24,7 +24,6 @@ namespace geosx
 
 using namespace dataRepository;
 
-
 PeriodicEvent::PeriodicEvent( const std::string & name,
                               Group * const parent ):
   EventBase( name, parent ),
@@ -80,11 +79,8 @@ PeriodicEvent::PeriodicEvent( const std::string & name,
 
 }
 
-
 PeriodicEvent::~PeriodicEvent()
 {}
-
-
 
 void PeriodicEvent::EstimateEventTiming( real64 const time,
                                          real64 const dt,
@@ -94,32 +90,31 @@ void PeriodicEvent::EstimateEventTiming( real64 const time,
   // Check event status
   if( cycle == 0 )
   {
-    SetForecast( 0 );
+    setForecast( ForeCast::READY_FOR_EXEC );
   }
   else if( m_timeFrequency >= 0.0 )
   {
     if( dt <= 0 )
     {
-      SetForecast( std::numeric_limits< integer >::max());
+      setForecast( ForeCast::IDLE );
     }
     else
     {
       // Note: add a small value to this forecast to account for floating point errors
       real64 forecast = ((m_timeFrequency - (time - m_lastTime)) / dt) + 1e-10;
-      SetForecast( static_cast< integer >(std::min( std::max( forecast, 0.0 ), 1e9 )));
+      setForecast( static_cast< integer >(std::min( std::max( forecast, 0.0 ), 1e9 )) );
     }
   }
   else
   {
-    SetForecast( m_cycleFrequency - (cycle - m_lastCycle));
+    setForecast( m_cycleFrequency - ( cycle - m_lastCycle ) );
   }
 
-  if((this->GetForecast() <= 0) && (m_functionName.empty() == 0))
+  if( this->isReadyForExec() and ( not m_functionName.empty() ) )
   {
     CheckOptionalFunctionThreshold( time, dt, cycle, domain );
   }
 }
-
 
 void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
                                                     real64 const GEOSX_UNUSED_PARAM( dt ),
@@ -181,11 +176,11 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
   // Forcast event
   if( result > m_eventThreshold )
   {
-    SetForecast( 0 );
+    setForecast( ForeCast::READY_FOR_EXEC );
   }
   else
   {
-    SetForecast( std::numeric_limits< integer >::max());
+    setForecast( ForeCast::IDLE );
   }
 }
 
@@ -214,7 +209,6 @@ real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
   return requestedDt;
 }
 
-
 void PeriodicEvent::Cleanup( real64 const time_n,
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -222,7 +216,7 @@ void PeriodicEvent::Cleanup( real64 const time_n,
                              Group * domain )
 {
   // Only call the cleanup method of the target/children if it is within its application time
-  if( ( time_n >= GetBeginTime() ) && ( time_n <= GetEndTime() ) )
+  if( isActive( time_n ) )
   {
     ExecutableGroup * target = GetEventTarget();
     if( target != nullptr )
@@ -239,7 +233,6 @@ void PeriodicEvent::Cleanup( real64 const time_n,
   }
 }
 
-
-
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
+
 } /* namespace geosx */

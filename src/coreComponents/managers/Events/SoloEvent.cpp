@@ -65,23 +65,23 @@ void SoloEvent::EstimateEventTiming( real64 const time,
     {
       if( dt <= 0 )
       {
-        SetForecast( std::numeric_limits< integer >::max());
+        setForecast( ForeCast::IDLE );
       }
       else
       {
         // Note: add a small value to this forecast to account for floating point errors
         real64 forecast = ((m_targetTime - time) / dt) + 1e-10;
-        SetForecast( static_cast< integer >(std::min( forecast, 1e9 )));
+        setForecast( static_cast< integer >(std::min( forecast, 1e9 )) );
       }
     }
     else
     {
-      SetForecast( m_targetCycle - cycle );
+      setForecast( m_targetCycle - cycle );
     }
   }
   else
   {
-    SetForecast( std::numeric_limits< integer >::max());
+    setForecast( ForeCast::IDLE );
   }
 }
 
