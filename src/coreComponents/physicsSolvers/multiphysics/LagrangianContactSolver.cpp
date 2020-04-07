@@ -234,7 +234,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getNeighbors() );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, " ***** ImplicitStepComplete *****" );
+  GEOSX_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
 
 void LagrangianContactSolver::PostProcessInput()
@@ -624,7 +624,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       bool const isPreviousFractureStateValid = UpdateFractureState( domain );
       GEOSX_LOG_LEVEL_RANK_0( 1, "active set flag: " << std::boolalpha << isPreviousFractureStateValid );
 
-      if( getLogLevel() > 2 )
+      if( getLogLevel() >= 1 )
       {
         globalIndex numStick, numSlip, numOpen;
         ComputeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
@@ -633,7 +633,7 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       // Active set check: end
       // *******************************
 
-      GEOSX_LOG_LEVEL_RANK_0( 2, "isPreviousFractureStateValid: " << std::boolalpha << isPreviousFractureStateValid <<
+      GEOSX_LOG_LEVEL_RANK_0( 1, "isPreviousFractureStateValid: " << std::boolalpha << isPreviousFractureStateValid <<
                               " | isNewtonConverged: " << isNewtonConverged << " | useElasticStep: " << useElasticStep );
       if( isNewtonConverged )
       {
@@ -645,14 +645,14 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       }
       else if( useElasticStep )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 2, "Trying with an elastic step" );
+        GEOSX_LOG_LEVEL_RANK_0( 1, "Trying with an elastic step" );
         useElasticStep = false;
         ResetStateToBeginningOfStep( domain );
         SetFractureStateForElasticStep( domain );
       }
       else
       {
-        GEOSX_LOG_LEVEL_RANK_0( 2, "Newton did not converge in active set loop" );
+        GEOSX_LOG_LEVEL_RANK_0( 1, "Newton did not converge in active set loop" );
         break;
       }
     }
@@ -2030,17 +2030,17 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
     solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( rank == 0 )
-  {
-    string str;
-    std::getline( std::cin, str );
-    if( str.length() > 0 )
-    {
-      GEOSX_ERROR( "STOP" );
-    }
-  }
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+//  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+//  if( rank == 0 )
+//  {
+//    string str;
+//    std::getline( std::cin, str );
+//    if( str.length() > 0 )
+//    {
+//      GEOSX_ERROR( "STOP" );
+//    }
+//  }
+//  MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 
 void LagrangianContactSolver::SetNextDt( real64 const & currentDt,
