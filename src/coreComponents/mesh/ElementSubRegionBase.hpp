@@ -138,6 +138,18 @@ public:
   dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
+  template< typename T >
+  T * getConstitutiveModel( string const & name )
+  {
+    return m_constitutiveModels.GetGroup<T>(name);
+  }
+
+  template< typename T >
+  T const * getConstitutiveModel( string const & name ) const
+  {
+    return m_constitutiveModels.GetGroup<T>(name);
+  }
+
   virtual string GetElementTypeString() const { return m_elementTypeString; }
 
   virtual void SetElementType( string const & elementType );

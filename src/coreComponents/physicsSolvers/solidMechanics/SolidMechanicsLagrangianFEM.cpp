@@ -1042,14 +1042,31 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 //  template< typename T >
 //  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel<T>;
 
-  m_maxForce = physicsLoopInterface::
-                 FiniteElementRegionLoop< serialPolicy, SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel >( *mesh,
-                                                                      m_targetRegions,
-                                                                      m_solidMaterialName,
-                                                                      feDiscretization,
-                                                                      dofNumber,
-                                                                      matrix,
-                                                                      rhs );
+  if( m_timeIntegrationOption == timeIntegrationOption::QuasiStatic)
+  {
+    m_maxForce = physicsLoopInterface::
+                 FiniteElementRegionLoop< serialPolicy,
+                                          SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *mesh,
+                                                                                             m_targetRegions,
+                                                                                             m_solidMaterialName,
+                                                                                             feDiscretization,
+                                                                                             dofNumber,
+                                                                                             matrix,
+                                                                                             rhs );
+  }
+  else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
+  {
+    m_maxForce = physicsLoopInterface::
+                 FiniteElementRegionLoop< serialPolicy,
+                                          SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( *mesh,
+                                                                                                 m_targetRegions,
+                                                                                                 m_solidMaterialName,
+                                                                                                 feDiscretization,
+                                                                                                 dofNumber,
+                                                                                                 matrix,
+                                                                                                 rhs );
+  }
+
 
 
   ApplyContactConstraint( dofManager,

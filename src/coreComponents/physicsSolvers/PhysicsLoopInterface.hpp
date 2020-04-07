@@ -54,18 +54,19 @@ public:
   {
 public:
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+    static constexpr int numDofPerNode= NUM_DOF_PER_NODE;
     static constexpr int ndof = NUM_DOF_PER_NODE * NUM_NODES_PER_ELEM;
 
 //    GEOSX_HOST_DEVICE
     StackVariables():
       elementLocalDofIndex{0},
-      R{0.0},
-      dRdU{{0.0}}
+      localResidual{0.0},
+      localJacobian{{0.0}}
     {}
 
     globalIndex elementLocalDofIndex[ndof];
-    real64      R[ndof];
-    real64      dRdU[ndof][ndof];
+    real64      localResidual[ndof];
+    real64      localJacobian[ndof][ndof];
   };
 
 
@@ -143,11 +144,11 @@ public:
   template< typename STACK_VARIABLE_TYPE >
 //  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 postKernel( STACK_VARIABLE_TYPE const & stack ) const
+  real64 postKernel( STACK_VARIABLE_TYPE & stack ) const
   {
     m_matrix.insert( stack.elementLocalDofIndex,
                      stack.elementLocalDofIndex,
-                     &(stack.dRdU[0][0]),
+                     &(stack.localJacobian[0][0]),
                      stack.ndof,
                      stack.ndof );
     return 0;
@@ -170,7 +171,7 @@ template< typename POLICY,
 real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
                                             KERNEL_CLASS const & kernelClass )
 {
-  RAJA::ReduceMax< serialReduce, real64 > maxForce( 0 );
+  RAJA::ReduceMax< serialReduce, real64 > maxResidual( 0 );
 
   forAll< POLICY >( numElems,
                     [=] ( localIndex const k )
@@ -188,10 +189,10 @@ real64 FiniteElementRegionLoopKernelLaunch( localIndex const numElems,
 
             kernelClass.integrationKernel( k, q, stack );
           }
-          maxForce.max( kernelClass.postKernel( stack ) );
+          maxResidual.max( kernelClass.postKernel( stack ) );
         }
       } );
-  return maxForce.get();
+  return maxResidual.get();
 }
 
 
@@ -207,7 +208,7 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
                                 ParallelVector & inputRhs )
 {
 
-  real64 maxForce = 0;
+  real64 maxResidual = 0;
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
@@ -233,7 +234,7 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
       constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
       constitutive::SolidBase * const
-      solidBase = elementSubRegion.GetConstitutiveModels()->template GetGroup< constitutive::SolidBase >( solidMaterialName );
+      solidBase = elementSubRegion.template getConstitutiveModel<constitutive::SolidBase>( solidMaterialName );
 
       constitutive::constitutiveUpdatePassThru( solidBase, [&]( auto & castedConstitutiveRelation )
       {
@@ -246,20 +247,17 @@ real64 FiniteElementRegionLoop( MeshLevel & mesh,
                                                                    elementSubRegion,
                                                                    castedConstitutiveRelation );
 
-//        typename CONSTITUTIVE_TYPE::KernelWrapper
-//        constitutiveWrapper = createConstitutiveUpdate<SUBREGIONTYPE,KERNEL_CLASS >( castedConstitutiveRelation );
-
-        maxForce = std::max( maxForce,
-                             FiniteElementRegionLoopKernelLaunch< POLICY,
-                                                                  NUM_NODES_PER_ELEM,
-                                                                  NUM_QUADRATURE_POINTS >( numElems,
-                                                                                           kernelClass ) );
+        maxResidual = std::max( maxResidual,
+                                FiniteElementRegionLoopKernelLaunch< POLICY,
+                                                                     NUM_NODES_PER_ELEM,
+                                                                     NUM_QUADRATURE_POINTS >( numElems,
+                                                                                              kernelClass ) );
 
       } );
     } );
   } );
 
-  return maxForce;
+  return maxResidual;
 }
 }
 }
