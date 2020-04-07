@@ -359,6 +359,9 @@ public:
     }
   }
 
+//  template< typename FUNCTION >
+//  auto executeIntgratorOption( FUNCTION && function );
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
