@@ -178,7 +178,7 @@ public:
   real64  GetEventProgress() const { return m_eventProgress; }
 
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
-  
+
   real64  GetBeginTime() const { return m_beginTime; }
   real64  GetEndTime() const { return m_endTime; }
   ExecutableGroup * GetEventTarget() const { return m_target; }
