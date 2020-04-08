@@ -374,19 +374,19 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
   } );
 
   // TODO: this formulation of explicit solver requires density boundary condition
-//  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-//  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::densityString,
-//                    [&]( FieldSpecificationBase const * const fs,
-//                         string const &,
-//                         set<localIndex> const & lset,
-//                         Group * subRegion,
-//                         string const & ) -> void
-//  {
-//    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-//                                                  time_n + dt,
-//                                                  subRegion,
-//                                                  viewKeyStruct::densityString );
-//  });
+  //FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  //fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::densityString,
+  //                  [&]( FieldSpecificationBase const * const fs,
+  //                       string const &,
+  //                       set<localIndex> const & lset,
+  //                       Group * subRegion,
+  //                       string const & ) -> void
+  //{
+  //  fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+  //                                                time_n + dt,
+  //                                                subRegion,
+  //                                                viewKeyStruct::densityString );
+  //});
 
   // update pressure based on density
   if (m_poroElasticFlag)
@@ -491,19 +491,19 @@ void SinglePhaseFlow::UpdateEOS( real64 const time_n,
   }
 
   // apply pressure boundary condition in the explicit solver
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
-                         string const &,
-                         set<localIndex> const & lset,
-                         Group * subRegion,
-                         string const & ) -> void
-  {
-    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
-                                                  time_n + dt,
-                                                  subRegion,
-                                                  viewKeyStruct::pressureString );
-  });
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+    fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                      [&]( FieldSpecificationBase const * const fs,
+                           string const &,
+                           set<localIndex> const & lset,
+                           Group * subRegion,
+                           string const & ) -> void
+    {
+      fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                    time_n + dt,
+                                                    subRegion,
+                                                    viewKeyStruct::pressureString );
+    });
 
   // update state based on pressure
   applyToSubRegions( mesh, [&] ( ElementSubRegionBase * const subRegion )
@@ -1051,6 +1051,34 @@ void SinglePhaseFlow::CalculateAndApplyMassFlux( real64 const time_n,
                                                       viewKeyStruct::massString );
 
   } );
+
+  // apply pressure boundary condition in the explicit solver
+  //FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         set<localIndex> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::pressureString );
+    CompressibleSinglePhaseFluid * const fluid = dynamic_cast<CompressibleSinglePhaseFluid*>(GetConstitutiveModel<SingleFluidBase>( subRegion, m_fluidName ));
+    arrayView1d<real64> const &
+        mass = subRegion->getReference<array1d<real64> >( viewKeyStruct::massString );
+    arrayView1d<real64 const> const &
+        vol = subRegion->getReference<array1d<real64> >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+    arrayView1d<real64 const> const &
+        poro = subRegion->getReference<array1d<real64> >( viewKeyStruct::porosityString );
+
+    for( localIndex const a : lset )
+    {
+    	mass[a] = fluid->referenceDensity() / (1 - (fs->GetScale()-fluid->referencePressure())
+    			* fluid->compressibility()) * vol[a] * poro[a];
+    }
+  });
 
   // synchronize element fields
   std::map<string, string_array> fieldNames;
