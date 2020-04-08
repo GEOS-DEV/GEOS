@@ -1067,19 +1067,27 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                                      dofNumber,
                                                                                                      matrix,
                                                                                                      rhs,
-                                                                                                     gravityVector().Data());
+                                                                                                     SolidMechanicsLagrangianFEMKernels::QuasiStatic::Parameters(gravityVector().Data()));//,
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-//    m_maxForce = physicsLoopInterface::
-//                 FiniteElementRegionLoop< serialPolicy,
-//                                          SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( *mesh,
-//                                                                                                 m_targetRegions,
-//                                                                                                 m_solidMaterialName,
-//                                                                                                 feDiscretization,
-//                                                                                                 dofNumber,
-//                                                                                                 matrix,
-//                                                                                                 rhs );
+    m_maxForce = physicsLoopInterface::
+                 FiniteElementRegionLoop::
+                 Execute< serialPolicy,
+                          SolidMechanicsLagrangianFEMKernels::
+                          ImplicitNewmark>( *mesh,
+                                            m_targetRegions,
+                                            m_solidMaterialName,
+                                            feDiscretization,
+                                            dofNumber,
+                                            matrix,
+                                            rhs,
+                                            SolidMechanicsLagrangianFEMKernels::ImplicitNewmark::Parameters( gravityVector().Data(),
+                                                                                                             m_newmarkGamma,
+                                                                                                             m_newmarkBeta,
+                                                                                                             m_massDamping,
+                                                                                                             m_stiffnessDamping,
+                                                                                                             dt ) );
   }
 
 

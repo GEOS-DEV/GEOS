@@ -49,10 +49,8 @@ class FiniteElementRegionLoop
 {
 public:
 
-  class Parameters
-  {
-
-  };
+  struct Parameters
+  {};
 
   template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
   struct StackVariables
@@ -119,26 +117,29 @@ public:
                        STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename STACK_VARIABLE_TYPE >
+    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //  GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
+                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename STACK_VARIABLE_TYPE >
+    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //  GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                             localIndex const GEOSX_UNUSED_PARAM( q ),
+                            PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                             STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename STACK_VARIABLE_TYPE >
+    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //  GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( STACK_VARIABLE_TYPE & stack ) const
+    real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                       STACK_VARIABLE_TYPE & stack ) const
     {
       m_matrix.insert( stack.elementLocalDofIndex,
                        stack.elementLocalDofIndex,
@@ -177,9 +178,11 @@ protected:
   int NUM_NODES_PER_ELEM,
   int NUM_QUADRATURE_POINTS,
   typename STACK_VARIABLES,
+  typename PARAMETERS_TYPE,
   typename KERNEL_CLASS >
   static
   real64 Launch( localIndex const numElems,
+                 PARAMETERS_TYPE const & parameters,
                  KERNEL_CLASS const & kernelClass )
   {
     RAJA::ReduceMax< serialReduce, real64 > maxResidual( 0 );
@@ -196,11 +199,11 @@ protected:
         {
           kernelClass.updateKernel( k, q, stack );
 
-          kernelClass.stiffnessKernel( k, q, stack );
+          kernelClass.stiffnessKernel( k, q, parameters, stack );
 
-          kernelClass.integrationKernel( k, q, stack );
+          kernelClass.integrationKernel( k, q, parameters, stack );
         }
-        maxResidual.max( kernelClass.postKernel( stack ) );
+        maxResidual.max( kernelClass.postKernel( parameters, stack ) );
       }
                       } );
     return maxResidual.get();
@@ -218,7 +221,7 @@ protected:
                   arrayView1d< globalIndex const > const & inputDofNumber,
                   ParallelMatrix & inputMatrix,
                   ParallelVector & inputRhs,
-                  KERNEL_PARAMS && ... kernelParams )
+                  typename UPDATE_CLASS::Parameters const & parameters )
   {
 
     real64 maxResidual = 0;
@@ -258,14 +261,14 @@ protected:
                                                                               inputRhs,
                                                                               nodeManager,
                                                                               elementSubRegion,
-                                                                              castedConstitutiveRelation,
-                                                                              std::forward<KERNEL_PARAMS>(kernelParams)... );
+                                                                              castedConstitutiveRelation );
 
           maxResidual = std::max( maxResidual,
                                   Launch< POLICY,
                                           NUM_NODES_PER_ELEM,
                                           NUM_QUADRATURE_POINTS,
                                           typename UPDATE_CLASS::template StackVariables<NUM_NODES_PER_ELEM,3>>( numElems,
+                                                                                                                 parameters,
                                                                                                                  kernelClass ) );
         } );
       } );
@@ -278,7 +281,7 @@ protected:
   static
   real64 FillSparsity( PARAMS && ... params )
   {
-    return Execute<POLICY, FiniteElementRegionLoop>( std::forward<PARAMS>(params)... );
+    return Execute<POLICY, FiniteElementRegionLoop>( std::forward<PARAMS>(params)..., FiniteElementRegionLoop::Parameters() );
   }
 
 
