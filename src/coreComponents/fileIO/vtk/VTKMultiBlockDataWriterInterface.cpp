@@ -340,6 +340,10 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, DomainPar
     {
       ug->SetCells(VTK_HEXAHEDRON, std::get<1>(VTKSurface));
     }
+    else if( esr->numNodesPerElement() == 6 )
+    {
+      ug->SetCells(VTK_WEDGE, std::get<1>(VTKSurface));
+    }
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtuWriter =vtkXMLUnstructuredGridWriter::New();
     vtuWriter->SetInputData( ug );
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
