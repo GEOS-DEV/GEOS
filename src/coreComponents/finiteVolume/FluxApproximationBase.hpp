@@ -118,6 +118,11 @@ public:
                                      bool const GEOSX_UNUSED_PARAM( initFlag ) ) {}
 
 
+  virtual void addEDFracToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                           string const & GEOSX_UNUSED_PARAM( embeddedSurfaceRegionName ) ) {}
+
+
+
   struct viewKeyStruct
   {
     static constexpr auto fieldNameString             = "fieldName";

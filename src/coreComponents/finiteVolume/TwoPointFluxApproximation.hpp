@@ -47,6 +47,10 @@ protected:
                                        SortedArrayView< localIndex const > const & faceSet,
                                        BoundaryStencil & stencil ) override;
 
+  virtual void addEDFracToFractureStencil( DomainPartition & domain,
+                                           string const & embeddedSurfaceRegionName ) override;
+
+
 };
 
 }

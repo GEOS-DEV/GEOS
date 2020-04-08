@@ -60,34 +60,6 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {
-
-//  for( auto & mesh : MeshBodies->GetSubGroups() )
-//  {
-//    MeshLevel * const meshLevel = mesh.second->group_cast<MeshBody*>()->getMeshLevel(0);
-//
-//    NodeManager * const nodeManager = meshLevel->getNodeManager();
-//    EdgeManager * const edgeManager = meshLevel->getEdgeManager();
-//
-//    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-//      setApplyDefaultValue(-1)->
-//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-//      setDescription("Parent index of node.");
-//
-//    nodeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-//      setApplyDefaultValue(-1)->
-//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-//      setDescription("Child index of node.");
-//
-//    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::parentIndexString)->
-//      setApplyDefaultValue(-1)->
-//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-//      setDescription("Parent index of the edge.");
-//
-//    edgeManager->registerWrapper<localIndex_array>(ObjectManagerBase::viewKeyStruct::childIndexString)->
-//      setApplyDefaultValue(-1)->
-//      setPlotLevel(dataRepository::PlotLevel::LEVEL_1)->
-//      setDescription("Child index of the edge.");
-//  }
 }
 
 void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
@@ -191,20 +163,13 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
                                                          embSurfToNodeMap,
                                                          numFractureNodes );
 
-
-//  for (localIndex e=0; e < embSurfToNodeMap.size(); e++)
-//  {
-//    std::cout << "element " << e << " which has" << embSurfToNodeMap.sizeOfArray(e) << std::endl;
-//    for (localIndex i=0; i < embSurfToNodeMap.sizeOfArray(e); i++)
-//    {
-//      std::cout << embSurfToNodeMap(e, i) << std::endl;
-//    }
-//  }
-
   // resize embSurfToEdgeMap
   embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
   embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap, embSurfToEdgeMap );
 
+
+  // Add the embedded elements to the fracture stencil.
+  addToFractureStencil(domain);
 
 }
 
@@ -228,9 +193,36 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( 
 {
   real64 rval = 0;
   /*
-   * This should be method that generates new fracture elements based on the propagation criterion of choice.
+   * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
   return rval;
+}
+
+void EmbeddedSurfaceGenerator::addToFractureStencil(DomainPartition * const domain)
+{
+  // Add embedded elements to the fracture Stencil
+  NumericalMethodsManager * const
+  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
+
+  FiniteVolumeManager * const
+  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( dataRepository::keys::finiteVolumeManager );
+
+  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+
+    {
+      for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
+      {
+        FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
+        if( fluxApprox!=nullptr )
+        {
+          fluxApprox->addToFractureStencil( *domain,
+                                            this->m_fractureRegionName );
+        }
+      }
+    }
+  }
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase,
