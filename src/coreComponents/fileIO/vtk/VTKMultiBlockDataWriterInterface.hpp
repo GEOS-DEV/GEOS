@@ -88,9 +88,10 @@ class VTKPolyDataWriterInterface
    *      - rank2
    *      - ...
    * @param[in] time the time step to be written
+   * @param[in] cycle the current cycle of event
    * @param[in] domain the computation domain of this rank
    */
-  void Write( real64 time, DomainPartition const & domain  ) const;
+  void Write( real64 time, integer cycle, DomainPartition const & domain  );
 
   private:
 
@@ -101,7 +102,7 @@ class VTKPolyDataWriterInterface
    * (aka one file per ElementRegion and per rank).
    * @param[in] time the time-step
    */
-  void CreateTimeStepSubFolder( double time ) const;
+  void CreateTimeStepSubFolder( real64 time ) const;
 
   /*!
    * @brief Given a time-step \p time, returns the relative path
@@ -109,7 +110,7 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time-step
    * @return the relative path to the folder of the time step
    */
-  string GetTimeStepSubFolder( double time ) const;
+  string GetTimeStepSubFolder( real64 time ) const;
 
   /*!
    * @brief Writes the files for all the CellElementRegions.
@@ -117,7 +118,7 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time-step
    * @param[in] domain the computation domain for this rank
    */
-  void WriteCellElementRegions( double time, DomainPartition const & domain ) const;
+  void WriteCellElementRegions( real64 time, DomainPartition const & domain ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
@@ -127,7 +128,7 @@ class VTKPolyDataWriterInterface
    * the second value is a table with the same size than the total number of element in the CellElementRegion
    * containg the type of the cells.
    */
-  std::tuple< vtkSmartPointer< vtkCellArray >,  std::vector< int> > GetVTKCells( CellElementRegion const & er ) const;
+  std::tuple< vtkSmartPointer< vtkCellArray >, std::vector< int> > GetVTKCells( CellElementRegion const & er ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
@@ -142,7 +143,7 @@ class VTKPolyDataWriterInterface
    * @param[in] time the time-step
    * @param[in] domain the computation domain for this rank
    */
-  void WriteWellFiles( double time, DomainPartition const & domain ) const;
+  void WriteWellElementRegions( real64 time, DomainPartition const & domain ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
@@ -151,13 +152,23 @@ class VTKPolyDataWriterInterface
   std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const & esr , NodeManager const & nodeManager) const;
 
   /*!
+   * @brief Writes the files containing the faces elements
+   * @details There will be one file written per FaceElementRegion and per rank
+   * @param[in] time the time-step
+   * @param[in] domain the computation domain for this rank
+   */
+  void WriteFaceElementRegions( real64 time, DomainPartition const & domain ) const;
+
+  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager) const;
+
+  /*!
    * @brief Writes a VTM file for the time-step \p time.
    * @details a VTM file is a VTK Multiblock file. It contains reltive path to different files organized in blocks.
    * @param[in] time the time-step
    * @param[in] domain the computation domain for this rank
    * @param[in] vtmWrite a writer specialized for the VTM file format
    */
-  void WriteVTMFile( double time, DomainPartition const & domain, VTKVTMWriter const & vtmWriter ) const;
+  void WriteVTMFile( real64 time, DomainPartition const & domain, VTKVTMWriter const & vtmWriter ) const;
 
   /*!
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
@@ -196,6 +207,9 @@ class VTKPolyDataWriterInterface
   
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
+
+  /// The previousCycle
+  integer m_previousCycle;
 };
 
 } // namespace vtk

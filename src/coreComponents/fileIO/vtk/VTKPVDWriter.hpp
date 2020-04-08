@@ -49,7 +49,7 @@ class VTKPVDWriter
     }
   }
 
-  void AddData( double time, string const& filePath ) const
+  void AddData( real64 time, string const& filePath ) const
   {
     auto collectionNode = m_pvdFile.child("VTKFile").child("Collection");
     auto dataSetNode = collectionNode.append_child("DataSet");
