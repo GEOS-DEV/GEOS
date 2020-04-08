@@ -217,6 +217,7 @@ void VTKPolyDataWriterInterface::WriteNodeFields( vtkSmartPointer< vtkPointData 
   }
 }
 
+/*
 void VTKPolyDataWriterInterface::WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const & er ) const
 {
   std::unordered_set< string > allFields;
@@ -247,6 +248,39 @@ void VTKPolyDataWriterInterface::WriteCellFields( vtkSmartPointer< vtkCellData >
     celldata->AddArray( data );
   }
 }
+*/
+
+template< class SUBREGION >
+void VTKPolyDataWriterInterface::WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBase const & er ) const
+{
+  std::unordered_set< string > allFields;
+  er.forElementSubRegions<SUBREGION>([&]( auto const & esr )
+  {
+    for( auto const & wrapperIter : esr.wrappers() )
+    {
+      auto const * const wrapper = wrapperIter.second;
+      if( wrapper->getPlotLevel() <= m_plotLevel )
+      {
+        allFields.insert(wrapperIter.first);
+      }
+    }
+  });
+
+  for( auto const & field : allFields )
+  {
+    vtkSmartPointer < VTKGEOSXData > data = VTKGEOSXData::New();
+    data->SetNumberOfValues( er.getNumberOfElements<SUBREGION> () );
+    data->SetName( field.c_str() );
+
+    localIndex count = 0;
+    er.forElementSubRegions<SUBREGION>([&]( auto const & esr )
+    {
+       auto const & wrapper = *esr.getWrapperBase( field ) ;
+       WriteField( wrapper, data, esr.size(), count);
+    });
+    celldata->AddArray( data );
+  }
+}
 void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, DomainPartition const & domain ) const
 {
   string timeStepSubFolder = VTKPolyDataWriterInterface::GetTimeStepSubFolder( time);
@@ -260,7 +294,7 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, DomainPar
     vtkUg->SetPoints( VTKPoints );
     auto VTKCells = GetVTKCells( er );
     vtkUg->SetCells( std::get<1>(VTKCells).data(), std::get<0>(VTKCells) );
-    WriteCellFields( vtkUg->GetCellData(), er );
+    WriteElementFields<CellElementSubRegion>( vtkUg->GetCellData(), er );
     WriteNodeFields( vtkUg->GetPointData(),*domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
     vtkUgWriter->SetFileName( vtuFilePath.c_str() );
@@ -309,6 +343,7 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, DomainPar
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtuWriter =vtkXMLUnstructuredGridWriter::New();
     vtuWriter->SetInputData( ug );
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
+    WriteElementFields<FaceElementSubRegion>( ug->GetCellData(), er );
     vtuWriter->SetFileName( vtuFilePath.c_str() );
     vtuWriter->SetDataModeToAscii();
     vtuWriter->Write();

@@ -178,11 +178,12 @@ class VTKPolyDataWriterInterface
   void WriteNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const & nodeManager) const;
 
   /*!
-   * @brief Writes all the fields associated to the cellss of \p er if their plotlevel is <= m_plotLevel
-   * @param[in] celldata a VTK object containing all the fields associated with the cells
-   * @param[in] er CellElementRegion being written
+   * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
+   * @param[in] celldata a VTK object containing all the fields associated with the elements
+   * @param[in] er ElementRegion being written
    */
-  void WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const & er ) const;
+template< class SUBREGION >
+void WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBase const & er ) const;
 
   /*!
    * @brief Writes a field from \p wrapperBase
