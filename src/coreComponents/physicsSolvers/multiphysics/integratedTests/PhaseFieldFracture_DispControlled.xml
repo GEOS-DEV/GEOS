@@ -99,8 +99,8 @@
   <Constitutive>
     <LinearElasticIsotropic name="shale"
                             defaultDensity="2700"
-                            defaultBulkModulus="1.7550e5"
-                            defaultShearModulus="8.077e4"/>
+                            defaultBulkModulus="1.7500e5"
+                            defaultShearModulus="8.0769e4"/>
   </Constitutive>
 
   <FieldSpecifications>
