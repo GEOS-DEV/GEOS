@@ -1519,9 +1519,10 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
+            // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[i][j] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              invStiffApprox[i][j] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
             }
           }
 
