@@ -568,7 +568,7 @@ else
 		}
 		else
 		{
-			r1 = r *(1.0 * sqrt( r.doubleContraction(r, r) ));
+			r1 = r * (1.0 / sqrt( r.doubleContraction(r, r) ));
 		}
         temp.AijBjk( r1, r1 );
         pass.AijBjk( temp, r1 );
@@ -697,6 +697,10 @@ else
 						std::cout<<beta0;
 						std::cout<<"\n";
 						std::cout<<beta1;
+						std::cout<<"\n";
+						std::cout<<Fb0;
+						std::cout<<"\n";
+						std::cout<<Fb1;
 						std::cout<<"\n";
 						std::cout<<alpha_ns.doubleContraction(alpha_ns,alpha_ns);
 						std::cout<<"\n";

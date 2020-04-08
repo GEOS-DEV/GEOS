@@ -825,7 +825,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
-  /*
   ElementRegionManager::MaterialViewAccessor< real64 > const
   clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
                                                                                        constitutiveManager);
@@ -835,7 +834,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   {
 	  ClearDisplacement( domain );
   }
-  */
 
   CommunicationTools::SynchronizeUnpack( mesh, neighbors, m_iComm, true );
 
@@ -1124,7 +1122,14 @@ void SolidMechanicsLagrangianFEM::ApplyTiedVelocity_explicit( real64 const time,
 	                    Group * const GEOSX_UNUSED_ARG( targetGroup ),
 	                    string const GEOSX_UNUSED_ARG( fieldName ) ) -> void
 	  {
-	    R1Tensor v0 = vel[targetSet[0]];
+	    R1Tensor v0 = R1Tensor(0,0,0);
+	    int vNum = 0;
+	    for( auto kf : targetSet )
+	    {
+	    	v0 += vel[kf];
+	    	++vNum;
+	    }
+	    v0 /= vNum;
 	    for( auto kf : targetSet )
 	    {
 	//        if( faceGhostRank[kf] < 0 )
