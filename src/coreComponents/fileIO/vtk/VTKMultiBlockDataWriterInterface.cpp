@@ -318,6 +318,7 @@ void VTKPolyDataWriterInterface::WriteWellElementRegions( real64 time, DomainPar
     ug->SetCells(VTK_LINE, std::get<1>(VTKWell));
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtuWriter =vtkXMLUnstructuredGridWriter::New();
     vtuWriter->SetInputData( ug );
+    WriteElementFields<WellElementSubRegion>( ug->GetCellData(), er );
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank) +"_" + er.getName() + ".vtu";
     vtuWriter->SetFileName( vtuFilePath.c_str() );
     vtuWriter->SetDataModeToAscii();
