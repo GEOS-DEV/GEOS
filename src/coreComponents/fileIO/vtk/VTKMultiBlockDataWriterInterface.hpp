@@ -149,7 +149,7 @@ class VTKPolyDataWriterInterface
    * @brief Gets the VTK Object points encapsulating
    * the cells connectivities of \p es
    */
-  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const & esr , NodeManager const & nodeManager) const;
+  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const & esr , NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -159,7 +159,7 @@ class VTKPolyDataWriterInterface
    */
   void WriteFaceElementRegions( real64 time, DomainPartition const & domain ) const;
 
-  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager) const;
+  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.

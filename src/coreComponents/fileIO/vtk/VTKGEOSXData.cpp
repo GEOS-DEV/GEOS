@@ -29,15 +29,13 @@ void VTKGEOSXData::InsertValue2< R1Tensor>( localIndex index, R1Tensor const & v
 }
 
 template<>
-void VTKGEOSXData::InsertValue2< R2Tensor>( localIndex index, R2Tensor const & val )
+void VTKGEOSXData::InsertValue2< R2Tensor>( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
 {
-  std::cout << val << index << std::endl;
 }
 
 template<>
-void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex index, R2SymTensor const & val )
+void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2SymTensor const & GEOSX_UNUSED_PARAM ( val ) )
 {
-  std::cout << val << index << std::endl;
 }
 }
 }

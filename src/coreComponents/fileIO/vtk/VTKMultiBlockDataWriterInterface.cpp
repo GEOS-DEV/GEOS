@@ -19,6 +19,7 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellData.h>
 #include <vtkPointData.h>
+#include <vtkExtentTranslator.h>
 
 #include <unordered_set>
 
@@ -78,18 +79,18 @@ std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >VTKP
   }
   return std::make_tuple( points, cellsArray );
 }
-std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >VTKPolyDataWriterInterface::GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager) const
+std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >VTKPolyDataWriterInterface::GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager ) const
 {
   // Get unique node set composing the surface
   auto & nodeList = esr.nodeList();
-  std::cout <<  "nb elem " << nodeList.size() << std::endl;
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   cellsArray->SetNumberOfCells( esr.size() );
   std::unordered_map< localIndex, localIndex > old2New;
   old2New.reserve( esr.size() * 4 );
   localIndex nodeIndexInVTK = 0;
-  for( auto & elem : nodeList )
+  for( localIndex ei = 0; ei < esr.size(); ei++ )
   {
+    auto & elem = nodeList[ei];
     std::vector< vtkIdType > connectivity(esr.numNodesPerElement() );
     for( localIndex i = 0; i < elem.size(); i++ )
     {
@@ -106,7 +107,6 @@ std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >VTKP
     cellsArray->InsertNextCell(elem.size(), connectivity.data() );
   }
 
-  std::cout << "nb points " << old2New.size() << std::endl;
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
   points->SetNumberOfPoints( old2New.size() );
   for( auto nodeIndex: old2New )
@@ -217,39 +217,6 @@ void VTKPolyDataWriterInterface::WriteNodeFields( vtkSmartPointer< vtkPointData 
   }
 }
 
-/*
-void VTKPolyDataWriterInterface::WriteCellFields( vtkSmartPointer< vtkCellData > const celldata, CellElementRegion const & er ) const
-{
-  std::unordered_set< string > allFields;
-  er.forElementSubRegions<CellElementSubRegion>([&]( auto const & esr )
-  {
-    for( auto const & wrapperIter : esr.wrappers() )
-    {
-      auto const * const wrapper = wrapperIter.second;
-      if( wrapper->getPlotLevel() <= m_plotLevel )
-      {
-        allFields.insert(wrapperIter.first);
-      }
-    }
-  });
-
-  for( auto const & field : allFields )
-  {
-    vtkSmartPointer < VTKGEOSXData > data = VTKGEOSXData::New();
-    data->SetNumberOfValues( er.getNumberOfElements<CellElementSubRegion> () );
-    data->SetName( field.c_str() );
-
-    localIndex count = 0;
-    er.forElementSubRegions<CellElementSubRegion>([&]( auto const & esr )
-    {
-       auto const & wrapper = *esr.getWrapperBase( field ) ;
-       WriteField( wrapper, data, esr.size(), count);
-    });
-    celldata->AddArray( data );
-  }
-}
-*/
-
 template< class SUBREGION >
 void VTKPolyDataWriterInterface::WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBase const & er ) const
 {
@@ -312,8 +279,8 @@ void VTKPolyDataWriterInterface::WriteWellElementRegions( real64 time, DomainPar
   elemManager->forElementRegions<WellElementRegion>([&](WellElementRegion const & er)->void
   {
     auto esr = er.GetSubRegion(0)->group_cast<WellElementSubRegion const *>();
-    auto VTKWell = GetWell( *esr, *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     vtkSmartPointer<vtkUnstructuredGrid> ug = vtkUnstructuredGrid::New();
+    auto VTKWell = GetWell( *esr, *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     ug->SetPoints(std::get<0>(VTKWell));
     ug->SetCells(VTK_LINE, std::get<1>(VTKWell));
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtuWriter =vtkXMLUnstructuredGridWriter::New();
@@ -334,8 +301,8 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, DomainPar
   elemManager->forElementRegions<FaceElementRegion>([&](FaceElementRegion const & er)->void
   {
     auto esr = er.GetSubRegion(0)->group_cast<FaceElementSubRegion const *>();
-    auto VTKSurface = GetSurface( *esr, *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     vtkSmartPointer<vtkUnstructuredGrid> ug = vtkUnstructuredGrid::New();
+    auto VTKSurface = GetSurface( *esr, *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager() );
     ug->SetPoints(std::get<0>(VTKSurface));
     if( esr->numNodesPerElement() == 8 )
     {
