@@ -354,7 +354,10 @@ if(m_initialTime[k][q] < 0)
 
 else
 {
-	m_clearDisplacement = -1;
+	if(m_initialTime[k][q] < m_defaultInitialTime)
+		m_clearDisplacement = 1;
+	else
+		m_clearDisplacement = -1;
 
 	real64 Mfc = m_M[k];
 	real64 Mdc = m_M[k];
