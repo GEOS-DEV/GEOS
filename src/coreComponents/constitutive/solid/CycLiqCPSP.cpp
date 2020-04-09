@@ -337,10 +337,10 @@ if(m_initialTime[k][q] < 0)
 	m_clearDisplacement = 1;
 
 	 //m_strain[k][q] += D;
-     real64 p = 1e10;
+     real64 p = 1e6;
      real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
      real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
-     G = 3.0 / 8.0 * K;
+     G = 0.48 / 8.0 * K;
      real64 meanStresIncrement = D.Trace();
      R2SymTensor temp = D;
      temp.PlusIdentity( -meanStresIncrement / 3.0 );
@@ -354,9 +354,9 @@ if(m_initialTime[k][q] < 0)
 
 else
 {
-	if(m_initialTime[k][q] < m_defaultInitialTime)
-		m_clearDisplacement = 1;
-	else
+	//if(m_initialTime[k][q] < m_defaultInitialTime)
+		//m_clearDisplacement = 1;
+	//else
 		m_clearDisplacement = -1;
 
 	real64 Mfc = m_M[k];
