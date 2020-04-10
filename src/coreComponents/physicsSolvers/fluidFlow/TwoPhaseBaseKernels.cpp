@@ -48,7 +48,7 @@ void PhaseMobilityKernel::Compute( arraySlice1d< real64 const > phaseDens,
                           + dPhaseDens_dPres[ip] * relPermOverVisc;
     dPhaseMob_dSat[ip]  = phaseDens[ip] * dRelPermOverVisc_dSat;
   }
-  dPhaseMob_dSat[1] *= -1;
+  dPhaseMob_dSat[1] *= -1; // we assume that the first saturation is the primary variable
 }
 
 void PhaseMobilityKernel::Launch( localIndex const size,

@@ -67,9 +67,9 @@ struct FluxKernelHelper
                                  arraySlice1d< real64 const > const dElemDens_dp,
                                  stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
                                                *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
-                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & totalVolFlux,
-                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dTotalVolFlux_dp,
-                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dTotalVolFlux_dS,
+                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & volFlux,
+                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dVlFlux_dp,
+                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dVolFlux_dS,
                                  stackArray3d< real64,
                                                TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES > & dTotalVolFlux_dfp );
 
@@ -165,7 +165,7 @@ struct FluxKernelHelper
   void AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                             arraySlice1d< localIndex const > const elemToFaces,
                             globalIndex const elemDofNumber,
-                            stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & VolFlux,
+                            stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & volFlux,
                             stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dp,
                             stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dS,
                             stackArray3d< real64,

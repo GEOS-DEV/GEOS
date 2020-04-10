@@ -34,7 +34,7 @@ namespace TwoPhaseBaseKernels
 struct PhaseMobilityKernel
 {
 
-  static inline void
+  static void
   Compute( arraySlice1d< real64 const > phaseDens,
            arraySlice1d< real64 const > dPhaseDens_dPres,
            arraySlice1d< real64 const > phaseVisc,

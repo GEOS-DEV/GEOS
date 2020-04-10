@@ -5,6 +5,8 @@
 
 set( gtest_geosx_tests
      testSinglePhaseKernels.cpp
+     testTwoPhaseBaseKernels.cpp          
+     testTwoPhaseHybridFVMKernels.cpp     
    )
 
 if(ENABLE_PVTPackage)
