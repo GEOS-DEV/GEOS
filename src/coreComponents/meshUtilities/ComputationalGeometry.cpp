@@ -356,115 +356,32 @@ void RotationMatrix_3D( R1Tensor const & normal,
                         R2Tensor & rotationMatrix,
                         real64 const rotationTolerance )
 {
-  R1Tensor const e1 = {1, 0, 0};
-  R1Tensor const e2 = {0, 1, 0};
-  R1Tensor const e3 = {0, 0, 1};
-
-  R1Tensor r2, r3;
-  R1Tensor proj1, proj2;
-  real64 dot1, dot2;
-  // Avoid to use a vector parallel to the normal to complete the basis
-  if( std::fabs( std::fabs( normal( 0 )) - 1.0 ) > rotationTolerance )
+  R1Tensor m1( -normal( 1 ), normal( 0 ), 0.0 );
+  R1Tensor m2( -normal( 2 ), 0.0, normal( 0 ) );
+  real64 const norm_m1 = m1.Normalize();
+  real64 const norm_m2 = m2.Normalize();
+  // If present, look for a vector with 0 norm
+  if( norm_m1 > norm_m2 )
   {
-    // Default choice: e1
-    proj1 = normal;
-    dot1 = Dot( e1, normal );
-    proj1 *= dot1;
-    r2 = e1;
-    r2 -= proj1;
-    r2.Normalize();
-
-    // Avoid to use a vector parallel to either the normal or the r2 direction to complete the basis
-    if( std::fabs( Dot( e3, normal ) ) + std::fabs( Dot( e3, r2 ) ) > rotationTolerance )
-    {
-      // Default choice: e2
-      proj1 = normal;
-      dot1 = Dot( e2, normal );
-      proj1 *= dot1;
-      proj2 = r2;
-      dot2 = Dot( e2, r2 );
-      proj2 *= dot2;
-      r3 = e2;
-      r3 -= proj1;
-      r3 -= proj2;
-      r3.Normalize();
-    }
-    else
-    {
-      // Alternative choice: e3
-      proj1 = normal;
-      dot1 = Dot( e3, normal );
-      proj1 *= dot1;
-      proj2 = r2;
-      dot2 = Dot( e3, r2 );
-      proj2 *= dot2;
-      r3 = e3;
-      r3 -= proj1;
-      r3 -= proj2;
-      r3.Normalize();
-    }
+    m2.Cross( normal, m1 );
+    m2.Normalize();
   }
   else
   {
-    // Alternative choice: e2
-    dot1 = Dot( e2, normal );
-    proj1 *= dot1;
-    r2 = e2;
-    r2 -= proj1;
-    r2.Normalize();
-
-    // Default choice: e3
-    proj1 = normal;
-    dot1 = Dot( e3, normal );
-    proj1 *= dot1;
-    proj2 = r2;
-    dot2 = Dot( e3, r2 );
-    proj2 *= dot2;
-    r3 = e3;
-    r3 -= proj1;
-    r3 -= proj2;
-    r3.Normalize();
-  }
-
-  // Change sign to the vectors added to complete the basis of R3 according to the criterion:
-  // maximum component larger than zero
-  real64 max_r2 = std::fabs( r2( 0 ));
-  real64 max_r3 = std::fabs( r3( 0 ));
-  int maxpos_r2 = 0;
-  int maxpos_r3 = 0;
-  for( int i=1; i<3; ++i )
-  {
-    if( std::fabs( r2( i )) > max_r2 )
-    {
-      max_r2 = std::fabs( r2( i ));
-      maxpos_r2 = i;
-    }
-    if( std::fabs( r3( i )) > max_r3 )
-    {
-      max_r3 = std::fabs( r3( i ));
-      maxpos_r3 = i;
-    }
-  }
-  if( r2( maxpos_r2 ) < 0.0 )
-  {
-    r2 *= -1.0;
-  }
-  if( r3( maxpos_r3 ) < 0.0 )
-  {
-    r3 *= -1.0;
+    m1.Cross( normal, m2 );
+    m1.Normalize();
   }
 
   // Save everything in the standard form (3x3 rotation matrix)
   rotationMatrix( 0, 0 ) = normal( 0 );
   rotationMatrix( 1, 0 ) = normal( 1 );
   rotationMatrix( 2, 0 ) = normal( 2 );
-  rotationMatrix( 0, 1 ) = r2( 0 );
-  rotationMatrix( 1, 1 ) = r2( 1 );
-  rotationMatrix( 2, 1 ) = r2( 2 );
-  rotationMatrix( 0, 2 ) = r3( 0 );
-  rotationMatrix( 1, 2 ) = r3( 1 );
-  rotationMatrix( 2, 2 ) = r3( 2 );
-
+  rotationMatrix( 0, 1 ) = m1( 0 );
+  rotationMatrix( 1, 1 ) = m1( 1 );
+  rotationMatrix( 2, 1 ) = m1( 2 );
+  rotationMatrix( 0, 2 ) = m2( 0 );
+  rotationMatrix( 1, 2 ) = m2( 1 );
+  rotationMatrix( 2, 2 ) = m2( 2 );
 
   GEOSX_ERROR_IF( std::fabs( std::fabs( rotationMatrix.Det() ) - 1.0 ) > std::max( rotationTolerance, 1.e+1*machinePrecision ),
                   "Rotation matrix with determinant different from both +1.0 and -1.0" );
