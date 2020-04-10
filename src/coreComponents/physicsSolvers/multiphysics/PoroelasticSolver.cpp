@@ -348,7 +348,8 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
 
       localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-      localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
+      localIndex const numQuadraturePoints = feDiscretization->getFiniteElement( cellElementSubRegion->GetElementTypeString() )->n_quadrature_points();
+
 
 
       forAll< parallelHostPolicy >( cellElementSubRegion->size(), [=] ( localIndex const ei )

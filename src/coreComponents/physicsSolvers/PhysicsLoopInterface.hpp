@@ -82,13 +82,15 @@ public:
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & nodeManager,
-             SUBREGION_TYPE & elementSubRegion,
+             SUBREGION_TYPE const & elementSubRegion,
+             FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & inputConstitutiveType ):
       Kernels( inputDofNumber,
                inputMatrix,
                inputRhs,
                nodeManager,
                elementSubRegion,
+               finiteElementSpace,
                inputConstitutiveType,
                typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
@@ -155,13 +157,15 @@ public:
     typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
     arrayView1d< integer const > const elemGhostRank;
     typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
+    FiniteElementBase const * m_finiteElementSpace;
 
 protected:
     Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & GEOSX_UNUSED_PARAM(nodeManager),
-             SUBREGION_TYPE & elementSubRegion,
+             SUBREGION_TYPE const & elementSubRegion,
+             FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM(inputConstitutiveType),
              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
      m_dofNumber( inputDofNumber ),
@@ -169,7 +173,8 @@ protected:
      m_rhs( inputRhs ),
      elemsToNodes( elementSubRegion.nodeList() ),
      elemGhostRank( elementSubRegion.ghostRank() ),
-     constitutiveUpdate( inputConstitutiveUpdate )
+     constitutiveUpdate( inputConstitutiveUpdate ),
+     m_finiteElementSpace( finiteElementSpace )
   {}
 
   };
@@ -236,15 +241,22 @@ protected:
       localIndex const numElems = elementSubRegion.size();
       typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
+
+      FiniteElementBase const * finiteElementSpace = nullptr;
+      if( feDiscretization != nullptr )
+      {
+        finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
+      }
+
       localIndex const
-      numQuadraturePointsPerElem = feDiscretization == nullptr ?
+      numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
                                    1 :
-                                   feDiscretization->m_finiteElement->n_quadrature_points();
+                                   finiteElementSpace->n_quadrature_points();
 
       discretizationLaunchSelector( elementSubRegion.numNodesPerElement(),
                                     numQuadraturePointsPerElem,
                                     [&]( auto constNNPE,
-                                        auto constNQPPE )
+                                         auto constNQPPE )
       {
         constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
         constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
@@ -257,11 +269,12 @@ protected:
           using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
           typename UPDATE_CLASS::template Kernels<SUBREGIONTYPE,CONSTITUTIVE_TYPE> kernelClass( inputDofNumber,
-                                                                              inputMatrix,
-                                                                              inputRhs,
-                                                                              nodeManager,
-                                                                              elementSubRegion,
-                                                                              castedConstitutiveRelation );
+                                                                                                inputMatrix,
+                                                                                                inputRhs,
+                                                                                                nodeManager,
+                                                                                                elementSubRegion,
+                                                                                                finiteElementSpace,
+                                                                                                castedConstitutiveRelation );
 
           maxResidual = std::max( maxResidual,
                                   Launch< POLICY,

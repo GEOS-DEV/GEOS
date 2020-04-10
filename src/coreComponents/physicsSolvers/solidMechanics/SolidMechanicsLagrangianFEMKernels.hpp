@@ -414,6 +414,7 @@ public:
     using KernelBase::m_rhs;
     using KernelBase::elemsToNodes;
     using KernelBase::constitutiveUpdate;
+    using KernelBase::m_finiteElementSpace;
 
 
 
@@ -422,7 +423,8 @@ public:
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & nodeManager,
-             SUBREGION_TYPE & elementSubRegion,
+             SUBREGION_TYPE const & elementSubRegion,
+             FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & inputConstitutiveType )://,
 //             real64 const inputGravityVector[3] ):
       KernelBase( inputDofNumber,
@@ -430,6 +432,7 @@ public:
                   inputRhs,
                   nodeManager,
                   elementSubRegion,
+                  finiteElementSpace,
                   inputConstitutiveType,
                   inputConstitutiveType.createKernelWrapper() ),
       m_disp(nodeManager.totalDisplacement()),
@@ -687,6 +690,7 @@ public:
     using KernelBase::m_uhat;
     using KernelBase::dNdX;
     using KernelBase::detJ;
+    using KernelBase::m_finiteElementSpace;
 
 
 
@@ -694,13 +698,15 @@ public:
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & nodeManager,
-             SUBREGION_TYPE & elementSubRegion,
+             SUBREGION_TYPE const & elementSubRegion,
+             FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & constitutiveModel ):
       KernelBase( inputDofNumber,
                  inputMatrix,
                  inputRhs,
                  nodeManager,
                  elementSubRegion,
+                 finiteElementSpace,
                  constitutiveModel ),
       m_vtilde(nodeManager.totalDisplacement()),
       m_uhattilde(nodeManager.totalDisplacement()),
@@ -743,7 +749,9 @@ public:
                           STACK_VARIABLE_TYPE & stack ) const
     {
 
-      real64 N[STACK_VARIABLE_TYPE::numNodesPerElem];
+      std::vector< double > const & N = m_finiteElementSpace->values( q );
+
+//      real64 N[STACK_VARIABLE_TYPE::numNodesPerElem];
       real64 const & massDamping = parameters.massDamping;
       real64 const & newmarkGamma = parameters.newmarkGamma;
       real64 const & newmarkBeta = parameters.newmarkBeta;
@@ -810,6 +818,29 @@ public:
   };
 
 };
+
+template< typename POLICY, typename UPDATE_CLASS, typename ... PARAMETERS >
+real64 FiniteElementRegionLoopExecute( MeshLevel & mesh,
+                                       string_array const & targetRegions,
+                                       string const & solidMaterialName,
+                                       FiniteElementDiscretization const * const feDiscretization,
+                                       arrayView1d< globalIndex const > const & dofNumber,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       PARAMETERS && ... parameters )
+{
+  physicsLoopInterface::
+    FiniteElementRegionLoop::
+    Execute< POLICY,UPDATE_CLASS>( mesh,
+                                   targetRegions,
+                                   solidMaterialName,
+                                   feDiscretization,
+                                   dofNumber,
+                                   matrix,
+                                   rhs,
+                                   UPDATE_CLASS::Parameters( std::forward<PARAMETERS>(parameters)... ) );
+
+}
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 
