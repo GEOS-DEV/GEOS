@@ -55,14 +55,15 @@ if(NOT CONDUIT_DIR)
     MESSAGE(FATAL_ERROR "Could not find Conduit. Conduit requires explicit CONDUIT_DIR.")
 endif()
 
-if(NOT EXISTS ${CONDUIT_DIR}/lib/cmake/conduit.cmake)
-    MESSAGE(FATAL_ERROR "Could not find Conduit cmake include file (${CONDUIT_DIR}/lib/cmake/conduit.cmake)")
+
+set(_conduit_config "${CONDUIT_DIR}/lib/cmake/ConduitConfig.cmake")
+if(NOT EXISTS ${_conduit_config})
+    MESSAGE(FATAL_ERROR "Could not find Conduit cmake include file ${_conduit_config}")
 endif()
 
-include(${CONDUIT_DIR}/lib/cmake/conduit.cmake)
-set(CONDUIT_FOUND TRUE)
-set(CONDUIT_INCLUDE_DIRS ${CONDUIT_DIR}/include/conduit)
-
+find_package(Conduit REQUIRED
+             NO_DEFAULT_PATH
+             PATHS ${CONDUIT_DIR}/lib/cmake)
 
 
 

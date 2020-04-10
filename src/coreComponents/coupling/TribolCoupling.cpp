@@ -101,17 +101,15 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
   globalID *extFaceMap ;
   int *slideNodeMap ;
-  int *extFacesToNodes ;
-  int *extFacesToElement ;
+  care::host_device_ptr<int> extFacesToNodes(numFaces*nodesPerFace, "extFacesToNodes") ;
+  care::host_device_ptr<int> extFacesToElement(numFaces*2, "extFacesToElement") ;
   vista::MemAlloc(numFaces*nodesPerFace, &slideNodeMap) ;
   vista::MemAlloc(numFaces, &extFaceMap) ;
-  vista::MemAlloc(numFaces*nodesPerFace, &extFacesToNodes) ;
-  vista::MemAlloc(numFaces*2, &extFacesToElement) ;
 
   int numSlideNodes = 0 ;
   int numExtFaces = 0 ;
 
-  for (int i = 0 ; i < numFaces ; ++i) {
+  LOOP_SEQUENTIAL_REF(i, 0, numFaces, numExtFaces, numSlideNodes) {
      // Only include external, non-ghost faces/nodes.
      if (isExternalFace[i] && faceGhostRank[i] < 0) {
         extFaceMap[numExtFaces] = globalID((GIDTYPE)faceMap[i]) ;
@@ -126,15 +124,16 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
 
         ++numExtFaces ;
      }
-  }
+  } LOOP_SEQUENTIAL_REF_END
+
   std::sort(slideNodeMap, slideNodeMap + numSlideNodes) ;
   int * newEnd = std::unique(slideNodeMap, slideNodeMap + numSlideNodes) ;
 
   numSlideNodes = newEnd - slideNodeMap ;
   vista::MemRealloc(numSlideNodes, &slideNodeMap) ;
   vista::MemRealloc(numExtFaces, &extFaceMap) ;
-  vista::MemRealloc(numExtFaces*nodesPerFace, &extFacesToNodes) ;
-  vista::MemRealloc(numExtFaces*2, &extFacesToElement) ;
+  extFacesToNodes.realloc(numExtFaces*nodesPerFace) ;
+  extFacesToElement.realloc(numExtFaces*2) ;
 
   s_srcFaces = s_tribolDomain->viewCreate("extFaces", 1, &numExtFaces, new vista::IndexSet(vista::VISTA_ACQUIRES, numExtFaces, extFaceMap)) ;
   s_srcNodes = s_tribolDomain->viewCreate("nodes", 1, &numNodes, new vista::IndexSet(vista::VISTA_COPIES, numNodes, (globalID*) nodeMap.data())) ;
@@ -195,17 +194,16 @@ void TribolCoupling::Initialize(dataRepository::ManagedGroup * eventManager, dat
   CopyPositionsToTribolSourceData(nodeManager) ;
   CopyForcesToTribolSourceData(nodeManager) ;
 
-  int *bricksToNodes ;
-  vista::MemAlloc(numBricks*nodesPerElem, &bricksToNodes) ;
-  int bricksToNodesIdx = 0 ;
+  care::host_device_ptr<int> bricksToNodes(numBricks*nodesPerElem, "bricksToNodes") ;
 
-  for (int i = 0 ; i < numBricks ; ++i) {
+  LOOP_SEQUENTIAL(i, 0, numBricks) {
+     int bricksToNodesIdx = i*nodesPerElem ;
      localIndex const * const elemNodes = elemsToNodes[i] ;
 
      for (int j = 0 ; j < nodesPerElem ; ++j) {
          bricksToNodes[bricksToNodesIdx++] = elemNodes[j] ;
      }
-  }
+  } LOOP_SEQUENTIAL_END
 
   s_srcBricks->relationCreateFixed("bricksToNodes", nodesPerElem, bricksToNodes, s_srcNodes, vista::VISTA_ACQUIRES) ;
 

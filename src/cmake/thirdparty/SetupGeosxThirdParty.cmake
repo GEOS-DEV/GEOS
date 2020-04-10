@@ -588,10 +588,11 @@ endif()
 if (ENABLE_TRIBOL)
   set(AXOM_DIR ${GEOSX_TPL_DIR}/axom)
   set(CHAI_DIR ${GEOSX_TPL_DIR}/chai)
+  set(MFEM_DIR ${GEOSX_TPL_DIR}/mfem)
   set(TRIBOL_DIR ${GEOSX_TPL_DIR}/tribol)
   set(UMPIRE_DIR ${GEOSX_TPL_DIR}/umpire)
   set(VISTA_DIR ${GEOSX_TPL_DIR}/vista)
-  set(RAVI_DIR ${GEOSX_TPL_DIR}/ravi)
+  set(CARE_DIR ${GEOSX_TPL_DIR}/care)
   set(RXB_DIR ${GEOSX_TPL_DIR}/rxb)
   set(WORLDS_CORE_DIR ${GEOSX_TPL_DIR}/worlds_core)
   set(LLNL_GLOBALID_DIR ${GEOSX_TPL_DIR}/LLNL_GlobalID)
@@ -610,11 +611,13 @@ if (ENABLE_TRIBOL)
                         INCLUDES ${CHAI_INCLUDE_DIRS}
                         LIBRARIES ${CHAI_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} chai)
 
   include(cmake/thirdparty/FindLLNL_GlobalID.cmake)
   blt_register_library( NAME llnl_globalid
                         INCLUDES ${LLNL_GLOBALID_INCLUDE_DIRS} 
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} llnl_globalid)
 
   # Register newer axom library needed for tribol
   include (${AXOM_DIR}/lib/cmake/fmt-targets.cmake)
@@ -625,28 +628,39 @@ if (ENABLE_TRIBOL)
                         INCLUDES ${ATK_INCLUDE_DIRS} 
                         LIBRARIES  axom
                         TREAT_INCLUDES_AS_SYSTEM ON)
-                        
   set( thirdPartyLibs ${thirdPartyLibs} axom)
+
+  include(cmake/thirdparty/FindMFEM.cmake)
+  blt_register_library( NAME mfem
+                        DEPENDS_ON hypre lapack
+                        INCLUDES ${MFEM_INCLUDE_DIRS} 
+                        LIBRARIES  ${MFEM_LIBRARY}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} mfem)
+
   include(cmake/thirdparty/FindTribol.cmake)
   blt_register_library( NAME tribol
-                        DEPENDS_ON axom
+                        DEPENDS_ON axom mfem
                         INCLUDES ${TRIBOL_INCLUDE_DIRS} 
                         LIBRARIES  ${TRIBOL_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} tribol)
 
-  include(cmake/thirdparty/FindRAVI.cmake)
-  blt_register_library( NAME ravi
+  include(cmake/thirdparty/FindCARE.cmake)
+  blt_register_library( NAME care
                         DEPENDS_ON llnl_globalid chai
                         INCLUDES ${VISTA_INCLUDE_DIRS} 
                         LIBRARIES  ${VISTA_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} care)
 
   include(cmake/thirdparty/FindVista.cmake)
   blt_register_library( NAME vista
-                        DEPENDS_ON llnl_globalid ravi chai
+                        DEPENDS_ON llnl_globalid care chai
                         INCLUDES ${VISTA_INCLUDE_DIRS} 
                         LIBRARIES  ${VISTA_LIBRARY}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} vista)
 
   include(cmake/thirdparty/FindRXB.cmake)
   blt_register_library( NAME rxb
@@ -654,6 +668,7 @@ if (ENABLE_TRIBOL)
                         INCLUDES ${RXB_INCLUDE_DIRS} 
                         LIBRARIES  ${RXB_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} rxb)
 
   include(cmake/thirdparty/FindWorldsCore.cmake)
   blt_register_library( NAME worlds_core
@@ -661,6 +676,7 @@ if (ENABLE_TRIBOL)
                         INCLUDES ${WORLDS_CORE_INCLUDE_DIRS} 
                         LIBRARIES  ${WORLDS_CORE_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} worlds_core)
 
 else()
   message( "Not using tribol" )
