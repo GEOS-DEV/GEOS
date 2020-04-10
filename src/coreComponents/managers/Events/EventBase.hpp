@@ -71,15 +71,6 @@ public:
              integer const cycle,
              dataRepository::Group * domain );
 
-  /*
-   * This method is called as the code exits the main run loop
-   */
-  virtual void Cleanup( real64 const time_n,
-                        integer const cycleNumber,
-                        integer const eventCounter,
-                        real64 const eventProgress,
-                        dataRepository::Group * domain ) override;
-
   /**
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
    * e.g.: <Events>
@@ -187,6 +178,10 @@ public:
   real64  GetEventProgress() const { return m_eventProgress; }
 
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
+
+  real64  GetBeginTime() const { return m_beginTime; }
+  real64  GetEndTime() const { return m_endTime; }
+  ExecutableGroup * GetEventTarget() const { return m_target; }
 
 
 protected:

@@ -83,6 +83,17 @@ public:
    */
   virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
+
+  /*
+   * This method is called as the code exits the main run loop
+   */
+  virtual void Cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        dataRepository::Group * domain ) override;
+
+
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
 

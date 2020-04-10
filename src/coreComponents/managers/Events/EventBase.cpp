@@ -312,27 +312,6 @@ real64 EventBase::GetTimestepRequest( real64 const time )
 }
 
 
-void EventBase::Cleanup( real64 const time_n,
-                         integer const cycleNumber,
-                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                         Group * domain )
-{
-  if( m_target != nullptr )
-  {
-    // Cleanup the target
-    m_target->Cleanup( time_n, cycleNumber, m_eventCount, m_eventProgress, domain );
-  }
-
-  // Cleanup any sub-events
-  this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
-  {
-    subEvent.Cleanup( time_n, cycleNumber, m_eventCount, m_eventProgress, domain );
-  } );
-}
-
-
-
 integer EventBase::GetExitFlag()
 {
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
