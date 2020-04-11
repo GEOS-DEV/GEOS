@@ -386,7 +386,7 @@ void FluxKernelHelper::FindNeighborsInTarget( array2d< localIndex > const & elem
                                               stackArray2d< localIndex, 3*HybridFVMInnerProduct::MAX_NUM_FACES > & neighborIds,
                                               stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & neighborDofNumber )
 {
-  localIndex const numFacesInElem = elemToFaces.size( 1 );
+  localIndex const numFacesInElem = elemToFaces.size();
 
   localIndex const er  = elemIds[0];
   localIndex const esr = elemIds[1];
@@ -394,8 +394,10 @@ void FluxKernelHelper::FindNeighborsInTarget( array2d< localIndex > const & elem
 
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
   {
-    neighborDofNumber[ifaceLoc] = elemDofNumber[er][esr][ei];
+
+    localIndex const faceId = elemToFaces[ifaceLoc];
     bool foundNeighborInTarget = false;
+    neighborDofNumber[ifaceLoc] = elemDofNumber[er][esr][ei];
 
     // the face has at most two adjacent elements
     // one of these two elements is the current element indexed by er, esr, ei
@@ -403,7 +405,6 @@ void FluxKernelHelper::FindNeighborsInTarget( array2d< localIndex > const & elem
     // this other element is "the neighbor" for this one-sided face
     for( localIndex k=0; k < elemRegionList.size( 1 ) && !foundNeighborInTarget; ++k )
     {
-      localIndex const faceId = elemToFaces[ifaceLoc];
 
       // this element is not the current element
       // we have found the neighbor or we are at the boundary

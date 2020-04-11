@@ -118,7 +118,7 @@ struct FluxKernelHelper
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] elemToFaces elem-to-faces maps
    * @param[in] elemDofNumber the dof number of this element
-   * @param[in] neighborDofNumbers the dof number of this element's neighbors
+   * @param[in] phaseToRow map from phase id to row id
    * @param[in] volFlux the volumetric fluxes at this element's faces
    * @param[in] dVolFlux_dp the derivatives of the vol fluxes wrt to this element's elem centered pressure
    * @param[in] dVolFlux_dS the derivatives of the vol fluxes wrt to this element's elem centered saturation
@@ -208,6 +208,37 @@ struct FluxKernel
 template<>
 struct FluxKernel< CellElementSubRegion >
 {
+  /**
+   * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
+   * constraints
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] ei index of this element
+   * @param[in] regionFilter set containing the indices of the target regions
+   * @param[in] elemRegionList face-to-elemRegions map
+   * @param[in] elemSubRegionList face-to-elemSubRegions map
+   * @param[in] elemList face-to-elemIds map
+   * @param[in] faceDofNumber the dof numbers of the face pressures
+   * @param[in] facePotential the phase potentials at the mesh faces at the beginning of the time step
+   * @param[in] dFacePotential the accumulated potential updates at the mesh face
+   * @param[in] faceGravDepth the depth at the mesh faces
+   * @param[in] elemToFaces the map from one-sided face to face
+   * @param[in] elemPres the pressure at this element's center
+   * @param[in] dElemPres the accumulated pressure updates at this element's center
+   * @param[in] elemGravDepth the depth at this element's center
+   * @param[in] fluidIndex the fluid index
+   * @param[in] elemDens the density at this elenent's center
+   * @param[in] dElemDens_dp the derivative of the density at this element's center
+   * @param[in] mobility the mobilities in the domain (non-local)
+   * @param[in] dMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] dMobility_dSat the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
+   * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
+   * @param[in] phaseToRow map from phase id to row id
+   * @param[in] transMatrix the transmissibility matrix in this element
+   * @param[in] dt time step size
+   * @param[inout] matrix the system matrix
+   * @param[inout] rhs the system right-hand side vector
+   */
   inline static void
   Compute( localIndex const er,
            localIndex const esr,
@@ -266,16 +297,14 @@ struct FluxKernel< CellElementSubRegion >
     stackArray2d< globalIndex, numPhases *maxNumFaces > upwDofNumber( numFacesInElem, numPhases );
 
     /*
-     * In this function, we want to assemble the flux in a total flux formulation
-     * To do that, we first compute at all the faces of this element:
-     * 1) One-sided "volumetric" fluxes
-     * 2) One-sided gravity term
-     * Once we know these quantities, we can upwind the mobility ratios
-     * that will multiply the total flux and the gravity term
+     * In this function, we want to assemble the phase fluxes
+     * To do that, we first compute at all the faces of this element
+     * the one-sided phase "volumetric" fluxes
+     * Once we know these quantities, we can upwind the mobilities
      */
 
     // For each one-sided face of the elem,
-    // Compute the volumetric flux using transMatrix
+    // compute the phase volumetric fluxes using transMatrix
     FluxKernelHelper::ComputeOneSidedVolFluxes( facePotential,
                                                 dFacePotential,
                                                 faceGravCoef,
@@ -313,13 +342,13 @@ struct FluxKernel< CellElementSubRegion >
                                                   neighborDofNumber );
 
     /*
-     * At this point, we have computed all the fluxes (viscous and gravity contributions) in the element
+     * At this point, we have computed all the fluxes in the element
      * We perform the assembly in this element in two steps:
      * 1) mass conservation equations
      * 2) face constraints
      */
 
-    // Use the computed one sided total vol fluxes (+ grav terms) and the upwinded mobilities
+    // Use the computed one sided phase vol fluxes and the upwinded mobilities
     // to assemble the upwinded mass fluxes in the mass conservation eqns of the elem
     FluxKernelHelper::AssembleOneSidedMassFluxes( dt,
                                                   faceDofNumber,
@@ -339,7 +368,7 @@ struct FluxKernel< CellElementSubRegion >
                                                   rhs );
 
     // Use the computed one sided vol fluxes to assemble the constraints
-    // enforcing total vol flux continuity at this element's faces
+    // enforcing phase vol flux continuity at this element's faces
     FluxKernelHelper::AssembleConstraints( faceDofNumber,
                                            elemToFaces,
                                            elemDofNumber[er][esr][ei],

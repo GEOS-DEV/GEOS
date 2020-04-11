@@ -19,16 +19,10 @@
 #include "TwoPhaseBase.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "physicsSolvers/fluidFlow/TwoPhaseBaseKernels.hpp"
@@ -232,6 +226,8 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
   RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation< RelativePermeabilityBase >( m_relPermName );
   GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
   m_relPermIndex = relPerm->getIndexInParent();
+
+  // this will be removed when Sergey's PR is merged
 
   GEOSX_ERROR_IF( fluid->numFluidPhases() != 2,
                   "Invalid number of fluid phases in fluid model '" << m_fluidName << "'" );
@@ -510,6 +506,7 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
         stackArray1d< real64, numPhases >          localAccum( numPhases );
         stackArray2d< real64, numPhases * numDof > localAccumJacobian( numPhases, numDof );
 
+
         AccumulationKernel::Compute( volume[ei],
                                      porosityOld[ei],
                                      porosityRef[ei],
@@ -635,7 +632,7 @@ void TwoPhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      dPres[ei]   = 0.0;
+      dPres[ei] = 0.0;
       dPhaseSat[ei][0] = 0.0;
       dPhaseSat[ei][1] = 0.0;
     } );

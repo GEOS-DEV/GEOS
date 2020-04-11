@@ -29,7 +29,7 @@ namespace geosx
  * @class TwoPhaseHybridFVM
  *
  * class to assemble the single-phase flow equations based
- * on a mixed hybrid finite-volume formulation known as the mimetic method
+ * on a mixed hybrid finite-volume formulation
  */
 class TwoPhaseHybridFVM : public TwoPhaseBase
 {
@@ -174,8 +174,6 @@ public:
 
 protected:
 
-  //  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
-
   virtual void ResizeFields( MeshLevel * const meshLevel ) override;
 
 private:
@@ -184,7 +182,7 @@ private:
    * @brief Assemble the mass conservation equations and face constraints in the face subregion
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
-   * @param[in] subRegion pointer to the cell element subregion
+   * @param[in] subRegion pointer to the face element subregion
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] mesh the mesh object (single level only)
    * @param[in] nodePosition position of the nodes
@@ -276,7 +274,7 @@ private:
    * @param[in] orthonormalizeWithSVD flag to indicate whether SVD is used (if not, Gram-Schmidt is used)
    * @param[inout] transMatrix
    *
-   * This function is in this class until we find a better place for it
+   * I will probably move this function somewhere else (to HybridFVMInnerProduct) at some point
    *
    */
   void ComputeTransmissibilityMatrix( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
@@ -300,15 +298,15 @@ private:
   real64 const m_areaRelTol;
 
   /// type of inner product for the mimetic method
-  /// This is only const for now
+  /// This is const (hard-coded) for now
   integer const m_ipType;
 
   /// flag to decide we orthonormalize with SVD or with MGS
-  /// This is only const for now
+  /// This is const (hard-coded) for now
   bool const m_orthonormalizeWithSVD;
 
 };
 
 } /* namespace geosx */
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_TWOPHASEHYBRIDFVM_HPP_

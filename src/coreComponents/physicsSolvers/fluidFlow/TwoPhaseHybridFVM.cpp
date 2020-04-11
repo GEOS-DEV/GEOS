@@ -20,8 +20,6 @@
 
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
-#include "mpiCommunications/NeighborCommunicator.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "physicsSolvers/fluidFlow/TwoPhaseHybridFVMKernels.hpp"
 
 /**
@@ -31,7 +29,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace constitutive;
 using namespace TwoPhaseHybridFVMKernels;
 using namespace HybridFVMInnerProduct;
 
@@ -41,8 +38,8 @@ TwoPhaseHybridFVM::TwoPhaseHybridFVM( const std::string & name,
   m_faceDofKey( "" ),
   m_elemDofKey( "" ),
   m_areaRelTol( 1e-8 ),
-  m_ipType( InnerProductType::TPFA ),
-  m_orthonormalizeWithSVD( false )
+  m_ipType( InnerProductType::QUASI_TPFA ), // hard-coded for now
+  m_orthonormalizeWithSVD( false ) // hard-coded for now
 {
   // two elem-centered dof per elem
   m_numDofPerCell = 2;
@@ -60,7 +57,7 @@ void TwoPhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
     MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    // primary variables: face pressures
+    // primary variables: face potentials
     faceManager->registerWrapper< array2d< real64 > >( viewKeyStruct::facePhasePotentialString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
@@ -70,7 +67,6 @@ void TwoPhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the accumulated phase potential updates at the faces." );
-
   }
 }
 
@@ -121,7 +117,7 @@ void TwoPhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager->getReference< array1d< globalIndex > >( m_faceDofKey );
 
-  // get the face-based pressures
+  // get the face-based potentials
   arrayView2d< real64 > const & facePotential =
     faceManager->getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString );
   arrayView2d< real64 const > const & dFacePotential =
@@ -182,6 +178,8 @@ void TwoPhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                                            ParallelMatrix * const matrix,
                                            ParallelVector * const rhs )
 {
+  GEOSX_MARK_FUNCTION;
+
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -472,7 +470,7 @@ real64 TwoPhaseHybridFVM::CalculateResidualNorm( DomainPartition const * const d
         // for the normalization, compute a saturation-weighted total density
         real64 const totalDensOld = satOld[a][0] * phaseDensOld[a][0]
                                     + satOld[a][1] * phaseDensOld[a][1];
-        real64 const normalizer = porosityOld[a] * totalDensOld * volume[a];
+        real64 const normalizer = (porosityOld[a] * totalDensOld * volume[a]) > 1e-12 ? (porosityOld[a] * totalDensOld * volume[a]) : 1e-12;
 
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {
@@ -561,9 +559,10 @@ void TwoPhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                          ElementRegionBase &,
                                          ElementSubRegionBase & subRegion )
   {
-    arrayView2d< real64 > const & sat = m_phaseSat[er][esr];
+    arrayView2d< real64 const > const & sat = m_phaseSat[er][esr];
     arrayView2d< real64 > const & dSat = m_deltaPhaseSat[er][esr];
 
+    // the saturation in the first slot is the primary saturation
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       real64 const newPrimarySat = sat[ei][0] + dSat[ei][0];
@@ -605,7 +604,7 @@ void TwoPhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const dom
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   FaceManager * const faceManager = mesh->getFaceManager();
 
-  // get the accumulated face pressure updates
+  // get the accumulated face potential updates
   arrayView2d< real64 > & dFacePotential =
     faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
 
@@ -627,6 +626,7 @@ void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d< real64 const
                                                        stackArray2d< real64, MAX_NUM_FACES
                                                                      *MAX_NUM_FACES > & transMatrix ) const
 {
+  // TODO: remove the switchyard
   switch( m_ipType )
   {
     case InnerProductType::TPFA:
@@ -644,7 +644,7 @@ void TwoPhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d< real64 const
     case InnerProductType::QUASI_TPFA:
     {
       // for now, Q-TPFA is useful for debugging the IP computation
-      // since it reduces to TPFA on orthogonal meshes...
+      // since it reduces to TPFA on K-orthogonal meshes...
       QTPFACellInnerProductKernel::Compute( nodePosition,
                                             faceToNodes,
                                             elemToFaces,

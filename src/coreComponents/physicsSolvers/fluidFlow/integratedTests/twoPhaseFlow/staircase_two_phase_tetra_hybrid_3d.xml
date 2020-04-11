@@ -1,0 +1,173 @@
+
+<Problem>
+
+  <Solvers>
+
+    <TwoPhaseHybridFVM name="twoPhaseFlow"
+                       logLevel="1"
+                       discretization="fluidTPFA"
+                       fluidName="fluid1"
+                       solidName="rock"
+                       relPermName="relperm"
+                       initialDt="1e3"
+                       targetRegions="{Channel}">
+      <NonlinearSolverParameters lineSearchAction="1"
+                                 newtonTol="1.0e-8"
+                                 newtonMaxIter="15"/>
+      <SystemSolverParameters useDirectSolver="1"/>
+    </TwoPhaseHybridFVM>
+
+  </Solvers>
+  
+  <Mesh>
+
+   <PAMELAMeshGenerator name="mesh1"
+                        file="staircase3d_tet.msh"/>
+    
+  </Mesh>
+
+
+  <Geometry>
+    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
+  </Geometry>
+
+  
+  <Events maxTime="1e8">
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="5e6"
+                   targetExactTimestep="1"
+                   target="/Outputs/siloOutput" />
+
+    <PeriodicEvent name="solverApplications"
+                   maxEventDt="2e6"
+                   target="/Solvers/twoPhaseFlow"/>
+    
+    <PeriodicEvent name="restarts"
+                   timeFrequency="5e6"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion name="Channel"
+                   cellBlocks="{0_TETRA}"
+                   materialList="{fluid1, rock, relperm}"/>
+    <!-- <CellElementRegion name="Barrier" -->
+    <!--                cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}" -->
+    <!--                materialList="{}"/> -->
+  </ElementRegions>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="fluidTPFA"
+                                 fieldName="pressure"
+                                 targetRegions="{Channel}"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  
+
+  <Constitutive>
+
+    <ImmiscibleTwoPhaseFluid name="fluid1"
+                             phaseNames="{water, oil}"
+                             referencePressure="1e6"
+                             referencePhaseDensity="{1000,800}"
+                             referencePhaseViscosity="{0.001,0.005}"
+                             phaseCompressibility="{0,1e-9}"
+                             phaseViscosibility="{1e-12,1e-11}"/>
+
+    <PoreVolumeCompressibleSolid name="rock"
+                                 referencePressure="0.0"
+                                 compressibility="1e-9"/>
+
+    <BrooksCoreyRelativePermeability name="relperm"
+                                     phaseNames="{water, oil}"
+                                     phaseMinVolumeFraction="{0.0, 0.0}"
+                                     phaseRelPermExponent="{2.0, 3.0}"
+                                     phaseRelPermMaxValue="{1.0, 1.0}"/>
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification name="permx_channel"
+                        component="0"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="permeability"
+                        scale="2.0e-14"/>
+
+    <FieldSpecification name="permy_channel"
+                        component="1"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="permeability"
+                        scale="2.0e-14"/>
+
+    <FieldSpecification name="permz_channel"
+                        component="2"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="permeability"
+                        scale="2.0e-14"/>
+
+    <FieldSpecification name="porosity_channel"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="referencePorosity"
+                        scale="0.1"/>
+
+    <!-- Initial pressure -->
+
+    <FieldSpecification name="initialPressure"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="pressure"
+                        scale="5e6"/>
+
+    <FieldSpecification name="initialFaceWaterPotential"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="faceManager"
+                        fieldName="facePhasePotential"
+                        component="0"
+                        scale="1e7"/>
+
+    <FieldSpecification name="initialFaceOilPotential"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="faceManager"
+                        fieldName="facePhasePotential"
+                        component="1"
+                        scale="1e6"/>
+    
+    <!-- Initial saturation (non-equilibrium) -->
+
+    <FieldSpecification name="initialWaterSaturation"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="phaseSaturation"
+                        component="0"
+                        scale="0.4"/>
+
+    <FieldSpecification name="initialOilSaturation"
+                        initialCondition="1"
+                        setNames="{all}"
+                        objectPath="ElementRegions/Channel"
+                        fieldName="phaseSaturation"
+                        component="1"
+                        scale="0.6"/>
+  </FieldSpecifications>
+  
+  <Outputs>
+    <Silo name="siloOutput"/>
+    <Restart name="restartOutput"/>
+  </Outputs>
+</Problem>

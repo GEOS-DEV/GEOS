@@ -105,6 +105,7 @@ void AccumulationKernel::Compute( real64 const & volume,
   {
     phaseSatNew[ip] = phaseSat[ip] + dPhaseSat[ip];
   }
+  // we assume that the first saturation is the primary saturation
   dPhaseSatNew_dS[0] = 1;
   dPhaseSatNew_dS[1] = -1;
 

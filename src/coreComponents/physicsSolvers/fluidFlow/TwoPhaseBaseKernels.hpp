@@ -34,6 +34,19 @@ namespace TwoPhaseBaseKernels
 struct PhaseMobilityKernel
 {
 
+  /**
+   * @brief In an element, compute the phase mobilities
+   * @param[in] phaseDens phase densities in the element
+   * @param[in] dPhaseDens_dPres derivatives of phase densities wrt pressure in the element
+   * @param[in] phaseVisc phase viscosities in the element
+   * @param[in] dPhaseVisc_dPres derivatives of phase viscosities wrt pressure in the element
+   * @param[in] phaseRelPerm phase relative permeabilities in the element
+   * @param[in] dPhaseRelPerm_dSat derivatives of the phase relative permeabilities wrt primary saturation in the
+   * element
+   * @param[inout] phaseMob phase mobilities in the element
+   * @param[inout] dPhaseMob_dPres derivatives of phase mobilities wrt pressure in the element
+   * @param[inout] dPhaseMob_dSat derivatives of phase mobilities wrt primary saturation in the element
+   */
   static void
   Compute( arraySlice1d< real64 const > phaseDens,
            arraySlice1d< real64 const > dPhaseDens_dPres,
@@ -45,6 +58,20 @@ struct PhaseMobilityKernel
            arraySlice1d< real64 > dPhaseMob_dPres,
            arraySlice1d< real64 > dPhaseMob_dSat );
 
+  /**
+   * @brief In a sub region, compute the phase mobilities
+   * @param[in] number of elements in the sub region
+   * @param[in] phaseDens phase densities in the sub region
+   * @param[in] dPhaseDens_dPres derivatives of phase densities wrt pressure in the sub region
+   * @param[in] phaseVisc phase viscosities in the sub region
+   * @param[in] dPhaseVisc_dPres derivatives of phase viscosities wrt pressure in the sub region
+   * @param[in] phaseRelPerm phase relative permeabilities in the sub region
+   * @param[in] dPhaseRelPerm_dSat derivatives of the phase relative permeabilities wrt primary saturation in the sub
+   * region
+   * @param[inout] phaseMob phase mobilities in the sub region
+   * @param[inout] dPhaseMob_dPres derivatives of phase mobilities wrt pressure in the sub region
+   * @param[inout] dPhaseMob_dSat derivatives of phase mobilities wrt primary saturation in the sub region
+   */
   static void
   Launch( localIndex const size,
           arrayView3d< real64 const > const & phaseDens,
@@ -64,6 +91,19 @@ struct PhaseMobilityKernel
 struct AccumulationKernel
 {
 
+  /**
+   * @brief In an element, compute the accumulation term and its derivatives
+   * @param[in] volume volume of the element
+   * @param[in] porosityOld old porosity in the element
+   * @param[in] porosityRef reference porosity in the element
+   * @param[in] pvMult pore volume multiplier in the element
+   * @param[in] dPvMult_dPres derivative of pore volume multiplier wrt pressure in the element
+   * @param[in] phaseDensOld old phase densities in the element
+   * @param[in] phaseDens phase densities in the element
+   * @param[in] dPhaseDens_dPres derivatives of phase densities wrt pressure in the element
+   * @param[inout] localAccum accumulation in the element
+   * @param[inout] localAccumJacobian derivatives of accumulation term in the element
+   */
   static void
   Compute( real64 const & volume,
            real64 const & porosityOld,

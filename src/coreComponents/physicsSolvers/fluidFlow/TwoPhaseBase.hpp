@@ -271,6 +271,7 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
 
+  // when we move to the old saturation / new saturation format, I will be able to remove one of these three vectors
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseSat;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaPhaseSat;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_newPhaseSat;
