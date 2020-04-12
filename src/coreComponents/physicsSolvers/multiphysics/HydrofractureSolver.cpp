@@ -1630,9 +1630,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   //########################################## END COPYING UU MATRIX #########################################
   if (print_matrix < 1)
   {
+  /*
     hypre_ParCSRMatrixPrintIJ(parcsr_uu,0,0,"UU_block");
     print_matrix++;
-  /*
     hypre_ParCSRMatrixPrintIJ(parcsr_uu,0,0,"UU_mat");
     hypre_ParCSRMatrixPrintIJ(parcsr_matrix,0,0,"full_mat");
     hypre_ParCSRMatrixPrintIJ(parcsr_precond,0,0,"full_precond");
@@ -1721,13 +1721,13 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   HYPRE_MGRSetLevelInterpType(mgr_precond, mgr_level_interp_type);
   HYPRE_MGRSetNumInterpSweeps(mgr_precond, mgr_num_interp_sweeps);
   /* set P_max_elmts for coarse grid */
-  //HYPRE_MGRSetPMaxElmts(mgr_precond, P_max_elmts);
+  //HYPRE_MGRSetPMaxElmts(mgr_precond, 8);
   /* set print level */
   HYPRE_MGRSetPrintLevel(mgr_precond, 0);
   /* set max iterations */
   HYPRE_MGRSetMaxIter(mgr_precond, 1);
   HYPRE_MGRSetTol(mgr_precond, 0.0);
-  //HYPRE_MGRSetCoarseGridMethod(mgr_precond, mgr_coarse_grid_method);
+  HYPRE_MGRSetCoarseGridMethod(mgr_precond, mgr_coarse_grid_method);
 
   HYPRE_MGRSetGlobalsmoothType(mgr_precond, mgr_gsmooth_type);
   HYPRE_MGRSetMaxGlobalsmoothIters( mgr_precond, mgr_num_gsmooth_sweeps );   
@@ -1736,23 +1736,25 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   HYPRE_BoomerAMGCreate(&cg_amg_solver); 
   if (ordering == 0)
   {
-    if (n_cycles == 0 && newtonIter == 0)
+    //if (n_cycles == 0 && newtonIter == 0)
+    if (newtonIter == 0)
       HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
     HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 1);
-    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 3);
+    HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 1);
   }
   else
   {
-    if (n_cycles == 0 && newtonIter == 0)
-      HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 1);
+    //if (n_cycles == 0 && newtonIter == 0)
+    if (newtonIter == 0)
+      HYPRE_BoomerAMGSetPrintLevel(cg_amg_solver, 0);
     HYPRE_BoomerAMGSetMaxIter(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetRelaxOrder(cg_amg_solver, 1);
-    //HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
+    HYPRE_BoomerAMGSetAggNumLevels(cg_amg_solver, 1);
     HYPRE_BoomerAMGSetNumFunctions(cg_amg_solver, 3);
     HYPRE_BoomerAMGSetNumSweeps(cg_amg_solver, 1);
-    HYPRE_BoomerAMGSetStrongThreshold(cg_amg_solver, 0.05);
+    //HYPRE_BoomerAMGSetStrongThreshold(cg_amg_solver, 0.05);
     //HYPRE_BoomerAMGSetCoarsenType(cg_amg_solver, 6);
     //HYPRE_BoomerAMGSetRelaxType(cg_amg_solver, 3);
     //HYPRE_BoomerAMGSetInterpType(cg_amg_solver, 0);
@@ -1781,17 +1783,17 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
       /* create AMG solver for F-relaxation */
       HYPRE_BoomerAMGCreate(&uu_amg_solver); 
       if (n_cycles == 0 && newtonIter == 0)
-        HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 1);
+        HYPRE_BoomerAMGSetPrintLevel(uu_amg_solver, 0);
       HYPRE_BoomerAMGSetMaxIter(uu_amg_solver, 1);
       HYPRE_BoomerAMGSetRelaxOrder(uu_amg_solver, 1);
       HYPRE_BoomerAMGSetAggNumLevels(uu_amg_solver, 1);
       HYPRE_BoomerAMGSetNumFunctions(uu_amg_solver, 3);
-      HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
+      //HYPRE_BoomerAMGSetNumSweeps(uu_amg_solver, 1);
       //HYPRE_BoomerAMGSetStrongThreshold(uu_amg_solver, 0.005);
-      HYPRE_BoomerAMGSetPMaxElmts(uu_amg_solver, 4);
-      HYPRE_BoomerAMGSetCoarsenType(uu_amg_solver, 8);
-      HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 18);
-      HYPRE_BoomerAMGSetInterpType(uu_amg_solver, 3);
+      //HYPRE_BoomerAMGSetPMaxElmts(uu_amg_solver, 4);
+      //HYPRE_BoomerAMGSetCoarsenType(uu_amg_solver, 8);
+      //HYPRE_BoomerAMGSetRelaxType(uu_amg_solver, 18);
+      //HYPRE_BoomerAMGSetInterpType(uu_amg_solver, 3);
 
       HYPRE_BoomerAMGSetup
         (uu_amg_solver, parcsr_uu, par_rhs_uu, par_lhs_uu);
