@@ -682,7 +682,6 @@ void LagrangianContactFlowSolver::AssembleSystem( real64 const time,
   // SynchronizeFractureState is called in AssembleSystem and it is needed by:
   // - UpdateOpeningForFlow
   // - AssembleFluidMassResidualDerivativeWrtDisplacement
-  // - AssembleStabilization
   m_contactSolver->AssembleSystem( time,
                                    dt,
                                    domain,
@@ -1324,13 +1323,8 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           fractureIndex[kf] = sei[iconn][kf];
-          elemDOF[kf][0] = -1;
-          nDof[kf] = 0;
-          if( !m_contactSolver->IsElementInOpenState( *fractureSubRegion, fractureIndex[kf] ) )
-          {
-            elemDOF[kf][0] = presDofNumber[fractureIndex[kf]];
-            nDof[kf] = 1;
-          }
+          elemDOF[kf][0] = presDofNumber[fractureIndex[kf]];
+          nDof[kf] = 1;
         }
 
         // Add mean density contribution
