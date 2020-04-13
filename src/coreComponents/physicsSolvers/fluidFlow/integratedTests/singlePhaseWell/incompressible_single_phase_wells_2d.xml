@@ -29,20 +29,17 @@
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls3"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
-                      targetRate="1e-2" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-2"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -67,7 +64,7 @@
                                         {14.5, 0.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.08"
+                  radius="0.1"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
                      distanceFromHead="14"
@@ -89,7 +86,7 @@
                                         { 0.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.08"
+                  radius="0.1"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
                      distanceFromHead="14."/> 
@@ -106,7 +103,7 @@
                   polylineNodeCoords="{ {0.5,   0.5, 0.5  }, 
                                         {14.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.08"
+                  radius="0.1"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.5"

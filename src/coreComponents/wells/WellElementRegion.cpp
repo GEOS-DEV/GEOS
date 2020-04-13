@@ -63,9 +63,8 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   globalIndex const numElemsGlobal        = wellGeometry.GetNumElements();
   globalIndex const numPerforationsGlobal = wellGeometry.GetNumPerforations();
 
-
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  perforationData->ConnectToMeshElements( mesh, wellGeometry );
+  subRegion->ConnectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
   GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,
