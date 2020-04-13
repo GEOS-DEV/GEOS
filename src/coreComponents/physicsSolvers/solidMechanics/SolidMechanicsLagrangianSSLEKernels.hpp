@@ -140,64 +140,64 @@ struct ExplicitKernel
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    [=] GEOSX_DEVICE ( localIndex const i )
+    {
+      localIndex const k = elementList[ i ];
+
+      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
+
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        for( int b = 0; b < 3; ++b )
         {
-          localIndex const k = elementList[ i ];
+          v_local[ a ][ b ] = vel( nodeIndex, b );
+        }
+      }
 
-          real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
-          real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
+      //Compute Quadrature
+      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+      {
+        real64 strain[6] = {0};
+        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          strain[0] = strain[0] + dNdX( k, q, a )[0] * v_local[a][0];
+          strain[1] = strain[1] + dNdX( k, q, a )[1] * v_local[a][1];
+          strain[2] = strain[2] + dNdX( k, q, a )[2] * v_local[a][2];
+          strain[3] = strain[3] + dNdX( k, q, a )[2] * v_local[a][1] + dNdX( k, q, a )[1] * v_local[a][2];
+          strain[4] = strain[4] + dNdX( k, q, a )[2] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][2];
+          strain[5] = strain[5] + dNdX( k, q, a )[1] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][1];
+        }
+        for( int j=0; j<6; ++j )
+        {
+          strain[j] *= dt;
+        }
 
-          for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-          {
-            localIndex const nodeIndex = elemsToNodes( k, a );
-            for( int b = 0; b < 3; ++b )
-            {
-              v_local[ a ][ b ] = vel( nodeIndex, b );
-            }
-          }
+        constitutive.SmallStrain( k, q, strain );
 
-          //Compute Quadrature
-          for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-          {
-            real64 strain[6] = {0};
-            for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-            {
-              strain[0] = strain[0] + dNdX( k, q, a )[0] * v_local[a][0];
-              strain[1] = strain[1] + dNdX( k, q, a )[1] * v_local[a][1];
-              strain[2] = strain[2] + dNdX( k, q, a )[2] * v_local[a][2];
-              strain[3] = strain[3] + dNdX( k, q, a )[2] * v_local[a][1] + dNdX( k, q, a )[1] * v_local[a][2];
-              strain[4] = strain[4] + dNdX( k, q, a )[2] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][2];
-              strain[5] = strain[5] + dNdX( k, q, a )[1] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][1];
-            }
-            for( int j=0; j<6; ++j )
-            {
-              strain[j] *= dt;
-            }
+        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                                 + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                                 + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                                 + constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                                 + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 0 ]
+                                 + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
+                                 + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+        }
+      }    //quadrature loop
 
-            constitutive.SmallStrain( k, q, strain );
-
-            for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-            {
-              f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                     + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                     + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
-              f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                     + constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                     + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
-              f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                     + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                     + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
-            }
-          }//quadrature loop
-
-          for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-          {
-            localIndex const nodeIndex = elemsToNodes( k, a );
-            for( int b = 0; b < 3; ++b )
-            {
-              RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), f_local[ a ][ b ] );
-            }
-          }
-        } );
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        for( int b = 0; b < 3; ++b )
+        {
+          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), f_local[ a ][ b ] );
+        }
+      }
+    } );
 
     return dt;
   }
