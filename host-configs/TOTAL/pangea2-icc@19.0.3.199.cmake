@@ -39,9 +39,6 @@ set(MPI_Fortran_COMPILER "${MPI_HOME}/bin/mpiifort" CACHE PATH "")
 set(MPIEXEC              "${MPI_HOME}/bin/mpirun" CACHE PATH "")
 set(MPIEXEC_NUMPROC_FLAG "-n" CACHE PATH "")
 
-#set( BLT_MPI_LINK_FLAGS "-Wl,--enable-new-dtags -Wl,-rpath,/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux/mpi/intel64/lib/release -Wl,-rpath,/data_local/sw/intel/RHEL7/compilers_and_libraries_2019.3.199/linux/mpi/intel64/lib" CACHE PATH "" FORCE )
-#set( BLT_MPI_LINK_FLAGS "-Wl,--enable-new-dtags -Wl,-rpath,${MPI_HOME}/lib/release -Wl,-rpath,${MPI_HOME}/lib" CACHE PATH "" FORCE )
-
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT ${INTEL_COMPILER_ROOT}/mkl )
 set(MKL_INCLUDE_DIRS ${MKL_ROOT}/include CACHE STRING "")

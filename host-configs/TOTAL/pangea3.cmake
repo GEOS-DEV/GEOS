@@ -42,7 +42,6 @@ set(ENABLE_OPENMP ON CACHE BOOL "" FORCE)
 
 # MPI options
 set(ENABLE_MPI ON CACHE BOOL "")
-#set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.00.01rtm3-rh7_20190611 CACHE PATH "")
 set(MPI_ROOT /data_local/sw/spectrum_mpi/10.03.01.00rtm5-rh7_20191114 CACHE PATH "")
 set(MPI_C_COMPILER         ${MPI_ROOT}/bin/mpicc  CACHE PATH "")
 set(MPI_CXX_COMPILER       ${MPI_ROOT}/bin/mpicxx CACHE PATH "")
@@ -114,9 +113,3 @@ set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 
 # PETSc doesn't seem to work correctly with clang.
 set(ENABLE_PETSC OFF CACHE BOOL "")
-
-#set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" FORCE)
-#set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" FORCE)
-
-#set(GEOSX_LINK_PREPEND_FLAG  "" CACHE STRING "" FORCE)
-#set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "" FORCE)
