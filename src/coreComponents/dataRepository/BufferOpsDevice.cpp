@@ -57,10 +57,10 @@ PackDevice( buffer_unit_type * & buffer,
   packedSize += PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE( localIndex ii )
-        {
-          reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
-        } );
+    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+    {
+      reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
+    } );
   }
   packedSize += var.size() * sizeof(T);
   if( DO_PACKING )
@@ -84,10 +84,10 @@ UnpackDevice( buffer_unit_type const * & buffer,
     GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
   }
 
-  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE( localIndex ii )
-      {
-        var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
-      } );
+  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+  {
+    var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
+  } );
   packedSize += var.size() * sizeof(T);
   buffer += var.size() * sizeof(T);
   return packedSize;
@@ -106,15 +106,15 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
   buffer_unit_type * const devBuffer = buffer;
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE( localIndex const ii )
-        {
-          buffer_unit_type * threadBuffer = devBuffer + ii * unitSize;
-          LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T const & value )
-          {
-            memcpy( threadBuffer, &value, sizeof( T ) );
-            threadBuffer += sizeof( T );
-          } );
-        } );
+    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
+    {
+      buffer_unit_type * threadBuffer = devBuffer + ii * unitSize;
+      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T const & value )
+      {
+        memcpy( threadBuffer, &value, sizeof( T ) );
+        threadBuffer += sizeof( T );
+      } );
+    } );
 
     buffer += numIndices * unitSize;
   }
@@ -135,14 +135,14 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
   buffer_unit_type const * devBuffer = buffer;
   localIndex unitSize = var.size() / var.size( 0 ) * sizeof(T);
   forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
-        LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
-        {
-          memcpy( &value, threadBuffer, sizeof( T ) );
-          threadBuffer += sizeof( T );
-        } );
-      } );
+  {
+    buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
+    LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
+    {
+      memcpy( &value, threadBuffer, sizeof( T ) );
+      threadBuffer += sizeof( T );
+    } );
+  } );
 
   localIndex avSize = numIndices * unitSize;
   sizeOfPackedChars += avSize;
