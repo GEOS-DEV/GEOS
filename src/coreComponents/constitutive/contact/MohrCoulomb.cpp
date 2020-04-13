@@ -40,11 +40,13 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::frictionInputString, &m_frictionInput, false )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "Friction Input" );
 
   registerWrapper( viewKeyStruct::frictionInputUnitOfMeasurementString, &m_frictionInputUnitOfMeasurement, false )->
     setApplyDefaultValue( "rad" )->
     setInputFlag( InputFlags::OPTIONAL )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "Friction Input Unit of Measurement. Valid inputs are (upper/lower case does not matter):\n"
                     " - rad/radians (default);\n"
                     " - deg/degrees." );
@@ -52,7 +54,6 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setRestartFlags( RestartFlags::WRITE )->
     setDescription( "Friction Coefficient" );
 }
 
