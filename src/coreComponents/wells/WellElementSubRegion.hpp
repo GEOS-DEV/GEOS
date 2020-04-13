@@ -209,6 +209,14 @@ public:
                  globalIndex nodeOffsetGlobal,
                  globalIndex elemOffsetGlobal );
 
+  /**
+   * @brief For each perforation, find the reservoir element that contains the perforation
+   * @param[in] meshLevel the mesh object (single level only)
+   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   */
+  void ConnectPerforationsToMeshElements( MeshLevel & mesh,
+                                          InternalWellGenerator const & wellGeometry );
+
   /*
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange
    */
@@ -292,20 +300,6 @@ private:
                                   arrayView1d< integer > & elemStatusGlobal ) const;
 
   /**
-   * @brief Now that the well elements are assigned, collect the nodes and tag the boundary nodes between ranks
-            The function WellElementSubRegion::AssignUnownedElements must have been called before this function
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[out] localNodes set of local well nodes (includes boundary nodes)
-   * @param[out] boundaryNodes set of local well nodes that are at the boundary between this rank
-                               and another rank
-   */
-  void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
-                                     SortedArray< globalIndex >      const & localElems,
-                                     SortedArray< globalIndex > & localNodes,
-                                     SortedArray< globalIndex > & boundaryNodes ) const;
-
-  /**
    * @brief Add the well nodes to the nodeManager (properly resized)
             The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function
    * @param[in] meshLevel the mesh object (single level only)
@@ -386,6 +380,9 @@ private:
 
   /// radius of the well element
   array1d< real64 > m_radius;
+
+  /// depth of the local search to match perforation to res elements
+  localIndex m_searchDepth;
 
 };
 
