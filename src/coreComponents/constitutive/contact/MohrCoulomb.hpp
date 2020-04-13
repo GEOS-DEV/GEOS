@@ -89,11 +89,14 @@ public:
     /// string/key for cohesion
     static constexpr auto cohesionString = "cohesion";
 
-    /// string/key for friction angle
-    static constexpr auto frictionAngleString = "frictionAngle";
+    /// string/key for friction angle input
+    static constexpr auto frictionInputString = "frictionInput";
 
     /// string/key for friction angle unit
-    static constexpr auto frictionAngleUnitOfMeasurementString = "frictionAngleUnitOfMeasurement";
+    static constexpr auto frictionInputUnitOfMeasurementString = "frictionInputUnitOfMeasurement";
+
+    /// string/key for friction coefficient
+    static constexpr auto frictionCoefficientString = "frictionCoefficient";
   };
 
   /**
@@ -115,28 +118,28 @@ public:
    * @return A const reference to arrayView1d<real64> containing the friction
    *         angles (at every element).
    */
-  real64 const & frictionAngle() { return m_frictionAngle; }
+  real64 const & frictionInput() { return m_frictionInput; }
 
   /**
    * @brief Const accessor for friction angle
    * @return A const reference to arrayView1d<real64 const> containing the
    *         friction angles (at every element).
    */
-  real64 const & frictionAngle() const { return m_frictionAngle; }
+  real64 const & frictionInput() const { return m_frictionInput; }
 
   /**
    * @brief Accessor for friction angle
    * @return A const reference to arrayView1d<real64> containing the friction
-   *         angle tangents (at every element).
+   *         coefficient (at every element).
    */
-  real64 const & frictionAngleTangent() { return m_frictionAngleTangent; }
+  real64 const & frictionCoefficient() { return m_frictionCoefficient; }
 
   /**
    * @brief Const accessor for friction angle
    * @return A const reference to arrayView1d<real64 const> containing the
-   *         friction angle tangents (at every element).
+   *         friction coefficient (at every element).
    */
-  real64 const & frictionAngleTangent() const { return m_frictionAngleTangent; }
+  real64 const & frictionCoefficient() const { return m_frictionCoefficient; }
 
 protected:
   virtual void PostProcessInput() override;
@@ -147,23 +150,22 @@ private:
   real64 m_cohesion;
 
   /// The friction angle for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionAngle;
+  real64 m_frictionInput;
 
-  /// The friction angle tangent for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionAngleTangent;
+  /// The friction coefficient for each upper level dimension (i.e. cell) of *this
+  real64 m_frictionCoefficient;
 
   /// The friction angle unit of measure description
-  string m_frictionAngleUnitOfMeasurement = "rad";
+  string m_frictionInputUnitOfMeasurement = "rad";
 
   enum class AngleUnit : int
   {
     RADIANS,
-    DEGREES,
-    GRADIANS
+    DEGREES
   };
 
   /// The friction angle unit of measure
-  AngleUnit m_frictionAngleUnit = AngleUnit::RADIANS;
+  AngleUnit m_frictionInputUnit = AngleUnit::RADIANS;
 
 };
 
