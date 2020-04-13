@@ -107,7 +107,7 @@ void MohrCoulomb::PostProcessInput()
       std::for_each( frictionInputUnitOfMeasurement.begin(), frictionInputUnitOfMeasurement.end(), []( char & c ) {
         c = ::tolower( c );
       } );
-     
+
       if( frictionInputUnitOfMeasurement == "radians" || frictionInputUnitOfMeasurement == "rad" )
       {
         m_frictionInputUnit = AngleUnit::RADIANS;
@@ -120,7 +120,7 @@ void MohrCoulomb::PostProcessInput()
       {
         GEOSX_ERROR( "Provided wrong unit of measurement for friction angle. It can be rad, deg or grad. Provided: " << frictionInputUnitOfMeasurement );
       }
-     
+
       switch( m_frictionInputUnit )
       {
         case AngleUnit::RADIANS:
@@ -134,13 +134,13 @@ void MohrCoulomb::PostProcessInput()
           break;
         }
       }
-     
+
       GEOSX_ERROR_IF( m_frictionInput < 0.0,
                       "The provided friction angle is less than zero. Value: " << m_frictionInput << " [rad]" );
-     
+
       GEOSX_ERROR_IF( m_frictionInput > M_PI_2,
                       "The provided friction angle is larger than pi/2. Value: " << m_frictionInput << " [rad]" );
-     
+
       // Compute the tangent of the friction angle just once
       m_frictionCoefficient = std::tan( m_frictionInput );
     }
