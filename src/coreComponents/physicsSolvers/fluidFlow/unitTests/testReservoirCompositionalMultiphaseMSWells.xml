@@ -3,7 +3,7 @@
 
   <Solvers gravityVector="0.0, 0.0, -9.81">
 
-    <Reservoir name="reservoirSystem"
+    <CompositionalMultiphaseReservoir name="reservoirSystem"
 	       flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
@@ -11,7 +11,7 @@
       <NonlinearSolverParameters newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="2"/>
-    </Reservoir>
+    </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"

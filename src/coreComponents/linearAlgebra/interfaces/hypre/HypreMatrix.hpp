@@ -277,7 +277,7 @@ public:
   virtual void print( std::ostream & os = std::cout ) const override;
 
   virtual void write( string const & filename,
-                      LAIOutputFormat const format ) const override;
+                      LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 
   ///@}
 

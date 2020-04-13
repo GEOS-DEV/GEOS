@@ -525,10 +525,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     integer const component = bc->GetComponent();
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        vel( a, component ) = u( a, component );
-      }
+    {
+      localIndex const a = targetSet[ i ];
+      vel( a, component ) = u( a, component );
+    }
                                             );
   },
                              [&]( FieldSpecificationBase const * const bc,
@@ -537,11 +537,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     integer const component = bc->GetComponent();
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        uhat( a, component ) = u( a, component ) - vel( a, component );
-        vel( a, component )  = uhat( a, component ) / dt;
-      }
+    {
+      localIndex const a = targetSet[ i ];
+      uhat( a, component ) = u( a, component ) - vel( a, component );
+      vel( a, component )  = uhat( a, component ) / dt;
+    }
                                             );
   }
                              );
@@ -1260,13 +1260,6 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution:\n" );
-    std::cout<< solution;
-  }
 }
 
 void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -1518,9 +1511,10 @@ SolidMechanicsLagrangianFEM::ScalingForSystemSolution( DomainPartition const * c
   return scalingFactor;
 }
 
-void
-SolidMechanicsLagrangianFEM::updateStress( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
-{}
+void SolidMechanicsLagrangianFEM::updateStress( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+{
+  GEOSX_ERROR( "SolidMechanicsLagrangianFEM::updateStress called!. Should be overridden." );
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianFEM, string const &, dataRepository::Group * const )
 }

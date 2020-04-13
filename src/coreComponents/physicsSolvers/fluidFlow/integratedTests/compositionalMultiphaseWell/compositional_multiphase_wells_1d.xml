@@ -3,16 +3,16 @@
 
   <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <CompositionalMultiphaseReservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters newtonTol="1.0e-6"
+      <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
@@ -74,14 +74,12 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.08"
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="19.4"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.4"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="20.3"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.3"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -97,14 +95,12 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.3"
+                  crossSectionArea="0.08"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.52"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.52"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="20.45"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.45"/> 
     </InternalWell> 
 
   </Mesh>

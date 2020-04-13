@@ -215,6 +215,31 @@ real64 PeriodicEvent::GetEventTypeDtRequest( real64 const time )
 }
 
 
+void PeriodicEvent::Cleanup( real64 const time_n,
+                             integer const cycleNumber,
+                             integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                             real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                             Group * domain )
+{
+  // Only call the cleanup method of the target/children if it is within its application time
+  if( ( time_n >= GetBeginTime() ) && ( time_n <= GetEndTime() ) )
+  {
+    ExecutableGroup * target = GetEventTarget();
+    if( target != nullptr )
+    {
+      // Cleanup the target
+      target->Cleanup( time_n, cycleNumber, 0, 0, domain );
+    }
+
+    // Cleanup any sub-events
+    this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
+    {
+      subEvent.Cleanup( time_n, cycleNumber, 0, 0, domain );
+    } );
+  }
+}
+
+
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, std::string const &, Group * const )
 } /* namespace geosx */

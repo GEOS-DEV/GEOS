@@ -25,7 +25,8 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -35,7 +36,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseKernels;
+using namespace SinglePhaseBaseKernels;
+using namespace SinglePhaseFVMKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
@@ -63,6 +65,79 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const * const domain,
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
+}
+
+template< typename BASE >
+void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
+                                          DofManager & dofManager,
+                                          ParallelMatrix & matrix,
+                                          ParallelVector & rhs,
+                                          ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+  BASE::SetupSystem( domain,
+                     dofManager,
+                     matrix,
+                     rhs,
+                     solution );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+  {
+
+    localIndex numRows = 0;
+    this->applyToSubRegions( mesh, [&]( ElementSubRegionBase const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.numLocalNonzeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row=0; row<matrix.numLocalRows(); ++row )
+    {
+      localIndex const rowSize = matrix.localRowLength( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    for( localIndex row=matrix.numLocalRows(); row<numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row,
+                                                         maxRowSize );
+    }
+
+  }
+
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const *
+    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const *
+    fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( this->getDiscretization() );
+
+
+  fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0=0; k0<numFluxElems; ++k0 )
+      {
+        for( localIndex k1=0; k1<numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
+  } );
 }
 
 
@@ -151,6 +226,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
   {
     this->UpdateState( &subRegion );
   } );
+
 }
 
 template< typename BASE >
@@ -162,6 +238,13 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                                                 ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  if( m_derivativeFluxResidual_dAperture==nullptr )
+  {
+    m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( matrix->numLocalRows(),
+                                                                                              matrix->numLocalCols() );
+  }
+  m_derivativeFluxResidual_dAperture->setValues( 0.0 );
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();

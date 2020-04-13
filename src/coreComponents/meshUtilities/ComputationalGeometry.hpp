@@ -21,11 +21,13 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "mesh/InterObjectRelation.hpp"
 
 namespace geosx
 {
 namespace computationalGeometry
 {
+
 
 /**
  * Calculates the intersection between a line and a plane
@@ -147,6 +149,19 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
                               R1Tensor const & point,
                               real64 const areaTolerance = 0.0 );
 
+/**
+ * @brief Compute the dimensions of the bounding box containing the element
+          defined here by the coordinates of its vertices
+ * @param[in] elemIndex index of the element in pointIndices
+ * @param[in] pointIndices the indices of the vertices in pointCoordinates
+ * @param[in] pointCoordinates the vertices coordinates
+ * @return an R1Tensor containing the dimensions of the box
+ */
+template< typename NODEMAP >
+R1Tensor GetBoundingBox( localIndex elemIndex,
+                         NODEMAP const & pointIndices,
+                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+
 inline
 GEOSX_HOST_DEVICE
 real64 HexVolume( R1Tensor const * const X )
@@ -190,6 +205,15 @@ real64 WedgeVolume( R1Tensor const * const points );
 real64 PyramidVolume( R1Tensor const * const points );
 
 }
+
+extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
+                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_IJ > > const & pointIndices,
+                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
+                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_JI > > const & pointIndices,
+                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+
+
 } /* namespace geosx */
 
 #endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
