@@ -525,10 +525,10 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     integer const component = bc->GetComponent();
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        vel( a, component ) = u( a, component );
-      }
+    {
+      localIndex const a = targetSet[ i ];
+      vel( a, component ) = u( a, component );
+    }
                                             );
   },
                              [&]( FieldSpecificationBase const * const bc,
@@ -537,11 +537,11 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     integer const component = bc->GetComponent();
     forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                             [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        uhat( a, component ) = u( a, component ) - vel( a, component );
-        vel( a, component )  = uhat( a, component ) / dt;
-      }
+    {
+      localIndex const a = targetSet[ i ];
+      uhat( a, component ) = u( a, component ) - vel( a, component );
+      vel( a, component )  = uhat( a, component ) / dt;
+    }
                                             );
   }
                              );
