@@ -44,7 +44,7 @@
   </Geometry>
 
 
-  <Events maxTime="50.0">
+  <Events maxTime="100.0">
   
     <!-- SoloEvent 
       name="initialPlot"

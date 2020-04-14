@@ -98,7 +98,7 @@ font = {'size'   : 10}
 
 matplotlib.rc('font', **font)
 
-fig1 = plt.figure(figsize=(8, 5))  # a new figure window
+fig1 = plt.figure(figsize=(12, 7.5))  # a new figure window
 fig1.subplots_adjust(wspace=0.4,bottom=0.1,left=0.1,right=0.97,top=0.95)
 
 
@@ -108,11 +108,12 @@ ax2 = fig1.add_subplot(3, 2, 1)  # specify (nrows, ncols, axnum)
 plt.plot(time,R_Tdom, 'k-', label='asymptotic $\mu \Rightarrow 0$  soln' )
 plt.plot(time,R_Vdom, 'r-', label='asymptotic $K_{IC} \Rightarrow 0$ soln' )
 for i in range(0,numFiles):
-    plt.plot(t_sim[i][1::N1],Radius[i][1::N1],symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(t_sim[i][1::N1],Radius[i][1::N1],symbols[i],fillstyle='none', markersize=6, label=labels[i] )
 #plt.xlabel('time (s)')
 plt.ylabel('Fracture\n Length (m)', multialignment='center')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([0, max(t_sim[0]) ])
+plt.ylim([0, 80])
 plt.legend( bbox_to_anchor=(2.4, 1.1),prop={'size':10})
 
 
@@ -120,9 +121,9 @@ ax1 = fig1.add_subplot(3, 2, 3)  # specify (nrows, ncols, axnum)
 plt.plot(time,w0_Tdom*1000, 'k-', label='$\mu$ => 0' )
 plt.plot(time,w0_Vdom*1000, 'r-', label='$K_{IC}$ => 0' )
 for i in range(0,numFiles):
-    plt.plot(t_sim[i][1::N1],aper0[i][1::N1]*1000,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(t_sim[i][1::N1],aper0[i][1::N1]*1000,symbols[i],fillstyle='none', markersize=6, label=labels[i] )
 #plt.xlabel('time (s)')
-plt.ylabel('Aperture(@L=0.5m) \n (mm)', multialignment='center')
+plt.ylabel('Aperture(@r=0.5m) \n (mm)', multialignment='center')
 #plt.legend(loc='lower right')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([0, max(t_sim[0]) ])
@@ -132,9 +133,9 @@ ax1 = fig1.add_subplot(3, 2, 5)  # specify (nrows, ncols, axnum)
 plt.plot(time,P_Tdom/1.0e6, 'k-', label='$\mu$ => 0' )
 plt.plot(time,P_Vdom/1.0e6, 'r-', label='$K_{Ic}$ => 0' )
 for i in range(0,numFiles):
-    plt.plot(t_sim[i][1::N1],(press0[i][1::N1]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(t_sim[i][1::N1],(press0[i][1::N1]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=6, label=labels[i] )
 plt.xlabel('time (s)')
-plt.ylabel('Pressure(@L=0.5m) \n (MPa)', multialignment='center')
+plt.ylabel('Pressure(@r=0.5m) \n (MPa)', multialignment='center')
 #plt.xticks(np.arange(min(t_sim[0]), max(t_sim[0]), 20.0))
 plt.xlim([0, max(t_sim[0]) ])
 #plt.yticks(np.arange(0.3, 1.01, 0.1))
@@ -148,29 +149,29 @@ N1 = 1
 fig2 = fig1 #plt.figure()  # a new figure window
 ax2 = fig2.add_subplot(3, 2, 4)  # specify (nrows, ncols, axnum)
 for i in range(0,numFiles):
-    plt.plot(radA[i]/np.amax(radA[i]),Aperture[i]*1000,symbols[i],fillstyle='none', markersize=4,label=labels[i] )
+    plt.plot(radA[i]/np.amax(radA[i]),Aperture[i]*1000,symbols[i],fillstyle='none', markersize=6,label=labels[i] )
 #plt.plot(solns[0],w_tough[0]*1000,  'k-', label='$\mu$ => 0' )
 plt.plot(solns[0],w_viscous[0]*1000,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],w_tough[0]*1000,'k-', label='$\mu$ => 0' )
 #plt.xlabel('Radius (m)')
-plt.ylabel('Aperture(t=200s) \n (mm)', multialignment='center')
+plt.ylabel('Aperture(t=400s) \n (mm)', multialignment='center')
 #plt.legend(loc='upper right')
 plt.xlim([0, 1 ])
-#plt.ylim([ 0.0  , 2.0 ])
+plt.ylim([ 0.0  , 2.0 ])
   
 #print Pressure[i][1::N1]
 #print np.append(Pressure[i][1::N1],Pressure[i][-1])
 ax2 = fig2.add_subplot(3, 2, 6)  # specify (nrows, ncols, axnum)
 for i in range(0,numFiles):
-    plt.plot(radP[i]/np.amax(radP[i]),(Pressure[i]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=4, label=labels[i] )
+    plt.plot(radP[i]/np.amax(radP[i]),(Pressure[i]-P0)/1.0e6,symbols[i],fillstyle='none', markersize=6, label=labels[i] )
 #plt.plot(solns[0],p_tough[0]/1.0e6,  'k-', label='$\mu$ => 0' )
 plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],p_tough[0]/1.0e6,'k-', label='$\mu$ => 0' )
-plt.xlabel('Length Coordinate') 
-plt.ylabel('Pressure(t=200s) \n (MPa)', multialignment='center')
+plt.xlabel('Radial Coordinate') 
+plt.ylabel('Pressure(t=400s) \n (MPa)', multialignment='center')
 plt.xlim([0, 1 ])
-#plt.yticks(np.arange(-0.2, 0.501, 0.1))
-#plt.ylim([ -0.3 , 0.31 ])
+plt.yticks([-0.5, -0.25, 0.0, 0.25, 0.5])
+plt.ylim([ -0.5 , 0.5 ])
 #  
 # plt.savefig('kgd2.eps',dpi=1200)
 plt.show()

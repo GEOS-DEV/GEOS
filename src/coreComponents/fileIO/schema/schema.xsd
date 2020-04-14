@@ -502,6 +502,8 @@
 		<xsd:attribute name="cellBlockNames" type="string_array" use="required" />
 		<!--elementTypes => element types of each mesh block-->
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
+		<!--mapToRadial => map the mesh to radial-->
+		<xsd:attribute name="mapToRadial" type="integer" default="0" />
 		<!--nx => number of elements in the x-direction within each mesh block-->
 		<xsd:attribute name="nx" type="integer_array" use="required" />
 		<!--ny => number of elements in the y-direction within each mesh block-->

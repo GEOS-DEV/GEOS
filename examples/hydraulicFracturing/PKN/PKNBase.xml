@@ -136,7 +136,7 @@
       name="solverApplications6"
       beginTime="60.0"
       endTime="100.0"
-      forceDt="8.0"
+      forceDt="4.0"
       target="/Solvers/hydrofracture" />
 
     <PeriodicEvent 

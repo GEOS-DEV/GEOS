@@ -123,6 +123,10 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("pattern by which to decompose the hex mesh into prisms (more explanation required)");
 
+  registerWrapper(keys::mapToRadial, &m_mapToRadial, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("map the mesh to radial");
 }
 
 InternalMeshGenerator::~InternalMeshGenerator()

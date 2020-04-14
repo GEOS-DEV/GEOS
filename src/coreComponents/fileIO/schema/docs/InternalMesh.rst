@@ -5,6 +5,7 @@ Name            Type          Default  Description
 =============== ============= ======== ======================================================================================================= 
 cellBlockNames  string_array  required names of each mesh block                                                                                
 elementTypes    string_array  required element types of each mesh block                                                                        
+mapToRadial     integer       0        map the mesh to radial                                                                                  
 name            string        required A name is required for any non-unique nodes                                                             
 nx              integer_array required number of elements in the x-direction within each mesh block                                            
 ny              integer_array required number of elements in the y-direction within each mesh block                                            

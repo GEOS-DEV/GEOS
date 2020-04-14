@@ -1204,6 +1204,8 @@
 		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="externalForce" type="r1_array" />
+		<!--fDisconnect => Disconnect force at fracture tip nodes-->
+		<xsd:attribute name="fDisconnect" type="r1_array" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--ghostRank => (no description available)-->

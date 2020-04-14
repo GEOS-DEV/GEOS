@@ -45,6 +45,7 @@ string const zBias  = "zBias";
 string const cellBlockNames = "cellBlockNames";
 string const elementTypes = "elementTypes";
 string const trianglePattern = "trianglePattern";
+string const mapToRadial = "mapToRadial";
 }
 }
 

@@ -104,8 +104,8 @@
 
     <PoroLinearElasticIsotropic name="rock"
                                 defaultDensity="2700"
-                                defaultBulkModulus="20.0e9"
-                                defaultShearModulus="12.0e9"
+                                defaultBulkModulus="26.667e9"
+                                defaultShearModulus="16.0e9"
                                 BiotCoefficient="1"
                                 compressibility="1.6155088853e-18"
                                 referencePressure="2.125e6"
