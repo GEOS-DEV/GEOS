@@ -1238,9 +1238,9 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
                                                                 integer_conversion< globalIndex >( i );
 
-                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( 0, i ) * pow( -1, kf );
-                      dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( 1, i ) * pow( -1, kf );
-                      dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( 2, i ) * pow( -1, kf );
+                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
+                      dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
+                      dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 2 ) * pow( -1, kf );
                     }
                   }
                 }
@@ -1259,7 +1259,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     {
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
                                                                 integer_conversion< globalIndex >( i );
-                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( 0, i ) * pow( -1, kf );
+                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
                     }
                   }
                 }
