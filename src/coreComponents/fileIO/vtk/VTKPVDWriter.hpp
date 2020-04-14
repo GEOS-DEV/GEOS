@@ -23,41 +23,41 @@ namespace vtk
 {
 class VTKPVDWriter
 {
-  public:
-  VTKPVDWriter( string const & name) :
-    m_fileName( name + ".pvd")
+public:
+  VTKPVDWriter( string const & name ):
+    m_fileName( name + ".pvd" )
   {
     // Declaration of XML version
-    auto declarationNode = m_pvdFile.append_child(pugi::node_declaration);
-    declarationNode.append_attribute("version") = "1.0";
+    auto declarationNode = m_pvdFile.append_child( pugi::node_declaration );
+    declarationNode.append_attribute( "version" ) = "1.0";
 
     // Declaration of the node VTKFile
-    auto vtkFileNode = m_pvdFile.append_child("VTKFile");
-    vtkFileNode.append_attribute("type") = "Collection";
-    vtkFileNode.append_attribute("version") = "0.1";
+    auto vtkFileNode = m_pvdFile.append_child( "VTKFile" );
+    vtkFileNode.append_attribute( "type" ) = "Collection";
+    vtkFileNode.append_attribute( "version" ) = "0.1";
 
-    vtkFileNode.append_child("Collection");
+    vtkFileNode.append_child( "Collection" );
   }
 
   void Save() const
   {
-    int const mpiRank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+    int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
     m_pvdFile.save_file( m_fileName.c_str() );
     if( mpiRank == 0 )
     {
-       m_pvdFile.save_file( m_fileName.c_str() );
+      m_pvdFile.save_file( m_fileName.c_str() );
     }
   }
 
-  void AddData( real64 time, string const& filePath ) const
+  void AddData( real64 time, string const & filePath ) const
   {
-    auto collectionNode = m_pvdFile.child("VTKFile").child("Collection");
-    auto dataSetNode = collectionNode.append_child("DataSet");
-    dataSetNode.append_attribute("timestep") = time;
-    dataSetNode.append_attribute("file") = filePath.c_str();
+    auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
+    auto dataSetNode = collectionNode.append_child( "DataSet" );
+    dataSetNode.append_attribute( "timestep" ) = time;
+    dataSetNode.append_attribute( "file" ) = filePath.c_str();
   }
-  private:
-  
+private:
+
   /// PVD XML file
   xmlWrapper::xmlDocument m_pvdFile;
 

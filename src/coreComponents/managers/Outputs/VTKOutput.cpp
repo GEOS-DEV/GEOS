@@ -65,7 +65,7 @@ void VTKOutput::Execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          Group * domain )
 {
-  DomainPartition* domainPartition = Group::group_cast<DomainPartition*>(domain);
+  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
   m_writerInterface.SetPlotLevel( m_plotLevel );
   m_writerInterface.Write( time_n, cycleNumber, *domainPartition );
 }

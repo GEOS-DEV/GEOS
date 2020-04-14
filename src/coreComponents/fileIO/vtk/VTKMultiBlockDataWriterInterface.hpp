@@ -43,7 +43,7 @@ namespace vtk
  */
 class VTKPolyDataWriterInterface
 {
-  public:
+public:
   VTKPolyDataWriterInterface( string const & outputName );
 
 
@@ -53,9 +53,9 @@ class VTKPolyDataWriterInterface
    * the field will be output.
    * @param[in] plotLevel the limit plotlevel
    */
-  void SetPlotLevel(integer plotLevel )
+  void SetPlotLevel( integer plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
   }
 
   /*!
@@ -91,9 +91,9 @@ class VTKPolyDataWriterInterface
    * @param[in] cycle the current cycle of event
    * @param[in] domain the computation domain of this rank
    */
-  void Write( real64 time, integer cycle, DomainPartition const & domain  );
+  void Write( real64 time, integer cycle, DomainPartition const & domain );
 
-  private:
+private:
 
   /*!
    * @brief Create a folder at the given time-step \p time
@@ -128,7 +128,7 @@ class VTKPolyDataWriterInterface
    * the second value is a table with the same size than the total number of element in the CellElementRegion
    * containg the type of the cells.
    */
-  std::tuple< vtkSmartPointer< vtkCellArray >, std::vector< int> > GetVTKCells( CellElementRegion const & er ) const;
+  std::tuple< vtkSmartPointer< vtkCellArray >, std::vector< int > > GetVTKCells( CellElementRegion const & er ) const;
 
   /*!
    * @brief Gets the VTK Object points encapsulating
@@ -149,7 +149,7 @@ class VTKPolyDataWriterInterface
    * @brief Gets the VTK Object points encapsulating
    * the cells connectivities of \p es
    */
-  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion  const & esr , NodeManager const & nodeManager ) const;
+  std::tuple< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion const & esr, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -159,7 +159,8 @@ class VTKPolyDataWriterInterface
    */
   void WriteFaceElementRegions( real64 time, DomainPartition const & domain ) const;
 
-  std::tuple< vtkSmartPointer< vtkPoints >,  vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion  const & esr , NodeManager const & nodeManager ) const;
+  std::tuple< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion const & esr,
+                                                                                         NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.
@@ -175,15 +176,15 @@ class VTKPolyDataWriterInterface
    * @param[in] pointdata a VTK object containing all the fields associated with the nodes
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
-  void WriteNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const & nodeManager) const;
+  void WriteNodeFields( vtkSmartPointer< vtkPointData > const pointdata, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes all the fields associated to the elements of \p er if their plotlevel is <= m_plotLevel
    * @param[in] celldata a VTK object containing all the fields associated with the elements
    * @param[in] er ElementRegion being written
    */
-template< class SUBREGION >
-void WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBase const & er ) const;
+  template< class SUBREGION >
+  void WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementRegionBase const & er ) const;
 
   /*!
    * @brief Writes a field from \p wrapperBase
@@ -195,17 +196,17 @@ void WriteElementFields( vtkSmartPointer< vtkCellData > const celldata, ElementR
    * @param[in,out] a counter that is incremented each time a value is written. This is useful
    * for CellElementSubRegion.
    */
-  void WriteField( WrapperBase const & wrapperBase, vtkSmartPointer < VTKGEOSXData > data, localIndex size, localIndex & count ) const;
+  void WriteField( WrapperBase const & wrapperBase, vtkSmartPointer< VTKGEOSXData > data, localIndex size, localIndex & count ) const;
 
-  private:
+private:
 
   /// Folder name in which all the files will be written
   string const m_outputFolder;
-  
+
   /// A writter specialized for PVD files. There is one PVD file per simulation. It is the root
   /// file containing all the paths to the VTM files.
   VTKPVDWriter m_pvd;
-  
+
   /// Maximum plot level to be written.
   dataRepository::PlotLevel m_plotLevel;
 

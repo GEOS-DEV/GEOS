@@ -20,22 +20,20 @@ namespace geosx
 namespace vtk
 {
 template<>
-void VTKGEOSXData::InsertValue2< R1Tensor>( localIndex index, R1Tensor const & val )
+void VTKGEOSXData::InsertValue2< R1Tensor >( localIndex index, R1Tensor const & val )
 {
   for( localIndex j = 0; j < 3; j++ )
   {
-    this->InsertValue( 3 * index + j ,val[j]);
+    this->InsertValue( 3 * index + j, val[j] );
   }
 }
 
 template<>
-void VTKGEOSXData::InsertValue2< R2Tensor>( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
-{
-}
+void VTKGEOSXData::InsertValue2< R2Tensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
+{}
 
 template<>
 void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2SymTensor const & GEOSX_UNUSED_PARAM ( val ) )
-{
-}
+{}
 }
 }

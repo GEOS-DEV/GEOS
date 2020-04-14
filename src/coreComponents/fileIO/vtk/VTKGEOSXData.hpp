@@ -26,23 +26,23 @@ namespace vtk
 
 class VTKGEOSXData : public vtkAOSDataArrayTemplate< real64 >
 {
-  public:
-    static VTKGEOSXData *New()
-    {
-      VTK_STANDARD_NEW_BODY(VTKGEOSXData);
-    }
-    template< typename T >
-    void InsertValue2( localIndex index,  T const & val )
-    {
-      this->InsertValue( index, val );
-    }
+public:
+  static VTKGEOSXData *New()
+  {
+    VTK_STANDARD_NEW_BODY( VTKGEOSXData );
+  }
+  template< typename T >
+  void InsertValue2( localIndex index, T const & val )
+  {
+    this->InsertValue( index, val );
+  }
 };
 
 template<>
-void VTKGEOSXData::InsertValue2< R1Tensor>( localIndex index, R1Tensor const & val );
+void VTKGEOSXData::InsertValue2< R1Tensor >( localIndex index, R1Tensor const & val );
 
 template<>
-void VTKGEOSXData::InsertValue2< R2Tensor>( localIndex index, R2Tensor const & val );
+void VTKGEOSXData::InsertValue2< R2Tensor >( localIndex index, R2Tensor const & val );
 
 template<>
 void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex index, R2SymTensor const & val );

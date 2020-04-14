@@ -22,9 +22,9 @@ namespace geosx
 {
 namespace vtk
 {
-  int GetVTKType(  std::type_index const & type );
+int GetVTKType( std::type_index const & type );
 
-  int GetVTKCellType( string const & cellType );
+int GetVTKCellType( string const & cellType );
 }
 }
 
