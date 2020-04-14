@@ -328,6 +328,7 @@ void CycLiqCPSP::StateUpdatePoint( localIndex const k,
                                                real64 const dt,
                                                integer const GEOSX_UNUSED_ARG( updateStiffnessFlag ) )
 {
+
 	if(dt < std::numeric_limits<real64>::max())
 	{
 		m_initialTime[k][q] += dt;
@@ -335,11 +336,10 @@ void CycLiqCPSP::StateUpdatePoint( localIndex const k,
 if(m_initialTime[k][q] < 0)
 {
 	m_clearDisplacement = 1;
-
 	 //m_strain[k][q] += D;
-     real64 p = 1e6;
-     real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat );
-     real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat );
+     real64 p = 1e3;
+     real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat )*1000.0;
+     real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat )*1000.0;
      G = 0.48 / 8.0 * K;
      real64 meanStresIncrement = D.Trace();
      R2SymTensor temp = D;
@@ -358,6 +358,7 @@ else
 		//m_clearDisplacement = 1;
 	//else
 		m_clearDisplacement = -1;
+	m_stress[k][q] /=1000;
 
 	real64 Mfc = m_M[k];
 	real64 Mdc = m_M[k];
@@ -981,6 +982,7 @@ else
 	m_stress[k][q] += temp;
 	temp.QijAjkQlk( m_stress[k][q], Rot );
 	m_stress[k][q] = temp;
+	m_stress[k][q] *=1000;
 	m_strain[k][q] = strain_nplus1 * (-1);
 
 	m_epsvir[k][q] = epsvir_ns;

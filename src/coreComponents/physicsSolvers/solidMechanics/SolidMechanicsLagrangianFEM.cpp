@@ -352,7 +352,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 //  }
 
   // Double the mass of nodes at external boundary
-  /*
+/*
   Group * nodeSets = nodes->sets();
   localIndex_set & xnegNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xneg") )->reference();
   localIndex_set & xposNodes = nodeSets->registerWrapper<localIndex_set>( std::string("xpos") )->reference();
@@ -373,7 +373,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
     mass[index] *= 2;
   for( localIndex index : zposNodes )
     mass[index] *= 2;
-    */
+*/
 
 }
 
@@ -757,7 +757,27 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes );
+  ElementRegionManager::MaterialViewAccessor< real64 > const
+    clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
+                                                                                         constitutiveManager);
+  bool isClearDisplacement = false;
+  real64 newMassDamping = 10.0;
+  for(localIndex i = 0;i<m_targetRegions.size();++i)
+  {
+	  if(clearDisplacement[0][0][m_solidMaterialFullIndex[i]] > 0)
+	  {
+		  isClearDisplacement = true;
+		  break;
+	  }
+  }
+  if(isClearDisplacement)
+  {
+	  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, newMassDamping, m_sendOrReceiveNodes );
+  }
+  else
+  {
+	  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes );
+  }
 
   //ApplyTiedVelocity_explicit(time_n + dt,domain);
 
@@ -819,18 +839,20 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStepVelocityUpdate( real64 const& ti
   } //Element Manager
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes );
+  if(isClearDisplacement)
+  {
+	  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, newMassDamping, m_nonSendOrReceiveNodes );
+  }
+  else
+  {
+	  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes );
+  }
 
   ApplyTiedVelocity_explicit(time_n + dt,domain);
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
-  ElementRegionManager::MaterialViewAccessor< real64 > const
-  clearDisplacement = elemManager->ConstructFullMaterialViewAccessor< real64 >( SolidBase::viewKeyStruct::clearDisplacementString,
-                                                                                       constitutiveManager);
-
-  for(localIndex i = 0;i<m_targetRegions.size();++i)
-	  if(clearDisplacement[0][0][m_solidMaterialFullIndex[i]] > 0)
+  if(isClearDisplacement)
   {
 	  ClearDisplacement( domain );
   }
