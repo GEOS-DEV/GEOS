@@ -425,13 +425,15 @@
 	<xsd:complexType name="TableFunctionType">
 		<!--coordinateFiles => List of coordinate file names for ND Table-->
 		<xsd:attribute name="coordinateFiles" type="string_array" default="{}" />
-		<!--coordinates => Coordinates inputs for 1D tables-->
+		<!--coordinates => Coordinates inputs for 1D tables. MULTILINE
+MERGE TEST
+MODIFICATION-->
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
 		<!--interpolation => Interpolation method (options = linear, nearest, upper, lower)-->
 		<xsd:attribute name="interpolation" type="string" default="linear" />
-		<!--values => Values for 1D tables-->
+		<!--values => Values for 1D tables. MERGE TEST-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />
 		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="string" default="" />
