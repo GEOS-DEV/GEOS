@@ -529,19 +529,19 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
 		</xsd:choice>
-		<!--crossSectionArea => cross section area of the well-->
-		<xsd:attribute name="crossSectionArea" type="real64" use="required" />
-		<!--meshName => name of the reservoir mesh associated with this well-->
+		<!--meshName => Name of the reservoir mesh associated with this well-->
 		<xsd:attribute name="meshName" type="string" use="required" />
-		<!--numElementsPerSegment => number of well elements per polyline segment-->
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
 		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
-		<!--polylineNodeCoords => physical coordinates of the well polyline nodes-->
+		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
 		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
-		<!--polylineSegmentConn => connectivity of the polyline segments-->
+		<!--polylineSegmentConn => Connectivity of the polyline segments-->
 		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
-		<!--wellControlsName => name of the set of constraints associated with this well-->
+		<!--radius => Radius of the well-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
 		<xsd:attribute name="wellControlsName" type="string" use="required" />
-		<!--wellRegionName => name of the well element region-->
+		<!--wellRegionName => Name of the well element region-->
 		<xsd:attribute name="wellRegionName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -901,8 +901,6 @@
 		<xsd:attribute name="control" type="string" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
-		<!--referenceDepth => Reference depth for well bottom hole pressure-->
-		<xsd:attribute name="referenceDepth" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
 		<!--targetRate => Target rate-->
