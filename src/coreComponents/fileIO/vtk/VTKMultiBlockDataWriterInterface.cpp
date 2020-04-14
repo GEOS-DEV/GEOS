@@ -268,7 +268,14 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, DomainPar
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank ) +"_" + er.getName() + ".vtu";
     vtkUgWriter->SetFileName( vtuFilePath.c_str() );
     vtkUgWriter->SetInputData( vtkUg );
-    vtkUgWriter->SetDataModeToAscii();
+    if( m_binaryMode )
+    {
+      vtkUgWriter->SetDataModeToBinary();
+    }
+    else
+    {
+      vtkUgWriter->SetDataModeToAscii();
+    }
     vtkUgWriter->Write();
   } );
 }
@@ -290,7 +297,14 @@ void VTKPolyDataWriterInterface::WriteWellElementRegions( real64 time, DomainPar
     WriteElementFields< WellElementSubRegion >( ug->GetCellData(), er );
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank ) +"_" + er.getName() + ".vtu";
     vtuWriter->SetFileName( vtuFilePath.c_str() );
-    vtuWriter->SetDataModeToAscii();
+    if( m_binaryMode )
+    {
+      vtuWriter->SetDataModeToBinary();
+    }
+    else
+    {
+      vtuWriter->SetDataModeToAscii();
+    }
     vtuWriter->Write();
   } );
 }
@@ -319,7 +333,14 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, DomainPar
     string vtuFilePath = timeStepSubFolder + "/" + std::to_string( mpiRank ) +"_" + er.getName() + ".vtu";
     WriteElementFields< FaceElementSubRegion >( ug->GetCellData(), er );
     vtuWriter->SetFileName( vtuFilePath.c_str() );
-    vtuWriter->SetDataModeToAscii();
+    if( m_binaryMode )
+    {
+      vtuWriter->SetDataModeToBinary();
+    }
+    else
+    {
+      vtuWriter->SetDataModeToAscii();
+    }
     vtuWriter->Write();
   } );
 }

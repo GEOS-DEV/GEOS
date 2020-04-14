@@ -46,7 +46,6 @@ class VTKPolyDataWriterInterface
 public:
   VTKPolyDataWriterInterface( string const & outputName );
 
-
   /*!
    * @brief Sets the plot level
    * @details All fields have an associated plot level. If it is <= to \p plotLevel,
@@ -56,6 +55,15 @@ public:
   void SetPlotLevel( integer plotLevel )
   {
     m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
+  }
+
+  /*!
+   * @brief Set the binary mode
+   * @param[in] binary binary mode to be set
+   */
+  void SetBinary( bool binary )
+  {
+    m_binaryMode = binary;
   }
 
   /*!
@@ -212,6 +220,11 @@ private:
 
   /// The previousCycle
   integer m_previousCycle;
+
+  /// Binary mode
+  /// true : binary
+  /// false : ascii
+  bool m_binaryMode;
 };
 
 } // namespace vtk
