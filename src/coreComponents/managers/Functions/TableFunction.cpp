@@ -58,11 +58,11 @@ TableFunction::TableFunction( const std::string & name,
 {
   registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D, false )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Coordinates inputs for 1D tables" );
+    setDescription( "Coordinates inputs for 1D tables. MULTILINE\nMERGE TEST\nMODIFICATION" );
 
   registerWrapper( keys::tableValues, &m_values, false )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Values for 1D tables" );
+    setDescription( "Values for 1D tables. MERGE TEST" );
 
   registerWrapper( keys::coordinateFiles, &m_coordinateFiles, false )->
     setInputFlag( InputFlags::OPTIONAL )->
