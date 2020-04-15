@@ -167,6 +167,31 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
   embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap, embSurfToEdgeMap );
 
+  //Usefull for debugging
+  EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
+  EdgeManager::NodeMapType const & edgeToNodesMap = embSurfEdgeManager->nodeList();
+
+  for (localIndex a=0; a < embeddedSurfaceSubRegion->size(); a++)
+  {
+    std::cout << "embSurface " << a << std::endl;
+    for (localIndex akn = 0; akn < embSurfToNodeMap.sizeOfArray(a); akn++)
+    {
+      std::cout << "node " << embSurfToNodeMap[a][akn] << std::endl;
+    }
+  }
+
+  for (localIndex ke=0; ke < embSurfEdgeManager->size(); ++ke)
+  {
+    std::cout << "edge: " << ke << " which is connected to " << edgeToEmbSurfacesMap.sizeOfSet(ke) <<  " embedded surfaces " << std::endl;
+    for (localIndex kes=0; kes < edgeToEmbSurfacesMap.sizeOfSet(ke); ++kes)
+    {
+      std::cout << "emb. surf. " << edgeToEmbSurfacesMap[ke][kes] <<  std::endl;
+    }
+    for (localIndex kn=0; kn < 2; kn++)
+    {
+      std::cout << "node " << edgeToNodesMap[ke][kn] <<  std::endl;
+    }
+  }
 
   // Add the embedded elements to the fracture stencil.
   addToFractureStencil(domain);
@@ -207,22 +232,16 @@ void EmbeddedSurfaceGenerator::addToFractureStencil(DomainPartition * const doma
   FiniteVolumeManager * const
   fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( dataRepository::keys::finiteVolumeManager );
 
-  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-
+    FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
+    if( fluxApprox!=nullptr )
     {
-      for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
-      {
-        FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
-        if( fluxApprox!=nullptr )
-        {
-          fluxApprox->addToFractureStencil( *domain,
-                                            this->m_fractureRegionName );
-        }
-      }
+      fluxApprox->addEDFracToFractureStencil( *domain,
+                                              this->m_fractureRegionName );
     }
   }
+
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase,

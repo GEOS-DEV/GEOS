@@ -186,9 +186,6 @@ private:
   /// list of nodes
   NodeMapType m_toNodesRelation;    // Not used for now. Will need for Flow?
 
-  /// list of edges (if necessary)
-  EdgeMapType m_toEdgesRelation;    // Not used for now. Will need for Flow?
-
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;
 

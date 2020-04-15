@@ -65,7 +65,19 @@ void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
   }
 }
 
-}
+//void averageTensorComponent(R1Tensor const & values, real64 & avCoeff)
+//{
+//  avCoeff = 0;
+//  for( unsigned icoord = 0; icoord < 3; ++icoord )
+//  {
+//    avCoeff += values[icoord];
+//  }
+//  avCoeff/=3;
+//}
+
+} // close namespace
+
+
 
 void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain )
 {
@@ -576,9 +588,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   }
 }
 
-void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & domain,
-                                                            string const & embeddedSurfaceRegionName)
-{
+void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                            string const & GEOSX_UNUSED_PARAM ( embeddedSurfaceRegionName ) )
+{/*
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -615,12 +627,12 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & do
   arrayView1d< integer const > const & edgeGhostRank = edgeManager->ghostRank();
 
   localIndex connectorIndex = 0;
-  // add new connectors/connections between face elements to the fracture stencil
+  // add new connectors/connections between embedded elements to the fracture stencil
   for( localIndex ke = 0;  ke <  embSurfEdgeManager->size(); ke++ )
   {
     // for now there is no generation of new elements so we add all edges.
     localIndex const numElems = 2;  // hardcoded for now but unless there is an intersection it should always be 2.
-    if (edgeToEmbSurfacesMap.sizeOfArray(ke) > 1) // to be a connector it need to be attached to at least 2 elements.
+    if (edgeToEmbSurfacesMap.sizeOfSet(ke) > 1) // to be a connector it need to be attached to at least 2 elements.
     {
 
       GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
@@ -632,26 +644,28 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & do
       stencilCellCenterToEdgeCenters.resize( numElems );
       isGhostConnectors.resize( numElems );
 
-      // get edge geometry
-      R1Tensor const edgeCenter = edgeManager->calculateCenter( ke, X );
-      real64 const edgeLength = edgeManager->calculateLength( ke, X ).L2_Norm();
+      //TODO get edge geometry
+//      R1Tensor const edgeCenter = embSurfEdgeManager->calculateCenter( ke, X );
+//      real64 const edgeLength   = embSurfEdgeManager->calculateLength( ke, X ).L2_Norm();
 
       // loop over all embedded surface elements attached to the connector and add them to the stencil
-      for( localIndex kes=0; kes<numElems; ++kes )
+      for( localIndex kes=0; kes < numElems; ++kes )
       {
         localIndex const fractureElementIndex = edgeToEmbSurfacesMap[ke][kes];
 
         // use straight difference between the edge center and face center for gradient length...maybe do something
         // better here?? TODO
-        R1Tensor cellCenterToEdgeCenter = edgeCenter;
-        cellCenterToEdgeCenter -= fractureElemCenter[fractureElementIndex];
+//        R1Tensor cellCenterToEdgeCenter = edgeCenter;
+//        cellCenterToEdgeCenter -= fractureElemCenter[fractureElementIndex];
 
         // form the CellStencil entry
         stencilCellsRegionIndex[kes]    = fractureRegionIndex;
         stencilCellsSubRegionIndex[kes] = 0;  // there is only one subregion.
         stencilCellsIndex[kes]          = fractureElementIndex;
 
-        stencilWeights[kes] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm();
+        //TODO use the proper geometrical info to compute the weight.
+//        stencilWeights[kes] =  1.0 / 12.0 * edgeLength / cellCenterToEdgeCenter.L2_Norm();
+        stencilWeights[kes] =  1.0 / 12.0;
 
         stencilCellCenterToEdgeCenters[kes] = cellCenterToEdgeCenter;
 
@@ -680,6 +694,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & do
     arrayView1d< localIndex const > const & elemRegionList    = fractureSubRegion->getSurfaceToRegionList();
     arrayView1d< localIndex const > const & elemSubRegionList = fractureSubRegion->getSurfaceToSubRegionList();
     arrayView1d< localIndex const > const & elemList          = fractureSubRegion->getSurfaceToCellList();
+    arrayView1d< real64 const >     const & ConnectivityIndex = fractureSubRegion->getConnectivityIndex();
 
     for( localIndex kes; kes  < fractureSubRegion->size(); kes++ )
     {
@@ -693,27 +708,18 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & do
         stencilCellsIndex.resize( numElems );
         stencilWeights.resize( numElems );
 
-        R2SymTensor coefTensor;
-        R1Tensor cellToFaceVec;
-        R1Tensor faceConormal;
+        localIndex const er  = elemRegionList[kes];
+        localIndex const esr = elemSubRegionList[kes];
+        localIndex const ei  = elemList[kes];
 
-        localIndex const faceIndex = faceMap[kfe][ke];
-        localIndex const er  = elemRegionList[kfe][ke];
-        localIndex const esr = elemSubRegionList[kfe][ke];
-        localIndex const ei  = elemList[kfe][ke];
+        // Here goes EDFM transmissibility computation.
+        real64 avCoefficient;
 
-        cellToFaceVec = faceCenter[faceIndex];
-        cellToFaceVec -= elemCenter[er][esr][ei];
+        averageTensorComponent(coefficient[er][esr][ei], avCoefficient);
 
-        real64 const c2fDistance = cellToFaceVec.Normalize();
+        real64 const ht = ConnectivityIndex[kes] * avCoefficient; // Using matrix perm coz assuming fracture is highly permeable for now.
 
-        // assemble full coefficient tensor from principal axis/components
-        makeFullTensor( coefficient[er][esr][ei], coefTensor );
-
-        faceConormal.AijBj( coefTensor, faceNormal[faceIndex] );
-        real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
-
-        // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
+        //
         stencilCellsRegionIndex[0] = er;
         stencilCellsSubRegionIndex[0] = esr;
         stencilCellsIndex[0] = ei;
@@ -721,20 +727,20 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & do
 
         stencilCellsRegionIndex[1] = fractureRegionIndex;
         stencilCellsSubRegionIndex[1] = 0;
-        stencilCellsIndex[1] = kfe;
+        stencilCellsIndex[1] = kes;
         stencilWeights[1] = -ht;
 
         cellStencil.add( 1,
-                         stencilCellRegionIndex,
-                         stencilCellSubRegionIndex,
-                         stencilCellIndex,
+                         stencilCellsRegionIndex,
+                         stencilCellsSubRegionIndex,
+                         stencilCellsIndex,
                          stencilWeights.data(),
-                         faceIndex );
+                         kes );
       }
     }
-  }
-
+  }*/
 }
+
 
 void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,
                                                         SortedArrayView< localIndex const > const & faceSet,

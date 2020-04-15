@@ -38,7 +38,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_embeddedSurfaceToSubRegion(),
   m_embeddedSurfaceToCell(),
   m_toNodesRelation(),
-  m_toEdgesRelation(),
   m_elementAperture(),
   m_elementArea()
 {
@@ -48,11 +47,11 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion, false )->
     setDescription( "Map to the subregion cut by each EmbeddedSurface." );
 
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
-    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
-
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
-    setDescription( "Map to the edges." );
+////  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
+////    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
+//
+//  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
+//    setDescription( "Map to the edges." );
 
   registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell, false )->
     setDescription( "Map to the cells." );
@@ -190,6 +189,8 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     // resize
     this->resize( this->size() + 1 );
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
+
+
   }
 
   return addEmbeddedElem;
@@ -221,7 +222,7 @@ void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeMa
                                                       array1d< int > & offSet ) const
 {
 
-  offSet.resize( size());
+  offSet.resize( size() );
   offSet = 0;
   for( localIndex k =0; k < size(); k++ )
   {

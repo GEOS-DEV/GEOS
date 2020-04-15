@@ -20,6 +20,7 @@
         </SinglePhaseFVM>
         <EmbeddedSurfaceGenerator
             name="SurfaceGenerator"
+            logLevel="1"
             solidMaterialName="rock"
             targetRegions="{Region2, Fracture}"
             fractureRegion="Fracture"/>
@@ -66,7 +67,7 @@
             origin="0.5, 4.5, 0.5"
             lengthVector= "0, 1, 0"
             widthVector="0, 0, 1"
-            dimensions="{5, 1}"/>
+            dimensions="{3, 1}"/>
     </Geometry>
 
 
