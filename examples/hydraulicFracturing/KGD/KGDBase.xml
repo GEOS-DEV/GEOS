@@ -90,7 +90,7 @@
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1.0e-3"
+                   timeFrequency="2.0"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 
