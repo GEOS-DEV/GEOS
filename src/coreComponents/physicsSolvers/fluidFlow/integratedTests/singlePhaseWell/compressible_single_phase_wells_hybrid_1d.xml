@@ -30,14 +30,12 @@
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
-                      targetRate="1e-3" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-3"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -66,7 +64,7 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.1"
+                  radius="0.1"
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
@@ -89,7 +87,7 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.1"
+                  radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
