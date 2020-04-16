@@ -95,7 +95,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     {
       check *= this->m_Partitions( i );
     }
-    assert( check == m_size );
+    GEOSX_ERROR_IF_NE( check, m_size );
   }
 
   //get communicator, rank, and coordinates
@@ -129,10 +129,10 @@ void SpatialPartition::InitializeMetis()
   //get size of problem and decomposition
   m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+
   //check to make sure our dimensions agree
-  {
-    assert( m_sizeMetis == m_size );
-  }
+  GEOSX_ERROR_IF_NE( m_sizeMetis, m_size );
+
   //initialize cached requests and status
   m_mpiRequest.resize( 100 );
   m_mpiStatus.resize( 100 );
@@ -258,7 +258,7 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       {
         check *= this->m_Partitions( i );
       }
-      assert( check == m_size );
+      GEOSX_ERROR_IF_NE( check, m_size );
     }
 
     //get communicator, rank, and coordinates

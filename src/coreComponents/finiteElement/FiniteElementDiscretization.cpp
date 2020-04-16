@@ -84,11 +84,6 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   array3d< R1Tensor > & dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >( keys::dNdX )->reference();
   dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
-  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(
-    CellElementSubRegion::viewKeyStruct::constitutiveMapString )->reference();
-  constitutiveMap.first.resize( cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize( cellBlock->size(), m_quadrature->size() );
-
   array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >( keys::detJ )->reference();
   detJ.resize( cellBlock->size(), m_quadrature->size() );
 }

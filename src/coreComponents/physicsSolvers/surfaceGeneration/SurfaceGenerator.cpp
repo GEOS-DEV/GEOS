@@ -780,7 +780,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
     GEOSX_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
 
-    m_tipNodes.erase( parentNodeIndex );
+    m_tipNodes.remove( parentNodeIndex );
   }
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
@@ -803,7 +803,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
     GEOSX_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
 
-    m_tipEdges.erase( parentEdgeIndex );
+    m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap.getIterableSet( parentEdgeIndex ) )
     {
       bool trailingFace = false;
@@ -819,7 +819,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
         if( trailingFace == false )
         {
-          m_trailingFaces.erase( faceIndex );
+          m_trailingFaces.remove( faceIndex );
         }
       }
     }
@@ -840,7 +840,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
     GEOSX_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
 
     m_trailingFaces.insert( parentFaceIndex );
-    m_tipFaces.erase( parentFaceIndex );
+    m_tipFaces.remove( parentFaceIndex );
 
     for( localIndex const edgeIndex : faceManager.edgeList().getIterableArray( parentFaceIndex ) )
     {
@@ -1758,7 +1758,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   degreeFromCrack[nodeID] = 0;
   degreeFromCrack[newNodeIndex] = 0;
-  m_tipNodes.erase( nodeID );
+  m_tipNodes.remove( nodeID );
   nodeDegreeFromCrackTip( nodeID ) = 1;
   nodeRuptureTime( nodeID ) = time_np1;
   nodeRuptureTime( newNodeIndex ) = time_np1;
@@ -1798,7 +1798,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       edgeManager.SplitObject( parentEdgeIndex, rank, newEdgeIndex );
 
-      m_tipEdges.erase( parentEdgeIndex );
+      m_tipEdges.remove( parentEdgeIndex );
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
@@ -1827,7 +1827,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           if( trailingFace == false )
           {
-            m_trailingFaces.erase( faceIndex );
+            m_trailingFaces.remove( faceIndex );
           }
         }
       }
@@ -1881,7 +1881,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
         m_trailingFaces.insert( faceIndex );
-        m_tipFaces.erase( faceIndex );
+        m_tipFaces.remove( faceIndex );
         faceDegreeFromCrackTip( faceIndex ) = 0;
         faceDegreeFromCrackTip( newFaceIndex ) = 0;
 
