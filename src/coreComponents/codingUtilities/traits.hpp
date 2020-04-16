@@ -22,6 +22,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "cxx-utilities/src/templateHelpers.hpp"
+#include "cxx-utilities/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
 // System includes
@@ -45,7 +46,8 @@ HAS_MEMBER_FUNCTION( data, void const *, );
  *        that is true iff the method @p CLASS ::move(chai::ExecutionSpace, bool) exists.
  * @tparam CLASS The type to test.
  */
-HAS_MEMBER_FUNCTION_NO_RTYPE( move, chai::CPU, true );
+template< typename CLASS >
+static constexpr bool HasMemberFunction_move = LvArray::bufferManipulation::HasMemberFunction_move< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_setName< @p CLASS >
