@@ -62,8 +62,8 @@ TEST( SinglePhaseBaseKernels, accumulation )
 
   real64 const densOld[NTEST]       = { 700.0, 1200.0, 1500.0 };
   real64 const densNew[NTEST]       = { 800.0, 1000.0, 1500.0 };
-  real64 const dDens_dPres[NTEST]   = { 1e-5, 1e-10, 0.0    };
-  real64 const dVol[NTEST]          = { 1.0, 2.0, 10.0   };
+  real64 const dDens_dPres[NTEST]   = { 1e-5, 1e-10, 0.0   };
+  real64 const dVol[NTEST]          = { 1e-2, 2e-2, 1e-1   };
   real64 const poroOld[NTEST]       = { 6e-2, 1e-1, 2e-1   };
   real64 const poroRef[NTEST]       = { 5e-2, 2e-1, 3e-1   };
   real64 const pvMult[NTEST]        = { 1.20, 1.10, 1.05   };

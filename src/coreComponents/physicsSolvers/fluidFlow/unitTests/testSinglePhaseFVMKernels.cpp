@@ -209,7 +209,7 @@ TEST( SinglePhaseFVMKernels, fluxFull )
   real64 const dDens_dPresData[NTEST][stencilSize] = {
     { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 }
   };
-  real64 const dt[NTEST]              = { 1.0, 1e+5, 1e+8           };
+  real64 const dt[NTEST] = { 1.0, 1e+5, 1e+8 };
 
 
   for( int i = 0; i < NTEST; ++i )
@@ -269,7 +269,7 @@ TEST( SinglePhaseFVMKernels, fluxRegion )
   real64 const dDens_dPresData[NTEST][stencilSize] = {
     { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 }
   };
-  real64 const dt[NTEST]              = { 1.0, 1e+5, 1e+8           };
+  real64 const dt[NTEST] = { 1.0, 1e+5, 1e+8 };
 
 
   for( int i = 0; i < NTEST; ++i )
