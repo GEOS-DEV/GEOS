@@ -1147,19 +1147,19 @@
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="Acceleration" type="LvArray_Array&lt;double, 2, camp_int_seq&lt;long, 1l, 0l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<xsd:attribute name="Acceleration" type="real64_array2d" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="IncrementalDisplacement" type="LvArray_Array&lt;double, 2, camp_int_seq&lt;long, 1l, 0l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<xsd:attribute name="IncrementalDisplacement" type="real64_array2d" />
 		<!--Mass => An array that holds the mass on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
-		<xsd:attribute name="ReferencePosition" type="LvArray_Array&lt;double, 2, camp_int_seq&lt;long, 1l, 0l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="TotalDisplacement" type="LvArray_Array&lt;double, 2, camp_int_seq&lt;long, 1l, 0l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="Velocity" type="LvArray_Array&lt;double, 2, camp_int_seq&lt;long, 1l, 0l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<xsd:attribute name="Velocity" type="real64_array2d" />
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->

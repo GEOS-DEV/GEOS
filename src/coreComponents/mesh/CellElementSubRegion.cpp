@@ -28,10 +28,7 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::constitutiveGroupingString, &m_constitutiveGrouping )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::constitutiveMapString, &m_constitutiveMapView );
-
   registerWrapper( viewKeyStruct::dNdXString, &m_dNdX );
-
 
   registerWrapper( viewKeyStruct::constitutivePointVolumeFraction, &m_constitutivePointVolumeFraction );
 

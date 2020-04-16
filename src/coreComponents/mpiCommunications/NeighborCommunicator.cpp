@@ -414,12 +414,10 @@ void NeighborCommunicator::UnpackGhosts( MeshLevel & mesh,
   unpackedSize += faceManager.UnpackUpDownMaps( receiveBufferPtr, faceUnpackList, false, false );
   unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, elementAdjacencyReceiveListArray, false );
 
-
   unpackedSize += nodeManager.Unpack( receiveBufferPtr, nodeUnpackList, 0 );
   unpackedSize += edgeManager.Unpack( receiveBufferPtr, edgeUnpackList, 0 );
   unpackedSize += faceManager.Unpack( receiveBufferPtr, faceUnpackList, 0 );
   unpackedSize += elemManager.Unpack( receiveBufferPtr, elementAdjacencyReceiveList );
-
 }
 
 void NeighborCommunicator::PrepareAndSendSyncLists( MeshLevel const & mesh,
