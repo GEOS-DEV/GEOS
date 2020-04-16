@@ -746,7 +746,7 @@ void SinglePhaseWell::ComputePerforationRates( WellElementSubRegion * const subR
   perfWellElemIndex = perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
 
   arrayView1d< real64 const > const &
-  perfTransmissibility = perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::transmissibilityString );
+  perfTransmissibility = perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString );
 
   arrayView1d< real64 > const &
   perfRate = perforationData->getReference< array1d< real64 > >( viewKeyStruct::perforationRateString );
