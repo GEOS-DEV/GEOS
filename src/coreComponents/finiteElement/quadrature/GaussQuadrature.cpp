@@ -96,7 +96,7 @@ void GaussQuadrature< dim >::PostProcessInput()
 {
   m_n_gauss_points = StructuredGrid::dimpower< dim >( m_degree );
 
-  assert( m_degree > 0 );
+  GEOSX_ASSERT_GT( m_degree, 0 );
 
   m_points_1d.resize( m_degree );
   m_weights_1d.resize( m_degree );

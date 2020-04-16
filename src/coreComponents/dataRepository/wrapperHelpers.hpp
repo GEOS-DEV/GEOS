@@ -378,7 +378,7 @@ pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
 
   T const * const values = reinterpret_cast< T const * >( valuesNode.data_ptr() );
-  var.insertSorted( values, numElements );
+  var.insert( values, values + numElements );
 }
 
 

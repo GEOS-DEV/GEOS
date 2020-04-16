@@ -79,7 +79,7 @@ UniformStrainHexahedron::~UniformStrainHexahedron()
 
 void UniformStrainHexahedron::reinit( const std::vector< R1TensorT< 3 > > & mapped_support_points )
 {
-  assert( mapped_support_points.size() == n_dofs );
+  GEOSX_ASSERT_EQ( mapped_support_points.size(), n_dofs );
 
   const unsigned int q = 0;
 

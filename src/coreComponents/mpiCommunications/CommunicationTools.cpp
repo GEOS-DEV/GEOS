@@ -479,8 +479,6 @@ CommunicationTools::
 void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
                                 std::vector< NeighborCommunicator > const & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
-
   arrayView1d< integer const > const & ghostRank = objectManager.ghostRank();
 
   /// Variable to track if an error has occurred.
@@ -551,8 +549,6 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
 void fixReceiveLists( ObjectManagerBase & objectManager,
                       std::vector< NeighborCommunicator > const & neighbors )
 {
-  GEOSX_MARK_FUNCTION;
-
   constexpr int nonLocalGhostsTag = 54673246;
 
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
@@ -762,7 +758,9 @@ void CommunicationTools::FindGhosts( MeshLevel & meshLevel,
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
 
   nodeManager.CompressRelationMaps();
-  edgeManager.CompressRelationMaps();
+  edgeManager.compressRelationMaps();
+  faceManager.compressRelationMaps();
+
   CommunicationTools::releaseCommID( commID );
 }
 

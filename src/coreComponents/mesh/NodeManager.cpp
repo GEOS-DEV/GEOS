@@ -17,13 +17,8 @@
  */
 
 #include "NodeManager.hpp"
-//#include "managers/DomainPartition.hpp"
 #include "FaceManager.hpp"
 #include "EdgeManager.hpp"
-//#include "ObjectManagers/ElementManagerT.h"
-//#include "Utilities/Utilities.h"
-//#include <fstream>
-//#include "ElementRegionT.hpp"
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
 #include "common/TimingMacros.hpp"
@@ -67,6 +62,17 @@ NodeManager::NodeManager( std::string const & name,
 NodeManager::~NodeManager()
 {}
 
+void NodeManager::resize( localIndex const newSize )
+{
+  m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
+  m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
+  m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
+  m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
+  m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
+
+  ObjectManagerBase::resize( newSize );
+}
+
 
 //**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
@@ -78,25 +84,31 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   localIndex const numNodes = size();
 
   ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager->maxEdgesPerNode() );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
 
   forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
   {
-    toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.atomicAppendToArray( RAJA::auto_atomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
+    toEdgesTemp.atomicAppendToArray( parallelHostAtomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
+    toEdgesTemp.atomicAppendToArray( parallelHostAtomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
+    totalNodeEdges += 2;
   } );
 
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges( 0 );
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    totalNodeEdges += toEdgesTemp.sizeOfArray( nodeID );
-  } );
-
+  // Resize the node to edge map.
   m_toEdgesRelation.resize( 0 );
-  m_toEdgesRelation.reserve( numNodes );
-  m_toEdgesRelation.reserveValues( totalNodeEdges.get() + numNodes * GetEdgeMapOverallocation() );
+
+  // Reserve space for the number of current nodes plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  m_toEdgesRelation.reserve( entriesToReserve );
+
+  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
+  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
+  m_toEdgesRelation.reserveValues( valuesToReserve );
+
+  // Append the individual sets.
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + GetEdgeMapOverallocation() );
+    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
   }
 
   ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
@@ -104,8 +116,8 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
     localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-    std::sort( edges, edges + numNodeEdges );
-    toEdgesView.insertSortedIntoSet( nodeID, edges, numNodeEdges );
+    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
+    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
   } );
 
   m_toEdgesRelation.SetRelatedObject( edgeManager );
@@ -121,41 +133,46 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   localIndex const numNodes = size();
 
   ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager->maxFacesPerNode() );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
 
   forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
   {
     localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
+    totalNodeFaces += numFaceNodes;
     for( localIndex a = 0; a < numFaceNodes; ++a )
     {
-      toFacesTemp.atomicAppendToArray( RAJA::auto_atomic{}, faceToNodes( faceID, a ), faceID );
+      toFacesTemp.atomicAppendToArray( parallelHostAtomic{}, faceToNodes( faceID, a ), faceID );
     }
   } );
 
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces( 0 );
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    totalNodeFaces += toFacesTemp.sizeOfArray( nodeID );
-  } );
-
+  // Resize the node to face map.
   m_toFacesRelation.resize( 0 );
-  m_toFacesRelation.reserve( numNodes );
-  m_toFacesRelation.reserveValues( totalNodeFaces.get() + numNodes * GetFaceMapOverallocation() );
+
+  // Reserve space for the number of nodes faces plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  m_toFacesRelation.reserve( entriesToReserve );
+
+  // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
+  localIndex const valuesToReserve = totalNodeFaces.get() + numNodes * FaceManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
+  m_toFacesRelation.reserveValues( valuesToReserve );
+
+  // Append the individual arrays.
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + GetFaceMapOverallocation() );
+    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
   }
 
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const faces = toFacesTemp[ nodeID ];
     localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );
-    std::sort( faces, faces + numNodeFaces );
-    m_toFacesRelation.insertSortedIntoSet( nodeID, faces, numNodeFaces );
+    localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
+    m_toFacesRelation.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
   } );
 
   m_toFacesRelation.SetRelatedObject( faceManager );
 }
-
 
 //**************************************************************************************************
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
@@ -167,63 +184,86 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
 
 
-  // This sets the capacity of each sub-array based on the maximum number of
-  // elements attached to a node. This is an over-allocation, so we need to
-  // compress the arrays as part of the initialization.
+  localIndex const numNodes = size();
 
-  array1d< localIndex > sizeOfArrays( size());
+  /// The number of elements attached to the each node.
+  array1d< localIndex > elemsPerNode( numNodes );
+
+  /// The total number of elements, the sum of elemsPerNode.
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
 
   elementRegionManager->
-    forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+    forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
   {
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
-    for( localIndex k=0; k<subRegion.size(); ++k )
+    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
+    {
+      localIndex const numIndependedNodes = subRegion.numIndependentNodesPerElement();
+      totalNodeElems += numIndependedNodes;
+      for( localIndex a = 0; a < numIndependedNodes; ++a )
+      {
+        localIndex const nodeIndex = elemToNodeMap( k, a );
+        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
+      }
+    } );
+  } );
+
+  // Resize the node to elem map.
+  toElementRegionList.resize( 0 );
+  toElementSubRegionList.resize( 0 );
+  toElementList.resize( 0 );
+
+  // Reserve space for the number of current faces plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
+  toElementRegionList.reserve( entriesToReserve );
+  toElementSubRegionList.reserve( entriesToReserve );
+  toElementList.reserve( entriesToReserve );
+
+  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
+  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  toElementRegionList.reserveValues( valuesToReserve );
+  toElementSubRegionList.reserveValues( valuesToReserve );
+  toElementList.reserveValues( valuesToReserve );
+
+  /// Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
+  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  {
+    toElementRegionList.appendArray( 0 );
+    toElementSubRegionList.appendArray( 0 );
+    toElementList.appendArray( 0 );
+
+    toElementRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+    toElementSubRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+    toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+  }
+
+  /// Populate the element maps. Note that this can't be done in parallel because the three element lists must be in the
+  /// same order.
+  /// If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
+  elementRegionManager->
+    forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
+                                                            ( localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                            CellElementSubRegion const & subRegion )
+  {
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
+    for( localIndex k = 0; k < subRegion.size(); ++k )
     {
       for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
       {
-        localIndex nodeIndex = elemToNodeMap( k, a );
-        ++sizeOfArrays[nodeIndex];
+        localIndex const nodeIndex = elemToNodeMap( k, a );
+        toElementRegionList.appendToArray( nodeIndex, er );
+        toElementSubRegionList.appendToArray( nodeIndex, esr );
+        toElementList.appendToArray( nodeIndex, k );
       }
     }
   } );
-  localIndex const arrayCapacity = *(std::max_element( sizeOfArrays.begin(), sizeOfArrays.end() ));
-
-  toElementRegionList.resize( 0 );
-  toElementRegionList.resize( size(), arrayCapacity );
-  toElementSubRegionList.resize( 0 );
-  toElementSubRegionList.resize( size(), arrayCapacity );
-  toElementList.resize( 0 );
-  toElementList.resize( size(), arrayCapacity );
-
-  for( typename dataRepository::indexType kReg=0; kReg<elementRegionManager->numRegions(); ++kReg )
-  {
-    ElementRegionBase const * const elemRegion = elementRegionManager->GetRegion( kReg );
-
-    elemRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const kSubReg,
-                                                                        CellElementSubRegion const & subRegion )
-    {
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemToNodeMap = subRegion.nodeList();
-
-      for( localIndex k=0; k<subRegion.size(); ++k )
-      {
-        for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
-        {
-          localIndex nodeIndex = elemToNodeMap( k, a );
-
-          toElementRegionList.appendToArray( nodeIndex, kReg );
-          toElementSubRegionList.appendToArray( nodeIndex, kSubReg );
-          toElementList.appendToArray( nodeIndex, k );
-        }
-      }
-    } );
-  }
 
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
 void NodeManager::CompressRelationMaps()
 {
-  //GEOSX_MARK_FUNCTION;
   m_toEdgesRelation.compress();
   m_toFacesRelation.compress();
   m_toElements.m_toElementRegion.compress();

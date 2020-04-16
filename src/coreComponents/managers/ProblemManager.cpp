@@ -563,7 +563,7 @@ void ProblemManager::GenerateMesh()
 
   Group * const meshBodies = domain->getMeshBodies();
 
-  for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
+  for( localIndex a=0; a<meshBodies->numSubGroups(); ++a )
   {
     MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
     for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
@@ -606,6 +606,21 @@ void ProblemManager::GenerateMesh()
       elemManager->GenerateWells( meshManager, meshLevel );
     }
   }
+
+  GEOSX_ERROR_IF_NE( meshBodies->numSubGroups(), 1 );
+  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
+
+  GEOSX_ERROR_IF_NE( meshBody->numSubGroups(), 1 );
+  MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( 0 );
+
+  FaceManager * const faceManager = meshLevel->getFaceManager();
+  EdgeManager * edgeManager = meshLevel->getEdgeManager();
+
+  Group * commandLine = this->GetGroup< Group >( groupKeys.commandLine );
+  integer const & useNonblockingMPI = commandLine->getReference< integer >( viewKeys.useNonblockingMPI );
+  domain->SetupCommunications( useNonblockingMPI );
+  faceManager->SetIsExternal();
+  edgeManager->SetIsExternal( faceManager );
 }
 
 
@@ -693,31 +708,8 @@ void ProblemManager::ApplyNumericalMethods()
   }
 }
 
-
-void ProblemManager::InitializePostSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
-{
-
-//  ObjectManagerBase::InitializePostSubGroups(nullptr);
-//
-  DomainPartition * domain  = getDomainPartition();
-
-  Group * const meshBodies = domain->getMeshBodies();
-  MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( 0 );
-  MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( 0 );
-
-  FaceManager * const faceManager = meshLevel->getFaceManager();
-  EdgeManager * edgeManager = meshLevel->getEdgeManager();
-
-  Group * commandLine = this->GetGroup< Group >( groupKeys.commandLine );
-  integer const & useNonblockingMPI = commandLine->getReference< integer >( viewKeys.useNonblockingMPI );
-  domain->SetupCommunications( useNonblockingMPI );
-  faceManager->SetIsExternal();
-  edgeManager->SetIsExternal( faceManager );
-}
-
 void ProblemManager::RunSimulation()
 {
-  GEOSX_MARK_FUNCTION;
   DomainPartition * domain  = getDomainPartition();
   m_eventManager->Run( domain );
 }

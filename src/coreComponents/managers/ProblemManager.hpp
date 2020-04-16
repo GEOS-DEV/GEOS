@@ -153,8 +153,6 @@ public:
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostSubGroups( Group * const group ) override final;
-
 private:
 
   PhysicsSolverManager * m_physicsSolverManager;

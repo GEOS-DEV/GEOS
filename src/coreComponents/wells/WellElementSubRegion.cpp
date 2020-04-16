@@ -591,7 +591,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
           // remove the duplicate elements
           if( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == iownerRank )
           {
-            localElems.erase( iwelemGlobal );
+            localElems.remove( iwelemGlobal );
           }
         }
         rankCount++;
