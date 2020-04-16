@@ -1530,13 +1530,14 @@
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
 		<xsd:attribute name="cohesion" type="real64" use="required" />
-		<!--frictionAngle => Friction Angle-->
-		<xsd:attribute name="frictionAngle" type="real64" use="required" />
-		<!--frictionAngleUnitOfMeasurement => Friction Angles Unit of Measurement. Valid inputs are (upper/lower case does not matter):
- - rad/radiants (default);
- - deg/degrees
-; - grad/gradians.-->
-		<xsd:attribute name="frictionAngleUnitOfMeasurement" type="string" use="required" />
+		<!--frictionCoefficient => Friction Coefficient-->
+		<xsd:attribute name="frictionCoefficient" type="real64" default="-1" />
+		<!--frictionInput => Friction Input-->
+		<xsd:attribute name="frictionInput" type="real64" default="-1" />
+		<!--frictionInputUnitOfMeasurement => Friction Input Unit of Measurement. Valid inputs are (upper/lower case does not matter):
+ - rad/radians (default);
+ - deg/degrees.-->
+		<xsd:attribute name="frictionInputUnitOfMeasurement" type="string" default="rad" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
