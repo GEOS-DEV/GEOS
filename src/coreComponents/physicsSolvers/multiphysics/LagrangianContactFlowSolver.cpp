@@ -73,11 +73,8 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
     setDescription( "Value of the default conductivity C_{f,0} for the fracture" );
 }
 
-void LagrangianContactFlowSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
-{
-  m_contactSolver->RegisterDataOnMesh( MeshBodies );
-  m_flowSolver->RegisterDataOnMesh( MeshBodies );
-}
+void LagrangianContactFlowSolver::RegisterDataOnMesh( dataRepository::Group * const )
+{}
 
 void LagrangianContactFlowSolver::InitializePreSubGroups( Group * const rootGroup )
 {
