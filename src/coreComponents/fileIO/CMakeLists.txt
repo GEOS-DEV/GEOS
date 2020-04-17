@@ -37,12 +37,14 @@ if( ENABLE_VTK )
                vtk/VTKPVDWriter.hpp
                vtk/VTKVTMWriter.hpp
                vtk/VTKGEOSXData.hpp
-               vtk/VTKMultiBlockDataWriterInterface.hpp )
+               vtk/VTKPolyDataWriterInterface.hpp )
 
   list( APPEND fileIO_sources
                vtk/VTKTypes.cpp
                vtk/VTKGEOSXData.cpp
-               vtk/VTKMultiBlockDataWriterInterface.cpp )
+               vtk/VTKPVDWriter.cpp
+               vtk/VTKVTMWriter.cpp
+               vtk/VTKPolyDataWriterInterface.cpp )
 
 
   list( APPEND dependencyList vtk )

@@ -66,7 +66,14 @@ void VTKOutput::Execute( real64 const time_n,
                          Group * domain )
 {
   DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
-  m_writerInterface.SetBinary( m_writeBinaryData );
+  if( m_writeBinaryData )
+  {
+    m_writerInterface.SetOutputMode( vtk::VTKOutputMode::BINARY );
+  }
+  else
+  {
+    m_writerInterface.SetOutputMode( vtk::VTKOutputMode::ASCII );
+  }
   m_writerInterface.SetPlotLevel( m_plotLevel );
   m_writerInterface.Write( time_n, cycleNumber, *domainPartition );
 }

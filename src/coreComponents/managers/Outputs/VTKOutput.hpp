@@ -20,7 +20,7 @@
 #define GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "fileIO/vtk/VTKMultiBlockDataWriterInterface.hpp"
+#include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
 
 namespace geosx

@@ -31,16 +31,30 @@ static std::unordered_map< string, int > geosxToVTKCellTypeMap =
 
 int GetVTKType( std::type_index const & type )
 {
-  GEOSX_ERROR_IF( geosxToVTKTypeMap.count( type ) == 0,
-                  "Type " << type.name() << " not recognized for a VTK output" );
-  return geosxToVTKTypeMap.at( type );
+  int VTKType = -1;
+  try
+  {
+    VTKType = geosxToVTKTypeMap.at( type );
+  }
+  catch( const std::out_of_range& outOfRange )
+  {
+  GEOSX_ERROR( "Type " << type.name() << " not recognized for a VTK output" );
+  }
+  return VTKType;
 }
 
 int GetVTKCellType( string const & type )
 {
-  GEOSX_ERROR_IF( geosxToVTKCellTypeMap.count( type ) == 0,
-                  "Cell type " << type << " not recognized for a VTK output" );
-  return geosxToVTKCellTypeMap.at( type );
+  int VTKCellType = -1;
+  try
+  {
+    VTKCellType = geosxToVTKCellTypeMap.at( type );
+  }
+  catch( const std::out_of_range& outOfRange )
+  {
+    GEOSX_ERROR( "Cell type " << type << " not recognized for a VTK output" );
+  }
+  return VTKCellType;
 }
 }
 }

@@ -24,38 +24,23 @@ namespace vtk
 class VTKPVDWriter
 {
 public:
-  VTKPVDWriter( string const & name ):
-    m_fileName( name + ".pvd" )
-  {
-    // Declaration of XML version
-    auto declarationNode = m_pvdFile.append_child( pugi::node_declaration );
-    declarationNode.append_attribute( "version" ) = "1.0";
+  /*!
+   * @brief Writer for PVD file
+   * @param[in] fileName the file name with the extension
+   */
+  VTKPVDWriter( string const & fileName );
 
-    // Declaration of the node VTKFile
-    auto vtkFileNode = m_pvdFile.append_child( "VTKFile" );
-    vtkFileNode.append_attribute( "type" ) = "Collection";
-    vtkFileNode.append_attribute( "version" ) = "0.1";
+  /*!
+   * @brief Triggers the file output
+   */
+  void Save() const;
 
-    vtkFileNode.append_child( "Collection" );
-  }
-
-  void Save() const
-  {
-    int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-    m_pvdFile.save_file( m_fileName.c_str() );
-    if( mpiRank == 0 )
-    {
-      m_pvdFile.save_file( m_fileName.c_str() );
-    }
-  }
-
-  void AddData( real64 time, string const & filePath ) const
-  {
-    auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );
-    auto dataSetNode = collectionNode.append_child( "DataSet" );
-    dataSetNode.append_attribute( "timestep" ) = time;
-    dataSetNode.append_attribute( "file" ) = filePath.c_str();
-  }
+  /*!
+   * @brief Add a dataset associated to a time-step
+   * @param[in] time the time step
+   * @param[in] filePath path to the file associated with the time-step
+   */
+  void AddData( real64 time, string const & filePath ) const;
 private:
 
   /// PVD XML file

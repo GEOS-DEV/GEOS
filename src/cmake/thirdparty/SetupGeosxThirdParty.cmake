@@ -630,7 +630,6 @@ if( ENABLE_VTK )
   message( STATUS "VTK_LIBRARIES = ${VTK_LIBRARIES}" )
 
   blt_register_library( NAME vtk
-    #                        INCLUDES ${GEOSX_TPL_DIR}/vtk/include/vtk-9.0/
                         LIBRARIES ${VTK_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
   set( thirdPartyLibs ${thirdPartyLibs} vtk )  

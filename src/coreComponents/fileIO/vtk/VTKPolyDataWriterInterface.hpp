@@ -38,6 +38,12 @@ namespace geosx
 using namespace dataRepository;
 namespace vtk
 {
+  
+enum struct VTKOutputMode
+{
+  BINARY,
+  ASCII
+};
 /*!
  * @brief Encapsulate IO methods from vtk
  */
@@ -59,11 +65,11 @@ public:
 
   /*!
    * @brief Set the binary mode
-   * @param[in] binary binary mode to be set
+   * @param[in] output mode to be set
    */
-  void SetBinary( bool binary )
+  void SetOutputMode( VTKOutputMode mode )
   {
-    m_binaryMode = binary;
+    m_outputMode = mode;
   }
 
   /*!
@@ -121,6 +127,15 @@ private:
   string GetTimeStepSubFolder( real64 time ) const;
 
   /*!
+   * @brief Get the DataSet file path
+   * @details the DataSet file path is the path to the .vtu mesh file
+   * @param[in] er The ElementRegion
+   * @param[in] time the time-step
+   * @param[in] mpiRank the mpi rank
+   */
+  string GetDataSetFilePath( ElementRegionBase const &  er, double time, int mpiRank ) const;
+
+  /*!
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
@@ -129,18 +144,18 @@ private:
   void WriteCellElementRegions( real64 time, DomainPartition const & domain ) const;
 
   /*!
-   * @brief Gets the VTK Object points encapsulating
-   * the cells connectivities of \p er
+   * @brief Gets the cell connectivities as
+   * a VTK object for the CellElementRegion \p er
    * @param[in] er the CellElementRegion to be written
-   * @return a tuple, first value is a VTK object containing the connectivity information,
-   * the second value is a table with the same size than the total number of element in the CellElementRegion
+   * @return a tuple, first value is a table with the same size than the total number of element in the CellElementRegion
    * containg the type of the cells.
-   */
-  std::tuple< vtkSmartPointer< vtkCellArray >, std::vector< int > > GetVTKCells( CellElementRegion const & er ) const;
+   * the second value is a VTK object containing the connectivity information
+   * */
+  std::tuple< std::vector< int >, vtkSmartPointer< vtkCellArray > > GetVTKCells( CellElementRegion const & er ) const;
 
   /*!
-   * @brief Gets the VTK Object points encapsulating
-   * the vertices coordinates of \p nodeManager
+   * @brief Gets the vertices coordinates
+   * as a VTK Object for \p nodeManager
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
   vtkSmartPointer< vtkPoints > GetVTKPoints( NodeManager const & nodeManager ) const;
@@ -154,8 +169,12 @@ private:
   void WriteWellElementRegions( real64 time, DomainPartition const & domain ) const;
 
   /*!
-   * @brief Gets the VTK Object points encapsulating
-   * the cells connectivities of \p es
+   * @brief Gets the cell connectivities and the vertices coordinates
+   * as VTK objects for a specific WellElementSubRegion
+   * @param[in] esr the WellElementSubRegion to be output
+   * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
+   * @return a tuple containing a VTKPoints (with the information on the vertices and their coordinates)
+   * and a VTKCellArray (with the cell connectivities).
    */
   std::tuple< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion const & esr, NodeManager const & nodeManager ) const;
 
@@ -205,7 +224,6 @@ private:
    * for CellElementSubRegion.
    */
   void WriteField( WrapperBase const & wrapperBase, vtkSmartPointer< VTKGEOSXData > data, localIndex size, localIndex & count ) const;
-
 private:
 
   /// Folder name in which all the files will be written
@@ -221,10 +239,8 @@ private:
   /// The previousCycle
   integer m_previousCycle;
 
-  /// Binary mode
-  /// true : binary
-  /// false : ascii
-  bool m_binaryMode;
+  /// Output mode, could be ASCII or BINARAY
+  VTKOutputMode m_outputMode;
 };
 
 } // namespace vtk
