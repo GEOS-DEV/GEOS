@@ -1528,7 +1528,7 @@
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
 		<xsd:attribute name="cohesion" type="real64" use="required" />
-		<!--frictionAngle => Friction Angle-->
+		<!--frictionAngle => Friction Angle (in radians)-->
 		<xsd:attribute name="frictionAngle" type="real64" default="-1" />
 		<!--frictionCoefficient => Friction Coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="-1" />

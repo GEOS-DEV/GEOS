@@ -392,8 +392,6 @@ public:
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
 
-  inline localIndex getSolidMaterialFullIndex() const { return m_solidMaterialFullIndex; }
-
 protected:
   virtual void PostProcessInput() override final;
 

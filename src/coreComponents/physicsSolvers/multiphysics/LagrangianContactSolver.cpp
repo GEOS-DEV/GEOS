@@ -1433,6 +1433,16 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const > const
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
 
+  // Bulk modulus accessor
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
+    elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
+                                                                                                  m_solidSolver->targetRegionNames(),
+                                                                                                  m_solidSolver->solidMaterialNames() );
+  // Shear modulus accessor
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
+    elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
+                                                                                                  m_solidSolver->targetRegionNames(),
+                                                                                                  m_solidSolver->solidMaterialNames() );
   arrayView1d< globalIndex const > const &
   tracDofNumber = fractureSubRegion->getReference< globalIndex_array >( tracDofKey );
 
@@ -1506,10 +1516,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             }
 
             // Get linear elastic isotropic constitutive parameters for the element
-            LinearElasticIsotropic const * const constitutiveRelation0 =
-              dynamic_cast< LinearElasticIsotropic const * >( constitutiveRelations[er][esr][m_solidSolver->getSolidMaterialFullIndex()] );
-            real64 const K = constitutiveRelation0->bulkModulus()[ei];
-            real64 const G = constitutiveRelation0->shearModulus()[ei];
+            real64 const K = bulkModulus[er][esr][ei];
+            real64 const G = shearModulus[er][esr][ei];
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
