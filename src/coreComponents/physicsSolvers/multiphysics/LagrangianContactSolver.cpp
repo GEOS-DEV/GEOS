@@ -357,21 +357,21 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          R1Tensor globalJumpTensor( 0.0, 0.0, 0.0 );
+          R1Tensor globalJumpTemp( 0.0, 0.0, 0.0 );
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
             for( localIndex i=0; i<3; ++i )
             {
-              globalJumpTensor( i ) +=
+              globalJumpTemp( i ) +=
                 ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
                   + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / static_cast< real64 >(numNodesPerFace);
             }
           }
-          R1Tensor localJumpTensor;
-          localJumpTensor.AijBi( rotationMatrix[kfe], globalJumpTensor );
-          localJump[kfe][0] = localJumpTensor( 0 );
-          localJump[kfe][1] = localJumpTensor( 1 );
-          localJump[kfe][2] = localJumpTensor( 2 );
+          R1Tensor localJumpTemp;
+          localJumpTemp.AijBi( rotationMatrix[kfe], globalJumpTemp );
+          localJump[kfe][0] = localJumpTemp( 0 );
+          localJump[kfe][1] = localJumpTemp( 1 );
+          localJump[kfe][2] = localJumpTemp( 2 );
         }
       } );
     }
