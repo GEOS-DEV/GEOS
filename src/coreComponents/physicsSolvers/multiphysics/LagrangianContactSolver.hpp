@@ -168,7 +168,6 @@ public:
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
     constexpr static auto fractureStateString = "fractureState";
-    constexpr static auto integerFractureStateString = "integerFractureState";
     constexpr static auto previousFractureStateString = "previousFractureState";
     constexpr static auto localJumpString = "localJump";
     constexpr static auto previousLocalJumpString = "previousLocalJump";
@@ -212,19 +211,21 @@ private:
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
   /**
-   * @enum FractureState
+   * @struct FractureState
    *
-   * A scoped enum for the Plot options.
+   * A struct for the fracture states
    */
-  enum class FractureState : int
+  struct FractureState
   {
-    STICK,    ///< element is closed: no jump across the discontinuity
-    SLIP,     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
-    NEW_SLIP, ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed for
-    OPEN,     ///< element is open: no constraints are imposed
+    static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
+    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding
+                                           ///< is allowed for
+    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity,
+                                           ///< but sliding is allowed for
+    static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
   };
 
-  string FractureStateToString( FractureState const & state ) const
+  string FractureStateToString( integer const & state ) const
   {
     string stringState;
     switch( state )
@@ -253,32 +254,7 @@ private:
     return stringState;
   }
 
-  integer FractureStateToInteger( FractureState const & state ) const
-  {
-    integer integerState;
-    switch( state )
-    {
-      case FractureState::STICK:
-      {
-        integerState = 0;
-        break;
-      }
-      case FractureState::SLIP:
-      case FractureState::NEW_SLIP:
-      {
-        integerState = 1;
-        break;
-      }
-      case FractureState::OPEN:
-      {
-        integerState = 2;
-        break;
-      }
-    }
-    return integerState;
-  }
-
-  bool CompareFractureStates( FractureState const & state0, FractureState const & state1 ) const
+  bool CompareFractureStates( integer const & state0, integer const & state1 ) const
   {
     if( state0 == state1 )
     {
