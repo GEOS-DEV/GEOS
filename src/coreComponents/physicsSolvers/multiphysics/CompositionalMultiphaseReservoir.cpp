@@ -43,15 +43,6 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::s
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
 
-void CompositionalMultiphaseReservoir::SetupDofs( DomainPartition const * const domain,
-                                                  DofManager & dofManager ) const
-{
-  m_flowSolver->SetupDofs( domain, dofManager );
-  m_wellSolver->SetupDofs( domain, dofManager );
-
-  // TODO: add coupling when dofManager can support perforation connectors
-}
-
 void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
                                                                    DofManager & dofManager,
                                                                    ParallelMatrix & matrix )
