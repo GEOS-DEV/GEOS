@@ -89,7 +89,7 @@ public:
     /// string/key for cohesion
     static constexpr auto cohesionString = "cohesion";
 
-    /// string/key for friction angle input
+    /// string/key for friction angle input (in radians)
     static constexpr auto frictionAngleString = "frictionAngle";
 
     /// string/key for friction coefficient

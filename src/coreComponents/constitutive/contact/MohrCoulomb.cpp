@@ -41,7 +41,7 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setRestartFlags( RestartFlags::NO_WRITE )->
-    setDescription( "Friction Angle" );
+    setDescription( "Friction Angle (in radians)" );
 
   registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->
     setApplyDefaultValue( -1 )->
