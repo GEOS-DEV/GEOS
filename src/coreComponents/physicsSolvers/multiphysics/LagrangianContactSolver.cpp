@@ -1753,7 +1753,10 @@ void LagrangianContactSolver::InitializeFractureState( MeshLevel * const mesh,
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-      fractureState = FractureState::STICK;
+      forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
+      {
+        fractureState[kfe] = FractureState::STICK;
+      } );
     }
   } );
 }
