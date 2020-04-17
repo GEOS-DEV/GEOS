@@ -76,9 +76,9 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
-  localIndex fluidIndex() const { return m_fluidIndex; }
+  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
-  localIndex solidIndex() const { return m_solidIndex; }
+  arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
@@ -92,10 +92,8 @@ public:
     static constexpr auto gravityCoefString = "gravityCoefficient";
 
     // misc inputs
-    static constexpr auto fluidNameString      = "fluidName";
-    static constexpr auto solidNameString      = "solidName";
-    static constexpr auto fluidIndexString     = "fluidIndex";
-    static constexpr auto solidIndexString     = "solidIndex";
+    static constexpr auto fluidNamesString = "fluidNames";
+    static constexpr auto solidNamesString = "solidNames";
 
     static constexpr auto pressureString = "pressure";
     static constexpr auto deltaPressureString = "deltaPressure";
@@ -106,23 +104,6 @@ public:
 
     static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
     static constexpr auto meanPermCoeffString  = "meanPermCoeff";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    // input data
-    ViewKey referencePorosity = { referencePorosityString };
-    ViewKey permeability      = { permeabilityString };
-
-    // gravity term precomputed values
-    ViewKey gravityCoef = { gravityCoefString };
-
-    // misc inputs
-    ViewKey discretization = { discretizationString };
-    ViewKey fluidName      = { fluidNameString };
-    ViewKey solidName      = { solidNameString };
-    ViewKey fluidIndex     = { fluidIndexString };
-    ViewKey solidIndex     = { solidIndexString };
-
   } viewKeysFlowSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -161,22 +142,17 @@ protected:
 
   void PrecomputeData( DomainPartition * const domain );
 
+  virtual void PostProcessInput() override;
+
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
-
   /// name of the fluid constitutive model
-  string m_fluidName;
+  array1d< string > m_fluidModelNames;
 
   /// name of the solid constitutive model
-  string m_solidName;
-
-  /// index of the fluid constitutive model
-  localIndex m_fluidIndex;
-
-  /// index of the solid constitutive model
-  localIndex m_solidIndex;
+  array1d< string > m_solidModelNames;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;

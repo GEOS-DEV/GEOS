@@ -514,7 +514,7 @@ private:
     constexpr static auto failCriterionString = "failCriterion";
     constexpr static auto degreeFromCrackString = "degreeFromCrack";
     constexpr static auto degreeFromCrackTipString = "degreeFromCrackTip";
-    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto solidMaterialNameString = "solidMaterialNames";
     constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIFNodeString = "SIFNode";
     constexpr static auto tipNodesString = "tipNodes";
@@ -554,7 +554,7 @@ private:
   integer m_failCriterion=1;
 
   // solid solver name
-  string m_solidMaterialName;
+  array1d< string > m_solidMaterialNames;
 
   localIndex m_solidMaterialFullIndex;
 

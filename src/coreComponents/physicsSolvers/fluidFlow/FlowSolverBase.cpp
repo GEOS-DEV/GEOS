@@ -22,7 +22,6 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 
 namespace geosx
 {
@@ -33,10 +32,8 @@ using namespace constitutive;
 FlowSolverBase::FlowSolverBase( std::string const & name,
                                 Group * const parent ):
   SolverBase( name, parent ),
-  m_fluidName(),
-  m_solidName(),
-  m_fluidIndex(),
-  m_solidIndex(),
+  m_fluidModelNames(),
+  m_solidModelNames(),
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
@@ -54,16 +51,15 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of discretization object to use for this solver." );
 
-  this->registerWrapper( viewKeyStruct::fluidNameString, &m_fluidName, false )->
+  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames, false )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Name of fluid constitutive object to use for this solver." );
+    setSizedFromParent( 0 )->
+    setDescription( "Names of fluid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::solidNameString, &m_solidName, false )->
+  this->registerWrapper( viewKeyStruct::solidNamesString, &m_solidModelNames, false )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Name of solid constitutive object to use for this solver" );
-
-  this->registerWrapper( viewKeyStruct::fluidIndexString, &m_fluidIndex, false );
-  this->registerWrapper( viewKeyStruct::solidIndexString, &m_solidIndex, false );
+    setSizedFromParent( 0 )->
+    setDescription( "Names of solid constitutive models for each region." );
 
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate, false )->
     setApplyDefaultValue( 1.0 )->
@@ -85,19 +81,22 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
 
   for( auto & subgroup : MeshBodies->GetSubGroups() )
   {
-    MeshBody * const meshBody = subgroup.second->group_cast< MeshBody * >();
-    MeshLevel * const mesh = meshBody->getMeshLevel( 0 );
+    MeshBody & meshBody = *subgroup.second->group_cast< MeshBody * >();
+    MeshLevel & mesh = *meshBody.getMeshLevel( 0 );
 
-    applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+    forTargetSubRegions( mesh, [&]( localIndex const,
+                                    ElementSubRegionBase & subRegion )
     {
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::permeabilityString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
     } );
 
-    ElementRegionManager * const elemManager = mesh->getElemManager();
+    ElementRegionManager * const elemManager = mesh.getElemManager();
 
-    elemManager->forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex, localIndex, ElementRegionBase & region,
+    elemManager->forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const,
+                                                                            localIndex const,
+                                                                            ElementRegionBase & region,
                                                                             FaceElementSubRegion & subRegion )
     {
       FaceElementRegion & faceRegion = dynamicCast< FaceElementRegion & >( region );
@@ -116,25 +115,30 @@ void FlowSolverBase::RegisterDataOnMesh( Group * const MeshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
-    FaceManager * const faceManager = mesh->getFaceManager();
+    FaceManager * const faceManager = mesh.getFaceManager();
     faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString )->setApplyDefaultValue( 0.0 );
   }
+}
+
+void FlowSolverBase::PostProcessInput()
+{
+  SolverBase::PostProcessInput();
+  CheckModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString );
+  CheckModelNames( m_solidModelNames, viewKeyStruct::solidNamesString );
 }
 
 void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
 
-  ConstitutiveBase const * fluid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_fluidName );
-  GEOSX_ERROR_IF( fluid == nullptr, "Fluid model " + m_fluidName + " not found" );
-  m_fluidIndex = fluid->getIndexInParent();
-
-  ConstitutiveBase const * solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidName );
-  GEOSX_ERROR_IF( solid == nullptr, "Solid model " + m_solidName + " not found" );
-  m_solidIndex = solid->getIndexInParent();
+  // Validate solid models in regions (fluid models are validated by derived classes)
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    ValidateModelMapping( *meshLevel.getElemManager(), m_solidModelNames );
+  }
 
   // fill stencil targetRegions
   NumericalMethodsManager * const
@@ -146,7 +150,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
   array1d< string > & stencilTargetRegions = fluxApprox->targetRegions();
   std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-  for( auto const & targetRegion : m_targetRegions )
+  for( auto const & targetRegion : targetRegionNames() )
   {
     stencilTargetRegionsSet.insert( targetRegion );
   }
@@ -156,16 +160,13 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   {
     stencilTargetRegions.push_back( targetRegion );
   }
-
-
-
 }
 
 void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
 
   ResetViews( domain );
 
@@ -175,12 +176,13 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 
 void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager * const faceManager = mesh->getFaceManager();
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FaceManager & faceManager = *mesh.getFaceManager();
 
   R1Tensor const gravVector = gravityVector();
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
     arrayView1d< R1Tensor const > const & elemCenter =
       subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
@@ -188,7 +190,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex a )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex a )
     {
       gravityCoef[a] = Dot( elemCenter[a], gravVector );
     } );
@@ -196,12 +198,12 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 
   {
     arrayView1d< R1Tensor const > const & faceCenter =
-      faceManager->getReference< array1d< R1Tensor > >( FaceManager::viewKeyStruct::faceCenterString );
+      faceManager.getReference< array1d< R1Tensor > >( FaceManager::viewKeyStruct::faceCenterString );
 
     arrayView1d< real64 > const & gravityCoef =
-      faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+      faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( faceManager->size(), [=] ( localIndex a )
+    forAll< serialPolicy >( faceManager.size(), [=] ( localIndex a )
     {
       gravityCoef[a] = Dot( faceCenter[a], gravVector );
     } );
@@ -245,6 +247,5 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }
-
 
 } // namespace geosx

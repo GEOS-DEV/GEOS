@@ -97,8 +97,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            R1Tensor & center,
                            R1Tensor & normal,
                            R2Tensor & rotationMatrix,
-                           real64 const areaTolerance = 0.0,
-                           real64 const rotationTolerance = 0.0 );
+                           real64 const areaTolerance = 0.0 );
 
 /**
  * Given the normal vector, it changes its orientation to be consistent in a global sense
@@ -112,8 +111,7 @@ void FixNormalOrientation_3D( R1Tensor & normal );
  * @param[out] rotationMatrix Rotation matrix for the face
  */
 void RotationMatrix_3D( R1Tensor const & normal,
-                        R2Tensor & rotationMatrix,
-                        real64 const rotationTolerance = 0.0 );
+                        R2Tensor & rotationMatrix );
 
 /**
  * @author settgast

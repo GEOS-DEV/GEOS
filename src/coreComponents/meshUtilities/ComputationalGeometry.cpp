@@ -269,8 +269,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            R1Tensor & center,
                            R1Tensor & normal,
                            R2Tensor & rotationMatrix,
-                           real64 const areaTolerance,
-                           real64 const rotationTolerance )
+                           real64 const areaTolerance )
 {
   R1Tensor v1, v2, vc;
   real64 area = 0.0;
@@ -312,7 +311,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
       FixNormalOrientation_3D( normal );
 
       // Compute the local rotation matrix according to the normal vector
-      RotationMatrix_3D( normal, rotationMatrix, rotationTolerance );
+      RotationMatrix_3D( normal, rotationMatrix );
     }
     else if( area < -areaTolerance )
     {
@@ -385,8 +384,7 @@ void FixNormalOrientation_3D( R1Tensor & normal )
 }
 
 void RotationMatrix_3D( R1Tensor const & normal,
-                        R2Tensor & rotationMatrix,
-                        real64 const rotationTolerance )
+                        R2Tensor & rotationMatrix )
 {
   R1Tensor m1( normal( 2 ), 0.0, -normal( 0 ) );
   R1Tensor m2( 0.0, normal( 2 ), -normal( 1 ) );
@@ -416,7 +414,7 @@ void RotationMatrix_3D( R1Tensor const & normal,
   rotationMatrix( 1, 2 ) = m2( 1 );
   rotationMatrix( 2, 2 ) = m2( 2 );
 
-  GEOSX_ERROR_IF( std::fabs( rotationMatrix.Det() - 1.0 ) > std::max( rotationTolerance, 1.e+1*machinePrecision ),
+  GEOSX_ERROR_IF( std::fabs( rotationMatrix.Det() - 1.0 ) > 1.e+1*machinePrecision,
                   "Rotation matrix with determinant different from +1.0" );
 
   return;
