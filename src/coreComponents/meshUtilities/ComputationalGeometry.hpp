@@ -101,10 +101,15 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            real64 const rotationTolerance = 0.0 );
 
 /**
+ * Given the normal vector, it changes its orientation to be consistent in a global sense
+ * @param[in/out] normal Normal to the face
+ */
+void FixNormalOrientation_3D( R1Tensor & normal );
+
+/**
  * Given the normal vector, it calculates the rotation matrix for a face in the 3D space
  * @param[in] normal Normal to the face
  * @param[out] rotationMatrix Rotation matrix for the face
- * @return area of the convex 3D polygon
  */
 void RotationMatrix_3D( R1Tensor const & normal,
                         R2Tensor & rotationMatrix,

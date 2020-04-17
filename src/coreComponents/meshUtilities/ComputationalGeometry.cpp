@@ -308,6 +308,10 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
       normal.Normalize();
       area *= 0.5;
 
+      // Set normal orientation according to a global criterion
+      FixNormalOrientation_3D( normal );
+
+      // Compute the local rotation matrix according to the normal vector
       RotationMatrix_3D( normal, rotationMatrix, rotationTolerance );
     }
     else if( area < -areaTolerance )
@@ -352,12 +356,40 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
 
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
+void FixNormalOrientation_3D( R1Tensor & normal )
+{
+  real64 const orientationTolerance = 1.e+1*machinePrecision;
+
+  // Orient local normal in global sense.
+  // First check: align with z direction
+  if( normal( 2 ) <= -orientationTolerance )
+  {
+    normal *= -1.0;
+  }
+  else if( std::fabs( normal( 2 ) ) < orientationTolerance )
+  {
+    // If needed, second check: align with y direction
+    if( normal( 1 ) <= -orientationTolerance )
+    {
+      normal *= -1.0;
+    }
+    else if( std::fabs( normal( 1 ) ) < orientationTolerance )
+    {
+      // If needed, third check: align with x direction
+      if( normal( 0 ) <= -orientationTolerance )
+      {
+        normal *= -1.0;
+      }
+    }
+  }
+}
+
 void RotationMatrix_3D( R1Tensor const & normal,
                         R2Tensor & rotationMatrix,
                         real64 const rotationTolerance )
 {
-  R1Tensor m1( -normal( 1 ), normal( 0 ), 0.0 );
-  R1Tensor m2( -normal( 2 ), 0.0, normal( 0 ) );
+  R1Tensor m1( normal( 2 ), 0.0, -normal( 0 ) );
+  R1Tensor m2( 0.0, normal( 2 ), -normal( 1 ) );
   real64 const norm_m1 = m1.Normalize();
   real64 const norm_m2 = m2.Normalize();
   // If present, look for a vector with 0 norm
@@ -369,6 +401,7 @@ void RotationMatrix_3D( R1Tensor const & normal,
   else
   {
     m1.Cross( normal, m2 );
+    m1 *= -1.0;
     m1.Normalize();
   }
 
@@ -383,8 +416,8 @@ void RotationMatrix_3D( R1Tensor const & normal,
   rotationMatrix( 1, 2 ) = m2( 1 );
   rotationMatrix( 2, 2 ) = m2( 2 );
 
-  GEOSX_ERROR_IF( std::fabs( std::fabs( rotationMatrix.Det() ) - 1.0 ) > std::max( rotationTolerance, 1.e+1*machinePrecision ),
-                  "Rotation matrix with determinant different from both +1.0 and -1.0" );
+  GEOSX_ERROR_IF( std::fabs( rotationMatrix.Det() - 1.0 ) > std::max( rotationTolerance, 1.e+1*machinePrecision ),
+                  "Rotation matrix with determinant different from +1.0" );
 
   return;
 }
