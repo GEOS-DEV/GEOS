@@ -126,7 +126,6 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
           setPlotLevel( PlotLevel::LEVEL_0 )->
           setRegisteringObjects( this->getName())->
           setDescription( "An array that holds the fracture state represented using integer values (just for output)." );
-        InitializeFractureState( meshLevel, viewKeyStruct::fractureStateString );
 
         subRegion.registerWrapper< array1d< FractureState > >( viewKeyStruct::previousFractureStateString )->
           setPlotLevel( PlotLevel::NOPLOT )->
