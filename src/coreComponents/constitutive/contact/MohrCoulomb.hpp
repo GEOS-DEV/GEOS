@@ -90,10 +90,7 @@ public:
     static constexpr auto cohesionString = "cohesion";
 
     /// string/key for friction angle input
-    static constexpr auto frictionInputString = "frictionInput";
-
-    /// string/key for friction angle unit
-    static constexpr auto frictionInputUnitOfMeasurementString = "frictionInputUnitOfMeasurement";
+    static constexpr auto frictionAngleString = "frictionAngle";
 
     /// string/key for friction coefficient
     static constexpr auto frictionCoefficientString = "frictionCoefficient";
@@ -136,24 +133,10 @@ private:
   real64 m_cohesion;
 
   /// The friction angle for each upper level dimension (i.e. cell) of *this
-  real64 m_frictionInput;
+  real64 m_frictionAngle;
 
   /// The friction coefficient for each upper level dimension (i.e. cell) of *this
   real64 m_frictionCoefficient;
-
-  /// The friction angle unit of measure description
-  string m_frictionInputUnitOfMeasurement = "coefficient";
-
-  enum class InputUnit : int
-  {
-    COEFFICIENT,
-    RADIANS,
-    DEGREES
-  };
-
-  /// The friction angle unit of measure
-  InputUnit m_frictionInputUnit = InputUnit::COEFFICIENT;
-
 };
 
 }

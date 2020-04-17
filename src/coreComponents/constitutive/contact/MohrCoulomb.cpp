@@ -29,32 +29,23 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
   ContactRelationBase( name, parent ),
   m_postProcessed( false ),
   m_cohesion(),
-  m_frictionInput(),
-  m_frictionInputUnitOfMeasurement( "coefficient" )
+  m_frictionAngle(),
+  m_frictionCoefficient()
 {
   registerWrapper( viewKeyStruct::cohesionString, &m_cohesion, false )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Cohesion" );
 
-  registerWrapper( viewKeyStruct::frictionInputString, &m_frictionInput, false )->
+  registerWrapper( viewKeyStruct::frictionAngleString, &m_frictionAngle, false )->
     setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::REQUIRED )->
+    setInputFlag( InputFlags::OPTIONAL )->
     setRestartFlags( RestartFlags::NO_WRITE )->
-    setDescription( "Friction Input" );
-
-  registerWrapper( viewKeyStruct::frictionInputUnitOfMeasurementString, &m_frictionInputUnitOfMeasurement, false )->
-    setApplyDefaultValue( "rad" )->
-    setInputFlag( InputFlags::REQUIRED )->
-    setRestartFlags( RestartFlags::NO_WRITE )->
-    setDescription( "Friction Input Unit of Measurement. Valid inputs are (upper/lower case does not matter):\n"
-                    " - coefficient: the friction coefficient (default);\n"
-                    " - rad/radians: the angle in radians;\n"
-                    " - deg/degrees: the angle in degrees." );
+    setDescription( "Friction Angle" );
 
   registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->
     setApplyDefaultValue( -1 )->
-    setInputFlag( InputFlags::FALSE )->
+    setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Friction Coefficient" );
 }
 
@@ -76,10 +67,8 @@ MohrCoulomb::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_postProcessed = false;
   newConstitutiveRelation->m_cohesion = m_cohesion;
-  newConstitutiveRelation->m_frictionInput = m_frictionInput;
+  newConstitutiveRelation->m_frictionAngle = m_frictionAngle;
   newConstitutiveRelation->m_frictionCoefficient = m_frictionCoefficient;
-  newConstitutiveRelation->m_frictionInputUnit = m_frictionInputUnit;
-  newConstitutiveRelation->m_frictionInputUnitOfMeasurement = m_frictionInputUnitOfMeasurement;
 }
 
 real64 MohrCoulomb::limitTangentialTractionNorm( real64 const normalTraction ) const
@@ -92,60 +81,40 @@ real64 MohrCoulomb::dLimitTangentialTractionNorm_dNormalTraction( real64 const G
   return ( m_frictionCoefficient );
 }
 
+static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
+
 void MohrCoulomb::PostProcessInput()
 {
   if( !m_postProcessed )
   {
-    string & frictionInputUnitOfMeasurement = getReference< string >( viewKeyStruct::frictionInputUnitOfMeasurementString );
-
-    // convert string to lower case
-    std::for_each( frictionInputUnitOfMeasurement.begin(), frictionInputUnitOfMeasurement.end(), []( char & c ) {
-      c = ::tolower( c );
-    } );
-
-    if( frictionInputUnitOfMeasurement == "coefficient" )
+    GEOSX_ERROR_IF( m_frictionCoefficient < 0.0 && m_frictionAngle < 0,
+                    "Both friction angle and friction coefficient are less than zero. Values: "
+                    << m_frictionAngle
+                    << ", "
+                    << m_frictionCoefficient
+                    << ". Invalid input." );
+    real64 frictionCoefficient = -1.0;
+    if( m_frictionAngle >= 0.0 )
     {
-      m_frictionInputUnit = InputUnit::COEFFICIENT;
+      // Compute the tangent of the friction angle just once
+      frictionCoefficient = std::tan( m_frictionAngle );
     }
-    else if( frictionInputUnitOfMeasurement == "radians" || frictionInputUnitOfMeasurement == "rad" )
+
+    if( m_frictionCoefficient >= 0.0 )
     {
-      m_frictionInputUnit = InputUnit::RADIANS;
-    }
-    else if( frictionInputUnitOfMeasurement == "degrees" || frictionInputUnitOfMeasurement == "deg" )
-    {
-      m_frictionInputUnit = InputUnit::DEGREES;
+      if( frictionCoefficient >= 0.0 )
+      {
+        GEOSX_ERROR_IF( std::fabs( m_frictionCoefficient - frictionCoefficient ) > 1.e+1*machinePrecision,
+                        "Provided friction angle and friction coefficient do not match: "
+                        << m_frictionCoefficient
+                        << ", "
+                        << frictionCoefficient
+                        << ". Invalid input." );
+      }
     }
     else
     {
-      GEOSX_ERROR( "Provided wrong unit of measurement for friction coefficient. It can be coefficient, rad or deg. Provided: "
-                   << frictionInputUnitOfMeasurement );
-    }
-
-    switch( m_frictionInputUnit )
-    {
-      case InputUnit::COEFFICIENT:
-      {
-        // Everything is ok!
-        m_frictionCoefficient = m_frictionInput;
-        break;
-      }
-      case InputUnit::RADIANS:
-      {
-        GEOSX_ERROR_IF( m_frictionInput > M_PI_2,
-                        "The provided friction angle is larger than pi/2. Value: " << m_frictionInput << " [rad]" );
-        // Compute the tangent of the friction angle just once
-        m_frictionCoefficient = std::tan( m_frictionInput );
-        break;
-      }
-      case InputUnit::DEGREES:
-      {
-        GEOSX_ERROR_IF( m_frictionInput > 90,
-                        "The provided friction angle is larger than 90 degrees. Value: " << m_frictionInput << " [deg]" );
-        m_frictionInput *= M_PI / 180;
-        // Compute the tangent of the friction angle just once
-        m_frictionCoefficient = std::tan( m_frictionInput );
-        break;
-      }
+      m_frictionCoefficient = frictionCoefficient;
     }
 
     GEOSX_ERROR_IF( m_frictionCoefficient < 0.0,
