@@ -357,18 +357,18 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          R1Tensor globalJump( 0.0, 0.0, 0.0 );
+          R1Tensor globalJumpTensor( 0.0, 0.0, 0.0 );
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
             for( localIndex i=0; i<3; ++i )
             {
-              globalJump( i ) +=
+              globalJumpTensor( i ) +=
                 ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
                   + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / static_cast< real64 >(numNodesPerFace);
             }
           }
           R1Tensor localJumpTensor;
-          localJumpTensor.AijBi( rotationMatrix[kfe], globalJump );
+          localJumpTensor.AijBi( rotationMatrix[kfe], globalJumpTensor );
           localJump[kfe][0] = localJumpTensor( 0 );
           localJump[kfe][1] = localJumpTensor( 1 );
           localJump[kfe][2] = localJumpTensor( 2 );
@@ -1291,7 +1291,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     {
                       for( localIndex i=0; i<3; ++i )
                       {
-                        R1TensorT< 2 > localRowB( rotationMatrix[kfe]( 1, i ), rotationMatrix[kfe]( 2, i ) );
+                        R1TensorT< 2 > localRowB( rotationMatrix[kfe]( i, 1 ), rotationMatrix[kfe]( i, 2 ) );
                         R1TensorT< 2 > localRowE;
                         localRowE.AijBj( dUdgT, localRowB );
 
