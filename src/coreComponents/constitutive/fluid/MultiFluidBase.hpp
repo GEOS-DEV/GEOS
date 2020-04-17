@@ -86,6 +86,10 @@ public:
 
   virtual ~MultiFluidBase() override;
 
+  virtual void DeliverClone( string const & name,
+                             Group * const parent,
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
+
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -188,24 +192,24 @@ public:
   /**
    * @return number of fluid components (species) in the model
    */
-  localIndex numFluidComponents() const;
+  localIndex numFluidComponents() const { return m_componentNames.size(); }
 
   /**
    * @param ic component index
    * @return name of ic-th fluid component
    */
-  string const & componentName( localIndex ic ) const;
+  arrayView1d< string const > const & componentNames() const { return m_componentNames; }
 
   /**
    * @return number of fluid phases in the model
    */
-  localIndex numFluidPhases() const;
+  localIndex numFluidPhases() const { return m_phaseNames.size(); }
 
   /**
    * @param ip phase index
    * @return name of ip-th fluid phase
    */
-  string const & phaseName( localIndex ip ) const;
+  arrayView1d< string const > const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Get the mass flag.
@@ -221,6 +225,31 @@ public:
    * any compute or state update methods.
    */
   void setMassFlag( bool flag );
+
+  arrayView3d< real64 const > const & phaseFraction() const { return m_phaseFraction; }
+  arrayView3d< real64 const > const & dPhaseFraction_dPressure() const { return m_dPhaseFraction_dPressure; }
+  arrayView3d< real64 const > const & dPhaseFraction_dTemperature() const { return m_dPhaseFraction_dTemperature; }
+  arrayView4d< real64 const > const & dPhaseFraction_dGlobalCompFraction() const { return m_dPhaseFraction_dGlobalCompFraction; }
+
+  arrayView3d< real64 const > const & phaseDensity() const { return m_phaseDensity; }
+  arrayView3d< real64 const > const & dPhaseDensity_dPressure() const { return m_dPhaseDensity_dPressure; }
+  arrayView3d< real64 const > const & dPhaseDensity_dTemperature() const { return m_dPhaseDensity_dTemperature; }
+  arrayView4d< real64 const > const & dPhaseDensity_dGlobalCompFraction() const { return m_dPhaseDensity_dGlobalCompFraction; }
+
+  arrayView3d< real64 const > const & phaseViscosity() const { return m_phaseViscosity; }
+  arrayView3d< real64 const > const & dPhaseViscosity_dPressure() const { return m_dPhaseViscosity_dPressure; }
+  arrayView3d< real64 const > const & dPhaseViscosity_dTemperature() const { return m_dPhaseViscosity_dTemperature; }
+  arrayView4d< real64 const > const & dPhaseViscosity_dGlobalCompFraction() const { return m_dPhaseViscosity_dGlobalCompFraction; }
+
+  arrayView4d< real64 const > const & phaseCompFraction() const { return m_phaseCompFraction; }
+  arrayView4d< real64 const > const & dPhaseCompFraction_dPressure() const { return m_dPhaseCompFraction_dPressure; }
+  arrayView4d< real64 const > const & dPhaseCompFraction_dTemperature() const { return m_dPhaseCompFraction_dTemperature; }
+  arrayView5d< real64 const > const & dPhaseCompFraction_dGlobalCompFraction() const { return m_dPhaseCompFraction_dGlobalCompFraction; }
+
+  arrayView2d< real64 const > const & totalDensity() const { return m_totalDensity; }
+  arrayView2d< real64 const > const & dTotalDensity_dPressure() const { return m_dTotalDensity_dPressure; }
+  arrayView2d< real64 const > const & dTotalDensity_dTemperature() const { return m_dTotalDensity_dTemperature; }
+  arrayView3d< real64 const > const & dTotalDensity_dGlobalCompFraction() const { return m_dTotalDensity_dGlobalCompFraction; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -253,42 +282,10 @@ public:
     static constexpr auto dTotalDensity_dPressureString                  = "dTotalDensity_dPressure";                // dRho_t/dP
     static constexpr auto dTotalDensity_dTemperatureString               = "dTotalDensity_dTemperature";             // dRho_t/dT
     static constexpr auto dTotalDensity_dGlobalCompFractionString        = "dTotalDensity_dGlobalCompFraction";      // dRho_t/dz
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey componentNames       = { componentNamesString };
-    ViewKey componentMolarWeight = { componentMolarWeightString };
-
-    ViewKey phaseNames     = { phaseNamesString };
-
-    ViewKey phaseFraction                            = { phaseFractionString };                            // xi_p
-    ViewKey dPhaseFraction_dPressure                 = { dPhaseFraction_dPressureString };                 // dXi_p/dP
-    ViewKey dPhaseFraction_dTemperature              = { dPhaseFraction_dTemperatureString };              // dXi_p/dT
-    ViewKey dPhaseFraction_dGlobalCompFraction       = { dPhaseFraction_dGlobalCompFractionString };       // dXi_p/dz
-
-    ViewKey phaseDensity                             = { phaseDensityString };                             // rho_p
-    ViewKey dPhaseDensity_dPressure                  = { dPhaseDensity_dPressureString };                  // dRho_p/dP
-    ViewKey dPhaseDensity_dTemperature               = { dPhaseDensity_dTemperatureString };               // dRho_p/dT
-    ViewKey dPhaseDensity_dGlobalCompFraction        = { dPhaseDensity_dGlobalCompFractionString };        // dRho_p/dz
-
-    ViewKey phaseViscosity                           = { phaseViscosityString };                           // rho_p
-    ViewKey dPhaseViscosity_dPressure                = { dPhaseViscosity_dPressureString };                // dRho_p/dP
-    ViewKey dPhaseViscosity_dTemperature             = { dPhaseViscosity_dTemperatureString };             // dRho_p/dT
-    ViewKey dPhaseViscosity_dGlobalCompFraction      = { dPhaseViscosity_dGlobalCompFractionString };      // dRho_p/dz
-
-    ViewKey phaseCompFraction                        = { phaseCompFractionString };                        // x_cp
-    ViewKey dPhaseCompFraction_dPressure             = { dPhaseCompFraction_dPressureString };             // dx_cp/dP
-    ViewKey dPhaseCompFraction_dTemperature          = { dPhaseCompFraction_dTemperatureString };          // dx_cp/dT
-    ViewKey dPhaseCompFraction_dGlobalCompFraction   = { dPhaseCompFraction_dGlobalCompFractionString };   // dx_cp/dz
-
-    ViewKey totalDensity                             = { totalDensityString };                             // rho_t
-    ViewKey dTotalDensity_dPressure                  = { dTotalDensity_dPressureString };                  // dRho_t/dP
-    ViewKey dTotalDensity_dTemperature               = { dTotalDensity_dTemperatureString };               // dRho_t/dT
-    ViewKey dTotalDensity_dGlobalCompFraction        = { dTotalDensity_dGlobalCompFractionString };        // dRho_t/dz
-
   } viewKeysMultiFluidBase;
 
 protected:
+
   virtual void PostProcessInput() override;
 
   /**

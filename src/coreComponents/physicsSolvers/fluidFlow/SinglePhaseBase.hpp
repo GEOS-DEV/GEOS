@@ -120,16 +120,16 @@ public:
   template< bool ISPORO >
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
-                           CellElementSubRegion const * const subRegion,
-                           DofManager const * const dofManager,
+                           CellElementSubRegion const & subRegion,
+                           DofManager const & dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
   template< bool ISPORO >
   void AccumulationLaunch( localIndex const er,
                            localIndex const esr,
-                           FaceElementSubRegion const * const subRegion,
-                           DofManager const * const dofManager,
+                           FaceElementSubRegion const & subRegion,
+                           DofManager const & dofManager,
                            ParallelMatrix * const matrix,
                            ParallelVector * const rhs );
 
@@ -174,14 +174,13 @@ public:
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  virtual void UpdateState( Group * dataGroup ) const;
+  virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  virtual void UpdateFluidModel( Group * const dataGroup ) const;
-
+  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -227,20 +226,24 @@ public:
 
 protected:
 
+  virtual void ValidateFluidModels( DomainPartition const & domain ) const;
+
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  void UpdateSolidModel( Group * const dataGroup ) const;
+  void UpdateSolidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
   template< class FLUIDBASE >
-  void UpdateMobility( Group * const dataGroup ) const;
+  void UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
 
   /// views into primary variable fields
@@ -264,22 +267,22 @@ protected:
 
   /// views into material fields
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_pvMult;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_density;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_density;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dDens_dPres;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_viscosity;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_viscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dVisc_dPres;
 
   /// coupling with mechanics
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_totalMeanStressOld;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_totalMeanStress;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 > > m_bulkModulus;
-  ElementRegionManager::MaterialViewAccessor< real64 > m_biotCoefficient;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_bulkModulus;
+  ElementRegionManager::ElementViewAccessor< real64 > m_biotCoefficient;
 
   // coupling with proppant transport
 
@@ -288,41 +291,43 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_transTMultiplier;
 
 private:
-  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager,
-                                  constitutive::ConstitutiveManager * const constitutiveManager );
+
+  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager );
 
 };
 
 
 
 template< class FLUIDBASE >
-void SinglePhaseBase::UpdateMobility( Group * const dataGroup ) const
+void SinglePhaseBase::UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
   // output
 
   arrayView1d< real64 > const & mob =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::mobilityString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::mobilityString );
 
   arrayView1d< real64 > const & dMob_dPres =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
 
-  FLUIDBASE * const fluid = GetConstitutiveModel< FLUIDBASE >( dataGroup, m_fluidName );
+  // input
+
+  FLUIDBASE & fluid = GetConstitutiveModel< FLUIDBASE >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & dens =
-    fluid->template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::densityString );
+    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::densityString );
 
   arrayView2d< real64 const > const & dDens_dPres =
-    fluid->template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
+    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
 
   arrayView2d< real64 const > const & visc =
-    fluid->template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::viscosityString );
+    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::viscosityString );
 
   arrayView2d< real64 const > const & dVisc_dPres =
-    fluid->template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
+    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
-  SinglePhaseBaseKernels::MobilityKernel::Launch( dataGroup->size(),
+  SinglePhaseBaseKernels::MobilityKernel::Launch( dataGroup.size(),
                                                   dens,
                                                   dDens_dPres,
                                                   visc,

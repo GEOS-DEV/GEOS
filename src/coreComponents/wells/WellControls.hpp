@@ -142,7 +142,7 @@ public:
    * @param the index of the component
    * @return the global component fraction for component ic
    */
-  real64 GetInjectionStream( localIndex ic ) const;
+  arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
 
   void Debug() const;
 

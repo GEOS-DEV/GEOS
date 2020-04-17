@@ -143,7 +143,6 @@ struct FluxKernel
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
    * @param[in] stencil The stencil object.
    * @param[in] dt The timestep for the integration step.
-   * @param[in] fluidIndex The index of the fluid being fluxed.
    * @param[in] dofNumber The dofNumbers for each element
    * @param[in] pres The pressures in each element
    * @param[in] dPres The change in pressure for each element
@@ -159,13 +158,12 @@ struct FluxKernel
   static void
     Launch( STENCIL_TYPE const & stencil,
             real64 const dt,
-            localIndex const fluidIndex,
             ElementView< arrayView1d< globalIndex const > > const & dofNumber,
             ElementView< arrayView1d< real64 const > > const & pres,
             ElementView< arrayView1d< real64 const > > const & dPres,
             ElementView< arrayView1d< real64 const > > const & gravCoef,
-            MaterialView< arrayView2d< real64 const > > const & dens,
-            MaterialView< arrayView2d< real64 const > > const & dDens_dPres,
+            ElementView< arrayView2d< real64 const > > const & dens,
+            ElementView< arrayView2d< real64 const > > const & dDens_dPres,
             ElementView< arrayView1d< real64 const > > const & mob,
             ElementView< arrayView1d< real64 const > > const & dMob_dPres,
             ElementView< arrayView1d< real64 const > > const & aperture0,
@@ -197,11 +195,10 @@ struct FluxKernel
            ElementView< arrayView1d< real64 const > > const & pres,
            ElementView< arrayView1d< real64 const > > const & dPres,
            ElementView< arrayView1d< real64 const > > const & gravCoef,
-           MaterialView< arrayView2d< real64 const > > const & dens,
-           MaterialView< arrayView2d< real64 const > > const & dDens_dPres,
+           ElementView< arrayView2d< real64 const > > const & dens,
+           ElementView< arrayView2d< real64 const > > const & dDens_dPres,
            ElementView< arrayView1d< real64 const > > const & mob,
            ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-           localIndex const fluidIndex,
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian )
@@ -224,8 +221,8 @@ struct FluxKernel
     for( localIndex ke = 0; ke < numElems; ++ke )
     {
       // density
-      real64 const density = dens[seri[ke]][sesri[ke]][fluidIndex][sei[ke]][0];
-      real64 const dDens_dP = dDens_dPres[seri[ke]][sesri[ke]][fluidIndex][sei[ke]][0];
+      real64 const density = dens[seri[ke]][sesri[ke]][sei[ke]][0];
+      real64 const dDens_dP = dDens_dPres[seri[ke]][sesri[ke]][sei[ke]][0];
 
       // average density
       densMean        += densWeight[ke] * density;
@@ -301,7 +298,6 @@ struct FluxKernel
            arrayView2d< real64 const > const & dDens_dPres,
            arrayView1d< real64 const > const & mob,
            arrayView1d< real64 const > const & dMob_dPres,
-           localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
            real64 const dt,
            arraySlice1d< real64 > const & flux,
            arraySlice2d< real64 > const & fluxJacobian )
@@ -403,7 +399,6 @@ struct FluxKernel
                    arrayView1d< real64 const > const &,//s,
                    arrayView1d< real64 const > const &,//dSdAper,
 #endif
-                   localIndex const GEOSX_UNUSED_PARAM( fluidIndex ),
                    real64 const dt,
                    arraySlice1d< real64 > const & flux,
                    arraySlice2d< real64 > const & fluxJacobian,
