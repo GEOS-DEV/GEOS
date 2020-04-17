@@ -116,20 +116,6 @@ public:
   /**
    * @brief Accessor for friction angle
    * @return A const reference to arrayView1d<real64> containing the friction
-   *         angles (at every element).
-   */
-  real64 const & frictionInput() { return m_frictionInput; }
-
-  /**
-   * @brief Const accessor for friction angle
-   * @return A const reference to arrayView1d<real64 const> containing the
-   *         friction angles (at every element).
-   */
-  real64 const & frictionInput() const { return m_frictionInput; }
-
-  /**
-   * @brief Accessor for friction angle
-   * @return A const reference to arrayView1d<real64> containing the friction
    *         coefficient (at every element).
    */
   real64 const & frictionCoefficient() { return m_frictionCoefficient; }
@@ -156,16 +142,17 @@ private:
   real64 m_frictionCoefficient;
 
   /// The friction angle unit of measure description
-  string m_frictionInputUnitOfMeasurement = "rad";
+  string m_frictionInputUnitOfMeasurement = "coefficient";
 
-  enum class AngleUnit : int
+  enum class InputUnit : int
   {
+    COEFFICIENT,
     RADIANS,
     DEGREES
   };
 
   /// The friction angle unit of measure
-  AngleUnit m_frictionInputUnit = AngleUnit::RADIANS;
+  InputUnit m_frictionInputUnit = InputUnit::COEFFICIENT;
 
 };
 

@@ -870,6 +870,8 @@
 		<xsd:choice minOccurs="0" maxOccurs="1">
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
+		<!--frictionCoefficient => Friction Coefficient-->
+		<xsd:attribute name="frictionCoefficient" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
