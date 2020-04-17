@@ -28,6 +28,10 @@ class NodeManager;
 class FaceManager;
 class MeshLevel;
 class DomainPartition;
+namespace constitutive
+{
+class ConstitutiveBase;
+}
 
 class ElementSubRegionBase : public ObjectManagerBase
 {
@@ -138,13 +142,13 @@ public:
   dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
-  template< typename T >
+  template< typename T = constitutive::ConstitutiveBase >
   T * getConstitutiveModel( string const & name )
   {
     return m_constitutiveModels.GetGroup<T>(name);
   }
 
-  template< typename T >
+  template< typename T = constitutive::ConstitutiveBase >
   T const * getConstitutiveModel( string const & name ) const
   {
     return m_constitutiveModels.GetGroup<T>(name);

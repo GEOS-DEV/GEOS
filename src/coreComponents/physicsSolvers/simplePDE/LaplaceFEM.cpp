@@ -18,24 +18,20 @@
  */
 
 #include "LaplaceFEM.hpp"
-
-#include <vector>
-#include <math.h>
+#include "LaplaceFEMKernels.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "dataRepository/Group.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "dataRepository/Group.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
-#include "codingUtilities/Utilities.hpp"
-
 #include "managers/DomainPartition.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 
 namespace geosx
 {
@@ -186,10 +182,12 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+
   Group * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+
   NumericalMethodsManager const *
     numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+
   FiniteElementDiscretizationManager const *
     feDiscretizationManager = numericalMethodManager->
                                 GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
@@ -197,16 +195,39 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   array1d< globalIndex > const & dofIndex =
     nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
+  FiniteElementDiscretization const *
+    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+
   matrix.open();
   rhs.open();
+
+
+#if 1
+  physicsLoopInterface::
+  FiniteElementRegionLoop::Execute< serialPolicy,
+                                    LaplaceFEMKernel,
+                                    Dummy >( *mesh,
+                                             m_targetRegions,
+                                             "",
+                                             feDiscretization,
+                                             dofIndex,
+                                             matrix,
+                                             rhs,
+                                             LaplaceFEMKernel::Parameters(m_fieldName));
+
+
+
+
+#else
+
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
 
   // begin region loop
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
 
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
     elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
     {
@@ -255,6 +276,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       }
     } );
   }
+#endif
   matrix.close();
   rhs.close();
   //END_SPHINX_INCLUDE_04

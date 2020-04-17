@@ -683,6 +683,7 @@
 			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
 			<xsd:element name="Contact" type="ContactType" />
+			<xsd:element name="Dummy" type="DummyType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
@@ -822,6 +823,7 @@
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="DummyType" />
 	<xsd:complexType name="LinearElasticAnisotropicType">
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />

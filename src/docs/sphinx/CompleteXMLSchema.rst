@@ -149,6 +149,13 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
+.. _XML_Dummy:
+
+Element: Dummy
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Dummy.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -830,6 +837,13 @@ Datastructure: Cylinder
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
+
+
+.. _DATASTRUCTURE_Dummy:
+
+Datastructure: Dummy
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Dummy_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:

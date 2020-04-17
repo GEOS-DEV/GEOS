@@ -10,7 +10,8 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
-#include "constitutive/solid/solidSelector.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 
@@ -84,7 +85,8 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & inputConstitutiveType ):
+             CONSTITUTIVE_TYPE & inputConstitutiveType,
+             Parameters const & GEOSX_UNUSED_PARAM(parameters) ):
       Kernels( inputDofNumber,
                inputMatrix,
                inputRhs,
@@ -194,7 +196,7 @@ protected:
 
     forAll< POLICY >( numElems,
                       [=] ( localIndex const k )
-                      {
+    {
       STACK_VARIABLES stack;
 
       if( kernelClass.elemGhostRank[k] < 0 )
@@ -210,18 +212,18 @@ protected:
         }
         maxResidual.max( kernelClass.postKernel( parameters, stack ) );
       }
-                      } );
+    } );
     return maxResidual.get();
   }
 
 
   template< typename POLICY,
             typename UPDATE_CLASS,
-            typename ... KERNEL_PARAMS >
+            typename CONSTITUTIVE_BASE >
   static
   real64 Execute( MeshLevel & mesh,
                   string_array const & targetRegions,
-                  string const & solidMaterialName,
+                  string const & constitutiveName,
                   FiniteElementDiscretization const * const feDiscretization,
                   arrayView1d< globalIndex const > const & inputDofNumber,
                   ParallelMatrix & inputMatrix,
@@ -261,10 +263,18 @@ protected:
         constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
         constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
-        constitutive::SolidBase * const
-        solidBase = elementSubRegion.template getConstitutiveModel<constitutive::SolidBase>( solidMaterialName );
+        constitutive::ConstitutiveBase *
+        constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveName );
 
-        constitutive::constitutiveUpdatePassThru( solidBase, [&]( auto & castedConstitutiveRelation )
+        std::unique_ptr<constitutive::Dummy> dummyConstitutiveRelation;
+        if( constitutiveRelation==nullptr )
+        {
+          dummyConstitutiveRelation = std::make_unique<constitutive::Dummy>( "dummy", &elementSubRegion );
+          constitutiveRelation = dummyConstitutiveRelation.get();
+        }
+
+        constitutive::ConstitutivePassThru<CONSTITUTIVE_BASE>::Execute( constitutiveRelation,
+                                                                        [&]( auto & castedConstitutiveRelation )
         {
           using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
@@ -274,15 +284,16 @@ protected:
                                                                                                 nodeManager,
                                                                                                 elementSubRegion,
                                                                                                 finiteElementSpace,
-                                                                                                castedConstitutiveRelation );
+                                                                                                castedConstitutiveRelation,
+                                                                                                parameters );
 
           maxResidual = std::max( maxResidual,
                                   Launch< POLICY,
                                           NUM_NODES_PER_ELEM,
                                           NUM_QUADRATURE_POINTS,
                                           typename UPDATE_CLASS::template StackVariables<NUM_NODES_PER_ELEM,3>>( numElems,
-                                                                                                                 parameters,
-                                                                                                                 kernelClass ) );
+                                                                                                                             parameters,
+                                                                                                                             kernelClass ) );
         } );
       } );
     } );
@@ -290,11 +301,32 @@ protected:
     return maxResidual;
   }
 
-  template< typename POLICY, typename ... PARAMS >
+
+
+
+
+  template< typename POLICY,
+            typename CONSTITUTIVE_BASE = constitutive::Dummy >
   static
-  real64 FillSparsity( PARAMS && ... params )
+  real64 FillSparsity( MeshLevel & mesh,
+                       string_array const & targetRegions,
+                       string const & constitutiveName,
+                       FiniteElementDiscretization const * const feDiscretization,
+                       arrayView1d< globalIndex const > const & inputDofNumber,
+                       ParallelMatrix & inputMatrix,
+                       ParallelVector & inputRhs,
+                       FiniteElementRegionLoop::Parameters const & parameters = FiniteElementRegionLoop::Parameters() )
   {
-    return Execute<POLICY, FiniteElementRegionLoop>( std::forward<PARAMS>(params)..., FiniteElementRegionLoop::Parameters() );
+    return Execute< POLICY,
+                    FiniteElementRegionLoop,
+                    CONSTITUTIVE_BASE >( mesh,
+                                         targetRegions,
+                                         constitutiveName,
+                                         feDiscretization,
+                                         inputDofNumber,
+                                         inputMatrix,
+                                         inputRhs,
+                                         parameters );
   }
 
 

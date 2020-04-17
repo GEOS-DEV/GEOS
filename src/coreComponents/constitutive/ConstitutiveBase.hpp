@@ -104,12 +104,19 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex );
 
+  using KernelWrapper = double;
+  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM(includeState) = false )
+  {
+    return 0.0;
+  }
+
   struct viewKeyStruct
   {
     static constexpr auto poreVolumeMultiplierString  = "poreVolumeMultiplier";
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 
   };
+
 
   struct groupKeyStruct
   {};

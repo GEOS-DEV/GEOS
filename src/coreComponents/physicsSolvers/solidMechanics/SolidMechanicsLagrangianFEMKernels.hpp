@@ -23,7 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/solidSelector.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/Kinematics.h"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -140,7 +140,10 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 {
   real64 rval = 0;
 
-  constitutive::constitutiveUpdatePassThru( constitutiveRelation, [&]( auto & constitutive )
+  using namespace constitutive;
+
+  ConstitutivePassThru<SolidBase>::Execute( constitutiveRelation,
+                                            [&]( auto & constitutive )
   {
     using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
     if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
@@ -425,7 +428,8 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & inputConstitutiveType )://,
+             CONSTITUTIVE_TYPE & inputConstitutiveType,
+             Parameters const & GEOSX_UNUSED_PARAM(parameters) )://,
 //             real64 const inputGravityVector[3] ):
       KernelBase( inputDofNumber,
                   inputMatrix,
@@ -700,14 +704,16 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & constitutiveModel ):
+             CONSTITUTIVE_TYPE & constitutiveModel,
+             Base::Parameters const & parameters ):
       KernelBase( inputDofNumber,
                  inputMatrix,
                  inputRhs,
                  nodeManager,
                  elementSubRegion,
                  finiteElementSpace,
-                 constitutiveModel ),
+                 constitutiveModel,
+                 parameters ),
       m_vtilde(nodeManager.totalDisplacement()),
       m_uhattilde(nodeManager.totalDisplacement()),
       m_density(constitutiveModel.getDensity())
