@@ -181,9 +181,6 @@ inline void ExpandMultipleTokens( string_array & sVector, const std::string & mu
   }
   sVector = newVec;
 }
-
-string EncodeBase64( unsigned char const * const bytes,
-                     integer dataSize );
 }
 }
 
