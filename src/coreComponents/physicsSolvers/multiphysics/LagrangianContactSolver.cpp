@@ -78,7 +78,7 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
   registerWrapper( viewKeyStruct::normalDisplacementToleranceString, &m_normalDisplacementTolerance, false )->
     setApplyDefaultValue( 1.e-7 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Tolerance used to determine if a compenetration is happening" );
+    setDescription( "Tolerance used to determine if a co-penetration is happening" );
 
   registerWrapper( viewKeyStruct::normalTractionToleranceString, &m_normalTractionTolerance, false )->
     setApplyDefaultValue( 1.e-4 )->
