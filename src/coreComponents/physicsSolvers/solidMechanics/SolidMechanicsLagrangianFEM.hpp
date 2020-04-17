@@ -367,8 +367,7 @@ public:
     static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
-    static constexpr auto solidMaterialNameString = "solidMaterialName";
-    static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto solidMaterialNamesString = "solidMaterialNames";
     static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
@@ -391,7 +390,7 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
-  string const & getSolidMaterialName() const { return m_solidMaterialName; }
+  arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
 
   inline localIndex getSolidMaterialFullIndex() const { return m_solidMaterialFullIndex; }
 
@@ -410,8 +409,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_solidMaterialName;
-  localIndex m_solidMaterialFullIndex;
+  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
 
 
