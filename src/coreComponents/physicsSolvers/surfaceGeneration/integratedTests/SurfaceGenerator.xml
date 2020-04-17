@@ -9,7 +9,7 @@
                                   logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="granite"
+                                  solidMaterialNames="{granite}"
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-3"
                                  newtonMaxIter="8"/>
@@ -21,7 +21,7 @@
                       logLevel="0"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}"
-                      solidMaterialName="granite"
+                      solidMaterialNames="{granite}"
                       rockToughness="1e6"
                       mpiCommOrder="1"
                       >

@@ -122,6 +122,14 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
+void ReservoirSolverBase::SetupDofs( DomainPartition const * const domain,
+                                     DofManager & dofManager ) const
+{
+  m_flowSolver->SetupDofs( domain, dofManager );
+  m_wellSolver->SetupDofs( domain, dofManager );
+  // TODO: add coupling when dofManager can support perforation connectors
+}
+
 void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,

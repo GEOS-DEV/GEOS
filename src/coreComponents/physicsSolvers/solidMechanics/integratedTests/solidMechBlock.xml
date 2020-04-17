@@ -7,7 +7,7 @@
                                   logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="shale"
+                                  solidMaterialNames="{shale}"
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-4"
                                  newtonMaxIter="8"/>

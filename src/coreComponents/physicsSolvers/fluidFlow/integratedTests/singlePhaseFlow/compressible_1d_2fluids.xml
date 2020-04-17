@@ -3,28 +3,28 @@
 
   <Solvers gravityVector="0.0, 0.0, -9.81">
   
-    <SinglePhaseFVM name="SinglePhaseFlow"
-                     logLevel="0"
-                     discretization="singlePhaseTPFA"
-                     fluidNames="{water}"
-                     solidNames="{rock}"
-                     targetRegions="{Region1}">
+    <SinglePhaseFVM name="flowSolver"
+                    logLevel="0"
+                    discretization="tpfaFlow"
+                    targetRegions="{Region1,Region2}"
+                    fluidNames="{fluid1,fluid2}"
+                    solidNames="{rock}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-10"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
-                  xCoords="{0, 10}"
+                  xCoords="{0, 5, 10}"
                   yCoords="{0, 1}"
                   zCoords="{0, 1}"
-                  nx="{10}"
+                  nx="{5, 5}"
                   ny="{1}"
                   nz="{1}"
-                  cellBlockNames="{block1}"/>
+                  cellBlockNames="{block1,block2}"/>
   </Mesh>
 
   <Geometry>
@@ -42,7 +42,7 @@
 
     <PeriodicEvent name="solverApplications"
                    forceDt="1e2"
-                   target="/Solvers/SinglePhaseFlow" />
+                   target="/Solvers/flowSolver" />
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e3"
@@ -53,7 +53,7 @@
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
+      <TwoPointFluxApproximation name="tpfaFlow"
                                  fieldName="pressure"
                                  coefficientName="permeability"/>
     </FiniteVolume>
@@ -61,18 +61,30 @@
 
   <ElementRegions>
     <CellElementRegion name="Region1"
-                   cellBlocks="{block1}"
-                   materialList="{water, rock}"/>
+                       cellBlocks="{block1}"
+                       materialList="{fluid1, rock}"/>
+    <CellElementRegion name="Region2"
+                       cellBlocks="{block2}"
+                       materialList="{fluid2, rock}"/>
   </ElementRegions>
 
   <Constitutive>
-    <CompressibleSinglePhaseFluid name="water"
+    <CompressibleSinglePhaseFluid name="fluid1"
                                   defaultDensity="1000"
                                   defaultViscosity="0.001"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
                                   referenceViscosity="0.001"
+                                  viscosibility="0.0"/>
+
+    <CompressibleSinglePhaseFluid name="fluid2"
+                                  defaultDensity="1000"
+                                  defaultViscosity="0.001"
+                                  referencePressure="0.0"
+                                  referenceDensity="1000"
+                                  compressibility="5e-10"
+                                  referenceViscosity="0.0001"
                                   viscosibility="0.0"/>
 
     <PoreVolumeCompressibleSolid name="rock"
@@ -86,7 +98,7 @@
                         component="0"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
@@ -94,7 +106,7 @@
                         component="1"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
@@ -102,32 +114,32 @@
                         component="2"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="permeability"
                         scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="referencePorosity"
                         scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="pressure"
                         scale="0.0"/>
 
     <FieldSpecification name="sourceTerm"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="pressure"
                         scale="5e6"
                         setNames="{source}"/>
 
     <FieldSpecification name="sinkTerm"
-                        objectPath="ElementRegions/Region1/block1"
+                        objectPath="ElementRegions"
                         fieldName="pressure"
                         scale="-5e6"
                         setNames="{sink}"/>
