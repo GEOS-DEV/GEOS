@@ -45,6 +45,9 @@ public:
 
   virtual ~MultiFluidPVTPackageWrapper() override;
 
+  virtual void DeliverClone( string const & name,
+                             Group * const parent,
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   virtual void PointUpdate( real64 const & pressure,
                             real64 const & temperature,

@@ -42,23 +42,14 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
 
-void SinglePhaseReservoir::SetupDofs( DomainPartition const * const domain,
-                                      DofManager & dofManager ) const
-{
-  m_flowSolver->SetupDofs( domain, dofManager );
-  m_wellSolver->SetupDofs( domain, dofManager );
-
-  // TODO: add coupling when dofManager can support perforation connectors
-}
-
 void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
                                                        DofManager & dofManager,
                                                        ParallelMatrix & matrix )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -71,9 +62,10 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
   localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
+    elemManager.ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion const & subRegion )
   {
     PerforationData const * const perforationData = subRegion.GetPerforationData();
 
@@ -103,9 +95,9 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
     for( localIndex iperf = 0; iperf < perforationData->size(); ++iperf )
     {
       // get the reservoir (sub)region and element indices
-      localIndex const er     = resElementRegion[iperf];
-      localIndex const esr    = resElementSubRegion[iperf];
-      localIndex const ei     = resElementIndex[iperf];
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
       localIndex const iwelem = perfWellElemIndex[iperf];
 
       for( localIndex idof = 0; idof < resNDOF; ++idof )
@@ -119,18 +111,14 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
       }
 
       // fill J_RW
-      matrix.insert( dofIndexRes.data(),
-                     dofIndexWell.data(),
-                     values.data(),
-                     resNDOF,
-                     wellNDOF );
+      matrix.insert( dofIndexRes,
+                     dofIndexWell,
+                     values );
 
       // fill J_WR
-      matrix.insert( dofIndexWell.data(),
-                     dofIndexRes.data(),
-                     values.data(),
-                     wellNDOF,
-                     resNDOF );
+      matrix.insert( dofIndexWell,
+                     dofIndexRes,
+                     values );
     }
 
   } );
@@ -145,20 +133,21 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
                                                   ParallelMatrix * const matrix,
                                                   ParallelVector * const rhs )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
   string const wellDofKey = dofManager->getKey( m_wellSolver->WellElementDofName() );
   string const resDofKey  = dofManager->getKey( m_wellSolver->ResElementDofName() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  resDofNumberAccessor = elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
+  resDofNumberAccessor = elemManager.ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst
     resDofNumber = resDofNumberAccessor.toViewConst();
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                               WellElementSubRegion & subRegion )
   {
     PerforationData const * const perforationData = subRegion.GetPerforationData();
 
@@ -200,12 +189,12 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
       localPerfJacobian = 0;
 
       // get the reservoir (sub)region and element indices
-      localIndex const er  = resElementRegion[iperf];
+      localIndex const er = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei  = resElementIndex[iperf];
+      localIndex const ei = resElementIndex[iperf];
 
       // get the well element index for this perforation
-      localIndex const iwelem      = perfWellElemIndex[iperf];
+      localIndex const iwelem = perfWellElemIndex[iperf];
       globalIndex const elemOffset = wellElemDofNumber[iwelem];
 
       // row index on reservoir side
@@ -223,12 +212,12 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
                                                           + SinglePhaseWell::ColOffset::DPRES;
 
       // populate local flux vector and derivatives
-      localPerf[WellSolverBase::SubRegionTag::RES]  =  dt * perfRate[iperf];
+      localPerf[WellSolverBase::SubRegionTag::RES] = dt * perfRate[iperf];
       localPerf[WellSolverBase::SubRegionTag::WELL] = -localPerf[WellSolverBase::SubRegionTag::RES];
 
       for( localIndex ke = 0; ke < 2; ++ke )
       {
-        localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke]  = dt * dPerfRate_dPres[iperf][ke];
+        localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke] = dt * dPerfRate_dPres[iperf][ke];
         localPerfJacobian[WellSolverBase::SubRegionTag::WELL][ke] = -localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke];
       }
 

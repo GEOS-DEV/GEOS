@@ -132,6 +132,20 @@ void MultiFluidBase::AllocateConstitutiveData( dataRepository::Group * const par
 MultiFluidBase::~MultiFluidBase()
 {}
 
+void
+MultiFluidBase::DeliverClone( string const & name,
+                              Group * const parent,
+                              std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  ConstitutiveBase::DeliverClone( name, parent, clone );
+  MultiFluidBase & fluid = dynamicCast< MultiFluidBase & >( *clone );
+
+  fluid.m_useMass              = m_useMass;
+  fluid.m_componentNames       = m_componentNames;
+  fluid.m_componentMolarWeight = m_componentMolarWeight;
+  fluid.m_phaseNames           = m_phaseNames;
+}
+
 void MultiFluidBase::PostProcessInput()
 {
   ConstitutiveBase::PostProcessInput();
@@ -165,34 +179,12 @@ void MultiFluidBase::PostProcessInput()
   ResizeFields( 0, 0 );
 }
 
-localIndex MultiFluidBase::numFluidComponents() const
-{
-  return integer_conversion< localIndex >( m_componentNames.size());
-}
-
-string const & MultiFluidBase::componentName( localIndex ic ) const
-{
-  GEOSX_ERROR_IF( ic >= numFluidComponents(), "Index " << ic << " exceeds number of fluid components" );
-  return m_componentNames[ic];
-}
-
-localIndex MultiFluidBase::numFluidPhases() const
-{
-  return integer_conversion< localIndex >( m_phaseNames.size());
-}
-
-string const & MultiFluidBase::phaseName( localIndex ip ) const
-{
-  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
-  return m_phaseNames[ip];
-}
-
 bool MultiFluidBase::getMassFlag() const
 {
   return m_useMass;
 }
 
-void MultiFluidBase::setMassFlag( bool flag )
+void MultiFluidBase::setMassFlag( bool const flag )
 {
   m_useMass = flag;
 }

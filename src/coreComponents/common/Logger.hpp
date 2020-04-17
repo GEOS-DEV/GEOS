@@ -112,7 +112,7 @@
  * @brief Assert a condition in debug builds.
  * @param EXP an expression that will be evaluated as a predicate
  */
-#define GEOSX_ASSERT( EXP ) GEOSX_ASSERT_MSG( EXP, "" );
+#define GEOSX_ASSERT( EXP ) GEOSX_ASSERT_MSG( EXP, "" )
 
 /**
  * @brief Conditionally report a warning.
