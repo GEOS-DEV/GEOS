@@ -1159,14 +1159,6 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
 
   string const presDofKey = dofManager.getKey( m_pressureKey );
 
-  /*
-  // Density accessor
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const density =
-    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::densityString,
-                                                                                                  m_flowSolver->targetRegionNames(),
-                                                                                                  m_flowSolver->fluidModelNames() );
-  */
-
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
   FiniteVolumeManager const * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
