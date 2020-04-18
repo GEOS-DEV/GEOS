@@ -429,20 +429,13 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    *
    */
   template< typename LAI >
-  static inline void SpecifyFieldValue( globalIndex const dof,
-                                        typename LAI::ParallelMatrix & matrix,
+  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
+                                        typename LAI::ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                         real64 & rhs,
                                         real64 const & bcValue,
                                         real64 const GEOSX_UNUSED_PARAM( fieldValue ) )
   {
-    if( matrix.getLocalRowID( dof ) >= 0 )
-    {
-      rhs += bcValue;
-    }
-    else
-    {
-      rhs = 0.0;
-    }
+    rhs += bcValue;
   }
 
   /**
@@ -458,13 +451,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                                          globalIndex * const dof,
                                          real64 * const values )
   {
-    for( localIndex a = 0; a < num; ++a )
-    {
-      if( rhs.getLocalRowID( dof[a] ) >= 0 )
-      {
-        rhs.add( dof[a], values[a] );
-      }
-    }
+    rhs.add( dof, values, num );
   }
 
 };
