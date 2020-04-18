@@ -1159,11 +1159,13 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
 
   string const presDofKey = dofManager.getKey( m_pressureKey );
 
+  /*
   // Density accessor
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const density =
     elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::densityString,
                                                                                                   m_flowSolver->targetRegionNames(),
                                                                                                   m_flowSolver->fluidModelNames() );
+  */
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -1187,6 +1189,11 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
   pressure = fractureSubRegion->getReference< array1d< real64 > >( m_pressureKey );
   arrayView1d< real64 const > const &
   deltaPressure = fractureSubRegion->getReference< array1d< real64 > >( m_deltaPressureKey );
+
+  string const &
+  fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( fractureRegion->getName() )];
+  SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( *fractureSubRegion, fluidName );
+  arrayView2d< real64 const > const & density = fluid.density();
 
   // Get the volume for all elements
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -1330,7 +1337,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
         }
 
         // Add mean density contribution
-        totalInvStiffApprox( 0 ) *= 0.5 * ( density[1][0][fractureIndex[0]][0] + density[1][0][fractureIndex[1]][0] );
+        totalInvStiffApprox( 0 ) *= 0.5 * ( density[fractureIndex[0]][0] + density[fractureIndex[1]][0] );
 
         // Compute rhs
         real64 rhs0 = 0.0;
