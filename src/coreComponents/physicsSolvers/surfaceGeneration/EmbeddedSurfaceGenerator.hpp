@@ -118,7 +118,7 @@ private:
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto solidMaterialNameString = "solidMaterialName";
+    constexpr static auto solidMaterialNameString = "solidMaterialNames";
     constexpr static auto fractureRegionNameString = "fractureRegion";
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
@@ -127,7 +127,7 @@ private:
 
 private:
   // solid solver name
-  string m_solidMaterialName;
+  array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
 };

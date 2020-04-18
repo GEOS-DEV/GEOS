@@ -158,7 +158,7 @@ struct AccessorHelper< true >
   }
 
   template< int NDIM, typename T, typename ... DIMS >
-  static MaterialAccessor< NDIM, T >
+  static ElementAccessor< NDIM, T >
   makeMaterialAccessor( T const * const data,
                         localIndex const stencilSize,
                         arraySlice1d< localIndex const > const & stencilRegIndices,
@@ -175,7 +175,7 @@ struct AccessorHelper< true >
       numElems = std::max( numElems, stencilElemIndices[i] + 1 );
     }
 
-    MaterialAccessor< NDIM, T > acc;
+    ElementAccessor< NDIM, T > acc;
     acc.resize( numRegions );
     for( localIndex kr = 0; kr < numRegions; ++kr )
     {

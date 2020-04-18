@@ -71,9 +71,6 @@ public:
    */
   /**@{*/
 
-  virtual void SetupDofs( DomainPartition const * const domain,
-                          DofManager & dofManager ) const override;
-
   /**@}*/
 
   virtual void AddCouplingSparsityPattern( DomainPartition * const domain,

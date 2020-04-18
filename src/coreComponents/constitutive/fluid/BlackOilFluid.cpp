@@ -83,25 +83,20 @@ BlackOilFluid::DeliverClone( string const & name,
                              Group * const parent,
                              std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< BlackOilFluid > newModel = std::make_unique< BlackOilFluid >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< BlackOilFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  newModel->m_componentNames       = this->m_componentNames;
-  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
+  fluid.m_surfaceDensities = m_surfaceDensities;
+  fluid.m_tableFiles       = m_tableFiles;
+  fluid.m_fluidTypeString  = m_fluidTypeString;
+  fluid.m_fluidType        = m_fluidType;
 
-  newModel->m_phaseNames           = this->m_phaseNames;
-  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-
-  newModel->m_surfaceDensities = this->m_surfaceDensities;
-  newModel->m_tableFiles       = this->m_tableFiles;
-
-  newModel->m_fluidTypeString = this->m_fluidTypeString;
-  newModel->m_fluidType       = this->m_fluidType;
-
-  newModel->createFluid();
-
-  clone = std::move( newModel );
+  fluid.createFluid();
 }
 
 void BlackOilFluid::PostProcessInput()
