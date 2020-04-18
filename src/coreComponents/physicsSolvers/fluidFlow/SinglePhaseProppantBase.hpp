@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-class SinglePhaseProppantBase : public geosx::SinglePhaseBase
+class SinglePhaseProppantBase : public SinglePhaseBase
 {
 public:
   /**
@@ -54,9 +54,9 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void UpdateState( Group * dataGroup ) const override;
+  virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const override;
 
-  virtual void UpdateFluidModel( Group * const dataGroup ) const override;
+  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
@@ -65,10 +65,13 @@ public:
 
   } viewKeysSinglePhaseProppantBase;
 
+protected:
+
+  virtual void ValidateFluidModels( DomainPartition const & domain ) const override;
 
 private:
-  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager,
-                                  constitutive::ConstitutiveManager * const constitutiveManager ) override;
+
+  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager ) override;
 
 };
 }

@@ -153,7 +153,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
   // in AssembleOneSidedMassFluxes
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::pressureString,
                           viewKeyStruct::pressureString,
@@ -162,7 +162,7 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
   // setup the connectivity of face fields
   dofManager.addField( viewKeyStruct::facePressureString,
                        DofManager::Location::Face,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::facePressureString,
                           viewKeyStruct::facePressureString,
@@ -183,62 +183,64 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                               ParallelMatrix * const matrix,
                                               ParallelVector * const rhs )
 {
-  MeshLevel const * const mesh                   = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  NodeManager const * const nodeManager          = mesh->getNodeManager();
-  FaceManager const * const faceManager          = mesh->getFaceManager();
+  MeshLevel const & mesh                   = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  NodeManager const & nodeManager          = *mesh.getNodeManager();
+  FaceManager const & faceManager          = *mesh.getFaceManager();
 
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : targetRegionNames() )
   {
-    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
+    regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
 
   // node data (for transmissibility computation)
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition =
-    nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   // face data
 
   // get the face-based DOF numbers for the assembly
   string const faceDofKey = dofManager->getKey( viewKeyStruct::facePressureString );
   arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager->getReference< array1d< globalIndex > >( faceDofKey );
+    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
   // get the face-centered pressures
   arrayView1d< real64 const > const & facePres =
-    faceManager->getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
   arrayView1d< real64 const > const & dFacePres =
-    faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   // get the face-centered depth
   arrayView1d< real64 const > const & faceGravCoef =
-    faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   // get the face-to-nodes connectivity for the transmissibility calculation
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList();
 
-  array2d< localIndex > const & elemRegionList    = faceManager->elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = faceManager->elementSubRegionList();
-  array2d< localIndex > const & elemList          = faceManager->elementList();
+  array2d< localIndex > const & elemRegionList    = faceManager.elementRegionList();
+  array2d< localIndex > const & elemSubRegionList = faceManager.elementSubRegionList();
+  array2d< localIndex > const & elemList          = faceManager.elementList();
 
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
 
-  elemManager->forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >( m_targetRegions,
-                                                                                           [&]( localIndex const er, localIndex const esr,
-                                                                                                ElementRegionBase const &, auto const & subRegion )
+  forTargetSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >( mesh,
+                                                                             [&]( localIndex const,
+                                                                                  localIndex const er,
+                                                                                  localIndex const esr,
+                                                                                  ElementRegionBase const &,
+                                                                                  auto const & subRegion )
   {
 
     FluxLaunch( er,
                 esr,
                 &subRegion,
                 regionFilter,
-                mesh,
+                &mesh,
                 nodePosition,
                 elemRegionList,
                 elemSubRegionList,
@@ -320,8 +322,8 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
   arrayView1d< real64 const > const & dElemPres = m_deltaPressure[er][esr];
 
   // get the cell centered densities
-  arrayView2d< real64 const > const & elemDens     = m_density[er][esr][m_fluidIndex];
-  arrayView2d< real64 const > const & dElemDens_dp = m_dDens_dPres[er][esr][m_fluidIndex];
+  arrayView2d< real64 const > const & elemDens     = m_density[er][esr];
+  arrayView2d< real64 const > const & dElemDens_dp = m_dDens_dPres[er][esr];
 
   // get the element data needed for transmissibility computation
   arrayView1d< R1Tensor const > const & elemCenter =
@@ -408,8 +410,8 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
                                                     DofManager const & dofManager,
                                                     ParallelVector const & rhs )
 {
-  MeshLevel const * const mesh          = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FaceManager const * const faceManager = mesh.getFaceManager();
 
   // here we compute the cell-centered residual norm in the derived class
   // to avoid duplicating a synchronization point
@@ -431,17 +433,21 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
   // 1. Compute the residual for the mass conservation equations
 
   // compute the norm of local residual scaled by cell pore volume
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase const &,
+                                    ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & elemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
-    arrayView1d< real64 const > const & refPoro        = m_porosityRef[er][esr];
-    arrayView1d< real64 const > const & volume         = m_volume[er][esr];
-    arrayView1d< real64 const > const & dVol           = m_deltaVolume[er][esr];
-    arrayView2d< real64 const > const & dens           = m_density[er][esr][m_fluidIndex];
+    arrayView1d< real64 const > const & refPoro = m_porosityRef[er][esr];
+    arrayView1d< real64 const > const & volume = m_volume[er][esr];
+    arrayView1d< real64 const > const & dVol = m_deltaVolume[er][esr];
+    arrayView2d< real64 const > const & dens = m_density[er][esr];
 
     localIndex const subRegionSize = subRegion.size();
     for( localIndex a = 0; a < subRegionSize; ++a )
@@ -450,7 +456,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
       {
         localIndex const lid = rhs.getLocalRowID( elemDofNumber[a] );
         // TODO: implement a normalization that matches the normalization used in SinglePhaseFVM
-        real64 const val = localResidual[lid] / (refPoro[a] * dens[a][0] * ( volume[a] + dVol[a]));
+        real64 const val = localResidual[lid] / ( refPoro[a] * dens[a][0] * ( volume[a] + dVol[a] ) );
         localResidualNorm[EquationType::MASS_CONS] += val * val;
       }
     }
@@ -486,10 +492,8 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
         // if not on boundary, save the mobility and the upwDofNumber
         if( !onBoundary )
         {
-          ElementRegionBase const * const region =
-            Group::group_cast< ElementRegionBase const * >( mesh->getElemManager()->GetRegion( er ));
-          ElementSubRegionBase const * const subRegion =
-            Group::group_cast< ElementSubRegionBase const * >( region->GetSubRegion( esr ));
+          ElementRegionBase const * const region = mesh.getElemManager()->GetRegion( er );
+          ElementSubRegionBase const * const subRegion = region->GetSubRegion( esr );
 
           arrayView1d< real64 const > const & elemVolume =
             subRegion->getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
@@ -536,23 +540,25 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const * const domain,
                                            ParallelVector const & solution,
                                            real64 const scalingFactor )
 {
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   real64 const * localSolution = solution.extractLocalVector();
   int localCheck = 1;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
-  applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase const &,
-                                         ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh, [&]( localIndex const,
+                                          localIndex const er,
+                                          localIndex const esr,
+                                          ElementRegionBase const &,
+                                          ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
-    arrayView1d< real64 const > const & pres      = m_pressure[er][esr];
-    arrayView1d< real64 const > const & dPres     = m_deltaPressure[er][esr];
+    arrayView1d< real64 const > const & pres = m_pressure[er][esr];
+    arrayView1d< real64 const > const & dPres = m_deltaPressure[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [&]( localIndex const ei )
     {
       if( elemGhostRank[ei] >= 0 )
       {
@@ -585,7 +591,7 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                                 real64 const scalingFactor,
                                                 DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   // here we apply the cell-centered update in the derived class
   // to avoid duplicating a synchronization point
@@ -611,11 +617,12 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["face"].push_back( viewKeyStruct::deltaFacePressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateState( &subRegion );
+    UpdateState( subRegion, targetIndex );
   } );
 }
 
