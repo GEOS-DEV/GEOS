@@ -1429,10 +1429,6 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
   arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
 
-  ConstitutiveManager const * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const > const
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
-
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
@@ -2020,10 +2016,10 @@ bool LagrangianContactSolver::IsElementInOpenState( FaceElementSubRegion const &
   bool res = false;
   if( subRegion.hasWrapper( m_tractionKey ) )
   {
-    arrayView1d< FractureState const > const & fractureState = subRegion.getReference< array1d< FractureState > >( viewKeyStruct::fractureStateString );
+    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString );
     if( kfe >= 0 && kfe < subRegion.size() )
     {
-      res = fractureState[kfe] == FractureState::OPEN;
+      res = ( fractureState[kfe] == FractureState::OPEN );
     }
     else
     {

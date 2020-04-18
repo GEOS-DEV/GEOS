@@ -1015,12 +1015,10 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
                                                                                       ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
+  FaceManager const * const faceManager = mesh.getFaceManager();
+  NodeManager const * const nodeManager = mesh.getNodeManager();
 
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
@@ -1030,7 +1028,6 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
 
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const presDofKey = dofManager.getKey( m_pressureKey );
-  string const constitutiveName = constitutiveManager->GetGroup( m_flowSolver->fluidIndex())->getName();
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
@@ -1038,20 +1035,25 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   matrix->open();
   rhs->open();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
+                                                       [&]( localIndex const,
+                                                            localIndex const,
+                                                            localIndex const,
+                                                            ElementRegionBase const & region,
+                                                            FaceElementSubRegion const & subRegion )
   {
     if( subRegion.hasWrapper( m_pressureKey ) )
     {
-      arrayView1d< globalIndex const > const &
-      presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
+      string const &
+      fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
+      SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const > const & density = fluid.density();
+
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const &
+      presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-
-      dataRepository::Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-      dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
-      arrayView2d< real64 const > const &
-      density = constitutiveRelation->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
 
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
@@ -1154,10 +1156,14 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
   FaceManager const * const faceManager = mesh->getFaceManager();
   NodeManager const * const nodeManager = mesh->getNodeManager();
   ElementRegionManager const * const elemManager = mesh->getElemManager();
-  ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
   string const presDofKey = dofManager.getKey( m_pressureKey );
-  string const constitutiveName = constitutiveManager->GetGroup( m_flowSolver->fluidIndex())->getName();
+
+  // Density accessor
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const density =
+    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::densityString,
+                                                                                                  m_flowSolver->targetRegionNames(),
+                                                                                                  m_flowSolver->fluidModelNames() );
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -1182,12 +1188,6 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
   arrayView1d< real64 const > const &
   deltaPressure = fractureSubRegion->getReference< array1d< real64 > >( m_deltaPressureKey );
 
-  // Get the density
-  dataRepository::Group const * const constitutiveGroup = fractureSubRegion->GetConstitutiveModels();
-  dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
-  arrayView2d< real64 const > const &
-  density = constitutiveRelation->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
-
   // Get the volume for all elements
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
     elemManager->ConstructViewAccessor< real64_array, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
@@ -1199,9 +1199,16 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
 
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const > const
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
-
+  // Bulk modulus accessor
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
+    elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
+                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
+                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
+  // Shear modulus accessor
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
+    elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
+                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
+                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
   arrayView1d< globalIndex const > const &
   presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
 
@@ -1275,10 +1282,8 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
             }
 
             // Get linear elastic isotropic constitutive parameters for the element
-            LinearElasticIsotropic const * const constitutiveRelation0 =
-              dynamic_cast< LinearElasticIsotropic const * >( constitutiveRelations[er][esr][m_contactSolver->getSolidSolver()->getSolidMaterialFullIndex()] );
-            real64 const K = constitutiveRelation0->bulkModulus()[ei];
-            real64 const G = constitutiveRelation0->shearModulus()[ei];
+            real64 const K = bulkModulus[er][esr][ei];
+            real64 const G = shearModulus[er][esr][ei];
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
@@ -1325,7 +1330,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
         }
 
         // Add mean density contribution
-        totalInvStiffApprox( 0 ) *= 0.5 * ( density[fractureIndex[0]][0] + density[fractureIndex[1]][0] );
+        totalInvStiffApprox( 0 ) *= 0.5 * ( density[1][0][fractureIndex[0]][0] + density[1][0][fractureIndex[1]][0] );
 
         // Compute rhs
         real64 rhs0 = 0.0;
