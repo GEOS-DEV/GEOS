@@ -94,7 +94,8 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
                                      DofManager & dofManager,
                                      ParallelMatrix & matrix,
                                      ParallelVector & rhs,
-                                     ParallelVector & solution )
+                                     ParallelVector & solution,
+                                     bool const setSparsity )
 {
   // setup monolithic coupled system
   dofManager.setMesh( domain, 0, 0 );
@@ -106,8 +107,10 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( m_matrix, true );
-
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( m_matrix, true );
+  }
 }
 
 void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,

@@ -142,8 +142,8 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 
   using namespace constitutive;
 
-  ConstitutivePassThru<SolidBase>::Execute( constitutiveRelation,
-                                            [&]( auto & constitutive )
+  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
+                                              [&]( auto & constitutive )
   {
     using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
     if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
@@ -370,6 +370,8 @@ class QuasiStatic
 {
 public:
   using Base = physicsLoopInterface::FiniteElementRegionLoop;
+  static constexpr int numTestDofPerSP = 3;
+  static constexpr int numTrialDofPerSP = 3;
 
   struct Parameters : public Base::Parameters
   {
@@ -381,15 +383,17 @@ public:
   };
 
 
-  template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
-  struct StackVariables : Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
+  template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
+  struct StackVariables : Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+                                                NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >
   {
-  public:
-    using StackVariablesBase = Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
-
-    using StackVariablesBase::numNodesPerElem;
-    using StackVariablesBase::numDofPerNode;
-    using StackVariablesBase::ndof;
+public:
+    using StackVariablesBase = Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+                                                     NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >;
+    using StackVariablesBase::numRows;
+    using StackVariablesBase::numCols;
+    static constexpr int numNodes = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
 
 
 //      GEOSX_HOST_DEVICE
@@ -400,18 +404,44 @@ public:
       constitutiveStiffness{ {0.0} }
     {}
 
-    R1Tensor u_local[NUM_NODES_PER_ELEM];
-    R1Tensor uhat_local[NUM_NODES_PER_ELEM];
+    R1Tensor u_local[numNodes];
+    R1Tensor uhat_local[numNodes];
     real64 constitutiveStiffness[6][6];
   };
 
+  template< typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE,
+            int NUM_NODES_PER_ELEM,
+            int >
+  using SparsityKernels = Base::Kernels< SUBREGION_TYPE,
+                                         CONSTITUTIVE_TYPE,
+                                         NUM_NODES_PER_ELEM,
+                                         NUM_NODES_PER_ELEM,
+                                         numTestDofPerSP,
+                                         numTrialDofPerSP >
+  ;
 
   template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE >
-  class Kernels : public Base::Kernels< SUBREGION_TYPE, CONSTITUTIVE_TYPE>
+            typename CONSTITUTIVE_TYPE,
+            int NUM_NODES_PER_ELEM,
+            int >
+  class Kernels : public Base::Kernels< SUBREGION_TYPE,
+                                        CONSTITUTIVE_TYPE,
+                                        NUM_NODES_PER_ELEM,
+                                        NUM_NODES_PER_ELEM,
+                                        numTestDofPerSP,
+                                        numTrialDofPerSP >
   {
-  public:
-    using KernelBase = Base::Kernels< SUBREGION_TYPE, CONSTITUTIVE_TYPE>;
+public:
+    using KernelBase = Base::Kernels< SUBREGION_TYPE,
+                                      CONSTITUTIVE_TYPE,
+                                      NUM_NODES_PER_ELEM,
+                                      NUM_NODES_PER_ELEM,
+                                      numTestDofPerSP,
+                                      numTrialDofPerSP >;
+
+    static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+
     using KernelBase::m_dofNumber;
     using KernelBase::m_matrix;
     using KernelBase::m_rhs;
@@ -419,6 +449,8 @@ public:
     using KernelBase::constitutiveUpdate;
     using KernelBase::m_finiteElementSpace;
 
+    using StackVars = StackVariables< numNodesPerElem,
+                                      numNodesPerElem >;
 
 
 
@@ -429,8 +461,7 @@ public:
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & inputConstitutiveType,
-             Parameters const & GEOSX_UNUSED_PARAM(parameters) )://,
-//             real64 const inputGravityVector[3] ):
+             Parameters const & GEOSX_UNUSED_PARAM( parameters ) )://,
       KernelBase( inputDofNumber,
                   inputMatrix,
                   inputRhs,
@@ -439,11 +470,10 @@ public:
                   finiteElementSpace,
                   inputConstitutiveType,
                   inputConstitutiveType.createKernelWrapper() ),
-      m_disp(nodeManager.totalDisplacement()),
-      m_uhat(nodeManager.incrementalDisplacement()),
-      dNdX(elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-      detJ(elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
-//      gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
+      m_disp( nodeManager.totalDisplacement()),
+      m_uhat( nodeManager.incrementalDisplacement()),
+      dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+      detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
     {}
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
@@ -452,16 +482,14 @@ public:
     arrayView3d< R1Tensor const > const dNdX;
     arrayView2d< real64 const > const detJ;
 
-//    real64 const gravityVector[3];
-
 
     template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void preKernel( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
-      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+      for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const localNodeIndex = elemsToNodes( k, a );
 
@@ -470,31 +498,31 @@ public:
 
         for( int i=0; i<3; ++i )
         {
-          stack.elementLocalDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+          stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
         }
       }
 
     }
 
     template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void updateKernel( localIndex const k,
                        localIndex const q,
                        STACK_VARIABLE_TYPE & stack ) const
     {
       real64 strainInc[6] = {0};
-      for( localIndex a = 0; a < STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         strainInc[0] = strainInc[0] + dNdX( k, q, a )[0] * stack.uhat_local[a][0];
         strainInc[1] = strainInc[1] + dNdX( k, q, a )[1] * stack.uhat_local[a][1];
         strainInc[2] = strainInc[2] + dNdX( k, q, a )[2] * stack.uhat_local[a][2];
         strainInc[3] = strainInc[3] + dNdX( k, q, a )[2] * stack.uhat_local[a][1] +
-                                      dNdX( k, q, a )[1] * stack.uhat_local[a][2];
+                       dNdX( k, q, a )[1] * stack.uhat_local[a][2];
         strainInc[4] = strainInc[4] + dNdX( k, q, a )[2] * stack.uhat_local[a][0] +
-                                      dNdX( k, q, a )[0] * stack.uhat_local[a][2];
+                       dNdX( k, q, a )[0] * stack.uhat_local[a][2];
         strainInc[5] = strainInc[5] + dNdX( k, q, a )[1] * stack.uhat_local[a][0] +
-                                      dNdX( k, q, a )[0] * stack.uhat_local[a][1];
+                       dNdX( k, q, a )[0] * stack.uhat_local[a][1];
       }
 
       constitutiveUpdate.SmallStrain( k, q, strainInc );
@@ -506,18 +534,18 @@ public:
 
     template< typename PARAMETERS_TYPE,
               typename STACK_VARIABLE_TYPE,
-              typename DYNAMICS_LAMBDA = std::function<void( localIndex, localIndex)> >
-  //    GEOSX_HOST_DEVICE
+              typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void stiffnessKernel( localIndex const k,
                           localIndex const q,
-                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM(parameters),
+                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & stack,
-                          DYNAMICS_LAMBDA && dynamicsTerms = []( localIndex, localIndex){} ) const
+                          DYNAMICS_LAMBDA && dynamicsTerms = [] ( localIndex, localIndex){} ) const
     {
-      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+      for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
       {
-        for( localIndex b=0; b<STACK_VARIABLE_TYPE::numNodesPerElem; ++b )
+        for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
         {
           real64 const (&c)[6][6] = stack.constitutiveStiffness;
           stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] +
@@ -557,8 +585,8 @@ public:
 
     template< typename PARAMETERS_TYPE,
               typename STACK_VARIABLE_TYPE,
-              typename DYNAMICS_LAMBDA = std::function<void( real64 * )> >
-  //    GEOSX_HOST_DEVICE
+              typename DYNAMICS_LAMBDA = std::function< void( real64 * ) > >
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void integrationKernel( localIndex const k,
                             localIndex const q,
@@ -573,9 +601,9 @@ public:
                            constitutiveUpdate.m_stress( k, q, 4 ),
                            constitutiveUpdate.m_stress( k, q, 5 ) };
 
-      stressModifier(stress);
+      stressModifier( stress );
 
-      for( localIndex a = 0; a < STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * dNdX( k, q, a )[ 0 ] +
                                               stress[ 5 ] * dNdX( k, q, a )[ 1 ] +
@@ -593,29 +621,29 @@ public:
     }
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
       real64 meanForce = 0;
-      for( localIndex a=0; a<stack.ndof; ++a )
+      for( localIndex a=0; a<stack.numRows; ++a )
       {
         meanForce = std::max( meanForce, stack.localResidual[a] );
-  //        meanForce += fabs( stack.localResidual[a] );
+        //        meanForce += fabs( stack.localResidual[a] );
       }
-  //      meanForce /= stack.ndof;
+      //      meanForce /= stack.ndof;
 
 
-      m_matrix.add( stack.elementLocalDofIndex,
-                    stack.elementLocalDofIndex,
+      m_matrix.add( stack.localRowDofIndex,
+                    stack.localColDofIndex,
                     &(stack.localJacobian[0][0]),
-                    stack.ndof,
-                    stack.ndof );
+                    stack.numRows,
+                    stack.numCols );
 
-      m_rhs.add( stack.elementLocalDofIndex,
+      m_rhs.add( stack.localRowDofIndex,
                  stack.localResidual,
-                 stack.ndof );
+                 stack.numRows );
 
       return meanForce;
     }
@@ -624,229 +652,408 @@ public:
 
 };
 
+//
+//
+//class ImplicitNewmark
+//{
+//public:
+//  using Base = QuasiStatic;
+//
+//  struct Parameters : public Base::Parameters
+//  {
+//    Parameters( real64 const inputGravityVector[3],
+//                real64 const inputNewmarkGamma,
+//                real64 const inputNewmarkBeta,
+//                real64 const inputMassDamping,
+//                real64 const inputStiffnessDamping,
+//                real64 const inputDt ):
+//    Base::Parameters( inputGravityVector ),
+//      newmarkGamma(inputNewmarkGamma),
+//      newmarkBeta(inputNewmarkBeta),
+//      massDamping(inputMassDamping),
+//      stiffnessDamping(inputStiffnessDamping),
+//      dt(inputDt)
+//    {}
+//
+//    real64 const newmarkGamma;
+//    real64 const newmarkBeta;
+//    real64 const massDamping;
+//    real64 const stiffnessDamping;
+//    real64 const dt;
+//  };
+//
+//  template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
+//  struct StackVariables : Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
+//  {
+//public:
+//    using StackVariablesBase = Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
+//
+//    using StackVariablesBase::numNodesPerElem;
+//    using StackVariablesBase::numDofPerNode;
+//    using StackVariablesBase::ndof;
+//
+////      GEOSX_HOST_DEVICE
+//    StackVariables():
+//      StackVariablesBase(),
+//      dRdU_InertiaMassDamping{ {0.0} },
+//      vtilde_local{ { 0.0, 0.0, 0.0} },
+//      uhattilde_local{ { 0.0, 0.0, 0.0} }
+//    {}
+//
+//    real64 dRdU_InertiaMassDamping[ ndof ][ ndof ];
+//
+//    R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
+//    R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
+//  };
+//
+//  template< typename SUBREGION_TYPE,
+//            typename CONSTITUTIVE_TYPE >
+//  class Kernels : public Base::Kernels< SUBREGION_TYPE, CONSTITUTIVE_TYPE >
+//  {
+//  public:
+//
+//    using KernelBase = Base::Kernels<SUBREGION_TYPE,CONSTITUTIVE_TYPE>;
+//    using KernelBase::m_dofNumber;
+//    using KernelBase::m_matrix;
+//    using KernelBase::m_rhs;
+//    using KernelBase::elemsToNodes;
+//    using KernelBase::constitutiveUpdate;
+//    using KernelBase::m_disp;
+//    using KernelBase::m_uhat;
+//    using KernelBase::dNdX;
+//    using KernelBase::detJ;
+//    using KernelBase::m_finiteElementSpace;
+//
+//
+//
+//    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
+//             ParallelMatrix & inputMatrix,
+//             ParallelVector & inputRhs,
+//             NodeManager const & nodeManager,
+//             SUBREGION_TYPE const & elementSubRegion,
+//             FiniteElementBase const * const finiteElementSpace,
+//             CONSTITUTIVE_TYPE & constitutiveModel,
+//             Base::Parameters const & parameters ):
+//      KernelBase( inputDofNumber,
+//                 inputMatrix,
+//                 inputRhs,
+//                 nodeManager,
+//                 elementSubRegion,
+//                 finiteElementSpace,
+//                 constitutiveModel,
+//                 parameters ),
+//      m_vtilde(nodeManager.totalDisplacement()),
+//      m_uhattilde(nodeManager.totalDisplacement()),
+//      m_density(constitutiveModel.getDensity())
+//    {}
+//
+//    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
+//    arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
+//    arrayView2d< real64 const > const m_density;
+//
+//    template< typename STACK_VARIABLE_TYPE >
+//  //    GEOSX_HOST_DEVICE
+//    GEOSX_FORCE_INLINE
+//    void preKernel( localIndex const k,
+//                    STACK_VARIABLE_TYPE & stack ) const
+//    {
+//      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+//      {
+//        localIndex const localNodeIndex = elemsToNodes( k, a );
+//
+//        stack.u_local[ a ] = m_disp[ localNodeIndex ];
+//        stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
+//        stack.vtilde_local[ a ] = m_vtilde[ localNodeIndex ];
+//        stack.uhattilde_local[ a ] = m_uhattilde[ localNodeIndex ];
+//
+//        for( int i=0; i<3; ++i )
+//        {
+//          stack.elementLocalDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+//        }
+//      }
+//
+//    }
+//
+//    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+//  //    GEOSX_HOST_DEVICE
+//    GEOSX_FORCE_INLINE
+//    void stiffnessKernel( localIndex const k,
+//                          localIndex const q,
+//                          PARAMETERS_TYPE const & parameters,
+//                          STACK_VARIABLE_TYPE & stack ) const
+//    {
+//
+//      std::vector< double > const & N = m_finiteElementSpace->values( q );
+//
+////      real64 N[STACK_VARIABLE_TYPE::numNodesPerElem];
+//      real64 const & massDamping = parameters.massDamping;
+//      real64 const & newmarkGamma = parameters.newmarkGamma;
+//      real64 const & newmarkBeta = parameters.newmarkBeta;
+//      real64 const & dt = parameters.dt;
+//
+//      KernelBase::stiffnessKernel( k, q, parameters, stack, [&]( localIndex const a, localIndex const b )
+//      {
+//        real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ(k,q);
+//        real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )*
+// integrationFactor;
+//
+//        constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
+//        for( int i=0; i<nsdof; ++i )
+//        {
+//          realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i]
+// );
+//          realT const vel = stack.vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( stack.uhat_local[b][i] -
+// stack.uhattilde_local[b][i] );
+//
+//          stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
+//          stack.localResidual[ a*nsdof+i ] -= ( massDamping * vel + acc ) * integrationFactor;
+//        }
+//      } );
+//    }
+//
+//    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+//  //    GEOSX_HOST_DEVICE
+//    GEOSX_FORCE_INLINE
+//    real64 postKernel( PARAMETERS_TYPE const & parameters,
+//                       STACK_VARIABLE_TYPE & stack ) const
+//    {
+//      constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
+//      real64 const & stiffnessDamping = parameters.stiffnessDamping;
+//      real64 const & newmarkGamma     = parameters.newmarkGamma;
+//      real64 const & newmarkBeta      = parameters.newmarkBeta;
+//      real64 const & dt               = parameters.dt;
+//
+//      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+//      {
+//        for( localIndex b=0; b<STACK_VARIABLE_TYPE::numNodesPerElem; ++b )
+//        {
+//          for( int i=0; i<nsdof; ++i )
+//          {
+//            for( int j=0; j<nsdof; ++j )
+//            {
+//              stack.localResidual[ a*nsdof+i ] += stiffnessDamping * stack.localJacobian[ a*nsdof+i][ b*nsdof+j ] *
+//                                               ( stack.vtilde_local[b][j] + newmarkGamma/(newmarkBeta *
+// dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+//
+//              stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping *
+// newmarkGamma / ( newmarkBeta * dt ) ) +
+//                                           stack.dRdU_InertiaMassDamping[ a ][ b ] ;
+//            }
+//          }
+//        }
+//      }
+//
+//      for( localIndex a=0 ; a<STACK_VARIABLE_TYPE::ndof ; ++a )
+//      {
+//        for( localIndex b=0 ; b<STACK_VARIABLE_TYPE::ndof ; ++b )
+//        {
+//          stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping * newmarkGamma / (
+// newmarkBeta * dt ) ) +
+//                                       stack.dRdU_InertiaMassDamping[ a ][ b ] ;
+//        }
+//      }
+//
+//      return KernelBase::postKernel( parameters, stack );
+//    }
+//  };
+//
+//};
 
 
-class ImplicitNewmark
-{
-public:
-  using Base = QuasiStatic;
-
-  struct Parameters : public Base::Parameters
-  {
-    Parameters( real64 const inputGravityVector[3],
-                real64 const inputNewmarkGamma,
-                real64 const inputNewmarkBeta,
-                real64 const inputMassDamping,
-                real64 const inputStiffnessDamping,
-                real64 const inputDt ):
-    Base::Parameters( inputGravityVector ),
-      newmarkGamma(inputNewmarkGamma),
-      newmarkBeta(inputNewmarkBeta),
-      massDamping(inputMassDamping),
-      stiffnessDamping(inputStiffnessDamping),
-      dt(inputDt)
-    {}
-
-    real64 const newmarkGamma;
-    real64 const newmarkBeta;
-    real64 const massDamping;
-    real64 const stiffnessDamping;
-    real64 const dt;
-  };
-
-  template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
-  struct StackVariables : Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
-  {
-public:
-    using StackVariablesBase = Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >;
-
-    using StackVariablesBase::numNodesPerElem;
-    using StackVariablesBase::numDofPerNode;
-    using StackVariablesBase::ndof;
-
-//      GEOSX_HOST_DEVICE
-    StackVariables():
-      StackVariablesBase(),
-      dRdU_InertiaMassDamping{ {0.0} },
-      vtilde_local{ { 0.0, 0.0, 0.0} },
-      uhattilde_local{ { 0.0, 0.0, 0.0} }
-    {}
-
-    real64 dRdU_InertiaMassDamping[ ndof ][ ndof ];
-
-    R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
-    R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
-  };
-
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE >
-  class Kernels : public Base::Kernels< SUBREGION_TYPE, CONSTITUTIVE_TYPE >
-  {
-  public:
-
-    using KernelBase = Base::Kernels<SUBREGION_TYPE,CONSTITUTIVE_TYPE>;
-    using KernelBase::m_dofNumber;
-    using KernelBase::m_matrix;
-    using KernelBase::m_rhs;
-    using KernelBase::elemsToNodes;
-    using KernelBase::constitutiveUpdate;
-    using KernelBase::m_disp;
-    using KernelBase::m_uhat;
-    using KernelBase::dNdX;
-    using KernelBase::detJ;
-    using KernelBase::m_finiteElementSpace;
 
 
-
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & constitutiveModel,
-             Base::Parameters const & parameters ):
-      KernelBase( inputDofNumber,
-                 inputMatrix,
-                 inputRhs,
-                 nodeManager,
-                 elementSubRegion,
-                 finiteElementSpace,
-                 constitutiveModel,
-                 parameters ),
-      m_vtilde(nodeManager.totalDisplacement()),
-      m_uhattilde(nodeManager.totalDisplacement()),
-      m_density(constitutiveModel.getDensity())
-    {}
-
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
-    arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
-    arrayView2d< real64 const > const m_density;
-
-    template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
-    {
-      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
-      {
-        localIndex const localNodeIndex = elemsToNodes( k, a );
-
-        stack.u_local[ a ] = m_disp[ localNodeIndex ];
-        stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
-        stack.vtilde_local[ a ] = m_vtilde[ localNodeIndex ];
-        stack.uhattilde_local[ a ] = m_uhattilde[ localNodeIndex ];
-
-        for( int i=0; i<3; ++i )
-        {
-          stack.elementLocalDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-        }
-      }
-
-    }
-
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const k,
-                          localIndex const q,
-                          PARAMETERS_TYPE const & parameters,
-                          STACK_VARIABLE_TYPE & stack ) const
-    {
-
-      std::vector< double > const & N = m_finiteElementSpace->values( q );
-
-//      real64 N[STACK_VARIABLE_TYPE::numNodesPerElem];
-      real64 const & massDamping = parameters.massDamping;
-      real64 const & newmarkGamma = parameters.newmarkGamma;
-      real64 const & newmarkBeta = parameters.newmarkBeta;
-      real64 const & dt = parameters.dt;
-
-      KernelBase::stiffnessKernel( k, q, parameters, stack, [&]( localIndex const a, localIndex const b )
-      {
-        real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ(k,q);
-        real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )* integrationFactor;
-
-        constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
-        for( int i=0; i<nsdof; ++i )
-        {
-          realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
-          realT const vel = stack.vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
-
-          stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
-          stack.localResidual[ a*nsdof+i ] -= ( massDamping * vel + acc ) * integrationFactor;
-        }
-      } );
-    }
-
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    real64 postKernel( PARAMETERS_TYPE const & parameters,
-                       STACK_VARIABLE_TYPE & stack ) const
-    {
-      constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
-      real64 const & stiffnessDamping = parameters.stiffnessDamping;
-      real64 const & newmarkGamma     = parameters.newmarkGamma;
-      real64 const & newmarkBeta      = parameters.newmarkBeta;
-      real64 const & dt               = parameters.dt;
-
-      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
-      {
-        for( localIndex b=0; b<STACK_VARIABLE_TYPE::numNodesPerElem; ++b )
-        {
-          for( int i=0; i<nsdof; ++i )
-          {
-            for( int j=0; j<nsdof; ++j )
-            {
-              stack.localResidual[ a*nsdof+i ] += stiffnessDamping * stack.localJacobian[ a*nsdof+i][ b*nsdof+j ] *
-                                               ( stack.vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
-
-              stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) ) +
-                                           stack.dRdU_InertiaMassDamping[ a ][ b ] ;
-            }
-          }
-        }
-      }
-
-      for( localIndex a=0 ; a<STACK_VARIABLE_TYPE::ndof ; ++a )
-      {
-        for( localIndex b=0 ; b<STACK_VARIABLE_TYPE::ndof ; ++b )
-        {
-          stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) ) +
-                                       stack.dRdU_InertiaMassDamping[ a ][ b ] ;
-        }
-      }
-
-      return KernelBase::postKernel( parameters, stack );
-    }
-  };
-
-};
-
-template< typename POLICY, typename UPDATE_CLASS, typename ... PARAMETERS >
-real64 FiniteElementRegionLoopExecute( MeshLevel & mesh,
-                                       string_array const & targetRegions,
-                                       string const & solidMaterialName,
-                                       FiniteElementDiscretization const * const feDiscretization,
-                                       arrayView1d< globalIndex const > const & dofNumber,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       PARAMETERS && ... parameters )
-{
-  physicsLoopInterface::
-    FiniteElementRegionLoop::
-    Execute< POLICY,UPDATE_CLASS>( mesh,
-                                   targetRegions,
-                                   solidMaterialName,
-                                   feDiscretization,
-                                   dofNumber,
-                                   matrix,
-                                   rhs,
-                                   UPDATE_CLASS::Parameters( std::forward<PARAMETERS>(parameters)... ) );
-
-}
+//class SmallStrainFracturePenaltyContact
+//{
+//public:
+//  using Base = physicsLoopInterface::FiniteElementRegionLoop;
+//  static constexpr int maxNumNodesPerFace = 4;
+//  static constexpr int numTestDofPerSP = 3;
+//  static constexpr int numTrialDofPerSP = 3;
+//
+//
+//  template< int ,
+//            int  >
+//  struct StackVariables : Base::StackVariables< maxNumNodesPerFace*numTestDofPerSP*2,
+//                                                maxNumNodesPerFace*numTrialDofPerSP*2 >
+//  {
+//public:
+//    using StackVariablesBase = Base::StackVariables< maxNumNodesPerFace*numTestDofPerSP*2,
+//                                                     maxNumNodesPerFace*numTrialDofPerSP*2 >;
+//    using StackVariablesBase::numRows;
+//    using StackVariablesBase::numCols;
+//
+////      GEOSX_HOST_DEVICE
+//    StackVariables():
+//      StackVariablesBase()
+//    {}
+//  };
+//
+//  template< typename SUBREGION_TYPE,
+//            typename CONSTITUTIVE_TYPE,
+//            int NUM_NODES_PER_ELEM,
+//            int >
+//  using SparsityKernels = Base::Kernels< SUBREGION_TYPE,
+//                                         CONSTITUTIVE_TYPE,
+//                                         NUM_NODES_PER_ELEM,
+//                                         NUM_NODES_PER_ELEM,
+//                                         numTestDofPerSP,
+//                                         numTrialDofPerSP >
+//  ;
+//
+//  template< typename SUBREGION_TYPE,
+//            typename CONSTITUTIVE_TYPE,
+//            int NUM_NODES_PER_ELEM,
+//            int >
+//  class Kernels : public Base::Kernels< SUBREGION_TYPE,
+//                                        CONSTITUTIVE_TYPE,
+//                                        NUM_NODES_PER_ELEM,
+//                                        NUM_NODES_PER_ELEM,
+//                                        numTestDofPerSP,
+//                                        numTrialDofPerSP >
+//  {
+//public:
+//    using KernelBase = Base::Kernels< SUBREGION_TYPE,
+//                                      CONSTITUTIVE_TYPE,
+//                                      NUM_NODES_PER_ELEM,
+//                                      NUM_NODES_PER_ELEM,
+//                                      numTestDofPerSP,
+//                                      numTrialDofPerSP >;
+//
+//    static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+//
+//    using KernelBase::m_dofNumber;
+//    using KernelBase::m_matrix;
+//    using KernelBase::m_rhs;
+//    using KernelBase::elemsToNodes;
+//    using KernelBase::constitutiveUpdate;
+//    using KernelBase::m_finiteElementSpace;
+//
+//    using StackVars = StackVariables< numNodesPerElem,
+//                                      numNodesPerElem >;
+//
+//
+//
+//    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
+//             ParallelMatrix & inputMatrix,
+//             ParallelVector & inputRhs,
+//             NodeManager const & nodeManager,
+//             SUBREGION_TYPE const & elementSubRegion,
+//             FiniteElementBase const * const finiteElementSpace,
+//             CONSTITUTIVE_TYPE & inputConstitutiveType,
+//             Parameters const & GEOSX_UNUSED_PARAM( parameters ) )://,
+//      KernelBase( inputDofNumber,
+//                  inputMatrix,
+//                  inputRhs,
+//                  nodeManager,
+//                  elementSubRegion,
+//                  finiteElementSpace,
+//                  inputConstitutiveType,
+//                  inputConstitutiveType.createKernelWrapper() ),
+//      m_faceNormal( faceManager->faceNormal() ),
+//      m_facesToNodes( faceManager->nodeList() ),
+//      area( subRegion.getElementArea() ),
+//      elemsToFaces( subRegion.faceList() ),
+//
+//      dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+//      detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
+//    {}
+//
+//    arrayView1d< R1Tensor const > const m_faceNormal;
+//    ArrayOfArraysView< localIndex const > const m_facesToNodes;
+//    arrayView1d< real64 > const area;
+//    arrayView2d< localIndex const > const elemsToFaces;
+//
+//
+//
+//    template< typename STACK_VARIABLE_TYPE >
+//    //    GEOSX_HOST_DEVICE
+//    GEOSX_FORCE_INLINE
+//    void preKernel( localIndex const k,
+//                    STACK_VARIABLE_TYPE & stack ) const
+//    {
+//      R1Tensor Nbar = m_faceNormal[elemsToFaces[kfe][0]];
+//      Nbar -= m_faceNormal[elemsToFaces[kfe][1]];
+//      Nbar.Normalize();
+//
+//      localIndex const kf0 = elemsToFaces[kfe][0];
+//      localIndex const kf1 = elemsToFaces[kfe][1];
+//      localIndex const numNodesPerFace=m_facesToNodes.sizeOfArray( kf0 );
+//      real64 const Ja = area[kfe] / numNodesPerFace;
+//
+//      stackArray1d< globalIndex, maxDofPerElem > rowDOF( numNodesPerFace*3*2 );
+//      stackArray1d< real64, maxDofPerElem > nodeRHS( numNodesPerFace*3*2 );
+//      stackArray2d< real64, maxDofPerElem *maxDofPerElem > dRdP( numNodesPerFace*3*2, numNodesPerFace*3*2 );
+//
+//      for( localIndex a=0; a<numNodesPerFace; ++a )
+//      {
+//        localIndex const node0 = facesToNodes[kf0][a];
+//        localIndex const node1 = facesToNodes[kf1][ a==0 ? a : numNodesPerFace-a ];
+//
+//        for( int i=0; i<3; ++i )
+//        {
+//          rowDOF[3*a+i]                     = nodeDofNumber[node0]+i;
+//          rowDOF[3*(numNodesPerFace + a)+i] = nodeDofNumber[node1]+i;
+//        }
+//
+//        R1Tensor gap = u[node1];
+//        gap -= u[node0];
+//        real64 const gapNormal = Dot( gap, Nbar );
+//
+//
+//        if( gapNormal < 0 )
+//        {
+//          R1Tensor penaltyForce = Nbar;
+//          penaltyForce *= -contactStiffness * gapNormal * Ja;
+//          for( int i=0; i<3; ++i )
+//          {
+//            fc[node0] -= penaltyForce;
+//            fc[node1] += penaltyForce;
+//            nodeRHS[3*a+i]                     -= penaltyForce[i];
+//            nodeRHS[3*(numNodesPerFace + a)+i] += penaltyForce[i];
+//
+//            dRdP( 3*a+i, 3*a+i )                                         -= contactStiffness * Ja * Nbar[i] * Nbar[i];
+//            dRdP( 3*a+i, 3*(numNodesPerFace + a)+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+//            dRdP( 3*(numNodesPerFace + a)+i, 3*a+i )                     += contactStiffness * Ja * Nbar[i] * Nbar[i];
+//            dRdP( 3*(numNodesPerFace + a)+i, 3*(numNodesPerFace + a)+i ) -= contactStiffness * Ja * Nbar[i] * Nbar[i];
+//          }
+//        }
+//      }
+//
+//      m_residual.add( rowDOF, nodeRHS );
+//      m_matrix.add( rowDOF, rowDOF, dRdP );
+//
+//
+//    }
+//
+//    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+//    //    GEOSX_HOST_DEVICE
+//    GEOSX_FORCE_INLINE
+//    real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+//                       STACK_VARIABLE_TYPE & stack ) const
+//    {
+//      real64 meanForce = 0;
+//      for( localIndex a=0; a<stack.numRows; ++a )
+//      {
+//        meanForce = std::max( meanForce, stack.localResidual[a] );
+//        //        meanForce += fabs( stack.localResidual[a] );
+//      }
+//      //      meanForce /= stack.ndof;
+//
+//
+//      m_matrix.add( stack.localRowDofIndex,
+//                    stack.localColDofIndex,
+//                    &(stack.localJacobian[0][0]),
+//                    stack.numRows,
+//                    stack.numCols );
+//
+//      m_rhs.add( stack.localRowDofIndex,
+//                 stack.localResidual,
+//                 stack.numRows );
+//
+//      return meanForce;
+//    }
+//  };
+//};
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

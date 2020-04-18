@@ -48,8 +48,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
-{
-}
+{}
 
 localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
 {

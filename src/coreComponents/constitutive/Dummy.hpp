@@ -25,9 +25,9 @@ public:
   virtual ~Dummy();
 
 
-  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM(name),
-                             Group * const GEOSX_UNUSED_PARAM(parent),
-                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM(clone) ) const override final;
+  virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
+                             Group * const GEOSX_UNUSED_PARAM( parent ),
+                             std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override final;
 
   /// string name to use for this class in the catalog
   static constexpr auto m_catalogNameString = "Dummy";
@@ -43,7 +43,7 @@ public:
   /// @typedef Alias for LinearElasticIsotropicUpdates
   using KernelWrapper = double;
 
-  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM(includeState) = false )
+  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM( includeState ) = false )
   {
     return 0.0;
   }

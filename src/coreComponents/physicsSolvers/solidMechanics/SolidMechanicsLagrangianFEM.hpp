@@ -119,7 +119,8 @@ public:
                DofManager & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
-               ParallelVector & solution ) override;
+               ParallelVector & solution,
+               bool const setSparsity = false ) override;
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,

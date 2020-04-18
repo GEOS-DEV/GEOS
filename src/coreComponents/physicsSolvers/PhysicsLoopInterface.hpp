@@ -1,8 +1,20 @@
 /*
- * PhysicsLoopInterface.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Mar 24, 2020
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @file PhysicsLoopInterface.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_PHYSICSLOOPINTERFACE_HPP_
@@ -17,9 +29,22 @@
 
 namespace geosx
 {
+
+/**
+ * @namespace Contains implementations of physics loops.
+ */
 namespace physicsLoopInterface
 {
 
+/**
+ * @brief Function to take runtime integers and call generic lambda with
+ *        compile time integers.
+ * @tparam LAMBDA the type of the generic lambda/function
+ * @param[in] NUM_NODES_PER_ELEM The number of nodes per element
+ * @param[in] NUM_QUADRATURE_POINTS The number of quadrature points per element.
+ * @param[in] lambda The generic lambda that will be passed the integral_constant
+ *            representation of
+ */
 template< typename LAMBDA >
 void
 discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
@@ -45,39 +70,107 @@ discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 }
 
 
-
+/**
+ * @class FiniteElementRegionLoop
+ *
+ * This class encapsulates base components and interface for applying a finite
+ * element method over a loop of element regions.
+ *
+ */
 class FiniteElementRegionLoop
 {
 public:
 
+  //***************************************************************************
+  /**
+   * @class Parameters
+   *
+   * Contains non-mesh parameters passed in from the calling scope.
+   */
   struct Parameters
   {};
 
-  template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
+
+  //***************************************************************************
+  /**
+   * @class StackVariables
+   * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
+   * @tparam NUM_COLS The number or columns to allocate for the jacobian.
+   * Contains variables that will be allocated on the stack of the main kernel.
+   * This will typically consist of local arrays to hold data mapped from the
+   * global data arrays, and local storage for the residual and jacobian
+   * contributions.
+   */
+  template< int NUM_ROWS,
+            int NUM_COLS,
+            bool ROWS_EQ_COL = (NUM_ROWS)==(NUM_COLS) >
   struct StackVariables
   {
-  public:
-    static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-    static constexpr int numDofPerNode= NUM_DOF_PER_NODE;
-    static constexpr int ndof = NUM_DOF_PER_NODE * NUM_NODES_PER_ELEM;
+public:
+    static constexpr int numRows = NUM_ROWS;
+    static constexpr int numCols = NUM_COLS;
 
     //    GEOSX_HOST_DEVICE
     StackVariables():
-      elementLocalDofIndex{0},
-      localResidual{0.0},
-      localJacobian{{0.0}}
-      {}
+      localRowDofIndex{ 0 },
+      localColDofIndex{ 0 },
+      localResidual{ 0.0 },
+      localJacobian{ {0.0} }
+    {}
 
-      globalIndex elementLocalDofIndex[ndof];
-      real64      localResidual[ndof];
-      real64      localJacobian[ndof][ndof];
+    globalIndex localRowDofIndex[numRows];
+    globalIndex localColDofIndex[numRows];
+    real64 localResidual[numRows];
+    real64 localJacobian[numRows][numCols];
   };
 
+
+  template< int NUM_ROWS,
+            int NUM_COLS >
+  struct StackVariables< NUM_ROWS,
+                         NUM_COLS,
+                         true >
+  {
+public:
+    static constexpr int numRows = NUM_ROWS;
+    static constexpr int numCols = NUM_COLS;
+
+    //    GEOSX_HOST_DEVICE
+    StackVariables():
+      localRowDofIndex{ 0 },
+      localColDofIndex( localRowDofIndex ),
+      localResidual{ 0.0 },
+      localJacobian{ {0.0} }
+    {}
+
+    globalIndex localRowDofIndex[numRows];
+    globalIndex * const localColDofIndex;   // non-memcopyable...problem if we are capturing.
+    real64 localResidual[numRows];
+    real64 localJacobian[numRows][numCols];
+  };
+
+
+  //***************************************************************************
+  /**
+   * @class Kernels
+   */
   template< typename SUBREGION_TYPE,
-  typename CONSTITUTIVE_TYPE >
+            typename CONSTITUTIVE_TYPE,
+            int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+            int NUM_DOF_PER_TEST_SP,
+            int NUM_DOF_PER_TRIAL_SP >
   class Kernels
   {
-  public:
+public:
+
+    static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
+    static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
+    static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
+    static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
+
+    using StackVars = StackVariables< numTestSupportPointsPerElem*numDofPerTestSupportPoint,
+                                      numTrialSupportPointsPerElem*numDofPerTrialSupportPoint >;
 
     Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
@@ -86,7 +179,7 @@ public:
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE & inputConstitutiveType,
-             Parameters const & GEOSX_UNUSED_PARAM(parameters) ):
+             Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
       Kernels( inputDofNumber,
                inputMatrix,
                inputRhs,
@@ -103,14 +196,25 @@ public:
     void preKernel( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
-      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+      for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
       {
         localIndex const localNodeIndex = elemsToNodes( k, a );
-        for( int i=0; i<3; ++i )
+        for( int i=0; i<numDofPerTestSupportPoint; ++i )
         {
-          stack.elementLocalDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+          stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
         }
       }
+
+      // TODO This is incorrect. The support points of the trial space is not necessarily the nodes.
+      for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
+      {
+        localIndex const localNodeIndex = elemsToNodes( k, a );
+        for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+        {
+          stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
+        }
+      }
+
     }
 
     template< typename STACK_VARIABLE_TYPE >
@@ -145,11 +249,11 @@ public:
     real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
-      m_matrix.insert( stack.elementLocalDofIndex,
-                       stack.elementLocalDofIndex,
+      m_matrix.insert( stack.localRowDofIndex,
+                       stack.localColDofIndex,
                        &(stack.localJacobian[0][0]),
-                       stack.ndof,
-                       stack.ndof );
+                       stack.numRows,
+                       stack.numCols );
       return 0;
     }
 
@@ -165,28 +269,28 @@ protected:
     Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
-             NodeManager const & GEOSX_UNUSED_PARAM(nodeManager),
+             NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM(inputConstitutiveType),
+             CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM( inputConstitutiveType ),
              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
-     m_dofNumber( inputDofNumber ),
-     m_matrix( inputMatrix ),
-     m_rhs( inputRhs ),
-     elemsToNodes( elementSubRegion.nodeList() ),
-     elemGhostRank( elementSubRegion.ghostRank() ),
-     constitutiveUpdate( inputConstitutiveUpdate ),
-     m_finiteElementSpace( finiteElementSpace )
-  {}
+      m_dofNumber( inputDofNumber ),
+      m_matrix( inputMatrix ),
+      m_rhs( inputRhs ),
+      elemsToNodes( elementSubRegion.nodeList() ),
+      elemGhostRank( elementSubRegion.ghostRank() ),
+      constitutiveUpdate( inputConstitutiveUpdate ),
+      m_finiteElementSpace( finiteElementSpace )
+    {}
 
   };
 
+  //***************************************************************************
   template< typename POLICY,
-  int NUM_NODES_PER_ELEM,
-  int NUM_QUADRATURE_POINTS,
-  typename STACK_VARIABLES,
-  typename PARAMETERS_TYPE,
-  typename KERNEL_CLASS >
+            int NUM_QUADRATURE_POINTS,
+            typename STACK_VARIABLES,
+            typename PARAMETERS_TYPE,
+            typename KERNEL_CLASS >
   static
   real64 Launch( localIndex const numElems,
                  PARAMETERS_TYPE const & parameters,
@@ -217,9 +321,15 @@ protected:
   }
 
 
+  //***************************************************************************
   template< typename POLICY,
             typename UPDATE_CLASS,
-            typename CONSTITUTIVE_BASE >
+            typename CONSTITUTIVE_BASE,
+            typename PARAMETER_CLASS,
+            template< typename SUBREGION_TYPE,
+                      typename CONSTITUTIVE_TYPE,
+                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_CLASS = UPDATE_CLASS::template Kernels >
   static
   real64 Execute( MeshLevel & mesh,
                   string_array const & targetRegions,
@@ -228,7 +338,7 @@ protected:
                   arrayView1d< globalIndex const > const & inputDofNumber,
                   ParallelMatrix & inputMatrix,
                   ParallelVector & inputRhs,
-                  typename UPDATE_CLASS::Parameters const & parameters )
+                  PARAMETER_CLASS const & parameters )
   {
 
     real64 maxResidual = 0;
@@ -237,8 +347,8 @@ protected:
     ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
-    elementRegionManager.forElementSubRegions<CellElementSubRegion>( targetRegions,
-                                                                     [&] ( auto & elementSubRegion )
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( targetRegions,
+                                                                       [&] ( auto & elementSubRegion )
     {
       localIndex const numElems = elementSubRegion.size();
       typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
@@ -266,34 +376,37 @@ protected:
         constitutive::ConstitutiveBase *
         constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveName );
 
-        std::unique_ptr<constitutive::Dummy> dummyConstitutiveRelation;
+        std::unique_ptr< constitutive::Dummy > dummyConstitutiveRelation;
         if( constitutiveRelation==nullptr )
         {
-          dummyConstitutiveRelation = std::make_unique<constitutive::Dummy>( "dummy", &elementSubRegion );
+          dummyConstitutiveRelation = std::make_unique< constitutive::Dummy >( "dummy", &elementSubRegion );
           constitutiveRelation = dummyConstitutiveRelation.get();
         }
 
-        constitutive::ConstitutivePassThru<CONSTITUTIVE_BASE>::Execute( constitutiveRelation,
-                                                                        [&]( auto & castedConstitutiveRelation )
+        constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
+                                                                          [&]( auto & castedConstitutiveRelation )
         {
           using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
 
-          typename UPDATE_CLASS::template Kernels<SUBREGIONTYPE,CONSTITUTIVE_TYPE> kernelClass( inputDofNumber,
-                                                                                                inputMatrix,
-                                                                                                inputRhs,
-                                                                                                nodeManager,
-                                                                                                elementSubRegion,
-                                                                                                finiteElementSpace,
-                                                                                                castedConstitutiveRelation,
-                                                                                                parameters );
+          KERNEL_CLASS< SUBREGIONTYPE,
+                        CONSTITUTIVE_TYPE,
+                        NUM_NODES_PER_ELEM,
+                        NUM_NODES_PER_ELEM >
+          kernelClass( inputDofNumber,
+                       inputMatrix,
+                       inputRhs,
+                       nodeManager,
+                       elementSubRegion,
+                       finiteElementSpace,
+                       castedConstitutiveRelation,
+                       parameters );
 
           maxResidual = std::max( maxResidual,
                                   Launch< POLICY,
-                                          NUM_NODES_PER_ELEM,
                                           NUM_QUADRATURE_POINTS,
-                                          typename UPDATE_CLASS::template StackVariables<NUM_NODES_PER_ELEM,3>>( numElems,
-                                                                                                                             parameters,
-                                                                                                                             kernelClass ) );
+                                          typename decltype(kernelClass)::StackVars >( numElems,
+                                                                                       parameters,
+                                                                                       kernelClass ) );
         } );
       } );
     } );
@@ -303,9 +416,9 @@ protected:
 
 
 
-
-
+  //***************************************************************************
   template< typename POLICY,
+            typename UPDATE_CLASS,
             typename CONSTITUTIVE_BASE = constitutive::Dummy >
   static
   real64 FillSparsity( MeshLevel & mesh,
@@ -314,19 +427,20 @@ protected:
                        FiniteElementDiscretization const * const feDiscretization,
                        arrayView1d< globalIndex const > const & inputDofNumber,
                        ParallelMatrix & inputMatrix,
-                       ParallelVector & inputRhs,
-                       FiniteElementRegionLoop::Parameters const & parameters = FiniteElementRegionLoop::Parameters() )
+                       ParallelVector & inputRhs )
   {
     return Execute< POLICY,
-                    FiniteElementRegionLoop,
-                    CONSTITUTIVE_BASE >( mesh,
-                                         targetRegions,
-                                         constitutiveName,
-                                         feDiscretization,
-                                         inputDofNumber,
-                                         inputMatrix,
-                                         inputRhs,
-                                         parameters );
+                    UPDATE_CLASS,
+                    CONSTITUTIVE_BASE,
+                    FiniteElementRegionLoop::Parameters,
+                    UPDATE_CLASS::template SparsityKernels >( mesh,
+                                                              targetRegions,
+                                                              constitutiveName,
+                                                              feDiscretization,
+                                                              inputDofNumber,
+                                                              inputMatrix,
+                                                              inputRhs,
+                                                              FiniteElementRegionLoop::Parameters() );
   }
 
 

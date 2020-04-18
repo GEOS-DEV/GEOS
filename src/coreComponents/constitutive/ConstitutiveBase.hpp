@@ -105,7 +105,7 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   using KernelWrapper = double;
-  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM(includeState) = false )
+  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM( includeState ) = false )
   {
     return 0.0;
   }

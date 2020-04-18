@@ -973,22 +973,11 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
                                                DofManager & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
-                                               ParallelVector & solution )
+                                               ParallelVector & solution,
+                                               bool const setSparisty )
 {
   GEOSX_MARK_FUNCTION;
-//  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
-  dofManager.setMesh( domain, 0, 0 );
-
-  SetupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalDof = dofManager.numLocalDofs();
-
-  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
-  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  // obove this is a copy of SolverBase::SetupSystem()
-
+  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution, setSparisty );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh->getNodeManager();
@@ -998,15 +987,15 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
   matrix.open();
 
 
-  physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy >( *mesh,
-                                                                               m_targetRegions,
-                                                                               m_solidMaterialName,
-                                                                               nullptr,
-                                                                               dofNumber,
-                                                                               matrix,
-                                                                               rhs );
+  physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy,
+                                                               SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *mesh,
+                                                                                                                  m_targetRegions,
+                                                                                                                  m_solidMaterialName,
+                                                                                                                  nullptr,
+                                                                                                                  dofNumber,
+                                                                                                                  matrix,
+                                                                                                                  rhs );
   matrix.close();
-
 
 }
 
@@ -1056,42 +1045,42 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 //  template< typename T >
 //  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel<T>;
 
-  if( m_timeIntegrationOption == timeIntegrationOption::QuasiStatic)
+  if( m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
     using Update = SolidMechanicsLagrangianFEMKernels::QuasiStatic;
     m_maxForce = physicsLoopInterface::
-                 FiniteElementRegionLoop::Execute< serialPolicy,
-                                                   Update,
-                                                   constitutive::SolidBase>( *mesh,
-                                                                             m_targetRegions,
-                                                                             m_solidMaterialName,
-                                                                             feDiscretization,
-                                                                             dofNumber,
-                                                                             matrix,
-                                                                             rhs,
-                                                                             Update::Parameters(gravityVector().Data()));
+                   FiniteElementRegionLoop::Execute< serialPolicy,
+                                                     Update,
+                                                     constitutive::SolidBase >( *mesh,
+                                                                                m_targetRegions,
+                                                                                m_solidMaterialName,
+                                                                                feDiscretization,
+                                                                                dofNumber,
+                                                                                matrix,
+                                                                                rhs,
+                                                                                Update::Parameters( gravityVector().Data()));
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {
-    using Update = SolidMechanicsLagrangianFEMKernels::ImplicitNewmark;
-
-    m_maxForce = physicsLoopInterface::
-                 FiniteElementRegionLoop::
-                 Execute< serialPolicy,
-                          Update,
-                          constitutive::SolidBase>( *mesh,
-                                                    m_targetRegions,
-                                                    m_solidMaterialName,
-                                                    feDiscretization,
-                                                    dofNumber,
-                                                    matrix,
-                                                    rhs,
-                                                    Update::Parameters( gravityVector().Data(),
-                                                                        m_newmarkGamma,
-                                                                        m_newmarkBeta,
-                                                                        m_massDamping,
-                                                                        m_stiffnessDamping,
-                                                                        dt ) );
+//    using Update = SolidMechanicsLagrangianFEMKernels::ImplicitNewmark;
+//
+//    m_maxForce = physicsLoopInterface::
+//                 FiniteElementRegionLoop::
+//                 Execute< serialPolicy,
+//                          Update,
+//                          constitutive::SolidBase>( *mesh,
+//                                                    m_targetRegions,
+//                                                    m_solidMaterialName,
+//                                                    feDiscretization,
+//                                                    dofNumber,
+//                                                    matrix,
+//                                                    rhs,
+//                                                    Update::Parameters( gravityVector().Data(),
+//                                                                        m_newmarkGamma,
+//                                                                        m_newmarkBeta,
+//                                                                        m_massDamping,
+//                                                                        m_stiffnessDamping,
+//                                                                        dt ) );
   }
 
 

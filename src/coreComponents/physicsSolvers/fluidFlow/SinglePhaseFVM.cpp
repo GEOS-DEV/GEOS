@@ -72,14 +72,16 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
                                           DofManager & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs,
-                                          ParallelVector & solution )
+                                          ParallelVector & solution,
+                                          bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   BASE::SetupSystem( domain,
                      dofManager,
                      matrix,
                      rhs,
-                     solution );
+                     solution,
+                     setSparsity);
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
 

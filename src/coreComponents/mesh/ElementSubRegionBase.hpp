@@ -145,13 +145,13 @@ public:
   template< typename T = constitutive::ConstitutiveBase >
   T * getConstitutiveModel( string const & name )
   {
-    return m_constitutiveModels.GetGroup<T>(name);
+    return m_constitutiveModels.GetGroup< T >( name );
   }
 
   template< typename T = constitutive::ConstitutiveBase >
   T const * getConstitutiveModel( string const & name ) const
   {
-    return m_constitutiveModels.GetGroup<T>(name);
+    return m_constitutiveModels.GetGroup< T >( name );
   }
 
   virtual string GetElementTypeString() const { return m_elementTypeString; }
