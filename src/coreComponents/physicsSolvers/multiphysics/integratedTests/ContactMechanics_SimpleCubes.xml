@@ -73,8 +73,7 @@
          xMax=" 4.01, 20.01,  0.01"/>
   </Geometry>
 
-  <!-- The maximum time can be reduced -->
-  <Events maxTime="80.0">
+  <Events maxTime="20.0">
     <SoloEvent name="initialPlot"
               target="/Outputs/siloOutput"/>
 
@@ -83,9 +82,14 @@
 
     <PeriodicEvent name="solverApplications"
                    beginTime="0.0"
-                   endTime="80.0"
+                   endTime="20.0"
                    forceDt="1.0"
                    target="/Solvers/lagrangiancontact" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="10.0"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -220,8 +224,8 @@
   <Functions>
     <TableFunction name="ForceTimeFunction"
                    inputVarNames="{time}"
-                   coordinates="{0.0, 10.0, 30.0, 50.0, 70.0, 80.0}"
-                   values="{0.0, 5.e0, -5.e0, 5.e0, -5.0, 0.0}" />
+                   coordinates="{0.0, 10.0, 20.0}"
+                   values="{0.0, 5.e0, 0.e0}" />
   </Functions>
 
   <Outputs>

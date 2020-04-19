@@ -90,9 +90,14 @@
 
     <PeriodicEvent name="solverApplications"
                    beginTime="0.0"
-                   endTime="80.0"
+                   endTime="2.0"
                    forceDt="1.0"
                    target="/Solvers/lagrangiancontact" />
+
+    <PeriodicEvent name="restarts"
+                   timeFrequency="1.0"
+                   targetExactTimestep="0"
+                   target="/Outputs/restartOutput"/>
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
