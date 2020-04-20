@@ -390,8 +390,9 @@ void RotationMatrix_3D( R1Tensor const & normal,
   R1Tensor m2( 0.0, normal( 2 ), -normal( 1 ) );
   real64 const norm_m1 = m1.Normalize();
   real64 const norm_m2 = m2.Normalize();
-  // If present, look for a vector with 0 norm
-  if( norm_m1 > norm_m2 )
+  // If present, looks for a vector with 0 norm
+  // Fix the uncertain case of norm_m1 very close to norm_m2
+  if( norm_m1+1.e+2*machinePrecision > norm_m2 )
   {
     m2.Cross( normal, m1 );
     m2.Normalize();
