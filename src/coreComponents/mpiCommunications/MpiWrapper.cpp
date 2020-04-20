@@ -301,6 +301,19 @@ int MpiWrapper::ActiveWaitOrderedCompletePhase( const int participants,
   return MPI_SUCCESS;
 }
 
+string MpiWrapper::PadRank()
+{
+#ifdef GEOSX_USE_MPI
+  int rank = Comm_rank();
+  int padSize = 10;
+  std::stringstream paddedRankStringStream;
+  paddedRankStringStream << std::setfill( '0' ) << std::setw( padSize ) << rank;
+  return paddedRankStringStream.str();
+#endif
+  return "0";
+}
+
+
 } /* namespace geosx */
 
 #if defined(__clang__)

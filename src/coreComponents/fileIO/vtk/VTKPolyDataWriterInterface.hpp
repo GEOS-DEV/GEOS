@@ -131,9 +131,8 @@ private:
    * @details the DataSet file path is the path to the .vtu mesh file
    * @param[in] er The ElementRegion
    * @param[in] time the time-step
-   * @param[in] mpiRank the mpi rank
    */
-  string GetDataSetFilePath( ElementRegionBase const &  er, double time, int mpiRank ) const;
+  string GetDataSetFilePath( ElementRegionBase const &  er, double time ) const;
 
   /*!
    * @brief Writes the files for all the CellElementRegions.
@@ -147,11 +146,11 @@ private:
    * @brief Gets the cell connectivities as
    * a VTK object for the CellElementRegion \p er
    * @param[in] er the CellElementRegion to be written
-   * @return a tuple, first value is a table with the same size than the total number of element in the CellElementRegion
+   * @return a pair, first value is a table with the same size than the total number of element in the CellElementRegion
    * containg the type of the cells.
    * the second value is a VTK object containing the connectivity information
    * */
-  std::tuple< std::vector< int >, vtkSmartPointer< vtkCellArray > > GetVTKCells( CellElementRegion const & er ) const;
+  std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > > GetVTKCells( CellElementRegion const & er ) const;
 
   /*!
    * @brief Gets the vertices coordinates
@@ -173,10 +172,10 @@ private:
    * as VTK objects for a specific WellElementSubRegion
    * @param[in] esr the WellElementSubRegion to be output
    * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
-   * @return a tuple containing a VTKPoints (with the information on the vertices and their coordinates)
+   * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
    * and a VTKCellArray (with the cell connectivities).
    */
-  std::tuple< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion const & esr, NodeManager const & nodeManager ) const;
+  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetWell( WellElementSubRegion const & esr, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -186,7 +185,15 @@ private:
    */
   void WriteFaceElementRegions( real64 time, DomainPartition const & domain ) const;
 
-  std::tuple< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion const & esr,
+  /*!
+   * @brief Gets the cell connectivities and the vertices coordinates
+   * as VTK objects for a specific FaceElementSubRegion
+   * @param[in] esr the FaceElementSubRegion to be output
+   * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
+   * @return a pair containing a VTKPoints (with the information on the vertices and their coordinates)
+   * and a VTKCellArray (with the cell connectivities).
+   */
+  std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion const & esr,
                                                                                          NodeManager const & nodeManager ) const;
 
   /*!
@@ -224,6 +231,18 @@ private:
    * for CellElementSubRegion.
    */
   void WriteField( WrapperBase const & wrapperBase, vtkSmartPointer< VTKGEOSXData > data, localIndex size, localIndex & count ) const;
+
+  /*!
+   * @brief Writes an unstructured grid
+   * @details The unstructured grid is the last element in the hiearchy of the output,
+   * it contains the cells connectivities and the vertices coordinates as long as the
+   * data fields associated with it
+   * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
+   * @param[in] time the current time-step
+   * @param[in] name the name of the ElementRegionBase to be written
+   */
+  void WriteUnstructuredGrid( vtkSmartPointer< vtkUnstructuredGrid > ug, double time, string const & name ) const;
+
 private:
 
   /// Folder name in which all the files will be written

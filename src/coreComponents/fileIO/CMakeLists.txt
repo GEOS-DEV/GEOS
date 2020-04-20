@@ -33,14 +33,12 @@ endif()
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
-               vtk/VTKTypes.hpp
                vtk/VTKPVDWriter.hpp
                vtk/VTKVTMWriter.hpp
                vtk/VTKGEOSXData.hpp
                vtk/VTKPolyDataWriterInterface.hpp )
 
   list( APPEND fileIO_sources
-               vtk/VTKTypes.cpp
                vtk/VTKGEOSXData.cpp
                vtk/VTKPVDWriter.cpp
                vtk/VTKVTMWriter.cpp
