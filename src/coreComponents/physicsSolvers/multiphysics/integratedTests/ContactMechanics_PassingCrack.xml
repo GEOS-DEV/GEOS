@@ -36,7 +36,8 @@
                       fractureRegion="Fracture"
                       targetRegions="{Region}"
                       solidMaterialNames="{rock}"
-                      rockToughness="1.0e6">
+                      rockToughness="1.0e6"
+                      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
 
