@@ -24,8 +24,6 @@
 
 #include "common/DataTypes.hpp"
 
-#include <iomanip>
-
 #if defined(GEOSX_USE_MPI)
   #include <mpi.h>
   #define MPI_PARAM( x ) x

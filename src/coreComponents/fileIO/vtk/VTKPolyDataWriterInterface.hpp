@@ -138,9 +138,10 @@ private:
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
-   * @param[in] domain the computation domain for this rank
+   * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
+   * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
-  void WriteCellElementRegions( real64 time, DomainPartition const & domain ) const;
+  void WriteCellElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities as
@@ -163,9 +164,10 @@ private:
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
-   * @param[in] domain the computation domain for this rank
+   * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
+   * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
-  void WriteWellElementRegions( real64 time, DomainPartition const & domain ) const;
+  void WriteWellElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities and the vertices coordinates
@@ -181,9 +183,10 @@ private:
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
-   * @param[in] domain the computation domain for this rank
+   * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
+   * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
-  void WriteFaceElementRegions( real64 time, DomainPartition const & domain ) const;
+  void WriteFaceElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Gets the cell connectivities and the vertices coordinates
@@ -200,10 +203,10 @@ private:
    * @brief Writes a VTM file for the time-step \p time.
    * @details a VTM file is a VTK Multiblock file. It contains reltive path to different files organized in blocks.
    * @param[in] time the time-step
-   * @param[in] domain the computation domain for this rank
+   * @param[in] elemManager the ElementRegionManager containing all the regions to be output and refered in the VTM file
    * @param[in] vtmWrite a writer specialized for the VTM file format
    */
-  void WriteVTMFile( real64 time, DomainPartition const & domain, VTKVTMWriter const & vtmWriter ) const;
+  void WriteVTMFile( real64 time, ElementRegionManager const & elemManager, VTKVTMWriter const & vtmWriter ) const;
 
   /*!
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
