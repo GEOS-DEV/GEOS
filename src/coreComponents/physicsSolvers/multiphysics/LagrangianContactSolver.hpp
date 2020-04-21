@@ -297,6 +297,7 @@ public:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
+
   bool IsElementInOpenState( FaceElementSubRegion const & subRegion,
                              localIndex const kfe ) const;
 };
