@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=98-340
+  - GEOSX_TPL_TAG=100-370
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -30,7 +30,7 @@ geosx_linux_build: &geosx_linux_build
   - GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
     # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
   - GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${TRAVIS_COMMIT:0:7}
-    # We need to know where the coded is mounted inside the container so we can run the script at the proper location!
+    # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
     # Since this information is repeated twice, we use a variable.
   - TRAVIS_BUILD_DIR_MOUNT_POINT=/tmp/GEOSX
     # We need to keep track of the building container (hence the `CONTAINER_NAME`)
@@ -103,6 +103,7 @@ geosx_pangea_build: &geosx_pangea_build
 
 stages:
   - build
+  - check_submodules
 
 jobs:
   include:
@@ -119,16 +120,8 @@ jobs:
   - <<: *geosx_osx_build
   - <<: *geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang6.0.1
+    - DOCKER_REPOSITORY=geosx/centos7.7.1908-clang9.0.0
     - CMAKE_BUILD_TYPE=Release
-  - <<: *geosx_linux_build
-    env:
-    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
-    - CMAKE_BUILD_TYPE=Release
-  - <<: *geosx_linux_build
-    env:
-    - DOCKER_REPOSITORY=geosx/centos7.5.1804-clang7.0.0
-    - CMAKE_BUILD_TYPE=Debug
   - <<: *geosx_linux_build
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
@@ -137,3 +130,5 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu18.04-gcc8
     - CMAKE_BUILD_TYPE=Debug
+  - stage: check_submodules
+    script: scripts/test_submodule_updated.sh

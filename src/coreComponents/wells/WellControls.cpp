@@ -31,7 +31,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_typeString( "" ),
   m_type( Type::PRODUCER ),
-  m_refWellElemDepth( 0.0 ),
   m_refWellElemIndex( -1 ),
   m_inputControlString( "" ),
   m_currentControl( Control::BHP ),
@@ -58,11 +57,6 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Target rate" );
 
-  registerWrapper( viewKeyStruct::refWellElemDepthString, &m_refWellElemDepth, false )->
-    setDefaultValue( 0.0 )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Reference depth for well bottom hole pressure" );
-
   registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
     setDefaultValue( -1 )->
     setSizedFromParent( 0 )->
@@ -74,15 +68,6 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
-real64 WellControls::GetInjectionStream( localIndex ic ) const
-{
-  real64 compFrac = -1;
-  if( ic < m_injectionStream.size())
-  {
-    compFrac = m_injectionStream[ic];
-  }
-  return compFrac;
-}
 
 void WellControls::SetControl( Control control,
                                real64 const & val )

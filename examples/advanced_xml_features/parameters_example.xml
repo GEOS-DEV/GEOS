@@ -28,8 +28,8 @@ XML Units:
                     logLevel="0"
                     discretization="singlePhaseTPFA"
                     targetRegions="{Fracture}"
-                    fluidName="water"
-                    solidName="rock"
+                    fluidNames="{water}"
+                    solidNames="{rock}"
                     inputFluxEstimate="1">
       <SystemSolverParameters krylovTol="1.0e-12"
                               logLevel="0"/>
