@@ -25,11 +25,11 @@ namespace geosx
 
 namespace interpolation
 {
-real64 ParabolicInterpolationThreePoints( real64 const lambdac,
-                                          real64 const lambdam,
-                                          real64 const ff0,
-                                          real64 const ffT,
-                                          real64 const ffm )
+static real64 ParabolicInterpolationThreePoints( real64 const lambdac,
+                                                 real64 const lambdam,
+                                                 real64 const ff0,
+                                                 real64 const ffT,
+                                                 real64 const ffm )
 {
   // Apply three-point safeguarded parabolic model for a line search.
   //
