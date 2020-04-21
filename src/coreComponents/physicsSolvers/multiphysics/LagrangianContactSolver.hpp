@@ -201,10 +201,10 @@ private:
 
   integer m_activeSetIter = 0;
 
-  real64 m_slidingCheckTolerance = 0.05;
-  real64 m_normalDisplacementTolerance = 1.e-7;
-  real64 m_normalTractionTolerance = 1.e-4;
-  real64 m_slidingTolerance = 1.e-7;
+  real64 const m_slidingCheckTolerance = 0.05;
+  //real64 m_normalDisplacementTolerance = 1.e-7;
+  //real64 m_normalTractionTolerance = 1.e-4;
+  //real64 m_slidingTolerance = 1.e-7;
 
   string const m_tractionKey = viewKeyStruct::tractionString;
 
@@ -270,6 +270,8 @@ private:
     }
     return false;
   }
+
+  void ComputeTolerances( DomainPartition * const domain ) const;
 
 public:
 
