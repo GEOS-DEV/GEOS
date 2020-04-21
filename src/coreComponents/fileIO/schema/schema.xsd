@@ -1008,14 +1008,6 @@
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--normalDisplacementTolerance => Tolerance used to determine if a co-penetration is happening-->
-		<xsd:attribute name="normalDisplacementTolerance" type="real64" default="1e-07" />
-		<!--normalTractionTolerance => Tolerance used to determine if an element is open due to a positive traction-->
-		<xsd:attribute name="normalTractionTolerance" type="real64" default="0.0001" />
-		<!--slidingCheckTolerance => Percentage of the current limit tangential stress used to relax the criterion to determine the sliding condition-->
-		<xsd:attribute name="slidingCheckTolerance" type="real64" default="0.05" />
-		<!--slidingTolerance => Tolerance below which friction is considered linear and a pseuso Jacobian is assembled-->
-		<xsd:attribute name="slidingTolerance" type="real64" default="1e-07" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the lagrangian contact solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->

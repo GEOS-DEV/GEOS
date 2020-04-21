@@ -207,10 +207,10 @@ private:
 
   integer m_activeSetIter = 0;
 
-  real64 m_slidingCheckTolerance = 0.05;
-  real64 m_normalDisplacementTolerance = 1.e-7;
-  real64 m_normalTractionTolerance = 1.e-4;
-  real64 m_slidingTolerance = 1.e-7;
+  real64 const m_slidingCheckTolerance = 0.05;
+  //real64 m_normalDisplacementTolerance = 1.e-7;
+  //real64 m_normalTractionTolerance = 1.e-4;
+  //real64 m_slidingTolerance = 1.e-7;
 
   string const m_tractionKey = viewKeyStruct::tractionString;
 
@@ -277,6 +277,8 @@ private:
     return false;
   }
 
+  void ComputeTolerances( DomainPartition * const domain ) const;
+
 public:
 
   void InitializeFractureState( MeshLevel * const mesh,
@@ -295,16 +297,8 @@ public:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
-
   bool IsElementInOpenState( FaceElementSubRegion const & subRegion,
                              localIndex const kfe ) const;
-
-  // TODO: maybe to be moved in SolverBase ...
-  real64 ParabolicInterpolationThreePoints( real64 const lambdac,
-                                            real64 const lambdam,
-                                            real64 const ff0,
-                                            real64 const ffc,
-                                            real64 const ffm ) const;
 };
 
 } /* namespace geosx */

@@ -39,12 +39,14 @@
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "math/interpolation/Interpolation.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace interpolation;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
                                                           Group * const parent ):
@@ -546,7 +548,7 @@ bool LagrangianContactFlowSolver::LineSearch( real64 const & time_n,
     }
     else
     {
-      localScaleFactor = m_contactSolver->ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
+      localScaleFactor = ParabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
     }
 
     // Update x; keep the books on lambda
