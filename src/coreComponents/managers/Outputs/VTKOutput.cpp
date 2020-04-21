@@ -31,7 +31,7 @@ VTKOutput::VTKOutput( std::string const & name,
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_writerInterface( name )
+  m_writer( name )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -68,14 +68,14 @@ void VTKOutput::Execute( real64 const time_n,
   DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
   if( m_writeBinaryData )
   {
-    m_writerInterface.SetOutputMode( vtk::VTKOutputMode::BINARY );
+    m_writer.SetOutputMode( vtk::VTKOutputMode::BINARY );
   }
   else
   {
-    m_writerInterface.SetOutputMode( vtk::VTKOutputMode::ASCII );
+    m_writer.SetOutputMode( vtk::VTKOutputMode::ASCII );
   }
-  m_writerInterface.SetPlotLevel( m_plotLevel );
-  m_writerInterface.Write( time_n, cycleNumber, *domainPartition );
+  m_writer.SetPlotLevel( m_plotLevel );
+  m_writer.Write( time_n, cycleNumber, *domainPartition );
 }
 
 

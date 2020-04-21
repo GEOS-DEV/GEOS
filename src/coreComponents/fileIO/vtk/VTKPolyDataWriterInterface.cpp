@@ -342,24 +342,15 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,  ElementRegionManage
     };
     // Cells
     vtmWriter.AddBlock( CellElementRegion::CatalogName() );
-    elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
-    {
-      writeSubBlocks(er);
-    } );
+    elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
 
     // Wells
     vtmWriter.AddBlock( WellElementRegion::CatalogName() );
-    elemManager.forElementRegions< WellElementRegion >( [&]( WellElementRegion const & er )->void
-    {
-      writeSubBlocks(er);
-    } );
+    elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
 
     // Surfaces
     vtmWriter.AddBlock( FaceElementRegion::CatalogName() );
-    elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & er )->void
-    {
-      writeSubBlocks(er);
-    } );
+    elemManager.forElementRegions< FaceElementRegion >( writeSubBlocks  );
 
     vtmWriter.Save();
   }
@@ -413,10 +404,10 @@ void VTKPolyDataWriterInterface::Write( real64 time, integer cycle, DomainPartit
   CreateTimeStepSubFolder( time );
   ElementRegionManager const & elemManager = *domain.getMeshBody(0)->getMeshLevel(0)->getElemManager();
   NodeManager const & nodeManager = *domain.getMeshBody(0)->getMeshLevel(0)->getNodeManager();
-  string vtmPath = GetTimeStepSubFolder( time ) + ".vtm";
   WriteCellElementRegions( time, elemManager, nodeManager );
   WriteWellElementRegions( time, elemManager, nodeManager );
   WriteFaceElementRegions( time, elemManager, nodeManager );
+  string vtmPath = GetTimeStepSubFolder( time ) + ".vtm";
   VTKVTMWriter vtmWriter( vtmPath );
   WriteVTMFile( time, elemManager, vtmWriter );
   if( cycle != m_previousCycle )

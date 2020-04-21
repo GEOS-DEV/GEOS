@@ -78,7 +78,7 @@ private:
 
   integer m_writeBinaryData;
 
-  vtk::VTKPolyDataWriterInterface m_writerInterface;
+  vtk::VTKPolyDataWriterInterface m_writer;
 
 };
 
