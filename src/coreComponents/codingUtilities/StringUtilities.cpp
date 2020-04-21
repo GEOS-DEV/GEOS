@@ -18,8 +18,10 @@
 
 #include "math/TensorT/TensorT.h"
 #include "codingUtilities/StringUtilities.hpp"
+#include "mpiCommunications/MpiWrapper.hpp"
 //#include "codingUtilities/UnitManager.h"
 
+#include <iomanip>
 #include <stdarg.h>
 
 namespace geosx
@@ -162,6 +164,16 @@ string_array Split( const std::string & str, const std::string & delimiters )
   }
   return tokens;
 }
+string PadRank()
+{
+  int rank = MpiWrapper::Comm_rank();
+  int padSize = std::to_string( MpiWrapper::Comm_size() ).size();
+  std::stringstream paddedRankStringStream;
+  paddedRankStringStream << std::setfill( '0' ) << std::setw( padSize ) << rank;
+  return paddedRankStringStream.str();
+}
+
+
 
 }
 }

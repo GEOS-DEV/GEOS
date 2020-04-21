@@ -31,21 +31,26 @@ public:
   {
     VTK_STANDARD_NEW_BODY( VTKGEOSXData );
   }
+  /*!
+   * @brief insert Value in a custom way for R1Tensors
+   * @param[in] index index where the value \p val will be inserted
+   * @param[in] val value to be inserted
+   */
   template< typename T >
-  void InsertValue2( localIndex index, T const & val )
+  void CustomInsertValue( localIndex index, T const & val )
   {
     this->InsertValue( index, val );
   }
 };
 
 template<>
-void VTKGEOSXData::InsertValue2< R1Tensor >( localIndex index, R1Tensor const & val );
+void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
 
 template<>
-void VTKGEOSXData::InsertValue2< R2Tensor >( localIndex index, R2Tensor const & val );
+void VTKGEOSXData::CustomInsertValue< R2Tensor >( localIndex index, R2Tensor const & val );
 
 template<>
-void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex index, R2SymTensor const & val );
+void VTKGEOSXData::CustomInsertValue< R2SymTensor >( localIndex index, R2SymTensor const & val );
 }
 }
 

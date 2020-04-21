@@ -36,9 +36,6 @@ VTKVTMWriter::VTKVTMWriter( string const & filePath ):
   vtkFileNode.append_child( "vtkMultiBlockDataSet" );
 }
 
-/*!
- * @brief Triggers the file output
- */
 void VTKVTMWriter::Save() const
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
@@ -48,12 +45,6 @@ void VTKVTMWriter::Save() const
   }
 }
 
-/*!
- * @brief Add a block to the VTM file
- * @details The first level of block is for the ElementRegion (\p blockName can
- * be CellElementRegion, FaceElementRegion or WellElementREgion)
- * @param[in] blockName Name of the block
- */
 void VTKVTMWriter::AddBlock( string const & blockName ) const
 {
   auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
@@ -61,12 +52,6 @@ void VTKVTMWriter::AddBlock( string const & blockName ) const
   blockNode.append_attribute( "name" ) = blockName.c_str();
 }
 
-/*!
- * @brief Add a subblock to the VTM file
- * @details The second level of block is for the different Regions
- * @param[in] blockName Name of the parent block
- * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
- */
 void VTKVTMWriter::AddSubBlock( string const & blockName, string const & subBlockName ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
@@ -74,14 +59,6 @@ void VTKVTMWriter::AddSubBlock( string const & blockName, string const & subBloc
   subBlockNode.append_attribute( "name" ) = subBlockName.c_str();
 }
 
-/*!
- * @brief Add data to the subblock \p subBlockName
- * @details The final level : paths to the vtu file per rank
- * @param[in] blockName Name of the parent block
- * @param[in] subBlockName Name of the subBlock (usually the name of the Region)
- * @param[in] filePath path to the vtu file containing the unstructured mesh
- * @param[in] mpiRank the mpi rank.
- */
 void VTKVTMWriter::AddDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );

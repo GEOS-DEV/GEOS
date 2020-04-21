@@ -31,7 +31,7 @@ VTKOutput::VTKOutput( std::string const & name,
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_writerInterface( name + ".pvd" )
+  m_writerInterface( name )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
     setInputFlag( InputFlags::OPTIONAL )->

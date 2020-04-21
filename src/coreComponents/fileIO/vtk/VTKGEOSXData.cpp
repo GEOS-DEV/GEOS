@@ -20,7 +20,7 @@ namespace geosx
 namespace vtk
 {
 template<>
-void VTKGEOSXData::InsertValue2< R1Tensor >( localIndex index, R1Tensor const & val )
+void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val )
 {
   for( localIndex j = 0; j < 3; j++ )
   {
@@ -29,16 +29,16 @@ void VTKGEOSXData::InsertValue2< R1Tensor >( localIndex index, R1Tensor const & 
 }
 
 template<>
-void VTKGEOSXData::InsertValue2< R2Tensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
+void VTKGEOSXData::CustomInsertValue< R2Tensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
 {
-  GEOSX_ERROR( "Can't output R2Tensor with VTK export");
+  GEOSX_WARNING( "Can't output R2Tensor with VTK export");
 }
 
 
 template<>
-void VTKGEOSXData::InsertValue2< R2SymTensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2SymTensor const & GEOSX_UNUSED_PARAM ( val ) )
+void VTKGEOSXData::CustomInsertValue< R2SymTensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2SymTensor const & GEOSX_UNUSED_PARAM ( val ) )
 {
-  GEOSX_ERROR( "Can't output R2Tensor with VTK export");
+  GEOSX_WARNING( "Can't output R2Tensor with VTK export");
 }
 }
 }

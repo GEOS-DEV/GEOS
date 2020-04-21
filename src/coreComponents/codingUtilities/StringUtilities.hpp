@@ -181,6 +181,13 @@ inline void ExpandMultipleTokens( string_array & sVector, const std::string & mu
   }
   sVector = newVec;
 }
+
+
+/**
+ * @brief returns a string containing the rank number padded with maximun ten '0'
+ * @return the padded rank
+ */
+string PadRank();
 }
 }
 

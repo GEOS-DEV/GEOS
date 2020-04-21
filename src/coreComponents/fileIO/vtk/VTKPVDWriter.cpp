@@ -20,10 +20,6 @@ namespace geosx
 {
 namespace vtk
 {
-/*!
- * @brief Writer for PVD file
- * @param[in] fileName the file name with the extension
- */
 VTKPVDWriter::VTKPVDWriter( string const & fileName ):
   m_fileName( fileName )
 {
@@ -39,9 +35,6 @@ VTKPVDWriter::VTKPVDWriter( string const & fileName ):
   vtkFileNode.append_child( "Collection" );
 }
 
-/*!
- * @brief Triggers the file output
- */
 void VTKPVDWriter::Save() const
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
@@ -51,11 +44,6 @@ void VTKPVDWriter::Save() const
   }
 }
 
-/*!
- * @brief Add a dataset associated to a time-step
- * @param[in] time the time step
- * @param[in] filePath path to the file associated with the time-step
- */
 void VTKPVDWriter::AddData( real64 time, string const & filePath ) const
 {
   auto collectionNode = m_pvdFile.child( "VTKFile" ).child( "Collection" );

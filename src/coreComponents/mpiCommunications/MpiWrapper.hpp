@@ -489,12 +489,6 @@ public:
    */
   template< typename T >
   static T Sum( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
-
-  /**
-   * @brief returns a string containing the rank number padded with maximun ten '0'
-   * @return the padded rank
-   */
-  static string PadRank();
 };
 
 template<> inline MPI_Datatype MpiWrapper::getMpiType< float >()                  { return MPI_FLOAT; }
