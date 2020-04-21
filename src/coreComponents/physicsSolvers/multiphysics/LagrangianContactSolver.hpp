@@ -291,13 +291,6 @@ public:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
-
-  // TODO: maybe to be moved in SolverBase ...
-  real64 ParabolicInterpolationThreePoints( real64 const lambdac,
-                                            real64 const lambdam,
-                                            real64 const ff0,
-                                            real64 const ffc,
-                                            real64 const ffm ) const;
 };
 
 } /* namespace geosx */
