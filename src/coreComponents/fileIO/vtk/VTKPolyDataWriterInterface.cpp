@@ -30,32 +30,55 @@ namespace geosx
 namespace vtk
 {
 
-VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
-  m_outputFolder( outputName ),
-  m_pvd( outputName + ".pvd" ),
-  m_previousCycle( -1 )
+
+/*!
+ * @brief Get the DataSet file path
+ * @details the DataSet file path is the path to the .vtu mesh file
+ * @param[in] er The ElementRegion
+ * @param[in] time the time-step
+ * @param[in] rank the rank to be written
+ */
+string GetDataSetFilePath( ElementRegionBase const &  er, double time, int rank )
 {
-  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( mpiRank == 0 )
-  {
-    mode_t mode = 0733;
-    int errorCode = mkdir( outputName.c_str(), mode );
-    if( errorCode == -1 )
-    {
-      if( errno == EEXIST )
-      {
-        GEOSX_WARNING( "Path " << outputName << " already exists from a previous simulation");
-      }
-      else
-      {
-        GEOSX_ERROR( "Fail to create main directory " << outputName << " for the VTK output" );
-      }
-    }
-  }
-  MpiWrapper::Barrier();
+  return std::to_string( time ) + "/" + stringutilities::PadValue( rank, std::to_string( MpiWrapper::Comm_size() ).size() ) + "_" + er.getName() + ".vtu";
 }
 
-integer_array VTKPolyDataWriterInterface::VTKNodeOrdering( string const& elementType ) const
+/*!
+ * @brief Gets the VTK cell identifier
+ * @param[in] elementType the type of the element (using the abaqus nomenclature)
+ * @return the VTK cell identifier
+ */
+int ToVTKCellType( const string & elementType )
+{
+  int vtkIdentifier = VTK_EMPTY_CELL;
+  if( !elementType.compare( 0, 4, "C3D4" ))
+  {
+    vtkIdentifier = VTK_TETRA;
+  }
+  else if( !elementType.compare( 0, 4, "C3D8" ))
+  {
+    vtkIdentifier = VTK_HEXAHEDRON;
+  }
+  else if( !elementType.compare( 0, 4, "C3D6" ))
+  {
+    vtkIdentifier = VTK_WEDGE;
+  }
+  else if( !elementType.compare( 0, 4, "C3D5" ))
+  {
+    vtkIdentifier = VTK_PYRAMID;
+  }
+  else
+  {
+    GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
+  }
+  return vtkIdentifier;
+}
+/*!
+ * @brief Gets a table with the VTK node ordering
+ * @param[in] elementType the type of the element (using the abaqus nomenclature)
+ * @return the table with the VTK node ordering (index : GEOSX ordering, value : VTK node ordering)
+ */
+integer_array VTKNodeOrdering( const string & elementType )
 {
   integer_array nodeOrdering;
   if( !elementType.compare( 0, 4, "C3D4" ))
@@ -104,42 +127,29 @@ integer_array VTKPolyDataWriterInterface::VTKNodeOrdering( string const& element
   return nodeOrdering;
 }
 
-int VTKPolyDataWriterInterface::ToVTKCellType( const string & elementType ) const
+VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
+  m_outputFolder( outputName ),
+  m_pvd( outputName + ".pvd" ),
+  m_previousCycle( -1 )
 {
-  int vtkIdentifier = VTK_EMPTY_CELL;
-  if( !elementType.compare( 0, 4, "C3D4" ))
+  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  if( mpiRank == 0 )
   {
-    vtkIdentifier = VTK_TETRA;
+    mode_t mode = 0733;
+    int errorCode = mkdir( outputName.c_str(), mode );
+    if( errorCode == -1 )
+    {
+      if( errno == EEXIST )
+      {
+        GEOSX_WARNING( "Path " << outputName << " already exists from a previous simulation");
+      }
+      else
+      {
+        GEOSX_ERROR( "Fail to create main directory " << outputName << " for the VTK output" );
+      }
+    }
   }
-  else if( !elementType.compare( 0, 4, "C3D8" ))
-  {
-    vtkIdentifier = VTK_HEXAHEDRON;
-  }
-  else if( !elementType.compare( 0, 4, "C3D6" ))
-  {
-    vtkIdentifier = VTK_WEDGE;
-  }
-  else if( !elementType.compare( 0, 4, "C3D5" ))
-  {
-    vtkIdentifier = VTK_PYRAMID;
-  }
-  else
-  {
-    GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
-  }
-  return vtkIdentifier;
-}
-
-vtkSmartPointer< vtkPoints >  VTKPolyDataWriterInterface::GetVTKPoints( NodeManager const & nodeManager ) const
-{
-  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
-  points->SetNumberOfPoints( nodeManager.size() );
-  auto connectivity = nodeManager.referencePosition();
-  for( localIndex v = 0; v < nodeManager.size(); v++ )
-  {
-    points->SetPoint( v, connectivity[v][0], connectivity[v][1], connectivity[v][2] );
-  }
-  return points;
+  MpiWrapper::Barrier();
 }
 
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPolyDataWriterInterface::GetWell( WellElementSubRegion const & esr,
@@ -372,11 +382,6 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, ElementRe
     WriteElementFields< FaceElementSubRegion >( ug->GetCellData(), er );
     WriteUnstructuredGrid( ug, time, er.getName() );
   } );
-}
-
-string VTKPolyDataWriterInterface::GetDataSetFilePath( ElementRegionBase const & er, double time, int rank ) const
-{
-  return std::to_string( time ) + "/" + stringutilities::PadValue( rank, std::to_string( MpiWrapper::Comm_size() ).size() ) + "_" + er.getName() + ".vtu";
 }
 
 void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,  ElementRegionManager const & elemManager, VTKVTMWriter const & vtmWriter ) const

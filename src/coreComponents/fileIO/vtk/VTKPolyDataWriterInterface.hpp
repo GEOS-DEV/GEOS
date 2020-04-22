@@ -127,15 +127,6 @@ private:
   string GetTimeStepSubFolder( real64 time ) const;
 
   /*!
-   * @brief Get the DataSet file path
-   * @details the DataSet file path is the path to the .vtu mesh file
-   * @param[in] er The ElementRegion
-   * @param[in] time the time-step
-   * @param[in] rank the rank to be written
-   */
-  string GetDataSetFilePath( ElementRegionBase const &  er, double time, int rank ) const;
-
-  /*!
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
@@ -253,13 +244,6 @@ private:
    * @return the table with the VTK node ordering (index : GEOSX ordering, value : VTK node ordering)
    */
   integer_array VTKNodeOrdering( const string & elementType ) const;
-
-  /*!
-   * @brief Gets the VTK cell identifier
-   * @param[in] elementType the type of the element (using the abaqus nomenclature)
-   * @return the VTK cell identifier
-   */
-  int ToVTKCellType( const string & elementType ) const;
 
 private:
 
