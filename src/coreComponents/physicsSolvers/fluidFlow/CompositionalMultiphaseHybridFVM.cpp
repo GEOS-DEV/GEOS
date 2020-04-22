@@ -40,8 +40,7 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
   m_areaRelTol( 1e-8 ),
   m_ipType( InnerProductType::QUASI_TPFA ), // hard-coded for now
   m_orthonormalizeWithSVD( false ) // hard-coded for now
-{
-}
+{}
 
 void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
 {
@@ -67,7 +66,7 @@ void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBod
   }
 }
 
-  
+
 void CompositionalMultiphaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
                                                           real64 const & dt,
                                                           DomainPartition * const domain,
@@ -92,12 +91,12 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const iface )
   {
     for( localIndex ip = 0; ip < m_numPhases; ++ip )
-    {  
+    {
       dFacePotential[iface][ip] = 0;
     }
   } );
 
-}  
+}
 
 
 void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
@@ -134,7 +133,7 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time
       }
     }
   } );
-}  
+}
 
 
 void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
@@ -168,7 +167,7 @@ void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const * const 
                           DofManager::Connector::Elem,
                           true );
 
-}  
+}
 
 
 void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -261,7 +260,7 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNU
                 matrix,
                 rhs );
   } );
-}  
+}
 
 void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
                                                    localIndex GEOSX_UNUSED_PARAM( esr ),
@@ -414,7 +413,7 @@ CompositionalMultiphaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UN
 
 }
 
-  
+
 void CompositionalMultiphaseHybridFVM::ResizeFields( MeshLevel & meshLevel )
 {
   CompositionalMultiphaseBase::ResizeFields( meshLevel );
@@ -433,7 +432,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
 {
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager const & faceManager = *mesh.getFaceManager();
-  
+
   real64 const * localResidual = rhs.extractLocalVector();
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
@@ -442,7 +441,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   // local residual
   real64 localResidualNorm = 0;
 
-  // 1. Compute the residual for the mass conservation equations 
+  // 1. Compute the residual for the mass conservation equations
 
   forTargetSubRegionsComplete( mesh,
                                [&]( localIndex const,
@@ -496,7 +495,7 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
       }
     }
   }
-  
+
   // compute global residual norm
   realT globalResidualNorm;
   MpiWrapper::allReduce( &localResidualNorm, &globalResidualNorm, 1, MPI_SUM, MPI_COMM_GEOSX );
@@ -511,12 +510,12 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
              residualNorm );
     std::cout<<output;
   }
-  
+
   return residualNorm;
 }
 
 
-void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & dofManager, 
+void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
                                                             ParallelVector const & solution,
                                                             real64 const scalingFactor,
                                                             DomainPartition * const domain )
@@ -562,7 +561,7 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
   } );
 }
 
-  
+
 void CompositionalMultiphaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
   // 1. Reset the cell-centered fields
@@ -579,7 +578,7 @@ void CompositionalMultiphaseHybridFVM::ResetStateToBeginningOfStep( DomainPartit
   forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const iface )
   {
     for( localIndex ip = 0; ip < m_numPhases; ++ip )
-    { 
+    {
       dFacePotential[iface][ip] = 0;
     }
   } );
@@ -595,7 +594,7 @@ void CompositionalMultiphaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2
                                                                       real64 const & lengthTolerance,
                                                                       bool const & orthonormalizeWithSVD,
                                                                       stackArray2d< real64, MAX_NUM_FACES
-                                                                                           *MAX_NUM_FACES > & transMatrix ) const
+                                                                                    *MAX_NUM_FACES > & transMatrix ) const
 {
   // TODO: remove the switchyard
   switch( m_ipType )

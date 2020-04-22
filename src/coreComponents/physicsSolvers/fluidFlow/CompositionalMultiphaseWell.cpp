@@ -40,7 +40,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 using namespace CompositionalMultiphaseBaseKernels;
-  
+
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
   :

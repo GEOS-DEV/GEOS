@@ -55,7 +55,7 @@ public:
     static constexpr integer TPFA = 0;
     static constexpr integer QUASI_TPFA = 1;
   };
-  
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -90,8 +90,8 @@ public:
    */
   static string CatalogName() { return dataRepository::keys::compositionalMultiphaseHybridFVM; }
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override; 
-  
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -107,7 +107,7 @@ public:
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
                      ParallelVector & solution ) override;
-  
+
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
@@ -138,7 +138,7 @@ public:
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
                         DomainPartition * const domain ) override;
-  
+
   /**
    * @brief assembles the flux terms for all cells
    * @param time_n previous time value
@@ -260,7 +260,7 @@ private:
                    DofManager const * const dofManager,
                    ParallelMatrix * const matrix,
                    ParallelVector * const rhs );
-  
+
   /**
    * @brief In a given element, recompute the transmissibility matrix
    * @param[in] nodePosition the position of the nodes
@@ -285,7 +285,7 @@ private:
                                       real64 const & lengthTolerance,
                                       bool const & orthonormalizeWithSVD,
                                       stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES > & transMatrix ) const;
-  
+
   /// Dof key for the member functions that do not have access to the coupled Dof manager
   string m_faceDofKey;
 
@@ -301,8 +301,8 @@ private:
 
   /// flag to decide we orthonormalize with SVD or with MGS
   /// This is const (hard-coded) for now
-  bool const m_orthonormalizeWithSVD;  
-  
+  bool const m_orthonormalizeWithSVD;
+
 };
 
 

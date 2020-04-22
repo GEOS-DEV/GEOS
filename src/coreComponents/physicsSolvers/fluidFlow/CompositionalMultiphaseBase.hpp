@@ -282,7 +282,7 @@ public:
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
-    
+
   } viewKeysCompMultiphaseBase;
 
 

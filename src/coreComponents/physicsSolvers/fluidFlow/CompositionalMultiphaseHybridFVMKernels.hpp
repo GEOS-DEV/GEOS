@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp" 
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "finiteVolume/HybridFVMInnerProduct.hpp"
 
 namespace geosx
@@ -51,7 +51,8 @@ struct FluxKernelHelper
    * @param[in] transMatrix the transmissibility matrix in this element
    * @param[inout] volFlux the volumetric fluxes at this element's faces
    * @param[inout] dVolFlux_dPres the derivatives of the vol fluxes wrt to this element's elem centered pressure
-   * @param[inout] dVolFlux_dComp the derivatives of the vol fluxes wrt to this element's elem centered component densities
+   * @param[inout] dVolFlux_dComp the derivatives of the vol fluxes wrt to this element's elem centered component
+   * densities
    * @param[inout] dVolFlux_dFacePotential the derivatives of the vol fluxes wrt to this element's face pressures
    *
    * For each face of the element, we compute the one sided volumetric flux as:
@@ -70,17 +71,17 @@ struct FluxKernelHelper
                                  arraySlice2d< real64 const > const dElemDens_dComp,
                                  arraySlice2d< real64 const > const dElemCompFrac_dCompDens,
                                  stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
+                                               *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
                                  stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *constitutive::MultiFluidBase::MAX_NUM_PHASES > & volFlux,
+                                               *constitutive::MultiFluidBase::MAX_NUM_PHASES > & volFlux,
                                  stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dVolFlux_dPres,
+                                               *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dVolFlux_dPres,
                                  stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                      *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dVolFlux_dComp,
+                                               *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                               *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dVolFlux_dComp,
                                  stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *HybridFVMInnerProduct::MAX_NUM_FACES
-                                                      *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dVolFlux_dFacePotential );
+                                               *HybridFVMInnerProduct::MAX_NUM_FACES
+                                               *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dVolFlux_dFacePotential );
 
   /**
    * @brief In a given element, collect the upwinded mobility ratios at this element's faces
@@ -91,13 +92,15 @@ struct FluxKernelHelper
    * @param[in] elemToFaces elem-to-faces maps
    * @param[in] mob the mobilities in the domain (non-local)
    * @param[in] dMob_dPres the derivatives of the mobilities in the domain wrt elem-centered pressure (non-local)
-   * @param[in] dMob_dComp the derivatives of the mobilities in the domain wrt elem-centered component densities (non-local)
+   * @param[in] dMob_dComp the derivatives of the mobilities in the domain wrt elem-centered component densities
+   *(non-local)
    * @param[in] elemDofNumber the element dof numbers in the domain (non-local)
    * @param[in] elemIds the region, subregion and index of the local element
    * @param[in] volFlux the volumetric fluxes at this element's faces
    * @param[inout] upwMobility the upwinded phase mobilities at this element's faces
    * @param[inout] dUpwMobility_dPres the derivatives of the upwinded phase mobilities wrt the elem-centered pressures
-   * @param[inout] dUpwMobility_dComp the derivatives of the upwinded phase mobilities wrt the elem-centered component densities
+   * @param[inout] dUpwMobility_dComp the derivatives of the upwinded phase mobilities wrt the elem-centered component
+   * densities
    * @param[inout] upwDofNumber the dof numbers of the upwind elements for each phase
    * @param[inout] neighborDofNumber the dof numbers of the neighbor elements
    *
@@ -119,26 +122,26 @@ struct FluxKernelHelper
                                    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
                                    stackArray1d< localIndex, 3 > const & elemIds,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & upwPhaseCompFrac,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & upwPhaseCompFrac,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseCompFrac_dPres,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseCompFrac_dPres,
                                    stackArray4d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseCompFrac_dComp,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseCompFrac_dComp,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > & upwPhaseMobility,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > & upwPhaseMobility,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dUpwPhaseMobility_dPres,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > & dUpwPhaseMobility_dPres,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseMobility_dComp,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > & dUpwPhaseMobility_dComp,
                                    stackArray2d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                             *constitutive::MultiFluidBase::MAX_NUM_PHASES > & upwDofNumber,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > & upwDofNumber,
                                    stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & neighborDofNumber );
 
   /**
@@ -153,7 +156,8 @@ struct FluxKernelHelper
    * @param[in] dVolFlux_dFacePotential the derivatives of the vol fluxes wrt to this element's face pressures
    * @param[in] upwMobility the upwinded phase mobilities at this element's faces
    * @param[in] dUpwMobility_dPres the derivatives of the upwinded phase mobilities wrt the elem-centered pressures
-   * @param[in] dUpwMobility_dComp the derivatives of the upwinded phase mobilities wrt the elem-centered component densities
+   * @param[in] dUpwMobility_dComp the derivatives of the upwinded phase mobilities wrt the elem-centered component
+   * densities
    * @param[in] upwDofNumber the dof numbers of the upwind elements for each phase
    * @param[in] neighborDofNumber the dof numbers of the neighbor elements
    * @param[inout] matrix the jacobian matrix
@@ -165,38 +169,38 @@ struct FluxKernelHelper
                                    arraySlice1d< localIndex const > const elemToFaces,
                                    globalIndex const elemDofNumber,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dPres,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dPres,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dVolFlux_dComp,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dVolFlux_dComp,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dFacePotential,
+                                                 *HybridFVMInnerProduct::MAX_NUM_FACES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dFacePotential,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & upwPhaseCompFrac,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & upwPhaseCompFrac,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseCompFrac_dPres,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseCompFrac_dPres,
                                    stackArray4d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseCompFrac_dComp,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseCompFrac_dComp,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & upwPhaseMobility,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & upwPhaseMobility,
                                    stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dUpwPhaseMobility_dPres,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dUpwPhaseMobility_dPres,
                                    stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                        *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseMobility_dComp,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dUpwPhaseMobility_dComp,
                                    stackArray2d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                             *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & upwDofNumber,
+                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & upwDofNumber,
                                    stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > const & neighborDofNumber,
                                    ParallelMatrix * const matrix,
                                    ParallelVector * const rhs );
-  
+
   /**
    * @brief In a given element, assemble the constraints at this element's faces
    * @param[in] faceDofNumber the dof numbers of the face pressures
@@ -214,18 +218,18 @@ struct FluxKernelHelper
                             arraySlice1d< localIndex const > const elemToFaces,
                             globalIndex const elemDofNumber,
                             stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
+                                          *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & volFlux,
                             stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dPres,
+                                          *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dPres,
                             stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES
-                                                 *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dVolFlux_dComp,
+                                          *constitutive::MultiFluidBase::MAX_NUM_PHASES
+                                          *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > const & dVolFlux_dComp,
                             stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                 *HybridFVMInnerProduct::MAX_NUM_FACES
-                                                 *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dFacePotential,
+                                          *HybridFVMInnerProduct::MAX_NUM_FACES
+                                          *constitutive::MultiFluidBase::MAX_NUM_PHASES > const & dVolFlux_dFacePotential,
                             ParallelMatrix * const matrix,
                             ParallelVector * const rhs );
-  
+
   /**
    * @brief For a given one-sided face, collect the buoyancy upwinded mobility ratios
    * @param[in] elemRegionList face-to-elemRegions map
@@ -262,7 +266,7 @@ template<>
 struct FluxKernel< CellElementSubRegion >
 {
 
- /**
+  /**
    * @brief In a given element, assemble the mass conservation equation and the contribution of this element to the face
    * constraints
    * @param[in] numPhases number of fluid phases
@@ -286,8 +290,10 @@ struct FluxKernel< CellElementSubRegion >
    * @param[in] dElemDens_dPres the derivative of the density wrt pressure at this element's center
    * @param[in] dElemDens_dComp the derivative of the density wrt component densities at this element's center
    * @param[in] elemPhaseMobility the mobilities in the domain (non-local)
-   * @param[in] dElemPhaseMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure (non-local)
-   * @param[in] dElemPhaseMobility_dComp the derivatives of the mobilities in the domain wrt cell-centered component densities (non-local)
+   * @param[in] dElemPhaseMobility_dPres the derivatives of the mobilities in the domain wrt cell-centered pressure
+   *(non-local)
+   * @param[in] dElemPhaseMobility_dComp the derivatives of the mobilities in the domain wrt cell-centered component
+   * densities (non-local)
    * @param[in] elemDofNumber the dof number of the cell centered pressures (non-local)
    * @param[in] transMatrix the transmissibility matrix in this element
    * @param[in] dt time step size
@@ -324,7 +330,7 @@ struct FluxKernel< CellElementSubRegion >
            ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dElemPhaseMob_dComp,
            ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
+                         *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
            real64 const & dt,
            ParallelMatrix * const matrix,
            ParallelVector * const rhs )
@@ -335,8 +341,8 @@ struct FluxKernel< CellElementSubRegion >
     // max number of phases
     localIndex constexpr maxNumPhases = constitutive::MultiFluidBase::MAX_NUM_PHASES;
     // max number of components
-    localIndex constexpr maxNumComponents = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;  
-    
+    localIndex constexpr maxNumComponents = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+
     localIndex const numFacesInElem = elemToFaces.size();
 
     stackArray1d< globalIndex, maxNumFaces > neighborDofNumber( numFacesInElem );
@@ -352,9 +358,9 @@ struct FluxKernel< CellElementSubRegion >
     stackArray3d< real64, maxNumFaces *maxNumPhases *maxNumComponents > dVolFlux_dComp( numFacesInElem, numPhases, numComponents );
     stackArray3d< real64, maxNumFaces *maxNumPhases *maxNumFaces > dVolFlux_dFacePotential( numFacesInElem, numFacesInElem, numPhases );
 
-    // the arrays below may be reasonable for tetra + black oil, but may become quite large in the general case  
-    // TODO: get rid of these arrays and only store the indices of the upwind element 
-    
+    // the arrays below may be reasonable for tetra + black oil, but may become quite large in the general case
+    // TODO: get rid of these arrays and only store the indices of the upwind element
+
     // upwinded mobility
     stackArray2d< real64, maxNumFaces *maxNumPhases > upwPhaseMobility( numFacesInElem, numPhases );
     stackArray2d< real64, maxNumFaces *maxNumPhases > dUpwPhaseMobility_dPres( numFacesInElem, numPhases );
@@ -363,7 +369,8 @@ struct FluxKernel< CellElementSubRegion >
     // upwinded phase component fraction
     stackArray3d< real64, maxNumFaces *maxNumPhases *maxNumComponents > upwPhaseCompFrac( numFacesInElem, numPhases, numComponents );
     stackArray3d< real64, maxNumFaces *maxNumPhases *maxNumComponents > dUpwPhaseCompFrac_dPres( numFacesInElem, numPhases, numComponents );
-    stackArray4d< real64, maxNumFaces *maxNumPhases *maxNumComponents *maxNumComponents > dUpwPhaseCompFrac_dComp( numFacesInElem, numPhases, numComponents, numComponents );        
+    stackArray4d< real64, maxNumFaces *maxNumPhases *maxNumComponents *maxNumComponents > dUpwPhaseCompFrac_dComp( numFacesInElem, numPhases, numComponents,
+                                                                                                                   numComponents );
 
     // upwind dof number (per phase)
     stackArray2d< globalIndex, maxNumFaces *maxNumPhases > upwDofNumber( numFacesInElem, numPhases );
@@ -420,7 +427,7 @@ struct FluxKernel< CellElementSubRegion >
                                                   dUpwPhaseMobility_dComp,
                                                   upwDofNumber,
                                                   neighborDofNumber );
-    
+
     /*
      * At this point, we have computed all the fluxes in the element
      * We perform the assembly in this element in two steps:
