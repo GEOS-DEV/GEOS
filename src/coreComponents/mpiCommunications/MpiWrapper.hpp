@@ -32,7 +32,8 @@
 typedef int MPI_Comm;
 
   #define MPI_COMM_NULL      ((MPI_Comm)0x04000000)
-  #define MPI_COMM_WORLD ((MPI_Comm)0x44000000)
+  #define MPI_COMM_WORLD     ((MPI_Comm)0x44000000)
+  #define MPI_COMM_SELF      ((MPI_Comm)0x44400000)
 
 typedef int MPI_Datatype;
   #define MPI_CHAR           ((MPI_Datatype)0x4c000101)

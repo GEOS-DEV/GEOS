@@ -24,7 +24,6 @@
 #include <string>
 #include <limits>
 
-#include "dataRepository/ManagedGroup.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "common/DataTypes.hpp"
 namespace geosx
@@ -35,7 +34,7 @@ class TaskBase : public ExecutableGroup
 public:
 
   explicit TaskBase( std::string const & name,
-                       ManagedGroup * const parent );
+                     Group * const parent );
 
   TaskBase( TaskBase && ) = default;
 
@@ -48,7 +47,7 @@ public:
 
   static string CatalogName() { return "TaskBase"; }
 
-  using CatalogInterface = cxx_utilities::CatalogInterface< TaskBase, std::string const &, ManagedGroup * const >;
+  using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType& GetCatalog();
 
   void PostProcessInput() override;

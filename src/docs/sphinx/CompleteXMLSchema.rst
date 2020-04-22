@@ -720,6 +720,13 @@ Datastructure: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact_other.rst
 
 
+.. _DATASTRUCTURE_CopyField:
+
+Datastructure: CopyField
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/CopyField_other.rst
+
+
 .. _DATASTRUCTURE_Cylinder:
 
 Datastructure: Cylinder
@@ -1166,6 +1173,13 @@ Datastructure: SystemSolverParameters
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
+
+
+.. _DATASTRUCTURE_Tasks:
+
+Datastructure: Tasks
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks_other.rst
 
 
 .. _DATASTRUCTURE_ThickPlane:

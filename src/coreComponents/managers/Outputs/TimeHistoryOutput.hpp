@@ -21,9 +21,10 @@ namespace geosx
       m_format( ),
       m_filename( ),
       m_record_count(false),
-      m_io(nullptr)
+      m_time_collection( "TimeCollection", this ),
+      m_io(nullptr),
+      m_t_io(nullptr)
     {
-
       registerWrapper(viewKeys::timeHistoryOutputTarget, &m_collector_path, false)->
         setInputFlag(InputFlags::REQUIRED)->
         setDescription("A collector from which to collect and output time history information.");
@@ -51,12 +52,19 @@ namespace geosx
     virtual void SetupDirectoryStructure() override
     {
       Group * tmp = this->GetGroupByPath(m_collector_path);
-      TimeHistoryCollector * collector = Group::group_cast<TimeHistoryCollector*>(tmp);
+      HistoryCollection * collector = Group::group_cast<HistoryCollection*>(tmp);
       GEOSX_ERROR_IF(collector == nullptr, "The target of a time history output event must be a collector! " << m_collector_path);
       // switch based on m_format, always hdf for now
       m_io = std::make_unique<HDFHistIO>( m_filename, collector->GetMetadata( ), m_record_count );
       collector->RegisterBufferCall([this]() { return this->m_io->GetBufferHead( ); });
       m_io->Init( m_record_count > 0 );
+      int rank = MpiWrapper::Comm_rank();
+      if( rank == 0 )
+      {
+        m_t_io = std::make_unique<HDFHistIO>( m_filename, m_time_collection.GetMetadata( ), m_record_count, 4, MPI_COMM_SELF );
+        m_time_collection.RegisterBufferCall([this]() { return this->m_t_io->GetBufferHead( ); });
+        m_t_io->Init( m_record_count > 0 );
+      }
     }
 
     /// This method will be called by the event manager if triggered
@@ -69,6 +77,11 @@ namespace geosx
     {
       m_record_count += m_io->GetBufferedCount( );
       m_io->Write( );
+      int rank = MpiWrapper::Comm_rank();
+      if( rank == 0 )
+      {
+        m_t_io->Write( );
+      }
     }
 
     /// Write one final output as the code exits
@@ -100,7 +113,10 @@ namespace geosx
 
       integer m_record_count;
 
+      TimeCollection m_time_collection;
+
       std::unique_ptr<BufferedHistoryIO> m_io;
+      std::unique_ptr<BufferedHistoryIO> m_t_io;
   };
 }
 

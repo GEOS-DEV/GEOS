@@ -26,8 +26,8 @@ using namespace dataRepository;
 using namespace cxx_utilities;
 
 TasksManager::TasksManager( std::string const & name,
-                            ManagedGroup * const parent ):
-  ManagedGroup( name, parent)
+                            Group * const parent ):
+  Group( name, parent)
 {
 }
 
@@ -35,7 +35,7 @@ TasksManager::~TasksManager()
 {}
 
 
-ManagedGroup * TasksManager::CreateChild( string const & childKey, string const & childName )
+Group * TasksManager::CreateChild( string const & childKey, string const & childName )
 {
   std::unique_ptr<TaskBase> tool = TaskBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move( tool ) );

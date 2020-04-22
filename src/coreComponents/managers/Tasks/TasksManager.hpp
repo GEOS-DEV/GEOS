@@ -19,7 +19,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_TOOLSMANAGER_TOOLSMANAGER_HPP_
 #define SRC_COMPONENTS_CORE_SRC_TOOLSMANAGER_TOOLSMANAGER_HPP_
 
-#include "dataRepository/ManagedGroup.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace pugi
 {
@@ -29,15 +29,15 @@ class xml_node;
 namespace geosx
 {
 
-class TasksManager : public dataRepository::ManagedGroup
+class TasksManager : public dataRepository::Group
 {
 public:
   TasksManager( std::string const & name,
-                ManagedGroup * const parent );
+                Group * const parent );
 
   virtual ~TasksManager() override;
 
-  virtual ManagedGroup * CreateChild( string const & childKey, string const & childName ) override;
+  virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;

@@ -20,6 +20,7 @@ NumericalMethods        node                                                    
 Outputs                 node                                                         :ref:`DATASTRUCTURE_Outputs`                              
 Parameters              node                                                         :ref:`DATASTRUCTURE_Parameters`                           
 Solvers                 node                                                         :ref:`DATASTRUCTURE_Solvers`                              
+Tasks                   node                                                         :ref:`DATASTRUCTURE_Tasks`                                
 commandLine             node                                                         :ref:`DATASTRUCTURE_commandLine`                          
 domain                  node                                                         :ref:`DATASTRUCTURE_domain`                               
 neighborData            node                                                         :ref:`DATASTRUCTURE_neighborData`                         

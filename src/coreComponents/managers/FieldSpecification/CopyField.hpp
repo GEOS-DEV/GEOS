@@ -32,7 +32,7 @@ namespace geosx
 
 namespace dataRepository
 {
-class ManagedGroup;
+class Group;
 }
 
 class CopyField : public TaskBase
@@ -40,7 +40,7 @@ class CopyField : public TaskBase
 public:
 
   explicit CopyField( std::string const & name,
-                      ManagedGroup * const parent );
+                      Group * const parent );
 
   CopyField( CopyField && ) = default;
 
@@ -57,7 +57,7 @@ public:
                 integer const cycleNumber,
                 integer const eventCounter,
                 real64 const eventProgress,
-                ManagedGroup * domain ) override;
+                Group * domain ) override;
 
   struct viewKeyStruct {
     static constexpr auto fromString = "from";

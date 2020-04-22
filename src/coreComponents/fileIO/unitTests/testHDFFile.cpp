@@ -41,7 +41,7 @@ TEST( testHDFIO, ArrayHistory )
         value = count++;
       });
 
-    HistoryMetadata spec = ArrayMetadata("Array1d History",arr);
+    HistoryMetadata spec = getHistoryMetadata("Array1d History",arr);
     HDFHistIO io( filename, spec );
     io.Init( true );
 
@@ -62,7 +62,7 @@ TEST( testHDFIO, ArrayHistory )
         value = count++;
       });
 
-    HistoryMetadata spec = ArrayMetadata("Array2d History",arr);
+    HistoryMetadata spec = getHistoryMetadata("Array2d History",arr);
     HDFHistIO io(filename,spec);
     io.Init( true );
 
@@ -93,7 +93,8 @@ TEST( testHDFIO, IdxArrayHistory )
         value = rand() % 1024;
       });
 
-    HistoryMetadata spec = ArrayIndicesMetadata("Array1d Idx History",arr,idx.size( ));
+    HistoryMetadata spec = getHistoryMetadata("Array1d Idx History",arr,idx.size( ));
+    // todo : change the first dim extant to reflect on the indices being packed
     HDFHistIO io( filename, spec );
     io.Init( true );
 

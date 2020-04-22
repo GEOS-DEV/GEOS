@@ -86,18 +86,19 @@ public:
     H5E_BEGIN_TRY {
       exists = H5Gget_objinfo(this->operator hid_t(), name.c_str(), 0, NULL);
     } H5E_END_TRY
-    return (exists == 0);
+        return (exists == 0);
   }
 };
 
 class HDFFile : public HDFTarget
 {
 public:
-  HDFFile(string const & fnm) :
+  HDFFile(string const & fnm, MPI_Comm comm = MPI_COMM_GEOSX) :
     filename(fnm),
     file_id(0),
     fapl_id(0),
-    dxpl_id(0)
+    dxpl_id(0),
+    m_comm(comm)
   {
     // check if file already exists
     htri_t exists = 0;
@@ -105,7 +106,7 @@ public:
       exists = H5Fis_hdf5(filename.c_str() );
     } H5E_END_TRY
     fapl_id = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_mpio(fapl_id, MPI_COMM_GEOSX, MPI_INFO_NULL);
+    H5Pset_fapl_mpio(fapl_id, m_comm, MPI_INFO_NULL);
     if( exists > 0 )
     {
       // file create access property
@@ -134,6 +135,7 @@ private:
   hid_t file_id;
   hid_t fapl_id;
   hid_t dxpl_id;
+  MPI_Comm m_comm;
 };
 
 class HDFHistIO : public BufferedHistoryIO
@@ -145,7 +147,8 @@ class HDFHistIO : public BufferedHistoryIO
              string const & name,
              std::type_index type_id,
              localIndex write_head = 0,
-             localIndex init_alloc = 4 ) :
+             localIndex init_alloc = 4,
+             MPI_Comm comm = MPI_COMM_GEOSX) :
     BufferedHistoryIO(),
     m_filename(filename),
     m_overalloc_multiple(init_alloc),
@@ -158,7 +161,8 @@ class HDFHistIO : public BufferedHistoryIO
     m_type_count(1),
     m_rank(integer_conversion<hsize_t>(rank)),
     m_dims(rank),
-    m_name(name)
+    m_name(name),
+    m_comm(comm)
   {
     for(hsize_t dd = 0; dd < m_rank; ++dd)
     {
@@ -167,8 +171,8 @@ class HDFHistIO : public BufferedHistoryIO
     }
   }
 
-  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4 ) :
-    HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc )
+  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ) :
+    HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc, comm )
   { }
 
   virtual ~HDFHistIO() { }
@@ -189,13 +193,13 @@ class HDFHistIO : public BufferedHistoryIO
 
     globalIndex local_idx_count = integer_conversion<globalIndex>(m_dims[0]);
 
-    MpiWrapper::allReduce(&local_idx_count,&m_global_idx_count,1,MPI_SUM,MPI_COMM_GEOSX);
-    MpiWrapper::exscan(&local_idx_count,&m_global_idx_offset,1,MPI_SUM,MPI_COMM_GEOSX);
+    MpiWrapper::allReduce(&local_idx_count,&m_global_idx_count,1,MPI_SUM,m_comm);
+    MpiWrapper::exscan(&local_idx_count,&m_global_idx_offset,1,MPI_SUM,m_comm);
 
     history_file_dims[1] = integer_conversion<hsize_t>(m_global_idx_count);
 
     // create a dataset in the file if needed
-    HDFFile target( m_filename );
+    HDFFile target( m_filename, m_comm );
     bool in_target = target.CheckInTarget( m_name );
     if( !in_target )
     {
@@ -222,7 +226,7 @@ class HDFHistIO : public BufferedHistoryIO
   virtual void Write( ) override
   {
     ResizeFileIfNeeded( );
-    HDFFile target( m_filename );
+    HDFFile target( m_filename, m_comm );
 
     hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
     hid_t filespace = H5Dget_space(dataset);
@@ -255,7 +259,7 @@ class HDFHistIO : public BufferedHistoryIO
 
   inline void ResizeFileIfNeeded( )
   {
-    HDFFile target( m_filename );
+    HDFFile target( m_filename, m_comm );
     if( m_write_head + m_buffered_count > m_write_limit )
     {
       while( m_write_head + m_buffered_count > m_write_limit )
@@ -296,10 +300,12 @@ class HDFHistIO : public BufferedHistoryIO
     // history metadata
     hsize_t m_hdf_type;
     size_t m_type_size;
-    hsize_t m_type_count; // prod(dims[0..n])
+    hsize_t m_type_count; // prod(dims[0:n])
     hsize_t m_rank;
     array1d<hsize_t> m_dims;
     string m_name;
+
+    MPI_Comm m_comm;
 };
 
 }

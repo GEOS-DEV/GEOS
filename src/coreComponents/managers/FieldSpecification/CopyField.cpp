@@ -26,19 +26,18 @@ namespace geosx
 using namespace dataRepository;
 
 CopyField::CopyField( std::string const & name,
-                        ManagedGroup * const parent ):
+                        Group * const parent ):
   TaskBase( name, parent )
 {
-
-  RegisterViewWrapper(viewKeyStruct::fromString, &m_from, false )->
+  registerWrapper(viewKeyStruct::fromString, &m_from, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Name of the field to copy.");
 
-  RegisterViewWrapper(viewKeyStruct::toString, &m_to, false )->
+  registerWrapper(viewKeyStruct::toString, &m_to, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Name of the field that will be created and filled.");
 
-  RegisterViewWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  registerWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Regions on which the copy will be done.");
 }
@@ -48,33 +47,33 @@ CopyField::~CopyField()
 }
 
 
-void CopyField::Execute( real64 const time_n,
-                         real64 const dt,
-                         integer const cycleNumber,
-                         integer const eventCounter,
-                         real64 const eventProgress,
-                         ManagedGroup * domain )
+void CopyField::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                         real64 const GEOSX_UNUSED_PARAM( dt ),
+                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                         Group * domain )
 {
-  GEOS_LOG_RANK( "Copying " + m_from + " to " + m_to );
+  GEOSX_LOG_RANK( "Copying " + m_from + " to " + m_to );
   DomainPartition * domainCast = domain->group_cast<DomainPartition*>(domain);
   MeshBody * meshBody = domainCast->getMeshBody(0);
   MeshLevel * meshLevel = meshBody->getMeshLevel(0);
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
   for( auto regionName : m_targetRegions )
   {
-    ElementRegion * curRegion = elemManager->GetRegion(regionName);
-    GEOS_ERROR_IF( curRegion == nullptr, "Region " + regionName + " not found" );
+    ElementRegionBase * curRegion = elemManager->GetRegion(regionName);
+    GEOSX_ERROR_IF( curRegion == nullptr, "Region " + regionName + " not found" );
     curRegion->forElementSubRegions([&]( auto * const elementSubRegion) -> void
     {
-      dataRepository::ViewWrapperBase * vwFrom = elementSubRegion->getWrapperBase( m_from );
-      GEOS_ERROR_IF( vwFrom == nullptr, "Field " + m_from + " not found on " + elementSubRegion->getName() );
+      dataRepository::WrapperBase * vwFrom = elementSubRegion->getWrapperBase( m_from );
+      GEOSX_ERROR_IF( vwFrom == nullptr, "Field " + m_from + " not found on " + elementSubRegion->getName() );
       std::type_index typeIndex = std::type_index( vwFrom->get_typeid());
       rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
                                       [&]( auto type ) -> void
       {
         using fieldType = decltype(type);
-        dataRepository::ViewWrapper<fieldType> *  to = elementSubRegion->template RegisterViewWrapper< fieldType >(m_to);
-        dataRepository::ViewWrapper<fieldType> & from = dynamic_cast< dataRepository::ViewWrapper<fieldType> & >(*vwFrom);
+        dataRepository::Wrapper< fieldType > *  to = elementSubRegion->template registerWrapper< fieldType >(m_to);
+        dataRepository::Wrapper< fieldType > & from = dataRepository::Wrapper< fieldType >::cast( *vwFrom );
         fieldType & fromField = from.reference();
         fieldType & toField = to->reference();
         toField = fromField;
@@ -84,6 +83,6 @@ void CopyField::Execute( real64 const time_n,
 
 }
 
-REGISTER_CATALOG_ENTRY( TaskBase, CopyField, std::string const &, ManagedGroup * const )
+REGISTER_CATALOG_ENTRY( TaskBase, CopyField, std::string const &, Group * const )
 
 } /* namespace */

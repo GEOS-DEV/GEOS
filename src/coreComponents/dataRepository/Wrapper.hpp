@@ -272,6 +272,12 @@ public:
 
   ///@}
 
+  virtual
+  HistoryMetadata getBufferedIOMetadata() const override final
+  {
+    return getHistoryMetadata< decltype(reference()) >( getName(), reference() );
+  }
+
   /**
    * @name Methods for buffer packing/unpacking
    * @param[in] on_device    whether to use device-based packing functions

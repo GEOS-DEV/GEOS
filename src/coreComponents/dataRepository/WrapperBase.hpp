@@ -23,6 +23,7 @@
 #include "InputFlags.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "managers/TimeHistory/HistoryDataSpec.hpp"
 
 namespace conduit
 {
@@ -167,6 +168,8 @@ public:
   virtual void loadFromConduit() = 0;
 
   ///@}
+
+  virtual HistoryMetadata getBufferedIOMetadata() const = 0;
 
   /**
    * @name Methods for buffer packing/unpacking

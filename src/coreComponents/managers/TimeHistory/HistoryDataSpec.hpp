@@ -1,7 +1,6 @@
 #ifndef GEOSX_HISTORY_DATA_SPEC_HPP_
 #define GEOSX_HISTORY_DATA_SPEC_HPP_
 
-#include "dataRepository/Group.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 
@@ -69,40 +68,38 @@ namespace geosx
     std::type_index m_type;
   };
 
-    template < typename ARRAY_T >
+  template < typename ARRAY_T >
   inline
   typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
-  ArrayMetadata( string const & name, const ARRAY_T & arr )
+  getHistoryMetadata( string const & name, const ARRAY_T & arr, size_t size_overwrite = 0 )
   {
-    size_t size = arr.size( );
+    size_t size = size_overwrite == 0 ? arr.size( ) : size_overwrite;
     return HistoryMetadata(name, 1, &size, std::type_index(typeid(typename ARRAY_T::value_type)));
   }
 
   template < typename ARRAY_T >
   inline
   typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
-  ArrayMetadata( string const & name, ARRAY_T const & arr )
+  getHistoryMetadata( string const & name, ARRAY_T const & arr, size_t size_overwrite = 0 )
   {
-    size_t sizes[2] = {integer_conversion<size_t>(arr.size( ) / arr.size(0)), integer_conversion<size_t>(arr.size( )) };
+    size_t sizes[2] = {size_overwrite == 0 ? integer_conversion<size_t>(arr.size( ) / arr.size(0)) : size_overwrite, integer_conversion<size_t>(arr.size( )) };
     return HistoryMetadata(name, 2, &sizes[0], std::type_index(typeid(typename ARRAY_T::value_type)));
   }
 
-  template < typename ARRAY_T >
-  inline
-  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
-  ArrayIndicesMetadata( ARRAY_T const & GEOSX_UNUSED_PARAM( arr ), string const & name, localIndex const num_indices )
+  template < typename T >
+  inline typename std::enable_if < can_history_io< T >, HistoryMetadata >::type
+  getHistoryMetadata( string const & name, const T & GEOSX_UNUSED_PARAM( type ), size_t size_overwrite = 0 )
   {
-    size_t size = integer_conversion<size_t>(num_indices);
-    return HistoryMetadata(name, 1, &size, std::type_index(typeid(typename ARRAY_T::value_type)));
+    size_t size = size_overwrite == 0 ? 1 : size_overwrite;
+    return HistoryMetadata(name, size, std::type_index(typeid(T)));
   }
 
-  template < typename ARRAY_T >
-  inline
-  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
-  ArrayIndicesMetadata( string const & name, ARRAY_T const & arr, localIndex const num_indices )
+  template < typename T >
+  inline typename std::enable_if < ! is_array<T> && ! can_history_io< T >, HistoryMetadata >::type
+  getHistoryMetadata( string const & GEOSX_UNUSED_PARAM(name), const T & GEOSX_UNUSED_PARAM(type), size_t size_overwrite = 0 )
   {
-    size_t sizes[2] = { integer_conversion<size_t>(num_indices), integer_conversion<size_t>(arr.size(0)) };
-    return HistoryMetadata(name, 2, &sizes[0], std::type_index(typeid(typename ARRAY_T::value_type)));
+    GEOSX_ERROR("Trying to use time history output on an unsupported type.");
+    return HistoryMetadata("NULL", size_overwrite, std::type_index(typeid(NULL)));
   }
 
 }
