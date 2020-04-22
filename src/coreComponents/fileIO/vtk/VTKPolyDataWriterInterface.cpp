@@ -29,29 +29,105 @@ namespace geosx
 {
 namespace vtk
 {
-localIndex const geosx2VTKHex[8] = {0, 1, 3, 2, 4, 5, 7, 6};
-localIndex const  geosx2VTKTet[4] = {0, 1, 2, 3};
-localIndex const geosx2VTKWedge[6] = {0, 1, 2, 3, 4, 5};
-localIndex const geosx2VTKPyr[5] = {0, 1, 2, 3, 4};
 
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
   m_outputFolder( outputName ),
   m_pvd( outputName + ".pvd" ),
   m_previousCycle( -1 )
 {
-  mode_t mode = 0733;
-  int errorCode = mkdir( outputName.c_str(), mode );
-  if( errorCode == -1 )
+  int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  if( mpiRank == 0 )
   {
-    if( errno == EEXIST )
+    mode_t mode = 0733;
+    int errorCode = mkdir( outputName.c_str(), mode );
+    if( errorCode == -1 )
     {
-      GEOSX_WARNING( "Path " << outputName << " already exists from a previous simulation");
-    }
-    else
-    {
-      GEOSX_ERROR( "Fail to create main directory " << outputName << " for the VTK output" );
+      if( errno == EEXIST )
+      {
+        GEOSX_WARNING( "Path " << outputName << " already exists from a previous simulation");
+      }
+      else
+      {
+        GEOSX_ERROR( "Fail to create main directory " << outputName << " for the VTK output" );
+      }
     }
   }
+  MpiWrapper::Barrier();
+}
+
+integer_array VTKPolyDataWriterInterface::VTKNodeOrdering( string const& elementType ) const
+{
+  integer_array nodeOrdering;
+  if( !elementType.compare( 0, 4, "C3D4" ))
+  {
+    nodeOrdering.resize( 4 );
+    nodeOrdering[0] = 1;
+    nodeOrdering[1] = 0;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 3;
+  }
+  else if( !elementType.compare( 0, 4, "C3D8" ))
+  {
+    nodeOrdering.resize( 8 );
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 1;
+    nodeOrdering[2] = 3;
+    nodeOrdering[3] = 2;
+    nodeOrdering[4] = 4;
+    nodeOrdering[5] = 5;
+    nodeOrdering[6] = 7;
+    nodeOrdering[7] = 6;
+  }
+  else if( !elementType.compare( 0, 4, "C3D6" ))
+  {
+    nodeOrdering.resize( 6 );
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 4;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 2;
+    nodeOrdering[5] = 5;
+  }
+  else if( !elementType.compare( 0, 4, "C3D5" ))
+  {
+    nodeOrdering.resize( 5 );
+    nodeOrdering[0] = 0;
+    nodeOrdering[1] = 3;
+    nodeOrdering[2] = 2;
+    nodeOrdering[3] = 1;
+    nodeOrdering[4] = 4;
+  }
+  else
+  {
+    GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
+  }
+  return nodeOrdering;
+}
+
+int VTKPolyDataWriterInterface::ToVTKCellType( const string & elementType ) const
+{
+  int vtkIdentifier = VTK_EMPTY_CELL;
+  if( !elementType.compare( 0, 4, "C3D4" ))
+  {
+    vtkIdentifier = VTK_TETRA;
+  }
+  else if( !elementType.compare( 0, 4, "C3D8" ))
+  {
+    vtkIdentifier = VTK_HEXAHEDRON;
+  }
+  else if( !elementType.compare( 0, 4, "C3D6" ))
+  {
+    vtkIdentifier = VTK_WEDGE;
+  }
+  else if( !elementType.compare( 0, 4, "C3D5" ))
+  {
+    vtkIdentifier = VTK_PYRAMID;
+  }
+  else
+  {
+    GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
+  }
+  return vtkIdentifier;
 }
 
 vtkSmartPointer< vtkPoints >  VTKPolyDataWriterInterface::GetVTKPoints( NodeManager const & nodeManager ) const
@@ -104,15 +180,16 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
   geosx2VTKIndexing.reserve( esr.size() * esr.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
+  integer_array vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
   for( localIndex ei = 0; ei < esr.size(); ei++ )
   {
     auto & elem = nodeListPerElement[ei];
     for( localIndex i = 0; i < elem.size(); i++ )
     {
-      auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[geosx2VTKHex[i]] );
+      auto const & VTKIndexPos = geosx2VTKIndexing.find( elem[vtkOrdering[i]] );
       if( VTKIndexPos == geosx2VTKIndexing.end() )
       {
-        connectivity[i] = geosx2VTKIndexing[elem[geosx2VTKHex[i]]] = nodeIndexInVTK++;
+        connectivity[i] = geosx2VTKIndexing[elem[vtkOrdering[i]]] = nodeIndexInVTK++;
       }
       else
       {
@@ -141,44 +218,16 @@ std::pair< std::vector< int >,  vtkSmartPointer< vtkCellArray > > VTKPolyDataWri
   er.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & esr )
   {
     std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
+    integer_array vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
+    int vtkCellType = ToVTKCellType( esr.GetElementTypeString() );
+    GEOSX_ERROR_IF_NE( integer_conversion< long >( connectivity.size() ), vtkOrdering.size() );
     for( localIndex c = 0; c < esr.size(); c++ )
     {
-      if( esr.GetElementTypeString() == "C3D8" )
+      for( localIndex i = 0; i < vtkOrdering.size(); i++ )
       {
-        for( localIndex i = 0; i < 8; i++ )
-        {
-          connectivity[i] = esr.nodeList( c, geosx2VTKHex[i] );
-        }
-        cellType.push_back( VTK_HEXAHEDRON );
+        connectivity[i] = esr.nodeList( c, vtkOrdering[i] );
       }
-      else if( esr.GetElementTypeString() == "C3D4" )
-      {
-        for( localIndex i = 0; i < 4; i++ )
-        {
-          connectivity[i] = esr.nodeList( c, geosx2VTKTet[i] );
-        }
-        cellType.push_back( VTK_TETRA );
-      }
-      else if( esr.GetElementTypeString() == "C3D6" )
-      {
-        for( localIndex i = 0; i < 6; i++ )
-        {
-          connectivity[i] = esr.nodeList( c, geosx2VTKWedge[i] );
-        }
-        cellType.push_back( VTK_WEDGE );
-      }
-      else if( esr.GetElementTypeString() == "C3D5" )
-      {
-        for( localIndex i = 0; i < 5; i++ )
-        {
-          connectivity[i] = esr.nodeList( c, geosx2VTKPyr[i] );
-        }
-        cellType.push_back( VTK_PYRAMID );
-      }
-      else
-      {
-        GEOSX_WARNING(esr.GetElementTypeString() << " is not supported and will be ignored for the output");
-      }
+      cellType.push_back( vtkCellType );
       cellsArray->InsertNextCell( esr.numNodesPerElement(), connectivity.data() );
     }
   } );
@@ -189,8 +238,11 @@ void VTKPolyDataWriterInterface::WriteField( WrapperBase const & wrapperBase, vt
 {
   std::type_info const & typeID = wrapperBase.get_typeid();
   if( typeID==typeid(r1_array) )
-  {
-    data->SetNumberOfComponents( 3 ); // We need a special case for the R1 array
+  { 
+    // We need a special case for the R1 array
+    // Because those array are not stored the same way than the classical array2d which is
+    // preferable to store a vector on each element.
+    data->SetNumberOfComponents( 3 );
   }
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( typeID ),
                                   true,
@@ -322,9 +374,9 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, ElementRe
   } );
 }
 
-string VTKPolyDataWriterInterface::GetDataSetFilePath( ElementRegionBase const & er, double time ) const
+string VTKPolyDataWriterInterface::GetDataSetFilePath( ElementRegionBase const & er, double time, int rank ) const
 {
-  return std::to_string( time ) + "/" + stringutilities::PadRank() + "_" + er.getName() + ".vtu";
+  return std::to_string( time ) + "/" + stringutilities::PadValue( rank, std::to_string( MpiWrapper::Comm_size() ).size() ) + "_" + er.getName() + ".vtu";
 }
 
 void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,  ElementRegionManager const & elemManager, VTKVTMWriter const & vtmWriter ) const
@@ -336,7 +388,7 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time,  ElementRegionManage
     auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
       vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
       for( int i = 0; i < mpiSize; i++ ) {
-        string const dataSetFile = GetDataSetFilePath( er, time );
+        string const dataSetFile = GetDataSetFilePath( er, time, i );
         vtmWriter.AddDataToSubBlock( er.getCatalogName(), er.getName(), dataSetFile, i );
       }
     };
@@ -384,7 +436,7 @@ void VTKPolyDataWriterInterface::WriteUnstructuredGrid( vtkSmartPointer< vtkUnst
   string timeStepSubFolder = VTKPolyDataWriterInterface::GetTimeStepSubFolder( time );
   vtkSmartPointer< vtkXMLUnstructuredGridWriter > vtuWriter =vtkXMLUnstructuredGridWriter::New();
   vtuWriter->SetInputData( ug );
-  string vtuFilePath = timeStepSubFolder + "/" + stringutilities::PadRank() +"_" + name + ".vtu";
+  string vtuFilePath = timeStepSubFolder + "/" + stringutilities::PadValue( MpiWrapper::Comm_rank(), std::to_string( MpiWrapper::Comm_size() ).size() ) +"_" + name + ".vtu";
   vtuWriter->SetFileName( vtuFilePath.c_str() );
   if( m_outputMode == VTKOutputMode::BINARY ) {
     vtuWriter->SetDataModeToBinary();

@@ -11,7 +11,6 @@ set(managers_headers
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
-    Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
@@ -43,7 +42,6 @@ set(managers_sources
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
-    Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
@@ -63,6 +61,11 @@ set(managers_sources
 if( ENABLE_MPI )
     list( APPEND managers_headers Outputs/ChomboIO.hpp )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
+endif()
+
+if( ENABLE_VTK )
+    list( APPEND managers_headers Outputs/VTKOutput.hpp )
+    list( APPEND managers_sources Outputs/VTKOutput.cpp )
 endif()
 
 if( BUILD_OBJ_LIBS )

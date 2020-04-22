@@ -23,6 +23,7 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+#include <iomanip>
 #include <algorithm>
 #include <map>
 
@@ -184,10 +185,18 @@ inline void ExpandMultipleTokens( string_array & sVector, const std::string & mu
 
 
 /**
- * @brief returns a string containing the rank number padded with maximun ten '0'
- * @return the padded rank
+ * @brief Retuns a string containing a padded value
+ * @param[in] value to be padded
+ * @param[in] size size of the padding
  */
-string PadRank();
+template <typename T>
+string PadValue( T value, int size )
+{
+  std::stringstream paddedStringStream;
+  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
+  return paddedStringStream.str();
+}
+
 }
 }
 
