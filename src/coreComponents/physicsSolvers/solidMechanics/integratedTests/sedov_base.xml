@@ -25,7 +25,7 @@
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <!--PeriodicEvent name="outputs"
+    <!-- PeriodicEvent name="outputs"
                    timeFrequency="1e-6"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" /-->
@@ -87,14 +87,14 @@
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
-               component="2"
+               component="1"
                scale="-1.0e6"/>
     <FieldSpecification name="source2"  
                initialCondition="1"  
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
-               component="5"
+               component="2"
                scale="-1.0e6"/>
 
     <FieldSpecification name="xconstraint" 

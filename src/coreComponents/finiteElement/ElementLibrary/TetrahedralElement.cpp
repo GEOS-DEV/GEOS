@@ -28,9 +28,9 @@ TetrahedralElement::TetrahedralElement( BasisBase const & GEOSX_UNUSED_PARAM( ba
                                         QuadratureBase const & GEOSX_UNUSED_PARAM( quadrature ),
                                         const int GEOSX_UNUSED_PARAM( num_zero_energy_modes ) ):
 //  FiniteElementBase( dim, quadrature.size(), basis.size(), num_zero_energy_modes)
-  FiniteElementBase( 3, 1, 4, 0)
+  FiniteElementBase( 3, 1, 4, 0 )
 {
-  m_nodeOrdering.resize(4);
+  m_nodeOrdering.resize( 4 );
 
   m_nodeOrdering[0] = 0;
   m_nodeOrdering[1] = 1;

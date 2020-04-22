@@ -29,14 +29,14 @@
 namespace geosx
 {
 
-template<int dim>
+template< int dim >
 class LagrangeBasis : public BasisBase
 {
 public:
   static string CatalogName()
   {
     string name = "LagrangeBasis";
-    name.append(std::to_string(dim));
+    name.append( std::to_string( dim ));
     return name;
   }
 
@@ -49,10 +49,10 @@ public:
   int size() const override final;
 
   double value( const int index,
-                const R1Tensor &point ) const override final;
+                const R1Tensor & point ) const override final;
 
   R1Tensor gradient( const int index,
-                     const R1Tensor &point ) const override final;
+                     const R1Tensor & point ) const override final;
 
   R1Tensor support_point( const int index ) override final;
 
@@ -66,7 +66,7 @@ private:
   int m_degree;
   int n_shape_functions;
 
-  std::vector<Polynomial> m_polynomials;
+  std::vector< Polynomial > m_polynomials;
 };
 }
 #endif

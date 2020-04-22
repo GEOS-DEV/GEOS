@@ -29,6 +29,12 @@
 namespace geosx
 {
 
+// Forward declarations
+namespace dataRepository
+{
+class Group;
+}
+
 class SchemaUtilities
 {
 public:
@@ -37,11 +43,12 @@ public:
 
   virtual ~SchemaUtilities();
 
-  static void ConvertDocumentationToSchema(std::string const & fname, dataRepository::Group * const group, integer documentationType);
-  
-  static void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot);
-  
-  static void SchemaConstruction(dataRepository::Group * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent, integer documentationType);
+  static void ConvertDocumentationToSchema( std::string const & fname, dataRepository::Group * const group, integer documentationType );
+
+  static void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot );
+
+  static void SchemaConstruction( dataRepository::Group * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent,
+                                  integer documentationType );
 
 };
 

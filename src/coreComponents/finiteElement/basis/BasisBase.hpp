@@ -47,15 +47,15 @@ public:
   static string CatalogName() { return "BasisBase"; }
 
   using CatalogInterface = dataRepository::CatalogInterface< BasisBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   virtual int size() const = 0;
 
   virtual double value( const int index,
-                        const R1Tensor &point ) const = 0;
+                        const R1Tensor & point ) const = 0;
 
   virtual R1Tensor gradient( const int index,
-                             const R1Tensor &point ) const = 0;
+                             const R1Tensor & point ) const = 0;
 
   virtual R1Tensor support_point( const int index ) = 0;
 

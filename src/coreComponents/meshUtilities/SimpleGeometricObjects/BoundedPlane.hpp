@@ -27,14 +27,14 @@ namespace geosx
 class BoundedPlane : public SimpleGeometricObjectBase
 {
 public:
-  BoundedPlane( const std::string& name,
-              Group * const parent );
+  BoundedPlane( const std::string & name,
+                Group * const parent );
 
   virtual ~BoundedPlane() override;
 
   static string CatalogName() { return "BoundedPlane"; }
 
-  bool IsCoordInObject( const R1Tensor& coord ) const override final;
+  bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
   void findRectangleLimits();
 
@@ -66,12 +66,12 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
-  R1Tensor             m_origin;
-  R1Tensor             m_normal;
-  R1Tensor             m_lengthVector;
-  R1Tensor             m_widthVector;
-  array1d < real64 >   m_dimensions;
-  array1d < R1Tensor > m_points;
+  R1Tensor m_origin;
+  R1Tensor m_normal;
+  R1Tensor m_lengthVector;
+  R1Tensor m_widthVector;
+  array1d< real64 >   m_dimensions;
+  array1d< R1Tensor > m_points;
 
   struct viewKeyStruct
   {
@@ -88,4 +88,3 @@ private:
 
 #endif /* SRC_COMPONENTS_CORE_SRC_MESHUTILITIES_SIMPLEGEOMETRICOBJECTS_BOUNDEDPLANE_HPP_
         */
-

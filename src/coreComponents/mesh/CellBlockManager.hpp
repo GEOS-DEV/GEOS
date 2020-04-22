@@ -76,18 +76,18 @@ public:
 
   CellBlock * GetRegion( string const & regionName )
   {
-    return this->GetGroup(dataRepository::keys::cellBlocks)->GetGroup<CellBlock>(regionName);
+    return this->GetGroup( dataRepository::keys::cellBlocks )->GetGroup< CellBlock >( regionName );
   }
 
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    Group * elementRegions = this->GetGroup(dataRepository::keys::cellBlocks);
-    elementRegions->forSubGroups<CellBlock>( lambda );
+    Group * elementRegions = this->GetGroup( dataRepository::keys::cellBlocks );
+    elementRegions->forSubGroups< CellBlock >( lambda );
   }
 private:
-  CellBlockManager( const CellBlockManager& );
-  CellBlockManager& operator=( const CellBlockManager&);
+  CellBlockManager( const CellBlockManager & );
+  CellBlockManager & operator=( const CellBlockManager & );
 
 
 };

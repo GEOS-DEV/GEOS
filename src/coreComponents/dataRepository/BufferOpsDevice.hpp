@@ -61,7 +61,7 @@ localIndex
 PackDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
             T const & GEOSX_UNUSED_PARAM( var ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << cxx_utilities::demangle< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR( "Trying to pack data type (" << cxx_utilities::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -79,7 +79,7 @@ PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
                    T const & GEOSX_UNUSED_PARAM( var ),
                    T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << cxx_utilities::demangle< T >() << ") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << cxx_utilities::demangleType< T >() << ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -95,7 +95,7 @@ localIndex
 UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
               T & GEOSX_UNUSED_PARAM( var ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << cxx_utilities::demangle< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR( "Trying to unpack data type (" << cxx_utilities::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -113,7 +113,7 @@ UnpackByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
                      T & GEOSX_UNUSED_PARAM( var ),
                      T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << cxx_utilities::demangle< T >() << ") but type is not packable by index." );
+  GEOSX_ERROR( "Trying to unpack data type (" << cxx_utilities::demangleType< T >() << ") but type is not packable by index." );
   return 0;
 }
 
