@@ -224,7 +224,7 @@ void DofManager::addField( string const & fieldName,
 // Just another interface to allow four parameters (no components)
 void DofManager::addField( string const & fieldName,
                            Location const location,
-                           string_array const & regions )
+                           arrayView1d< string const > const & regions )
 {
   addField( fieldName, location, 1, regions );
 }
@@ -233,7 +233,7 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            Location const location,
                            localIndex const components,
-                           string_array const & regions )
+                           arrayView1d< string const > const & regions )
 {
   GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
   GEOSX_ERROR_IF( fieldExists( fieldName ), "Requested field name '" << fieldName << "' already exists." );
@@ -252,7 +252,8 @@ void DofManager::addField( string const & fieldName,
 
   field.name = fieldName;
   field.location = location;
-  field.regions = regions;
+  field.regions.resize( regions.size() );
+  std::copy( regions.begin(), regions.end(), field.regions.begin() );
   field.numComponents = components;
   field.key = m_name + '_' + fieldName + "_dofIndex" + suffix;
   field.docstring = fieldName + " DoF indices";
@@ -648,7 +649,7 @@ namespace
 
 template< typename FIELD_OP, typename POLICY, typename VECTOR >
 void vectorToFieldImpl( VECTOR const & vector,
-                        ObjectManagerBase * const manager,
+                        ObjectManagerBase & manager,
                         string const & dofKey,
                         string const & fieldName,
                         real64 const scalingFactor,
@@ -656,12 +657,12 @@ void vectorToFieldImpl( VECTOR const & vector,
                         localIndex const loComp,
                         localIndex const hiComp )
 {
-  arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
+  arrayView1d< globalIndex const > const & indexArray = manager.getReference< array1d< globalIndex > >( dofKey );
+  arrayView1d< integer const > const & ghostRank = manager.ghostRank();
 
   real64 const * localVector = vector.extractLocalVector();
 
-  WrapperBase * const wrapper = manager->getWrapperBase( fieldName );
+  WrapperBase * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
@@ -693,7 +694,7 @@ void vectorToFieldImpl( VECTOR const & vector,
 
 template< typename FIELD_OP, typename POLICY, typename VECTOR >
 void fieldToVectorImpl( VECTOR & vector,
-                        ObjectManagerBase const * const manager,
+                        ObjectManagerBase const & manager,
                         string const & dofKey,
                         string const & fieldName,
                         real64 const GEOSX_UNUSED_PARAM( scalingFactor ),
@@ -701,12 +702,12 @@ void fieldToVectorImpl( VECTOR & vector,
                         localIndex const loComp,
                         localIndex const hiComp )
 {
-  arrayView1d< globalIndex const > const & indexArray = manager->getReference< array1d< globalIndex > >( dofKey );
-  arrayView1d< integer const > const & ghostRank = manager->ghostRank();
+  arrayView1d< globalIndex const > const & indexArray = manager.getReference< array1d< globalIndex > >( dofKey );
+  arrayView1d< integer const > const & ghostRank = manager.ghostRank();
 
   real64 * localVector = vector.extractLocalVector();
 
-  WrapperBase const * const wrapper = manager->getWrapperBase( fieldName );
+  WrapperBase const * const wrapper = manager.getWrapperBase( fieldName );
   GEOSX_ASSERT( wrapper != nullptr );
 
   rtTypes::ApplyArrayTypeLambda2( rtTypes::typeID( std::type_index( wrapper->get_typeid() ) ),
@@ -754,10 +755,12 @@ void DofManager::vectorToField( VECTOR const & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase & subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
+                                                                            [&]( localIndex const,
+                                                                                 ElementSubRegionBase & subRegion )
     {
       vectorToFieldImpl< FIELD_OP, POLICY >( vector,
-                                             &subRegion,
+                                             subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -829,10 +832,12 @@ void DofManager::fieldToVector( VECTOR & vector,
 
   if( fieldDesc.location == Location::Elem )
   {
-    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions, [&]( ElementSubRegionBase const & subRegion )
+    m_mesh->getElemManager()->forElementSubRegions< ElementSubRegionBase >( fieldDesc.regions,
+                                                                            [&]( localIndex const,
+                                                                                 ElementSubRegionBase const & subRegion )
     {
       fieldToVectorImpl< FIELD_OP, POLICY >( vector,
-                                             &subRegion,
+                                             subRegion,
                                              fieldDesc.key,
                                              dstFieldName,
                                              scalingFactor,
@@ -893,14 +898,15 @@ void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity )
 {
-  addCoupling( rowFieldName, colFieldName, connectivity, string_array(), true );
+  string_array dummy_regions;
+  addCoupling( rowFieldName, colFieldName, connectivity, dummy_regions, true );
 }
 
 // Just another interface to allow four parameters (no symmetry)
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity,
-                              string_array const & regions = string_array() )
+                              arrayView1d< string const > const & regions )
 {
   addCoupling( rowFieldName, colFieldName, connectivity, regions, true );
 }
@@ -911,14 +917,15 @@ void DofManager::addCoupling( string const & rowFieldName,
                               Connector const connectivity,
                               bool const symmetric )
 {
-  addCoupling( rowFieldName, colFieldName, connectivity, string_array(), symmetric );
+  string_array dummy_regions;
+  addCoupling( rowFieldName, colFieldName, connectivity, dummy_regions, symmetric );
 }
 
 // The real function, allowing the creation of coupling blocks
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity,
-                              string_array const & regions,
+                              arrayView1d< string const > const & regions,
                               bool const symmetric )
 {
   localIndex const rowFieldIndex = getFieldIndex( rowFieldName );
@@ -948,7 +955,8 @@ void DofManager::addCoupling( string const & rowFieldName,
   else
   {
     // Sort alphabetically and remove possible duplicates in user input
-    regionList = regions;
+    regionList.resize( regions.size() );
+    std::copy( regions.begin(), regions.end(), regionList.begin() );
     std::sort( regionList.begin(), regionList.end() );
     regionList.resize( std::distance( regionList.begin(), std::unique( regionList.begin(), regionList.end() ) ) );
 

@@ -44,11 +44,10 @@ TwoPhaseBase::TwoPhaseBase( const std::string & name,
 {
   m_numDofPerCell = 2;
 
-  this->registerWrapper( viewKeyStruct::relPermNameString, &m_relPermName, false )->
+  this->registerWrapper( viewKeyStruct::relPermNamesString, &m_relPermModelNames, false )->
     setInputFlag( InputFlags::REQUIRED )->
+    setSizedFromParent( 0 )->
     setDescription( "Name of the relative permeability constitutive model to use" );
-
-  this->registerWrapper( viewKeyStruct::relPermIndexString, &m_relPermIndex, false );
 
 }
 
@@ -58,11 +57,10 @@ void TwoPhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    forTargetSubRegions( meshLevel, [&]( localIndex const,
+                                         ElementSubRegionBase & subRegion )
     {
       // non-wetting phase pressure
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::pressureString )->setPlotLevel( PlotLevel::LEVEL_0 );
@@ -86,63 +84,63 @@ void TwoPhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
   }
 }
 
-void TwoPhaseBase::UpdateFluidModel( Group * const dataGroup ) const
+void TwoPhaseBase::UpdateFluidModel( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  MultiFluidBase * const fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidName );
+  MultiFluidBase & fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView1d< real64 const > const & pres =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
   real64 const dummyTemperature = 293.15;
   stackArray1d< real64, 2 > dummyCompFrac( 2 );
   dummyCompFrac = 0;
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-    fluid->PointUpdate( pres[a] + dPres[a], dummyTemperature, dummyCompFrac, a, 0 );
+    fluid.PointUpdate( pres[a] + dPres[a], dummyTemperature, dummyCompFrac, a, 0 );
   } );
 
 }
 
-void TwoPhaseBase::UpdateSolidModel( Group * const dataGroup ) const
+void TwoPhaseBase::UpdateSolidModel( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  ConstitutiveBase * const solid = GetConstitutiveModel< ConstitutiveBase >( dataGroup, m_solidName );
+  ConstitutiveBase & solid = GetConstitutiveModel< ConstitutiveBase >( dataGroup, m_solidModelNames[targetIndex] );
 
   arrayView1d< real64 const > const & pres =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres =
-    dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-    solid->StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
+    solid.StateUpdatePointPressure( pres[a] + dPres[a], a, 0 );
   } );
 }
 
-void TwoPhaseBase::UpdateRelPermModel( Group * const dataGroup ) const
+void TwoPhaseBase::UpdateRelPermModel( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  RelativePermeabilityBase * const relPerm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermName );
+  RelativePermeabilityBase & relPerm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
   arrayView2d< real64 const > const & phaseSat =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::phaseSatString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseSatString );
   arrayView2d< real64 const > const & dPhaseSat =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaPhaseSatString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaPhaseSatString );
 
   // ultimately, we may want to switch to old sat / new sat in the solvers as it seems more convenient
   arrayView2d< real64 > const & newPhaseSat =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::newPhaseSatString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::newPhaseSatString );
 
   localIndex constexpr numPhases = NUM_PHASES;
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
     for( localIndex ip = 0; ip < numPhases; ++ip )
     {
@@ -150,44 +148,44 @@ void TwoPhaseBase::UpdateRelPermModel( Group * const dataGroup ) const
     }
   } );
 
-  relPerm->BatchUpdate( newPhaseSat );
+  relPerm.BatchUpdate( newPhaseSat );
 }
 
-void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
+void TwoPhaseBase::UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MultiFluidBase * const fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidName );
+  MultiFluidBase & fluid = GetConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  RelativePermeabilityBase * const relPerm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermName );
+  RelativePermeabilityBase & relPerm = GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
   // phase relperms
   arrayView3d< real64 const > const & phaseRelPerm =
-    relPerm->getReference< array3d< real64 > >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString );
+    relPerm.getReference< array3d< real64 > >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString );
   arrayView4d< real64 const > const & dPhaseRelPerm_dSat =
-    relPerm->getReference< array4d< real64 > >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
+    relPerm.getReference< array4d< real64 > >( RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString );
 
   // phase densities
   arrayView3d< real64 const > const & phaseDens =
-    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseDensityString );
+    fluid.getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseDensityString );
   arrayView3d< real64 const > const & dPhaseDens_dPres =
-    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
+    fluid.getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString );
 
   // phase viscosities
   arrayView3d< real64 const > const & phaseVisc =
-    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseViscosityString );
+    fluid.getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseViscosityString );
   arrayView3d< real64 const > const & dPhaseVisc_dPres =
-    fluid->getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
+    fluid.getReference< array3d< real64 > >( MultiFluidBase::viewKeyStruct::dPhaseViscosity_dPressureString );
 
   // phase mobilities
   arrayView2d< real64 > const & phaseMob =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseMobilityString );
   arrayView2d< real64 > const & dPhaseMob_dPres =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dPressureString );
   arrayView2d< real64 > const & dPhaseMob_dSat =
-    dataGroup->getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dSaturationString );
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::dPhaseMobility_dSaturationString );
 
-  PhaseMobilityKernel::Launch( dataGroup->size(),
+  PhaseMobilityKernel::Launch( dataGroup.size(),
                                phaseDens,
                                dPhaseDens_dPres,
                                phaseVisc,
@@ -199,14 +197,14 @@ void TwoPhaseBase::UpdatePhaseMobility( Group * const dataGroup ) const
                                dPhaseMob_dSat );
 }
 
-void TwoPhaseBase::UpdateState( Group * dataGroup ) const
+void TwoPhaseBase::UpdateState( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  UpdateFluidModel( dataGroup );
-  UpdateSolidModel( dataGroup );
-  UpdateRelPermModel( dataGroup );
-  UpdatePhaseMobility( dataGroup );
+  UpdateFluidModel( dataGroup, targetIndex );
+  UpdateSolidModel( dataGroup, targetIndex );
+  UpdateRelPermModel( dataGroup, targetIndex );
+  UpdatePhaseMobility( dataGroup, targetIndex );
 }
 
 void TwoPhaseBase::PostProcessInput()
@@ -214,53 +212,73 @@ void TwoPhaseBase::PostProcessInput()
   FlowSolverBase::PostProcessInput();
 }
 
+namespace
+{
+
+template< typename MODEL1_TYPE, typename MODEL2_TYPE >
+void CompareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
+{
+  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidPhases(), TwoPhaseBase::NUM_PHASES,
+                         "The number of phases in constitutive model "
+                         << lhs.getName() << " should be two" );
+
+  GEOSX_ERROR_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
+                         "Mismatch in number of phases between constitutive models "
+                         << lhs.getName() << " and " << rhs.getName() );
+
+  for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
+  {
+    GEOSX_ERROR_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
+                           "Mismatch in phase names between constitutive models "
+                           << lhs.getName() << " and " << rhs.getName() );
+  }
+}
+
+}
+
+void TwoPhaseBase::ValidateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const
+{
+  MultiFluidBase const & fluid0 = *cm.GetConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
+
+  for( localIndex i = 1; i < m_fluidModelNames.size(); ++i )
+  {
+    MultiFluidBase const & fluid = *cm.GetConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[i] );
+    CompareMultiphaseModels( fluid, fluid0 );
+  }
+
+  RelativePermeabilityBase const & relPerm0 = *cm.GetConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[0] );
+  CompareMultiphaseModels( relPerm0, fluid0 );
+
+  for( localIndex i = 1; i < m_relPermModelNames.size(); ++i )
+  {
+    RelativePermeabilityBase const & relPerm = *cm.GetConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[i] );
+    CompareMultiphaseModels( relPerm, relPerm0 );
+  }
+}
+
 void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const & cm = *domain->getConstitutiveManager();
 
-  MultiFluidBase const * fluid = cm->GetConstitutiveRelation< MultiFluidBase >( m_fluidName );
+  // validate various models against each other (must have same phases and components)
+  ValidateConstitutiveModels( cm );
 
-  RelativePermeabilityBase const * relPerm = cm->GetConstitutiveRelation< RelativePermeabilityBase >( m_relPermName );
-  GEOSX_ERROR_IF( relPerm == nullptr, "Relative permeability model " + m_relPermName + " not found" );
-  m_relPermIndex = relPerm->getIndexInParent();
-
-  // this will be removed when Sergey's PR is merged
-
-  GEOSX_ERROR_IF( fluid->numFluidPhases() != 2,
-                  "Invalid number of fluid phases in fluid model '" << m_fluidName << "'" );
-
-  // Consistency check between the models
-  GEOSX_ERROR_IF( fluid->numFluidPhases() != relPerm->numFluidPhases(),
-                  "Number of fluid phases differs between fluid model '" << m_fluidName
-                                                                         << "' and relperm model '" << m_relPermName << "'" );
-
-  localIndex constexpr numPhases  = NUM_PHASES;
-  GEOSX_ERROR_IF( fluid->numFluidPhases() != numPhases,
-                  "Number of fluid phases differs between fluid model '" << m_fluidName
-                                                                         << "' and relperm model '" << m_relPermName << "'" );
-
-  for( localIndex ip = 0; ip < numPhases; ++ip )
-  {
-    string const & phase_fl = fluid->phaseName( ip );
-    string const & phase_rp = relPerm->phaseName( ip );
-    GEOSX_ERROR_IF( phase_fl != phase_rp, "Phase '" << phase_fl << "' in fluid model '"   << m_fluidName
-                                                    << "' does not match phase '"   << phase_rp << "' in relperm model '" << m_relPermName << "'" );
-  }
+  MultiFluidBase const & fluid = *cm.GetConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
 
   localIndex wettingPhaseSat = -1;
   localIndex nonWettingPhaseSat = -1;
   // determine the indices of the wetting and non-wetting phases
-  if( (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "gas") ||
-      (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "water") )
+  if( (fluid.phaseNames()[0] == "oil" && fluid.phaseNames()[1] == "gas") ||
+      (fluid.phaseNames()[1] == "oil" && fluid.phaseNames()[0] == "water") )
   {
     wettingPhaseSat    = 0;
     nonWettingPhaseSat = 1;
   }
-  else if( (fluid->phaseName( 1 ) == "oil" && fluid->phaseName( 0 ) == "gas") ||
-           (fluid->phaseName( 0 ) == "oil" && fluid->phaseName( 1 ) == "water") )
+  else if( (fluid.phaseNames()[1] == "oil" && fluid.phaseNames()[0] == "gas") ||
+           (fluid.phaseNames()[0] == "oil" && fluid.phaseNames()[1] == "water") )
   {
     wettingPhaseSat    = 1;
     nonWettingPhaseSat = 0;
@@ -268,23 +286,29 @@ void TwoPhaseBase::InitializePreSubGroups( Group * const rootGroup )
   GEOSX_ERROR_IF( wettingPhaseSat == -1 || nonWettingPhaseSat == -1,
                   "TwoPhaseBase: the accepted phase names are water, oil, and gas" );
 
-  // fill the array mapping the phase index to the row offset in the residual
+  // Fill the array mapping the phase index to the row offset in the residual
   m_phaseToRow.resize( NUM_PHASES );
   m_phaseToRow[wettingPhaseSat] = RowOffset::WETTING;
   m_phaseToRow[nonWettingPhaseSat] = RowOffset::NONWETTING;
 
+  // Resize all fields as necessary, validate constitutive models in regions
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     ResizeFields( meshLevel );
+
+    ValidateModelMapping< MultiFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    ValidateModelMapping< RelativePermeabilityBase >( *meshLevel.getElemManager(), m_relPermModelNames );
+
   }
 }
 
-void TwoPhaseBase::ResizeFields( MeshLevel * const meshLevel )
+void TwoPhaseBase::ResizeFields( MeshLevel & meshLevel )
 {
   localIndex constexpr numPhases = NUM_PHASES;
 
-  applyToSubRegions( meshLevel, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( meshLevel, [&] ( localIndex const,
+                                        ElementSubRegionBase & subRegion )
   {
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::phaseSatString ).resizeDimension< 1 >( numPhases );
     subRegion.getReference< array2d< real64 > >( viewKeyStruct::newPhaseSatString ).resizeDimension< 1 >( numPhases );
@@ -316,28 +340,22 @@ void TwoPhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const r
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
-
-  // TODO find a way to set this before constitutive model is duplicated and attached to subregions?
+  // set mass fraction flag on fluid models
+  forTargetSubRegions( *mesh, [&]( localIndex const targetIndex,
+                                   ElementSubRegionBase & subRegion )
   {
-    MultiFluidBase * const fluid = constitutiveManager->GetConstitutiveRelation< MultiFluidBase >( m_fluidName );
-    fluid->setMassFlag( static_cast< bool >(true) );
-  }
-
-  // set mass fraction flag on subregion models
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
-  {
-    MultiFluidBase * const fluid = GetConstitutiveModel< MultiFluidBase >( &subRegion, m_fluidName );
-    fluid->setMassFlag( static_cast< bool >(true) );
+    MultiFluidBase & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+    fluid.setMassFlag( static_cast< bool >(true) );
   } );
 
   // initialize primary variables from applied initial conditions
   ResetViews( domain );
 
   // initialize fluid state
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( *mesh, [&]( localIndex const targetIndex,
+                                   ElementSubRegionBase & subRegion )
   {
-    UpdateState( &subRegion );
+    UpdateState( subRegion, targetIndex );
   } );
 }
 
@@ -390,11 +408,14 @@ void TwoPhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase &,
-                                         ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&] ( localIndex const,
+                                     localIndex const er,
+                                     localIndex const esr,
+                                     ElementRegionBase &,
+                                     ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const & dPres = m_deltaPressure[er][esr];
     arrayView2d< real64 const > const & dPhaseSat = m_deltaPhaseSat[er][esr];
@@ -464,16 +485,19 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex constexpr numDof = NUM_DOF;
   localIndex constexpr numPhases = NUM_PHASES;
 
   string const dofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
 
-  applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase const &,
-                                         ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&] ( localIndex const,
+                                     localIndex const er,
+                                     localIndex const esr,
+                                     ElementRegionBase const &,
+                                     ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
@@ -481,20 +505,20 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
 
     arrayView1d< real64 const > const & volume           = m_volume[er][esr];
     arrayView1d< real64 const > const & porosityRef      = m_porosityRef[er][esr];
-    arrayView2d< real64 const > const & pvMult           = m_pvMult[er][esr][m_solidIndex];
-    arrayView2d< real64 const > const & dPvMult_dPres    = m_dPvMult_dPres[er][esr][m_solidIndex];
+    arrayView2d< real64 const > const & pvMult           = m_pvMult[er][esr];
+    arrayView2d< real64 const > const & dPvMult_dPres    = m_dPvMult_dPres[er][esr];
 
     arrayView2d< real64 const > const & phaseSat         = m_phaseSat[er][esr];
     arrayView2d< real64 const > const & dPhaseSat        = m_deltaPhaseSat[er][esr];
 
-    arrayView3d< real64 const > const & phaseDens        = m_phaseDens[er][esr][m_fluidIndex];
-    arrayView3d< real64 const > const & dPhaseDens_dPres = m_dPhaseDens_dPres[er][esr][m_fluidIndex];
+    arrayView3d< real64 const > const & phaseDens        = m_phaseDens[er][esr];
+    arrayView3d< real64 const > const & dPhaseDens_dPres = m_dPhaseDens_dPres[er][esr];
 
     arrayView1d< real64 const > const & porosityOld      = m_porosityOld[er][esr];
     arrayView2d< real64 const > const & phaseDensOld     = m_phaseDensOld[er][esr];
 
-    localIndex const dp = ColOffset::DPRES;
-    localIndex const dS = ColOffset::DSAT;
+    localIndex const dPres = ColOffset::DPRES;
+    localIndex const dSat  = ColOffset::DSAT;
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
@@ -521,8 +545,8 @@ void TwoPhaseBase::AssembleAccumulationTerms( DomainPartition const * const doma
                                      localAccumJacobian );
 
         // dof numbers
-        dofColIndices[dp] = dofNumber[ei] + dp;
-        dofColIndices[dS] = dofNumber[ei] + dS;
+        dofColIndices[dPres] = dofNumber[ei] + dPres;
+        dofColIndices[dSat] = dofNumber[ei] + dSat;
 
         for( localIndex ip = 0; ip < numPhases; ++ip )
         {
@@ -550,15 +574,18 @@ bool TwoPhaseBase::CheckSystemSolution( DomainPartition const * const domain,
                                         ParallelVector const & solution,
                                         real64 const scalingFactor )
 {
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   real64 const * localSolution = solution.extractLocalVector();
   int localCheck = 1;
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
 
-  applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase const &,
-                                         ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&] ( localIndex const,
+                                     localIndex const er,
+                                     localIndex const esr,
+                                     ElementRegionBase const &,
+                                     ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & elemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( elemDofKey );
@@ -599,9 +626,7 @@ bool TwoPhaseBase::CheckSystemSolution( DomainPartition const * const domain,
     } );
   } );
 
-  int const globalCheck = MpiWrapper::Min( localCheck );
-
-  return globalCheck;
+  return MpiWrapper::Min( localCheck, MPI_COMM_GEOSX );
 }
 
 
@@ -621,11 +646,14 @@ void TwoPhaseBase::SolveSystem( DofManager const & dofManager,
 
 void TwoPhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegionsComplete( mesh, [&] ( localIndex er, localIndex esr,
-                                         ElementRegionBase &,
-                                         ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&] ( localIndex const,
+                                     localIndex const er,
+                                     localIndex const esr,
+                                     ElementRegionBase &,
+                                     ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 > const & dPres = m_deltaPressure[er][esr];
     arrayView2d< real64 > const & dPhaseSat  = m_deltaPhaseSat[er][esr];
@@ -637,7 +665,12 @@ void TwoPhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
       dPhaseSat[ei][1] = 0.0;
     } );
 
-    UpdateState( &subRegion );
+  } );
+
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
+  {
+    UpdateState( subRegion, targetIndex );
   } );
 }
 
@@ -648,7 +681,6 @@ void TwoPhaseBase::ResetViews( DomainPartition * const domain )
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   // primary variables
   m_pressure =
@@ -668,23 +700,31 @@ void TwoPhaseBase::ResetViews( DomainPartition * const domain )
   m_dPhaseMob_dSat =
     elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( viewKeyStruct::dPhaseMobility_dSaturationString );
 
-  m_pvMult =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
-      ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString,
-      constitutiveManager );
-  m_dPvMult_dPres =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
-      ConstitutiveBase::viewKeyStruct::dPVMult_dPresString,
-      constitutiveManager );
+  {
+    using keys = ConstitutiveBase::viewKeyStruct;
 
-  m_phaseDens =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
-      MultiFluidBase::viewKeyStruct::phaseDensityString,
-      constitutiveManager );
-  m_dPhaseDens_dPres =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
-      MultiFluidBase::viewKeyStruct::dPhaseDensity_dPressureString,
-      constitutiveManager );
+    m_pvMult =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::poreVolumeMultiplierString,
+                                                                                              targetRegionNames(),
+                                                                                              solidModelNames() );
+    m_dPvMult_dPres =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dPVMult_dPresString,
+                                                                                              targetRegionNames(),
+                                                                                              solidModelNames() );
+  }
+
+  {
+    using keys = MultiFluidBase::viewKeyStruct;
+
+    m_phaseDens =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::phaseDensityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dPhaseDens_dPres =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::dPhaseDensity_dPressureString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+  }
 
   // backup data
   m_porosityOld =
@@ -696,22 +736,25 @@ void TwoPhaseBase::ResetViews( DomainPartition * const domain )
 
 void TwoPhaseBase::BackupFields( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex constexpr numPhases  = NUM_PHASES;
 
   // backup some fields used in time derivative approximation
-  applyToSubRegionsComplete( mesh, [&] ( localIndex const er, localIndex const esr,
-                                         ElementRegionBase &,
-                                         ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&] ( localIndex const,
+                                     localIndex const er,
+                                     localIndex const esr,
+                                     ElementRegionBase &,
+                                     ElementSubRegionBase & subRegion )
   {
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
     arrayView1d< real64 const > const & poroRef   = m_porosityRef[er][esr];
     arrayView1d< real64 > const & poroOld         = m_porosityOld[er][esr];
-    arrayView2d< real64 const > const & pvMult    = m_pvMult[er][esr][m_solidIndex];
+    arrayView2d< real64 const > const & pvMult    = m_pvMult[er][esr];
 
-    arrayView3d< real64 const > const & phaseDens = m_phaseDens[er][esr][m_fluidIndex];
+    arrayView3d< real64 const > const & phaseDens = m_phaseDens[er][esr];
     arrayView2d< real64 > const & phaseDensOld    = m_phaseDensOld[er][esr];
 
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )

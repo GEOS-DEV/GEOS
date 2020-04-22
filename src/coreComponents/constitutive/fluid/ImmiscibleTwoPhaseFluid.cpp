@@ -69,23 +69,20 @@ void ImmiscibleTwoPhaseFluid::DeliverClone( string const & name,
                                             Group * const parent,
                                             std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< ImmiscibleTwoPhaseFluid > newModel = std::make_unique< ImmiscibleTwoPhaseFluid >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< ImmiscibleTwoPhaseFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidBase::DeliverClone( name, parent, clone );
+  ImmiscibleTwoPhaseFluid & fluid = dynamicCast< ImmiscibleTwoPhaseFluid & >( *clone );
 
-  newModel->m_componentNames          = this->m_componentNames;
-  newModel->m_componentMolarWeight    = this->m_componentMolarWeight;
-  newModel->m_phaseNames              = this->m_phaseNames;
+  fluid.m_phaseCompressibility  = m_phaseCompressibility;
+  fluid.m_phaseViscosibility    = m_phaseViscosibility;
 
-  newModel->m_phaseCompressibility    = this->m_phaseCompressibility;
-  newModel->m_phaseViscosibility      = this->m_phaseViscosibility;
-
-  newModel->m_referencePhaseDensity   = this->m_referencePhaseDensity;
-  newModel->m_referencePhaseViscosity = this->m_referencePhaseViscosity;
-  newModel->m_referencePressure       = this->m_referencePressure;
-
-  clone = std::move( newModel );
-
+  fluid.m_referencePhaseDensity   = m_referencePhaseDensity;
+  fluid.m_referencePhaseViscosity = m_referencePhaseViscosity;
+  fluid.m_referencePressure       = m_referencePressure;
 }
 
 

@@ -140,13 +140,6 @@ public:
     static constexpr auto referencePhaseViscosityString = "referencePhaseViscosity";
     static constexpr auto referencePressureString       = "referencePressure";
 
-    dataRepository::ViewKey phaseCompressibility    = { phaseCompressibilityString  };
-    dataRepository::ViewKey phaseViscosibility      = { phaseViscosibilityString    };
-
-    dataRepository::ViewKey referencePhaseDensity   = { referencePhaseDensityString   };
-    dataRepository::ViewKey referencePhaseViscosity = { referencePhaseViscosityString };
-    dataRepository::ViewKey referencePressure       = { referencePressureString       };
-
   } viewKeysImmiscibleTwoPhaseFluid;
 
 

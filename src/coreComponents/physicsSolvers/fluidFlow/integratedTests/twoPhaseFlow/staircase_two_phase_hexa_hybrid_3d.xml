@@ -6,11 +6,11 @@
     <TwoPhaseHybridFVM name="twoPhaseFlow"
                        logLevel="1"
                        discretization="fluidTPFA"
-                       fluidName="fluid1"
-                       solidName="rock"
-                       relPermName="relperm"
-                       initialDt="1e3"
-                       targetRegions="{Channel}">
+                       targetRegions="{Channel}"
+                       fluidNames="{fluid1}"
+                       solidNames="{rock}"
+                       relPermNames="{relperm}"
+                       initialDt="1e3">
       <NonlinearSolverParameters lineSearchAction="1"
                                  newtonTol="1.0e-8"
                                  newtonMaxIter="15"/>

@@ -135,8 +135,6 @@ public:
 
   /**
    * @brief assembles the accumulation terms for all cells
-   * @param time_n previous time value
-   * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param matrix the system matrix
@@ -171,14 +169,16 @@ public:
   /**
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
+   * @param targetIndex index for the constitutive models
    */
-  void UpdateState( Group * dataGroup ) const;
+  void UpdateState( Group & dataGroup, localIndex const targetIndex );
 
   /**
-   * @brief Function to update all constitutive models
+   * @brief Function to update the fluid constitutive model
    * @param dataGroup group that contains the fields
+   * @param targetIndex index for the fluid constitutive model
    */
-  void UpdateFluidModel( Group * const dataGroup ) const;
+  void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex );
 
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
@@ -186,8 +186,7 @@ public:
     static constexpr auto elemDofFieldString = "elemVariables";
 
     // inputs
-    static constexpr auto relPermNameString  = "relPermName";
-    static constexpr auto relPermIndexString = "relPermIndex";
+    static constexpr auto relPermNamesString  = "relPermNames";
 
     // primary variables
     static constexpr auto phaseSatString = "phaseSaturation";
@@ -232,28 +231,36 @@ protected:
    * @brief Resize the allocated multidimensional fields
    * @param domain the domain containing the mesh and fields
    *
-   * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
-   * once the number of phases/components is known (e.g. component fractions)
+   * Resize fields along dimension 1 (0 is the size of containing object, i.e. element subregion)
    */
-  virtual void ResizeFields( MeshLevel * const meshLevel );
+  virtual void ResizeFields( MeshLevel & meshLevel );
+
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param cm        reference to the global constitutive model manager
+   */
+  void ValidateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Function to update the solid model
    * @param dataGroup group that contains the fields
+   * @param targetIndex index for the solid constitutive model
    */
-  void UpdateSolidModel( Group * const dataGroup ) const;
+  void UpdateSolidModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
+   * @param targetIndex index for the fluid and relperm constitutive models
    */
-  void UpdatePhaseMobility( Group * const dataGroup ) const;
+  void UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update relative permeability
    * @param dataGroup the group storing the required fields
+   * @param targetIndex index for the relperm constitutive model
    */
-  void UpdateRelPermModel( Group * const dataGroup ) const;
+  void UpdateRelPermModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -265,6 +272,12 @@ protected:
    * @brief Setup stored views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
+
+  /// name of the rel perm constitutive model
+  array1d< string > m_relPermModelNames;
+
+  /// map from the phase indices to the row indices
+  array1d< localIndex > m_phaseToRow;
 
   /// views into primary variable fields
 
@@ -282,25 +295,16 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dPres;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dSat;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_pvMult;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseDens;
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
 
   /// views into backup fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosityOld;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseDensOld;
-
-  /// name of the rel perm constitutive model
-  string m_relPermName;
-
-  /// index of the rel perm constitutive model
-  localIndex m_relPermIndex;
-
-  /// map from the phase indices to the row indices
-  array1d< localIndex > m_phaseToRow;
 
 };
 

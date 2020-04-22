@@ -7,10 +7,10 @@
                        logLevel="1"
                        discretization="fluidTPFA"
                        targetRegions="{Region1}"
-                       fluidName="fluid1"
-                       solidName="rock"
-                       initialDt="1e3"
-                       relPermName="relperm">
+                       fluidNames="{fluid1}"
+                       solidNames="{rock}"
+                       relPermNames="{relperm}"
+                       initialDt="1e3">
       <NonlinearSolverParameters lineSearchAction="0"
                                  newtonTol="1.0e-10"
                                  newtonMaxIter="15"/>

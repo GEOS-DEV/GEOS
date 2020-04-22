@@ -4,7 +4,9 @@
 #
 
 set( gtest_geosx_tests
-     testSinglePhaseKernels.cpp
+     testSinglePhaseBaseKernels.cpp
+     testSinglePhaseFVMKernels.cpp     
+     testSinglePhaseHybridFVMKernels.cpp
      testTwoPhaseBaseKernels.cpp          
      testTwoPhaseHybridFVMKernels.cpp     
    )

@@ -36,34 +36,34 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView2d< real64 const > con
                                                  real64 const & dElemPres,
                                                  real64 const & elemGravCoef,
                                                  arraySlice1d< real64 const > const elemDens,
-                                                 arraySlice1d< real64 const > const dElemDens_dp,
+                                                 arraySlice1d< real64 const > const dElemDens_dPres,
                                                  stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
                                                                *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
-                                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & volFlux,
-                                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dVolFlux_dp,
-                                                 stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dVolFlux_dS,
-                                                 stackArray3d< real64,
-                                                               TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES > & dVolFlux_dfp )
+                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & volFlux,
+                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & dVolFlux_dPres,
+                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & dVolFlux_dSat,
+                                                 stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES
+                                                               *TwoPhaseBase::NUM_PHASES > & dVolFlux_dFacePres )
 {
   localIndex constexpr numPhases   = TwoPhaseBase::NUM_PHASES;
   localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
   localIndex const numFacesInElem = elemToFaces.size();
 
-  volFlux      = 0;
-  dVolFlux_dp  = 0;
-  dVolFlux_dS  = 0;
-  dVolFlux_dfp = 0;
+  volFlux = 0;
+  dVolFlux_dPres = 0;
+  dVolFlux_dSat = 0;
+  dVolFlux_dFacePres = 0;
 
   // this is going to store \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-  stackArray2d< real64, numPhases *maxNumFaces > potDif( numFacesInElem, numPhases );
-  stackArray2d< real64, numPhases *maxNumFaces > dPotDif_dp( numFacesInElem, numPhases );
-  stackArray2d< real64, numPhases *maxNumFaces > dPotDif_dS( numFacesInElem, numPhases );
-  stackArray2d< real64, numPhases *maxNumFaces > dPotDif_dfp( numFacesInElem, numPhases );
-  potDif      = 0;
-  dPotDif_dp  = 0;
-  dPotDif_dS  = 0;
-  dPotDif_dfp = 0;
+  stackArray2d< real64, maxNumFaces *numPhases > potDif( numFacesInElem, numPhases );
+  stackArray2d< real64, maxNumFaces *numPhases > dPotDif_dPres( numFacesInElem, numPhases );
+  stackArray2d< real64, maxNumFaces *numPhases > dPotDif_dSat( numFacesInElem, numPhases );
+  stackArray2d< real64, maxNumFaces *numPhases > dPotDif_dFacePres( numFacesInElem, numPhases );
+  potDif = 0;
+  dPotDif_dPres = 0;
+  dPotDif_dSat = 0;
+  dPotDif_dFacePres = 0;
 
   // 1) precompute the potential difference at each one-sided face
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
@@ -76,26 +76,26 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView2d< real64 const > con
     for( localIndex ip = 0; ip < numPhases; ++ip )
     {
       // cell centered phase pressure and gravity terms
-      real64 const phasePres         = elemPres + dElemPres;
-      real64 const dPhasePres_dp     = 1;
-      real64 const dPhasePres_dS     = 0; // for capillary pressure
-      real64 const phaseGravTerm     = elemDens[ip] * depthDif;
-      real64 const dPhaseGravTerm_dp = dElemDens_dp[ip] * depthDif;
+      real64 const phasePres = elemPres + dElemPres;
+      real64 const dPhasePres_dPres = 1;
+      real64 const dPhasePres_dSat  = 0; // for capillary pressure
+      real64 const phaseGravTerm    = elemDens[ip] * depthDif;
+      real64 const dPhaseGravTerm_dPres = dElemDens_dPres[ip] * depthDif;
 
       // cell centered phase potential
-      real64 const phasePotential     = phasePres - phaseGravTerm;
-      real64 const dPhasePotential_dp = dPhasePres_dp - dPhaseGravTerm_dp;
-      real64 const dPhasePotential_dS = dPhasePres_dS;
+      real64 const phasePotential = phasePres - phaseGravTerm;
+      real64 const dPhasePotential_dPres = dPhasePres_dPres - dPhaseGravTerm_dPres;
+      real64 const dPhasePotential_dSat  = dPhasePres_dSat;
 
       // face phase potential
       real64 const facePhasePotential = facePotential[elemToFaces[ifaceLoc]][ip]
                                         + dFacePotential[elemToFaces[ifaceLoc]][ip];
 
       // phase potential difference
-      potDif[ifaceLoc][ip]      = phasePotential - facePhasePotential;
-      dPotDif_dp[ifaceLoc][ip]  = dPhasePotential_dp;
-      dPotDif_dS[ifaceLoc][ip]  = dPhasePotential_dS;
-      dPotDif_dfp[ifaceLoc][ip] = -1;
+      potDif[ifaceLoc][ip] = phasePotential - facePhasePotential;
+      dPotDif_dPres[ifaceLoc][ip] = dPhasePotential_dPres;
+      dPotDif_dSat[ifaceLoc][ip]  = dPhasePotential_dSat;
+      dPotDif_dFacePres[ifaceLoc][ip] = -1;
     }
   }
 
@@ -112,10 +112,10 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView2d< real64 const > con
       for( localIndex ip = 0; ip < numPhases; ++ip )
       {
         // this is going to store T (\nabla p_{\ell} - \rho_p_{\ell} g \nabla d)
-        volFlux[ifaceLoc][ip]                += transMatrix[ifaceLoc][jfaceLoc] * potDif[jfaceLoc][ip];
-        dVolFlux_dp[ifaceLoc][ip]            += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dp[jfaceLoc][ip];
-        dVolFlux_dS[ifaceLoc][ip]            += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dS[jfaceLoc][ip];
-        dVolFlux_dfp[ifaceLoc][jfaceLoc][ip] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dfp[jfaceLoc][ip];
+        volFlux[ifaceLoc][ip]        += transMatrix[ifaceLoc][jfaceLoc] * potDif[jfaceLoc][ip];
+        dVolFlux_dPres[ifaceLoc][ip] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dPres[jfaceLoc][ip];
+        dVolFlux_dSat[ifaceLoc][ip]  += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dSat[jfaceLoc][ip];
+        dVolFlux_dFacePres[ifaceLoc][jfaceLoc][ip] += transMatrix[ifaceLoc][jfaceLoc] * dPotDif_dFacePres[jfaceLoc][ip];
       }
     }
   }
@@ -128,15 +128,15 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const &
                                                    SortedArray< localIndex > const & regionFilter,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & mob,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dMob_dp,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dMob_dS,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dMob_dPres,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dMob_dSat,
                                                    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
                                                    stackArray1d< localIndex, 3 > const & elemIds,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & volFlux,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dS,
-                                                   stackArray2d< globalIndex, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > & upwDofNumber,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & volFlux,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & upwMobility,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & dUpwMobility_dPres,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & dUpwMobility_dSat,
+                                                   stackArray2d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > & upwDofNumber,
                                                    stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & neighborDofNumber )
 {
 
@@ -189,10 +189,10 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const &
       globalIndex const dofNumber = neighborIsUpw * neighborDofNumber[ifaceLoc]
                                     + (1-neighborIsUpw) * elemDofNumber[er][esr][ei];
 
-      upwMobility[ifaceLoc][ip]     = mob[erUpw][esrUpw][eiUpw][ip];
-      dUpwMobility_dp[ifaceLoc][ip] = dMob_dp[erUpw][esrUpw][eiUpw][ip];
-      dUpwMobility_dS[ifaceLoc][ip] = dMob_dS[erUpw][esrUpw][eiUpw][ip];
-      upwDofNumber[ifaceLoc][ip]    = dofNumber;
+      upwMobility[ifaceLoc][ip]        = mob[erUpw][esrUpw][eiUpw][ip];
+      dUpwMobility_dPres[ifaceLoc][ip] = dMob_dPres[erUpw][esrUpw][eiUpw][ip];
+      dUpwMobility_dSat[ifaceLoc][ip]  = dMob_dSat[erUpw][esrUpw][eiUpw][ip];
+      upwDofNumber[ifaceLoc][ip]       = dofNumber;
     }
   }
 }
@@ -202,15 +202,19 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    globalIndex const elemDofNumber,
                                                    array1d< localIndex > const & phaseToRow,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & volFlux,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dp,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dS,
-                                                   stackArray3d< real64,
-                                                                 TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dfp,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & upwMobility,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dUpwMobility_dp,
-                                                   stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dUpwMobility_dS,
-                                                   stackArray2d< globalIndex, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & upwDofNumber,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & volFlux,
+                                                   stackArray2d< real64,
+                                                                 HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dPres,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dSat,
+                                                   stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES
+                                                                 *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dFacePres,
+                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & upwMobility,
+                                                   stackArray2d< real64,
+                                                                 HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dUpwMobility_dPres,
+                                                   stackArray2d< real64,
+                                                                 HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dUpwMobility_dSat,
+                                                   stackArray2d< globalIndex,
+                                                                 HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & upwDofNumber,
                                                    stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > const & neighborDofNumber,
                                                    ParallelMatrix * const matrix,
                                                    ParallelVector * const rhs )
@@ -219,8 +223,8 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   localIndex constexpr numPhases   = TwoPhaseBase::NUM_PHASES;
   localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
 
-  localIndex constexpr dp = TwoPhaseBase::ColOffset::DPRES;
-  localIndex constexpr dS = TwoPhaseBase::ColOffset::DSAT;
+  localIndex constexpr dPres = TwoPhaseBase::ColOffset::DPRES;
+  localIndex constexpr dSat = TwoPhaseBase::ColOffset::DSAT;
 
   localIndex const numFacesInElem = elemToFaces.size();
 
@@ -228,10 +232,10 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   stackArray1d< globalIndex, numPhases >               eqnRowIndices( numPhases );
   stackArray1d< globalIndex, numDof *(1+maxNumFaces) > elemDofColIndices( numDof * (1+numFacesInElem) );
   stackArray1d< globalIndex, numPhases * maxNumFaces > faceDofColIndices( numPhases * numFacesInElem );
-  eqnRowIndices[0]      = elemDofNumber + phaseToRow[0];
-  eqnRowIndices[1]      = elemDofNumber + phaseToRow[1];
-  elemDofColIndices[dp] = elemDofNumber + dp;
-  elemDofColIndices[dS] = elemDofNumber + dS;
+  eqnRowIndices[0] = elemDofNumber + phaseToRow[0];
+  eqnRowIndices[1] = elemDofNumber + phaseToRow[1];
+  elemDofColIndices[dPres] = elemDofNumber + dPres;
+  elemDofColIndices[dSat]  = elemDofNumber + dSat;
 
   // fluxes
   stackArray1d< real64, numPhases >                          sumLocalMassFluxes( numPhases );
@@ -252,32 +256,32 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
       sumLocalMassFluxes[ip] += dt * upwMobility[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
 
       // 2) derivatives wrt the elem centered vars of the local elem
-      dSumLocalMassFluxes_dElemVars[ip][dp] += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dp[ifaceLoc][ip];
-      dSumLocalMassFluxes_dElemVars[ip][dS] += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dS[ifaceLoc][ip];
+      dSumLocalMassFluxes_dElemVars[ip][dPres] += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dPres[ifaceLoc][ip];
+      dSumLocalMassFluxes_dElemVars[ip][dSat]  += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dSat[ifaceLoc][ip];
 
       // 3) derivatives of the upwinded mobilities
       if( upwDofNumber[ifaceLoc][ip] == elemDofNumber )
       {
-        dSumLocalMassFluxes_dElemVars[ip][dp] += dt * dUpwMobility_dp[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
-        dSumLocalMassFluxes_dElemVars[ip][dS] += dt * dUpwMobility_dS[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
+        dSumLocalMassFluxes_dElemVars[ip][dPres] += dt * dUpwMobility_dPres[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
+        dSumLocalMassFluxes_dElemVars[ip][dSat]  += dt * dUpwMobility_dSat[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
       }
       else
       {
-        dSumLocalMassFluxes_dElemVars[ip][elemVarsOffset+dp] = dt * dUpwMobility_dp[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
-        dSumLocalMassFluxes_dElemVars[ip][elemVarsOffset+dS] = dt * dUpwMobility_dS[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
+        dSumLocalMassFluxes_dElemVars[ip][elemVarsOffset+dPres] = dt * dUpwMobility_dPres[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
+        dSumLocalMassFluxes_dElemVars[ip][elemVarsOffset+dSat]  = dt * dUpwMobility_dSat[ifaceLoc][ip] * volFlux[ifaceLoc][ip];
       }
 
       // 4) derivatives wrt the face centered var
       for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
       {
         localIndex const faceVarsOffset = numPhases*jfaceLoc;
-        dSumLocalMassFluxes_dFaceVars[ip][faceVarsOffset + ip] += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dfp[ifaceLoc][jfaceLoc][ip];
+        dSumLocalMassFluxes_dFaceVars[ip][faceVarsOffset + ip] += dt * upwMobility[ifaceLoc][ip] * dVolFlux_dFacePres[ifaceLoc][jfaceLoc][ip];
       }
     }
 
     // collect the relevant dof numbers
-    elemDofColIndices[elemVarsOffset+dp] = neighborDofNumber[ifaceLoc] + dp;
-    elemDofColIndices[elemVarsOffset+dS] = neighborDofNumber[ifaceLoc] + dS;
+    elemDofColIndices[elemVarsOffset+dPres] = neighborDofNumber[ifaceLoc] + dPres;
+    elemDofColIndices[elemVarsOffset+dSat] = neighborDofNumber[ifaceLoc] + dSat;
 
     localIndex const faceVarsOffset = numPhases*ifaceLoc;
     faceDofColIndices[faceVarsOffset] = faceDofNumber[elemToFaces[ifaceLoc]];
@@ -304,11 +308,11 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
 void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                                             arraySlice1d< localIndex const > const elemToFaces,
                                             globalIndex const elemDofNumber,
-                                            stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & volFlux,
-                                            stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dp,
-                                            stackArray2d< real64, TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dS,
-                                            stackArray3d< real64,
-                                                          TwoPhaseBase::NUM_PHASES *HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES > const & dVolFlux_dfp,
+                                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & volFlux,
+                                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dPres,
+                                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dSat,
+                                            stackArray3d< real64, HybridFVMInnerProduct::MAX_NUM_FACES *HybridFVMInnerProduct::MAX_NUM_FACES
+                                                          *TwoPhaseBase::NUM_PHASES > const & dVolFlux_dFacePres,
                                             ParallelMatrix * const matrix,
                                             ParallelVector * const rhs )
 {
@@ -318,16 +322,16 @@ void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
 
   localIndex const numFacesInElem = elemToFaces.size();
 
-  localIndex const dp = TwoPhaseBase::ColOffset::DPRES;
-  localIndex const dS = TwoPhaseBase::ColOffset::DSAT;
+  localIndex const dPres = TwoPhaseBase::ColOffset::DPRES;
+  localIndex const dSat = TwoPhaseBase::ColOffset::DSAT;
 
   // dof numbers
   stackArray1d< globalIndex, numPhases > eqnRowIndices( numPhases );
   stackArray1d< globalIndex, numPhases *numDof > elemDofColIndices( numDof );
   stackArray1d< globalIndex, numPhases *maxNumFaces > faceDofColIndices( numPhases*numFacesInElem );
 
-  elemDofColIndices[dp] = elemDofNumber + dp;
-  elemDofColIndices[dS] = elemDofNumber + dS;
+  elemDofColIndices[dPres] = elemDofNumber + dPres;
+  elemDofColIndices[dSat] = elemDofNumber + dSat;
 
   // fluxes
   stackArray1d< real64, numPhases > flux( numPhases );
@@ -347,14 +351,14 @@ void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
 
       // fluxes
       flux[ip] = volFlux[ifaceLoc][ip];
-      dFlux_dElemVars[ip][dp] = dVolFlux_dp[ifaceLoc][ip];
-      dFlux_dElemVars[ip][dS] = dVolFlux_dS[ifaceLoc][ip];
+      dFlux_dElemVars[ip][dPres] = dVolFlux_dPres[ifaceLoc][ip];
+      dFlux_dElemVars[ip][dSat] = dVolFlux_dSat[ifaceLoc][ip];
 
       for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
       {
         localIndex const faceVarsOffset = numPhases*jfaceLoc;
         faceDofColIndices[faceVarsOffset+ip] = faceDofNumber[elemToFaces[jfaceLoc]] + ip;
-        dFlux_dFaceVars[ip][faceVarsOffset+ip] = dVolFlux_dfp[ifaceLoc][jfaceLoc][ip];
+        dFlux_dFaceVars[ip][faceVarsOffset+ip] = dVolFlux_dFacePres[ifaceLoc][jfaceLoc][ip];
       }
     }
 

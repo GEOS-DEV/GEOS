@@ -14,8 +14,6 @@
 
 // Source includes
 #include "managers/initialization.hpp"
-#include "common/Logger.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testFlowKernelHelpers.hpp"
 
@@ -23,81 +21,8 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseBaseKernels;
 using namespace geosx::SinglePhaseFVMKernels;
 
-
-TEST( SinglePhaseKernels, mobility )
-{
-  int constexpr NTEST = 3;
-
-  real64 const dens[NTEST]        = { 800.0, 1000.0, 1500.0 };
-  real64 const dDens_dPres[NTEST] = { 1e-5, 1e-10, 0.0    };
-  real64 const visc[NTEST]        = { 5.0, 2.0, 1.0    };
-  real64 const dVisc_dPres[NTEST] = { 1e-7, 0.0, 0.0    };
-
-  for( int i = 0; i < NTEST; ++i )
-  {
-    SCOPED_TRACE( "Input # " + std::to_string( i ) );
-
-    real64 mob;
-    real64 dMob_dPres;
-
-    MobilityKernel::Compute( dens[i], dDens_dPres[i], visc[i], dVisc_dPres[i], mob, dMob_dPres );
-
-    // compute etalon
-    real64 const mob_et = dens[i] / visc[i];
-    real64 const dMob_dPres_et = mob_et * (dDens_dPres[i] / dens[i] - dVisc_dPres[i] / visc[i]);
-
-    EXPECT_DOUBLE_EQ( mob, mob_et );
-    EXPECT_DOUBLE_EQ( dMob_dPres, dMob_dPres_et );
-  }
-}
-
-/**
- * @brief Test the assembly of accumulation contribution
- *
- * @note This only tests uncoupled version.
- * In future, porosity update will be elsewhere and this will be simplified.
- */
-TEST( SinglePhaseKernels, accumulation )
-{
-  int constexpr NTEST = 3;
-
-  real64 const densOld[NTEST]       = { 700.0, 1200.0, 1500.0 };
-  real64 const densNew[NTEST]       = { 800.0, 1000.0, 1500.0 };
-  real64 const dDens_dPres[NTEST]   = { 1e-5, 1e-10, 0.0    };
-  real64 const dVol[NTEST]          = { 1.0, 2.0, 10.0   };
-  real64 const poroOld[NTEST]       = { 6e-2, 1e-1, 2e-1   };
-  real64 const poroRef[NTEST]       = { 5e-2, 2e-1, 3e-1   };
-  real64 const pvMult[NTEST]        = { 1.20, 1.10, 1.05   };
-  real64 const dPvMult_dPres[NTEST] = { 1e-5, 1e-7, 0.0    };
-  real64 const volume               = 1.0;
-
-
-  for( int i = 0; i < NTEST; ++i )
-  {
-    SCOPED_TRACE( "Input # " + std::to_string( i ) );
-
-    real64 accum;
-    real64 accumJacobian;
-    real64 poroNew;
-
-    AccumulationKernel< CellElementSubRegion >::Compute< false >( 0.0, densNew[i], densOld[i], dDens_dPres[i], volume, dVol[i],
-                                                                  poroRef[i], poroOld[i], pvMult[i], dPvMult_dPres[i],
-                                                                  0.0, 0.0, 0.0, 0.0, poroNew, accum, accumJacobian );
-
-    // compute etalon
-    real64 const poroNew_et = poroRef[i] * pvMult[i];
-    real64 const accum_et = poroNew_et * densNew[i] * (volume + dVol[i]) - poroOld[i] * densOld[i] * volume;
-    real64 const accumJacobian_et = dPvMult_dPres[i] * poroRef[i] * densNew[i] * (volume + dVol[i])
-                                    + poroNew_et * dDens_dPres[i] * (volume + dVol[i]);
-
-    EXPECT_DOUBLE_EQ( poroNew, poroNew_et );
-    EXPECT_DOUBLE_EQ( accum, accum_et );
-    EXPECT_DOUBLE_EQ( accumJacobian, accumJacobian_et );
-  }
-}
 
 template< localIndex stencilSize >
 void computeFlux( arraySlice1d< real64 const > const & weight,
@@ -149,7 +74,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const dt )
 {
   localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-  localIndex constexpr fluidIndex = 0;
 
   typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
@@ -181,18 +105,18 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                                                                                     seri[0],
                                                                                     sesri[0],
                                                                                     sei[0] );
-  auto densView        = AccessorHelper< FULL >::template makeMaterialAccessor< 2 >( dens,
-                                                                                     stencilSize,
-                                                                                     seri[0],
-                                                                                     sesri[0],
-                                                                                     sei[0],
-                                                                                     fluidIndex );
-  auto dDens_dPresView = AccessorHelper< FULL >::template makeMaterialAccessor< 2 >( dDens_dPres,
-                                                                                     stencilSize,
-                                                                                     seri[0],
-                                                                                     sesri[0],
-                                                                                     sei[0],
-                                                                                     fluidIndex );
+  auto densView        = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dens,
+                                                                                    stencilSize,
+                                                                                    seri[0],
+                                                                                    sesri[0],
+                                                                                    sei[0],
+                                                                                    1 );
+  auto dDens_dPresView = AccessorHelper< FULL >::template makeElementAccessor< 2 >( dDens_dPres,
+                                                                                    stencilSize,
+                                                                                    seri[0],
+                                                                                    sesri[0],
+                                                                                    sei[0],
+                                                                                    1 );
 
   array1d< real64 > flux( numElems );
   array2d< real64 > fluxJacobian( numElems, stencilSize );
@@ -211,7 +135,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                        dDens_dPresView.toViewConst(),
                        mobView.toViewConst(),
                        dMob_dPresView.toViewConst(),
-                       fluidIndex,
                        dt,
                        flux,
                        fluxJacobian );
@@ -241,7 +164,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   }
 }
 
-TEST( SinglePhaseKernels, fluxFull )
+TEST( SinglePhaseFVMKernels, fluxFull )
 {
   localIndex constexpr stencilSize = 2;
 
@@ -284,7 +207,7 @@ TEST( SinglePhaseKernels, fluxFull )
   real64 const dDens_dPresData[NTEST][stencilSize] = {
     { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 }
   };
-  real64 const dt[NTEST]              = { 1.0, 1e+5, 1e+8           };
+  real64 const dt[NTEST] = { 1.0, 1e+5, 1e+8 };
 
 
   for( int i = 0; i < NTEST; ++i )
@@ -304,7 +227,7 @@ TEST( SinglePhaseKernels, fluxFull )
   }
 }
 
-TEST( SinglePhaseKernels, fluxRegion )
+TEST( SinglePhaseFVMKernels, fluxRegion )
 {
   localIndex constexpr stencilSize = 2;
   CellElementStencilTPFA stencil;
@@ -344,7 +267,7 @@ TEST( SinglePhaseKernels, fluxRegion )
   real64 const dDens_dPresData[NTEST][stencilSize] = {
     { 1e-6, 2e-6 }, { 2e-6, 3e-6 }, { 2e-6, 2e-6 }
   };
-  real64 const dt[NTEST]              = { 1.0, 1e+5, 1e+8           };
+  real64 const dt[NTEST] = { 1.0, 1e+5, 1e+8 };
 
 
   for( int i = 0; i < NTEST; ++i )
