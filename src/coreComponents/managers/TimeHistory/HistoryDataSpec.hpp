@@ -70,7 +70,7 @@ namespace geosx
 
   template < typename ARRAY_T >
   inline
-  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
+  typename std::enable_if < (is_array_view<ARRAY_T> || is_array<ARRAY_T>) && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
   getHistoryMetadata( string const & name, const ARRAY_T & arr, size_t size_overwrite = 0 )
   {
     size_t size = size_overwrite == 0 ? arr.size( ) : size_overwrite;
@@ -79,7 +79,7 @@ namespace geosx
 
   template < typename ARRAY_T >
   inline
-  typename std::enable_if < is_array<ARRAY_T> && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
+  typename std::enable_if < (is_array_view<ARRAY_T> || is_array<ARRAY_T>) && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
   getHistoryMetadata( string const & name, ARRAY_T const & arr, size_t size_overwrite = 0 )
   {
     size_t sizes[2] = {size_overwrite == 0 ? integer_conversion<size_t>(arr.size( ) / arr.size(0)) : size_overwrite, integer_conversion<size_t>(arr.size( )) };

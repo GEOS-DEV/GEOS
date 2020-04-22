@@ -156,6 +156,9 @@ constexpr bool is_string = std::is_base_of_v< std::string, T >;
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
+template< typename T >
+constexpr bool is_array_view = LvArray::isArrayView< T >;
+
 /// True if T is a Tensor class.
 template< typename T >
 constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor > ||

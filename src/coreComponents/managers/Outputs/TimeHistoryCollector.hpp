@@ -29,7 +29,11 @@ namespace geosx
                           real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                           dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override
     {
-      //assert that m_buffer_call is associated correctly
+      // std::function defines the == and =! comparable against nullptr_t to check the
+      //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
+      GEOSX_ERROR_IF( m_buffer_call == nullptr,
+                      "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
+      // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
       buffer_unit_type * buffer = m_buffer_call();
       Collect( time_n, dt, buffer );
     }
@@ -80,7 +84,7 @@ namespace geosx
     {
       WrapperBase const * target = Group::getWrapperBase( m_target_path );
       // assert(target->isPackable());
-      target->Pack( buffer );
+      target->Pack( buffer, false );
     }
 
     static string CatalogName() { return "PackCollection"; }
@@ -121,7 +125,7 @@ namespace geosx
       //ArrayIndexer const & probe = Group::getReference<Probe>
       //arrayView1d< localIndex const > const & indices = probe.getIndices( );
       //target->PackByIndex( buffer, indices );
-      target->Pack( buffer );
+      target->Pack( buffer, false );
     }
 
     static string CatalogName() { return "PackByIndexCollection"; }

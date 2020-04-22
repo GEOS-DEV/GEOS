@@ -306,10 +306,10 @@ public:
    * @return number of packed bytes.
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool onDevice ) const override final
+  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
-    packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
     if( onDevice )
     {
       packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
@@ -330,12 +330,12 @@ public:
    * @return number of packed bytes.
    */
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
     {
-      packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+      if ( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
       if( onDevice )
       {
         packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
@@ -355,11 +355,11 @@ public:
    * @return size of packed bytes
    */
   virtual
-  localIndex PackSize( bool onDevice ) const override final
+  localIndex PackSize( bool withMetadata, bool onDevice ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
-    packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
     if( onDevice )
     {
       packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
@@ -379,13 +379,13 @@ public:
    * @return number of packed bytes.
    */
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
     if( sizedFromParent() == 1 )
     {
-      packedSize += bufferOps::Pack< false >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
       if( onDevice )
       {
         packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
@@ -406,11 +406,11 @@ public:
    * @return
    */
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool onDevice ) override final
+  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     string name;
-    unpackedSize += bufferOps::Unpack( buffer, name );
+    if( withMetadata ) unpackedSize += bufferOps::Unpack( buffer, name );
     GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
     if( onDevice )
     {
@@ -432,13 +432,13 @@ public:
    * @return
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool onDevice ) override final
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
     {
       string name;
-      unpackedSize += bufferOps::Unpack( buffer, name );
+      if( withMetadata ) unpackedSize += bufferOps::Unpack( buffer, name );
       GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
       if( onDevice )
       {
