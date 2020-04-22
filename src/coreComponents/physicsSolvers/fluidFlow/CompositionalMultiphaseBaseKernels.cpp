@@ -13,15 +13,15 @@
  */
 
 /**
- * @file CompositionalMultiphaseFlowKernels.cpp
+ * @file CompositionalMultiphaseBaseKernels.cpp
  */
 
-#include "CompositionalMultiphaseFlowKernels.hpp"
+#include "CompositionalMultiphaseBaseKernels.hpp"
 
 namespace geosx
 {
 
-namespace CompositionalMultiphaseFlowKernels
+namespace CompositionalMultiphaseBaseKernels
 {
 
 /******************************** ComponentFractionKernel ********************************/
@@ -798,6 +798,6 @@ INST_PhaseMobilityKernel( 5, 3 );
 
 #undef INST_PhaseMobilityKernel
 
-} // namespace CompositionalMultiphaseFlowKernels
+} // namespace CompositionalMultiphaseBaseKernels
 
 } // namespace geosx

@@ -19,7 +19,7 @@
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -36,7 +36,7 @@ struct TestCompositionalVarContainer
 };
 
 template< typename LAMBDA >
-void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
+void testNumericalJacobian( CompositionalMultiphaseFVM * solver,
                             DomainPartition * domain,
                             double perturbParameter,
                             double relTol,
@@ -73,7 +73,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
   jacobianFD.zero();
   jacobianFD.open();
 
-  string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
+  string const dofKey = dofManager.getKey( CompositionalMultiphaseFVM::viewKeyStruct::elemDofFieldString );
 
   solver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
   {
@@ -84,16 +84,16 @@ void testNumericalJacobian( CompositionalMultiphaseFlow * solver,
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::pressureString );
 
     arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 > & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::globalCompDensityString );
 
     arrayView2d< real64 > & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaGlobalCompDensityString );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
@@ -209,7 +209,7 @@ protected:
 
     problemManager->ProblemSetup();
 
-    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseFlow >( "compflow" );
+    solver = problemManager->GetPhysicsSolverManager().GetGroup< CompositionalMultiphaseFVM >( "compflow" );
   }
 
   static void TearDownTestCase()
@@ -220,12 +220,12 @@ protected:
   }
 
   static ProblemManager * problemManager;
-  static CompositionalMultiphaseFlow * solver;
+  static CompositionalMultiphaseFVM * solver;
 
 };
 
 ProblemManager * CompositionalMultiphaseFlowTest::problemManager = nullptr;
-CompositionalMultiphaseFlow * CompositionalMultiphaseFlowTest::solver = nullptr;
+CompositionalMultiphaseFVM * CompositionalMultiphaseFlowTest::solver = nullptr;
 
 TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
 {
@@ -246,7 +246,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
                              solver->getSystemSolution() );
 
   testNumericalJacobian( solver, domain, eps, tol,
-                         [&] ( CompositionalMultiphaseFlow * const targetSolver,
+                         [&] ( CompositionalMultiphaseFVM * const targetSolver,
                                DomainPartition * const targetDomain,
                                ParallelMatrix * targetJacobian,
                                ParallelVector * targetResidual,

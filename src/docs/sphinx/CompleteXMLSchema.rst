@@ -79,11 +79,11 @@ Element: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction.rst
 
 
-.. _XML_CompositionalMultiphaseFlow:
+.. _XML_CompositionalMultiphaseFVM:
 
-Element: CompositionalMultiphaseFlow
-====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow.rst
+Element: CompositionalMultiphaseFVM
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM.rst
 
 
 .. _XML_CompositionalMultiphaseFluid:
@@ -91,6 +91,13 @@ Element: CompositionalMultiphaseFlow
 Element: CompositionalMultiphaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_CompositionalMultiphaseHybridFVM:
+
+Element: CompositionalMultiphaseHybridFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM.rst
 
 
 .. _XML_CompositionalMultiphaseWell:
@@ -720,11 +727,11 @@ Datastructure: CompositeFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositeFunction_other.rst
 
 
-.. _DATASTRUCTURE_CompositionalMultiphaseFlow:
+.. _DATASTRUCTURE_CompositionalMultiphaseFVM:
 
-Datastructure: CompositionalMultiphaseFlow
-==========================================
-.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFlow_other.rst
+Datastructure: CompositionalMultiphaseFVM
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseFluid:
@@ -732,6 +739,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseHybridFVM:
+
+Datastructure: CompositionalMultiphaseHybridFVM
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:

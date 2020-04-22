@@ -286,7 +286,7 @@ void CompositionalMultiphaseWell::UpdateMixtureDensity( WellElementSubRegion * c
 
 void CompositionalMultiphaseWell::UpdateState( WellElementSubRegion * const subRegion )
 {
-  CompositionalMultiphaseFlow * const flowSolver = getParent()->GetGroup< CompositionalMultiphaseFlow >( GetFlowSolverName() );
+  CompositionalMultiphaseBase * const flowSolver = getParent()->GetGroup< CompositionalMultiphaseBase >( GetFlowSolverName() );
 
   GEOSX_ERROR_IF( flowSolver == nullptr,
                   "Flow solver " << GetFlowSolverName() << " not found in well solver " << getName() );
@@ -1291,45 +1291,45 @@ void CompositionalMultiphaseWell::ResetViews( DomainPartition * const domain )
   ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_resPressure =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString );
 
   m_deltaResPressure =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString );
 
   m_resGlobalCompDensity =
-    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString );
 
   m_deltaResGlobalCompDensity =
-    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString );
 
   m_resCompFrac =
-    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString );
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::globalCompFractionString );
 
   m_dResCompFrac_dCompDens =
     elemManager->ConstructViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
-      CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
+      CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString );
 
   m_resPhaseMob =
-    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseMobilityString );
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseMobilityString );
 
   m_dResPhaseMob_dPres =
     elemManager->ConstructViewAccessor< array2d< real64 >,
-                                        arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dPressureString );
+                                        arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::dPhaseMobility_dPressureString );
 
   m_dResPhaseMob_dCompDens =
     elemManager->ConstructViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
-      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
+      CompositionalMultiphaseBase::viewKeyStruct::dPhaseMobility_dGlobalCompDensityString );
 
   m_resPhaseVolFrac =
-    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString );
+    elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString );
 
   m_dResPhaseVolFrac_dPres =
     elemManager->ConstructViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
-      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
+      CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString );
 
   m_dResPhaseVolFrac_dCompDens =
     elemManager->ConstructViewAccessor< array3d< real64 >, arrayView3d< real64 > >(
-      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
+      CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString );
 
   m_resPhaseFrac =
     elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( MultiFluidBase::viewKeyStruct::phaseFractionString,

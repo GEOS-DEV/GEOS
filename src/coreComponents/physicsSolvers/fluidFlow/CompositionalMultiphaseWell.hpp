@@ -21,7 +21,7 @@
 
 #include "WellSolverBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 namespace geosx
 {
@@ -150,7 +150,7 @@ public:
 
   virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
 
-  virtual string ResElementDofName() const override { return CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString; }
+  virtual string ResElementDofName() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString; }
 
   virtual localIndex NumFluidComponents() const override { return m_numComponents; }
 
@@ -244,18 +244,18 @@ public:
     static constexpr auto resRelPermIndexString = "elementRelPermIndex";
 
     // primary solution field
-    static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
-    static constexpr auto deltaPressureString = CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString;
-    static constexpr auto globalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString;
-    static constexpr auto deltaGlobalCompDensityString = CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString;
+    static constexpr auto pressureString = CompositionalMultiphaseBase::viewKeyStruct::pressureString;
+    static constexpr auto deltaPressureString = CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString;
+    static constexpr auto globalCompDensityString = CompositionalMultiphaseBase::viewKeyStruct::globalCompDensityString;
+    static constexpr auto deltaGlobalCompDensityString = CompositionalMultiphaseBase::viewKeyStruct::deltaGlobalCompDensityString;
     static constexpr auto mixtureConnRateString = "wellElementMixtureConnectionRate";
     static constexpr auto deltaMixtureConnRateString = "deltaWellElementMixtureConnectionRate";
 
     // saturations
-    static constexpr auto phaseVolumeFractionString = CompositionalMultiphaseFlow::viewKeyStruct::phaseVolumeFractionString;
-    static constexpr auto dPhaseVolumeFraction_dPressureString = CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dPressureString;
+    static constexpr auto phaseVolumeFractionString = CompositionalMultiphaseBase::viewKeyStruct::phaseVolumeFractionString;
+    static constexpr auto dPhaseVolumeFraction_dPressureString = CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dPressureString;
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
-      CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
+      CompositionalMultiphaseBase::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
 
     // mixture density
     static constexpr auto mixtureDensityString = "wellElementMixtureDensity";
@@ -263,9 +263,9 @@ public:
     static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dWellElementMixtureDensity_dComp";
 
     // global component fractions
-    static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
+    static constexpr auto globalCompFractionString = CompositionalMultiphaseBase::viewKeyStruct::globalCompFractionString;
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
-      CompositionalMultiphaseFlow::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
+      CompositionalMultiphaseBase::viewKeyStruct::dGlobalCompFraction_dGlobalCompDensityString;
 
     // perforation rates and derivatives
     static constexpr auto compPerforationRateString = "compPerforationRate";

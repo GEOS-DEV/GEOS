@@ -3,21 +3,21 @@
 <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
   <Solvers>
 
-    <CompositionalMultiphaseFlow name="compflow"
-                                 logLevel="1"
-                                 discretization="fluidTPFA"
-                                 targetRegions="{Channel}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 temperature="300"
-                                 useMass="0">
+    <CompositionalMultiphaseFVM name="compflow"
+                                logLevel="1"
+                                discretization="fluidTPFA"
+                                targetRegions="{Channel}"
+                                fluidName="fluid1"
+                                solidName="rock"
+                                relPermName="relperm"
+                                temperature="300"
+                                useMass="0">
       <NonlinearSolverParameters newtonTol="1.0e-10"
                                  newtonMaxIter="15"
                                  maxTimeStepCuts="2"
                                  lineSearchMaxCuts="2"/>
       <SystemSolverParameters useDirectSolver="1"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
   </Solvers>
 <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
 <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->

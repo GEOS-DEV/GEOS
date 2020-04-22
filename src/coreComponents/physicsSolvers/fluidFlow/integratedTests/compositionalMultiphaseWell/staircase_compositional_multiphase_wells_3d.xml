@@ -15,16 +15,16 @@
                               logLevel="0"/>
     </Reservoir>
     
-    <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 logLevel="1"
-                                 discretization="fluidTPFA"
-                                 targetRegions="{Channel}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 temperature="297.15"
-                                 useMass="0">
-    </CompositionalMultiphaseFlow>
+    <CompositionalMultiphaseFVM name="compositionalMultiphaseFlow"
+                                logLevel="1"
+                                discretization="fluidTPFA"
+                                targetRegions="{Channel}"
+                                fluidName="fluid1"
+                                solidName="rock"
+                                relPermName="relperm"
+                                temperature="297.15"
+                                useMass="0">
+    </CompositionalMultiphaseFVM>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
@@ -44,7 +44,7 @@
                       control="liquidRate" 
                       targetBHP="3e6"
                       targetRate="1e-2" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"
                       referenceDepth="0.5"/>
     </CompositionalMultiphaseWell>
 

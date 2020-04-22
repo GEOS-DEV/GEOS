@@ -3,21 +3,21 @@
 
   <Solvers>
   
-    <CompositionalMultiphaseFlow name="compflow"
-                                 logLevel="1"
-                                 discretization="fluidTPFA"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 temperature="300"
-                                 useMass="0"
-                                 targetRegions="{Region1}">
+    <CompositionalMultiphaseFVM name="compflow"
+                                logLevel="1"
+                                discretization="fluidTPFA"
+                                fluidName="fluid1"
+                                solidName="rock"
+                                relPermName="relperm"
+                                temperature="300"
+                                useMass="0"
+                                targetRegions="{Region1}">
       <NonlinearSolverParameters newtonTol="1.0e-10"
                                  newtonMaxIter="15"
                                  maxTimeStepCuts="2"
                                  lineSearchMaxCuts="2"/>
       <SystemSolverParameters useDirectSolver="1"/>
-    </CompositionalMultiphaseFlow>
+    </CompositionalMultiphaseFVM>
   </Solvers>
   
   <Mesh>

@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseFlow.hpp
+ * @file CompositionalMultiphaseBase.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
-#define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_
 
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
@@ -31,10 +31,6 @@ namespace dataRepository
 {
 class Group;
 
-namespace keys
-{
-string const compositionalMultiphaseFlow = "CompositionalMultiphaseFlow";
-}
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
@@ -47,11 +43,11 @@ class MultiFluidBase;
 
 //START_SPHINX_INCLUDE_00
 /**
- * @class CompositionalMultiphaseFlow
+ * @class CompositionalMultiphaseBase
  *
  * A compositional multiphase solver
  */
-class CompositionalMultiphaseFlow : public FlowSolverBase
+class CompositionalMultiphaseBase : public FlowSolverBase
 {
 public:
 
@@ -60,36 +56,30 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  CompositionalMultiphaseFlow( const string & name,
+  CompositionalMultiphaseBase( const string & name,
                                Group * const parent );
 
   /// deleted default constructor
-  CompositionalMultiphaseFlow() = delete;
+  CompositionalMultiphaseBase() = delete;
 
   /// deleted copy constructor
-  CompositionalMultiphaseFlow( CompositionalMultiphaseFlow const & ) = delete;
+  CompositionalMultiphaseBase( CompositionalMultiphaseBase const & ) = delete;
 
   /// default move constructor
-  CompositionalMultiphaseFlow( CompositionalMultiphaseFlow && ) = default;
+  CompositionalMultiphaseBase( CompositionalMultiphaseBase && ) = default;
 
   /// deleted assignment operator
-  CompositionalMultiphaseFlow & operator=( CompositionalMultiphaseFlow const & ) = delete;
+  CompositionalMultiphaseBase & operator=( CompositionalMultiphaseBase const & ) = delete;
 
   /// deleted move operator
-  CompositionalMultiphaseFlow & operator=( CompositionalMultiphaseFlow && ) = delete;
+  CompositionalMultiphaseBase & operator=( CompositionalMultiphaseBase && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~CompositionalMultiphaseFlow() override = default;
+  virtual ~CompositionalMultiphaseBase() override = default;
 
 //START_SPHINX_INCLUDE_01
-
-  /**
-   * @brief name of the solver in the object catalog
-   * @return string that contains the catalog name to generate a new object through the object catalog.
-   */
-  static string CatalogName() { return dataRepository::keys::compositionalMultiphaseFlow; }
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
@@ -115,10 +105,6 @@ public:
                      ParallelVector & solution ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
-
-  virtual void
   AssembleSystem( real64 const time_n,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -127,35 +113,10 @@ public:
                   ParallelVector & rhs ) override;
 
   virtual void
-  ApplyBoundaryConditions( real64 const time_n,
-                           real64 const dt,
-                           DomainPartition * const domain,
-                           DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
-
-  virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
-
-  virtual void
   SolveSystem( DofManager const & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
                ParallelVector & solution ) override;
-
-  virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
-                       DofManager const & dofManager,
-                       ParallelVector const & solution,
-                       real64 const scalingFactor ) override;
-
-  virtual void
-  ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
-                       real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
 
   virtual void
   ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
@@ -271,12 +232,13 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
+  virtual
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
                           DomainPartition const * const domain,
                           DofManager const * const dofManager,
                           ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
+                          ParallelVector * const rhs ) = 0;
 
   /**
    * @brief assembles the volume balance terms for all cells
@@ -298,7 +260,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
-    static constexpr auto dofFieldString = "compositionalVariables";
+    static constexpr auto elemDofFieldString = "compositionalVariables";
 
     // inputs
     static constexpr auto temperatureString = "temperature";
@@ -385,10 +347,10 @@ public:
     ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
     ViewKey phaseCapillaryPressure     = { phaseCapillaryPressureString };
 
-  } viewKeysCompMultiphaseFlow;
+  } viewKeysCompMultiphaseBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {} groupKeysCompMultiphaseFlow;
+  {} groupKeysCompMultiphaseBase;
 
 protected:
 
@@ -398,8 +360,6 @@ protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
-private:
-
   /**
    * @brief Resize the allocated multidimensional fields
    * @param domain the domain containing the mesh and fields
@@ -407,7 +367,9 @@ private:
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  void ResizeFields( MeshLevel * const meshLevel );
+  virtual void ResizeFields( MeshLevel * const meshLevel );
+  
+private:
 
   /**
    * @brief Initialize all variables from initial conditions
@@ -430,31 +392,7 @@ private:
    */
   void ResetViews( DomainPartition * const domain ) override;
 
-  /**
-   * @brief Function to perform the Application of Dirichlet type BC's
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   */
-  void ApplyDirichletBC_implicit( real64 const time,
-                                  real64 const dt,
-                                  DofManager const * const dofManager,
-                                  DomainPartition * const domain,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
-
-
-  void ApplySourceFluxBC( real64 const time,
-                          real64 const dt,
-                          DofManager const * const dofManager,
-                          DomainPartition * const domain,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
-
+protected:
 
   /// the max number of fluid phases
   localIndex m_numPhases;
@@ -547,4 +485,4 @@ private:
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEBASE_HPP_

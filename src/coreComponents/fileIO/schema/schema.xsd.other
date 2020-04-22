@@ -417,7 +417,8 @@
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
+			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
+			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
@@ -435,7 +436,23 @@
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseFlowType">
+	<xsd:complexType name="CompositionalMultiphaseFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--capPressureIndex => (no description available)-->
+		<xsd:attribute name="capPressureIndex" type="localIndex" />
+		<!--fluidIndex => (no description available)-->
+		<xsd:attribute name="fluidIndex" type="localIndex" />
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--relPermIndex => (no description available)-->
+		<xsd:attribute name="relPermIndex" type="localIndex" />
+		<!--solidIndex => (no description available)-->
+		<xsd:attribute name="solidIndex" type="localIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -1095,6 +1112,8 @@
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
+		<!--deltaFacePhasePotential => An array that holds the accumulated phase potential updates at the faces. => CompositionalMultiphaseHybridFVM-->
+		<xsd:attribute name="deltaFacePhasePotential" type="real64_array2d" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
@@ -1113,6 +1132,8 @@
 		<xsd:attribute name="faceCenter" type="r1_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
+		<!--facePhasePotential => An array that holds the phase potentials at the faces. => CompositionalMultiphaseHybridFVM-->
+		<xsd:attribute name="facePhasePotential" type="real64_array2d" />
 		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--ghostRank => (no description available)-->
@@ -1143,23 +1164,23 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Acceleration" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="IncrementalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--Mass => An array that holds the mass on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--Mass => An array that holds the mass on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
-		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="LvArray::Array&lt;double, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--contactForce => An array that holds the contact force. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
@@ -1175,7 +1196,7 @@
 		<xsd:attribute name="elemRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
-		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
@@ -1193,9 +1214,9 @@
 		<xsd:attribute name="primaryField" type="real64_array" />
 		<!--ruptureTime => Time that the node was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
-		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
+		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="velocityTilde" type="r1_array" />
 	</xsd:complexType>
 	<xsd:complexType name="cellManagerType">

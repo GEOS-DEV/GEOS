@@ -24,6 +24,7 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/multiphysics/ReservoirSolver.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -51,7 +52,7 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
   ElementRegionManager * elemManager = mesh->getElemManager();
 
   ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
-  CompositionalMultiphaseFlow * flowSolver = solver->getParent()->GetGroup( "compositionalMultiphaseFlow" )->group_cast< CompositionalMultiphaseFlow * >();
+  CompositionalMultiphaseFVM * flowSolver = solver->getParent()->GetGroup( "compositionalMultiphaseFlow" )->group_cast< CompositionalMultiphaseFVM * >();
 
   MultiFluidBase * fluid = constitutiveManager->GetGroup< MultiFluidBase >( flowSolver->fluidIndex() );
   ASSERT_NE( fluid, nullptr );
@@ -160,7 +161,7 @@ void testNumericalJacobian( ReservoirSolver * solver,
                             LAMBDA && assembleFunction )
 {
   CompositionalMultiphaseWell * wellSolver = solver->GetWellSolver()->group_cast< CompositionalMultiphaseWell * >();
-  CompositionalMultiphaseFlow * flowSolver = solver->GetFlowSolver()->group_cast< CompositionalMultiphaseFlow * >();
+  CompositionalMultiphaseFVM * flowSolver = solver->GetFlowSolver()->group_cast< CompositionalMultiphaseFVM * >();
 
   localIndex const NC = flowSolver->numFluidComponents();
 
@@ -216,16 +217,16 @@ void testNumericalJacobian( ReservoirSolver * solver,
 
       // get the primary variables on the reservoir elements
       arrayView1d< real64 > & pres =
-        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::pressureString );
 
       arrayView1d< real64 > & dPres =
-        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+        subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaPressureString );
 
       arrayView2d< real64 > & compDens =
-        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::globalCompDensityString );
 
       arrayView2d< real64 > & dCompDens =
-        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+        subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFVM::viewKeyStruct::deltaGlobalCompDensityString );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )

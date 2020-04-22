@@ -10,8 +10,12 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
-     fluidFlow/CompositionalMultiphaseFlow.hpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.hpp
+     fluidFlow/CompositionalMultiphaseBase.hpp
+     fluidFlow/CompositionalMultiphaseFVM.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.hpp          
+     fluidFlow/CompositionalMultiphaseBaseKernels.hpp
+     fluidFlow/CompositionalMultiphaseFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
@@ -45,8 +49,11 @@ set( physicsSolvers_sources
      SolverBase.cpp
      NonlinearSolverParameters.cpp
      SystemSolverParameters.cpp
-     fluidFlow/CompositionalMultiphaseFlow.cpp
-     fluidFlow/CompositionalMultiphaseFlowKernels.cpp
+     fluidFlow/CompositionalMultiphaseBase.cpp
+     fluidFlow/CompositionalMultiphaseFVM.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVM.cpp          
+     fluidFlow/CompositionalMultiphaseBaseKernels.cpp
+     fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp     
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp

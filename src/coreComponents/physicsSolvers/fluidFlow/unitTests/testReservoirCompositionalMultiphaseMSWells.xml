@@ -4,7 +4,7 @@
   <Solvers gravityVector="0.0, 0.0, -9.81">
 
     <Reservoir name="reservoirSystem"
-	       flowSolverName="compositionalMultiphaseFlow"
+               flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
@@ -13,16 +13,16 @@
                               logLevel="2"/>
     </Reservoir>
     
-    <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
-                                 logLevel="1"
-                                 discretization="fluidTPFA"
-                                 targetRegions="{Region1}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 temperature="297.15"
-                                 useMass="0">
-    </CompositionalMultiphaseFlow>
+    <CompositionalMultiphaseFVM name="compositionalMultiphaseFlow"
+                                logLevel="1"
+                                discretization="fluidTPFA"
+                                targetRegions="{Region1}"
+                                fluidName="fluid1"
+                                solidName="rock"
+                                relPermName="relperm"
+                                temperature="297.15"
+                                useMass="0">
+    </CompositionalMultiphaseFVM>
 
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
@@ -42,7 +42,7 @@
                       control="liquidRate" 
                       targetBHP="1e7"
                       targetRate="1e-5" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"
                       referenceDepth="0.5"/>
     </CompositionalMultiphaseWell>
 
