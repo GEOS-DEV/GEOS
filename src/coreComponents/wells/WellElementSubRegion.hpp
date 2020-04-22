@@ -209,6 +209,14 @@ public:
                  globalIndex nodeOffsetGlobal,
                  globalIndex elemOffsetGlobal );
 
+  /**
+   * @brief For each perforation, find the reservoir element that contains the perforation
+   * @param[in] meshLevel the mesh object (single level only)
+   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   */
+  void ConnectPerforationsToMeshElements( MeshLevel & mesh,
+                                          InternalWellGenerator const & wellGeometry );
+
   /*
    * @brief Reconstruct the (local) map nextWellElemId using nextWellElemIdGlobal after the ghost exchange
    */
@@ -238,6 +246,7 @@ public:
     static constexpr auto nextWellElementIndexGlobalString = "nextWellElementIndexGlobal";
     static constexpr auto topWellElementIndexString        = "topWellElementIndex";
     static constexpr auto topRankString                    = "topRank";
+    static constexpr auto radiusString                     = "radius";
 
     dataRepository::ViewKey wellControlsName     = { wellControlsString };
     dataRepository::ViewKey wellNodeList         = { wellNodeListString };
@@ -245,6 +254,7 @@ public:
     dataRepository::ViewKey nextWellElementIndexGlobal = { nextWellElementIndexGlobalString };
     dataRepository::ViewKey topWellElementIndex  = { topWellElementIndexString };
     dataRepository::ViewKey topRank            = { topRankString };
+    dataRepository::ViewKey radius             = { radiusString };
 
   } viewKeysWellElementSubRegion;
 
@@ -290,20 +300,6 @@ private:
                                   arrayView1d< integer > & elemStatusGlobal ) const;
 
   /**
-   * @brief Now that the well elements are assigned, collect the nodes and tag the boundary nodes between ranks
-            The function WellElementSubRegion::AssignUnownedElements must have been called before this function
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[out] localNodes set of local well nodes (includes boundary nodes)
-   * @param[out] boundaryNodes set of local well nodes that are at the boundary between this rank
-                               and another rank
-   */
-  void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
-                                     SortedArray< globalIndex >      const & localElems,
-                                     SortedArray< globalIndex > & localNodes,
-                                     SortedArray< globalIndex > & boundaryNodes ) const;
-
-  /**
    * @brief Add the well nodes to the nodeManager (properly resized)
             The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function
    * @param[in] meshLevel the mesh object (single level only)
@@ -327,14 +323,12 @@ private:
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] localElems set of local well elems. At this point all the well elems have been assigned
-   * @param[in] localNodes set of local well nodes (includes boundary nodes)
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
                                            InternalWellGenerator const & wellGeometry,
-                                           SortedArray< globalIndex >      const & localElems,
-                                           SortedArray< globalIndex >      const & localNodes,
+                                           SortedArray< globalIndex > const & localElems,
                                            globalIndex nodeOffsetGlobal,
                                            globalIndex elemOffsetGlobal );
 
@@ -383,6 +377,12 @@ private:
 
   /// top rank
   integer m_topRank;
+
+  /// radius of the well element
+  array1d< real64 > m_radius;
+
+  /// depth of the local search to match perforation to res elements
+  localIndex m_searchDepth;
 
 };
 

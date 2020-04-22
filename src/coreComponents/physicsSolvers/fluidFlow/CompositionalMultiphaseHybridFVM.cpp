@@ -51,16 +51,16 @@ void CompositionalMultiphaseHybridFVM::RegisterDataOnMesh( Group * const MeshBod
   // 2) Register the face data
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    FaceManager * const faceManager = meshLevel->getFaceManager();
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    FaceManager & faceManager = *meshLevel.getFaceManager();
 
     // primary variables: face potentials
-    faceManager->registerWrapper< array2d< real64 > >( viewKeyStruct::facePhasePotentialString )->
+    faceManager.registerWrapper< array2d< real64 > >( viewKeyStruct::facePhasePotentialString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the phase potentials at the faces." );
 
-    faceManager->registerWrapper< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString )->
+    faceManager.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the accumulated phase potential updates at the faces." );
@@ -82,14 +82,14 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   CompositionalMultiphaseBase::ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
   // setup the face fields
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  FaceManager * const faceManager = meshLevel->getFaceManager();
+  MeshLevel & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the accumulated pressure updates
   arrayView2d< real64 > & dFacePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex const iface )
+  forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const iface )
   {
     for( localIndex ip = 0; ip < m_numPhases; ++ip )
     {  
@@ -110,20 +110,20 @@ void CompositionalMultiphaseHybridFVM::ImplicitStepComplete( real64 const & time
   CompositionalMultiphaseBase::ImplicitStepComplete( time_n, dt, domain );
 
   // increment the face fields
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  FaceManager * const faceManager = meshLevel->getFaceManager();
+  MeshLevel & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  FaceManager & faceManager = *meshLevel.getFaceManager();
 
   // get the face-based DOF numbers
   arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager->getReference< array1d< globalIndex > >( m_faceDofKey );
+    faceManager.getReference< array1d< globalIndex > >( m_faceDofKey );
 
   // get the face-based potentials
   arrayView2d< real64 > const & facePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString );
   arrayView2d< real64 const > const & dFacePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex const iface )
+  forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const iface )
   {
     // update if face is in target region
     if( faceDofNumber[iface] >= 0 )
@@ -146,7 +146,7 @@ void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const * const 
   dofManager.addField( viewKeyStruct::elemDofFieldString,
                        DofManager::Location::Elem,
                        m_numDofPerCell,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString,
                           viewKeyStruct::elemDofFieldString,
@@ -156,7 +156,7 @@ void CompositionalMultiphaseHybridFVM::SetupDofs( DomainPartition const * const 
   dofManager.addField( viewKeyStruct::faceDofFieldString,
                        DofManager::Location::Face,
                        m_numPhases,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::faceDofFieldString,
                           viewKeyStruct::faceDofFieldString,
@@ -180,10 +180,10 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNU
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
 
   string const faceDofKey = dofManager->getKey( viewKeyStruct::faceDofFieldString );
   string const elemDofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
@@ -197,53 +197,53 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNU
   // in this function we need to make sure that we act only on the target regions
   // for that, we need the following region filter
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : targetRegionNames() )
   {
-    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
+    regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
 
   // node data (for transmissibility computation)
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition =
-    nodeManager->referencePosition();
+    nodeManager.referencePosition();
 
 
   // face data
 
   arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager->getReference< array1d< globalIndex > >( faceDofKey );
+    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
   // get the face-centered pressures
   arrayView2d< real64 const > const & facePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString );
   arrayView2d< real64 const > const & dFacePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
 
   // get the face-centered depth
   arrayView1d< real64 const > const & faceGravCoef =
-    faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   // get the face-to-nodes connectivity for the transmissibility calculation
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList();
 
-  array2d< localIndex > const & elemRegionList    = faceManager->elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = faceManager->elementSubRegionList();
-  array2d< localIndex > const & elemList          = faceManager->elementList();
+  array2d< localIndex > const & elemRegionList    = faceManager.elementRegionList();
+  array2d< localIndex > const & elemSubRegionList = faceManager.elementSubRegionList();
+  array2d< localIndex > const & elemList          = faceManager.elementList();
 
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
-  elemManager->
-    forElementSubRegionsComplete< CellElementSubRegion,
-                                  FaceElementSubRegion >( m_targetRegions,
-                                                          [&]( localIndex const er,
-                                                               localIndex const esr,
-                                                               ElementRegionBase const &,
-                                                               auto const & subRegion )
+  forTargetSubRegionsComplete< CellElementSubRegion,
+                               FaceElementSubRegion >( mesh,
+                                                       [&]( localIndex const,
+                                                            localIndex const er,
+                                                            localIndex const esr,
+                                                            ElementRegionBase const &,
+                                                            auto const & subRegion )
   {
     FluxLaunch( er,
                 esr,
-                &subRegion,
+                subRegion,
                 regionFilter,
                 mesh,
                 nodePosition,
@@ -265,9 +265,9 @@ void CompositionalMultiphaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNU
 
 void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
                                                    localIndex GEOSX_UNUSED_PARAM( esr ),
-                                                   FaceElementSubRegion const * const GEOSX_UNUSED_PARAM( subRegion ),
+                                                   FaceElementSubRegion const & GEOSX_UNUSED_PARAM( subRegion ),
                                                    SortedArray< localIndex > GEOSX_UNUSED_PARAM( regionFilter ),
-                                                   MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ),
+                                                   MeshLevel const & GEOSX_UNUSED_PARAM( mesh ),
                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( nodePosition ),
                                                    array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemRegionList ),
                                                    array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemSubRegionList ),
@@ -288,9 +288,9 @@ void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM
 
 void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex er,
                                                    localIndex esr,
-                                                   CellElementSubRegion const * const subRegion,
+                                                   CellElementSubRegion const & subRegion,
                                                    SortedArray< localIndex > regionFilter,
-                                                   MeshLevel const * const mesh,
+                                                   MeshLevel const & mesh,
                                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                                    array2d< localIndex > const & elemRegionList,
                                                    array2d< localIndex > const & elemSubRegionList,
@@ -315,12 +315,12 @@ void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex er,
   // get the elem-centered DOF numbers and ghost rank for the assembly
   string const elemDofKey = dofManager->getKey( viewKeyStruct::elemDofFieldString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh->getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
-                                                                 arrayView1d< globalIndex const > >( elemDofKey );
+  elemDofNumber = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
+                                                                arrayView1d< globalIndex const > >( elemDofKey );
   arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
   // get the map from elem to faces
-  arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
+  arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 
   // get the elem-centered pressures
   arrayView1d< real64 const > const & elemPres  = m_pressure[er][esr];
@@ -328,20 +328,20 @@ void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex er,
 
   // get the element data needed for transmissibility computation
   arrayView1d< R1Tensor const > const & elemCenter =
-    subRegion->template getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+    subRegion.template getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
   arrayView1d< real64 const > const & elemVolume =
-    subRegion->template getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+    subRegion.template getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
   arrayView1d< R1Tensor const > const & elemPerm =
-    subRegion->template getReference< array1d< R1Tensor > >( viewKeyStruct::permeabilityString );
+    subRegion.template getReference< array1d< R1Tensor > >( viewKeyStruct::permeabilityString );
 
   // get the elem-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion->template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+    subRegion.template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
 
-  forAll< serialPolicy >( subRegion->size(), [=] ( localIndex const ei )
+  forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
   {
     if( elemGhostRank[ei] < 0 )
     {
@@ -380,7 +380,6 @@ void CompositionalMultiphaseHybridFVM::FluxLaunch( localIndex er,
                                                                                             elemPres[ei],
                                                                                             dElemPres[ei],
                                                                                             elemGravCoef[ei],
-                                                                                            m_fluidIndex,
                                                                                             m_phaseDens.toViewConst(),
                                                                                             m_dPhaseDens_dPres.toViewConst(),
                                                                                             m_dPhaseDens_dComp.toViewConst(),
@@ -416,14 +415,14 @@ CompositionalMultiphaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UN
 }
 
   
-void CompositionalMultiphaseHybridFVM::ResizeFields( MeshLevel * const meshLevel )
+void CompositionalMultiphaseHybridFVM::ResizeFields( MeshLevel & meshLevel )
 {
   CompositionalMultiphaseBase::ResizeFields( meshLevel );
 
-  FaceManager * const faceManager = meshLevel->getFaceManager();
+  FaceManager & faceManager = *meshLevel.getFaceManager();
 
-  faceManager->getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString ).resizeDimension< 1 >( m_numPhases );
-  faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString ).resizeDimension< 1 >( m_numPhases );
+  faceManager.getReference< array2d< real64 > >( viewKeyStruct::facePhasePotentialString ).resizeDimension< 1 >( m_numPhases );
+  faceManager.getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString ).resizeDimension< 1 >( m_numPhases );
 
 }
 
@@ -432,8 +431,8 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
                                                                 DofManager const & dofManager,
                                                                 ParallelVector const & rhs )
 {
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FaceManager const & faceManager = *mesh.getFaceManager();
   
   real64 const * localResidual = rhs.extractLocalVector();
 
@@ -444,19 +443,20 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   real64 localResidualNorm = 0;
 
   // 1. Compute the residual for the mass conservation equations 
-  
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er,
-                                   localIndex const esr,
-                                   ElementRegionBase const &,
-                                   ElementSubRegionBase const & subRegion )
+
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase const &,
+                                    ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
     arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
     arrayView1d< real64 const >      const & refPoro       = m_porosityRef[er][esr];
     arrayView1d< real64 const >      const & volume        = m_volume[er][esr];
-    arrayView2d< real64 const >      const & totalDens     = m_totalDens[er][esr][m_fluidIndex];
+    arrayView2d< real64 const >      const & totalDens     = m_totalDens[er][esr];
 
     localIndex const subRegionSize = subRegion.size();
     for( localIndex ei = 0; ei < subRegionSize; ++ei )
@@ -478,11 +478,11 @@ real64 CompositionalMultiphaseHybridFVM::CalculateResidualNorm( DomainPartition 
   // 2. Compute the residual for the face-based constraints
 
   arrayView1d< integer const > const & faceGhostRank =
-    faceManager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    faceManager.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
   arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager->getReference< array1d< globalIndex > >( faceDofKey );
+    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
-  for( localIndex iface = 0; iface < faceManager->size(); ++iface )
+  for( localIndex iface = 0; iface < faceManager.size(); ++iface )
   {
     // if not ghost face and if adjacent to target region
     if( faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0 )
@@ -521,7 +521,7 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
                                                             real64 const scalingFactor,
                                                             DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   // 1. apply the elem-based update
 
@@ -552,12 +552,13 @@ void CompositionalMultiphaseHybridFVM::ApplySystemSolution( DofManager const & d
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
   CommunicationTools::SynchronizeFields( fieldNames,
-                                         mesh,
+                                         &mesh,
                                          domain->getNeighbors() );
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateState( &subRegion );
+    UpdateState( subRegion, targetIndex );
   } );
 }
 
@@ -568,14 +569,14 @@ void CompositionalMultiphaseHybridFVM::ResetStateToBeginningOfStep( DomainPartit
   CompositionalMultiphaseBase::ResetStateToBeginningOfStep( domain );
 
   // 2. Reset the face-based fields
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  FaceManager * const faceManager = mesh->getFaceManager();
+  MeshLevel & mesh = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  FaceManager & faceManager = *mesh.getFaceManager();
 
   // get the accumulated face potential updates
   arrayView2d< real64 > & dFacePotential =
-    faceManager->getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
+    faceManager.getReference< array2d< real64 > >( viewKeyStruct::deltaFacePhasePotentialString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex const iface )
+  forAll< serialPolicy >( faceManager.size(), [=] ( localIndex const iface )
   {
     for( localIndex ip = 0; ip < m_numPhases; ++ip )
     { 

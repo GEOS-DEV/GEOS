@@ -157,10 +157,9 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const &
                                                    array2d< localIndex > const & elemList,
                                                    SortedArray< localIndex > const & regionFilter,
                                                    arraySlice1d< localIndex const > const elemToFaces,
-                                                   localIndex const fluidIndex,                                            
-                                                   ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & phaseCompFrac,
-                                                   ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dPres,
-                                                   ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dComp,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & phaseCompFrac,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dPres,
+                                                   ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dComp,
                                                    ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dCompFrac_dCompDens,                                            
                                                    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & phaseMob,
                                                    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dPhaseMob_dPres,
@@ -254,13 +253,13 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const &
       // save upwinded phase component fractions
       for( localIndex ic = 0; ic < numComponents; ++ic )
       {
-        upwPhaseCompFrac[ifaceLoc][ip][ic] = phaseCompFrac[erUpw][esrUpw][fluidIndex][eiUpw][0][ip][ic];
-        dUpwPhaseCompFrac_dPres[ifaceLoc][ip][ic] = dPhaseCompFrac_dPres[erUpw][esrUpw][fluidIndex][eiUpw][0][ip][ic];
+        upwPhaseCompFrac[ifaceLoc][ip][ic] = phaseCompFrac[erUpw][esrUpw][eiUpw][0][ip][ic];
+        dUpwPhaseCompFrac_dPres[ifaceLoc][ip][ic] = dPhaseCompFrac_dPres[erUpw][esrUpw][eiUpw][0][ip][ic];
 
         dPhaseCompFrac_dC = 0;
         applyChainRule( numComponents,
                         dCompFrac_dCompDens[erUpw][esrUpw][eiUpw],
-                        dPhaseCompFrac_dComp[erUpw][esrUpw][fluidIndex][eiUpw][0][ip][ic],
+                        dPhaseCompFrac_dComp[erUpw][esrUpw][eiUpw][0][ip][ic],
                         dPhaseCompFrac_dC );
         
         for( localIndex jc = 0; jc < numComponents; ++jc )

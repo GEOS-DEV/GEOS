@@ -173,7 +173,7 @@ public:
 
 protected:
 
-  virtual void ResizeFields( MeshLevel * const meshLevel ) override;
+  virtual void ResizeFields( MeshLevel & meshLevel ) override;
 
 private:
 
@@ -181,7 +181,7 @@ private:
    * @brief Assemble the mass conservation equations and face constraints in the face subregion
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
-   * @param[in] subRegion pointer to the face element subregion
+   * @param[in] subRegion reference to the face element subregion
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] mesh the mesh object (single level only)
    * @param[in] nodePosition position of the nodes
@@ -201,9 +201,9 @@ private:
    */
   void FluxLaunch( localIndex er,
                    localIndex esr,
-                   FaceElementSubRegion const * const subRegion,
+                   FaceElementSubRegion const & subRegion,
                    SortedArray< localIndex > regionFilter,
-                   MeshLevel const * const mesh,
+                   MeshLevel const & mesh,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                    array2d< localIndex > const & elemRegionList,
                    array2d< localIndex > const & elemSubRegionList,
@@ -223,7 +223,7 @@ private:
    * @brief Assemble the mass conservation equations and face constraints in the face subregion
    * @param[in] er index of this element's region
    * @param[in] esr index of this element's subregion
-   * @param[in] subRegion pointer to the cell element subregion
+   * @param[in] subRegion reference to the cell element subregion
    * @param[in] regionFilter set containing the indices of the target regions
    * @param[in] mesh the mesh object (single level only)
    * @param[in] nodePosition position of the nodes
@@ -243,9 +243,9 @@ private:
    */
   void FluxLaunch( localIndex er,
                    localIndex esr,
-                   CellElementSubRegion const * const subRegion,
+                   CellElementSubRegion const & subRegion,
                    SortedArray< localIndex > regionFilter,
-                   MeshLevel const * const mesh,
+                   MeshLevel const & mesh,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                    array2d< localIndex > const & elemRegionList,
                    array2d< localIndex > const & elemSubRegionList,

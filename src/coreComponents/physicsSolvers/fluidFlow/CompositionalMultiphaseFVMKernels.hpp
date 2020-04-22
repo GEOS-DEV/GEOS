@@ -75,16 +75,14 @@ struct FluxKernel
            ElementView< arrayView2d< real64 const > > const & dPhaseVolFrac_dPres,
            ElementView< arrayView3d< real64 const > > const & dPhaseVolFrac_dComp,
            ElementView< arrayView3d< real64 const > > const & dCompFrac_dCompDens,
-           MaterialView< arrayView3d< real64 const > > const & phaseDens,
-           MaterialView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
-           MaterialView< arrayView4d< real64 const > > const & dPhaseDens_dComp,
-           MaterialView< arrayView4d< real64 const > > const & phaseCompFrac,
-           MaterialView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
-           MaterialView< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
-           MaterialView< arrayView3d< real64 const > > const & phaseCapPressure,
-           MaterialView< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
-           localIndex const fluidIndex,
-           localIndex const capPressureIndex,
+           ElementView< arrayView3d< real64 const > > const & phaseDens,
+           ElementView< arrayView3d< real64 const > > const & dPhaseDens_dPres,
+           ElementView< arrayView4d< real64 const > > const & dPhaseDens_dComp,
+           ElementView< arrayView4d< real64 const > > const & phaseCompFrac,
+           ElementView< arrayView4d< real64 const > > const & dPhaseCompFrac_dPres,
+           ElementView< arrayView5d< real64 const > > const & dPhaseCompFrac_dComp,
+           ElementView< arrayView3d< real64 const > > const & phaseCapPressure,
+           ElementView< arrayView4d< real64 const > > const & dPhaseCapPressure_dPhaseVolFrac,
            integer const capPressureFlag,
            real64 const dt,
            arraySlice1d< real64 > const & localFlux,
@@ -161,12 +159,12 @@ struct FluxKernel
         localIndex const ei  = sei[i];
 
         // density
-        real64 const density  = phaseDens[er][esr][fluidIndex][ei][0][ip];
-        real64 const dDens_dP = dPhaseDens_dPres[er][esr][fluidIndex][ei][0][ip];
+        real64 const density  = phaseDens[er][esr][ei][0][ip];
+        real64 const dDens_dP = dPhaseDens_dPres[er][esr][ei][0][ip];
 
         applyChainRule( NC,
                         dCompFrac_dCompDens[er][esr][ei],
-                        dPhaseDens_dComp[er][esr][fluidIndex][ei][0][ip],
+                        dPhaseDens_dComp[er][esr][ei][0][ip],
                         dDens_dC );
 
         // average density and pressure derivative
@@ -197,11 +195,11 @@ struct FluxKernel
 
         if( capPressureFlag )
         {
-          capPressure = phaseCapPressure[er][esr][capPressureIndex][ei][0][ip];
+          capPressure = phaseCapPressure[er][esr][ei][0][ip];
 
           for( localIndex jp = 0; jp < NP; ++jp )
           {
-            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][capPressureIndex][ei][0][ip][jp];
+            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
             dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
 
             for( localIndex jc = 0; jc < NC; ++jc )
@@ -298,9 +296,9 @@ struct FluxKernel
       }
 
       // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][fluidIndex][ei_up][0][ip];
-      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][fluidIndex][ei_up][0][ip];
-      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][fluidIndex][ei_up][0][ip];
+      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
+      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
+      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
 
       // compute component fluxes and derivatives using upstream cell composition
       for( localIndex ic = 0; ic < NC; ++ic )

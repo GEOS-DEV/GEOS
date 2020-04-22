@@ -7,12 +7,11 @@
                                 logLevel="0"
                                 discretization="fluidTPFA"
                                 targetRegions="{Region2}"
-                                fluidName="fluid1"
-                                solidName="rock"
-                                relPermName="relperm"
+                                fluidNames="{fluid1}"
+                                solidNames="{rock}"
+                                relPermNames="{relperm}"
                                 temperature="297.15"
                                 useMass="1">
-                                 
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="2"/>
       <SystemSolverParameters krylovTol="1.0e-10"

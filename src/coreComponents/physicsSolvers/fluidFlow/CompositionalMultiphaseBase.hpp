@@ -130,82 +130,61 @@ public:
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
    */
-  void UpdateComponentFraction( Group * dataGroup ) const;
-
-  /**
-   * @brief Recompute component fractions from primary variables (component densities)
-   * @param er region index
-   * @param esr subregion index
-   */
-  void UpdateComponentFraction( localIndex er, localIndex esr ) const;
+  void UpdateComponentFraction( Group & dataGroup ) const;
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param dataGroup the group storing the required fields
    */
-  void UpdatePhaseVolumeFraction( Group * dataGroup ) const;
-
-  /**
-   * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
-   * @param er region index
-   * @param esr subregion index
-   */
-  void UpdatePhaseVolumeFraction( localIndex er, localIndex esr ) const;
+  void UpdatePhaseVolumeFraction( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateFluidModel( Group * dataGroup );
+  void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Update all relevant solid models using current values of pressure
    * @param dataGroup the group storing the required fields
    */
-  void UpdateSolidModel( Group * dataGroup );
+  void UpdateSolidModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateRelPermModel( Group * dataGroup );
+  void UpdateRelPermModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param dataGroup the group storing the required fields
    */
-  void UpdateCapPressureModel( Group * dataGroup );
+  void UpdateCapPressureModel( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
-  void UpdatePhaseMobility( Group * dataGroup ) const;
-
-  /**
-   * @brief Recompute phase mobility from constitutive and primary variables
-   * @param er region index
-   * @param esr subregion index
-   */
-  void UpdatePhaseMobility( localIndex er, localIndex esr ) const;
+  void UpdatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  void UpdateState( Group * dataGroup );
+  void UpdateState( Group & dataGroup, localIndex const targetIndex );
 
   /**
    * @brief Get the number of fluid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const;
+  localIndex numFluidComponents() const { return m_numComponents; }
 
   /**
    * @brief Get the number of fluid phases
    * @return the number of phases
    */
-  localIndex numFluidPhases() const;
+  localIndex numFluidPhases() const { return m_numPhases; }
 
   /**
    * @brief assembles the accumulation terms for all cells
@@ -258,6 +237,10 @@ public:
 
   /**@}*/
 
+  arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
+
+  arrayView1d< string const > const & capPresModelNames() const { return m_capPressureModelNames; }
+
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr auto elemDofFieldString = "compositionalVariables";
@@ -266,10 +249,8 @@ public:
     static constexpr auto temperatureString = "temperature";
     static constexpr auto useMassFlagString = "useMass";
 
-    static constexpr auto relPermNameString  = "relPermName";
-    static constexpr auto relPermIndexString = "relPermIndex";
-    static constexpr auto capPressureNameString  = "capPressureName";
-    static constexpr auto capPressureIndexString = "capPressureIndex";
+    static constexpr auto relPermNamesString  = "relPermNames";
+    static constexpr auto capPressureNamesString  = "capPressureNames";
 
     static constexpr auto facePressureString  = "facePressure";
     static constexpr auto bcPressureString    = "bcPressure";
@@ -301,53 +282,9 @@ public:
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    // inputs
-    ViewKey temperature = { temperatureString };
-    ViewKey useMassFlag = { useMassFlagString };
-
-    ViewKey relPermName  = { relPermNameString };
-    ViewKey relPermIndex = { relPermIndexString };
-    ViewKey capPressureName  = { capPressureNameString };
-    ViewKey capPressureIndex = { capPressureIndexString };
-
-    // primary solution field
-    ViewKey pressure      = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-    ViewKey facePressure  = { facePressureString };
-    ViewKey bcPressure    = { bcPressureString };
-
-    ViewKey globalCompDensity      = { globalCompDensityString };
-    ViewKey deltaGlobalCompDensity = { deltaGlobalCompDensityString };
-
-    // intermediate values for constitutive model input
-    ViewKey globalCompFraction                     = { globalCompFractionString };
-    ViewKey dGlobalCompFraction_dGlobalCompDensity = { dGlobalCompFraction_dGlobalCompDensityString };
-
-    // intermediate values for saturations
-    ViewKey phaseVolumeFraction                     = { phaseVolumeFractionString };
-    ViewKey dPhaseVolumeFraction_dPressure          = { dPhaseVolumeFraction_dPressureString };
-    ViewKey dPhaseVolumeFraction_dGlobalCompDensity = { dPhaseVolumeFraction_dGlobalCompDensityString };
-
-    // intermediate values for mobilities
-    ViewKey phaseMobility                     = { phaseMobilityString };
-    ViewKey dPhaseMobility_dPressure          = { dPhaseMobility_dPressureString };
-    ViewKey dPhaseMobility_dGlobalCompDensity = { dPhaseMobility_dGlobalCompDensityString };
-
-    // these are used to store last converged time step values
-    ViewKey phaseVolumeFractionOld     = { phaseVolumeFractionOldString };
-    ViewKey phaseDensityOld            = { phaseDensityOldString };
-    ViewKey phaseComponentFractionOld  = { phaseComponentFractionOldString };
-    ViewKey porosityOld                = { porosityOldString };
-
-    // these are allocated on faces for BC application until we can get constitutive models on faces
-    ViewKey phaseViscosity             = { phaseViscosityString };
-    ViewKey phaseRelativePermeability  = { phaseRelativePermeabilityString };
-    ViewKey phaseCapillaryPressure     = { phaseCapillaryPressureString };
-
+    
   } viewKeysCompMultiphaseBase;
+
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysCompMultiphaseBase;
@@ -361,14 +298,20 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
   /**
+   * @brief Checks constitutive models for consistency
+   * @param cm        reference to the global constitutive model manager
+   */
+  void ValidateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
    * @brief Resize the allocated multidimensional fields
    * @param domain the domain containing the mesh and fields
    *
    * Resize fields along dimensions 1 and 2 (0 is the size of containing object, i.e. element subregion)
    * once the number of phases/components is known (e.g. component fractions)
    */
-  virtual void ResizeFields( MeshLevel * const meshLevel );
-  
+  virtual void ResizeFields( MeshLevel & meshLevel );
+
 private:
 
   /**
@@ -407,19 +350,13 @@ protected:
   integer m_useMass;
 
   /// name of the rel perm constitutive model
-  string m_relPermName;
-
-  /// index of the rel perm constitutive model
-  localIndex m_relPermIndex;
+  array1d< string > m_relPermModelNames;
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_capPressureFlag;
 
   /// name of the cap pressure constitutive model
-  string m_capPressureName;
-
-  /// index of the cap pressure constitutive model
-  localIndex m_capPressureIndex;
+  array1d< string > m_capPressureModelNames;
 
 
   /// views into primary variable fields
@@ -452,32 +389,32 @@ protected:
 
   /// views into material fields
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_pvMult;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseFrac;
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseDens;
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseDens_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseDens_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseVisc;
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_dPhaseVisc_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseVisc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseVisc_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_phaseCompFrac;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 > > m_dPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_phaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 > > m_dPhaseCompFrac_dComp;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_totalDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_totalDens;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseRelPerm;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseRelPerm;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseRelPerm_dPhaseVolFrac;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 > > m_phaseCapPressure;
-  ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 > > m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseCapPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
 

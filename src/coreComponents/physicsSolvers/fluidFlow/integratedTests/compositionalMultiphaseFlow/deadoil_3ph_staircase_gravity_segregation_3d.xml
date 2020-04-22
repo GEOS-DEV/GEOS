@@ -7,9 +7,9 @@
                                 logLevel="1"
                                 discretization="fluidTPFA"
                                 targetRegions="{Channel}"
-                                fluidName="fluid1"
-                                solidName="rock"
-                                relPermName="relperm"
+                                fluidNames="{fluid1}"
+                                solidNames="{rock}"
+                                relPermNames="{relperm}"
                                 temperature="300"
                                 useMass="0">
       <NonlinearSolverParameters newtonTol="1.0e-10"

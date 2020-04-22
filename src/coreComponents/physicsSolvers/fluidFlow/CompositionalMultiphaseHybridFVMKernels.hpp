@@ -109,10 +109,9 @@ struct FluxKernelHelper
                                    array2d< localIndex > const & elemList,
                                    SortedArray< localIndex > const & regionFilter,
                                    arraySlice1d< localIndex const > const elemToFaces,
-                                   localIndex const fluidIndex,
-                                   ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & phaseCompFrac,
-                                   ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dPres,
-                                   ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dComp,
+                                   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & phaseCompFrac,
+                                   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dPres,
+                                   ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dPhaseCompFrac_dComp,
                                    ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dCompFrac_dCompDens,
                                    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & phaseMob,
                                    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dPhaseMob_dPres,
@@ -283,7 +282,6 @@ struct FluxKernel< CellElementSubRegion >
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
-   * @param[in] fluidIndex the fluid index
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dPres the derivative of the density wrt pressure at this element's center
    * @param[in] dElemDens_dComp the derivative of the density wrt component densities at this element's center
@@ -314,13 +312,12 @@ struct FluxKernel< CellElementSubRegion >
            real64 const & elemPres,
            real64 const & dElemPres,
            real64 const & elemGravCoef,
-           localIndex const fluidIndex,
-           ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & elemPhaseDens,
-           ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dElemPhaseDens_dPres,
-           ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dElemPhaseDens_dComp,
-           ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & elemPhaseCompFrac,
-           ElementRegionManager::MaterialViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dElemPhaseCompFrac_dPres,
-           ElementRegionManager::MaterialViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dElemPhaseCompFrac_dComp,
+           ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & elemPhaseDens,
+           ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dElemPhaseDens_dPres,
+           ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dElemPhaseDens_dComp,
+           ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & elemPhaseCompFrac,
+           ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > >::ViewTypeConst const & dElemPhaseCompFrac_dPres,
+           ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > >::ViewTypeConst const & dElemPhaseCompFrac_dComp,
            ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >::ViewTypeConst const & dElemCompFrac_dCompDens,
            ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & elemPhaseMob,
            ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >::ViewTypeConst const & dElemPhaseMob_dPres,
@@ -387,9 +384,9 @@ struct FluxKernel< CellElementSubRegion >
                                                 elemPres,
                                                 dElemPres,
                                                 elemGravCoef,
-                                                elemPhaseDens[er][esr][fluidIndex][ei][0],
-                                                dElemPhaseDens_dPres[er][esr][fluidIndex][ei][0],
-                                                dElemPhaseDens_dComp[er][esr][fluidIndex][ei][0],
+                                                elemPhaseDens[er][esr][ei][0],
+                                                dElemPhaseDens_dPres[er][esr][ei][0],
+                                                dElemPhaseDens_dComp[er][esr][ei][0],
                                                 dElemCompFrac_dCompDens[er][esr][ei],
                                                 transMatrix,
                                                 volFlux,
@@ -405,7 +402,6 @@ struct FluxKernel< CellElementSubRegion >
                                                   elemList,
                                                   regionFilter,
                                                   elemToFaces,
-                                                  fluidIndex,                                             
                                                   elemPhaseCompFrac,
                                                   dElemPhaseCompFrac_dPres,
                                                   dElemPhaseCompFrac_dComp,

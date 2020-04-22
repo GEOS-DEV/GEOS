@@ -83,9 +83,12 @@ public:
    */
   virtual void BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction ) = 0;
 
-  localIndex numFluidPhases() const;
+  localIndex numFluidPhases() const { return m_phaseNames.size(); }
 
-  string const & phaseName( localIndex ip ) const;
+  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+
+  arrayView3d< real64 const > phaseRelPerm() const { return m_phaseRelPerm; }
+  arrayView4d< real64 const > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -95,16 +98,6 @@ public:
 
     static constexpr auto phaseRelPermString                    = "phaseRelPerm";                    // Kr
     static constexpr auto dPhaseRelPerm_dPhaseVolFractionString = "dPhaseRelPerm_dPhaseVolFraction"; // dKr_p/dS_p
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey phaseNames = { phaseNamesString };
-    ViewKey phaseTypes = { phaseTypesString };
-    ViewKey phaseOrder = { phaseOrderString };
-
-    ViewKey phaseRelPerm                    = { phaseRelPermString };                    // Kr_p
-    ViewKey dPhaseRelPerm_dPhaseVolFraction = { dPhaseRelPerm_dPhaseVolFractionString }; // dKr_p/dS_p
-
   } viewKeysRelativePermeabilityBase;
 
 protected:
