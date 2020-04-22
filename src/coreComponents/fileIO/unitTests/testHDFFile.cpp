@@ -94,7 +94,6 @@ TEST( testHDFIO, IdxArrayHistory )
       });
 
     HistoryMetadata spec = getHistoryMetadata("Array1d Idx History",arr,idx.size( ));
-    // todo : change the first dim extant to reflect on the indices being packed
     HDFHistIO io( filename, spec );
     io.Init( true );
 

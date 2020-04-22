@@ -44,6 +44,7 @@ namespace geosx
         setInputFlag(InputFlags::FALSE)->
         setRestartFlags(RestartFlags::WRITE_AND_READ)->
         setDescription("The current history record to be written, on restart from an earlier time allows use to remove invalid future history.");
+
     }
 
     virtual ~TimeHistoryOutput() override
@@ -94,14 +95,13 @@ namespace geosx
       Execute(time_n,0.0,cycleNumber,eventCounter,eventProgress,domain);
     }
 
-    static string CatalogName() { return "TimeHistoryOutput"; }
+    static string CatalogName() { return "TimeHistory"; }
 
     struct viewKeys
     {
       static constexpr auto timeHistoryOutputTarget = "source";
       static constexpr auto timeHistoryOutputFilename = "filename";
       static constexpr auto timeHistoryOutputFormat = "format";
-      static constexpr auto timeHistoryWriteHead = "write_head";
       static constexpr auto timeHistoryRestart = "restart";
     } timeHistoryOutputViewKeys;
 

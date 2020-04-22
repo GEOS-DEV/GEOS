@@ -46,14 +46,21 @@ CopyField::~CopyField()
 {
 }
 
+  /*
+void CopyField::InitializePostSubGroups( Group * const group )
+{
+  DofManager::addField(m_to, 
+}
+  */
 
 void CopyField::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                         Group * domain )
+                         Group * GEOSX_UNUSED_PARAM(domain) )
 {
+  /*
   GEOSX_LOG_RANK( "Copying " + m_from + " to " + m_to );
   DomainPartition * domainCast = domain->group_cast<DomainPartition*>(domain);
   MeshBody * meshBody = domainCast->getMeshBody(0);
@@ -63,16 +70,17 @@ void CopyField::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   {
     ElementRegionBase * curRegion = elemManager->GetRegion(regionName);
     GEOSX_ERROR_IF( curRegion == nullptr, "Region " + regionName + " not found" );
-    curRegion->forElementSubRegions([&]( auto * const elementSubRegion) -> void
+    //curRegion->template registerWrapper< fieldType >(m_to);
+    curRegion->forElementSubRegions([&]( auto const & elementSubRegion) -> void
     {
-      dataRepository::WrapperBase * vwFrom = elementSubRegion->getWrapperBase( m_from );
-      GEOSX_ERROR_IF( vwFrom == nullptr, "Field " + m_from + " not found on " + elementSubRegion->getName() );
+      dataRepository::WrapperBase const * vwFrom = elementSubRegion.getWrapperBase( m_from );
+      GEOSX_ERROR_IF( vwFrom == nullptr, "Field " + m_from + " not found on " + elementSubRegion.getName() );
       std::type_index typeIndex = std::type_index( vwFrom->get_typeid());
       rtTypes::ApplyArrayTypeLambda1( rtTypes::typeID( typeIndex ),
                                       [&]( auto type ) -> void
       {
         using fieldType = decltype(type);
-        dataRepository::Wrapper< fieldType > *  to = elementSubRegion->template registerWrapper< fieldType >(m_to);
+        dataRepository::Wrapper< fieldType > *  to = elementSubRegion.template registerWrapper< fieldType >(m_to);
         dataRepository::Wrapper< fieldType > & from = dataRepository::Wrapper< fieldType >::cast( *vwFrom );
         fieldType & fromField = from.reference();
         fieldType & toField = to->reference();
@@ -80,7 +88,7 @@ void CopyField::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
       });
     });
   }
-
+  */
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase, CopyField, std::string const &, Group * const )
