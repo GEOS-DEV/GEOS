@@ -43,6 +43,22 @@ string GetDataSetFilePath( ElementRegionBase const &  er, double time, int rank 
   return std::to_string( time ) + "/" + stringutilities::PadValue( rank, std::to_string( MpiWrapper::Comm_size() ).size() ) + "_" + er.getName() + ".vtu";
 }
 
+std::map< string, int > geosx2VTKCellTypes =
+{
+  { "C3D4", VTK_TETRA },
+  { "C3D8", VTK_HEXAHEDRON },
+  { "C3D6", VTK_WEDGE },
+  { "C3D5", VTK_PYRAMID }
+};
+
+std::map< string, std::vector< int > > geosx2VTKCellOrdering =
+{
+  { "C3D4", { 1, 0, 2, 3 } },
+  { "C3D8", { 0, 1, 3, 2, 4, 5, 7, 6 } },
+  { "C3D6", { 0, 3, 4, 1, 2, 5 } },
+  { "C3D5", { 0, 3, 2, 1, 4}  }
+};
+
 /*!
  * @brief Gets the VTK cell identifier
  * @param[in] elementType the type of the element (using the abaqus nomenclature)
@@ -51,23 +67,11 @@ string GetDataSetFilePath( ElementRegionBase const &  er, double time, int rank 
 int ToVTKCellType( const string & elementType )
 {
   int vtkIdentifier = VTK_EMPTY_CELL;
-  if( !elementType.compare( 0, 4, "C3D4" ))
+  try
   {
-    vtkIdentifier = VTK_TETRA;
+    vtkIdentifier = geosx2VTKCellTypes.at( elementType );
   }
-  else if( !elementType.compare( 0, 4, "C3D8" ))
-  {
-    vtkIdentifier = VTK_HEXAHEDRON;
-  }
-  else if( !elementType.compare( 0, 4, "C3D6" ))
-  {
-    vtkIdentifier = VTK_WEDGE;
-  }
-  else if( !elementType.compare( 0, 4, "C3D5" ))
-  {
-    vtkIdentifier = VTK_PYRAMID;
-  }
-  else
+  catch( const std::out_of_range& outOfRange )
   {
     GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
   }
@@ -78,49 +82,14 @@ int ToVTKCellType( const string & elementType )
  * @param[in] elementType the type of the element (using the abaqus nomenclature)
  * @return the table with the VTK node ordering (index : GEOSX ordering, value : VTK node ordering)
  */
-integer_array VTKNodeOrdering( const string & elementType )
+std::vector< int > VTKNodeOrdering( const string & elementType )
 {
-  integer_array nodeOrdering;
-  if( !elementType.compare( 0, 4, "C3D4" ))
+  std::vector< int > nodeOrdering;
+  try
   {
-    nodeOrdering.resize( 4 );
-    nodeOrdering[0] = 1;
-    nodeOrdering[1] = 0;
-    nodeOrdering[2] = 2;
-    nodeOrdering[3] = 3;
+    nodeOrdering = geosx2VTKCellOrdering.at( elementType );
   }
-  else if( !elementType.compare( 0, 4, "C3D8" ))
-  {
-    nodeOrdering.resize( 8 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 1;
-    nodeOrdering[2] = 3;
-    nodeOrdering[3] = 2;
-    nodeOrdering[4] = 4;
-    nodeOrdering[5] = 5;
-    nodeOrdering[6] = 7;
-    nodeOrdering[7] = 6;
-  }
-  else if( !elementType.compare( 0, 4, "C3D6" ))
-  {
-    nodeOrdering.resize( 6 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 3;
-    nodeOrdering[2] = 4;
-    nodeOrdering[3] = 1;
-    nodeOrdering[4] = 2;
-    nodeOrdering[5] = 5;
-  }
-  else if( !elementType.compare( 0, 4, "C3D5" ))
-  {
-    nodeOrdering.resize( 5 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 3;
-    nodeOrdering[2] = 2;
-    nodeOrdering[3] = 1;
-    nodeOrdering[4] = 4;
-  }
-  else
+  catch( const std::out_of_range& outOfRange )
   {
     GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
   }
@@ -150,6 +119,18 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputNam
     }
   }
   MpiWrapper::Barrier();
+} 
+
+vtkSmartPointer< vtkPoints >  VTKPolyDataWriterInterface::GetVTKPoints( NodeManager const & nodeManager ) const
+{
+  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  points->SetNumberOfPoints( nodeManager.size() );
+  auto connectivity = nodeManager.referencePosition();
+  for( localIndex v = 0; v < nodeManager.size(); v++ )
+  {
+    points->SetPoint( v, connectivity[v][0], connectivity[v][1], connectivity[v][2] );
+  }
+  return points;
 }
 
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPolyDataWriterInterface::GetWell( WellElementSubRegion const & esr,
@@ -190,7 +171,7 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
   geosx2VTKIndexing.reserve( esr.size() * esr.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
-  integer_array vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
+  std::vector< int >  vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
   for( localIndex ei = 0; ei < esr.size(); ei++ )
   {
     auto & elem = nodeListPerElement[ei];
@@ -228,12 +209,12 @@ std::pair< std::vector< int >,  vtkSmartPointer< vtkCellArray > > VTKPolyDataWri
   er.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & esr )
   {
     std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
-    integer_array vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
+    std::vector< int > vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
     int vtkCellType = ToVTKCellType( esr.GetElementTypeString() );
-    GEOSX_ERROR_IF_NE( integer_conversion< long >( connectivity.size() ), vtkOrdering.size() );
+    GEOSX_ERROR_IF_NE( connectivity.size(), vtkOrdering.size() );
     for( localIndex c = 0; c < esr.size(); c++ )
     {
-      for( localIndex i = 0; i < vtkOrdering.size(); i++ )
+      for( int i = 0; i < integer_conversion< int >( vtkOrdering.size() ); i++ )
       {
         connectivity[i] = esr.nodeList( c, vtkOrdering[i] );
       }
