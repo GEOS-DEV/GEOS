@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=101-373
+  - GEOSX_TPL_TAG=101-409
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
 # To save time (and money) we do not let travis automatically clone all our (lfs) subrepositories and do it by hand.
@@ -114,7 +114,7 @@ jobs:
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - <<: *geosx_linux_build
     env:
-    - DOCKER_REPOSITORY=geosx/centos7.7.1908-gcc8.3.1-cuda10.1.243
+    - DOCKER_REPOSITORY=geosx/centos7.6.1810-gcc8.3.1-cuda10.1.243
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - <<: *geosx_pangea_build
