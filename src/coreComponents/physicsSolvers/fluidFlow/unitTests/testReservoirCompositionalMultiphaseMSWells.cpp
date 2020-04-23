@@ -49,21 +49,18 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
 {
   localIndex const NC = solver->NumFluidComponents();
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * elemManager = mesh->getElemManager();
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   ConstitutiveManager * constitutiveManager = domain->getConstitutiveManager();
-  CompositionalMultiphaseFlow * flowSolver = solver->getParent()->GetGroup( "compositionalMultiphaseFlow" )->group_cast< CompositionalMultiphaseFlow * >();
-
-  MultiFluidBase * fluid = constitutiveManager->GetGroup< MultiFluidBase >( flowSolver->fluidIndex() );
-  ASSERT_NE( fluid, nullptr );
-
-  auto const & components = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  CompositionalMultiphaseFlow const & flowSolver = *solver->getParent()->GetGroup< CompositionalMultiphaseFlow >( "compositionalMultiphaseFlow" );
+  MultiFluidBase const & fluid = *constitutiveManager->GetGroup< MultiFluidBase >( flowSolver.fluidModelNames()[0] );
+  arrayView1d< string const > const & components = fluid.componentNames();
 
   // bind the stored reservoir views to the current domain
   //solver->ImplicitStepSetup( 0, 0, domain, nullptr );
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  solver->forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                                  WellElementSubRegion & subRegion )
   {
 
     SCOPED_TRACE( "Well " + subRegion.getName() );
@@ -100,12 +97,12 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
       // perturb pressure in each cell
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
       {
-        real64 const dP = perturbParameter * (pres[iwelem] + perturbParameter);
+        real64 const dP = perturbParameter * ( pres[iwelem] + perturbParameter );
         dPres[iwelem] = dP;
       }
 
       // recompute component fractions
-      solver->UpdateState( &subRegion );
+      solver->UpdateState( subRegion, targetIndex );
 
       // check values in each cell
       for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -126,12 +123,12 @@ void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell * solve
         // perturb a single component density in each cell
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
         {
-          real64 const dRho = perturbParameter * (compDens[iwelem][jc] + perturbParameter);
+          real64 const dRho = perturbParameter * ( compDens[iwelem][jc] + perturbParameter );
           dCompDens[iwelem][jc] = dRho;
         }
 
         // recompute component fractions
-        solver->UpdateState( &subRegion );
+        solver->UpdateState( subRegion, targetIndex );
 
         // check values in each cell
         for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
@@ -169,8 +166,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
   // get a view into local residual vector
   real64 const * localResidual = residual.extractLocalVector();
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   // assemble the analytical residual
   solver->ResetStateToBeginningOfStep( domain );
@@ -246,13 +243,15 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
           real64 const dP = perturbParameter * (pres[ei] + perturbParameter);
           dPres[ei] = dP;
           // after perturbing, update the pressure-dependent quantities in the reservoir
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
+          flowSolver->forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
+                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver->UpdateState( &subRegion2 );
+            flowSolver->UpdateState( subRegion2, targetIndex2 );
           } );
-          elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion3 )
+          wellSolver->forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
+                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver->UpdateState( &subRegion3 );
+            wellSolver->UpdateState( subRegion3, targetIndex3 );
           } );
 
 
@@ -286,9 +285,10 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
           real64 const dRho = perturbParameter * totalDensity;
           dCompDens[ei][jc] = dRho;
 
-          flowSolver->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion2 )
+          flowSolver->forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
+                                                      ElementSubRegionBase & subRegion2 )
           {
-            flowSolver->UpdateState( &subRegion2 );
+            flowSolver->UpdateState( subRegion2, targetIndex2 );
           } );
 
           residual.zero();
@@ -321,7 +321,8 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
   /////////////////////////////////////////////////
 
   // loop over the wells
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  wellSolver->forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                                      WellElementSubRegion & subRegion )
   {
 
     // get the degrees of freedom, ghosting info and next well elem index
@@ -342,7 +343,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
     arrayView2d< real64 > const & dWellElemCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
 
-    arrayView1d< real64 > const & connRate  =
+    arrayView1d< real64 > const & connRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureConnRateString );
     arrayView1d< real64 > const & dConnRate =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaMixtureConnRateString );
@@ -367,10 +368,10 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
         solver->ResetStateToBeginningOfStep( domain );
 
         // here is the perturbation in the pressure of the well element
-        real64 const dP = perturbParameter * (wellElemPressure[iwelem] + perturbParameter);
+        real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
         dWellElemPressure[iwelem] = dP;
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver->UpdateState( &subRegion );
+        wellSolver->UpdateState( subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -386,7 +387,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
         //      this is computing J_RW and J_WW
         for( localIndex lid = 0; lid < residual.localSize(); ++lid )
         {
-          real64 dRdP = (localResidual[lid] - localResidualOrig[lid]) / dP;
+          real64 dRdP = ( localResidual[lid] - localResidualOrig[lid] ) / dP;
           if( std::fabs( dRdP ) > 0.0 )
           {
             globalIndex gid = residual.getGlobalRowID( lid );
@@ -401,7 +402,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
 
         real64 const dRho = perturbParameter * wellElemTotalDensity;
         dWellElemCompDens[iwelem][jc] = dRho;
-        wellSolver->UpdateStateAll( domain );
+        wellSolver->UpdateStateAll( *domain );
 
         residual.zero();
         jacobian.zero();
@@ -416,7 +417,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
         for( localIndex lid = 0; lid < residual.localSize(); ++lid )
         {
           // here is the perturbation in the density of the element
-          real64 dRdRho = (localResidual[lid] - localResidualOrig[lid]) / dRho;
+          real64 dRdRho = ( localResidual[lid] - localResidualOrig[lid] ) / dRho;
           if( std::fabs( dRdRho ) > 0.0 )
           {
             globalIndex gid = residual.getGlobalRowID( lid );
@@ -440,7 +441,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
         solver->ResetStateToBeginningOfStep( domain );
 
         // here is the perturbation in the pressure of the well element
-        real64 const dRate = perturbParameter * (connRate[iwelem] + perturbParameter);
+        real64 const dRate = perturbParameter * ( connRate[iwelem] + perturbParameter );
         dConnRate[iwelem] = dRate;
 
         residual.zero();
@@ -457,7 +458,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir * solver,
         //      this is computing J_RW and J_WW
         for( localIndex lid = 0; lid < residual.localSize(); ++lid )
         {
-          real64 dRdRate = (localResidual[lid] - localResidualOrig[lid]) / dRate;
+          real64 dRdRate = ( localResidual[lid] - localResidualOrig[lid] ) / dRate;
           if( std::fabs( dRdRate ) > 0.0 )
           {
             globalIndex gid = residual.getGlobalRowID( lid );
