@@ -43,7 +43,7 @@ string GetDataSetFilePath( ElementRegionBase const &  er, double time, int rank 
   return std::to_string( time ) + "/" + stringutilities::PadValue( rank, std::to_string( MpiWrapper::Comm_size() ).size() ) + "_" + er.getName() + ".vtu";
 }
 
-std::map< string, int > geosx2VTKCellTypes =
+const std::map< string, int > geosx2VTKCellTypes =
 {
   { "C3D4", VTK_TETRA },
   { "C3D8", VTK_HEXAHEDRON },
@@ -51,7 +51,7 @@ std::map< string, int > geosx2VTKCellTypes =
   { "C3D5", VTK_PYRAMID }
 };
 
-std::map< string, std::vector< int > > geosx2VTKCellOrdering =
+const std::map< string, std::vector< int > > geosx2VTKCellOrdering =
 {
   { "C3D4", { 1, 0, 2, 3 } },
   { "C3D8", { 0, 1, 3, 2, 4, 5, 7, 6 } },
@@ -214,7 +214,7 @@ std::pair< std::vector< int >,  vtkSmartPointer< vtkCellArray > > VTKPolyDataWri
     GEOSX_ERROR_IF_NE( connectivity.size(), vtkOrdering.size() );
     for( localIndex c = 0; c < esr.size(); c++ )
     {
-      for( int i = 0; i < integer_conversion< int >( vtkOrdering.size() ); i++ )
+      for( std::size_t i = 0; i < vtkOrdering.size() ; i++ )
       {
         connectivity[i] = esr.nodeList( c, vtkOrdering[i] );
       }
