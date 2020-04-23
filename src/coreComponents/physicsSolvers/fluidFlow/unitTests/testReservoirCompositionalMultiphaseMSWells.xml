@@ -17,9 +17,9 @@
                                  logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="297.15"
                                  useMass="0">
     </CompositionalMultiphaseFlow>
@@ -27,23 +27,21 @@
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
-                                 wellFluidName="fluid1"
-                                 wellRelPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 relPermNames="{relperm}"
                                  wellTemperature="297.15"
                                  useMass="0">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="4e6"
-                      targetRate="1"
-                      referenceDepth="0.5"/>
+                      targetRate="1"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e7"
                       targetRate="1e-5" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
-                      referenceDepth="0.5"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
 
     
@@ -69,14 +67,12 @@
                                         {3.5, 0,  0.5} }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="1">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="19.4"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.4"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="20.3"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.3"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -88,14 +84,12 @@
                                         {1.5, 0,  0.5} }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.2"
+                  radius="0.1"
                   numElementsPerSegment="1">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.52"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.52"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="20.45"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.45"/> 
     </InternalWell> 
 
   </Mesh>

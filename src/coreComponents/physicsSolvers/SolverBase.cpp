@@ -62,7 +62,7 @@ SolverBase::SolverBase( std::string const & name,
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames, false )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
@@ -167,6 +167,36 @@ void SolverBase::SetLinearSolverParameters()
   }
 }
 
+bool SolverBase::CheckModelNames( array1d< string > & modelNames,
+                                  string const & attribute,
+                                  bool const allowEmpty ) const
+{
+  if( allowEmpty && modelNames.empty() )
+  {
+    return false;
+  }
+
+  // We can disable this if we want to be more strict
+  if( modelNames.size() == 1 )
+  {
+    string const singleModelName = modelNames[0];
+    modelNames.resize( m_targetRegionNames.size() );
+    modelNames = singleModelName;
+  }
+
+  GEOSX_ERROR_IF_NE_MSG( modelNames.size(), m_targetRegionNames.size(),
+                         getName() << ": invalid number of values in " << attribute << " attribute "
+                                                                                       "(expected one model name per target region, or one value for all regions)" );
+  return true;
+}
+
+localIndex SolverBase::targetRegionIndex( string const & regionName ) const
+{
+  auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
+  GEOSX_ERROR_IF( pos == m_targetRegionNames.end(), "Region " << regionName << " is not a target of solver " << getName() );
+  return std::distance( m_targetRegionNames.begin(), pos );
+}
+
 real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                real64 const & GEOSX_UNUSED_PARAM( dt ),
                                const integer GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -174,7 +204,6 @@ real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
 {
   return 0;
 }
-
 
 void SolverBase::Execute( real64 const time_n,
                           real64 const dt,
@@ -287,6 +316,7 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   return dt;
 }
 
+
 bool SolverBase::LineSearch( real64 const & time_n,
                              real64 const & dt,
                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -363,7 +393,6 @@ bool SolverBase::LineSearch( real64 const & time_n,
   lastResidual = residualNorm;
   return lineSearchSuccess;
 }
-
 
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,

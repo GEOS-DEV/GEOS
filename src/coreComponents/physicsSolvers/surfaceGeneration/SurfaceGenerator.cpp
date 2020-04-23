@@ -176,7 +176,6 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
   SolverBase( name, parent ),
   m_failCriterion( 1 ),
 //  m_maxTurnAngle(91.0),
-  m_solidMaterialName( "" ),
   m_nodeBasedSIF( 0 ),
   m_rockToughness( 1.0e99 ),
   m_mpiCommOrder( 0 )
@@ -185,7 +184,7 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
                          &this->m_failCriterion,
                          0 );
 
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0 )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames, 0 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
@@ -2933,8 +2932,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   parentNodeIndices = nodeManager.getReference< array1d< localIndex > >( nodeManager.viewKeys.parentIndex );
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
-  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialName );
-  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
+  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
+  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
@@ -2970,7 +2969,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   nodeManager.totalDisplacement().move( chai::CPU, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
-    subRegion.GetConstitutiveModels()->GetGroup( m_solidMaterialName )->
+    subRegion.GetConstitutiveModels()->GetGroup( m_solidMaterialNames[0] )->
       getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( chai::CPU,
                                                                                                                    false );
   } );
@@ -3024,22 +3023,18 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
           for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeIndex ); ++k )
           {
-            R1Tensor xEle;
-            CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodeToRegionMap[nodeIndex][k] )->
-                                                        GetSubRegion< CellElementSubRegion >( nodeToSubRegionMap[nodeIndex][k] );
-            localIndex iEle = nodeToElementMap[nodeIndex][k];
+            localIndex const er  = nodeToRegionMap[nodeIndex][k];
+            localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
+            localIndex const ei  = nodeToElementMap[nodeIndex][k];
 
-            ElementRegionBase * const
-            elementRegion = elementSubRegion->getParent()->getParent()->group_cast< ElementRegionBase * >();
-            string const elementRegionName = elementRegion->getName();
-            localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-            localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+            CellElementSubRegion * const elementSubRegion = elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
+
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion->nodeList();
 
-            xEle = elementSubRegion->getElementCenter()[iEle];
+            R1Tensor xEle = elementSubRegion->getElementCenter()[ei];
 
-            realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][iEle];
-            realT G = shearModulus[er][esr][m_solidMaterialFullIndex][iEle];
+            realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
+            realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
             realT youngsModulus = 9 * K * G / ( 3 * K + G );
             realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
@@ -3047,13 +3042,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
             {
-              if( elementsToNodes( iEle, n ) == nodeIndex )
+              if( elementsToNodes( ei, n ) == nodeIndex )
               {
                 R1Tensor temp;
-                xEle = elementSubRegion->getElementCenter()[iEle];
+                xEle = elementSubRegion->getElementCenter()[ei];
 
                 SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
-                  CalculateSingleNodalForce( iEle,
+                  CalculateSingleNodalForce( ei,
                                              n,
                                              numQuadraturePoints,
                                              dNdX[er][esr],
@@ -3154,18 +3149,12 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             localIndex nodeID = i == 0 ? tralingNodeID : theOtherTrailingNodeID;
             for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
             {
-              CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodeToRegionMap[nodeID][k] )->
-                                                          GetSubRegion< CellElementSubRegion >( nodeToSubRegionMap[nodeID][k] );
-              localIndex iEle = nodeToElementMap[nodeID][k];
+              localIndex const er  = nodeToRegionMap[nodeIndex][k];
+              localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
+              localIndex const ei  = nodeToElementMap[nodeIndex][k];
 
-              ElementRegionBase * const
-              elementRegion = elementSubRegion->getParent()->getParent()->group_cast< ElementRegionBase * >();
-              string const elementRegionName = elementRegion->getName();
-              localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-              localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
-
-              realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][iEle];
-              realT G = shearModulus[er][esr][m_solidMaterialFullIndex][iEle];
+              realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
+              realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
               averageYoungsModulus += 9 * K * G / ( 3 * K + G );
               averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
             }
@@ -3771,8 +3760,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
-  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialName );
-  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialName + " not found" );
+  ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
+  GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
@@ -3804,6 +3793,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   ElementRegionManager::ElementViewAccessor< array2d< real64 > > const
   detJ = elementManager.ConstructViewAccessor< array2d< real64 > >( keys::detJ );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const elemCenter =
+    elementManager.ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
 
   localIndex nElemEachSide[2];
   nElemEachSide[0] = 0;
@@ -3827,17 +3818,13 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
     for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
     {
-      R1Tensor xEle;
-      CellElementSubRegion * elementSubRegion = elementManager.GetRegion( nodeToRegionMap[nodeID][k] )->
-                                                  GetSubRegion< CellElementSubRegion >( nodeToSubRegionMap[nodeID][k] );
-      localIndex iEle = nodeToElementMap[nodeID][k];
+      localIndex const er  = nodeToRegionMap[nodeID][k];
+      localIndex const esr = nodeToSubRegionMap[nodeID][k];
+      localIndex const ei  = nodeToElementMap[nodeID][k];
 
-      ElementRegionBase * const elementRegion = elementSubRegion->getParent()->getParent()->group_cast< ElementRegionBase * >();
-      string const elementRegionName = elementRegion->getName();
-      localIndex const er = elementManager.GetRegions().getIndex( elementRegionName );
-      localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
+      CellElementSubRegion const * const elementSubRegion = elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
 
-      xEle = elementSubRegion->getElementCenter()[iEle];
+      R1Tensor xEle = elemCenter[er][esr][ei];
 
       realT udist;
       R1Tensor x0_x1( X[edgeToNodeMap[edgeID][0]] ), x0_xEle( xEle );
@@ -3851,24 +3838,24 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
-        realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][iEle];
-        realT G = shearModulus[er][esr][m_solidMaterialFullIndex][iEle];
+        realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
+        realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
         realT youngsModulus = 9 * K * G / ( 3 * K + G );
         realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion->nodeList();
         for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
         {
-          if( elementsToNodes( iEle, n ) == nodeID )
+          if( elementsToNodes( ei, n ) == nodeID )
           {
             R1Tensor temp;
-            xEle = elementSubRegion->getElementCenter()[iEle]; //For C3D6 element type, elementsToNodes map may include
-                                                               // repeated indices and the following may run multiple
-                                                               // times for the same element.
+            xEle = elemCenter[er][esr][ei]; //For C3D6 element type, elementsToNodes map may include
+                                            // repeated indices and the following may run multiple
+                                            // times for the same element.
 
             //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
             SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
-              CalculateSingleNodalForce( iEle,
+              CalculateSingleNodalForce( ei,
                                          n,
                                          numQuadraturePoints,
                                          dNdX[er][esr],

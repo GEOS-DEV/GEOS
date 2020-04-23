@@ -459,16 +459,8 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--capPressureIndex => (no description available)-->
-		<xsd:attribute name="capPressureIndex" type="localIndex" />
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--relPermIndex => (no description available)-->
-		<xsd:attribute name="relPermIndex" type="localIndex" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -482,12 +474,8 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
-		<!--elementRelPermIndex => (no description available)-->
-		<xsd:attribute name="elementRelPermIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--resFluidIndex => (no description available)-->
-		<xsd:attribute name="resFluidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType" />
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
@@ -535,50 +523,32 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--proppantIndex => (no description available)-->
-		<xsd:attribute name="proppantIndex" type="localIndex" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -594,8 +564,6 @@
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--resFluidIndex => (no description available)-->
-		<xsd:attribute name="resFluidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1422,9 +1390,9 @@
 		<xsd:attribute name="reservoirElementRegion" type="localIndex_array" />
 		<!--reservoirElementSubregion => (no description available)-->
 		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
-		<!--transmissibility => (no description available)-->
-		<xsd:attribute name="transmissibility" type="real64_array" />
 		<!--wellElementIndex => (no description available)-->
 		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
+		<!--wellTransmissibility => (no description available)-->
+		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>

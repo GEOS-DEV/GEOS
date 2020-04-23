@@ -530,19 +530,19 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
 		</xsd:choice>
-		<!--crossSectionArea => cross section area of the well-->
-		<xsd:attribute name="crossSectionArea" type="real64" use="required" />
-		<!--meshName => name of the reservoir mesh associated with this well-->
+		<!--meshName => Name of the reservoir mesh associated with this well-->
 		<xsd:attribute name="meshName" type="string" use="required" />
-		<!--numElementsPerSegment => number of well elements per polyline segment-->
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
 		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
-		<!--polylineNodeCoords => physical coordinates of the well polyline nodes-->
+		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
 		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
-		<!--polylineSegmentConn => connectivity of the polyline segments-->
+		<!--polylineSegmentConn => Connectivity of the polyline segments-->
 		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
-		<!--wellControlsName => name of the set of constraints associated with this well-->
+		<!--radius => Radius of the well-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
 		<xsd:attribute name="wellControlsName" type="string" use="required" />
-		<!--wellRegionName => name of the well element region-->
+		<!--wellRegionName => Name of the well element region-->
 		<xsd:attribute name="wellRegionName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -827,14 +827,14 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--capPressureName => Name of the capillary pressure constitutive model to use-->
-		<xsd:attribute name="capPressureName" type="string" default="" />
+		<!--capPressureNames => Name of the capillary pressure constitutive model to use-->
+		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--fluidNames => Names of fluid constitutive models for each region.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -843,10 +843,10 @@
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
-		<!--relPermName => Name of the relative permeability constitutive model to use-->
-		<xsd:attribute name="relPermName" type="string" use="required" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
-		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--relPermNames => Name of the relative permeability constitutive model to use-->
+		<xsd:attribute name="relPermNames" type="string_array" use="required" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -886,18 +886,18 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--relPermNames => Names of relative permeability constitutive models to use-->
+		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
-		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="wellFluidName" type="string" use="required" />
-		<!--wellRelPermName => Name of the relative permeability constitutive model to use-->
-		<xsd:attribute name="wellRelPermName" type="string" use="required" />
 		<!--wellTemperature => Temperature-->
 		<xsd:attribute name="wellTemperature" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -908,8 +908,6 @@
 		<xsd:attribute name="control" type="string" use="required" />
 		<!--injectionStream => Global component densities for the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
-		<!--referenceDepth => Reference depth for well bottom hole pressure-->
-		<xsd:attribute name="referenceDepth" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure-->
 		<xsd:attribute name="targetBHP" type="real64" use="required" />
 		<!--targetRate => Target rate-->
@@ -934,8 +932,8 @@
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidMaterialName => Name of the solid material used in solid mechanic solver-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<!--solidMaterialNames => Name of the solid material used in solid mechanic solver-->
+		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1050,8 +1048,8 @@
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--fluidNames => Names of fluid constitutive models for each region.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--frictionCoefficient => Friction coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" default="0.03" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1068,10 +1066,10 @@
 		<xsd:attribute name="proppantDensity" type="real64" default="2500" />
 		<!--proppantDiameter => Proppant diameter-->
 		<xsd:attribute name="proppantDiameter" type="real64" default="0.0004" />
-		<!--proppantName => Name of proppant constitutive object to use for this solver.-->
-		<xsd:attribute name="proppantName" type="string" use="required" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
-		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--proppantNames => Name of proppant constitutive object to use for this solver.-->
+		<xsd:attribute name="proppantNames" type="string_array" use="required" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
@@ -1088,8 +1086,8 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--fluidNames => Names of fluid constitutive models for each region.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -1098,8 +1096,8 @@
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
-		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1114,8 +1112,8 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--fluidNames => Names of fluid constitutive models for each region.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -1124,8 +1122,8 @@
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
-		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1140,8 +1138,8 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--fluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="fluidName" type="string" use="required" />
+		<!--fluidNames => Names of fluid constitutive models for each region.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
@@ -1150,8 +1148,8 @@
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
-		<!--solidName => Name of solid constitutive object to use for this solver-->
-		<xsd:attribute name="solidName" type="string" use="required" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1187,14 +1185,14 @@
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
+		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--wellFluidName => Name of fluid constitutive object to use for this solver.-->
-		<xsd:attribute name="wellFluidName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1221,8 +1219,8 @@
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
-		<!--solidMaterialName => The name of the material that should be used in the constitutive updates-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<!--solidMaterialNames => The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1264,8 +1262,8 @@
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
-		<!--solidMaterialName => The name of the material that should be used in the constitutive updates-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<!--solidMaterialNames => The name of the material that should be used in the constitutive updates-->
+		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1305,8 +1303,8 @@
 		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
 		<!--rockToughness => Rock toughness of the solid material-->
 		<xsd:attribute name="rockToughness" type="real64" use="required" />
-		<!--solidMaterialName => Name of the solid material used in solid mechanic solver-->
-		<xsd:attribute name="solidMaterialName" type="string" use="required" />
+		<!--solidMaterialNames => Name of the solid material used in solid mechanic solver-->
+		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

@@ -1452,7 +1452,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
-  array1d< std::map< string, WrapperBase const * > > viewPointers;
+  std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(

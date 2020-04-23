@@ -332,8 +332,8 @@ protected:
                       int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_CLASS = UPDATE_CLASS::template Kernels >
   static
   real64 Execute( MeshLevel & mesh,
-                  string_array const & targetRegions,
-                  string const & constitutiveName,
+                  arrayView1d< string const > const & targetRegions,
+                  arrayView1d< string const > const & constitutiveNames,
                   FiniteElementDiscretization const * const feDiscretization,
                   arrayView1d< globalIndex const > const & inputDofNumber,
                   ParallelMatrix & inputMatrix,
@@ -348,7 +348,8 @@ protected:
 
 
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( targetRegions,
-                                                                       [&] ( auto & elementSubRegion )
+                                                                       [&] ( localIndex const targetRegionIndex,
+                                                                             auto & elementSubRegion )
     {
       localIndex const numElems = elementSubRegion.size();
       typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
@@ -373,9 +374,11 @@ protected:
         constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
         constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
-        constitutive::ConstitutiveBase *
-        constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveName );
-
+        constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
+        if( targetRegionIndex <= constitutiveNames.size() -1 )
+        {
+          constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+        }
         std::unique_ptr< constitutive::Dummy > dummyConstitutiveRelation;
         if( constitutiveRelation==nullptr )
         {
@@ -422,8 +425,8 @@ protected:
             typename CONSTITUTIVE_BASE = constitutive::Dummy >
   static
   real64 FillSparsity( MeshLevel & mesh,
-                       string_array const & targetRegions,
-                       string const & constitutiveName,
+                       arrayView1d< string const > const & targetRegions,
+                       arrayView1d< string const > const & constitutiveNames,
                        FiniteElementDiscretization const * const feDiscretization,
                        arrayView1d< globalIndex const > const & inputDofNumber,
                        ParallelMatrix & inputMatrix,
@@ -435,7 +438,7 @@ protected:
                     FiniteElementRegionLoop::Parameters,
                     UPDATE_CLASS::template SparsityKernels >( mesh,
                                                               targetRegions,
-                                                              constitutiveName,
+                                                              constitutiveNames,
                                                               feDiscretization,
                                                               inputDofNumber,
                                                               inputMatrix,

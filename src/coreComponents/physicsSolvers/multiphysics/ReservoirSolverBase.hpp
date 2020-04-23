@@ -82,6 +82,9 @@ public:
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override final;
 
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
+
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,
                             ParallelMatrix & matrix,

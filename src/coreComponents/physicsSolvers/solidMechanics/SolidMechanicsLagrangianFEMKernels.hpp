@@ -55,13 +55,13 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
 
   localIndex const N = acceleration.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        for( int j = 0; j < 3; ++j )
-        {
-          velocity( i, j ) += dt * acceleration( i, j );
-          acceleration( i, j ) = 0;
-        }
-      } );
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      velocity( i, j ) += dt * acceleration( i, j );
+      acceleration( i, j ) = 0;
+    }
+  } );
 }
 
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
@@ -73,14 +73,14 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   GEOSX_MARK_FUNCTION;
 
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = indices[ i ];
-        for( int j = 0; j < 3; ++j )
-        {
-          acceleration( a, j ) /= mass[ a ];
-          velocity( a, j ) += dt * acceleration( a, j );
-        }
-      } );
+  {
+    localIndex const a = indices[ i ];
+    for( int j = 0; j < 3; ++j )
+    {
+      acceleration( a, j ) /= mass[ a ];
+      velocity( a, j ) += dt * acceleration( a, j );
+    }
+  } );
 }
 
 inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD > const & velocity,
@@ -92,13 +92,13 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 
   localIndex const N = velocity.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        for( int j = 0; j < 3; ++j )
-        {
-          uhat( i, j ) = velocity( i, j ) * dt;
-          u( i, j ) += uhat( i, j );
-        }
-      } );
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      uhat( i, j ) = velocity( i, j ) * dt;
+      u( i, j ) += uhat( i, j );
+    }
+  } );
 }
 
 template< int N >
