@@ -32,19 +32,19 @@
                   cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
   </Mesh>
 
-  <Events maxTime="1e10">
+  <Events maxTime="1e8">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="5e9"
+                   timeFrequency="5e7"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e9"
+                   forceDt="1e7"
                    target="/Solvers/compflow"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e9"
+                   timeFrequency="5e7"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 
@@ -94,7 +94,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="permy_channel"
                         component="1"
@@ -102,7 +102,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="permz_channel"
                         component="2"
@@ -110,7 +110,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="porosity_channel"
                         initialCondition="1"

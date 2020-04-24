@@ -87,8 +87,10 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
 
     stackArray1d< globalIndex, 1 > dofIndexRes( resNDOF );
     stackArray1d< globalIndex, 2 > dofIndexWell( wellNDOF );
-    stackArray2d< real64, 2 > values( resNDOF, wellNDOF );
-    values = 1.0;
+    stackArray2d< real64, 2 > valuesResWell( resNDOF, wellNDOF );
+    stackArray2d< real64, 2 > valuesWellRes( wellNDOF, resNDOF );
+    valuesResWell = 1.0;
+    valuesWellRes = 1.0;
 
     // Insert the entries corresponding to reservoir-well perforations
     // This will fill J_WR, and J_RW
@@ -113,12 +115,12 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
       // fill J_RW
       matrix.insert( dofIndexRes,
                      dofIndexWell,
-                     values );
+                     valuesResWell );
 
       // fill J_WR
       matrix.insert( dofIndexWell,
                      dofIndexRes,
-                     values );
+                     valuesWellRes );
     }
 
   } );

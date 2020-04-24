@@ -38,32 +38,32 @@
   </Geometry>
 
 
-  <Events maxTime="2e8">
+  <Events maxTime="2e4">
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="1e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="solverApplications1"
-                   forceDt="1e4"
+                   forceDt="1e0"
                    beginTime="0"
-                   endTime="1e5"
+                   endTime="1e1"
                    target="/Solvers/compflow"/>
 
     <PeriodicEvent name="solverApplications2"
-                   forceDt="1e5"
-                   beginTime="1e5"
-                   endTime="1e6"
+                   forceDt="1e1"
+                   beginTime="1e1"
+                   endTime="1e2"
                    target="/Solvers/compflow"/>
 
     <PeriodicEvent name="solverApplications3"
-                   forceDt="1e6"
-                   beginTime="1e6"
+                   forceDt="1e2"
+                   beginTime="1e2"
                    target="/Solvers/compflow"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e8"
+                   timeFrequency="1e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
   </Events>
@@ -106,7 +106,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
                fieldName="permeability"
-               scale="1.0e-14"/>
+               scale="1.0e-16"/>
 
     <FieldSpecification name="permy"
                component="1"
@@ -114,7 +114,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
                fieldName="permeability"
-               scale="1.0e-14"/>
+               scale="1.0e-16"/>
 
     <FieldSpecification name="permz"
                component="2"
@@ -122,7 +122,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/block1"
                fieldName="permeability"
-               scale="1.0e-14"/>
+               scale="1.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"

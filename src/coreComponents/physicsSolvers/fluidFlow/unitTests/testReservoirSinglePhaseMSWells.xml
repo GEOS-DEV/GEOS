@@ -54,43 +54,27 @@
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
                   meshName="mesh1"
-                  polylineNodeCoords="{ {4.5, 0, 20  }, 
-                                        {4.5, 0, 15  },
-                                        {4.5, 0, 10  },
-                                        {4.5, 0,  0.5},
-                                        {3.5, 0,  0.5} }"
-                  polylineSegmentConn="{ {0, 1},
-                                         {1, 2},
-                                         {2, 3},
-                                         {3, 4} }"
+                  polylineNodeCoords="{ {4.5, 0,  2  },
+                                        {4.5, 0,  0.5} }"
+                  polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
                   numElementsPerSegment="1">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="19.4"/> 
-        <Perforation name="producer1_perf2"
-                     distanceFromHead="20.3"/> 
+                     distanceFromHead="1.45"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
                   meshName="mesh1"
-                  polylineNodeCoords="{ {0.5, 0, 20  }, 
-                                        {0.5, 0, 15  },
-                                        {0.5, 0, 10  },
-                                        {0.5, 0,  0.5},
-                                        {1.5, 0,  0.5} }"
-                  polylineSegmentConn="{ {0, 1},
-                                         {1, 2},
-                                         {2, 3},
-                                         {3, 4} }"
+                  polylineNodeCoords="{ {0.5, 0, 2  },
+                                        {0.5, 0, 0.5} }"
+                  polylineSegmentConn="{ {0, 1} }"
                   radius="0.1"
-                  numElementsPerSegment="3">
+                  numElementsPerSegment="1">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.52"/> 
-        <Perforation name="injector1_perf2"
-                     distanceFromHead="20.45"/> 
-    </InternalWell> 
+                     distanceFromHead="1.45"/> 
+    </InternalWell>
 
   </Mesh>
 
