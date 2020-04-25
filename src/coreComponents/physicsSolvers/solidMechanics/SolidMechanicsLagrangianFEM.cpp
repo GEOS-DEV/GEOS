@@ -970,22 +970,39 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
   GEOSX_MARK_FUNCTION;
   SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution, setSparisty );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = *(domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
   arrayView1d< globalIndex const > const &
-  dofNumber = nodeManager->getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
+  dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
   matrix.open();
 
+  {
+    array1d<string> fractureRegion(1);
+    fractureRegion[0] = "Fracture";
 
+    physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy,
+                                                                 SolidMechanicsLagrangianFEMKernels::QuasiStatic,
+                                                                 FaceElementSubRegion >( mesh,
+                                                                                      fractureRegion,
+                                                                                      array1d<string>(),
+                                                                                      nullptr,
+                                                                                      dofNumber,
+                                                                                      matrix,
+                                                                                      rhs );
+
+  }
   physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy,
-                                                               SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *mesh,
-                                                                                                                  targetRegionNames(),
-                                                                                                                  m_solidMaterialNames,
-                                                                                                                  nullptr,
-                                                                                                                  dofNumber,
-                                                                                                                  matrix,
-                                                                                                                  rhs );
+                                                               SolidMechanicsLagrangianFEMKernels::QuasiStatic,
+                                                               CellElementSubRegion >( mesh,
+                                                                                    targetRegionNames(),
+                                                                                    m_solidMaterialNames,
+                                                                                    nullptr,
+                                                                                    dofNumber,
+                                                                                    matrix,
+                                                                                    rhs );
+
+
   matrix.close();
 
 }
@@ -1011,30 +1028,27 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                   ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel & mesh = *(domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  NumericalMethodsManager const * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const &
+  numericalMethodManager = *(domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager ));
 
-  FiniteElementDiscretizationManager const * const
-  feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = *(numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations ));
 
-  FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix.open();
   rhs.open();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   ResetStressToBeginningOfStep( domain );
 
   GEOSX_UNUSED_VAR( dt );
-//  GEOSX_UNUSED_VAR( numericalMethodManager )
-//  GEOSX_UNUSED_VAR( feDiscretizationManager )
-//  template< typename T >
-//  using LoopKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel::FiniteElementRegionLoopKernel<T>;
 
   if( m_timeIntegrationOption == timeIntegrationOption::QuasiStatic )
   {
@@ -1042,14 +1056,15 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
     m_maxForce = physicsLoopInterface::
                    FiniteElementRegionLoop::Execute< serialPolicy,
                                                      Update,
-                                                     constitutive::SolidBase >( *mesh,
-                                                                                targetRegionNames(),
-                                                                                m_solidMaterialNames,
-                                                                                feDiscretization,
-                                                                                dofNumber,
-                                                                                matrix,
-                                                                                rhs,
-                                                                                Update::Parameters( gravityVector().Data()));
+                                                     constitutive::SolidBase,
+                                                     CellElementSubRegion >( mesh,
+                                                                          targetRegionNames(),
+                                                                          m_solidMaterialNames,
+                                                                          feDiscretization,
+                                                                          dofNumber,
+                                                                          matrix,
+                                                                          rhs,
+                                                                          Update::Parameters( gravityVector().Data()));
   }
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitDynamic )
   {

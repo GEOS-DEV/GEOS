@@ -39,10 +39,6 @@ namespace constitutive
 class LinearElasticAnisotropicUpdates : public SolidBaseUpdates
 {
 public:
-  LinearElasticAnisotropicUpdates():
-    SolidBaseUpdates(),
-    m_stiffnessView()
-  {}
 
   /**
    * @brief Constructor
@@ -55,6 +51,9 @@ public:
     SolidBaseUpdates( stress ),
     m_stiffnessView( C )
   {}
+
+  /// Deleted default constructor
+  LinearElasticAnisotropicUpdates() = delete;
 
   /// Default copy constructor
   LinearElasticAnisotropicUpdates( LinearElasticAnisotropicUpdates const & ) = default;

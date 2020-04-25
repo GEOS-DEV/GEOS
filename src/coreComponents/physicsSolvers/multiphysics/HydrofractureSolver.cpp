@@ -248,7 +248,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
-      m_solidSolver->updateStress( domain );
+//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {

@@ -161,7 +161,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
 {
   if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
-    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
+//    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
     m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
     m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   }
@@ -666,7 +666,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
                                                            solidSolver.getSystemRhs(),
                                                            solidSolver.getSystemSolution() );
 
-    solidSolver.updateStress( domain );
+//    solidSolver.updateStress( domain );
 
     if( dtReturnTemporary < dtReturn )
     {

@@ -49,11 +49,6 @@ namespace constitutive
 class SolidBaseUpdates
 {
 protected:
-  /// default constructor
-  SolidBaseUpdates():
-    m_stress()
-  {}
-
   /**
    * @brief constructor
    * @param[in] stress The stress data from the constitutive model class.
@@ -61,6 +56,11 @@ protected:
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & stress ):
     m_stress( stress )
   {}
+
+
+  /// Deleted default constructor
+  SolidBaseUpdates() = delete;
+
 
   /**
    * @brief Copy Constructor

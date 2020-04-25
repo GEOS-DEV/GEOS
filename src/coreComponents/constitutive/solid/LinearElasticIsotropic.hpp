@@ -36,13 +36,6 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  /// default constructor
-  LinearElasticIsotropicUpdates():
-    SolidBaseUpdates(),
-    m_bulkModulus(),
-    m_shearModulus()
-  {}
-
 
   /**
    * @brief Constructor
@@ -60,6 +53,9 @@ public:
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
+
+  /// Deleted default constructor
+  LinearElasticIsotropicUpdates() = delete;
 
   /// Default copy constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates const & ) = default;

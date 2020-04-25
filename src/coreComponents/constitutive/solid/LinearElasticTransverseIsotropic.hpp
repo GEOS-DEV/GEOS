@@ -38,17 +38,6 @@ namespace constitutive
 class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
-  /// default constructor
-  LinearElasticTransverseIsotropicUpdates():
-    SolidBaseUpdates(),
-    m_c11( ),
-    m_c13( ),
-    m_c33( ),
-    m_c44( ),
-    m_c66( )
-  {}
-
-
 
   /**
    * @brief Constructor
@@ -73,6 +62,9 @@ public:
     m_c44( c44 ),
     m_c66( c66 )
   {}
+
+  /// Deleted default constructor
+  LinearElasticTransverseIsotropicUpdates() = delete;
 
   /// Default copy constructor
   LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates const & ) = default;

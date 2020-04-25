@@ -198,7 +198,7 @@ public:
     {
       for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
       {
-        localIndex const localNodeIndex = elemsToNodes( k, a );
+        localIndex const localNodeIndex = elemsToNodes[ k][ a ];
         for( int i=0; i<numDofPerTestSupportPoint; ++i )
         {
           stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
@@ -208,7 +208,7 @@ public:
       // TODO This is incorrect. The support points of the trial space is not necessarily the nodes.
       for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
       {
-        localIndex const localNodeIndex = elemsToNodes( k, a );
+        localIndex const localNodeIndex = elemsToNodes[ k][ a];
         for( int i=0; i<numDofPerTrialSupportPoint; ++i )
         {
           stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
@@ -277,7 +277,7 @@ protected:
       m_dofNumber( inputDofNumber ),
       m_matrix( inputMatrix ),
       m_rhs( inputRhs ),
-      elemsToNodes( elementSubRegion.nodeList() ),
+      elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
       elemGhostRank( elementSubRegion.ghostRank() ),
       constitutiveUpdate( inputConstitutiveUpdate ),
       m_finiteElementSpace( finiteElementSpace )
@@ -325,6 +325,7 @@ protected:
   template< typename POLICY,
             typename UPDATE_CLASS,
             typename CONSTITUTIVE_BASE,
+            typename REGION_TYPE,
             typename PARAMETER_CLASS,
             template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
@@ -347,9 +348,9 @@ protected:
     ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( targetRegions,
-                                                                       [&] ( localIndex const targetRegionIndex,
-                                                                             auto & elementSubRegion )
+    elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
+                                                              [&] ( localIndex const targetRegionIndex,
+                                                                    auto & elementSubRegion )
     {
       localIndex const numElems = elementSubRegion.size();
       typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
@@ -394,15 +395,14 @@ protected:
           KERNEL_CLASS< SUBREGIONTYPE,
                         CONSTITUTIVE_TYPE,
                         NUM_NODES_PER_ELEM,
-                        NUM_NODES_PER_ELEM >
-          kernelClass( inputDofNumber,
-                       inputMatrix,
-                       inputRhs,
-                       nodeManager,
-                       elementSubRegion,
-                       finiteElementSpace,
-                       castedConstitutiveRelation,
-                       parameters );
+                        NUM_NODES_PER_ELEM > kernelClass( inputDofNumber,
+                                                          inputMatrix,
+                                                          inputRhs,
+                                                          nodeManager,
+                                                          elementSubRegion,
+                                                          finiteElementSpace,
+                                                          castedConstitutiveRelation,
+                                                          parameters );
 
           maxResidual = std::max( maxResidual,
                                   Launch< POLICY,
@@ -422,6 +422,7 @@ protected:
   //***************************************************************************
   template< typename POLICY,
             typename UPDATE_CLASS,
+            typename REGION_TYPE,
             typename CONSTITUTIVE_BASE = constitutive::Dummy >
   static
   real64 FillSparsity( MeshLevel & mesh,
@@ -435,6 +436,7 @@ protected:
     return Execute< POLICY,
                     UPDATE_CLASS,
                     CONSTITUTIVE_BASE,
+                    REGION_TYPE,
                     FiniteElementRegionLoop::Parameters,
                     UPDATE_CLASS::template SparsityKernels >( mesh,
                                                               targetRegions,
