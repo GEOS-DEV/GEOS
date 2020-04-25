@@ -310,17 +310,17 @@ protected:
     {
       STACK_VARIABLES stack;
 
+      kernelClass.preKernel( k, stack );
+      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      {
+        kernelClass.updateKernel( k, q, stack );
+
+        kernelClass.stiffnessKernel( k, q, parameters, stack );
+
+        kernelClass.integrationKernel( k, q, parameters, stack );
+      }
       if( kernelClass.elemGhostRank[k] < 0 )
       {
-        kernelClass.preKernel( k, stack );
-        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-        {
-          kernelClass.updateKernel( k, q, stack );
-
-          kernelClass.stiffnessKernel( k, q, parameters, stack );
-
-          kernelClass.integrationKernel( k, q, parameters, stack );
-        }
         maxResidual.max( kernelClass.postKernel( parameters, stack ) );
       }
     } );
