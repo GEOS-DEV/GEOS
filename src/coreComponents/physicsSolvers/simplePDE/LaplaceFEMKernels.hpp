@@ -121,7 +121,7 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & inputConstitutiveType,
+             CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & parameters ):
       KernelBase( inputDofNumber,
                   inputMatrix,
@@ -130,7 +130,7 @@ public:
                   elementSubRegion,
                   finiteElementSpace,
                   inputConstitutiveType,
-                  inputConstitutiveType.createKernelWrapper() ),
+                  inputConstitutiveType->createKernelWrapper() ),
       m_primaryField( nodeManager.template getReference< array1d< real64 > >( parameters.m_fieldName )),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,

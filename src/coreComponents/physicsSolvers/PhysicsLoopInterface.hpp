@@ -178,7 +178,7 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & inputConstitutiveType,
+             CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
       Kernels( inputDofNumber,
                inputMatrix,
@@ -189,6 +189,13 @@ public:
                inputConstitutiveType,
                typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
+
+//    Kernels() = delete;
+////    Kernels( Kernels const & ) = delete;
+//    Kernels & operator=( Kernels const & ) = delete;
+//    Kernels( Kernels && ) = delete;
+//    Kernels & operator=( Kernels && ) = delete;
+
 
     template< typename STACK_VARIABLE_TYPE >
     //  GEOSX_HOST_DEVICE
@@ -272,7 +279,7 @@ protected:
              NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & GEOSX_UNUSED_PARAM( inputConstitutiveType ),
+             CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
       m_dofNumber( inputDofNumber ),
       m_matrix( inputMatrix ),
@@ -375,22 +382,14 @@ protected:
         constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
         constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
-        constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
-        if( targetRegionIndex <= constitutiveNames.size() -1 )
-        {
-          constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
-        }
-        std::unique_ptr< constitutive::Dummy > dummyConstitutiveRelation;
-        if( constitutiveRelation==nullptr )
-        {
-          dummyConstitutiveRelation = std::make_unique< constitutive::Dummy >( "dummy", &elementSubRegion );
-          constitutiveRelation = dummyConstitutiveRelation.get();
-        }
+        constitutive::ConstitutiveBase * const
+        constitutiveRelation = ( targetRegionIndex <= constitutiveNames.size()-1 ) ?
+                               elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] ) : nullptr;
 
         constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                          [&]( auto & castedConstitutiveRelation )
+                                                                          [&]( auto * const castedConstitutiveRelation )
         {
-          using CONSTITUTIVE_TYPE = TYPEOFREF( castedConstitutiveRelation );
+          using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
           KERNEL_CLASS< SUBREGIONTYPE,
                         CONSTITUTIVE_TYPE,
@@ -422,12 +421,10 @@ protected:
   //***************************************************************************
   template< typename POLICY,
             typename UPDATE_CLASS,
-            typename REGION_TYPE,
-            typename CONSTITUTIVE_BASE = constitutive::Dummy >
+            typename REGION_TYPE >
   static
   real64 FillSparsity( MeshLevel & mesh,
                        arrayView1d< string const > const & targetRegions,
-                       arrayView1d< string const > const & constitutiveNames,
                        FiniteElementDiscretization const * const feDiscretization,
                        arrayView1d< globalIndex const > const & inputDofNumber,
                        ParallelMatrix & inputMatrix,
@@ -435,12 +432,12 @@ protected:
   {
     return Execute< POLICY,
                     UPDATE_CLASS,
-                    CONSTITUTIVE_BASE,
+                    constitutive::Dummy,
                     REGION_TYPE,
                     FiniteElementRegionLoop::Parameters,
                     UPDATE_CLASS::template SparsityKernels >( mesh,
                                                               targetRegions,
-                                                              constitutiveNames,
+                                                              array1d<string>(),
                                                               feDiscretization,
                                                               inputDofNumber,
                                                               inputMatrix,

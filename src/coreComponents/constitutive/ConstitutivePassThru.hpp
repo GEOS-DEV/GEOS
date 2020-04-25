@@ -46,15 +46,15 @@ struct ConstitutivePassThru<SolidBase>
     bool rval = true;
     if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
     {
-      lambda( static_cast< LinearElasticIsotropic & >( *constitutiveRelation) );
+      lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
     }
     else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
     {
-      lambda( static_cast< LinearElasticTransverseIsotropic & >( *constitutiveRelation) );
+      lambda( static_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation) );
     }
     else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
     {
-      lambda( static_cast< LinearElasticAnisotropic & >( *constitutiveRelation) );
+      lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
     }
     else
     {
@@ -77,11 +77,11 @@ struct ConstitutivePassThru<Dummy>
     bool rval = true;
     if( dynamic_cast< Dummy * >( constitutiveRelation ) )
     {
-      lambda( static_cast< Dummy & >( *constitutiveRelation ) );
+      lambda( static_cast< Dummy * >( constitutiveRelation ) );
     }
     else
     {
-      lambda( static_cast< ConstitutiveBase & >( *constitutiveRelation ) );
+      lambda( static_cast< ConstitutiveBase * >( constitutiveRelation ) );
       rval = false;
     }
     return rval;

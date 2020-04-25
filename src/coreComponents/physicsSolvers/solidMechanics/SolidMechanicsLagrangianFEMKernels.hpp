@@ -143,17 +143,17 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
   using namespace constitutive;
 
   ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
-                                              [&]( auto & constitutive )
+                                              [&]( auto * const constitutive )
   {
-    using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
+    using CONSTITUTIVE_TYPE = TYPEOFPTR( constitutive );
     if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
     {
-      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( &constitutive,
+      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( constitutive,
                                                                         std::forward< PARAMS >( params )... );
     }
     else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
     {
-      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( &constitutive,
+      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( constitutive,
                                                                         std::forward< PARAMS >( params )... );
     }
   } );
@@ -460,7 +460,7 @@ public:
              NodeManager const & nodeManager,
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & inputConstitutiveType,
+             CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & GEOSX_UNUSED_PARAM( parameters ) )://,
       KernelBase( inputDofNumber,
                   inputMatrix,
@@ -469,7 +469,7 @@ public:
                   elementSubRegion,
                   finiteElementSpace,
                   inputConstitutiveType,
-                  inputConstitutiveType.createKernelWrapper() ),
+                  inputConstitutiveType->createKernelWrapper() ),
       m_disp( nodeManager.totalDisplacement()),
       m_uhat( nodeManager.incrementalDisplacement()),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
