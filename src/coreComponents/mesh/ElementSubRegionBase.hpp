@@ -117,24 +117,16 @@ public:
    * @param numFaces The number of faces per element
    */
   void setNumFacesPerElement( localIndex const numFaces )
-  {
-    m_numFacesPerElement = numFaces;
-  }
+  { m_numFacesPerElement = numFaces; }
 
   arrayView1d< R1Tensor const > const & getElementCenter() const
-  {
-    return m_elementCenter;
-  }
+  { return m_elementCenter; }
 
   arrayView1d< R1Tensor > const & getElementCenter()
-  {
-    return m_elementCenter;
-  }
+  { return m_elementCenter; }
 
   arrayView1d< real64 const > const & getElementVolume() const
-  {
-    return m_elementVolume;
-  }
+  { return m_elementVolume; }
 
   dataRepository::Group const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
@@ -157,6 +149,8 @@ public:
   virtual string GetElementTypeString() const { return m_elementTypeString; }
 
   virtual void SetElementType( string const & elementType );
+
+  std::vector< int > getVTKNodeOrdering() const;
 
 private:
   dataRepository::Group m_constitutiveModels;
@@ -183,8 +177,6 @@ protected:
   string m_elementTypeString;
 
   FiniteElementBase::ElementType m_elementType;
-//  template< LAMBDA lambda >
-//  void numNodesPerElemSwitchyard() const;
 };
 
 

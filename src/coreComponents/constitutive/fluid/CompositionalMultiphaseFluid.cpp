@@ -53,27 +53,27 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & 
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
+  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of equation of state types for each phase" );
 
-  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
+  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component critical pressures" );
 
-  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
+  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component critical temperatures" );
 
-  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
+  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component acentric factors" );
 
-  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
+  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Component volume shifts" );
 
-  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
+  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Table of binary interaction coefficients" );
 }

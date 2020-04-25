@@ -26,23 +26,10 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/Kinematics.h"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
+#include "TimeIntegrationOption.hpp"
 
 namespace geosx
 {
-
-/**
- * @enum timeIntegrationOption
- *
- * The options for time integration
- */
-enum class timeIntegrationOption : int
-{
-  QuasiStatic,    //!< QuasiStatic
-  ImplicitDynamic,//!< ImplicitDynamic
-  ExplicitDynamic //!< ExplicitDynamic
-};
 
 namespace SolidMechanicsLagrangianFEMKernels
 {
@@ -350,7 +337,7 @@ struct ImplicitKernel
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
           real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
-          timeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
+          TimeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
           real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
           real64 const GEOSX_UNUSED_PARAM( massDamping ),
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),

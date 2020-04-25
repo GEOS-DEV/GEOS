@@ -260,7 +260,7 @@ public:
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                real64 const biotCoefficient,
-                               timeIntegrationOption const tiOption,
+                               TimeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
                                real64 const newmarkBeta,
@@ -339,30 +339,6 @@ public:
                             DofManager const & dofManager,
                             ParallelVector const & solution ) override;
 
-
-  void SetTimeIntegrationOption( string const & stringVal )
-  {
-    if( stringVal == "ExplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
-    }
-    else if( stringVal == "ImplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
-    }
-    else if( stringVal == "QuasiStatic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
-    }
-    else
-    {
-      GEOSX_ERROR( "Invalid time integration option: " << stringVal );
-    }
-  }
-
-//  template< typename FUNCTION >
-//  auto executeIntgratorOption( FUNCTION && function );
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
@@ -373,8 +349,7 @@ public:
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
-    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNamesString = "solidMaterialNames";
@@ -411,8 +386,7 @@ protected:
   real64 m_newmarkBeta;
   real64 m_massDamping;
   real64 m_stiffnessDamping;
-  string m_timeIntegrationOptionString;
-  timeIntegrationOption m_timeIntegrationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;

@@ -13,15 +13,14 @@
  */
 
 /**
- * @file WrapperHelpers.hpp
+ * @file wrapperHelpers.hpp
  */
 
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERHELPERS_HPP_
 
-/**
- * @brief Enables verbose logging of restart output
- */
+
+/// Enables verbose logging of restart output
 #define RESTART_TYPE_LOGGING 0
 
 // Source includes
@@ -49,6 +48,8 @@ namespace dataRepository
 {
 namespace wrapperHelpers
 {
+namespace internal
+{
 
 inline void logOutputType( std::string const & typeString, std::string const & msg )
 {
@@ -65,6 +66,79 @@ inline void logOutputType( std::string const & typeString, std::string const & m
   GEOSX_DEBUG_VAR( msg );
 #endif
 }
+
+template< typename T, typename ... INDICES >
+std::string getIndicesToComponent( T const &, int const component, INDICES const ... existingIndices )
+{
+  GEOSX_ERROR_IF_NE( component, 0 );
+  return LvArray::getIndexString( existingIndices ... );
+}
+
+template< typename ... INDICES >
+std::string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
+{ return LvArray::getIndexString( existingIndices ..., component ); }
+
+template< typename ... INDICES >
+std::string getIndicesToComponent( R2Tensor const &, int const component, INDICES const ... existingIndices )
+{
+  int const i = component / 3;
+  int const j = component % 3;
+  return LvArray::getIndexString( existingIndices ..., i, j );
+}
+
+template< typename ... INDICES >
+std::string getIndicesToComponent( R2SymTensor const &, int const component, INDICES const ... existingIndices )
+{
+  if( component == 0 )
+    return LvArray::getIndexString( existingIndices ..., 0, 0 );
+  if( component == 1 )
+    return LvArray::getIndexString( existingIndices ..., 1, 0 );
+  if( component == 2 )
+    return LvArray::getIndexString( existingIndices ..., 1, 1 );
+  if( component == 3 )
+    return LvArray::getIndexString( existingIndices ..., 2, 0 );
+  if( component == 4 )
+    return LvArray::getIndexString( existingIndices ..., 2, 1 );
+  if( component == 5 )
+    return LvArray::getIndexString( existingIndices ..., 2, 2 );
+  else
+  {
+    GEOSX_ERROR( "Component out of bounds for a R2SymTensor: " << component );
+    return std::string();
+  }
+}
+
+template< typename T >
+T const * getPointerToComponent( T const & var, int const component )
+{
+  GEOSX_ERROR_IF_NE( component, 0 );
+  return &var;
+}
+
+inline
+real64 const * getPointerToComponent( R1Tensor const & var, int const component )
+{
+  GEOSX_ERROR_IF_GE( component, 3 );
+  return &var.Data()[ component ];
+}
+
+inline
+real64 const * getPointerToComponent( R2Tensor const & var, int const component )
+{
+  GEOSX_ERROR_IF_GE( component, 9 );
+  return &var.Data()[ component ];
+}
+
+inline
+real64 const * getPointerToComponent( R2SymTensor const & var, int const component )
+{
+  GEOSX_ERROR_IF_GE( component, 6 );
+  return &var.Data()[ component ];
+}
+
+} // namespace internal
+
+
 
 template< typename T >
 inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
@@ -215,7 +289,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangleType( var ), "Packing for output: " );
+  internal::logOutputType( cxx_utilities::demangleType( var ), "Packing for output: " );
 
   // Get the number of bytes in the packed object.
   localIndex const byteSize = bufferOps::PackSize( var );
@@ -253,7 +327,7 @@ inline
 void
 pushDataToConduitNode( std::string const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< signed char >::id;
   conduit::DataType const dtype( conduitTypeID, var.size() );
@@ -267,7 +341,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< typename traits::Pointer< T > >::id;
   constexpr int sizeofConduitType = conduitTypeInfo< typename traits::Pointer< T > >::sizeOfConduitType;
@@ -314,7 +388,7 @@ std::enable_if_t< bufferOps::can_memcpy< T > >
 pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
                        conduit::Node & node )
 {
-  logOutputType( cxx_utilities::demangleType( var ), "Output array via external pointer: " );
+  internal::logOutputType( cxx_utilities::demangleType( var ), "Output array via external pointer: " );
 
   // Push the data into conduit
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -409,52 +483,197 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
 template< typename T >
 void pushDataToConduitNode( InterObjectRelation< T > const & var,
                             conduit::Node & node )
-{
-  return pushDataToConduitNode( var.Base(), node );
-}
+{return pushDataToConduitNode( var.Base(), node ); }
 
 template< typename T >
 void pullDataFromConduitNode( InterObjectRelation< T > & var,
                               conduit::Node const & node )
+{ return pullDataFromConduitNode( var.Base(), node ); }
+
+
+/// TODO: Remove this function once https://github.com/visit-dav/visit/issues/4637 is fixed and released.
+template< typename T, int NDIM, int USD >
+std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
+addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
+                   conduit::Node & fields,
+                   std::string const & fieldName,
+                   std::string const & topology,
+                   std::vector< std::string > const & componentNames )
 {
-  return pullDataFromConduitNode( var.Base(), node );
+  GEOSX_ERROR_IF_LE( var.size(), 0 );
+
+  using ConduitType = typename conduitTypeInfo< T >::type;
+  constexpr int conduitTypeID = conduitTypeInfo< T >::id;
+  constexpr int numComponentsPerValue = conduitTypeInfo< T >::numConduitValues;
+
+  localIndex const totalNumberOfComponents = numComponentsPerValue * var.size() / var.size( 0 );
+  if( !componentNames.empty() )
+  {
+    GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
+  }
+
+  var.move( chai::CPU, false );
+
+  conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
+  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
+
+  localIndex curComponent = 0;
+  LvArray::forValuesInSliceWithIndices( var[ 0 ], [&fields, &fieldName, &topology, &componentNames, totalNumberOfComponents, &dtype, &curComponent]
+                                          ( T const & val, auto const ... indices )
+  {
+    for( int i = 0; i < numComponentsPerValue; ++i )
+    {
+      std::string name;
+      if( totalNumberOfComponents == 1 )
+      {
+        name = fieldName;
+      }
+      else if( componentNames.empty() )
+      {
+        std::string indexString = internal::getIndicesToComponent( val, i, indices ... );
+        indexString.erase( indexString.begin() );
+        indexString.pop_back();
+        indexString.pop_back();
+        name = fieldName + indexString;
+      }
+      else
+      {
+        name = componentNames[ curComponent++ ];
+      }
+
+      conduit::Node & field = fields[ name ];
+      field[ "association" ] = "element";
+      field[ "volume_dependent" ] = "false";
+      field[ "topology" ] = topology;
+
+      void const * pointer = internal::getPointerToComponent( val, i );
+      field[ "values" ].set_external( dtype, const_cast< void * >( pointer ) );
+    }
+  } );
 }
+
+template< typename T >
+void addBlueprintField( T const &,
+                        conduit::Node & fields,
+                        std::string const &,
+                        std::string const &,
+                        std::vector< std::string > const & )
+{
+  GEOSX_ERROR( "Cannot create a mcarray out of " << cxx_utilities::demangleType< T >() <<
+               "\nWas trying to write it to " << fields.path() );
+}
+
+template< typename T, int NDIM, int USD >
+std::enable_if_t< std::is_arithmetic< T >::value || traits::is_tensorT< T > >
+populateMCArray( ArrayView< T const, NDIM, USD > const & var,
+                 conduit::Node & node,
+                 std::vector< std::string > const & componentNames )
+{
+  GEOSX_ERROR_IF_LE( var.size(), 0 );
+
+  using ConduitType = typename conduitTypeInfo< T >::type;
+  constexpr int conduitTypeID = conduitTypeInfo< T >::id;
+  constexpr int numComponentsPerValue = conduitTypeInfo< T >::numConduitValues;
+
+  if( !componentNames.empty() )
+  {
+    GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
+  }
+
+  var.move( chai::CPU, false );
+
+  conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
+  dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
+
+  localIndex curComponent = 0;
+  LvArray::forValuesInSliceWithIndices( var[ 0 ], [&componentNames, &node, &dtype, &curComponent]
+                                          ( T const & val, auto const ... indices )
+  {
+    for( int i = 0; i < numComponentsPerValue; ++i )
+    {
+      std::string const name = componentNames.empty() ? internal::getIndicesToComponent( val, i, indices ... ) :
+                               componentNames[ curComponent++ ];
+
+      void const * pointer = internal::getPointerToComponent( val, i );
+      node[ name ].set_external( dtype, const_cast< void * >( pointer ) );
+    }
+  } );
+}
+
+template< typename T >
+void populateMCArray( T const &,
+                      conduit::Node & node,
+                      std::vector< std::string > const & )
+{
+  GEOSX_ERROR( "Cannot create a mcarray out of " << cxx_utilities::demangleType< T >() <<
+               "\nWas trying to write it to " << node.path() );
+}
+
+template< typename T, int NDIM, int USD >
+std::enable_if_t< ( NDIM > 1 ) && ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ), std::unique_ptr< Array< T, NDIM - 1 > > >
+averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
+{
+  std::unique_ptr< Array< T, NDIM - 1 > > ret = std::make_unique< Array< T, NDIM - 1 > >();
+
+  localIndex newDims[ NDIM - 1 ];
+  newDims[ 0 ] = var.size( 0 );
+  for( int i = 2; i < NDIM; ++i )
+  {
+    newDims[ i - 1 ] = var.size( i );
+  }
+
+  ret->resize( NDIM - 1, newDims );
+
+  ArrayView< T, NDIM - 1 > const & output = *ret;
+
+  localIndex const numSamples = var.size( 1 );
+  forAll< serialPolicy >( var.size( 0 ), [var, numSamples, &output] ( localIndex const i )
+  {
+    LvArray::sumOverFirstDimension( var[ i ], output[ i ] );
+
+    LvArray::forValuesInSlice( output[ i ], [numSamples] ( T & val )
+    {
+      val /= numSamples;
+    } );
+  } );
+
+  return std::move( ret );
+}
+
+template< typename T >
+std::unique_ptr< int > averageOverSecondDim( T const & )
+{
+  GEOSX_ERROR( "Cannot average over the second dimension of " << cxx_utilities::demangleType< T >() );
+  return std::unique_ptr< int >( nullptr );
+}
+
+
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * & buffer, T & var, IDX & idx )
-{
-  return bufferOps::PackByIndex< DO_PACKING >( buffer, var, idx );
-}
+{ return bufferOps::PackByIndex< DO_PACKING >( buffer, var, idx ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 PackByIndex( buffer_unit_type * &, T &, IDX & )
-{
-  return 0;
-}
+{ return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
-{
-  return bufferOps::UnpackByIndex( buffer, var, idx );
-}
+{ return bufferOps::UnpackByIndex( buffer, var, idx ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
-{
-  return 0;
-}
+{ return 0; }
 
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T & var )
-{
-  return bufferOps::PackDevice< DO_PACKING >( buffer, var );
-}
+{ return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
 
 template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > || !bufferOps::can_memcpy< T >, localIndex >
@@ -467,9 +686,7 @@ PackDevice( buffer_unit_type * &, T & )
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
-{
-  return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx );
-}
+{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
@@ -482,30 +699,22 @@ PackByIndexDevice( buffer_unit_type * &, T &, IDX & )
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * & buffer, T & var )
-{
-  return bufferOps::UnpackDevice( buffer, var );
-}
+{ return bufferOps::UnpackDevice( buffer, var ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDevice( buffer_unit_type const * &, T & )
-{
-  return 0;
-}
+{ return 0; }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
-{
-  return bufferOps::UnpackByIndexDevice( buffer, var, idx );
-}
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
-{
-  return 0;
-}
+{ return 0; }
 
 } // namespace WrapperHelpers
 } // namespace dataRepository
