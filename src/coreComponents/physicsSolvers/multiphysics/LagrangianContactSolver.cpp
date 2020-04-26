@@ -55,19 +55,19 @@ LagrangianContactSolver::LagrangianContactSolver( const std::string & name,
   m_contactRelationName(),
   m_activeSetMaxIter()
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, false )->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver to use in the lagrangian contact solver" );
 
-  registerWrapper( viewKeyStruct::stabilizationNameString, &m_stabilizationName, false )->
+  registerWrapper( viewKeyStruct::stabilizationNameString, &m_stabilizationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, false )->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the constitutive law used for fracture elements" );
 
-  registerWrapper( viewKeyStruct::activeSetMaxIterString, &m_activeSetMaxIter, false )->
+  registerWrapper( viewKeyStruct::activeSetMaxIterString, &m_activeSetMaxIter )->
     setApplyDefaultValue( 10 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum number of iteration for the active set strategy in the lagrangian contact solver" );

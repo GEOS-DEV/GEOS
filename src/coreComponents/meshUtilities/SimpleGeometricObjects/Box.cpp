@@ -35,22 +35,22 @@ Box::Box( const std::string & name, Group * const parent ):
   m_cosStrike{ 0.0 },
   m_sinStrike{ 0.0 }
 {
-  registerWrapper( viewKeyStruct::xMinString, &m_min, false )->
+  registerWrapper( viewKeyStruct::xMinString, &m_min )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Minimum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::xMaxString, &m_max, false )->
+  registerWrapper( viewKeyStruct::xMaxString, &m_max )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Maximum (x,y,z) coordinates of the box" );
 
-  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle, false )->
+  registerWrapper( viewKeyStruct::strikeAngleString, &m_strikeAngle )->
     setApplyDefaultValue( -90.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The strike angle of the box" );
 
-  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter, false );
-  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike, false );
-  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike, false );
+  registerWrapper( viewKeyStruct::boxCenterString, &m_boxCenter );
+  registerWrapper( viewKeyStruct::cosStrikeString, &m_cosStrike );
+  registerWrapper( viewKeyStruct::sinStrikeString, &m_sinStrike );
 }
 
 Box::~Box()

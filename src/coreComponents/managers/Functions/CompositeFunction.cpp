@@ -46,15 +46,15 @@ CompositeFunction::CompositeFunction( const std::string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( keys::functionNames, &m_functionNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( keys::variableNames, &m_variableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of variables in expression" );
 
-  registerWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( keys::expression, &m_expression )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Composite math expression" );
 }

@@ -3,6 +3,16 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
+	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
@@ -731,11 +741,24 @@
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="BlueprintType">
+		<!--outputFullQuadratureData => If true writes out data associated with every quadrature point.-->
+		<xsd:attribute name="outputFullQuadratureData" type="integer" default="0" />
+		<!--parallelThreads => Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--plotLevel => Determines which fields to write.-->
+		<xsd:attribute name="plotLevel" type="geosx_dataRepository_PlotLevel" default="1" />
+		<!--slaveDirectory => slave directory path-->
+		<xsd:attribute name="slaveDirectory" type="string" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ChomboIOType">
 		<!--beginCycle => Cycle at which the coupling will commence.-->
@@ -1287,7 +1310,7 @@
  QuasiStatic 
  ImplicitDynamic 
  ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
+		<xsd:attribute name="timeIntegrationOption" type="geosx_TimeIntegrationOption" default="TimeIntegrationOption::ExplicitDynamic" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1330,7 +1353,7 @@
  QuasiStatic 
  ImplicitDynamic 
  ExplicitDynamic-->
-		<xsd:attribute name="timeIntegrationOption" type="string" default="" />
+		<xsd:attribute name="timeIntegrationOption" type="geosx_TimeIntegrationOption" default="TimeIntegrationOption::ExplicitDynamic" />
 		<!--useVelocityForQS => Flag to indicate the use of the incremental displacement from the previous step as an initial estimate for the incremental displacement of the current step.-->
 		<xsd:attribute name="useVelocityForQS" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

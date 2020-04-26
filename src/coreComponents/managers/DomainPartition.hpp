@@ -74,22 +74,6 @@ public:
                      int * ncoords );
   ///@}
 
-
-  void ReadSilo( const SiloFile & siloFile,
-                 const int cycleNum,
-                 const realT problemTime,
-                 const bool isRestart );
-
-  void WriteFiniteElementMesh( SiloFile & siloFile,
-                               const int cycleNum,
-                               const realT problemTime,
-                               const bool isRestart );
-
-  void ReadFiniteElementMesh( const SiloFile & siloFile,
-                              const int cycleNum,
-                              const realT problemTime,
-                              const bool isRestart );
-
   struct groupKeysStruct
   {
     static constexpr auto meshBodiesString = "MeshBodies";
