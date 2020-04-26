@@ -34,29 +34,29 @@ VanGenuchtenBakerRelativePermeability::VanGenuchtenBakerRelativePermeability( st
                                                                               Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Minimum volume fraction value for each phase" );
 
 
-  registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString, &m_waterOilRelPermExponentInv, false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentInvString, &m_waterOilRelPermExponentInv )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rel perm power law exponent inverse for the pair (water phase, oil phase) at residual gas saturation" );
 
-  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation" );
 
 
-  registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString, &m_gasOilRelPermExponentInv, false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentInvString, &m_gasOilRelPermExponentInv )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rel perm power law exponent inverse for the pair (gas phase, oil phase) at residual water saturation" );
 
-  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );

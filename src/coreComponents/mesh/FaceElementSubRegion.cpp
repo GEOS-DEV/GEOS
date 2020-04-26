@@ -43,55 +43,54 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_elementArea(),
   m_elementRotationMatrix()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
+  SetElementType( "C3D8" );
+
+  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
     setDescription( "Map to the nodes attached to each FaceElement." );
 
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
+  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation )->
     setDescription( "Map to the edges attached to each FaceElement." );
 
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, false )->
+  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation )->
     setDescription( "Map to the faces attached to each FaceElement." )->
     reference().resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
+  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The aperture of each FaceElement." );
 
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
+  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
     setDescription( "The area of each FaceElement." );
 
-  registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix, false )->
+  registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix )->
     setApplyDefaultValue( {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0} )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
     setDescription( "The rotation matrix of each FaceElement." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
+  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
     setApplyDefaultValue( {0.0, 0.0, 0.0} )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
     setDescription( "The center of each FaceElement." );
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
+  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The volume of each FaceElement." );
 
-  registerWrapper( viewKeyStruct::faceElementsToCellRegionsString,
-                   &(m_faceElementsToCells.m_toElementRegion), 0 )->
+  registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
     setApplyDefaultValue( -1 )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of face element local indices to the cell local indices" );
 
-  registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString,
-                   &(m_faceElementsToCells.m_toElementSubRegion), 0 )->
+  registerWrapper( viewKeyStruct::faceElementsToCellSubRegionsString, &m_faceElementsToCells.m_toElementSubRegion )->
     setApplyDefaultValue( -1 )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of face element local indices to the cell local indices" );
 
-  registerWrapper( viewKeyStruct::faceElementsToCellIndexString,
-                   &(m_faceElementsToCells.m_toElementIndex), 0 )->
+  registerWrapper( viewKeyStruct::faceElementsToCellIndexString, &m_faceElementsToCells.m_toElementIndex )->
     setApplyDefaultValue( -1 )->
     setPlotLevel( PlotLevel::NOPLOT )->
     setDescription( "A map of face element local indices to the cell local indices" );
@@ -102,7 +101,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "The amount of remaining mass that was introduced when the FaceElement was created." );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  registerWrapper( viewKeyStruct::separationCoeffString, &m_separationCoefficient, false )->
+  registerWrapper( viewKeyStruct::separationCoeffString, &m_separationCoefficient )->
     setApplyDefaultValue( 0.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "Scalar indicator of level of separation for a fracturing face." );

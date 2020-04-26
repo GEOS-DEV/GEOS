@@ -30,6 +30,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_Blueprint:
+
+Element: Blueprint
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
+
+
 .. _XML_BoundedPlane:
 
 Element: BoundedPlane
@@ -718,6 +725,13 @@ Datastructure: Benchmarks
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_Blueprint:
+
+Datastructure: Blueprint
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_BoundedPlane:

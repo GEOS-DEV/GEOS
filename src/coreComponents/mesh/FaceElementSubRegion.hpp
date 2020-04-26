@@ -105,8 +105,6 @@ public:
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
-  virtual string GetElementTypeString() const override { return "C3D8"; }
-
 
   /**
    * @name Relation Accessors

@@ -36,29 +36,23 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase( "FaceManager", parent )
 {
-  this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
-  this->registerWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
+  this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList );
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_edgeList );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
-  this->registerWrapper( viewKeyStruct::elementRegionListString,
-                         &(m_toElements.m_toElementRegion),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementRegionListString, &m_toElements.m_toElementRegion )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
-                         &(m_toElements.m_toElementSubRegion),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString, &m_toElements.m_toElementSubRegion )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::elementListString,
-                         &(m_toElements.m_toElementIndex),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementListString, &m_toElements.m_toElementIndex )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false );
-  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false );
-  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false );
-  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix, false );
+  this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea );
+  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter );
+  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal );
+  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix );
 
   m_toElements.resize( 0, 2 );
 

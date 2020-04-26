@@ -32,18 +32,18 @@ MohrCoulomb::MohrCoulomb( std::string const & name, Group * const parent ):
   m_frictionAngle(),
   m_frictionCoefficient()
 {
-  registerWrapper( viewKeyStruct::cohesionString, &m_cohesion, false )->
+  registerWrapper( viewKeyStruct::cohesionString, &m_cohesion )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Cohesion" );
 
-  registerWrapper( viewKeyStruct::frictionAngleString, &m_frictionAngle, false )->
+  registerWrapper( viewKeyStruct::frictionAngleString, &m_frictionAngle )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "Friction Angle (in radians)" );
 
-  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->
+  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Friction Coefficient" );

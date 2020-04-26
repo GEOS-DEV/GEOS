@@ -60,7 +60,7 @@ LaplaceFEM::LaplaceFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false )->
+  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of field variable" );
 }
