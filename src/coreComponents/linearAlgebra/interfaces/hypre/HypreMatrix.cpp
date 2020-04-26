@@ -1183,7 +1183,66 @@ void HypreMatrix::write( string const & filename,
       GEOSX_LAI_CHECK_ERROR( hypre_ParCSRMatrixPrintIJ( m_parcsr_mat, 1, 1, filename.c_str() ) );
       break;
     }
+    case LAIOutputFormat::MATRIX_MARKET:
+    {
+      if( numGlobalRows() * numGlobalCols() == 0 )
+      {
+        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+          hypre_fprintf( fp, "%lld %lld %d\n", numGlobalRows(), numGlobalCols(), 0 );
+          std::fclose( fp );
+        }
+      }
+      else
+      {
+        // Copy distributed parcsr matrix in a local CSR matrix on every process
+        // with at least one row
+        // Warning: works for a parcsr matrix that is smaller than 2^31-1
+        hypre_CSRMatrix *CSRmatrix;
+        CSRmatrix = hypre_ParCSRMatrixToCSRMatrixAll( m_parcsr_mat );
 
+        // Identify the smallest process where CSRmatrix exists
+        int myID = MpiWrapper::Comm_rank( getComm() );
+        if( CSRmatrix == 0 )
+        {
+          myID = MpiWrapper::Comm_size( getComm() );
+        }
+        int printID = MpiWrapper::Min( myID, getComm() );
+
+        // Write to file CSRmatrix
+        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+
+          HYPRE_Real *matrix_data = hypre_CSRMatrixData( CSRmatrix );
+          HYPRE_Int *matrix_i    = hypre_CSRMatrixI( CSRmatrix );
+          HYPRE_Int *matrix_j    = hypre_CSRMatrixJ( CSRmatrix );
+          HYPRE_Int num_rows    = hypre_CSRMatrixNumRows( CSRmatrix );
+          HYPRE_Int num_cols    = hypre_CSRMatrixNumCols( CSRmatrix );
+          HYPRE_Int num_nnz     = hypre_CSRMatrixNumNonzeros( CSRmatrix );
+
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix coordinate real general\n" );
+          hypre_fprintf( fp, "%d %d %d\n", num_rows, num_cols, num_nnz );
+          for( HYPRE_Int i = 0; i < num_rows; i++ )
+          {
+            for( HYPRE_Int j = matrix_i[i]; j < matrix_i[i+1]; j++ )
+            {
+              hypre_fprintf( fp, "%d %d %.16e\n", i + 1, matrix_j[j] + 1, matrix_data[j] );
+            }
+          }
+          std::fclose( fp );
+        }
+
+        // Destroy CSRmatrix
+        if( CSRmatrix )
+        {
+          GEOSX_LAI_CHECK_ERROR( hypre_CSRMatrixDestroy( CSRmatrix ) );
+        }
+      }
+      break;
+    }
     default:
       GEOSX_ERROR( "Unsupported matrix output format" );
   }

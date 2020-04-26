@@ -51,39 +51,43 @@ ProppantTransport::ProppantTransport( const std::string & name,
                                       Group * const parent ):
   FlowSolverBase( name, parent )
 {
-  this->registerWrapper( viewKeyStruct::proppantNameString, &m_proppantName, false )->setInputFlag( InputFlags::REQUIRED )->
+  this->registerWrapper( viewKeyStruct::proppantNamesString, &m_proppantModelNames )->setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of proppant constitutive object to use for this solver." );
 
-  this->registerWrapper( viewKeyStruct::proppantIndexString, &m_proppantIndex, false );
-
-  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor, false )->setApplyDefaultValue( 0.0 )->
+  registerWrapper( viewKeyStruct::bridgingFactorString, &m_bridgingFactor )->setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Bridging factor used for bridging/screen-out calculation" );
 
-  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->setApplyDefaultValue( 0.6 )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration )->setApplyDefaultValue( 0.6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum proppant concentration" );
 
-  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter, false )->setApplyDefaultValue( 0.4e-3 )->
+  registerWrapper( viewKeyStruct::proppantDiameterString, &m_proppantDiameter )->setApplyDefaultValue( 0.4e-3 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant diameter" );
 
-  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity, false )->setApplyDefaultValue( 2500.0 )->
+  registerWrapper( viewKeyStruct::proppantDensityString, &m_proppantDensity )->setApplyDefaultValue( 2500.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Proppant density" );
 
-  registerWrapper( viewKeyStruct::criticalShieldsNumberString, &m_criticalShieldsNumber, false )->setApplyDefaultValue( 0.0 )->
+  registerWrapper( viewKeyStruct::criticalShieldsNumberString, &m_criticalShieldsNumber )->setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Critical Shields number" );
 
-  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient, false )->setApplyDefaultValue( 0.03 )->
+  registerWrapper( viewKeyStruct::frictionCoefficientString, &m_frictionCoefficient )->setApplyDefaultValue( 0.03 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Friction coefficient" );
 
-  registerWrapper( viewKeyStruct::updateProppantPackingString, &m_updateProppantPacking, false )->setApplyDefaultValue( 0 )->
+  registerWrapper( viewKeyStruct::updateProppantPackingString, &m_updateProppantPacking )->setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag that enables/disables proppant-packing update" );
 
+}
+
+void ProppantTransport::PostProcessInput()
+{
+  FlowSolverBase::PostProcessInput();
+  CheckModelNames( m_proppantModelNames, viewKeyStruct::proppantNamesString );
 }
 
 void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
@@ -92,74 +96,42 @@ void ProppantTransport::RegisterDataOnMesh( Group * const MeshBodies )
 
   for( auto & mesh : MeshBodies->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    ElementRegionManager * const elemManager = meshLevel->getElemManager();
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
-
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    forTargetSubRegions< CellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                                 CellElementSubRegion & subRegion )
     {
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->setDefaultValue( 0.0 )->setPlotLevel( PlotLevel::LEVEL_0 );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString )->setDefaultValue( 0.0 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->setDefaultValue( 0.0 )->
-        setPlotLevel( PlotLevel::LEVEL_0 );
-
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->setDefaultValue( 0.0 )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString )->setDefaultValue( 0.0 );
-
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString )->setDefaultValue( 0.0 );
-
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::cellBasedFluxString )->setDefaultValue( {0.0, 0.0, 0.0} );
-
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::cellBasedFluxString )->setDefaultValue( { 0.0, 0.0, 0.0 } );
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString )->setDefaultValue( 0 );
-
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
-
     } );
 
 
-    elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    forTargetSubRegions< FaceElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                                 FaceElementSubRegion & subRegion )
     {
-
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->
-        setPlotLevel( PlotLevel::LEVEL_0 );
-
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->
-        setPlotLevel( PlotLevel::LEVEL_0 );
-
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::componentConcentrationString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
-
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::oldProppantConcentrationString );
-
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldComponentDensityString );
-
       subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::cellBasedFluxString );
-
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isInterfaceElementString );
-
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantBoundaryString );
-
       subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::isProppantMobileString );
-
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString )->
-        setPlotLevel( PlotLevel::LEVEL_0 );
-
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString )->setPlotLevel( PlotLevel::LEVEL_0 );
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::poroMultiplierString )->setDefaultValue( 1.0 );
-
-      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultiplierString )->setDefaultValue( {1.0, 1.0, 1.0} );
-
+      subRegion.registerWrapper< array1d< R1Tensor > >( viewKeyStruct::transTMultiplierString )->setDefaultValue( { 1.0, 1.0, 1.0 } );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString )->setDefaultValue( 0.0 );
-
-
     } );
 
   }
@@ -170,32 +142,31 @@ void ProppantTransport::InitializePreSubGroups( Group * const rootGroup )
   FlowSolverBase::InitializePreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  ConstitutiveManager & cm = *domain->getConstitutiveManager();
 
-  ConstitutiveManager * const cm = domain->getConstitutiveManager();
+  // Validate proppant models in regions
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  {
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    ValidateModelMapping< SlurryFluidBase >( *meshLevel.getElemManager(), m_fluidModelNames );
+    ValidateModelMapping< ParticleFluidBase >( *meshLevel.getElemManager(), m_proppantModelNames );
+  }
 
-  ConstitutiveBase const * proppant  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_proppantName );
-  GEOSX_ERROR_IF( proppant == nullptr, "Proppant model " + m_proppantName + " not found" );
-  m_proppantIndex = proppant->getIndexInParent();
+  SlurryFluidBase const * fluid0 = cm.GetConstitutiveRelation< SlurryFluidBase >( m_fluidModelNames[0] );
 
-  SlurryFluidBase const * fluid = cm->GetConstitutiveRelation< SlurryFluidBase >( m_fluidName );
-
-  m_numComponents = fluid->numFluidComponents();
+  m_numComponents = fluid0->numFluidComponents();
   m_numDofPerCell = m_numComponents + 1;
 
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
-
+  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   localIndex const NC = m_numComponents;
 
   if( NC > 0 )
   {
-
-    elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    forTargetSubRegions< CellElementSubRegion >( meshLevel, [&]( localIndex const,
+                                                                 CellElementSubRegion & subRegion )
     {
-
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString ).resizeDimension< 1 >( NC );
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString ).resizeDimension< 1 >( NC );
-
     } );
   }
 
@@ -206,163 +177,141 @@ void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_PARAM(
                                               real64 const & GEOSX_UNUSED_PARAM( dt ),
                                               DomainPartition * const domain )
 {
-
   localIndex const NC = m_numComponents;
 
   if( NC > 0 )
   {
+    MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-
-    ElementRegionManager * const elemManager = mesh->getElemManager();
-
-    elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
+                                                            FaceElementSubRegion & subRegion )
     {
-
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString ).resizeDimension< 1 >( NC );
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString ).resizeDimension< 1 >( NC );
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString ).resizeDimension< 1 >( NC );
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldComponentDensityString ).resizeDimension< 1 >( NC );
-
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString ).resizeDimension< 1 >( NC );
-
     } );
-
   }
 }
 
-void ProppantTransport::UpdateFluidModel( Group * const dataGroup )
+void ProppantTransport::UpdateFluidModel( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  SlurryFluidBase * const fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidName );
+  SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  arrayView1d< real64 const > const & pres = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-  arrayView1d< real64 const > const & dPres = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+  arrayView1d< real64 const > const & pres  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const & dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-  arrayView2d< real64 const > const & componentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
-  arrayView2d< real64 const > const & dComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
+  arrayView2d< real64 const > const & componentConc  = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
+  arrayView2d< real64 const > const & dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  arrayView2d< real64 > const & updatedComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString );
+  arrayView2d< real64 > const & updatedComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString );
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-
     for( localIndex c = 0; c < m_numComponents; ++c )
     {
       updatedComponentConc[a][c] = componentConc[a][c] + dComponentConc[a][c];
     }
 
-    fluid->PointUpdateFluidProperty( pres[a] + dPres[a], updatedComponentConc[a], 0.0, a, 0 );
-
+    fluid.PointUpdateFluidProperty( pres[a] + dPres[a], updatedComponentConc[a], 0.0, a, 0 );
   } );
 
 }
 
-void ProppantTransport::UpdateComponentDensity( Group * const dataGroup )
+void ProppantTransport::UpdateComponentDensity( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  SlurryFluidBase * const fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidName );
+  SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  arrayView1d< real64 const > const & pres = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-  arrayView1d< real64 const > const & dPres = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+  arrayView1d< real64 const > const & pres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const & dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-  arrayView2d< real64 const > const & componentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
-  arrayView2d< real64 const > const & dComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
+  arrayView2d< real64 const > const & componentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
+  arrayView2d< real64 const > const & dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  arrayView2d< real64 > const & updatedComponentConc = dataGroup->getReference< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString );
+  arrayView2d< real64 > const & updatedComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::updatedComponentConcentrationString );
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-
     for( localIndex c = 0; c < m_numComponents; ++c )
     {
       updatedComponentConc[a][c] = componentConc[a][c] + dComponentConc[a][c];
     }
 
-    fluid->PointUpdateComponentDensity( pres[a] + dPres[a], updatedComponentConc[a], a, 0 );
-
+    fluid.PointUpdateComponentDensity( pres[a] + dPres[a], updatedComponentConc[a], a, 0 );
   } );
 
 }
 
 
-void ProppantTransport::UpdateProppantModel( Group * const dataGroup )
+void ProppantTransport::UpdateProppantModel( Group & dataGroup, localIndex const targetIndex )
 {
-
   GEOSX_MARK_FUNCTION;
-
-
-  SlurryFluidBase * const fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidName );
-
-  /*
-     array1d<real64> const & nIndices = fluid->nIndex();
-     array1d<real64> const & KIndices = fluid->KIndex();
-   */
 
   localIndex const NC = m_numComponents;
 
-  ParticleFluidBase * const particle = GetConstitutiveModel< ParticleFluidBase >( dataGroup, m_proppantName );
+  arrayView1d< real64 const > const & proppantConc  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  arrayView1d< real64 const > const & dProppantConc = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString );
 
-  arrayView1d< real64 const > const & proppantConc = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  SlurryFluidBase const & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  arrayView1d< real64 const > const & dProppantConc = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::deltaProppantConcentrationString );
+  arrayView2d< real64 const > const & fluidDens            = fluid.fluidDensity();
+  arrayView2d< real64 const > const & dFluidDens_dPres     = fluid.dFluidDensity_dPressure();
+  arrayView3d< real64 const > const & dFluidDens_dCompConc = fluid.dFluidDensity_dComponentConcentration();
+  arrayView2d< real64 const > const & fluidVisc            = fluid.fluidViscosity();
+  arrayView2d< real64 const > const & dFluidVisc_dPres     = fluid.dFluidViscosity_dPressure();
+  arrayView3d< real64 const > const & dFluidVisc_dCompConc = fluid.dFluidViscosity_dComponentConcentration();
 
-  arrayView2d< real64 const > const & fluidDens = fluid->getReference< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::fluidDensityString );
+  ParticleFluidBase & particle = GetConstitutiveModel< ParticleFluidBase >( dataGroup, m_proppantModelNames[targetIndex] );
 
-  arrayView2d< real64 const > const & dFluidDens_dPres = fluid->getReference< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::dFluidDens_dPresString );
-
-  arrayView3d< real64 const > const & dFluidDens_dCompConc = fluid->getReference< array3d< real64 > >(
-    SlurryFluidBase::viewKeyStruct::dFluidDens_dCompConcString );
-
-  arrayView2d< real64 const > const & fluidVisc = fluid->getReference< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::fluidViscosityString );
-
-  arrayView2d< real64 const > const & dFluidVisc_dPres = fluid->getReference< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::dFluidVisc_dPresString );
-
-  arrayView3d< real64 const > const & dFluidVisc_dCompConc = fluid->getReference< array3d< real64 > >(
-    SlurryFluidBase::viewKeyStruct::dFluidVisc_dCompConcString );
-
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-    particle->PointUpdate( NC, proppantConc[a] + dProppantConc[a], fluidDens[a][0], dFluidDens_dPres[a][0], dFluidDens_dCompConc[a][0], fluidVisc[a][0],
-                           dFluidVisc_dPres[a][0], dFluidVisc_dCompConc[a][0], a );
+    particle.PointUpdate( NC,
+                          proppantConc[a] + dProppantConc[a],
+                          fluidDens[a][0],
+                          dFluidDens_dPres[a][0],
+                          dFluidDens_dCompConc[a][0],
+                          fluidVisc[a][0],
+                          dFluidVisc_dPres[a][0],
+                          dFluidVisc_dCompConc[a][0], a );
   } );
 
 }
 
-void ProppantTransport::UpdateProppantMobility( Group * const dataGroup )
+void ProppantTransport::UpdateProppantMobility( Group & dataGroup )
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & conc = dataGroup->getReference< array1d< real64 > >( viewKeyStruct::proppantConcentrationString );
-
-  arrayView1d< real64 const > const & aperture = dataGroup->getReference< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
-
-  arrayView1d< integer > const & isProppantMobile = dataGroup->getReference< array1d< integer > >( viewKeyStruct::isProppantMobileString );
+  arrayView1d< real64 const > const & conc = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  arrayView1d< real64 const > const & aperture = dataGroup.getReference< array1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  arrayView1d< integer > const & isProppantMobile = dataGroup.getReference< array1d< integer > >( viewKeyStruct::isProppantMobileString );
 
   // TODO replace with batch update
 
-  forAll< serialPolicy >( dataGroup->size(), [=] ( localIndex const a )
+  forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
-
     if( aperture[a] > m_minAperture && conc[a] < m_maxProppantConcentration )
+    {
       isProppantMobile[a] = 1;
+    }
     else
+    {
       isProppantMobile[a] = 0;
-
+    }
   } );
 
 }
 
-void ProppantTransport::UpdateState( Group * dataGroup )
+void ProppantTransport::UpdateState( Group & dataGroup, localIndex const targetIndex )
 {
   GEOSX_MARK_FUNCTION;
 
-  UpdateFluidModel( dataGroup );
-
-  UpdateProppantModel( dataGroup );
-
+  UpdateFluidModel( dataGroup, targetIndex );
+  UpdateProppantModel( dataGroup, targetIndex );
 }
 
 void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
@@ -372,15 +321,13 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  //TODO this is a hack until the sets are fixed to include ghosts!!
   std::map< string, string_array > fieldNames;
-
   fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::componentConcentrationString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
   ResetViews( domain );
 
@@ -388,26 +335,29 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
   localIndex const NC = m_numComponents;
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex er, localIndex esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const targetIndex,
+                                    localIndex er,
+                                    localIndex esr,
+                                    ElementRegionBase &,
+                                    ElementSubRegionBase & subRegion )
   {
-    UpdateState( &subRegion );
+    UpdateState( subRegion, targetIndex );
 
     arrayView1d< real64 > const & proppantConc = m_proppantConcentration[er][esr];
     arrayView1d< real64 > const & proppantConcOld = m_proppantConcentrationOld[er][esr];
 
-    arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
+    arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr];
     arrayView2d< real64 > const & componentDensOld = m_componentDensityOld[er][esr];
 
-
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
     {
       proppantConcOld[ei] = proppantConc[ei];
-
       for( localIndex c = 0; c < NC; ++c )
+      {
         componentDensOld[ei][c] = componentDens[ei][0][c];
+      }
     } );
-
   } );
 
   m_downVector = gravityVector();
@@ -415,10 +365,9 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
   m_minAperture = m_bridgingFactor * m_proppantDiameter;
 
-  m_proppantPackPermeability =
-    pow( m_proppantDiameter,
-         2.0 ) / 180.0 * ((1.0 - m_maxProppantConcentration) * (1.0 - m_maxProppantConcentration) * (1.0 - m_maxProppantConcentration))/
-    (m_maxProppantConcentration * m_maxProppantConcentration);
+  real64 const oneMinusMaxConc = (1.0 - m_maxProppantConcentration);
+  m_proppantPackPermeability = m_proppantDiameter * m_proppantDiameter / 180.0 *
+                               (oneMinusMaxConc * oneMinusMaxConc * oneMinusMaxConc) / (m_maxProppantConcentration * m_maxProppantConcentration);
 
 }
 
@@ -431,11 +380,10 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
   FlowSolverBase::PrecomputeData( domain );
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
 
   real64 dt_return = dt;
 
@@ -449,38 +397,35 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
   if( cycleNumber == 0 )
   {
-
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
 
     boundaryConditionManager.ApplyInitialConditions( domain );
 
     localIndex const NC = m_numComponents;
 
-    applyToSubRegionsComplete( mesh,
-                               [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+    forTargetSubRegionsComplete( mesh,
+                                 [&]( localIndex const targetIndex,
+                                      localIndex const er,
+                                      localIndex const esr,
+                                      ElementRegionBase &,
+                                      ElementSubRegionBase & subRegion )
     {
+      subRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
 
+      UpdateState( subRegion, targetIndex );
 
-      subRegion.CalculateElementGeometricQuantities( *nodeManager,
-                                                     *faceManager );
-
-
-
-      UpdateState( &subRegion );
-
-      arrayView1d< real64 > const & dProppantConc   = m_deltaProppantConcentration[er][esr];
-      arrayView2d< real64 > const & dComponentConc   = m_deltaComponentConcentration[er][esr];
-
+      arrayView1d< real64 > const & dProppantConc = m_deltaProppantConcentration[er][esr];
+      arrayView2d< real64 > const & dComponentConc = m_deltaComponentConcentration[er][esr];
 
       arrayView1d< real64 > const & proppantConcOld = m_proppantConcentrationOld[er][esr];
       arrayView1d< real64 > const & proppantConc = m_proppantConcentration[er][esr];
 
       arrayView2d< real64 > const & componentDensOld = m_componentDensityOld[er][esr];
-      arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
+      arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr];
 
-      arrayView1d< R1Tensor > const & cellBasedFlux   = m_cellBasedFlux[er][esr];
+      arrayView1d< R1Tensor > const & cellBasedFlux = m_cellBasedFlux[er][esr];
 
-      arrayView1d< real64 > const & proppantLiftFlux   = m_proppantLiftFlux[er][esr];
+      arrayView1d< real64 > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
 
       arrayView1d< real64 > const & packVf = m_proppantPackVolumeFraction[er][esr];
 
@@ -494,20 +439,15 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
       arrayView1d< integer > const & isProppantMobile = m_isProppantMobile[er][esr];
 
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
       {
         dProppantConc[ei] = 0.0;
-
         proppantConcOld[ei] = proppantConc[ei];
-
-
 
         for( localIndex c = 0; c < NC; ++c )
         {
-
           dComponentConc[ei][c] = 0.0;
           componentDensOld[ei][c] = componentDens[ei][0][c];
-
         }
 
         cellBasedFlux[ei] = 0.0;
@@ -521,45 +461,44 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
         isInterfaceElement[ei] = 0;
         isProppantMobile[ei] = 1;
-
       } );
 
     } );
   }
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
+    UpdateProppantMobility( subRegion );
   } );
-
 
   UpdateCellBasedFlux( time_n, domain );
 
-
   // currently the only method is implicit time integration
-  dt_return= this->NonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain,
-                                          m_dofManager,
-                                          m_matrix,
-                                          m_rhs,
-                                          m_solution );
+  dt_return = this->NonlinearImplicitStep( time_n,
+                                           dt,
+                                           cycleNumber,
+                                           domain,
+                                           m_dofManager,
+                                           m_matrix,
+                                           m_rhs,
+                                           m_solution );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
+    UpdateProppantMobility( subRegion );
   } );
 
   if( m_updateProppantPacking == 1 )
+  {
     UpdateProppantPackVolume( time_n, dt_return, domain );
-
+  }
 
   return dt_return;
-
 }
 
 
@@ -572,10 +511,10 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
   FlowSolverBase::PrecomputeData( domain );
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
 
 
   if( cycleNumber == 0 )
@@ -594,53 +533,47 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
     localIndex const NC = m_numComponents;
 
-    applyToSubRegionsComplete( mesh,
-                               [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+    forTargetSubRegionsComplete( mesh,
+                                 [&]( localIndex const targetIndex,
+                                      localIndex const er,
+                                      localIndex const esr,
+                                      ElementRegionBase &,
+                                      ElementSubRegionBase & subRegion )
     {
-      subRegion.CalculateElementGeometricQuantities( *nodeManager,
-                                                     *faceManager );
+      subRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
 
+      UpdateState( subRegion, targetIndex );
 
-      UpdateState( &subRegion );
-
-      arrayView1d< real64 > const & dProppantConc   = m_deltaProppantConcentration[er][esr];
-      arrayView2d< real64 > const & dComponentConc   = m_deltaComponentConcentration[er][esr];
-
+      arrayView1d< real64 > const & dProppantConc = m_deltaProppantConcentration[er][esr];
+      arrayView2d< real64 > const & dComponentConc = m_deltaComponentConcentration[er][esr];
 
       arrayView1d< real64 > const & proppantConcOld = m_proppantConcentrationOld[er][esr];
       arrayView1d< real64 > const & proppantConc = m_proppantConcentration[er][esr];
 
       arrayView2d< real64 > const & componentDensOld = m_componentDensityOld[er][esr];
-      arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
+      arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr];
 
-      arrayView1d< R1Tensor > const & cellBasedFlux   = m_cellBasedFlux[er][esr];
-
-      arrayView1d< real64 > const & proppantLiftFlux   = m_proppantLiftFlux[er][esr];
+      arrayView1d< R1Tensor > const & cellBasedFlux = m_cellBasedFlux[er][esr];
+      arrayView1d< real64 > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
 
       arrayView1d< real64 > const & packVf = m_proppantPackVolumeFraction[er][esr];
-
       arrayView1d< real64 > const & excessPackV = m_proppantExcessPackVolume[er][esr];
 
       arrayView1d< real64 > const & poroMultiplier = m_poroMultiplier[er][esr];
       arrayView1d< R1Tensor > const & transTMultiplier = m_transTMultiplier[er][esr];
 
-
       arrayView1d< integer > const & isInterfaceElement = m_isInterfaceElement[er][esr];
-
       arrayView1d< integer > const & isProppantMobile = m_isProppantMobile[er][esr];
 
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
       {
         dProppantConc[ei] = 0.0;
-
         proppantConcOld[ei] = proppantConc[ei];
 
         for( localIndex c = 0; c < NC; ++c )
         {
-
           dComponentConc[ei][c] = 0.0;
           componentDensOld[ei][c] = componentDens[ei][0][c];
-
         }
 
         cellBasedFlux[ei] = 0.0;
@@ -654,17 +587,15 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
         isInterfaceElement[ei] = 0;
         isProppantMobile[ei] = 1;
-
       } );
-
     } );
   }
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
-    UpdateState( &subRegion );
-
+    UpdateProppantMobility( subRegion );
+    UpdateState( subRegion, targetIndex );
   } );
 
 
@@ -679,16 +610,18 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
+    UpdateProppantMobility( subRegion );
   } );
 
   if( m_updateProppantPacking == 1 )
+  {
     UpdateProppantPackVolume( time_n, dt_return, domain );
-
+  }
 }
 
 
@@ -705,47 +638,44 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
 
   ResetViews( domain );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
-
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase &,
+                                    ElementSubRegionBase & subRegion )
   {
-
-    arrayView1d< real64 > const & dProppantConc   = m_deltaProppantConcentration[er][esr];
-    arrayView2d< real64 > const & dComponentConc   = m_deltaComponentConcentration[er][esr];
+    arrayView1d< real64 > const & dProppantConc = m_deltaProppantConcentration[er][esr];
+    arrayView2d< real64 > const & dComponentConc = m_deltaComponentConcentration[er][esr];
 
     arrayView1d< real64 > const & proppantConc = m_proppantConcentration[er][esr];
     arrayView1d< real64 > const & proppantConcOld = m_proppantConcentrationOld[er][esr];
 
-    arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr][m_fluidIndex];
+    arrayView3d< real64 > const & componentDens = m_componentDensity[er][esr];
     arrayView2d< real64 > const & componentDensOld = m_componentDensityOld[er][esr];
 
     arrayView1d< real64 > const & excessPackV = m_proppantExcessPackVolume[er][esr];
-
     arrayView1d< real64 > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
 
     arrayView1d< R1Tensor > const & cellBasedFlux = m_cellBasedFlux[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
-
       dProppantConc[ei] = 0.0;
       proppantConcOld[ei] = proppantConc[ei];
 
       for( localIndex c = 0; c < NC; ++c )
       {
-
         dComponentConc[ei][c] = 0.0;
         componentDensOld[ei][c] = componentDens[ei][0][c];
-
       }
 
       excessPackV[ei] = 0.0;
       proppantLiftFlux[ei] = 0.0;
       cellBasedFlux[ei] = 0.0;
-
     } );
   } );
 
@@ -757,12 +687,16 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase &,
+                                    ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 > const & proppantConc = m_proppantConcentration[er][esr];
     arrayView1d< real64 const > const & dProppantConc = m_deltaProppantConcentration[er][esr];
@@ -772,16 +706,16 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 
     arrayView1d< real64 > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
       proppantConc[ei] += dProppantConc[ei];
       proppantLiftFlux[ei] = 0.0;
 
       for( localIndex c = 0; c < NC; ++c )
+      {
         componentConc[ei][c] += dComponentConc[ei][c];
-
+      }
     } );
-
   } );
 
 }
@@ -792,12 +726,11 @@ void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PA
   dofManager.addField( viewKeyStruct::proppantConcentrationString,
                        DofManager::Location::Elem,
                        m_numDofPerCell,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   dofManager.addCoupling( viewKeyStruct::proppantConcentrationString,
                           viewKeyStruct::proppantConcentrationString,
                           DofManager::Connector::Face );
-
 }
 
 
@@ -822,9 +755,9 @@ void ProppantTransport::AssembleSystem( real64 const time,
   {
     GEOSX_LOG_RANK_0( "After ProppantTransport::AssembleAccumulationTerms" );
     GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    matrix.print( std::cout );
+    std::cout << matrix;
     GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    rhs.print( std::cout );
+    std::cout << rhs;
   }
 
 
@@ -858,40 +791,36 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
   localIndex const NC = m_numComponents;
 
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase const &,
+                                    ElementSubRegionBase const & subRegion )
   {
     string const dofKey = dofManager->getKey( viewKeyStruct::proppantConcentrationString );
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-    arrayView1d< integer const >     const & elemGhostRank = m_elemGhostRank[er][esr];
+    arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
 
-    arrayView1d< real64 const > const & proppantConcOld       = m_proppantConcentrationOld[er][esr];
-    arrayView2d< real64 const > const & componentDensOld       = m_componentDensityOld[er][esr];
+    arrayView1d< real64 const > const & proppantConcOld = m_proppantConcentrationOld[er][esr];
+    arrayView2d< real64 const > const & componentDensOld = m_componentDensityOld[er][esr];
+    arrayView1d< real64 const > const & volume = m_volume[er][esr];
+    arrayView1d< real64 const > const & proppantConc = m_proppantConcentration[er][esr];
+    arrayView1d< real64 const > const & dProppantConc = m_deltaProppantConcentration[er][esr];
+    arrayView3d< real64 const > const & componentDens = m_componentDensity[er][esr];
+    arrayView3d< real64 const > const & dCompDens_dPres = m_dComponentDensity_dPressure[er][esr];
+    arrayView4d< real64 const > const & dCompDens_dCompConc = m_dComponentDensity_dComponentConcentration[er][esr];
+    arrayView1d< real64 const > const & proppantPackVf = m_proppantPackVolumeFraction[er][esr];
 
-    arrayView1d< real64 const > const & volume        = m_volume[er][esr];
-
-    arrayView1d< real64 const > const & proppantConc          = m_proppantConcentration[er][esr];
-
-    arrayView1d< real64 const > const & dProppantConc          = m_deltaProppantConcentration[er][esr];
-
-    arrayView3d< real64 const > const & componentDens          = m_componentDensity[er][esr][m_fluidIndex];
-
-    arrayView3d< real64 const > const & dCompDens_dPres          = m_dComponentDensity_dPressure[er][esr][m_fluidIndex];
-
-    arrayView4d< real64 const > const & dCompDens_dCompConc          = m_dComponentDensity_dComponentConcentration[er][esr][m_fluidIndex];
-
-    arrayView1d< real64 const > const & proppantPackVf          = m_proppantPackVolumeFraction[er][esr];
-
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
-
-        stackArray1d< globalIndex, MAX_NUM_COMPONENTS >         localAccumDOF( m_numDofPerCell );
-        stackArray1d< real64, MAX_NUM_COMPONENTS >             localAccum( m_numDofPerCell );
+        stackArray1d< globalIndex, MAX_NUM_COMPONENTS > localAccumDOF( m_numDofPerCell );
+        stackArray1d< real64, MAX_NUM_COMPONENTS > localAccum( m_numDofPerCell );
         stackArray2d< real64, MAX_NUM_COMPONENTS * MAX_NUM_COMPONENTS > localAccumJacobian( m_numDofPerCell, m_numDofPerCell );
 
         real64 effectiveVolume = volume[ei];
@@ -899,9 +828,8 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
 
         if( proppantPackVf[ei] < 1.0 )
         {
-          effectiveVolume = volume[ei]  * (1.0 - proppantPackVf[ei]);
-          packPoreVolume = volume[ei]  * proppantPackVf[ei] * (1.0 - m_maxProppantConcentration);
-
+          effectiveVolume = volume[ei] * ( 1.0 - proppantPackVf[ei] );
+          packPoreVolume = volume[ei] * proppantPackVf[ei] * ( 1.0 - m_maxProppantConcentration );
         }
 
         AccumulationKernel::Compute( NC,
@@ -923,16 +851,13 @@ void ProppantTransport::AssembleAccumulationTerms( DomainPartition const * const
           localAccumDOF[idof] = elemDOF + idof;
         }
         // add contribution to global residual and dRdP
-        rhs->add( localAccumDOF.data(),
-                  localAccum.data(),
-                  m_numDofPerCell );
+        rhs->add( localAccumDOF,
+                  localAccum );
 
-        matrix->add( localAccumDOF.data(),
-                     localAccumDOF.data(),
-                     localAccumJacobian.data(),
-                     m_numDofPerCell, m_numDofPerCell );
+        matrix->add( localAccumDOF,
+                     localAccumDOF,
+                     localAccumJacobian );
       }
-
     } );
   } );
 
@@ -967,64 +892,51 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   FluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber = dofNumberAccessor.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres        = m_pressure.toViewConst();
-
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dPres       = m_deltaPressure.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantConc       = m_proppantConcentration.toViewConst();
-
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dProppantConc       = m_deltaProppantConcentration.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef   = m_gravCoef.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dens        = m_density.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens        = m_density.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres = m_dDensity_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc = m_dDensity_dProppantConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc = m_dDensity_dComponentConcentration.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dDens_dPres = m_dDensity_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & visc        = m_viscosity.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dVisc_dPres = m_dViscosity_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc = m_dViscosity_dProppantConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc = m_dViscosity_dComponentConcentration.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dDens_dProppantConc = m_dDensity_dProppantConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & componentDens = m_componentDensity.toViewConst();
+  FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres = m_dComponentDensity_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc = m_dComponentDensity_dComponentConcentration.toViewConst();
 
-  FluxKernel::MaterialView< arrayView3d< real64 const > > const & dDens_dComponentConc = m_dDensity_dComponentConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & visc        = m_viscosity.toViewConst();
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dVisc_dPres = m_dViscosity_dPressure.toViewConst();
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dVisc_dProppantConc = m_dViscosity_dProppantConcentration.toViewConst();
-  FluxKernel::MaterialView< arrayView3d< real64 const > > const & dVisc_dComponentConc = m_dViscosity_dComponentConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres = m_dFluidDensity_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc = m_dFluidDensity_dComponentConcentration.toViewConst();
 
-  FluxKernel::MaterialView< arrayView3d< real64 const > > const & componentDens = m_componentDensity.toViewConst();
-  FluxKernel::MaterialView< arrayView3d< real64 const > > const & dComponentDens_dPres = m_dComponentDensity_dPressure.toViewConst();
-  FluxKernel::MaterialView< arrayView4d< real64 const > > const & dComponentDens_dComponentConc = m_dComponentDensity_dComponentConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dPres = m_dSettlingFactor_dPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc = m_dSettlingFactor_dProppantConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc = m_dSettlingFactor_dComponentConcentration.toViewConst();
 
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dFluidDens_dPres = m_dFluidDensity_dPressure.toViewConst();
-  FluxKernel::MaterialView< arrayView3d< real64 const > > const & dFluidDens_dComponentConc = m_dFluidDensity_dComponentConcentration.toViewConst();
-
-
-  FluxKernel::MaterialView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
-
-  FluxKernel::MaterialView< arrayView1d< real64 const > > const & dSettlingFactor_dPres = m_dSettlingFactor_dPressure.toViewConst();
-  FluxKernel::MaterialView< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc = m_dSettlingFactor_dProppantConcentration.toViewConst();
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc = m_dSettlingFactor_dComponentConcentration.toViewConst();
-
-  FluxKernel::MaterialView< arrayView1d< real64 const > > const & collisionFactor = m_collisionFactor.toViewConst();
-
-  FluxKernel::MaterialView< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc = m_dCollisionFactor_dProppantConcentration.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & collisionFactor = m_collisionFactor.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc = m_dCollisionFactor_dProppantConcentration.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantMobile  = m_isProppantMobile.toViewConst();
-
   FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
-
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture  = m_elementAperture.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf  = m_proppantPackVolumeFraction.toViewConst();
-
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux  = m_proppantLiftFlux.toViewConst();
 
   FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement  = m_isInterfaceElement.toViewConst();
 
   //  FluxKernel::ElementViewConst < arrayView1d<integer const> > const & elemGhostRank = m_elemGhostRank.toViewConst();
-
-  localIndex const fluidIndex = m_fluidIndex;
-  localIndex const proppantIndex = m_proppantIndex;
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
@@ -1032,8 +944,6 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
     FluxKernel::Launch( stencil,
                         m_numDofPerCell,
                         dt,
-                        fluidIndex,
-                        proppantIndex,
                         transTMultiplier,
                         m_updateProppantPacking,
                         m_downVector,
@@ -1071,7 +981,6 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                         matrix,
                         rhs );
   } );
-
 }
 
 void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
@@ -1090,7 +999,6 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
-
   //  Apply Dirichlet BC for proppant concentration
 
   fsManager.Apply( time_n + dt, domain, "ElementRegions", viewKeyStruct::proppantConcentrationString,
@@ -1100,8 +1008,6 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                         Group * subRegion,
                         string const & ) -> void
   {
-
-
     arrayView1d< globalIndex const > const &
     dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
 
@@ -1123,7 +1029,6 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
     {
       return proppantConc[a] + dProppantConc[a];
     } );
-
   } );
 
   //  Apply Dirichlet BC for component concentration
@@ -1132,7 +1037,6 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 
   if( NC > 0 )
   {
-
     map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
     fsManager.Apply( time_n + dt,
@@ -1208,11 +1112,9 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 
       arrayView1d< globalIndex const > const & dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
 
-      arrayView2d< real64 const > const & compConc  = subRegion->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
-
+      arrayView2d< real64 const > const & compConc       = subRegion->getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
       arrayView2d< real64 const > const & deltaCompConc  = subRegion->getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
-
-      arrayView2d< real64 const > const & bcCompConc  = subRegion->getReference< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString );
+      arrayView2d< real64 const > const & bcCompConc     = subRegion->getReference< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString );
 
       array1d< real64 > rhsContribution( targetSet.size() * NC );
       array1d< globalIndex > dof( targetSet.size() * NC );
@@ -1221,10 +1123,8 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 
       for( localIndex a : targetSet )
       {
-
         for( localIndex ic = 0; ic < NC; ++ic )
         {
-
           dof[counter] = dofNumber[a] + ic + 1;
 
           FieldSpecificationEqual::SpecifyFieldValue< LAInterface >( dof[counter],
@@ -1232,21 +1132,15 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                                                                      rhsContribution[counter],
                                                                      bcCompConc[a][ic],
                                                                      compConc[a][ic] + deltaCompConc[a][ic] );
-
           ++counter;
-
         }
 
         FieldSpecificationEqual::PrescribeRhsValues< LAInterface >( rhs,
                                                                     counter,
                                                                     dof.data(),
                                                                     rhsContribution.data());
-
-
       }
-
     } );
-
   }
 
   matrix.close();
@@ -1285,7 +1179,7 @@ ProppantTransport::
                          ParallelVector const & rhs )
 {
 
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   // get a view into local residual vector
   real64 const * localResidual = rhs.extractLocalVector();
@@ -1295,20 +1189,22 @@ ProppantTransport::
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm = 0.0;
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase const &,
+                                    ElementSubRegionBase const & subRegion )
   {
 
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
-
-    arrayView1d< real64 const > const & volume         = m_volume[er][esr];
+    arrayView1d< real64 const > const & volume = m_volume[er][esr];
 
     localIndex const subRegionSize = subRegion.size();
     for( localIndex a = 0; a < subRegionSize; ++a )
     {
-
       if( elemGhostRank[a] < 0 )
       {
         localIndex const offset = dofNumber[a];
@@ -1320,13 +1216,10 @@ ProppantTransport::
         }
       }
     }
-
   } );
 
   // compute global residual norm
-  real64 globalResidualNorm;
-  MPI_Allreduce( &localResidualNorm, &globalResidualNorm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_GEOSX );
-
+  real64 const globalResidualNorm = MpiWrapper::Sum( localResidualNorm, MPI_COMM_GEOSX );
   return sqrt( globalResidualNorm );
 }
 
@@ -1336,7 +1229,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
                                              DomainPartition * const domain )
 {
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
 
   dofManager.addVectorToField( solution,
@@ -1347,22 +1240,25 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
 
 
   if( m_numDofPerCell > 1 )
+  {
     dofManager.addVectorToField( solution,
                                  viewKeyStruct::proppantConcentrationString,
                                  viewKeyStruct::deltaComponentConcentrationString,
                                  scalingFactor,
                                  1, m_numDofPerCell );
+  }
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaComponentConcentrationString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
   {
-    //    UpdateState( subRegion );
-    UpdateComponentDensity( &subRegion );
+    //UpdateState( subRegion );
+    UpdateComponentDensity( subRegion, targetIndex );
   } );
 
 }
@@ -1382,26 +1278,30 @@ void ProppantTransport::SolveSystem( DofManager const & dofManager,
 
 void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const domain )
 {
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const targetIndex,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase &,
+                                    ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 > const & dProppantConc = m_deltaProppantConcentration[er][esr];
     arrayView2d< real64 > const & dComponentConc = m_deltaComponentConcentration[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
     {
       dProppantConc[ei] = 0.0;
-
       for( localIndex c = 0; c < NC; ++c )
+      {
         dComponentConc[ei][c] = 0.0;
-
+      }
     } );
 
-    UpdateState( &subRegion );
+    UpdateState( subRegion, targetIndex );
   } );
 
 }
@@ -1412,11 +1312,9 @@ void ProppantTransport::ResetViews( DomainPartition * const domain )
 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  ConstitutiveManager * const constitutiveManager = domain->getConstitutiveManager();
 
   m_pressure =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::pressureString );
-
   m_deltaPressure =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::deltaPressureString );
 
@@ -1460,96 +1358,109 @@ void ProppantTransport::ResetViews( DomainPartition * const domain )
   m_isProppantBoundaryElement =
     elemManager->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isProppantBoundaryString );
 
-  m_density =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString,
-                                                                                                constitutiveManager );
+  {
+    using keys = SlurryFluidBase::viewKeyStruct;
 
-  m_dDensity_dPressure =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                                constitutiveManager );
+    m_density =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::densityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dDensity_dPressure =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dDens_dPresString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dDensity_dProppantConcentration =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dDens_dProppantConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dDensity_dComponentConcentration =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::dDens_dCompConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_componentDensity =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::componentDensityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dComponentDensity_dPressure =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::dCompDens_dPresString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dComponentDensity_dComponentConcentration =
+      elemManager->ConstructMaterialViewAccessor< array4d< real64 >, arrayView4d< real64 > >( keys::dCompDens_dCompConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_fluidDensity =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::fluidDensityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dFluidDensity_dPressure =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dFluidDens_dPresString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dFluidDensity_dComponentConcentration =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::dFluidDens_dCompConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_fluidViscosity =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::fluidViscosityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_viscosity =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::viscosityString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dViscosity_dPressure =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dVisc_dPresString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dViscosity_dProppantConcentration =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dVisc_dProppantConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+    m_dViscosity_dComponentConcentration =
+      elemManager->ConstructMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( keys::dVisc_dCompConcString,
+                                                                                              targetRegionNames(),
+                                                                                              fluidModelNames() );
+  }
+  {
+    using keys = ParticleFluidBase::viewKeyStruct;
 
-  m_dDensity_dProppantConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dDens_dProppantConcString,
-                                                                                                constitutiveManager );
+    m_settlingFactor =
+      elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( keys::settlingFactorString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
 
-  m_dDensity_dComponentConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( SlurryFluidBase::viewKeyStruct::dDens_dCompConcString,
-                                                                                                constitutiveManager );
+    m_dSettlingFactor_dPressure =
+      elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( keys::dSettlingFactor_dPressureString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
 
-  m_componentDensity =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( SlurryFluidBase::viewKeyStruct::componentDensityString,
-                                                                                                constitutiveManager );
+    m_dSettlingFactor_dProppantConcentration =
+      elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( keys::dSettlingFactor_dProppantConcentrationString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
 
-  m_dComponentDensity_dPressure =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( SlurryFluidBase::viewKeyStruct::dCompDens_dPresString,
-                                                                                                constitutiveManager );
+    m_dSettlingFactor_dComponentConcentration =
+      elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( keys::dSettlingFactor_dComponentConcentrationString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
 
-  m_dComponentDensity_dComponentConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array4d< real64 >, arrayView4d< real64 > >( SlurryFluidBase::viewKeyStruct::dCompDens_dCompConcString,
-                                                                                                constitutiveManager );
+    m_collisionFactor =
+      elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( keys::collisionFactorString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
 
-  m_fluidDensity =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::fluidDensityString,
-                                                                                                constitutiveManager );
-
-  m_dFluidDensity_dPressure =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dFluidDens_dPresString,
-                                                                                                constitutiveManager );
-
-  m_dFluidDensity_dComponentConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( SlurryFluidBase::viewKeyStruct::dFluidDens_dCompConcString,
-                                                                                                constitutiveManager );
-
-  m_fluidViscosity =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::fluidViscosityString,
-                                                                                                constitutiveManager );
-
-  m_viscosity =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString,
-                                                                                                constitutiveManager );
-
-  m_dViscosity_dPressure =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                                constitutiveManager );
-
-  m_dViscosity_dProppantConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dVisc_dProppantConcString,
-                                                                                                constitutiveManager );
-
-  m_dViscosity_dComponentConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array3d< real64 >, arrayView3d< real64 > >( SlurryFluidBase::viewKeyStruct::dVisc_dCompConcString,
-                                                                                                constitutiveManager );
-
-  m_settlingFactor =
-    elemManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( ParticleFluidBase::viewKeyStruct::settlingFactorString,
-                                                                                                constitutiveManager );
-
-  m_dSettlingFactor_dPressure =
-    elemManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >(
-      ParticleFluidBase::viewKeyStruct::dSettlingFactor_dPressureString, constitutiveManager );
-
-  m_dSettlingFactor_dProppantConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >(
-      ParticleFluidBase::viewKeyStruct::dSettlingFactor_dProppantConcentrationString, constitutiveManager );
-
-  m_dSettlingFactor_dComponentConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >(
-      ParticleFluidBase::viewKeyStruct::dSettlingFactor_dComponentConcentrationString, constitutiveManager );
-
-  m_collisionFactor =
-    elemManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( ParticleFluidBase::viewKeyStruct::collisionFactorString,
-                                                                                                constitutiveManager );
-
-  m_dCollisionFactor_dProppantConcentration =
-    elemManager->ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >(
-      ParticleFluidBase::viewKeyStruct::dCollisionFactor_dProppantConcentrationString, constitutiveManager );
+    m_dCollisionFactor_dProppantConcentration =
+      elemManager->ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 > >( keys::dCollisionFactor_dProppantConcentrationString,
+                                                                                              targetRegionNames(),
+                                                                                              proppantModelNames() );
+  }
 
   m_poroMultiplier =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::poroMultiplierString );
 
   m_transTMultiplier =
     elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( viewKeyStruct::transTMultiplierString );
-
 }
 
 
@@ -1569,31 +1480,22 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
-  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres        = m_pressure.toViewConst();
-
-  //  FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dPres       = m_deltaPressure.toViewConst();
-
-  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef   = m_gravCoef.toViewConst();
-
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dens        = m_density.toViewConst();
-
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & visc        = m_viscosity.toViewConst();
-
-  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture  = m_elementAperture.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres               = m_pressure.toViewConst();
+  //FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dPres               =
+  // m_deltaPressure.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef           = m_gravCoef.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens               = m_density.toViewConst();
+  FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & visc               = m_viscosity.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture           = m_elementAperture.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf     = m_proppantPackVolumeFraction.toViewConst();
+  FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier = m_transTMultiplier.toViewConst();
 
   FluxKernel::ElementView< arrayView1d< R1Tensor > > & cellBasedFlux  = m_cellBasedFlux.toView();
-
-  FluxKernel::ElementView< arrayView1d< real64 const > > const & proppantPackVf  = m_proppantPackVolumeFraction.toViewConst();
-
-  FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
-
-  localIndex const fluidIndex = m_fluidIndex;
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
 
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
-                                                fluidIndex,
                                                 transTMultiplier,
                                                 m_downVector,
                                                 pres,
@@ -1620,7 +1522,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NumericalMethodsManager const * numericalMethodManager =
     domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -1631,46 +1533,26 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc       = m_proppantConcentration.toView();
-
-  ProppantPackVolumeKernel::MaterialViewConst< arrayView1d< real64 > > const & settlingFactor = m_settlingFactor.toViewConst();
-
-  ProppantPackVolumeKernel::MaterialViewConst< arrayView2d< real64 > > const & density = m_density.toViewConst();
-
-  ProppantPackVolumeKernel::MaterialViewConst< arrayView2d< real64 > > const & fluidDensity = m_fluidDensity.toViewConst();
-
-  ProppantPackVolumeKernel::MaterialViewConst< arrayView2d< real64 > > const & fluidViscosity = m_fluidViscosity.toViewConst();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
+  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & density = m_density.toViewConst();
+  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
+  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & fluidViscosity = m_fluidViscosity.toViewConst();
 
   ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isProppantMobile = m_isProppantMobile.toView();
-
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer > > const & isProppantBoundaryElement = m_isProppantBoundaryElement.toViewConst();
-
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantPackVf  = m_proppantPackVolumeFraction.toView();
-
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantExcessPackV  = m_proppantExcessPackVolume.toView();
-
   ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isInterfaceElement = m_isInterfaceElement.toView();
-
-  ProppantPackVolumeKernel::ElementView< arrayView1d< R1Tensor > > const & cellBasedFlux  = m_cellBasedFlux.toView();
-
+  ProppantPackVolumeKernel::ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux  = m_cellBasedFlux.toViewConst();
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantLiftFlux  = m_proppantLiftFlux.toView();
-
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & volume  = m_volume.toViewConst();
-
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture  = m_elementAperture.toViewConst();
-
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
-
-
-  localIndex const fluidIndex = m_fluidIndex;
-  localIndex const proppantIndex = m_proppantIndex;
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
-
     ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation( stencil,
                                                                    dt,
-                                                                   fluidIndex,
-                                                                   proppantIndex,
                                                                    m_proppantDensity,
                                                                    m_proppantDiameter,
                                                                    m_maxProppantConcentration,
@@ -1691,31 +1573,27 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
                                                                    elemGhostRank,
                                                                    cellBasedFlux,
                                                                    proppantLiftFlux );
-
   } );
 
-
   {
-
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantExcessPackVolumeString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantLiftFluxString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
-
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
+    UpdateProppantMobility( subRegion );
   } );
 
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
-
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
                                                               m_downVector,
                                                               m_maxProppantConcentration,
@@ -1727,25 +1605,23 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
 
   {
-
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
-
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
 
-  applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
   {
-    UpdateProppantMobility( &subRegion );
+    UpdateProppantMobility( subRegion );
   } );
 
 
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
-
     ProppantPackVolumeKernel::LaunchInterfaceElementUpdate( stencil,
                                                             m_downVector,
                                                             isProppantMobile,
@@ -1753,18 +1629,20 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   } );
 
   {
-
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].push_back( viewKeyStruct::isInterfaceElementString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
-
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
 
   // update poroMultiplier and transTMultiplier
 
-  applyToSubRegionsComplete( mesh,
-                             [&] ( localIndex const er, localIndex const esr, ElementRegionBase &, ElementSubRegionBase & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase &,
+                                    ElementSubRegionBase & subRegion )
   {
 
     arrayView1d< real64 const > const & proppantPackVfNew = m_proppantPackVolumeFraction[er][esr];
@@ -1774,24 +1652,24 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     arrayView1d< real64 > const & poroMultiplier = m_poroMultiplier[er][esr];
     arrayView1d< R1Tensor > const & transTMultiplier = m_transTMultiplier[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
 
       poroMultiplier[ei] = 1.0 - m_maxProppantConcentration * proppantPackVfNew[ei];
 
       //K0 horizontal
 
-      transTMultiplier[ei][0] = (1.0 - proppantPackVfNew[ei]) + proppantPackVfNew[ei] * m_proppantPackPermeability * 12.0 / (aperture0[ei] * aperture0[ei]);
+      transTMultiplier[ei][0] = ( 1.0 - proppantPackVfNew[ei] )
+                                + proppantPackVfNew[ei] * m_proppantPackPermeability * 12.0 / ( aperture0[ei] * aperture0[ei] );
 
       //K1 vertical
 
       transTMultiplier[ei][1] = 1.0 /
-                                (proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / m_proppantPackPermeability + (1.0 - proppantPackVfNew[ei]));
+                                ( proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / m_proppantPackPermeability
+                                  + ( 1.0 - proppantPackVfNew[ei] ) );
 
     } );
-
   } );
-
 }
 
 

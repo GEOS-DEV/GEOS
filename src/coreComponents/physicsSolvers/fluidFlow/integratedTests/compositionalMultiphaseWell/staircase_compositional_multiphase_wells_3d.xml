@@ -3,8 +3,7 @@
 
   <Solvers>
 
-
-    <Reservoir name="reservoirSystem"
+    <CompositionalMultiphaseReservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
@@ -13,15 +12,15 @@
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="297.15"
                                  useMass="0">
     </CompositionalMultiphaseFlow>
@@ -29,23 +28,21 @@
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
                                  targetRegions="{wellRegion1,wellRegion2}"
-                                 wellFluidName="fluid1"
-                                 wellRelPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 relPermNames="{relperm}"
                                  wellTemperature="297.15"
                                  useMass="0">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1"
-                      referenceDepth="0.5"/>
+                      targetRate="1"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
                       targetRate="1e-2" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
-                      referenceDepth="0.5"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
 
   </Solvers>
@@ -68,7 +65,7 @@
                   polylineNodeCoords="{ {9.5,  0.5, 12  }, 
                                         {9.5,  0.5, 0.05 } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.05"
+                  radius="0.1"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
                      distanceFromHead="11.95"/> 
@@ -81,7 +78,7 @@
                   polylineNodeCoords="{ {9.5, 0.2, 12  }, 
                                         {9.5, 0.2, 9.5 } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.05"
+                  radius="0.1"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
                      distanceFromHead="2.45"/> 

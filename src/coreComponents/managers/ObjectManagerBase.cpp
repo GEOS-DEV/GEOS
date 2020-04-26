@@ -35,18 +35,18 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup, false );
+  RegisterGroup( groupKeyStruct::setsString, &m_sets );
+  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
 
-  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
+  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap )->
     setApplyDefaultValue( -1 )->
     setDescription( "Array that contains a map from localIndex to globalIndex." );
 
-  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
+  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap );
 
-  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal, false );
+  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal );
 
-  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank )->
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -198,6 +198,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
   m_globalToLocalMap.clear();
   localIndex const N = size();
+  m_globalToLocalMap.reserve( N );
   for( localIndex k = 0; k < N; ++k )
   {
     updateGlobalToLocalMap( k );

@@ -31,8 +31,8 @@ WellElementRegion::WellElementRegion( string const & name, Group * const parent 
   m_wellControlsName( "" ),
   m_wellGeneratorName( "" )
 {
-  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
-  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName, false );
+  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName );
 
   this->GetGroup( viewKeyStruct::elementSubRegions )
     ->RegisterGroup< WellElementSubRegion >( m_subRegionName );
@@ -63,9 +63,8 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   globalIndex const numElemsGlobal        = wellGeometry.GetNumElements();
   globalIndex const numPerforationsGlobal = wellGeometry.GetNumPerforations();
 
-
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  perforationData->ConnectToMeshElements( mesh, wellGeometry );
+  subRegion->ConnectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
   GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,

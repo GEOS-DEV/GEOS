@@ -112,7 +112,7 @@
  * @brief Assert a condition in debug builds.
  * @param EXP an expression that will be evaluated as a predicate
  */
-#define GEOSX_ASSERT( EXP ) GEOSX_ASSERT_MSG( EXP, "" );
+#define GEOSX_ASSERT( EXP ) GEOSX_ASSERT_MSG( EXP, "" )
 
 /**
  * @brief Conditionally report a warning.
@@ -139,13 +139,6 @@
  * @param msg a message to log (any expression that can be stream inserted)
  */
 #define GEOSX_INFO( msg ) LVARRAY_INFO( msg )
-
-/**
- * @brief Check a predicate and report a warning in debug builds.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
- */
-#define GEOSX_CHECK( EXP, msg ) LVARRAY_CHECK( EXP, msg )
 
 /**
  * @brief Raise a hard error if two values are equal.

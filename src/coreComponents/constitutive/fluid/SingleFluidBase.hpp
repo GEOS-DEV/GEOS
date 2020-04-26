@@ -93,26 +93,20 @@ public:
   array2d< real64 > const & dViscosity_dDensity() const { return m_dViscosity_dPressure; }
   array2d< real64 > & dViscosity_dDensity()       { return m_dViscosity_dPressure; }
 
+  real64 defaultDensity() const { return m_defaultDensity; }
+  real64 defaultViscosity() const { return m_defaultViscosity; }
+
   // *** Data repository keys
 
   struct viewKeyStruct
   {
-    static constexpr auto defaultDensityString      = "defaultDensity";
-    static constexpr auto densityString      = "density";
-    static constexpr auto dDens_dPresString  = "dDensity_dPressure";
+    static constexpr auto defaultDensityString = "defaultDensity";
+    static constexpr auto densityString        = "density";
+    static constexpr auto dDens_dPresString    = "dDensity_dPressure";
 
-    static constexpr auto defaultViscosityString    = "defaultViscosity";
-    static constexpr auto viscosityString    = "viscosity";
-    static constexpr auto dVisc_dPresString  = "dViscosity_dPressure";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey density     = { densityString };
-    ViewKey dDens_dPres = { dDens_dPresString };
-
-    ViewKey viscosity   = { viscosityString };
-    ViewKey dVisc_dPres = { dVisc_dPresString };
-
+    static constexpr auto defaultViscosityString = "defaultViscosity";
+    static constexpr auto viscosityString        = "viscosity";
+    static constexpr auto dVisc_dPresString      = "dViscosity_dPressure";
   } viewKeysSingleFluidBase;
 
 protected:

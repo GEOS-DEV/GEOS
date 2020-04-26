@@ -56,23 +56,23 @@ TableFunction::TableFunction( const std::string & name,
   m_corners(),
   m_numCorners( 0 )
 {
-  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D, false )->
+  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Coordinates inputs for 1D tables" );
 
-  registerWrapper( keys::tableValues, &m_values, false )->
+  registerWrapper( keys::tableValues, &m_values )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Values for 1D tables" );
 
-  registerWrapper( keys::coordinateFiles, &m_coordinateFiles, false )->
+  registerWrapper( keys::coordinateFiles, &m_coordinateFiles )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of coordinate file names for ND Table" );
 
-  registerWrapper( keys::voxelFile, &m_voxelFile, false )->
+  registerWrapper( keys::voxelFile, &m_voxelFile )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString, false )->
+  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Interpolation method (options = linear, nearest, upper, lower)" )->
     setApplyDefaultValue( "linear" );

@@ -30,21 +30,10 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/Kinematics.h"
 #include "common/TimingMacros.hpp"
+#include "TimeIntegrationOption.hpp"
 
 namespace geosx
 {
-
-/**
- * @enum timeIntegrationOption
- *
- * The options for time integration
- */
-enum class timeIntegrationOption : int
-{
-  QuasiStatic,    //!< QuasiStatic
-  ImplicitDynamic,//!< ImplicitDynamic
-  ExplicitDynamic //!< ExplicitDynamic
-};
 
 namespace SolidMechanicsLagrangianFEMKernels
 {
@@ -57,13 +46,13 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
 
   localIndex const N = acceleration.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        for( int j = 0; j < 3; ++j )
-        {
-          velocity( i, j ) += dt * acceleration( i, j );
-          acceleration( i, j ) = 0;
-        }
-      } );
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      velocity( i, j ) += dt * acceleration( i, j );
+      acceleration( i, j ) = 0;
+    }
+  } );
 }
 
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
@@ -75,14 +64,14 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   GEOSX_MARK_FUNCTION;
 
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        localIndex const a = indices[ i ];
-        for( int j = 0; j < 3; ++j )
-        {
-          acceleration( a, j ) /= mass[ a ];
-          velocity( a, j ) += dt * acceleration( a, j );
-        }
-      } );
+  {
+    localIndex const a = indices[ i ];
+    for( int j = 0; j < 3; ++j )
+    {
+      acceleration( a, j ) /= mass[ a ];
+      velocity( a, j ) += dt * acceleration( a, j );
+    }
+  } );
 }
 
 inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD > const & velocity,
@@ -94,13 +83,13 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 
   localIndex const N = velocity.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
-      {
-        for( int j = 0; j < 3; ++j )
-        {
-          uhat( i, j ) = velocity( i, j ) * dt;
-          u( i, j ) += uhat( i, j );
-        }
-      } );
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      uhat( i, j ) = velocity( i, j ) * dt;
+      u( i, j ) += uhat( i, j );
+    }
+  } );
 }
 
 
@@ -238,76 +227,76 @@ struct ExplicitKernel
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    [=] GEOSX_DEVICE ( localIndex const index )
+    {
+      localIndex const k = elementList[ index ];
+
+      R1Tensor v_local[NUM_NODES_PER_ELEM];
+      R1Tensor u_local[NUM_NODES_PER_ELEM];
+      R1Tensor f_local[NUM_NODES_PER_ELEM];
+      real64 X_local[8][3];
+
+      for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        for( int i=0; i<3; ++i )
         {
-          localIndex const k = elementList[ index ];
+          X_local[ a ][ i ] = X[ nodeIndex ][ i ];
+          u_local[ a ][ i ] = u[ nodeIndex ][ i ];
+          v_local[ a ][ i ] = vel[ nodeIndex ][ i ];
+        }
+      }
 
-          R1Tensor v_local[NUM_NODES_PER_ELEM];
-          R1Tensor u_local[NUM_NODES_PER_ELEM];
-          R1Tensor f_local[NUM_NODES_PER_ELEM];
-          real64 X_local[8][3];
-
-          for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
-          {
-            localIndex const nodeIndex = elemsToNodes( k, a );
-            for( int i=0; i<3; ++i )
-            {
-              X_local[ a ][ i ] = X[ nodeIndex ][ i ];
-              u_local[ a ][ i ] = u[ nodeIndex ][ i ];
-              v_local[ a ][ i ] = vel[ nodeIndex ][ i ];
-            }
-          }
-
-          //Compute Quadrature
-          for( localIndex q = 0; q<NUM_QUADRATURE_POINTS; ++q )
-          {
+      //Compute Quadrature
+      for( localIndex q = 0; q<NUM_QUADRATURE_POINTS; ++q )
+      {
 
 //        real64 dNdX[ 8 ][ 3 ];
 //        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, X_local, dNdX );
 
-            R2Tensor dUhatdX, dUdX;
-            CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, dNdX[k][q] );
-            dUhatdX *= dt;
+        R2Tensor dUhatdX, dUdX;
+        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, dNdX[k][q] );
+        dUhatdX *= dt;
 
-            R2Tensor F, Ldt, fInv;
+        R2Tensor F, Ldt, fInv;
 
-            // calculate du/dX
-            F = dUhatdX;
-            F *= 0.5;
-            F += dUdX;
-            F.PlusIdentity( 1.0 );
-            fInv.Inverse( F );
+        // calculate du/dX
+        F = dUhatdX;
+        F *= 0.5;
+        F += dUdX;
+        F.PlusIdentity( 1.0 );
+        fInv.Inverse( F );
 
-            // chain rule: calculate dv/du = dv/dX * dX/du
-            Ldt.AijBjk( dUhatdX, fInv );
+        // chain rule: calculate dv/du = dv/dX * dX/du
+        Ldt.AijBjk( dUhatdX, fInv );
 
-            // calculate gradient (end of step)
-            F = dUhatdX;
-            F += dUdX;
-            F.PlusIdentity( 1.0 );
-            real64 const detF = F.Det();
-            fInv.Inverse( F );
+        // calculate gradient (end of step)
+        F = dUhatdX;
+        F += dUdX;
+        F.PlusIdentity( 1.0 );
+        real64 const detF = F.Det();
+        fInv.Inverse( F );
 
 
-            R2Tensor Rot;
-            R2SymTensor Dadt;
-            HughesWinget( Rot, Dadt, Ldt );
+        R2Tensor Rot;
+        R2SymTensor Dadt;
+        HughesWinget( Rot, Dadt, Ldt );
 
-            constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
+        constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
 
-            Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
+        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
 //        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(), dNdX, detJ, detF, fInv, f_local
 // );
-          }//quadrature loop
+      }    //quadrature loop
 
-          for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-          {
-            localIndex const nodeIndex = elemsToNodes( k, a );
-            RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 0 ), f_local[ a ][ 0 ] );
-            RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 1 ), f_local[ a ][ 1 ] );
-            RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 2 ), f_local[ a ][ 2 ] );
-          }
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes( k, a );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 0 ), f_local[ a ][ 0 ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 1 ), f_local[ a ][ 1 ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 2 ), f_local[ a ][ 2 ] );
+      }
 
-        } );
+    } );
 
     return dt;
   }
@@ -401,7 +390,7 @@ struct ImplicitKernel
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
           arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
           real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
-          timeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
+          TimeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
           real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
           real64 const GEOSX_UNUSED_PARAM( massDamping ),
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),

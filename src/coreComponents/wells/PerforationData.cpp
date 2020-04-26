@@ -35,15 +35,15 @@ PerforationData::PerforationData( string const & name, Group * const parent )
   : ObjectManagerBase( name, parent ),
   m_numPerforationsGlobal( 0 )
 {
-  registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal, false );
+  registerWrapper( viewKeyStruct::numPerforationsGlobalString, &m_numPerforationsGlobal );
 
-  registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion, false );
-  registerWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion, false );
-  registerWrapper( viewKeyStruct::reservoirElementIndexString, &m_toMeshElements.m_toElementIndex, false );
+  registerWrapper( viewKeyStruct::reservoirElementRegionString, &m_toMeshElements.m_toElementRegion );
+  registerWrapper( viewKeyStruct::reservoirElementSubregionString, &m_toMeshElements.m_toElementSubRegion );
+  registerWrapper( viewKeyStruct::reservoirElementIndexString, &m_toMeshElements.m_toElementIndex );
 
-  registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex, false );
-  registerWrapper( viewKeyStruct::locationString, &m_location, false );
-  registerWrapper( viewKeyStruct::transmissibilityString, &m_transmissibility, false );
+  registerWrapper( viewKeyStruct::wellElementIndexString, &m_wellElementIndex );
+  registerWrapper( viewKeyStruct::locationString, &m_location );
+  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility );
 }
 
 PerforationData::~PerforationData()
@@ -64,7 +64,7 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
 
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
-    if( m_transmissibility[iperf] > 0 )
+    if( m_wellTransmissibility[iperf] > 0 )
     {
       continue;
     }
@@ -126,9 +126,9 @@ void PerforationData::ComputeWellTransmissibility( MeshLevel const & mesh,
                     ") in " << getName() );
 
     // compute the well Peaceman index
-    m_transmissibility[iperf] = 2 * M_PI * kh / std::log( rEq / wellElemRadius[wellElemIndex] );
+    m_wellTransmissibility[iperf] = 2 * M_PI * kh / std::log( rEq / wellElemRadius[wellElemIndex] );
 
-    GEOSX_ERROR_IF( m_transmissibility[iperf] <= 0,
+    GEOSX_ERROR_IF( m_wellTransmissibility[iperf] <= 0,
                     "The well index is negative or equal to zero in " << getName() );
   }
 }
@@ -268,7 +268,7 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
     m_toMeshElements.m_toElementIndex    [iperfLocal] = ei;
 
     // construct the local transmissibility and location maps
-    m_transmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
+    m_wellTransmissibility[iperfLocal] = perfTransGlobal[iperfGlobal];
     m_location[iperfLocal] = coords;
 
     m_localToGlobalMap[iperfLocal++] = iperfGlobal;
@@ -331,7 +331,7 @@ void PerforationData::DebugLocalPerforations() const
               << std::endl;
     std::cout << "m_location[" << iperf << "] = " << m_location[iperf]
               << std::endl;
-    std::cout << "m_transmissibility[" << iperf << "] = " << m_transmissibility[iperf]
+    std::cout << "m_wellTransmissibility[" << iperf << "] = " << m_wellTransmissibility[iperf]
               << std::endl;
   }
 }

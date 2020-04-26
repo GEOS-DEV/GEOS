@@ -1,11 +1,42 @@
 
-<Problem>  
+<Problem>
+  <Benchmarks>
+    <quartz>
+      <Run name="OMP"
+           nodes="1" tasksPerNode="1"
+           timeLimit="10"
+           autoPartition="On"/>
+      <Run name="MPI_OMP"
+           nodes="1" tasksPerNode="2"
+           autoPartition="On"
+           timeLimit="10"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+      <Run name="MPI"
+           nodes="1" tasksPerNode="36"
+           autoPartition="On"
+           timeLimit="10"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+    </quartz>
+
+    <lassen>
+      <Run name="OMP_CUDA"
+           nodes="1" tasksPerNode="1"
+           autoPartition="On"
+           timeLimit="10"/>
+      <Run name="MPI_OMP_CUDA"
+           nodes="1" tasksPerNode="4"
+           autoPartition="On"
+           timeLimit="10"
+           strongScaling="{ 1, 2, 4, 8 }"/>
+    </lassen>
+  </Benchmarks>
+
   <Solvers>
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   cflFactor="0.25"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="shale"/>
+                                  solidMaterialNames="{shale}"/>
   </Solvers>
 
   <Mesh>
@@ -21,12 +52,27 @@
   </Mesh>
 
 
-  <Events maxTime="1.0e-3">
+  <Events maxTime="2.0e-3">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0e-5"
                    target="/Solvers/lagsolve" />
+
+    <PeriodicEvent name="blueprint"
+                   timeFrequency="1.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/blueprint" />
+    
+    <PeriodicEvent name="silo"
+                   timeFrequency="1.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/silo" />
+
+    <PeriodicEvent name="restart"
+                   timeFrequency="5.0e-3"
+                   targetExactTimestep="0"
+                   target="/Outputs/restart"/>
   </Events>
 
 
@@ -107,5 +153,12 @@
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
   </Geometry>
 
+  <Outputs>
+    <Blueprint name="blueprint" plotLevel="3"/>
+
+    <Silo name="silo" plotLevel="3"/>
+
+    <Restart name="restart"/>
+  </Outputs>
 
 </Problem>

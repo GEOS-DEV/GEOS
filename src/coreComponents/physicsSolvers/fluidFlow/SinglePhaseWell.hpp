@@ -16,8 +16,8 @@
  * @file SinglePhaseWell.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_WELLS_SINGLEPHASEWELLSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_WELLS_SINGLEPHASEWELLSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
 
 #include "WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -127,10 +127,6 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
 
-  virtual void
-  SetupDofs( DomainPartition const * const domain,
-             DofManager & dofManager ) const override;
-
   /**@}*/
 
   virtual string WellElementDofName() const override { return viewKeyStruct::dofFieldString; }
@@ -139,11 +135,20 @@ public:
 
   virtual localIndex NumFluidComponents() const override { return 1; }
 
+  virtual localIndex NumFluidPhases() const override { return 1; }
+
+  /**
+   * @brief Update fluid constitutive model state
+   * @param dataGroup group that contains the fields
+   */
+  virtual void UpdateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+
+
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual void UpdateState( WellElementSubRegion * subRegion ) override;
+  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -160,23 +165,6 @@ public:
                           DofManager const * const dofManager,
                           ParallelMatrix * const matrix,
                           ParallelVector * const rhs ) override;
-
-
-  /**
-   * @Brief assembles the perforation rate terms
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void AssemblePerforationTerms( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const matrix,
-                                         ParallelVector * const rhs ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -232,19 +220,6 @@ public:
     // perforation rates
     static constexpr auto perforationRateString        = "perforationRate";
     static constexpr auto dPerforationRate_dPresString = "dPerforationRate_dPres";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    // primary solution field
-    ViewKey pressure      = { pressureString };
-    ViewKey deltaPressure = { deltaPressureString };
-    ViewKey rate          = { connRateString };
-    ViewKey deltaRate     = { deltaConnRateString };
-
-    // perforation rates
-    ViewKey perforationRate        = { perforationRateString };
-    ViewKey dPerforationRate_dPres = { dPerforationRate_dPresString };
-
   } viewKeysSinglePhaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -252,9 +227,18 @@ public:
 
 protected:
 
+  virtual void PostProcessInput() override;
+
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
+
 private:
+
+  /**
+   * @brief Compute all the perforation rates for this well
+   * @param well the well with its perforations
+   */
+  void ComputePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
@@ -275,16 +259,12 @@ private:
   void CheckWellControlSwitch( DomainPartition * const domain ) override;
 
   /**
-   * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void ComputeAllPerforationRates( WellElementSubRegion * const subRegion );
-
-  /**
    * @brief Save all the rates and pressures in the well for reporting purposes
    * @param well the well with its perforations
    */
-  void RecordWellData( WellElementSubRegion const * const subRegion );
+  void RecordWellData( WellElementSubRegion const & subRegion );
+
+private:
 
   /// views into reservoir primary variable fields
 
@@ -293,15 +273,15 @@ private:
 
   /// views into reservoir material fields
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resDensity;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
 
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_resViscosity;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resViscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
 
 };
 
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_WELLS_SINGLEPHASEWELL_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELL_HPP_
