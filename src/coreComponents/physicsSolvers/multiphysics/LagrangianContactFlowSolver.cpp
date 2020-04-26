@@ -58,19 +58,19 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   m_stabilizationName( "" ),
   m_defaultConductivity( -1.0 )
 {
-  registerWrapper( viewKeyStruct::contactSolverNameString, &m_contactSolverName, false )->
+  registerWrapper( viewKeyStruct::contactSolverNameString, &m_contactSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the contact solid mechanics solver to use in the contact with flow solver" );
 
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, false )->
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow mechanics solver to use in the contact with flow solver" );
 
-  registerWrapper( viewKeyStruct::stabilizationNameString, &m_stabilizationName, false )->
+  registerWrapper( viewKeyStruct::stabilizationNameString, &m_stabilizationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the stabilization to use in the lagrangian contact with flow solver" );
 
-  registerWrapper( viewKeyStruct::defaultConductivityString, &m_defaultConductivity, false )->
+  registerWrapper( viewKeyStruct::defaultConductivityString, &m_defaultConductivity )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Value of the default conductivity C_{f,0} for the fracture" );
 }

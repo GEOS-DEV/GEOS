@@ -101,7 +101,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "The amount of remaining mass that was introduced when the FaceElement was created." );
 
-  registerWrapper( viewKeyStruct::elementDefaultConductivityString, &m_elementDefaultConductivity, false )->
+  registerWrapper( viewKeyStruct::elementDefaultConductivityString, &m_elementDefaultConductivity )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
     setDescription( "Scalar value of default conductivity C_{f,0} for a fracturing face." );
