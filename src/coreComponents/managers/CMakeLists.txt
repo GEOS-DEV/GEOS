@@ -12,6 +12,7 @@ set(managers_headers
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -43,6 +44,7 @@ set(managers_sources
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -69,9 +71,9 @@ if( ENABLE_VTK )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
 endif()
 
 if( ENABLE_MATHPRESSO )

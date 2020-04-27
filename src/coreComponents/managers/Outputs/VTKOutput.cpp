@@ -33,20 +33,20 @@ VTKOutput::VTKOutput( std::string const & name,
   m_plotLevel(),
   m_writer( name )
 {
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh, false )->
+  registerWrapper( viewKeysStruct::writeFEMFaces, &m_writeFaceMesh )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel, false )->
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData, false )->
+  registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Output the data in binary format" );

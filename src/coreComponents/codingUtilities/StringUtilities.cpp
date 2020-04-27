@@ -27,33 +27,6 @@ namespace geosx
 namespace stringutilities
 {
 
-void toLower( std::string & theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
-}
-std::string lowercase( std::string theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::tolower );
-  return theString;
-}
-
-void toUpper( std::string & theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
-}
-std::string uppercase( std::string theString )
-{
-  std::transform( theString.begin(), theString.end(), theString.begin(), ::toupper );
-  return theString;
-}
-
-bool ieq( std::string strA, std::string strB )
-{
-  toLower( strA ); toLower( strB ); return strA == strB;
-}
-
-
-
 /**
  * String tokenizing function
  **/
