@@ -51,14 +51,6 @@ const std::map< string, int > geosx2VTKCellTypes =
   { "C3D5", VTK_PYRAMID }
 };
 
-const std::map< string, std::vector< int > > geosx2VTKCellOrdering =
-{
-  { "C3D4", { 1, 0, 2, 3 } },
-  { "C3D8", { 0, 1, 3, 2, 4, 5, 7, 6 } },
-  { "C3D6", { 0, 3, 4, 1, 2, 5 } },
-  { "C3D5", { 0, 3, 2, 1, 4}  }
-};
-
 /*!
  * @brief Gets the VTK cell identifier
  * @param[in] elementType the type of the element (using the abaqus nomenclature)
@@ -76,24 +68,6 @@ int ToVTKCellType( const string & elementType )
     GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
   }
   return vtkIdentifier;
-}
-/*!
- * @brief Gets a table with the VTK node ordering
- * @param[in] elementType the type of the element (using the abaqus nomenclature)
- * @return the table with the VTK node ordering (index : GEOSX ordering, value : VTK node ordering)
- */
-std::vector< int > VTKNodeOrdering( const string & elementType )
-{
-  std::vector< int > nodeOrdering;
-  try
-  {
-    nodeOrdering = geosx2VTKCellOrdering.at( elementType );
-  }
-  catch( const std::out_of_range& outOfRange )
-  {
-    GEOSX_ERROR( "Element type " << elementType << " not recognized for VTK output ");
-  }
-  return nodeOrdering;
 }
 
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
@@ -171,7 +145,7 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
   geosx2VTKIndexing.reserve( esr.size() * esr.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
-  std::vector< int >  vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
+  std::vector< int >  vtkOrdering = esr.getVTKNodeOrdering();
   for( localIndex ei = 0; ei < esr.size(); ei++ )
   {
     auto & elem = nodeListPerElement[ei];
@@ -209,7 +183,7 @@ std::pair< std::vector< int >,  vtkSmartPointer< vtkCellArray > > VTKPolyDataWri
   er.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & esr )
   {
     std::vector< vtkIdType > connectivity( esr.numNodesPerElement() );
-    std::vector< int > vtkOrdering = VTKNodeOrdering( esr.GetElementTypeString() );
+    std::vector< int > vtkOrdering = esr.getVTKNodeOrdering();
     int vtkCellType = ToVTKCellType( esr.GetElementTypeString() );
     GEOSX_ERROR_IF_NE( connectivity.size(), vtkOrdering.size() );
     for( localIndex c = 0; c < esr.size(); c++ )
