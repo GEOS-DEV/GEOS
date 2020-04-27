@@ -105,8 +105,8 @@ struct StressCalculationKernel
  */
 struct ExplicitKernel
 {
-//#define CALCSHAPESSLE
-#define UPDATE_STRESS
+  #define UPDATE_STRESS
+
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -153,7 +153,7 @@ struct ExplicitKernel
     GEOSX_UNUSED_VAR( X );
 #endif
 
-    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+    using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    [=] GEOSX_DEVICE ( localIndex const index )
     {
