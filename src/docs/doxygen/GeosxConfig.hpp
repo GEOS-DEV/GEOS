@@ -75,7 +75,7 @@
 #define GEOSX_USE_SEPARATION_COEFFICIENT
 
 /// CMake option CMAKE_BUILD_TYPE
-#define GEOSX_CMAKE_BUILD_TYPE "Debug"
+#define GEOSX_CMAKE_BUILD_TYPE "RelWithDebInfo"
 
 #endif  /* GEOSX_CONFIG_HPP */
 

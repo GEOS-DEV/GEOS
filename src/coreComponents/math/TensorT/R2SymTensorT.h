@@ -217,6 +217,7 @@ public:
   //****** TENSOR OPERATIONS **************************************************
 
   realT Inner( void ) const;
+  GEOSX_HOST_DEVICE
   realT Trace( void ) const;
   realT Det( void ) const;
   realT AijAij( void ) const;

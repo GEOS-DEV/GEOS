@@ -73,11 +73,13 @@ void CalculateGradient( R2Tensor & Gradient,
 }
 
 template< int N >
-inline void CalculateGradients( R2Tensor & Gradient0,
-                                R2Tensor & Gradient1,
-                                R1Tensor const * GEOSX_RESTRICT const var0,
-                                R1Tensor const * GEOSX_RESTRICT const var1,
-                                arraySlice1d< R1Tensor const > const & dNdX )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CalculateGradients( R2Tensor & Gradient0,
+                         R2Tensor & Gradient1,
+                         R1Tensor const * GEOSX_RESTRICT const var0,
+                         R1Tensor const * GEOSX_RESTRICT const var1,
+                         arraySlice1d< R1Tensor const > const & dNdX )
 {
   Gradient0.dyadic_ab( var0[0], dNdX[0] );
   Gradient1.dyadic_ab( var1[0], dNdX[0] );
