@@ -105,6 +105,7 @@ struct StressCalculationKernel
  */
 struct ExplicitKernel
 {
+//#define CALCSHAPESSLE
 #define UPDATE_STRESS
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -145,9 +146,12 @@ struct ExplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-#if 0
+#ifdef CALCSHAPESSLE
     GEOSX_UNUSED_VAR( dNdX );
     GEOSX_UNUSED_VAR( detJ );
+#else
+    GEOSX_UNUSED_VAR( X );
+#endif
 
     using KERNEL_POLICY = parallelDevicePolicy< 256 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -156,6 +160,8 @@ struct ExplicitKernel
       localIndex const k = elementList[ index ];
 
       real64 fLocal[ NUM_NODES_PER_ELEM ][ 3 ] = {{0}};
+
+#ifdef CALCSHAPESSLE
       real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
@@ -167,77 +173,18 @@ struct ExplicitKernel
         }
       }
 
-#if defined(UPDATE_STRESS)
+  #if defined(UPDATE_STRESS)
       #define POS vel
       arrayView3d< real64, solid::STRESS_USD > const & stress = constitutive.m_stress;
-#else
+  #else
       #define POS u
-#endif
+  #endif
 
       real64 const G = constitutive.m_shearModulus[k];
       real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
       real64 const Lame2G = 2*G + Lame;
-
-      //Compute Quadrature
-      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-      {
-        real64 dNdX[ 8 ][ 3 ];
-        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, xLocal, dNdX );
-
-        real64 stressLocal[ 6 ] = {0};
-        for( localIndex b=0; b< NUM_NODES_PER_ELEM; ++b )
-        {
-          localIndex const nib = elemsToNodes( k,
-                                               b );
-          stressLocal[ 0 ] = stressLocal[ 0 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 0 ] *
-                             POS[ nib ][ 0 ] * Lame2G;
-          stressLocal[ 2 ] = stressLocal[ 2 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 1 ] *
-                             POS[ nib ][ 1 ] * Lame2G;
-          stressLocal[ 5 ] = stressLocal[ 5 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] ) * Lame + dNdX[ b ][ 2 ] *
-                             POS[ nib ][ 2 ] * Lame2G;
-          stressLocal[ 4 ] = stressLocal[ 4 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 2 ] ) * G;
-          stressLocal[ 3 ] = stressLocal[ 3 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 2 ] ) * G;
-          stressLocal[ 1 ] = stressLocal[ 1 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 1 ] ) * G;
-        }
-
-        for( localIndex c = 0; c < 6; ++c )
-        {
-#if defined(UPDATE_STRESS)
-          stress( k, q, c ) = stress( k, q, c ) + stressLocal[ c ] * dt;
-          stressLocal[ c ] = stress( k, q,
-                                     c ) * -detJ;
 #else
-          stressLocal[ c ] *= -detJ;
-#endif
-        }
-
-        for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
-        {
-          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + ( dNdX[ a ][ 0 ] * stressLocal[ 0 ] + dNdX[ a ][ 2 ] * stressLocal[ 3 ] + dNdX[ a ][ 1 ] * stressLocal[ 1 ] );
-          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + ( dNdX[ a ][ 1 ] * stressLocal[ 2 ] + dNdX[ a ][ 2 ] * stressLocal[ 4 ] + dNdX[ a ][ 0 ] * stressLocal[ 1 ] );
-          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + ( dNdX[ a ][ 2 ] * stressLocal[ 5 ] + dNdX[ a ][ 1 ] * stressLocal[ 4 ] + dNdX[ a ][ 0 ] * stressLocal[ 3 ] );
-        }
-      }    //quadrature loop
-
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        localIndex const nib = elemsToNodes( k, a );
-        for( int b = 0; b < 3; ++b )
-        {
-          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nib, b ), fLocal[ a ][ b ] );
-        }
-      }
-    } );
-#else
-    GEOSX_UNUSED_VAR( X );
-    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
-                                   [=] GEOSX_DEVICE ( localIndex const i )
-    {
-      localIndex const k = elementList[ i ];
-
       real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
-      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = {};
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
@@ -247,10 +194,38 @@ struct ExplicitKernel
           v_local[ a ][ b ] = vel( nodeIndex, b );
         }
       }
-
+#endif
       //Compute Quadrature
       for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+#ifdef CALCSHAPESSLE
+        real64 dNdX[ 8 ][ 3 ];
+        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, xLocal, dNdX );
+
+        real64 stressLocal[ 6 ] = {0};
+        for( localIndex b=0; b< NUM_NODES_PER_ELEM; ++b )
+        {
+          localIndex const nib = elemsToNodes( k,
+                                               b );
+          stressLocal[ 0 ] = stressLocal[ 0 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] * Lame2G;
+          stressLocal[ 1 ] = stressLocal[ 1 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] * Lame2G;
+          stressLocal[ 2 ] = stressLocal[ 2 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] ) * Lame + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] * Lame2G;
+          stressLocal[ 3 ] = stressLocal[ 3 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 2 ] ) * G;
+          stressLocal[ 4 ] = stressLocal[ 4 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 2 ] ) * G;
+          stressLocal[ 5 ] = stressLocal[ 5 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 1 ] ) * G;
+        }
+
+        for( localIndex c = 0; c < 6; ++c )
+        {
+  #if defined(UPDATE_STRESS)
+          stress( k, q, c ) = stress( k, q, c ) + stressLocal[ c ] * dt;
+          stressLocal[ c ] = stress( k, q, c ) * -detJ;
+  #else
+          stressLocal[ c ] *= -detJ;
+  #endif
+        }
+  #define DNDX0( k, q, a, i ) dNdX[a][i]
+#else
         real64 strain[6] = {0};
         for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -268,31 +243,37 @@ struct ExplicitKernel
 
         constitutive.SmallStrain( k, q, strain );
 
-        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        strain[0] = -constitutive.m_stress( k, q, 0 ) * detJ( k, q );
+        strain[1] = -constitutive.m_stress( k, q, 1 ) * detJ( k, q );
+        strain[2] = -constitutive.m_stress( k, q, 2 ) * detJ( k, q );
+        strain[3] = -constitutive.m_stress( k, q, 3 ) * detJ( k, q );
+        strain[4] = -constitutive.m_stress( k, q, 4 ) * detJ( k, q );
+        strain[5] = -constitutive.m_stress( k, q, 5 ) * detJ( k, q );
+
+        real64 const * const stressLocal = strain;
+
+  #define DNDX0( k, q, a, i ) dNdX[k][q][a][i]
+#endif
+        for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          f_local[ a ][ 0 ] -= ( constitutive.m_stress( k, q, 0 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                 + constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                 + constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 1 ] -= ( constitutive.m_stress( k, q, 5 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                 + constitutive.m_stress( k, q, 1 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                 + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
-          f_local[ a ][ 2 ] -= ( constitutive.m_stress( k, q, 4 ) * dNdX[ k ][ q ][ a ][ 0 ]
-                                 + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
-                                 + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
+          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] +
+                             ( stressLocal[ 0 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 5 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 4 ] * DNDX0( k, q, a, 2 ) );
+          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] +
+                             ( stressLocal[ 5 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 1 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 3 ] * DNDX0( k, q, a, 2 ) );
+          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] +
+                             ( stressLocal[ 4 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 3 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 2 ] * DNDX0( k, q, a, 2 ) );
         }
-      }     //quadrature loop
+      }    //quadrature loop
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
-        localIndex const nodeIndex = elemsToNodes( k, a );
+        localIndex const nib = elemsToNodes( k, a );
         for( int b = 0; b < 3; ++b )
         {
-          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), f_local[ a ][ b ] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nib, b ), fLocal[ a ][ b ] );
         }
       }
     } );
-
-#endif
     return dt;
   }
 

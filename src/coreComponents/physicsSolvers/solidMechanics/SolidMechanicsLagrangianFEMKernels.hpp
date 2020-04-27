@@ -93,61 +93,6 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 }
 
 
-template< int N, int USD >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
-                real64 const (&dNdX)[N][3],
-                real64 const detJ,
-                real64 const detF,
-                R2Tensor const & fInv,
-                R1Tensor (& result)[N] )
-{
-  GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
-
-  real64 const integrationFactor = detJ * detF;
-
-  real64 P[ 3 ][ 3 ];
-  P[ 0 ][ 0 ] = ( fieldVar[ 0 ] * fInv( 0, 0 ) + fieldVar[ 1 ] * fInv( 0, 1 ) + fieldVar[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
-  P[ 0 ][ 1 ] = ( fieldVar[ 0 ] * fInv( 1, 0 ) + fieldVar[ 1 ] * fInv( 1, 1 ) + fieldVar[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
-  P[ 0 ][ 2 ] = ( fieldVar[ 0 ] * fInv( 2, 0 ) + fieldVar[ 1 ] * fInv( 2, 1 ) + fieldVar[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-  P[ 1 ][ 0 ] = ( fieldVar[ 1 ] * fInv( 0, 0 ) + fieldVar[ 2 ] * fInv( 0, 1 ) + fieldVar[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
-  P[ 1 ][ 1 ] = ( fieldVar[ 1 ] * fInv( 1, 0 ) + fieldVar[ 2 ] * fInv( 1, 1 ) + fieldVar[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
-  P[ 1 ][ 2 ] = ( fieldVar[ 1 ] * fInv( 2, 0 ) + fieldVar[ 2 ] * fInv( 2, 1 ) + fieldVar[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-  P[ 2 ][ 0 ] = ( fieldVar[ 3 ] * fInv( 0, 0 ) + fieldVar[ 4 ] * fInv( 0, 1 ) + fieldVar[ 5 ] * fInv( 0, 2 ) ) * integrationFactor;
-  P[ 2 ][ 1 ] = ( fieldVar[ 3 ] * fInv( 1, 0 ) + fieldVar[ 4 ] * fInv( 1, 1 ) + fieldVar[ 5 ] * fInv( 1, 2 ) ) * integrationFactor;
-  P[ 2 ][ 2 ] = ( fieldVar[ 3 ] * fInv( 2, 0 ) + fieldVar[ 4 ] * fInv( 2, 1 ) + fieldVar[ 5 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-  for( int a=0; a<N; ++a )    // loop through all shape functions in element
-  {
-    result[a][0] -= P[ 0 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 0 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 0 ][ 2 ] * dNdX[ a ][ 2 ];
-    result[a][1] -= P[ 1 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 1 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 1 ][ 2 ] * dNdX[ a ][ 2 ];
-    result[a][2] -= P[ 2 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 2 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 2 ][ 2 ] * dNdX[ a ][ 2 ];
-  }
-}
-
-template< int N >
-inline void Integrate( const R2SymTensor & fieldvar,
-                       arraySlice1d< R1Tensor const > const & dNdX,
-                       real64 const & detJ,
-                       real64 const & detF,
-                       const R2Tensor & fInv,
-                       R1Tensor * GEOSX_RESTRICT const result )
-{
-  real64 const integrationFactor = detJ * detF;
-
-  R2Tensor P;
-  P.AijBkj( fieldvar, fInv );
-  P *= integrationFactor;
-
-  for( int a=0; a<N; ++a )    // loop through all shape functions in element
-  {
-    result[a].minusAijBj( P, dNdX[a] );
-  }
-}
-
 
 /**
  * @brief Function to select which templated kernel function to call.
@@ -191,6 +136,49 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 struct ExplicitKernel
 {
 
+//#define CALCSHAPEFEM
+
+
+
+  template< int N, int USD >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static
+  void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
+  #if defined(CALCSHAPEFEM)
+                  real64 const (&dNdX)[N][3],
+  #else
+                  arraySlice1d< R1Tensor const > const & dNdX,
+  #endif
+                  real64 const detJ,
+                  real64 const detF,
+                  R2Tensor const & fInv,
+                  R1Tensor (& result)[N] )
+  {
+    GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
+
+    real64 const integrationFactor = detJ * detF;
+
+    real64 P[ 3 ][ 3 ];
+    P[ 0 ][ 0 ] = ( fieldVar[ 0 ] * fInv( 0, 0 ) + fieldVar[ 5 ] * fInv( 0, 1 ) + fieldVar[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 0 ][ 1 ] = ( fieldVar[ 0 ] * fInv( 1, 0 ) + fieldVar[ 5 ] * fInv( 1, 1 ) + fieldVar[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 0 ][ 2 ] = ( fieldVar[ 0 ] * fInv( 2, 0 ) + fieldVar[ 5 ] * fInv( 2, 1 ) + fieldVar[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    P[ 1 ][ 0 ] = ( fieldVar[ 5 ] * fInv( 0, 0 ) + fieldVar[ 1 ] * fInv( 0, 1 ) + fieldVar[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 1 ][ 1 ] = ( fieldVar[ 5 ] * fInv( 1, 0 ) + fieldVar[ 1 ] * fInv( 1, 1 ) + fieldVar[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 1 ][ 2 ] = ( fieldVar[ 5 ] * fInv( 2, 0 ) + fieldVar[ 1 ] * fInv( 2, 1 ) + fieldVar[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    P[ 2 ][ 0 ] = ( fieldVar[ 4 ] * fInv( 0, 0 ) + fieldVar[ 3 ] * fInv( 0, 1 ) + fieldVar[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 2 ][ 1 ] = ( fieldVar[ 4 ] * fInv( 1, 0 ) + fieldVar[ 3 ] * fInv( 1, 1 ) + fieldVar[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 2 ][ 2 ] = ( fieldVar[ 4 ] * fInv( 2, 0 ) + fieldVar[ 3 ] * fInv( 2, 1 ) + fieldVar[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    for( int a=0; a<N; ++a )    // loop through all shape functions in element
+    {
+      result[a][0] -= P[ 0 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 0 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 0 ][ 2 ] * dNdX[ a ][ 2 ];
+      result[a][1] -= P[ 1 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 1 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 1 ][ 2 ] * dNdX[ a ][ 2 ];
+      result[a][2] -= P[ 2 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 2 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 2 ][ 2 ] * dNdX[ a ][ 2 ];
+    }
+  }
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -214,9 +202,15 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+#if !defined(CALCSHAPEFEM)
           arrayView3d< R1Tensor const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
+#else
+          arrayView3d< R1Tensor const > const &,
+          arrayView2d< real64 const > const &,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+#endif
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
           arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
@@ -233,14 +227,17 @@ struct ExplicitKernel
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
+#if defined(CALCSHAPEFEM)
       real64 X_local[8][3];
-
+#endif
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nodeIndex = elemsToNodes( k, a );
         for( int i=0; i<3; ++i )
         {
+#if defined(CALCSHAPEFEM)
           X_local[ a ][ i ] = X[ nodeIndex ][ i ];
+#endif
           u_local[ a ][ i ] = u[ nodeIndex ][ i ];
           v_local[ a ][ i ] = vel[ nodeIndex ][ i ];
         }
@@ -249,12 +246,17 @@ struct ExplicitKernel
       //Compute Quadrature
       for( localIndex q = 0; q<NUM_QUADRATURE_POINTS; ++q )
       {
-
-//        real64 dNdX[ 8 ][ 3 ];
-//        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, X_local, dNdX );
-
+#if defined(CALCSHAPEFEM)
+        real64 dNdX[ 8 ][ 3 ];
+        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, X_local, dNdX );
+#define DNDX( k, q ) dNdX
+#define DETJ( k, q ) detJ
+#else
+#define DNDX( k, q ) dNdX[k][q]
+#define DETJ( k, q ) detJ( k, q )
+#endif
         R2Tensor dUhatdX, dUdX;
-        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, dNdX[k][q] );
+        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, DNDX( k, q ) );
         dUhatdX *= dt;
 
         R2Tensor F, Ldt, fInv;
@@ -283,8 +285,12 @@ struct ExplicitKernel
 
         constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
 
-        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
-//        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(), dNdX, detJ, detF, fInv, f_local
+        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(),
+                                         DNDX( k, q ),
+                                         DETJ( k, q ),
+                                         detF,
+                                         fInv,
+                                         f_local );
 // );
       }    //quadrature loop
 
