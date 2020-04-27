@@ -40,11 +40,11 @@ ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0 )->
+  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 

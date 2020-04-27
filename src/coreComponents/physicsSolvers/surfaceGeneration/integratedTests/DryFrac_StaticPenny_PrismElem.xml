@@ -166,7 +166,7 @@
 
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
+    <Silo name="siloOutput" plotLevel="3" parallelThreads="1" plotFileRoot="simple2D"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

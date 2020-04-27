@@ -29,7 +29,7 @@ namespace dataRepository
  *
  * A scoped enum for the restart options.
  */
-enum class RestartFlags : unsigned char
+enum class RestartFlags : int
 {
   NO_WRITE,      ///< Doe no write into restart
   WRITE,         ///< Write into restart
@@ -55,86 +55,64 @@ enum class PlotLevel : int
  * @param val int that represents the PlotLevel
  * @return The PlotLevel that corresponds to the input
  */
-inline PlotLevel IntToPlotLevel( int const val )
+inline PlotLevel toPlotLevel( int const val )
 {
-  PlotLevel rval = PlotLevel::NOPLOT;
   switch( val )
   {
-    case 0:
+    case static_cast< int >( PlotLevel::LEVEL_0 ):
     {
-      rval = PlotLevel::LEVEL_0;
-      break;
+      return PlotLevel::LEVEL_0;
     }
-    case 1:
+    case static_cast< int >( PlotLevel::LEVEL_1 ):
     {
-      rval = PlotLevel::LEVEL_1;
-      break;
+      return PlotLevel::LEVEL_1;
     }
-    case 2:
+    case static_cast< int >( PlotLevel::LEVEL_2 ):
     {
-      rval = PlotLevel::LEVEL_2;
-      break;
+      return PlotLevel::LEVEL_2;
     }
-    case 3:
+    case static_cast< int >( PlotLevel::LEVEL_3 ):
     {
-      rval = PlotLevel::LEVEL_3;
-      break;
+      return PlotLevel::LEVEL_3;
+    }
+    case static_cast< int >( PlotLevel::NOPLOT ):
+    {
+      return PlotLevel::NOPLOT;
     }
     default:
     {
-      break;
+      GEOSX_ERROR( "Could not parse " << val << " into a PlotLevel." );
+      return PlotLevel::NOPLOT;
     }
   }
-  return rval;
 }
 
 /**
- * @brief boolean operator< for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left<right
+ * @brief Reads a PlotLevel enum from a stream.
+ * @param is The stream to read from.
+ * @param plotLevel The PlotLevel to write to.
+ * @return The stream.
  */
-inline bool operator<( PlotLevel const left, PlotLevel const right )
+inline
+std::istream & operator>>( std::istream & is, PlotLevel & plotLevel )
 {
-  return static_cast< int >(left) < static_cast< int >(right);
+  int value;
+  is >> value;
+  plotLevel = toPlotLevel( value );
+  return is;
 }
 
 /**
- * @brief boolean operator> for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left>right
+ * @brief Writes a plot level to a stream.
+ * @param os The stream to read from.
+ * @param plotLevel the PlotLevel to write.
+ * @return The stream.
  */
-inline bool operator>( PlotLevel const left, PlotLevel const right )
-{
-  return static_cast< int >(left) > static_cast< int >(right);
-}
+inline
+std::ostream & operator<<( std::ostream & os, PlotLevel const & plotLevel )
+{ return os << static_cast< int >( plotLevel ); }
 
-/**
- * @brief boolean operator== for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left==right
- */
-inline bool operator==( PlotLevel const left, PlotLevel const right )
-{
-  return static_cast< int >(left) == static_cast< int >(right);
-}
-
-/**
- * @brief boolean operator!= for PlotLevel
- * @param[in] left
- * @param[in] right
- * @return boolean result of left!=right
- */
-inline bool operator!=( PlotLevel const left, PlotLevel const right )
-{
-  return static_cast< int >(left) != static_cast< int >(right);
-}
-
-
-
-}   /* namespace dataRepository */
-}   /* namespace geosx */
+} /// namespace dataRepository
+} /// namespace geosx
 
 #endif  /* GEOSX_DATAREPOSITORY_RESTARTFLAGS_HPP_ */

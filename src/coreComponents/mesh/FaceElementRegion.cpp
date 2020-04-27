@@ -32,7 +32,7 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
 {
   this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< FaceElementSubRegion >( "default" );
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The default aperture of for new faceElements." );
 

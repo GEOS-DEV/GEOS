@@ -187,7 +187,7 @@ struct ExplicitKernel
                                  + constitutive.m_stress( k, q, 3 ) * dNdX[ k ][ q ][ a ][ 1 ]
                                  + constitutive.m_stress( k, q, 2 ) * dNdX[ k ][ q ][ a ][ 2 ] ) * detJ[ k ][ q ];
         }
-      }    //quadrature loop
+      }     //quadrature loop
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
@@ -259,7 +259,7 @@ struct ImplicitKernel
           arrayView1d< real64 const > const & fluidPressure,
           arrayView1d< real64 const > const & deltaFluidPressure,
           real64 const biotCoefficient,
-          timeIntegrationOption const tiOption,
+          TimeIntegrationOption const tiOption,
           real64 const stiffnessDamping,
           real64 const massDamping,
           real64 const newmarkBeta,
@@ -325,7 +325,7 @@ struct ImplicitKernel
           }
         }
 
-        if( tiOption == timeIntegrationOption::ImplicitDynamic )
+        if( tiOption == TimeIntegrationOption::ImplicitDynamic )
         {
           GEOSX_ERROR( "Option not supported" );
           for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
@@ -379,7 +379,7 @@ struct ImplicitKernel
               dRdU( a*dim+2, b*dim+1 ) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
               dRdU( a*dim+2, b*dim+2 ) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
 
-              if( tiOption == timeIntegrationOption::ImplicitDynamic )
+              if( tiOption == TimeIntegrationOption::ImplicitDynamic )
               {
 
                 real64 integrationFactor = density( k, q ) * N[a] * N[b] * detJq;
@@ -448,7 +448,7 @@ struct ImplicitKernel
               }
             }
 
-            if( tiOption == timeIntegrationOption::ImplicitDynamic )
+            if( tiOption == TimeIntegrationOption::ImplicitDynamic )
             {
               for( int i=0; i<dim; ++i )
               {
@@ -469,7 +469,7 @@ struct ImplicitKernel
         }
 
 
-        if( tiOption == timeIntegrationOption::ImplicitDynamic )
+        if( tiOption == TimeIntegrationOption::ImplicitDynamic )
         {
           GEOSX_ERROR( "NOT IMPLEMENTED" );
 //          dRdU_StiffnessDamping = dRdU;
