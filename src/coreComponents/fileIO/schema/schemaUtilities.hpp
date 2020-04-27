@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SchemaUtilities.hpp
+ * @file schemaUtilities.hpp
  */
 
 #ifndef GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_
@@ -35,24 +35,17 @@ namespace dataRepository
 class Group;
 }
 
-class SchemaUtilities
+namespace schemaUtilities
 {
-public:
 
-  SchemaUtilities();
+void ConvertDocumentationToSchema( std::string const & fname, dataRepository::Group * const group, integer documentationType );
 
-  virtual ~SchemaUtilities();
+void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot );
 
-  static void ConvertDocumentationToSchema( std::string const & fname, dataRepository::Group * const group, integer documentationType );
+void SchemaConstruction( dataRepository::Group * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent,
+                         integer documentationType );
 
-  static void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot );
-
-  static void SchemaConstruction( dataRepository::Group * const group, xmlWrapper::xmlNode schemaRoot, xmlWrapper::xmlNode schemaParent,
-                                  integer documentationType );
-
-};
-
-
-}
+} /// namespace schemaUtilities
+} /// namespace geosx
 
 #endif /* GEOSX_FILEIO_SCHEMA_SCHEMAUTILITIES_HPP_ */

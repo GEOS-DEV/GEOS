@@ -35,18 +35,18 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_searchDepth( 10 )
 {
 
-  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
-  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation, false );
-  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
-  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal, false );
-  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex, false );
-  registerWrapper( viewKeyStruct::topRankString, &m_topRank, false );
-  registerWrapper( viewKeyStruct::radiusString, &m_radius, false );
+  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex );
+  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal );
+  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex );
+  registerWrapper( viewKeyStruct::topRankString, &m_topRank );
+  registerWrapper( viewKeyStruct::radiusString, &m_radius );
 
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
+  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter );
+  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume );
 
-  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData, false );
+  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData );
 
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );

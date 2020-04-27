@@ -43,18 +43,18 @@ SolverBase::SolverBase( std::string const & name,
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
 
-  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::FALSE )->
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
     setApplyDefaultValue( "none" )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
@@ -62,14 +62,14 @@ SolverBase::SolverBase( std::string const & name,
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames, false )->
+  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
-  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
+  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
     setApplyDefaultValue( 1e99 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
@@ -91,11 +91,11 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
   Group * rval = nullptr;
   if( childKey == SystemSolverParameters::CatalogName() )
   {
-    rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
+    rval = RegisterGroup( childName, &m_systemSolverParameters );
   }
   else if( childKey == NonlinearSolverParameters::CatalogName() )
   {
-    rval = RegisterGroup( childName, &m_nonlinearSolverParameters, 0 );
+    rval = RegisterGroup( childName, &m_nonlinearSolverParameters );
   }
   else
   {

@@ -57,23 +57,23 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   m_flowSolver( nullptr ),
   m_maxNumResolves( 10 )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0 )->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
-  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, 0 )->
+  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves )->
     setApplyDefaultValue( 10 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );

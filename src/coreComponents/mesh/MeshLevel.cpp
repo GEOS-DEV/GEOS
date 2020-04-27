@@ -38,16 +38,16 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( groupStructKeys::elemManagerString, this )
 {
 
-  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
+  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
 
-  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager, false );
+  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
 
 
-  RegisterGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager, false );
+  RegisterGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
   m_faceManager.nodeList().SetRelatedObject( &m_nodeManager );
 
 
-  RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager, false );
+  RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
 
 
   registerWrapper< integer >( viewKeys.meshLevel );

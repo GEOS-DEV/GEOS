@@ -32,12 +32,12 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
   m_bulkModulus(),
   m_shearModulus()
 {
-  registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Bulk Modulus Parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus, 0 )->
+  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic Shear Modulus Parameter" );
@@ -52,11 +52,11 @@ LinearElasticIsotropic::LinearElasticIsotropic( std::string const & name, Group 
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Poisson's ratio" );
 
-  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus, 0 )->
+  registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Bulk Modulus Field" );
 
-  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus, 0 )->
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic Shear Modulus" );
 }
