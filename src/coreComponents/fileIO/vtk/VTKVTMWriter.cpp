@@ -70,4 +70,3 @@ void VTKVTMWriter::AddDataToSubBlock( string const & blockName, string const & s
 }
 }
 }
-

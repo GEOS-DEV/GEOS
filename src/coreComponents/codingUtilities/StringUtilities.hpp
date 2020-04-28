@@ -58,7 +58,7 @@ string_array Tokenize( std::string const & str, std::string const & delimiters )
  * @param[in] value to be padded
  * @param[in] size size of the padding
  */
-template <typename T>
+template< typename T >
 string PadValue( T value, int size )
 {
   std::stringstream paddedStringStream;

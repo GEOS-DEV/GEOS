@@ -38,7 +38,7 @@ namespace geosx
 using namespace dataRepository;
 namespace vtk
 {
-  
+
 enum struct VTKOutputMode
 {
   BINARY,
@@ -189,7 +189,7 @@ private:
    * and a VTKCellArray (with the cell connectivities).
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetSurface( FaceElementSubRegion const & esr,
-                                                                                         NodeManager const & nodeManager ) const;
+                                                                                        NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.
