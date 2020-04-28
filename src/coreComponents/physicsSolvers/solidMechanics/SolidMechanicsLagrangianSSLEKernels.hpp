@@ -108,7 +108,9 @@ struct ExplicitKernel
 //#if defined(GEOSX_USE_CUDA)
   #define CALCSHAPESSLE
   #define CONSTITUTIVE_CALL
-  #define UPDATE_STRESS
+#if defined(CONSTITUTIVE_CALL)
+//  #define UPDATE_STRESS
+#endif
 //#endif
 
   /**
@@ -148,14 +150,14 @@ struct ExplicitKernel
 #ifdef CALCSHAPESSLE
     GEOSX_UNUSED_VAR( dNdX );
     GEOSX_UNUSED_VAR( detJ );
-  #if defined( UPDATE_STRESS )
-    GEOSX_UNUSED_VAR( u );
-  #else
-    GEOSX_UNUSED_VAR( vel );
-  #endif
 #else
     GEOSX_UNUSED_VAR( X );
+#endif
+
+#if defined( UPDATE_STRESS )
     GEOSX_UNUSED_VAR( u );
+#else
+    GEOSX_UNUSED_VAR( vel );
 #endif
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
@@ -165,131 +167,95 @@ struct ExplicitKernel
       localIndex const k = elementList[ index ];
 
       real64 fLocal[ NUM_NODES_PER_ELEM ][ 3 ] = {{0}};
+      real64 varLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 
 #if defined(CALCSHAPESSLE)
       real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
+#endif
 
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nib = elemsToNodes( k, a );
         for( int i=0; i<3; ++i )
         {
+#if defined(CALCSHAPESSLE)
           xLocal[ a ][ i ] = X[ nib ][ i ];
+#endif
+
+#if defined(UPDATE_STRESS)
+          varLocal[ a ][ i ] = vel[ nib ][ i ] * dt;
+#else
+          varLocal[ a ][ i ] = u[ nib ][ i ];
+#endif
         }
       }
 
-  #if defined(UPDATE_STRESS)
-      #define POS vel
-      arrayView3d< real64, solid::STRESS_USD > const & stress = constitutive.m_stress;
-  #else
-      #define POS u
-  #endif
-
-  #if !defined(CONSTITUTIVE_CALL)
-        real64 const G = constitutive.m_shearModulus[k];
-        real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
-        real64 const Lame2G = 2*G + Lame;
-  #endif
-#else // defined(CALCSHAPESSLE)
-      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
-
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        localIndex const nodeIndex = elemsToNodes( k, a );
-        for( int b = 0; b < 3; ++b )
-        {
-          v_local[ a ][ b ] = vel( nodeIndex, b );
-        }
-      }
-#endif //defined(CALCSHAPESSLE)
-
+#if !defined(CONSTITUTIVE_CALL)
+      real64 const G = constitutive.m_shearModulus[k];
+      real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
+      real64 const Lame2G = 2*G + Lame;
+#endif
 
       //Compute Quadrature
       for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
+
 #if defined(CALCSHAPESSLE)
         real64 dNdX[ 8 ][ 3 ];
         real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, xLocal, dNdX );
+  #define DNDX dNdX
+  #define DETJ detJ
+#else //defined(CALCSHAPESSLE)
+  #define DNDX dNdX[k][q]
+  #define DETJ detJ( k, q )
+#endif //defined(CALCSHAPESSLE)
+
         real64 stressLocal[ 6 ] = {0};
 
-  #if defined(CONSTITUTIVE_CALL)
+#if defined(CONSTITUTIVE_CALL)
+
         real64 strain[6] = {0};
         for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          localIndex const nib = elemsToNodes( k, a );
-          strain[0] = strain[0] + dNdX[ a ][0] * POS[ nib ][0];
-          strain[1] = strain[1] + dNdX[ a ][1] * POS[ nib ][1];
-          strain[2] = strain[2] + dNdX[ a ][2] * POS[ nib ][2];
-          strain[3] = strain[3] + dNdX[ a ][2] * POS[ nib ][1] + dNdX[ a ][1] * POS[ nib ][2];
-          strain[4] = strain[4] + dNdX[ a ][2] * POS[ nib ][0] + dNdX[ a ][0] * POS[ nib ][2];
-          strain[5] = strain[5] + dNdX[ a ][1] * POS[ nib ][0] + dNdX[ a ][0] * POS[ nib ][1];
+          strain[0] = strain[0] + DNDX[ a ][0] * varLocal[ a ][0];
+          strain[1] = strain[1] + DNDX[ a ][1] * varLocal[ a ][1];
+          strain[2] = strain[2] + DNDX[ a ][2] * varLocal[ a ][2];
+          strain[3] = strain[3] + DNDX[ a ][2] * varLocal[ a ][1] + DNDX[ a ][1] * varLocal[ a ][2];
+          strain[4] = strain[4] + DNDX[ a ][2] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][2];
+          strain[5] = strain[5] + DNDX[ a ][1] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][1];
         }
-        for( int j=0; j<6; ++j )
-        {
-          strain[j] *= dt;
-        }
-
-        constitutive.SmallStrainNoState( k, strain, stressLocal );
-  #else //defined(CONSTITUTIVE_CALL)
-        for( localIndex b=0; b< NUM_NODES_PER_ELEM; ++b )
-        {
-          localIndex const nib = elemsToNodes( k, b );
-          stressLocal[ 0 ] = stressLocal[ 0 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] * Lame2G;
-          stressLocal[ 1 ] = stressLocal[ 1 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] ) * Lame + dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] * Lame2G;
-          stressLocal[ 2 ] = stressLocal[ 2 ] + ( dNdX[ b ][ 0 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 1 ] ) * Lame + dNdX[ b ][ 2 ] * POS[ nib ][ 2 ] * Lame2G;
-          stressLocal[ 3 ] = stressLocal[ 3 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 1 ] + dNdX[ b ][ 1 ] * POS[ nib ][ 2 ] ) * G;
-          stressLocal[ 4 ] = stressLocal[ 4 ] + ( dNdX[ b ][ 2 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 2 ] ) * G;
-          stressLocal[ 5 ] = stressLocal[ 5 ] + ( dNdX[ b ][ 1 ] * POS[ nib ][ 0 ] + dNdX[ b ][ 0 ] * POS[ nib ][ 1 ] ) * G;
-        }
-  #endif //defined(CONSTITUTIVE_CALL)
-        for( localIndex c = 0; c < 6; ++c )
-        {
   #if defined(UPDATE_STRESS)
-//          stress( k, q, c ) = stress( k, q, c ) + stressLocal[ c ] * dt;
-          stress( k, q, c ) = stress( k, q, c ) + stressLocal[ c ];
-          stressLocal[ c ] = stress( k, q, c ) * -detJ;
-  #else
-          stressLocal[ c ] *= -detJ;
-  #endif
-        }
-  #define DNDX0( k, q, a, i ) dNdX[a][i]
-#else //defined(CALCSHAPESSLE)
-        real64 strain[6] = {0};
-        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-        {
-          strain[0] = strain[0] + dNdX( k, q, a )[0] * v_local[a][0];
-          strain[1] = strain[1] + dNdX( k, q, a )[1] * v_local[a][1];
-          strain[2] = strain[2] + dNdX( k, q, a )[2] * v_local[a][2];
-          strain[3] = strain[3] + dNdX( k, q, a )[2] * v_local[a][1] + dNdX( k, q, a )[1] * v_local[a][2];
-          strain[4] = strain[4] + dNdX( k, q, a )[2] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][2];
-          strain[5] = strain[5] + dNdX( k, q, a )[1] * v_local[a][0] + dNdX( k, q, a )[0] * v_local[a][1];
-        }
-        for( int j=0; j<6; ++j )
-        {
-          strain[j] *= dt;
-        }
-
         constitutive.SmallStrain( k, q, strain );
+  #else
+        constitutive.SmallStrainNoState( k, strain, stressLocal );
+  #endif
 
-        strain[0] = -constitutive.m_stress( k, q, 0 ) * detJ( k, q );
-        strain[1] = -constitutive.m_stress( k, q, 1 ) * detJ( k, q );
-        strain[2] = -constitutive.m_stress( k, q, 2 ) * detJ( k, q );
-        strain[3] = -constitutive.m_stress( k, q, 3 ) * detJ( k, q );
-        strain[4] = -constitutive.m_stress( k, q, 4 ) * detJ( k, q );
-        strain[5] = -constitutive.m_stress( k, q, 5 ) * detJ( k, q );
-
-        real64 const * const stressLocal = strain;
-
-  #define DNDX0( k, q, a, i ) dNdX[k][q][a][i]
-#endif //defined(CALCSHAPESSLE)
+#else //defined(CONSTITUTIVE_CALL)
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] +
-                             ( stressLocal[ 0 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 5 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 4 ] * DNDX0( k, q, a, 2 ) );
-          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] +
-                             ( stressLocal[ 5 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 1 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 3 ] * DNDX0( k, q, a, 2 ) );
-          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] +
-                             ( stressLocal[ 4 ] * DNDX0( k, q, a, 0 ) + stressLocal[ 3 ] * DNDX0( k, q, a, 1 ) + stressLocal[ 2 ] * DNDX0( k, q, a, 2 ) );
+          stressLocal[ 0 ] = stressLocal[ 0 ] + ( DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] ) * Lame + DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] * Lame2G;
+          stressLocal[ 1 ] = stressLocal[ 1 ] + ( DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] ) * Lame + DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] * Lame2G;
+          stressLocal[ 2 ] = stressLocal[ 2 ] + ( DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] ) * Lame + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] * Lame2G;
+          stressLocal[ 3 ] = stressLocal[ 3 ] + ( DNDX[ b ][ 2 ] * varLocal[ a ][ 1 ] + DNDX[ b ][ 1 ] * varLocal[ a ][ 2 ] ) * G;
+          stressLocal[ 4 ] = stressLocal[ 4 ] + ( DNDX[ b ][ 2 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 0 ] * varLocal[ a ][ 2 ] ) * G;
+          stressLocal[ 5 ] = stressLocal[ 5 ] + ( DNDX[ b ][ 1 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 0 ] * varLocal[ a ][ 1 ] ) * G;
+        }
+#endif //defined(CONSTITUTIVE_CALL)
+
+        for( localIndex c = 0; c < 6; ++c )
+        {
+#if defined(UPDATE_STRESS)
+          stressLocal[ c ] =  constitutive.m_stress( k, q, c ) * (-DETJ);
+#else
+          stressLocal[ c ] *= -DETJ;
+#endif
+        }
+
+        for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+        {
+          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + ( stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ] );
+          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + ( stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ] );
+          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + ( stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ] );
         }
       }    //quadrature loop
 
@@ -305,11 +271,12 @@ struct ExplicitKernel
     return dt;
   }
 
-  #undef STRESS
-  #undef POS
   #undef CALCSHAPESSLE
   #undef UPDATE_STRESS
   #undef CONSTITUTIVE_CALL
+  #undef DNDX
+  #undef DETJ
+
 };
 
 /**

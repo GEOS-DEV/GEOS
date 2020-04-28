@@ -308,6 +308,10 @@ struct ExplicitKernel
     return dt;
   }
 
+#undef CALCSHAPEFEM
+#undef DNDX
+#undef DETJ
+
 
   static inline real64
   CalculateSingleNodalForce( localIndex const k,
