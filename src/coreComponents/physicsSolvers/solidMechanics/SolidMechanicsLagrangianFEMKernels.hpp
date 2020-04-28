@@ -136,8 +136,9 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 struct ExplicitKernel
 {
 
-//#define CALCSHAPEFEM
-
+#if defined(GEOSX_USE_CUDA)
+  #define CALCSHAPEFEM
+#endif
 
 
   template< int N, int USD >
@@ -218,7 +219,7 @@ struct ExplicitKernel
   {
     typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
 
-    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
+    using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
                                    [=] GEOSX_DEVICE ( localIndex const index )
     {
