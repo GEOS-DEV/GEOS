@@ -65,6 +65,18 @@ if (EXISTS ${ATK_DIR})
     include(${ATK_CMAKE}/sparsehash-targets.cmake)
     include(${ATK_CMAKE}/axom-targets.cmake)
 
+    # wrap imported compile flags properly for nvcc
+    if(ENABLE_CUDA)
+        get_target_property(_axom_compile_flags axom INTERFACE_COMPILE_OPTIONS)
+        set(_axom_compile_flags_new)
+        foreach(_flag ${_axom_compile_flags})
+            list(APPEND _axom_compile_flags_new
+                 $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:${_flag}>
+                 $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${_flag}>)
+        endforeach()
+        set_target_properties(axom PROPERTIES INTERFACE_COMPILE_OPTIONS "${_axom_compile_flags_new}")
+    endif()
+
     blt_register_library (NAME axom
                           INCLUDES ${ATK_INCLUDE_DIRS}
                           LIBRARIES axom
