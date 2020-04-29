@@ -23,7 +23,7 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
-#include <iomanip>
+ #include <iomanip>
 #include <algorithm>
 #include <map>
 
@@ -65,7 +65,6 @@ string PadValue( T value, int size )
   paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
   return paddedStringStream.str();
 }
-
 }
 }
 
