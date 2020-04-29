@@ -24,7 +24,6 @@
 namespace geosx
 {
 
-
 inline constexpr bool isEven( int x )
 {
   return !(x&1);

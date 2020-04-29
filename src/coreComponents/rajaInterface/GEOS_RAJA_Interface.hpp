@@ -17,7 +17,6 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "common/GeosxMacros.hpp"
 
 // TPL includes
 #include <RAJA/RAJA.hpp>

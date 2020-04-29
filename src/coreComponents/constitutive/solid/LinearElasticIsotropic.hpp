@@ -127,7 +127,7 @@ public:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
 
-//private:
+private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
 
@@ -354,7 +354,6 @@ public:
    *         modulus (at every element).
    */
   arrayView1d< real64 > const & bulkModulus()       { return m_bulkModulus; }
-
 
   /**
    * @brief Const accessor for bulk modulus
