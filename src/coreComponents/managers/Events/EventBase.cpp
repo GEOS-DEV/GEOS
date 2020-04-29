@@ -214,8 +214,6 @@ void EventBase::Execute( real64 const time_n,
                          real64 const,
                          Group * domain )
 {
-  GEOSX_MARK_FUNCTION;
-
   // If m_targetExecFlag is set, then the code has resumed at a point
   // after the target has executed.
   if((m_target != nullptr) && (m_targetExecFlag == 0))
