@@ -717,7 +717,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
     else
     {
       FunctionBase const * const function = functionManager.GetGroup< FunctionBase >( functionName );
-      assert( function!=nullptr );
+      GEOSX_ASSERT( function != nullptr );
 
       if( function->isFunctionOfTime()==2 )
       {

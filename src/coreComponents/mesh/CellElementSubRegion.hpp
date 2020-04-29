@@ -84,9 +84,6 @@ public:
 
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-  // TODO this needs to be stored by the FiniteElementManager!!
-  std::pair< array2d< localIndex >, array2d< localIndex > > m_constitutiveMapView;
-
   array3d< R1Tensor > m_dNdX;
 
 
