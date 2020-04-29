@@ -45,9 +45,14 @@ public:
   static const string CatalogName()
   { return "FaceManager"; }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const override
   { return FaceManager::CatalogName(); }
 
+  static localIndex nodeMapExtraSpacePerFace()
+  { return 4; }
+
+  static localIndex edgeMapExtraSpacePerFace()
+  { return 4; }
 
   ///@}
   ///
@@ -55,8 +60,9 @@ public:
   ///
   ///
   FaceManager( string const &, Group * const parent );
-  virtual ~FaceManager() override final;
+  virtual ~FaceManager() override;
 
+  virtual void resize( localIndex const newsize ) override;
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
@@ -89,6 +95,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  void compressRelationMaps();
+
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices ) override;
 
   void depopulateUpMaps( std::set< localIndex > const & receivedFaces,
@@ -98,7 +106,7 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
