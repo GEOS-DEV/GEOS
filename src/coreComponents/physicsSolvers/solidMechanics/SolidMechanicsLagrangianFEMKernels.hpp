@@ -137,7 +137,7 @@ struct ExplicitKernel
 {
 
 #if defined(GEOSX_USE_CUDA)
-  #define CALCSHAPEFEM
+  #define CALCFEMSHAPE
 #endif
 
 
@@ -146,7 +146,7 @@ struct ExplicitKernel
   GEOSX_FORCE_INLINE
   static
   void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
-  #if defined(CALCSHAPEFEM)
+  #if defined(CALCFEMSHAPE)
                   real64 const (&dNdX)[N][3],
   #else
                   arraySlice1d< R1Tensor const > const & dNdX,
@@ -203,20 +203,25 @@ struct ExplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-#if !defined(CALCSHAPEFEM)
           arrayView3d< R1Tensor const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
-#else
-          arrayView3d< R1Tensor const > const &,
-          arrayView2d< real64 const > const &,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-#endif
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
           arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
           real64 const dt )
   {
+
+
+#if defined(CALCFEMSHAPE)
+    GEOSX_UNUSED_VAR( dNdX );
+    GEOSX_UNUSED_VAR( detJ );
+#else
+    GEOSX_UNUSED_VAR( X );
+#endif
+
+
+
     typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
@@ -228,7 +233,7 @@ struct ExplicitKernel
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
-#if defined(CALCSHAPEFEM)
+#if defined(CALCFEMSHAPE)
       real64 X_local[8][3];
 #endif
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
@@ -236,7 +241,7 @@ struct ExplicitKernel
         localIndex const nodeIndex = elemsToNodes( k, a );
         for( int i=0; i<3; ++i )
         {
-#if defined(CALCSHAPEFEM)
+#if defined(CALCFEMSHAPE)
           X_local[ a ][ i ] = X[ nodeIndex ][ i ];
 #endif
           u_local[ a ][ i ] = u[ nodeIndex ][ i ];
@@ -247,17 +252,17 @@ struct ExplicitKernel
       //Compute Quadrature
       for( localIndex q = 0; q<NUM_QUADRATURE_POINTS; ++q )
       {
-#if defined(CALCSHAPEFEM)
+#if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
         real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, X_local, dNdX );
-#define DNDX( k, q ) dNdX
-#define DETJ( k, q ) detJ
+#define DNDX dNdX
+#define DETJ detJ
 #else
-#define DNDX( k, q ) dNdX[k][q]
-#define DETJ( k, q ) detJ( k, q )
+#define DNDX dNdX[k][q]
+#define DETJ detJ( k, q )
 #endif
         R2Tensor dUhatdX, dUdX;
-        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, DNDX( k, q ) );
+        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, DNDX );
         dUhatdX *= dt;
 
         R2Tensor F, Ldt, fInv;
@@ -287,8 +292,8 @@ struct ExplicitKernel
         constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
 
         Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(),
-                                         DNDX( k, q ),
-                                         DETJ( k, q ),
+                                         DNDX,
+                                         DETJ,
                                          detF,
                                          fInv,
                                          f_local );
@@ -308,7 +313,7 @@ struct ExplicitKernel
     return dt;
   }
 
-#undef CALCSHAPEFEM
+#undef CALCFEMSHAPE
 #undef DNDX
 #undef DETJ
 

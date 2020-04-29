@@ -105,13 +105,12 @@ struct StressCalculationKernel
  */
 struct ExplicitKernel
 {
-//#if defined(GEOSX_USE_CUDA)
-  #define CALCSHAPESSLE
-  #define CONSTITUTIVE_CALL
-#if defined(CONSTITUTIVE_CALL)
-//  #define UPDATE_STRESS
+#if defined(GEOSX_USE_CUDA)
+  #define CALCFEMSHAPE
 #endif
-//#endif
+  // If UPDATE_STRESS is undef, then stress is not updated at all.
+//  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
+  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -147,14 +146,14 @@ struct ExplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-#ifdef CALCSHAPESSLE
+#if defined(CALCFEMSHAPE)
     GEOSX_UNUSED_VAR( dNdX );
     GEOSX_UNUSED_VAR( detJ );
 #else
     GEOSX_UNUSED_VAR( X );
 #endif
 
-#if defined( UPDATE_STRESS )
+#if UPDATE_STRESS == 2
     GEOSX_UNUSED_VAR( u );
 #else
     GEOSX_UNUSED_VAR( vel );
@@ -169,7 +168,7 @@ struct ExplicitKernel
       real64 fLocal[ NUM_NODES_PER_ELEM ][ 3 ] = {{0}};
       real64 varLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 
-#if defined(CALCSHAPESSLE)
+#if defined(CALCFEMSHAPE)
       real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 #endif
 
@@ -178,11 +177,11 @@ struct ExplicitKernel
         localIndex const nib = elemsToNodes( k, a );
         for( int i=0; i<3; ++i )
         {
-#if defined(CALCSHAPESSLE)
+#if defined(CALCFEMSHAPE)
           xLocal[ a ][ i ] = X[ nib ][ i ];
 #endif
 
-#if defined(UPDATE_STRESS)
+#if UPDATE_STRESS==2
           varLocal[ a ][ i ] = vel[ nib ][ i ] * dt;
 #else
           varLocal[ a ][ i ] = u[ nib ][ i ];
@@ -190,30 +189,21 @@ struct ExplicitKernel
         }
       }
 
-#if !defined(CONSTITUTIVE_CALL)
-      real64 const G = constitutive.m_shearModulus[k];
-      real64 const Lame = constitutive.m_bulkModulus[k] - 2.0/3.0 * G;
-      real64 const Lame2G = 2*G + Lame;
-#endif
-
       //Compute Quadrature
       for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
 
-#if defined(CALCSHAPESSLE)
+#if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
         real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, xLocal, dNdX );
   #define DNDX dNdX
   #define DETJ detJ
-#else //defined(CALCSHAPESSLE)
+#else //defined(CALCFEMSHAPE)
   #define DNDX dNdX[k][q]
   #define DETJ detJ( k, q )
-#endif //defined(CALCSHAPESSLE)
+#endif //defined(CALCFEMSHAPE)
 
         real64 stressLocal[ 6 ] = {0};
-
-#if defined(CONSTITUTIVE_CALL)
-
         real64 strain[6] = {0};
         for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -224,32 +214,24 @@ struct ExplicitKernel
           strain[4] = strain[4] + DNDX[ a ][2] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][2];
           strain[5] = strain[5] + DNDX[ a ][1] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][1];
         }
-  #if defined(UPDATE_STRESS)
-        constitutive.SmallStrain( k, q, strain );
-  #else
-        constitutive.SmallStrainNoState( k, strain, stressLocal );
-  #endif
 
-#else //defined(CONSTITUTIVE_CALL)
-        for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
-        {
-          stressLocal[ 0 ] = stressLocal[ 0 ] + ( DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] ) * Lame + DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] * Lame2G;
-          stressLocal[ 1 ] = stressLocal[ 1 ] + ( DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] ) * Lame + DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] * Lame2G;
-          stressLocal[ 2 ] = stressLocal[ 2 ] + ( DNDX[ b ][ 0 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 1 ] * varLocal[ a ][ 1 ] ) * Lame + DNDX[ b ][ 2 ] * varLocal[ a ][ 2 ] * Lame2G;
-          stressLocal[ 3 ] = stressLocal[ 3 ] + ( DNDX[ b ][ 2 ] * varLocal[ a ][ 1 ] + DNDX[ b ][ 1 ] * varLocal[ a ][ 2 ] ) * G;
-          stressLocal[ 4 ] = stressLocal[ 4 ] + ( DNDX[ b ][ 2 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 0 ] * varLocal[ a ][ 2 ] ) * G;
-          stressLocal[ 5 ] = stressLocal[ 5 ] + ( DNDX[ b ][ 1 ] * varLocal[ a ][ 0 ] + DNDX[ b ][ 0 ] * varLocal[ a ][ 1 ] ) * G;
-        }
-#endif //defined(CONSTITUTIVE_CALL)
+#if UPDATE_STRESS == 2
+        constitutive.SmallStrain( k, q, strain );
+#else
+        constitutive.SmallStrainNoState( k, strain, stressLocal );
+#endif
 
         for( localIndex c = 0; c < 6; ++c )
         {
-#if defined(UPDATE_STRESS)
+#if UPDATE_STRESS == 2
           stressLocal[ c ] =  constitutive.m_stress( k, q, c ) * (-DETJ);
+#elif UPDATE_STRESS == 1
+          stressLocal[ c ] = ( stressLocal[ c ] + constitutive.m_stress( k, q, c ) ) *(-DETJ);
 #else
           stressLocal[ c ] *= -DETJ;
 #endif
         }
+
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
@@ -271,11 +253,10 @@ struct ExplicitKernel
     return dt;
   }
 
-  #undef CALCSHAPESSLE
-  #undef UPDATE_STRESS
-  #undef CONSTITUTIVE_CALL
-  #undef DNDX
-  #undef DETJ
+#undef CALCFEMSHAPE
+#undef DNDX
+#undef DETJ
+#undef UPDATE_STRESS
 
 };
 
