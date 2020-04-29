@@ -19,20 +19,12 @@
 #pragma once
 
 #include "common/DataTypes.hpp"
-//#include "SolidMechanicsLagrangianFEMKernels.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
-
-#include "RAJA/RAJA.hpp"
-
 #include "finiteElement/Kinematics.h"
-#include "common/TimingMacros.hpp"
-
-#include "Epetra_SerialDenseMatrix.h"
-#include "Epetra_SerialDenseVector.h"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -174,17 +166,17 @@ struct ExplicitKernel
 
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
-        localIndex const nib = elemsToNodes( k, a );
+        localIndex const nodeIndex = elemsToNodes( k, a );
         for( int i=0; i<3; ++i )
         {
 #if defined(CALCFEMSHAPE)
-          xLocal[ a ][ i ] = X[ nib ][ i ];
+          xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
 #endif
 
 #if UPDATE_STRESS==2
-          varLocal[ a ][ i ] = vel[ nib ][ i ] * dt;
+          varLocal[ a ][ i ] = vel[ nodeIndex ][ i ] * dt;
 #else
-          varLocal[ a ][ i ] = u[ nib ][ i ];
+          varLocal[ a ][ i ] = u[ nodeIndex ][ i ];
 #endif
         }
       }
@@ -243,10 +235,10 @@ struct ExplicitKernel
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
-        localIndex const nib = elemsToNodes( k, a );
+        localIndex const nodeIndex = elemsToNodes( k, a );
         for( int b = 0; b < 3; ++b )
         {
-          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nib, b ), fLocal[ a ][ b ] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), fLocal[ a ][ b ] );
         }
       }
     } );

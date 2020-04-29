@@ -19,17 +19,13 @@
 #pragma once
 
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "finiteElement/ElementLibrary/FiniteElementBase.h"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-#include "Epetra_FECrsMatrix.h"
-#include "Epetra_FEVector.h"
-#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/solid/solidSelector.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
-#include "common/TimingMacros.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
 namespace geosx
