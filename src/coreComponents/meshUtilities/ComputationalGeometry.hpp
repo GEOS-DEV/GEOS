@@ -76,12 +76,94 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
  * @details if area < - areaTolerance, this function will throw an error,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           real64 areaTolerance = 0.0 );
+GEOSX_HOST_DEVICE
+static real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                                  localIndex const numPoints,
+                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
+                                  R1Tensor & center,
+                                  R1Tensor & normal,
+                                  real64 areaTolerance = 0.0 )
+{
+  R1Tensor v1, v2, vc;
+  real64 area = 0.0;
+  center = 0.0;
+  normal=0.;
+
+  if( numPoints > 2 )
+  {
+    R1Tensor x0;
+    x0[0] = points[pointsIndices[0]][0];
+    x0[1] = points[pointsIndices[0]][1];
+    x0[2] = points[pointsIndices[0]][2];
+    for( localIndex a=0; a<(numPoints-2); ++a )
+    {
+      v1  = points[pointsIndices[a+1]];
+      v2  = points[pointsIndices[a+2]];
+
+      vc  = x0;
+      vc += v1;
+      vc += v2;
+
+      v1 -= x0;
+      v2 -= x0;
+
+      R1Tensor triangleNormal;
+      triangleNormal.Cross( v1, v2 );
+      const real64 triangleArea = triangleNormal.Normalize();
+      triangleNormal *= triangleArea;
+      normal += triangleNormal;
+      area += triangleArea;
+      vc *= triangleArea;
+      center += vc;
+    }
+    if( area > areaTolerance )
+    {
+      center /= (area * 3.0);
+      normal.Normalize();
+      area *= 0.5;
+    }
+    else if( area < -areaTolerance )
+    {
+      for( localIndex a=0; a<numPoints; ++a )
+      {
+        /*
+              GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
+                                         << points[pointsIndices[a]]( 1 ) << " "
+                                         << points[pointsIndices[a]]( 2 ) << " "
+                                         << pointsIndices[a] );
+         */
+      }
+
+      //GEOSX_ERROR( "Negative area found : " << area );
+    }
+    else
+    {
+      return 0.;
+    }
+  }
+  else if( numPoints == 1 )
+  {
+    center = points[pointsIndices[0]];
+  }
+  else if( numPoints == 2 )
+  {
+    center  = points[pointsIndices[0]];
+
+    //For 2D elements, a face is actually an edge with two nodes. We treat the
+    // length of this edge as the surface area and use it in the calculation of
+    // tractions.
+    R1Tensor x1_x0;
+    x1_x0 = points[pointsIndices[1]];
+    center += x1_x0;
+    center *= 0.5;
+
+    x1_x0 -= points[pointsIndices[0]];
+    area = Dot( x1_x0, x1_x0 );
+    area = sqrt( area );
+  }
+  return area;
+}
+
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.

@@ -21,13 +21,13 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-//using namespace geosx::SinglePhaseBaseKernels;
 using namespace geosx::SinglePhaseHybridFVMKernels;
 using namespace geosx::HybridFVMInnerProduct;
 using namespace geosx::testing;
 
 
 static real64 constexpr relTol = 1e-5;
+static localIndex constexpr NF = 4; // we consider a tetrahedron in this file
 
 // helpers
 
@@ -49,16 +49,16 @@ void updateDensity( real64 const & refPres,
 void updateUpwindedMobilities( globalIndex const elemDofNumber,
                                real64 const & elemDens,
                                real64 const & dElemDens_dp,
-                               stackArray1d< real64, MAX_NUM_FACES > & upwMobility,
-                               stackArray1d< real64, MAX_NUM_FACES > & dUpwMobility_dp,
-                               stackArray1d< globalIndex, MAX_NUM_FACES > & upwDofNumber )
+                               arraySlice1d< real64 > const & upwMobility,
+                               arraySlice1d< real64 > const & dUpwMobility_dp,
+                               arraySlice1d< globalIndex > const & upwDofNumber )
 {
   // we assume that viscosity is independent of pressure
   real64 const elemVisc = 0.001;
   real64 elemMobility = elemDens / elemVisc;
   real64 dElemMobility_dp = dElemDens_dp / elemVisc;
 
-  for( localIndex ifaceLoc = 0; ifaceLoc < upwMobility.size( 0 ); ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     upwMobility( ifaceLoc ) = elemMobility;
     dUpwMobility_dp( ifaceLoc ) = dElemMobility_dp;
@@ -69,8 +69,7 @@ void updateUpwindedMobilities( globalIndex const elemDofNumber,
 
 // in this function, we set up a 1-element problem in a tetrahedron
 // the QTPFA transmissibility matrix comes from testHybridFVMInnerProducts
-void setupProblemForTetra( localIndex & numFacesInElem,
-                           array1d< localIndex > & elemToFaces,
+void setupProblemForTetra( array1d< localIndex > & elemToFaces,
                            array1d< real64 > & facePres,
                            array1d< real64 > & dFacePres,
                            array1d< real64 > & faceGravCoef,
@@ -80,27 +79,23 @@ void setupProblemForTetra( localIndex & numFacesInElem,
                            real64 & elemGravCoef,
                            real64 & elemDens,
                            real64 & dElemDens_dp,
-                           stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > & transMatrix )
+                           arraySlice2d< real64 > const & transMatrix )
 {
-  numFacesInElem = 4;
-
-  // we assume that we are in a tetrahedron
-
-  facePres.resize( numFacesInElem );
-  dFacePres.resize( numFacesInElem );
+  facePres.resize( NF );
+  dFacePres.resize( NF );
   facePres( 0 ) = 1e5; dFacePres( 0 ) = 0;
   facePres( 1 ) = 2e5; dFacePres( 1 ) = 0;
   facePres( 2 ) = 1e4; dFacePres( 2 ) = 0;
   facePres( 3 ) = 5e4; dFacePres( 3 ) = 0;
 
   elemGravCoef = 5e1;
-  faceGravCoef.resize( numFacesInElem );
+  faceGravCoef.resize( NF );
   faceGravCoef( 0 ) = 1e1;
   faceGravCoef( 1 ) = 1e2;
   faceGravCoef( 2 ) = 3e1;
   faceGravCoef( 3 ) = 7e1;
 
-  elemToFaces.resize( numFacesInElem );
+  elemToFaces.resize( NF );
   elemToFaces( 0 ) = 0;
   elemToFaces( 1 ) = 1;
   elemToFaces( 2 ) = 2;
@@ -112,7 +107,6 @@ void setupProblemForTetra( localIndex & numFacesInElem,
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
 
   // the transmissibility matrix comes from the HybridFVMInnerProduct unit tests
-  transMatrix.resize( numFacesInElem, numFacesInElem );
   transMatrix( 0, 0 ) =  5.25e-12;
   transMatrix( 0, 1 ) =  3.75e-12;
   transMatrix( 0, 2 ) =  2.25e-12;
@@ -136,8 +130,7 @@ void setupProblemForTetra( localIndex & numFacesInElem,
 }
 
 
-void setupMatrixAndRhsForTetra( localIndex const numFacesInElem,
-                                globalIndex & elemDofNumber,
+void setupMatrixAndRhsForTetra( globalIndex & elemDofNumber,
                                 array1d< globalIndex > & faceDofNumber,
                                 ParallelMatrix & matrix,
                                 ParallelMatrix & matrixPerturb,
@@ -146,26 +139,26 @@ void setupMatrixAndRhsForTetra( localIndex const numFacesInElem,
                                 ParallelVector & rhsPerturb )
 {
   elemDofNumber = 0;
-  faceDofNumber.resize( numFacesInElem );
+  faceDofNumber.resize( NF );
   faceDofNumber( 0 ) = 1;
   faceDofNumber( 1 ) = 2;
   faceDofNumber( 2 ) = 3;
   faceDofNumber( 3 ) = 4;
 
-  matrix.createWithGlobalSize( numFacesInElem+1, numFacesInElem+1, MPI_COMM_GEOSX );
-  matrixPerturb.createWithGlobalSize( numFacesInElem+1, numFacesInElem+1, MPI_COMM_GEOSX );
-  matrixFD.createWithGlobalSize( numFacesInElem+1, numFacesInElem+1, MPI_COMM_GEOSX );
-  rhs.createWithGlobalSize( numFacesInElem+1, MPI_COMM_GEOSX );
-  rhsPerturb.createWithGlobalSize( numFacesInElem+1, MPI_COMM_GEOSX );
+  matrix.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
+  matrixPerturb.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
+  matrixFD.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
+  rhs.createWithGlobalSize( NF+1, MPI_COMM_GEOSX );
+  rhsPerturb.createWithGlobalSize( NF+1, MPI_COMM_GEOSX );
 
   matrix.open();
   matrixPerturb.open();
   matrixFD.open();
 
   // the matrices are full for the one-cell problem
-  for( globalIndex i = 0; i < numFacesInElem+1; ++i )
+  for( globalIndex i = 0; i < NF+1; ++i )
   {
-    for( globalIndex j = 0; j < numFacesInElem+1; ++j )
+    for( globalIndex j = 0; j < NF+1; ++j )
     {
       matrix.insert( i, j, 1 );
       matrixPerturb.insert( i, j, 1 );
@@ -187,7 +180,6 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   // 1) problem setup //
   //////////////////////
 
-  localIndex numFacesInElem;
   array1d< localIndex > elemToFaces;
   array1d< real64 > facePres;
   array1d< real64 > dFacePres;
@@ -198,10 +190,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   real64 elemGravCoef;
   real64 elemDens;
   real64 dElemDens_dp;
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > transMatrix;
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-  setupProblemForTetra( numFacesInElem,
-                        elemToFaces,
+  setupProblemForTetra( elemToFaces,
                         facePres,
                         dFacePres,
                         faceGravCoef,
@@ -221,8 +212,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   ParallelVector rhs;
   ParallelVector rhsPerturb;
 
-  setupMatrixAndRhsForTetra( numFacesInElem,
-                             elemDofNumber,
+  setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
                              jacobian,
                              jacobianPerturb,
@@ -233,27 +223,27 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   real64 const * localRhs = rhs.extractLocalVector();
   real64 const * localRhsPerturb = rhsPerturb.extractLocalVector();
 
-  stackArray1d< real64, MAX_NUM_FACES > oneSidedVolFlux( numFacesInElem );
-  stackArray1d< real64, MAX_NUM_FACES > dOneSidedVolFlux_dp( numFacesInElem );
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > dOneSidedVolFlux_dfp( numFacesInElem, numFacesInElem );
+  stackArray1d< real64, NF > oneSidedVolFlux( NF );
+  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
+  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                              dFacePres,
-                                              faceGravCoef,
-                                              elemToFaces,
-                                              elemPres,
-                                              dElemPres,
-                                              elemGravCoef,
-                                              elemDens,
-                                              dElemDens_dp,
-                                              transMatrix,
-                                              oneSidedVolFlux,
-                                              dOneSidedVolFlux_dp,
-                                              dOneSidedVolFlux_dfp );
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                         dFacePres,
+                                                         faceGravCoef,
+                                                         elemToFaces,
+                                                         elemPres,
+                                                         dElemPres,
+                                                         elemGravCoef,
+                                                         elemDens,
+                                                         dElemDens_dp,
+                                                         transMatrix,
+                                                         oneSidedVolFlux,
+                                                         dOneSidedVolFlux_dp,
+                                                         dOneSidedVolFlux_dfp );
 
   jacobianFD.zero();
   jacobianFD.open();
@@ -262,14 +252,14 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   rhs.zero();
   rhs.open();
 
-  FluxKernelHelper::AssembleConstraints( faceDofNumber,
-                                         elemToFaces,
-                                         elemDofNumber,
-                                         oneSidedVolFlux,
-                                         dOneSidedVolFlux_dp,
-                                         dOneSidedVolFlux_dfp,
-                                         &jacobian,
-                                         &rhs );
+  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    elemToFaces,
+                                                    elemDofNumber,
+                                                    oneSidedVolFlux,
+                                                    dOneSidedVolFlux_dp,
+                                                    dOneSidedVolFlux_dfp,
+                                                    &jacobian,
+                                                    &rhs );
 
   jacobian.close();
   rhs.close();
@@ -282,33 +272,37 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   // we need to update density to account for the perturbation
   updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
 
-  FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                              dFacePres,
-                                              faceGravCoef,
-                                              elemToFaces,
-                                              elemPres,
-                                              dElemPresPerturb,
-                                              elemGravCoef,
-                                              elemDens,
-                                              dElemDens_dp,
-                                              transMatrix,
-                                              oneSidedVolFlux,
-                                              dOneSidedVolFlux_dp,
-                                              dOneSidedVolFlux_dfp );
+  oneSidedVolFlux = 0;
+  dOneSidedVolFlux_dp = 0;
+  dOneSidedVolFlux_dfp = 0;
+
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                         dFacePres,
+                                                         faceGravCoef,
+                                                         elemToFaces,
+                                                         elemPres,
+                                                         dElemPresPerturb,
+                                                         elemGravCoef,
+                                                         elemDens,
+                                                         dElemDens_dp,
+                                                         transMatrix,
+                                                         oneSidedVolFlux,
+                                                         dOneSidedVolFlux_dp,
+                                                         dOneSidedVolFlux_dfp );
 
   jacobianPerturb.zero();
   jacobianPerturb.open();
   rhsPerturb.zero();
   rhsPerturb.open();
 
-  FluxKernelHelper::AssembleConstraints( faceDofNumber,
-                                         elemToFaces,
-                                         elemDofNumber,
-                                         oneSidedVolFlux,
-                                         dOneSidedVolFlux_dp,
-                                         dOneSidedVolFlux_dfp,
-                                         &jacobianPerturb,
-                                         &rhsPerturb );
+  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    elemToFaces,
+                                                    elemDofNumber,
+                                                    oneSidedVolFlux,
+                                                    dOneSidedVolFlux_dp,
+                                                    dOneSidedVolFlux_dfp,
+                                                    &jacobianPerturb,
+                                                    &rhsPerturb );
 
   jacobianPerturb.close();
   rhsPerturb.close();
@@ -329,38 +323,42 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   // we need to revert the density to its initial value (it is independent of face pressure)
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     dFacePres = 0;
     dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
-    FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                                dFacePres,
-                                                faceGravCoef,
-                                                elemToFaces,
-                                                elemPres,
-                                                dElemPres,
-                                                elemGravCoef,
-                                                elemDens,
-                                                dElemDens_dp,
-                                                transMatrix,
-                                                oneSidedVolFlux,
-                                                dOneSidedVolFlux_dp,
-                                                dOneSidedVolFlux_dfp );
+    oneSidedVolFlux = 0;
+    dOneSidedVolFlux_dp = 0;
+    dOneSidedVolFlux_dfp = 0;
+
+    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                           dFacePres,
+                                                           faceGravCoef,
+                                                           elemToFaces,
+                                                           elemPres,
+                                                           dElemPres,
+                                                           elemGravCoef,
+                                                           elemDens,
+                                                           dElemDens_dp,
+                                                           transMatrix,
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp );
 
     jacobianPerturb.zero();
     jacobianPerturb.open();
     rhsPerturb.zero();
     rhsPerturb.open();
 
-    FluxKernelHelper::AssembleConstraints( faceDofNumber,
-                                           elemToFaces,
-                                           elemDofNumber,
-                                           oneSidedVolFlux,
-                                           dOneSidedVolFlux_dp,
-                                           dOneSidedVolFlux_dfp,
-                                           &jacobianPerturb,
-                                           &rhsPerturb );
+    AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                      elemToFaces,
+                                                      elemDofNumber,
+                                                      oneSidedVolFlux,
+                                                      dOneSidedVolFlux_dp,
+                                                      dOneSidedVolFlux_dfp,
+                                                      &jacobianPerturb,
+                                                      &rhsPerturb );
 
     jacobianPerturb.close();
     rhsPerturb.close();
@@ -391,7 +389,6 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   // 1) problem setup //
   //////////////////////
 
-  localIndex numFacesInElem;
   array1d< localIndex > elemToFaces;
   array1d< real64 > facePres;
   array1d< real64 > dFacePres;
@@ -402,10 +399,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   real64 elemGravCoef;
   real64 elemDens;
   real64 dElemDens_dp;
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > transMatrix;
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-  setupProblemForTetra( numFacesInElem,
-                        elemToFaces,
+  setupProblemForTetra( elemToFaces,
                         facePres,
                         dFacePres,
                         faceGravCoef,
@@ -425,8 +421,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   ParallelVector rhs;
   ParallelVector rhsPerturb;
 
-  setupMatrixAndRhsForTetra( numFacesInElem,
-                             elemDofNumber,
+  setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
                              jacobian,
                              jacobianPerturb,
@@ -437,9 +432,9 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   real64 const * localRhs = rhs.extractLocalVector();
   real64 const * localRhsPerturb = rhsPerturb.extractLocalVector();
 
-  stackArray1d< real64, MAX_NUM_FACES > upwMobility( numFacesInElem );
-  stackArray1d< real64, MAX_NUM_FACES > dUpwMobility_dp( numFacesInElem );
-  stackArray1d< globalIndex, MAX_NUM_FACES > upwDofNumber( numFacesInElem );
+  stackArray1d< real64, NF > upwMobility( NF );
+  stackArray1d< real64, NF > dUpwMobility_dp( NF );
+  stackArray1d< globalIndex, NF > upwDofNumber( NF );
 
   // no upwinding to do since we are in a one-cell problem
   updateUpwindedMobilities( elemDofNumber,
@@ -449,27 +444,27 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                             dUpwMobility_dp,
                             upwDofNumber );
 
-  stackArray1d< real64, MAX_NUM_FACES > oneSidedVolFlux( numFacesInElem );
-  stackArray1d< real64, MAX_NUM_FACES > dOneSidedVolFlux_dp( numFacesInElem );
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > dOneSidedVolFlux_dfp( numFacesInElem, numFacesInElem );
+  stackArray1d< real64, NF > oneSidedVolFlux( NF );
+  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
+  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
 
   ///////////////////////////////////////
   // 2) Compute analytical derivatives //
   ///////////////////////////////////////
 
-  FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                              dFacePres,
-                                              faceGravCoef,
-                                              elemToFaces,
-                                              elemPres,
-                                              dElemPres,
-                                              elemGravCoef,
-                                              elemDens,
-                                              dElemDens_dp,
-                                              transMatrix,
-                                              oneSidedVolFlux,
-                                              dOneSidedVolFlux_dp,
-                                              dOneSidedVolFlux_dfp );
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                         dFacePres,
+                                                         faceGravCoef,
+                                                         elemToFaces,
+                                                         elemPres,
+                                                         dElemPres,
+                                                         elemGravCoef,
+                                                         elemDens,
+                                                         dElemDens_dp,
+                                                         transMatrix,
+                                                         oneSidedVolFlux,
+                                                         dOneSidedVolFlux_dp,
+                                                         dOneSidedVolFlux_dfp );
 
   jacobianFD.zero();
   jacobianFD.open();
@@ -478,18 +473,18 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   rhs.zero();
   rhs.open();
 
-  FluxKernelHelper::AssembleOneSidedMassFluxes( dt,
-                                                faceDofNumber,
-                                                elemToFaces,
-                                                elemDofNumber,
-                                                oneSidedVolFlux,
-                                                dOneSidedVolFlux_dp,
-                                                dOneSidedVolFlux_dfp,
-                                                upwMobility,
-                                                dUpwMobility_dp,
-                                                upwDofNumber,
-                                                &jacobian,
-                                                &rhs );
+  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                           faceDofNumber,
+                                                           elemToFaces,
+                                                           elemDofNumber,
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp,
+                                                           upwMobility,
+                                                           dUpwMobility_dp,
+                                                           upwDofNumber,
+                                                           &jacobian,
+                                                           &rhs );
 
 
   jacobian.close();
@@ -504,37 +499,41 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
   updateDensity( refPres, elemPres, dElemPresPerturb, elemDens, dElemDens_dp );
   updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
 
-  FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                              dFacePres,
-                                              faceGravCoef,
-                                              elemToFaces,
-                                              elemPres,
-                                              dElemPresPerturb,
-                                              elemGravCoef,
-                                              elemDens,
-                                              dElemDens_dp,
-                                              transMatrix,
-                                              oneSidedVolFlux,
-                                              dOneSidedVolFlux_dp,
-                                              dOneSidedVolFlux_dfp );
+  oneSidedVolFlux = 0;
+  dOneSidedVolFlux_dp = 0;
+  dOneSidedVolFlux_dfp = 0;
+
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                         dFacePres,
+                                                         faceGravCoef,
+                                                         elemToFaces,
+                                                         elemPres,
+                                                         dElemPresPerturb,
+                                                         elemGravCoef,
+                                                         elemDens,
+                                                         dElemDens_dp,
+                                                         transMatrix,
+                                                         oneSidedVolFlux,
+                                                         dOneSidedVolFlux_dp,
+                                                         dOneSidedVolFlux_dfp );
 
   jacobianPerturb.zero();
   jacobianPerturb.open();
   rhsPerturb.zero();
   rhsPerturb.open();
 
-  FluxKernelHelper::AssembleOneSidedMassFluxes( dt,
-                                                faceDofNumber,
-                                                elemToFaces,
-                                                elemDofNumber,
-                                                oneSidedVolFlux,
-                                                dOneSidedVolFlux_dp,
-                                                dOneSidedVolFlux_dfp,
-                                                upwMobility,
-                                                dUpwMobility_dp,
-                                                upwDofNumber,
-                                                &jacobianPerturb,
-                                                &rhsPerturb );
+  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                           faceDofNumber,
+                                                           elemToFaces,
+                                                           elemDofNumber,
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp,
+                                                           upwMobility,
+                                                           dUpwMobility_dp,
+                                                           upwDofNumber,
+                                                           &jacobianPerturb,
+                                                           &rhsPerturb );
 
 
   jacobianPerturb.close();
@@ -556,42 +555,46 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   updateDensity( refPres, elemPres, dElemPres, elemDens, dElemDens_dp );
   updateUpwindedMobilities( elemDofNumber, elemDens, dElemDens_dp, upwMobility, dUpwMobility_dp, upwDofNumber );
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     dFacePres = 0;
     dFacePres[ifaceLoc] = perturbParameter * (facePres[ifaceLoc] + perturbParameter);
 
-    FluxKernelHelper::ComputeOneSidedVolFluxes( facePres,
-                                                dFacePres,
-                                                faceGravCoef,
-                                                elemToFaces,
-                                                elemPres,
-                                                dElemPres,
-                                                elemGravCoef,
-                                                elemDens,
-                                                dElemDens_dp,
-                                                transMatrix,
-                                                oneSidedVolFlux,
-                                                dOneSidedVolFlux_dp,
-                                                dOneSidedVolFlux_dfp );
+    oneSidedVolFlux = 0;
+    dOneSidedVolFlux_dp = 0;
+    dOneSidedVolFlux_dfp = 0;
+
+    AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                           dFacePres,
+                                                           faceGravCoef,
+                                                           elemToFaces,
+                                                           elemPres,
+                                                           dElemPres,
+                                                           elemGravCoef,
+                                                           elemDens,
+                                                           dElemDens_dp,
+                                                           transMatrix,
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp );
 
     jacobianPerturb.zero();
     jacobianPerturb.open();
     rhsPerturb.zero();
     rhsPerturb.open();
 
-    FluxKernelHelper::AssembleOneSidedMassFluxes( dt,
-                                                  faceDofNumber,
-                                                  elemToFaces,
-                                                  elemDofNumber,
-                                                  oneSidedVolFlux,
-                                                  dOneSidedVolFlux_dp,
-                                                  dOneSidedVolFlux_dfp,
-                                                  upwMobility,
-                                                  dUpwMobility_dp,
-                                                  upwDofNumber,
-                                                  &jacobianPerturb,
-                                                  &rhsPerturb );
+    AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                             faceDofNumber,
+                                                             elemToFaces,
+                                                             elemDofNumber,
+                                                             oneSidedVolFlux,
+                                                             dOneSidedVolFlux_dp,
+                                                             dOneSidedVolFlux_dfp,
+                                                             upwMobility,
+                                                             dUpwMobility_dp,
+                                                             upwDofNumber,
+                                                             &jacobianPerturb,
+                                                             &rhsPerturb );
 
 
     jacobianPerturb.close();

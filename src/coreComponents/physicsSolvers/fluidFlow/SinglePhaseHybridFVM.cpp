@@ -21,7 +21,6 @@
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -37,9 +36,7 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const std::string & name,
                                             Group * const parent ):
   SinglePhaseBase( name, parent ),
   m_faceDofKey( "" ),
-  m_areaRelTol( 1e-8 ),
-  m_ipType( InnerProductType::QUASI_TPFA ),
-  m_orthonormalizeWithSVD( true )
+  m_areaRelTol( 1e-8 )
 {
 
   // one cell-centered dof per cell
@@ -103,7 +100,7 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
   arrayView1d< real64 > & dFacePres =
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
+  forAll< parallelDevicePolicy< 1024 > >( faceManager->size(), [=] GEOSX_HOST_DEVICE ( localIndex iface )
   {
     dFacePres[iface] = 0;
   } );
@@ -133,7 +130,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   arrayView1d< real64 > const & dFacePres =
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
+  forAll< parallelDevicePolicy< 1024 > >( faceManager->size(), [=] GEOSX_HOST_DEVICE ( localIndex iface )
   {
     // update if face is in target region
     if( faceDofNumber[iface] >= 0 )
@@ -207,6 +204,12 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
+  // get the element dof numbers for the assembly
+  string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
+                                                                arrayView1d< globalIndex const > >( elemDofKey );
+
   // get the face-centered pressures
   arrayView1d< real64 const > const & facePres =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
@@ -227,170 +230,39 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
-
-  forTargetSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion >( mesh,
-                                                                             [&]( localIndex const,
-                                                                                  localIndex const er,
-                                                                                  localIndex const esr,
-                                                                                  ElementRegionBase const &,
-                                                                                  auto const & subRegion )
+  forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
+                                                       [&]( localIndex const,
+                                                            localIndex const er,
+                                                            localIndex const esr,
+                                                            ElementRegionBase const &,
+                                                            auto const & subRegion )
   {
-
-    FluxLaunch( er,
-                esr,
-                &subRegion,
-                regionFilter,
-                &mesh,
-                nodePosition,
-                elemRegionList,
-                elemSubRegionList,
-                elemList,
-                faceToNodes,
-                faceDofNumber,
-                facePres,
-                dFacePres,
-                faceGravCoef,
-                lengthTolerance,
-                dt,
-                dofManager,
-                matrix,
-                rhs );
+    KernelLaunchSelector< FluxKernel >( subRegion.numFacesPerElement(),
+                                        er,
+                                        esr,
+                                        subRegion,
+                                        regionFilter.toViewConst(),
+                                        mesh,
+                                        nodePosition,
+                                        elemRegionList.toViewConst(),
+                                        elemSubRegionList.toViewConst(),
+                                        elemList.toViewConst(),
+                                        faceToNodes,
+                                        faceDofNumber.toViewConst(),
+                                        facePres,
+                                        dFacePres,
+                                        faceGravCoef,
+                                        m_density[er][esr],
+                                        m_dDens_dPres[er][esr],
+                                        m_mobility.toViewConst(),
+                                        m_dMobility_dPres.toViewConst(),
+                                        lengthTolerance,
+                                        dt,
+                                        dofManager,
+                                        matrix,
+                                        rhs );
   } );
 }
-
-
-void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
-                                       localIndex GEOSX_UNUSED_PARAM( esr ),
-                                       FaceElementSubRegion const * const GEOSX_UNUSED_PARAM( subRegion ),
-                                       SortedArray< localIndex > GEOSX_UNUSED_PARAM( regionFilter ),
-                                       MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ),
-                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( nodePosition ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemRegionList ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemSubRegionList ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemList ),
-                                       ArrayOfArraysView< localIndex const > const & GEOSX_UNUSED_PARAM( faceToNodes ),
-                                       arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( faceDofNumber ),
-                                       arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( facePres ),
-                                       arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( dFacePres ),
-                                       arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( faceGravCoef ),
-                                       real64 const GEOSX_UNUSED_PARAM( lengthTolerance ),
-                                       real64 const GEOSX_UNUSED_PARAM( dt ),
-                                       DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-                                       ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                       ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
-{
-  GEOSX_LOG_RANK( "Support for FaceElementSubRegion is not implemented in the Hybrid FVM scheme" );
-}
-
-void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
-                                       localIndex esr,
-                                       CellElementSubRegion const * const subRegion,
-                                       SortedArray< localIndex > regionFilter,
-                                       MeshLevel const * const mesh,
-                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                       array2d< localIndex > const & elemRegionList,
-                                       array2d< localIndex > const & elemSubRegionList,
-                                       array2d< localIndex > const & elemList,
-                                       ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                       arrayView1d< globalIndex const > const & faceDofNumber,
-                                       arrayView1d< real64 const > const & facePres,
-                                       arrayView1d< real64 const > const & dFacePres,
-                                       arrayView1d< real64 const > const & faceGravCoef,
-                                       real64 const lengthTolerance,
-                                       real64 const dt,
-                                       DofManager const * const dofManager,
-                                       ParallelMatrix * const matrix,
-                                       ParallelVector * const rhs )
-{
-  // max number of faces allowed in an element
-  localIndex constexpr maxNumFaces = MAX_NUM_FACES;
-
-  // elem data
-
-  // get the cell-centered DOF numbers and ghost rank for the assembly
-  string const elemDofKey = dofManager->getKey( viewKeyStruct::pressureString );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh->getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
-                                                                 arrayView1d< globalIndex const > >( elemDofKey );
-  arrayView1d< integer const > const & elemGhostRank = m_elemGhostRank[er][esr];
-
-  // get the map from elem to faces
-  arrayView2d< localIndex const > const & elemToFaces = subRegion->faceList();
-
-  // get the cell-centered pressures
-  arrayView1d< real64 const > const & elemPres  = m_pressure[er][esr];
-  arrayView1d< real64 const > const & dElemPres = m_deltaPressure[er][esr];
-
-  // get the cell centered densities
-  arrayView2d< real64 const > const & elemDens     = m_density[er][esr];
-  arrayView2d< real64 const > const & dElemDens_dp = m_dDens_dPres[er][esr];
-
-  // get the element data needed for transmissibility computation
-  arrayView1d< R1Tensor const > const & elemCenter =
-    subRegion->template getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
-  arrayView1d< real64 const > const & elemVolume =
-    subRegion->template getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-  arrayView1d< R1Tensor const > const & elemPerm =
-    subRegion->template getReference< array1d< R1Tensor > >( viewKeyStruct::permeabilityString );
-
-  // get the cell-centered depth
-  arrayView1d< real64 const > const & elemGravCoef =
-    subRegion->template getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
-
-  // assemble the residual and Jacobian element by element
-  // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  forAll< serialPolicy >( subRegion->size(), [=] ( localIndex ei )
-  {
-
-    if( elemGhostRank[ei] < 0 )
-    {
-
-      localIndex const numFacesInElem = elemToFaces.size( 1 );
-
-      // transmissibility matrix
-      stackArray2d< real64, maxNumFaces *maxNumFaces > transMatrix( numFacesInElem,
-                                                                    numFacesInElem );
-
-      // recompute the local transmissibility matrix at each iteration
-      // we can decide later to precompute transMatrix if needed
-      ComputeTransmissibilityMatrix( nodePosition,
-                                     faceToNodes,
-                                     elemToFaces[ei],
-                                     elemCenter[ei],
-                                     elemVolume[ei],
-                                     elemPerm[ei],
-                                     lengthTolerance,
-                                     m_orthonormalizeWithSVD,
-                                     transMatrix );
-
-      // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::FluxKernel< CellElementSubRegion >::Compute( er, esr, ei,
-                                                                                regionFilter,
-                                                                                elemRegionList,
-                                                                                elemSubRegionList,
-                                                                                elemList,
-                                                                                faceDofNumber,
-                                                                                facePres,
-                                                                                dFacePres,
-                                                                                faceGravCoef,
-                                                                                elemToFaces[ei],
-                                                                                elemPres[ei],
-                                                                                dElemPres[ei],
-                                                                                elemGravCoef[ei],
-                                                                                elemDens[ei][0],
-                                                                                dElemDens_dp[ei][0],
-                                                                                m_mobility.toViewConst(),
-                                                                                m_dMobility_dPres.toViewConst(),
-                                                                                elemDofNumber.toViewConst(),
-                                                                                transMatrix,
-                                                                                dt,
-                                                                                matrix,
-                                                                                rhs );
-
-    }
-  } );
-}
-
 
 void
 SinglePhaseHybridFVM::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -640,65 +512,11 @@ void SinglePhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const 
   arrayView1d< real64 > & dFacePres =
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forAll< serialPolicy >( faceManager->size(), [=] ( localIndex iface )
+  forAll< parallelDevicePolicy< 1024 > >( faceManager->size(), [=] GEOSX_HOST_DEVICE ( localIndex iface )
   {
     dFacePres[iface] = 0;
   } );
 }
-
-
-// TODO: template on the type of inner product
-// TODO: template on the type of subRegion to have a special treatment for fractures
-void SinglePhaseHybridFVM::ComputeTransmissibilityMatrix( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                                          ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                                          arraySlice1d< localIndex const > const elemToFaces,
-                                                          R1Tensor const & elemCenter,
-                                                          real64 const & elemVolume,
-                                                          R1Tensor const & elemPerm,
-                                                          real64 const & lengthTolerance,
-                                                          bool const & orthonormalizeWithSVD,
-                                                          stackArray2d< real64, MAX_NUM_FACES
-                                                                        *MAX_NUM_FACES > const & transMatrix ) const
-{
-  switch( m_ipType )
-  {
-    case InnerProductType::TPFA:
-    {
-      TPFACellInnerProductKernel::Compute( nodePosition,
-                                           faceToNodes,
-                                           elemToFaces,
-                                           elemCenter,
-                                           elemPerm,
-                                           lengthTolerance,
-                                           transMatrix );
-      break;
-    }
-
-    case InnerProductType::QUASI_TPFA:
-    {
-      // for now, Q-TPFA is useful for debugging the IP computation
-      // since it reduces to TPFA on orthogonal meshes...
-      QTPFACellInnerProductKernel::Compute( nodePosition,
-                                            faceToNodes,
-                                            elemToFaces,
-                                            elemCenter,
-                                            elemVolume,
-                                            elemPerm,
-                                            2,
-                                            lengthTolerance,
-                                            orthonormalizeWithSVD,
-                                            transMatrix );
-      break;
-    }
-
-    default:
-    {
-      GEOSX_LOG_RANK( "Unknown inner product in SinglePhaseHybridFVM" );
-      break;
-    }
-  }
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, std::string const &, Group * const )
 } /* namespace geosx */
