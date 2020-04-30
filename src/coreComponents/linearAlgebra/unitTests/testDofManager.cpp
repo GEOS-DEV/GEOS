@@ -452,7 +452,7 @@ protected:
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
-TYPED_TEST_CASE_P( DofManagerSparsityTest );
+TYPED_TEST_SUITE_P( DofManagerSparsityTest );
 
 template< typename LAI >
 void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
@@ -712,28 +712,28 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
   } );
 }
 
-REGISTER_TYPED_TEST_CASE_P( DofManagerSparsityTest,
-                            TPFA_Full,
-                            TPFA_Partial,
-                            FEM_Full,
-                            FEM_Partial,
-                            Mass_Full,
-                            Mass_Partial,
-                            Flux_Full,
-                            Flux_Partial,
-                            FEM_TPFA_Full,
-                            FEM_TPFA_Partial );
+REGISTER_TYPED_TEST_SUITE_P( DofManagerSparsityTest,
+                             TPFA_Full,
+                             TPFA_Partial,
+                             FEM_Full,
+                             FEM_Partial,
+                             Mass_Full,
+                             Mass_Partial,
+                             Flux_Full,
+                             Flux_Partial,
+                             FEM_TPFA_Full,
+                             FEM_TPFA_Partial );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerSparsityTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerSparsityTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerSparsityTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerSparsityTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerSparsityTest, PetscInterface, );
 #endif
 
 /**
@@ -803,7 +803,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   compareMatrices( Asub_RAP, B );
 }
 
-TYPED_TEST_CASE_P( DofManagerRestrictorTest );
+TYPED_TEST_SUITE_P( DofManagerRestrictorTest );
 
 TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
 {
@@ -876,21 +876,21 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock2 )
   } );
 }
 
-REGISTER_TYPED_TEST_CASE_P( DofManagerRestrictorTest,
-                            SingleBlock,
-                            MultiBlock1,
-                            MultiBlock2 );
+REGISTER_TYPED_TEST_SUITE_P( DofManagerRestrictorTest,
+                             SingleBlock,
+                             MultiBlock1,
+                             MultiBlock2 );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, DofManagerRestrictorTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, DofManagerRestrictorTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, DofManagerRestrictorTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, DofManagerRestrictorTest, PetscInterface, );
 #endif
 
 int main( int argc, char * * argv )

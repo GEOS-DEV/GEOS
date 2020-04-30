@@ -197,7 +197,7 @@ template< typename LAI >
 class KrylovSolverTest : public ::testing::Test
 {};
 
-TYPED_TEST_CASE_P( KrylovSolverTest );
+TYPED_TEST_SUITE_P( KrylovSolverTest );
 
 TYPED_TEST_P( KrylovSolverTest, CG )
 {
@@ -219,22 +219,22 @@ TYPED_TEST_P( KrylovSolverTest, BiCGSTAB_block )
   testGEOSXBlockSolvers< BiCGSTABsolver, TypeParam >();
 }
 
-REGISTER_TYPED_TEST_CASE_P( KrylovSolverTest,
-                            CG,
-                            BiCGSTAB,
-                            CG_block,
-                            BiCGSTAB_block );
+REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
+                             CG,
+                             BiCGSTAB,
+                             CG_block,
+                             BiCGSTAB_block );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, KrylovSolverTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, KrylovSolverTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, KrylovSolverTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, KrylovSolverTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, KrylovSolverTest, PetscInterface, );
 #endif
 
 
