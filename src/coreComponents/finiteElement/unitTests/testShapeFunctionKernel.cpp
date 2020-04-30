@@ -86,12 +86,8 @@ void testKernelDriver()
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
                           [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    real64 N[numQuadraturePoints][numNodes] = {
-      {0}
-    };
-    real64 dNdX[numQuadraturePoints][numNodes][3] = {
-      {0}
-    };
+    real64 N[numQuadraturePoints][numNodes] = {{0}};
+    real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
@@ -137,9 +133,7 @@ void testKernelDriver()
         EXPECT_FLOAT_EQ( N, viewN[q][a] );
       }
 
-      real64 J[3][3] = {
-        {0}
-      };
+      real64 J[3][3] = {{0}};
       for( localIndex a=0; a<numNodes; ++a )
       {
         real64 dNdXi[3] = { 0.125 * pCoords[ 0 ][ a ] *
