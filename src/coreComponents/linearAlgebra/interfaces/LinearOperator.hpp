@@ -35,6 +35,7 @@ class LinearOperator
 {
 public:
 
+  /// Alias for VECTOR
   using Vector = VECTOR;
 
   LinearOperator() = default;
@@ -63,11 +64,13 @@ public:
 
   /**
    * @brief Returns the number of global rows.
+   * @return the number for global rows
    */
   virtual globalIndex numGlobalRows() const = 0;
 
   /**
    * @brief Returns the number of global columns.
+   * @return the number of global columns
    */
   virtual globalIndex numGlobalCols() const = 0;
 };

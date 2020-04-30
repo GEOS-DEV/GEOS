@@ -51,6 +51,7 @@ public:
    * @brief Returns the 1-norm of the vector.
    *
    * @param [in] X GEOSX array1d.
+   * @return the vector 1-norm.
    */
   static real64 vectorNorm1( arraySlice1d< real64 const > const & X );
 
@@ -58,6 +59,7 @@ public:
    * @brief Returns the two norm of the vector.
    *
    * @param [in] X GEOSX array1d.
+   * @return the vector 2-norm.
    */
   static real64 vectorNorm2( arraySlice1d< real64 const > const & X );
 
@@ -65,6 +67,7 @@ public:
    * @brief Returns the infinity-norm of the vector.
    *
    * @param [in] X GEOSX array1d.
+   * @return the vector inf-norm.
    */
   static real64 vectorNormInf( arraySlice1d< real64 const > const & X );
 
@@ -72,6 +75,7 @@ public:
    * @brief Returns the determinant of a square matrix.
    *
    * @param [in] A GEOSX array2d.
+   * @return the matrix determinant.
    *
    * @note
    * This function is hardcoded for square matrices up to order four.
@@ -84,7 +88,8 @@ public:
   static real64 determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
-   * @copydoc determinant( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
+   * @copydoc determinant
+   * @return the matrix determinant.
    */
   static real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
@@ -92,6 +97,7 @@ public:
    * @brief Returns the infinity norm of the matrix.
    *
    * @param [in] A GEOSX array2d.
+   * @return the matrix inf-norm.
    *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
@@ -102,7 +108,7 @@ public:
   static real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
-   * @copydoc matrixNormInf( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
+   * @copydoc matrixNormInf
    */
   static real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
@@ -110,6 +116,7 @@ public:
    * @brief Returns the one norm of the matrix.
    *
    * @param [in] A GEOSX array2d.
+   * @return the matrix 1-norm.
    *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
@@ -120,7 +127,7 @@ public:
   static real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
-   * @copydoc matrixNorm1( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
+   * @copydoc matrixNorm1
    */
   static real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
@@ -128,6 +135,7 @@ public:
    * @brief Returns the Frobenius norm of the matrix.
    *
    * @param [in] A GEOSX array2d.
+   * @return the Frobenius norm of the matrix.
    *
    * @note
    * Row major ordering is used for GEOSX array2d. Since LAPACK native
@@ -138,7 +146,7 @@ public:
   static real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
-   * @copydoc matrixNormFrobenius( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
+   * @copydoc matrixNormFrobenius
    */
   static real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
@@ -179,9 +187,7 @@ public:
                                real64 const alpha = 1. );
 
   /**
-   * @copydoc matrixMatrixAdd( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                               arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B,
-                               real64 const alpha = 1. )
+   * @copydoc matrixMatrixAdd
    */
   static void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
@@ -208,7 +214,7 @@ public:
                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
-   * @copydoc static void matrixScale( real64 const alpha, arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & )
+   * @copydoc matrixScale
    */
   static void matrixScale( real64 const alpha,
                            arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A );
@@ -218,7 +224,7 @@ public:
    *
    * @param [in] X GEOSX array1d.
    * @param [in] Y GEOSX array1d.
-   *
+   * @return the dot product of the two vectors.
    */
   static real64 vectorDot( arraySlice1d< real64 const > const & X,
                            arraySlice1d< real64 const > const & Y );
@@ -393,9 +399,7 @@ public:
                              real64 & detA );
 
   /**
-   * @copydoc matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const &,
-                             arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> &,
-                             real64 & )
+   * @copydoc matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const &, arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> &, real64 & )
    */
   static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
@@ -426,8 +430,7 @@ public:
                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv );
 
   /**
-   * @copydoc matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                             arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> & Ainv )
+   * @copydoc matrixInverse( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const &, arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> & )
    */
   static void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv );
@@ -461,8 +464,7 @@ public:
                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B );
 
   /**
-   * @copydoc matrixCopy( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
-                          arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B )
+   * @copydoc matrixCopy
    */
   static void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                           arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B );
@@ -501,7 +503,7 @@ public:
    * Sets matrix entries to random real numbers from a uniform or normal
    * distribution without specifying the seed of the random number generator.
    *
-   * @param [out]    X     GEOSX array1d.
+   * @param [out]    A     GEOSX array1d.
    * @param [in]     idist Optional RandomNumberDistribution enum value
    *                       specifying the distribution of the random numbers.
    */
@@ -509,8 +511,7 @@ public:
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
 
   /**
-   * @copydoc matrixRand( arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & A,
-                          RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 )
+   * @copydoc matrixRand
    */
   static void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
                           RandomNumberDistribution const & idist = RandomNumberDistribution::UNIFORM_01 );
@@ -537,16 +538,12 @@ public:
                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT );
 
   /**
-   * @copydoc matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const &,
-                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const &,
-                         arraySlice1d< real64 > const &,
-                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & )
+   * @copydoc matrixSVD
    */
   static void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
                          arraySlice1d< real64 > const & S,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT );
-
 
 };
 

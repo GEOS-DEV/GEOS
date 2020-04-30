@@ -27,10 +27,9 @@ class EpetraMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ * @class TrilinosSolver
+ * @brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
  */
-
 class TrilinosSolver
 {
 public:
@@ -38,6 +37,7 @@ public:
   /**
    * @brief Solver constructor, with parameter list reference
    *
+   * @param[in] parameters structure containing linear solver parameters
    */
   TrilinosSolver( LinearSolverParameters const & parameters );
 
@@ -49,10 +49,12 @@ public:
 
   /**
    * @brief Solve system with an iterative solver.
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-
   void solve( EpetraMatrix & mat,
               EpetraVector & sol,
               EpetraVector & rhs );

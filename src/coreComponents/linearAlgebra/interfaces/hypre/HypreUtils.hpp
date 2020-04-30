@@ -25,11 +25,21 @@
 namespace geosx
 {
 
+/**
+ * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt
+ * @param[in] index the input array
+ * @return the converted array
+ */
 inline HYPRE_BigInt * toHYPRE_BigInt( globalIndex * const index )
 {
   return reinterpret_cast< HYPRE_BigInt * >(index);
 }
 
+/**
+ * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt
+ * @param[in] index the input array
+ * @return the converted array
+ */
 inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
 {
   return reinterpret_cast< HYPRE_BigInt const * >(index);

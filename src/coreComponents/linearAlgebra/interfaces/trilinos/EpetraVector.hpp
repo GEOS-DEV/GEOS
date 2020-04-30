@@ -49,24 +49,28 @@ public:
   /**
    * @brief Copy constructor.
    * @param src EpetraVector to be copied.
+   * @return the new vector
    */
   EpetraVector( EpetraVector const & src );
 
   /**
    * @brief Move constructor
    * @param src EpetraVector to move from
+   * @return the new vector
    */
   EpetraVector( EpetraVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
    * @param src EpetraVector to be copied.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector const & src );
 
   /**
    * @brief Move assignment.
    * @param src EpetraVector to be moved from.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector && src ) noexcept;
 
@@ -179,11 +183,13 @@ public:
 
   /**
    * @brief Returns a const pointer to the underlying Epetra object.
+   * @return const pointer to the underlying Epetra object
    */
   Epetra_FEVector const & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Epetra object.
+   * @return non-const pointer to the underlying Epetra object
    */
   Epetra_FEVector & unwrapped();
 
