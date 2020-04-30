@@ -26,20 +26,23 @@ namespace geosx
 {
 
 /**
- * @brief This class creates and provides basic support for block operator objects.
- * @tparam Vector type of vector that sub-blocks of this view can operate on
+ * @brief Abstract view of a block operator.
+ * @tparam VECTOR type of vector that sub-blocks of this view can operate on
+ * @tparam OPERATOR type of operator that can operate on @p VECTOR (can be base class or a more specialized derived class)
+ *
+ * This class does not deal with constructing or storing sub-blocks, only provides high-level access functions.
+ * See derived classes BlockOperator and BlockOperatorWrapper for ways to construct a block operator.
  */
-
 template< typename VECTOR, typename OPERATOR = LinearOperator< VECTOR > >
 class BlockOperatorView : public LinearOperator< BlockVectorView< VECTOR > >
 {
 
 public:
 
-  /// Base type
+  /// Alias for base type
   using Base = LinearOperator< BlockVectorView< VECTOR > >;
 
-  /// the type of vector this linear operator operates on
+  /// Alias for vector type
   using Vector = typename Base::Vector;
 
   /**
@@ -53,12 +56,12 @@ public:
   virtual ~BlockOperatorView() override = default;
 
   /**
-   * @brief Deleted copy assignment
+   * @brief Deleted copy assignment.
    */
   BlockOperatorView & operator=( BlockOperatorView const & rhs ) = delete;
 
   /**
-   * @brief Deleted move assignment
+   * @brief Deleted move assignment.
    */
   BlockOperatorView & operator=( BlockOperatorView && rhs ) = delete;
 
@@ -88,7 +91,7 @@ public:
   ///@{
 
   /**
-   * @brief Get number of block rows
+   * @brief Get number of block rows.
    * @return number of block rows
    */
   localIndex numBlockRows() const
@@ -97,7 +100,7 @@ public:
   }
 
   /**
-   * @brief Get number of block columns
+   * @brief Get number of block columns.
    * @return number of block columns
    */
   localIndex numBlockCols() const
@@ -106,7 +109,10 @@ public:
   }
 
   /**
-   * @brief Get the matrix corresponding to block (@p blockRowIndex, @p blockColIndex).
+   * @brief Get the operator corresponding to a sub-block.
+   * @param blockRowIndex block row index
+   * @param blockColIndex block column index
+   * @return a reference to the sub-block
    */
   OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
   {
@@ -114,7 +120,7 @@ public:
   }
 
   /**
-   * @copydoc block( localIndex const, localIndex const )
+   * @copydoc block( localIndex const, localIndex const ) const
    */
   OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
   {
@@ -126,7 +132,9 @@ public:
 protected:
 
   /**
-   * @brief Create a matrix of (@P nRows, @p nCols) blocks.
+   * @brief Create an operator with given number of block rows and columns.
+   * @param nRows number of block rows
+   * @param nCols number of block columns
    */
   BlockOperatorView( localIndex const nRows, localIndex const nCols )
     : m_operators( nRows, nCols )
@@ -136,20 +144,22 @@ protected:
   }
 
   /**
-   * @brief Copy constructor
+   * @brief Copy constructor.
+   * @param x the block vector to copy
    */
   BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > const & x ) = default;
 
   /**
-   * @brief Move constructor
+   * @brief Move constructor.
+   * @param x the block vector to move from
    */
   BlockOperatorView( BlockOperatorView< VECTOR, OPERATOR > && x ) = default;
 
   /**
-   * @brief Set/replace a pointer to a block
+   * @brief Set/replace a pointer to a block.
    * @param blockRowIndex row index of the block
    * @param blockColIndex column index of the block
-   * @param op the new pointer
+   * @param op            the new pointer
    */
   void setPointer( localIndex const blockRowIndex, localIndex const blockColIndex, OPERATOR * op )
   {

@@ -25,11 +25,11 @@ namespace geosx
 {
 
 /**
- * \class LinearSolverParameters
- * This class holds a simple tree of linear solver options.  They are set to
- * default values, but can be overwritten as needed.
+ * @brief Set of parameters for a linear sovler or preconditioner.
+ *
+ * This class holds a simple tree of linear solver options.
+ * They are set to default values, but can be overwritten as needed.
  */
-
 class LinearSolverParameters
 {
 public:
@@ -41,45 +41,45 @@ public:
 
   struct
   {
-    real64 tolerance = 1e-6;
-    integer maxIterations = 200;
-    integer maxRestart = 200;
-    bool useAdaptiveTol = false;
+    real64 tolerance = 1e-6;      //!< Iterative solver relative residual tolerance
+    integer maxIterations = 200;  //!< Maximum overall number of iterations
+    integer maxRestart = 200;     //!< Maximum number of restarts (for GMRES)
+    bool useAdaptiveTol = false;  //!< Whether to use an adaptive linear tolerance scheme
   }
-  krylov;
+  krylov;                         //!< Iterative (Krylov subspace) solver parameters
 
   struct
   {
-    bool useRowScaling = false;
-    bool useRowColScaling = false;
+    bool useRowScaling = false;     //!< Whether to apply row scaling to the linear system
+    bool useRowColScaling = false;  //!< Whether to apply column scaling to the linear system
   }
-  scaling; //TODO: not implemented
+  scaling;                          //!< Linear system scaling parameters
 
   struct
   {
-    integer maxLevels = 20;
-    string cycleType = "V";
-    string smootherType = "gaussSeidel";
-    string coarseType = "direct";
-    integer numSweeps = 2;
-    bool isSymmetric = true;
-    bool separateComponents = false;
-    string nullSpaceType = "constantModes";
+    integer maxLevels = 20;                 //!< Maximum number of levels in the hierarchy
+    string cycleType = "V";                 //!< Multigrid cycle type
+    string smootherType = "gaussSeidel";    //!< Type of smoother
+    string coarseType = "direct";           //!< Type of coarse solver
+    integer numSweeps = 2;                  //!< Number of smoother sweeps at each level
+    bool isSymmetric = true;                //!< Whether the system matrix is symmetric
+    bool separateComponents = false;        //!< Whether to use separate component matrix approximation for constructing AMG hierarchy
+    string nullSpaceType = "constantModes"; //!< Type of nullspace information for AMG
   }
-  amg;
+  amg;                                      //!< Algebraic Multigrid (AMG) parameters
 
   struct
   {
-    integer fill = 0;
-    real64 threshold = 0.0;
+    integer fill = 0;        //!< Level of fill for ILU(k)-type methods
+    real64 threshold = 0.0;  //!< Thresholding value for ILUT-type methods
   }
-  ilu;
+  ilu;                       //!< Incomplete factorization parameters
 
   struct
   {
-    integer overlap = 0;
+    integer overlap = 0;  //!< Overlap level between ranks
   }
-  dd;
+  dd;                     //!< Domain decomposition parameters
 
   /**
    * @brief Constructor.
@@ -93,10 +93,12 @@ public:
   ~LinearSolverParameters() = default;
 
   /**
-   * @brief Einsenstat-Walker adaptive tolerance
-   *
+   * @brief Compute Einsenstat-Walker adaptive tolerance
+   * @param newNewtonNorm current iteration residual norm
+   * @param oldNewtonNorm previous iteration residual norm
+   * @return linear solver tolerance for the next Newton iteration
    */
-  static real64 eisenstatWalker( real64 newNewtonNorm, real64 oldNewtonNorm )
+  static real64 eisenstatWalker( real64 const newNewtonNorm, real64 const oldNewtonNorm )
   {
     const real64 weakTol = 1e-3;
     const real64 strongTol = 1e-8;
