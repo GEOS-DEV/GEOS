@@ -30,6 +30,7 @@ class FaceManager;
 
 /**
  * Class to manage the data stored at the element level.
+ * Edited by TJ
  */
 class ElementRegionBase : public ObjectManagerBase
 {
