@@ -112,7 +112,7 @@ private:
 
 using WrapperSetGetTypes = ::testing::Types< int, array1d< real64 > >;
 
-TYPED_TEST_CASE( WrapperSetGet, WrapperSetGetTypes );
+TYPED_TEST_SUITE( WrapperSetGet, WrapperSetGetTypes, );
 
 TYPED_TEST( WrapperSetGet, SizedFromParent )
 {

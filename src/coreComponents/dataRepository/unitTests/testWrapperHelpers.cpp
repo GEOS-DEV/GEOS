@@ -186,7 +186,7 @@ private:
   ARRAY m_array;
 };
 
-TYPED_TEST_CASE( PopulateMCArray, ArrayTypes );
+TYPED_TEST_SUITE( PopulateMCArray, ArrayTypes, );
 TYPED_TEST( PopulateMCArray, test )
 {
   this->test();
@@ -223,7 +223,7 @@ private:
   ARRAY m_array;
 };
 
-TYPED_TEST_CASE( AverageOverSecondDim, ArrayTypes );
+TYPED_TEST_SUITE( AverageOverSecondDim, ArrayTypes, );
 TYPED_TEST( AverageOverSecondDim, test )
 {
   this->test();
