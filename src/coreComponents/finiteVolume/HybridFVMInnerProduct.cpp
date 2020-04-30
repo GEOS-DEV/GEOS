@@ -18,7 +18,7 @@
  */
 
 #include "HybridFVMInnerProduct.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "linearAlgebra/interfaces/DenseLA.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -226,12 +226,12 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   //       this should be easy if MGS orthonormalization is as robust as SVD
 
   // 3) compute N K N'
-  BlasLapackLA::matrixMatrixTMultiply( permMat,
-                                       normalsMat,
-                                       work_dimByNumFaces );
-  BlasLapackLA::matrixMatrixMultiply( normalsMat,
-                                      work_dimByNumFaces,
-                                      transMatrix );
+  DenseLA::matrixMatrixTMultiply( permMat,
+                                  normalsMat,
+                                  work_dimByNumFaces );
+  DenseLA::matrixMatrixMultiply( normalsMat,
+                                 work_dimByNumFaces,
+                                 transMatrix );
 
   // 4) compute the orthonormalization of the matrix cellToFaceVec
   //    This is done either with SVD or MGS
@@ -240,29 +240,29 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   if( orthonormalizeWithSVD )
   {
     // calling SVD seems to be an overkill to orthonormalize the 3 columns of cellToFaceMat...
-    BlasLapackLA::matrixSVD( cellToFaceMat,
-                             work_numFacesByDim,
-                             work_dim,
-                             work_dimByDim );
+    DenseLA::matrixSVD( cellToFaceMat,
+                        work_numFacesByDim,
+                        work_dim,
+                        work_dimByDim );
   }
   else
   {
     // q0
-    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q0 ), q0 );
+    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q0 ), q0 );
 
     // q1
-    real64 const q0Dotq1 = BlasLapackLA::vectorDot( q0, q1 );
-    BlasLapackLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
-    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q1 ), q1 );
+    real64 const q0Dotq1 = DenseLA::vectorDot( q0, q1 );
+    DenseLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
+    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q1 ), q1 );
 
     // q2
-    real64 const q0Dotq2 = BlasLapackLA::vectorDot( q0, q2 );
-    BlasLapackLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
-    real64 const q1Dotq2 = BlasLapackLA::vectorDot( q1, q2 );
-    BlasLapackLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
-    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q2 ), q2 );
+    real64 const q0Dotq2 = DenseLA::vectorDot( q0, q2 );
+    DenseLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
+    real64 const q1Dotq2 = DenseLA::vectorDot( q1, q2 );
+    DenseLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
+    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q2 ), q2 );
 
-    // TODO: remove the copies once the BlasLapackLA calls have been removed
+    // TODO: remove the copies once the DenseLA calls have been removed
     for( int i = 0; i < numFacesInElem; ++i )
     {
       work_numFacesByDim( i, 0 ) = q0( i );
@@ -272,10 +272,10 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   }
 
   // 5) compute P_Q = I - QQ'
-  BlasLapackLA::matrixMatrixTMultiply( work_numFacesByDim,
-                                       work_numFacesByDim,
-                                       worka_numFacesByNumFaces );
-  BlasLapackLA::matrixScale( -1, worka_numFacesByNumFaces );
+  DenseLA::matrixMatrixTMultiply( work_numFacesByDim,
+                                  work_numFacesByDim,
+                                  worka_numFacesByNumFaces );
+  DenseLA::matrixScale( -1, worka_numFacesByNumFaces );
   for( localIndex i = 0; i < numFacesInElem; ++i )
   {
     worka_numFacesByNumFaces( i, i )++;
@@ -289,17 +289,17 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
       workb_numFacesByNumFaces( i, j ) = (i == j ) ?  transMatrix( i, j ) : 0.0;
     }
   }
-  BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
-                                      worka_numFacesByNumFaces,
-                                      workc_numFacesByNumFaces );
-  BlasLapackLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
-                                      workc_numFacesByNumFaces,
-                                      workb_numFacesByNumFaces );
+  DenseLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
+                                 worka_numFacesByNumFaces,
+                                 workc_numFacesByNumFaces );
+  DenseLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
+                                 workc_numFacesByNumFaces,
+                                 workb_numFacesByNumFaces );
 
   // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
-  BlasLapackLA::matrixScale( tParam, workb_numFacesByNumFaces );
-  BlasLapackLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMatrix );
-  BlasLapackLA::matrixScale( 1/elemVolume, transMatrix );
+  DenseLA::matrixScale( tParam, workb_numFacesByNumFaces );
+  DenseLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMatrix );
+  DenseLA::matrixScale( 1/elemVolume, transMatrix );
 
 }
 

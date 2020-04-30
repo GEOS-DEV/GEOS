@@ -21,7 +21,6 @@
 #include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code

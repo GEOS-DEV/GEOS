@@ -6,7 +6,8 @@ message( "Entering /src/coreComponents/linearAlgebra/CMakeLists.txt")
 set( linearAlgebra_headers
      common.hpp
      interfaces/BlasLapackFunctions.h
-     interfaces/BlasLapackLA.hpp
+     interfaces/DenseLA.hpp
+     interfaces/DenseLAHelpers.hpp
      interfaces/InterfaceTypes.hpp
      interfaces/LinearOperator.hpp
      interfaces/MatrixBase.hpp
@@ -31,7 +32,7 @@ set( linearAlgebra_headers
 # Specify all sources
 #
 set( linearAlgebra_sources
-     interfaces/BlasLapackLA.cpp
+     interfaces/DenseLA.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
      utilities/LAIHelperFunctions.cpp

@@ -13,10 +13,10 @@
  */
 
 /**
- * @file BlasLapackLA.hpp
+ * @file DenseLA.hpp
  */
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKLA_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_DENSELA_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_DENSELA_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/Logger.hpp"
@@ -26,11 +26,11 @@ namespace geosx
 {
 
 /**
- * \class BlasLapackLA
- * \brief This class contains a collection of BLAS and LAPACK linear
+ * \class DenseLA
+ * \brief This class contains a collection of dense linear
  *        algebra operations for GEOSX array1d and array2d
  */
-class BlasLapackLA
+class DenseLA
 {
 
 public:
@@ -194,7 +194,7 @@ public:
    * @param [in]     alpha Scalar to multiply with \p X.
    * @param [in,out] X     GEOSX array1d.
    */
-  static void vectorScale( real64 const alpha,
+  static void vectorScale( real64 const & alpha,
                            arraySlice1d< real64 > const & X );
 
   /**
@@ -204,13 +204,13 @@ public:
    * @param [in]     alpha Scalar to multiply with <tt>A</tt>.
    * @param [in,out] A     GEOSX array2d.
    */
-  static void matrixScale( real64 const alpha,
+  static void matrixScale( real64 const & alpha,
                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A );
 
   /**
    * @copydoc static void matrixScale( real64 const alpha, arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & )
    */
-  static void matrixScale( real64 const alpha,
+  static void matrixScale( real64 const & alpha,
                            arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A );
 
   /**
@@ -552,4 +552,4 @@ public:
 
 }
 
-#endif /*GEOSX_LINEARALGEBRA_BLASLAPACKLA_HPP_*/
+#endif /*GEOSX_LINEARALGEBRA_DENSELA_HPP_*/

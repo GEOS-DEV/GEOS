@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
 
-#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
+#include "linearAlgebra/interfaces/DenseLA.hpp"
 
 using namespace geosx;
 
@@ -106,10 +106,10 @@ void vector_normInf_test()
                normInf * machinePrecision );
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void determinant_test()
 {
-  array2d< real64 > Laplacian1d;
+  array2d< real64, PERM > Laplacian1d;
   real64 determinant;
 
   real64 theta;
@@ -152,12 +152,12 @@ void determinant_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_normInf_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > mat( M, N );
+  array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
   LAI::matrixRand( mat,
@@ -181,12 +181,12 @@ void matrix_normInf_test()
                normInf * machinePrecision );
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_norm1_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > mat( M, N );
+  array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
   LAI::matrixRand( mat,
@@ -202,6 +202,7 @@ void matrix_norm1_test()
       tmp( j ) += std::abs( mat( i, j ) );
     }
   }
+
   real64 *norm1 = std::max_element( tmp.begin(), tmp.end());
 
   // Check
@@ -210,12 +211,12 @@ void matrix_norm1_test()
                *norm1 * machinePrecision );
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_normFrobenius_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > mat( M, N );
+  array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
   LAI::matrixRand( mat,
@@ -273,14 +274,14 @@ void vector_vector_add_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_matrix_add_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > mat1( M, N );
-  array2d< real64 > mat2( M, N );
-  array2d< real64 > matSum( M, N );
+  array2d< real64, PERM > mat1( M, N );
+  array2d< real64, PERM > mat2( M, N );
+  array2d< real64, PERM > matSum( M, N );
 
   // Populate vectors with random coefficients
   // Populate matrix with random coefficients
@@ -348,13 +349,13 @@ void vector_scale_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_scale_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > mat( M, N );
-  array2d< real64 > matScaled( M, N );
+  array2d< real64, PERM > mat( M, N );
+  array2d< real64, PERM > matScaled( M, N );
 
   // Populate vectors with random coefficients
   LAI::matrixRand( mat,
@@ -413,12 +414,12 @@ void vector_dot_test()
                static_cast< real64 >(N)*machinePrecision );
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > A( M, N );
+  array2d< real64, PERM > A( M, N );
   array1d< real64 > X( N );
   array1d< real64 > Y( M );
   array1d< real64 > vecResult( M );
@@ -459,12 +460,12 @@ void matrix_vector_multiply_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrixT_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64 > A( M, N );
+  array2d< real64, PERM > A( M, N );
   array1d< real64 > X( M );
   array1d< real64 > Y( N );
   array1d< real64 > vecResult( N );
@@ -505,7 +506,7 @@ void matrixT_vector_multiply_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -516,10 +517,10 @@ void matrix_matrix_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64 > A;
-  array2d< real64 > B;
-  array2d< real64 > C;
-  array2d< real64 > matResult;
+  array2d< real64, PERM > A;
+  array2d< real64, PERM > B;
+  array2d< real64, PERM > C;
+  array2d< real64, PERM > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -579,7 +580,7 @@ void matrix_matrix_multiply_test()
 
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrixT_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -590,10 +591,10 @@ void matrixT_matrix_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64 > A;
-  array2d< real64 > B;
-  array2d< real64 > C;
-  array2d< real64 > matResult;
+  array2d< real64, PERM > A;
+  array2d< real64, PERM > B;
+  array2d< real64, PERM > C;
+  array2d< real64, PERM > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -653,7 +654,7 @@ void matrixT_matrix_multiply_test()
 
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -664,10 +665,10 @@ void matrix_matrixT_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64 > A;
-  array2d< real64 > B;
-  array2d< real64 > C;
-  array2d< real64 > matResult;
+  array2d< real64, PERM > A;
+  array2d< real64, PERM > B;
+  array2d< real64, PERM > C;
+  array2d< real64, PERM > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -727,7 +728,7 @@ void matrix_matrixT_multiply_test()
 
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrixT_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -738,10 +739,10 @@ void matrixT_matrixT_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64 > A;
-  array2d< real64 > B;
-  array2d< real64 > C;
-  array2d< real64 > matResult;
+  array2d< real64, PERM > A;
+  array2d< real64, PERM > B;
+  array2d< real64, PERM > C;
+  array2d< real64, PERM > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -800,11 +801,11 @@ void matrixT_matrixT_multiply_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_inverse_test()
 {
-  array2d< real64 > Laplacian1d;
-  array2d< real64 > Laplacian1dInv;
+  array2d< real64, PERM > Laplacian1d;
+  array2d< real64, PERM > Laplacian1dInv;
   real64 exact_entry;
   real64 theta;
   real64 lambda_max;
@@ -894,7 +895,7 @@ void vector_copy_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_copy_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -904,8 +905,8 @@ void matrix_copy_test()
   M_indeces.push_back( 100 );
   array1d< INDEX_TYPE > N_indeces( M_indeces );
 
-  array2d< real64 > src;
-  array2d< real64 > dst;
+  array2d< real64, PERM > src;
+  array2d< real64, PERM > dst;
 
   for( INDEX_TYPE M : M_indeces )
   {
@@ -963,12 +964,12 @@ void vector_rand_test()
 
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_rand_test()
 {
   INDEX_TYPE M =  99;
   INDEX_TYPE N = 101;
-  array2d< real64 > mat( M, N );
+  array2d< real64, PERM > mat( M, N );
 
   // Populate vector with random coefficients
 
@@ -1047,7 +1048,7 @@ void performance_test()
   }
 }
 
-template< typename LAI >
+template< typename LAI, typename PERM >
 void matrix_svd_test()
 {
   array1d< INDEX_TYPE > M_indices;
@@ -1061,17 +1062,18 @@ void matrix_svd_test()
   M_indices.push_back( 8 );
   array1d< INDEX_TYPE > N_indices( M_indices );
 
-  array2d< real64 > A;
-  array2d< real64 > U;
+  array2d< real64, PERM > A;
+  array2d< real64, PERM > U;
+  array2d< real64, PERM > VT;
   array1d< real64 > S_vec;
-  array2d< real64 > VT;
 
-  array2d< real64 > A_svd;
-  array2d< real64 > UTU;
-  array2d< real64 > U_extended;
-  array2d< real64 > S_extended;
-  array2d< real64 > VT_extended;
-  array2d< real64 > work0;
+
+  array2d< real64, PERM > A_svd;
+  array2d< real64, PERM > UTU;
+  array2d< real64, PERM > U_extended;
+  array2d< real64, PERM > S_extended;
+  array2d< real64, PERM > VT_extended;
+  array2d< real64, PERM > work0;
 
   for( INDEX_TYPE M : M_indices )
   {
@@ -1102,46 +1104,46 @@ void matrix_svd_test()
       // 1) Check that we recover the matrix with the decomposition
 
       // fill U_extended
-      for( int i = 0; i < U_extended.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < U_extended.size( 0 ); ++i )
       {
-        for( int j = 0; j < U_extended.size( 1 ); ++j )
+        for( INDEX_TYPE j = 0; j < U_extended.size( 1 ); ++j )
         {
           U_extended( i, j ) = 0.0;
         }
       }
-      for( int i = 0; i < U.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < U.size( 0 ); ++i )
       {
-        for( int j = 0; j < U.size( 1 ); ++j )
+        for( INDEX_TYPE j = 0; j < U.size( 1 ); ++j )
         {
           U_extended( i, j ) = U( i, j );
         }
       }
 
       // fill VT_extended
-      for( int i = 0; i < VT_extended.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < VT_extended.size( 0 ); ++i )
       {
-        for( int j = 0; j < VT_extended.size( 1 ); ++j )
+        for( INDEX_TYPE j = 0; j < VT_extended.size( 1 ); ++j )
         {
           VT_extended( i, j ) = 0.0;
         }
       }
-      for( int i = 0; i < VT.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < VT.size( 0 ); ++i )
       {
-        for( int j = 0; j < VT.size( 1 ); ++j )
+        for( INDEX_TYPE j = 0; j < VT.size( 1 ); ++j )
         {
           VT_extended( i, j ) = VT( i, j );
         }
       }
 
       // fill S_extended
-      for( int i = 0; i < S_extended.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < S_extended.size( 0 ); ++i )
       {
-        for( int j = 0; j < S_extended.size( 1 ); ++j )
+        for( INDEX_TYPE j = 0; j < S_extended.size( 1 ); ++j )
         {
           S_extended( i, j ) = 0.0;
         }
       }
-      for( int i = 0; i < S_vec.size(); ++i )
+      for( INDEX_TYPE i = 0; i < S_vec.size(); ++i )
       {
         S_extended( i, i ) = S_vec( i );
       }
@@ -1161,7 +1163,7 @@ void matrix_svd_test()
 
       // 2) Check that U is orthonormal
       LAI::matrixTMatrixMultiply( U, U, UTU );
-      for( int i = 0; i < UTU.size( 0 ); ++i )
+      for( INDEX_TYPE i = 0; i < UTU.size( 0 ); ++i )
       {
         UTU( i, i ) = 1 - UTU( i, i );
       }
@@ -1175,134 +1177,188 @@ void matrix_svd_test()
 
 TEST( Array1D, vectorNorm1 )
 {
-  vector_norm1_test< BlasLapackLA >();
+  vector_norm1_test< DenseLA >();
 }
 
 TEST( Array1D, vectorNorm2 )
 {
-  vector_norm2_test< BlasLapackLA >();
+  vector_norm2_test< DenseLA >();
 }
 
 TEST( Array1D, vectorNormInf )
 {
-  vector_normInf_test< BlasLapackLA >();
+  vector_normInf_test< DenseLA >();
 }
 
-TEST( Array2D, determinant )
+
+TEST( Array2D, determinantRowMajor )
 {
-  determinant_test< BlasLapackLA >();
+  determinant_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixNormInf )
+TEST( Array2D, determinantColMajor )
 {
-  matrix_normInf_test< BlasLapackLA >();
+  determinant_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixNorm1 )
+
+TEST( Array2D, matrixNormInfRowMajor )
 {
-  matrix_norm1_test< BlasLapackLA >();
+  matrix_normInf_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixNormFrobenius )
+TEST( Array2D, matrixNormInfColMajor )
 {
-  matrix_normFrobenius_test< BlasLapackLA >();
+  matrix_normInf_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixNorm1RowMajor )
+{
+  matrix_norm1_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixNorm1ColMajor )
+{
+  matrix_norm1_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixNormFrobeniusRowMajor )
+{
+  matrix_normFrobenius_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixNormFrobeniusColMajor )
+{
+  matrix_normFrobenius_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorVectorAdd )
 {
-  vector_vector_add_test< BlasLapackLA >();
+  vector_vector_add_test< DenseLA >();
 }
 
-TEST( Array2D, matrixMatrixAdd )
+TEST( Array2D, matrixMatrixAddRowMajor )
 {
-  matrix_matrix_add_test< BlasLapackLA >();
+  matrix_matrix_add_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixMatrixAddColMajor )
+{
+  matrix_matrix_add_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorScale )
 {
-  vector_scale_test< BlasLapackLA >();
+  vector_scale_test< DenseLA >();
 }
 
-TEST( Array2D, matrixScale )
+TEST( Array2D, matrixScaleRowMajor )
 {
-  matrix_scale_test< BlasLapackLA >();
+  matrix_scale_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixScaleColMajor )
+{
+  matrix_scale_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorDot )
 {
-  vector_dot_test< BlasLapackLA >();
+  vector_dot_test< DenseLA >();
 }
 
-TEST( Array2D, matrixVectorMultiply )
+TEST( Array2D, matrixVectorMultiplyRowMajor )
 {
-  matrix_vector_multiply_test< BlasLapackLA >();
+  matrix_vector_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixTVectorMultiply )
+TEST( Array2D, matrixTVectorMultiplyRowMajor )
 {
-  matrixT_vector_multiply_test< BlasLapackLA >();
+  matrixT_vector_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixMatrixMultiply )
+TEST( Array2D, matrixMatrixMultiplyRowMajor )
 {
-  matrix_matrix_multiply_test< BlasLapackLA >();
+  matrix_matrix_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixTMatrixMultiply )
+TEST( Array2D, matrixTMatrixMultiplyRowMajor )
 {
-  matrixT_matrix_multiply_test< BlasLapackLA >();
+  matrixT_matrix_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixMatrixTMultiply )
+TEST( Array2D, matrixMatrixTMultiplyRowMajor )
 {
-  matrix_matrixT_multiply_test< BlasLapackLA >();
+  matrix_matrixT_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixTMatrixTMultiply )
+TEST( Array2D, matrixTMatrixTMultiplyRowMajor )
 {
-  matrixT_matrixT_multiply_test< BlasLapackLA >();
+  matrixT_matrixT_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
 
-TEST( Array2D, matrixInverse )
+TEST( Array2D, matrixInverseRowMajor )
 {
-  matrix_inverse_test< BlasLapackLA >();
+  matrix_inverse_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixInverseColMajor )
+{
+  matrix_inverse_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorCopy )
 {
-  vector_copy_test< BlasLapackLA >();
+  vector_copy_test< DenseLA >();
 }
 
-TEST( Array2D, matrixCopy )
+TEST( Array2D, matrixCopyRowMajor )
 {
-  matrix_copy_test< BlasLapackLA >();
+  matrix_copy_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixCopyColMajor )
+{
+  matrix_copy_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorRand )
 {
-  vector_rand_test< BlasLapackLA >();
+  vector_rand_test< DenseLA >();
 }
 
-TEST( Array2D, matrixRand )
+TEST( Array2D, matrixRandRowMajor )
 {
-  matrix_rand_test< BlasLapackLA >();
+  matrix_rand_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+}
+
+TEST( Array2D, matrixRandColMajor )
+{
+  matrix_rand_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed )
 {
-  set_get_random_number_generator_seed_test< BlasLapackLA >();
+  set_get_random_number_generator_seed_test< DenseLA >();
 }
 
 TEST( DenseLAInterface, performanceTest )
 {
-  // performance_test<BlasLapackLA>();
+  // performance_test<DenseLA>();
   SUCCEED();
 }
 
-TEST( DenseLAInterface, matrixSVD )
+TEST( DenseLAInterface, matrixSVDRowMajor )
 {
-  matrix_svd_test< BlasLapackLA >();
+  matrix_svd_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
 }
+
+/*
+   TEST( DenseLAInterface, matrixSVDColMajor )
+   {
+   matrix_svd_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+   }
+ */
 
 int main( int argc, char * * argv )
 {
