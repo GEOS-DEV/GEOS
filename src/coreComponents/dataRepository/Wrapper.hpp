@@ -275,7 +275,7 @@ public:
   virtual
   HistoryMetadata getBufferedIOMetadata() const override final
   {
-    return getHistoryMetadata< decltype(reference()) >( getName(), reference() );
+    return getHistoryMetadata< T >( getName(), *this->m_data );
   }
 
   /**
@@ -409,9 +409,12 @@ public:
   localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice ) override final
   {
     localIndex unpackedSize = 0;
-    string name;
-    if( withMetadata ) unpackedSize += bufferOps::Unpack( buffer, name );
-    GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
     if( onDevice )
     {
       unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
@@ -437,9 +440,12 @@ public:
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
     {
-      string name;
-      if( withMetadata ) unpackedSize += bufferOps::Unpack( buffer, name );
-      GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+      if( withMetadata )
+      {
+        string name;
+        unpackedSize += bufferOps::Unpack( buffer, name );
+        GEOSX_ERROR_IF( name != this->getName(), "buffer unpack leads to wrapper names that don't match" );
+      }
       if( onDevice )
       {
         unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );

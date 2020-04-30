@@ -225,36 +225,56 @@ class HDFHistIO : public BufferedHistoryIO
 
   virtual void Write( ) override
   {
-    ResizeFileIfNeeded( );
-    HDFFile target( m_filename, m_comm );
-
-    hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
-    hid_t filespace = H5Dget_space(dataset);
-
-    array1d<hsize_t> file_offset(m_rank+1);
-    forValuesInSlice(file_offset.toSlice(),[]( hsize_t & val ) { val = 0; });
-    file_offset[0] = integer_conversion<hsize_t>(m_write_head);
-    file_offset[1] = integer_conversion<hsize_t>(m_global_idx_offset);
-
-    array1d<hsize_t> buffered_counts(m_rank+1);
-    buffered_counts[0] = integer_conversion<hsize_t>(m_buffered_count);
-    for( hsize_t dd = 1; dd < m_rank+1; ++dd )
+    // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
+    if( m_buffered_count > 0 )
     {
-      buffered_counts[dd] = m_dims[dd-1];
+      ResizeFileIfNeeded( );
+      HDFFile target( m_filename, m_comm );
+
+      hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
+      hid_t filespace = H5Dget_space(dataset);
+
+      array1d<hsize_t> file_offset(m_rank+1);
+      forValuesInSlice(file_offset.toSlice(),[]( hsize_t & val ) { val = 0; });
+      file_offset[0] = integer_conversion<hsize_t>(m_write_head);
+      file_offset[1] = integer_conversion<hsize_t>(m_global_idx_offset);
+
+      array1d<hsize_t> buffered_counts(m_rank+1);
+      buffered_counts[0] = integer_conversion<hsize_t>(m_buffered_count);
+      for( hsize_t dd = 1; dd < m_rank+1; ++dd )
+      {
+        buffered_counts[dd] = m_dims[dd-1];
+      }
+      hid_t memspace = H5Screate_simple(m_rank+1,&buffered_counts[0],nullptr);
+
+      hid_t file_hyperslab = filespace;
+      H5Sselect_hyperslab(file_hyperslab, H5S_SELECT_SET, &file_offset[0], nullptr, &buffered_counts[0], nullptr);
+
+      H5Dwrite(dataset,m_hdf_type,memspace,file_hyperslab,H5P_DEFAULT,&m_data_buffer[0]);
+
+      H5Sclose(memspace);
+      H5Sclose(filespace);
+      H5Dclose(dataset);
+
+      m_write_head += m_buffered_count;
+      EmptyBuffer( );
     }
-    hid_t memspace = H5Screate_simple(m_rank+1,&buffered_counts[0],nullptr);
+  }
 
-    hid_t file_hyperslab = filespace;
-    H5Sselect_hyperslab(file_hyperslab, H5S_SELECT_SET, &file_offset[0], nullptr, &buffered_counts[0], nullptr);
-
-    H5Dwrite(dataset,m_hdf_type,memspace,file_hyperslab,H5P_DEFAULT,&m_data_buffer[0]);
-
-    H5Sclose(memspace);
-    H5Sclose(filespace);
+  virtual void CompressInFile( ) override
+  {
+    HDFFile target( m_filename, m_comm );
+    array1d<hsize_t> max_file_dims(m_rank+1);
+    max_file_dims[0] = integer_conversion<hsize_t>(m_write_head);
+    max_file_dims[1] = integer_conversion<hsize_t>(m_global_idx_count);
+    for( hsize_t dd = 2; dd < m_rank+1; ++dd )
+    {
+      max_file_dims[dd] = m_dims[dd-1];
+    }
+    hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
+    H5Dset_extent(dataset,&max_file_dims[0]);
     H5Dclose(dataset);
-
-    m_write_head += m_buffered_count;
-    EmptyBuffer( );
+    m_write_limit = m_write_head;
   }
 
   inline void ResizeFileIfNeeded( )

@@ -25,18 +25,17 @@ namespace geosx
 
     virtual void Init( bool exists_okay ) = 0;
     virtual void Write( ) = 0;
+    virtual void CompressInFile( ) = 0;
 
     localIndex GetBufferedCount( ) { return m_buffered_count; }
   protected:
     virtual void resizeBuffer( ) = 0;
 
-    void EmptyBuffer( bool dealloc = false )
+    void EmptyBuffer( )
     {
       m_buffered_count = 0;
-      if( dealloc )
-      {
-        m_data_buffer.resize(0);
-      }
+      m_data_buffer = 0;
+      m_data_buffer.resize( 0 );
     }
 
     localIndex m_buffered_count;

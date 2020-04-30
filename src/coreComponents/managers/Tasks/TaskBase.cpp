@@ -30,9 +30,7 @@ TaskBase::TaskBase( std::string const & name,
 }
 
 TaskBase::~TaskBase()
-{
-//  delete m_linearSolverWrapper;
-}
+{ }
 
 TaskBase::CatalogInterface::CatalogType& TaskBase::GetCatalog()
 {
@@ -42,8 +40,7 @@ TaskBase::CatalogInterface::CatalogType& TaskBase::GetCatalog()
 
 
 void TaskBase::PostProcessInput()
-{
-}
+{ }
 
 
 } /* namespace */

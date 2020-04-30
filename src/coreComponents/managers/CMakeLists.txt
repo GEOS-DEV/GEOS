@@ -13,6 +13,7 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/TimeHistoryCollector.hpp
     Outputs/TimeHistoryOutput.hpp
     Tasks/TaskBase.hpp
     Tasks/TasksManager.hpp
@@ -48,6 +49,8 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/TimeHistoryCollector.cpp
+    Outputs/TimeHistoryOutput.cpp
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
     Functions/FunctionBase.cpp

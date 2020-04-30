@@ -21,7 +21,6 @@ namespace geosx
       m_format( ),
       m_filename( ),
       m_record_count(false),
-      m_time_collection( "TimeCollection", this ),
       m_io(nullptr),
       m_t_io(nullptr)
     {
@@ -50,22 +49,25 @@ namespace geosx
     virtual ~TimeHistoryOutput() override
     { }
 
-    virtual void SetupDirectoryStructure() override
+    virtual void InitializePostSubGroups( Group * const group ) override
     {
       Group * tmp = this->GetGroupByPath(m_collector_path);
       HistoryCollection * collector = Group::group_cast<HistoryCollection*>(tmp);
       GEOSX_ERROR_IF(collector == nullptr, "The target of a time history output event must be a collector! " << m_collector_path);
-      // switch based on m_format, always hdf for now
-      m_io = std::make_unique<HDFHistIO>( m_filename, collector->GetMetadata( ), m_record_count );
+      // todo: switch based on m_format, always hdf for now
+      HistoryMetadata metadata = collector->GetMetadata( group );
+      m_io = std::make_unique<HDFHistIO>( m_filename, metadata, m_record_count );
       collector->RegisterBufferCall([this]() { return this->m_io->GetBufferHead( ); });
-      m_io->Init( m_record_count > 0 );
       int rank = MpiWrapper::Comm_rank();
       if( rank == 0 )
       {
-        m_t_io = std::make_unique<HDFHistIO>( m_filename, m_time_collection.GetMetadata( ), m_record_count, 4, MPI_COMM_SELF );
-        m_time_collection.RegisterBufferCall([this]() { return this->m_t_io->GetBufferHead( ); });
+        HistoryMetadata time_metadata = collector->GetTimeMetadata( );
+        time_metadata.setName(metadata.getName() + string(" ") + time_metadata.getName());
+        m_t_io = std::make_unique<HDFHistIO>( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF );
+        collector->RegisterTimeBufferCall([this]() { return this->m_t_io->GetBufferHead( ); });
         m_t_io->Init( m_record_count > 0 );
       }
+      m_io->Init( m_record_count > 0 );
     }
 
     /// This method will be called by the event manager if triggered
@@ -93,6 +95,13 @@ namespace geosx
                           dataRepository::Group * domain ) override
     {
       Execute(time_n,0.0,cycleNumber,eventCounter,eventProgress,domain);
+      // remove any unused trailing space reserved to write additional histories
+      m_io->CompressInFile();
+      int rank = MpiWrapper::Comm_rank();
+      if( rank == 0 )
+      {
+        m_t_io->CompressInFile();
+      }
     }
 
     static string CatalogName() { return "TimeHistory"; }
@@ -112,8 +121,6 @@ namespace geosx
       string m_filename;
 
       integer m_record_count;
-
-      TimeCollection m_time_collection;
 
       std::unique_ptr<BufferedHistoryIO> m_io;
       std::unique_ptr<BufferedHistoryIO> m_t_io;

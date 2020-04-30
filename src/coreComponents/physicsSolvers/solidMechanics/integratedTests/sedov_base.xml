@@ -3,7 +3,7 @@
   <!-- SPHINX_INTERNAL_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
+                  elementTypes="{C3D8}"
                   xCoords="{ 0, 10 }"
                   yCoords="{ 0, 10 }"
                   zCoords="{ 0, 10 }"
@@ -22,7 +22,23 @@
                    forceDt="1.0e-5"
                    target="/Solvers/lagsolve" />
 
-    <!-- This event is applied every 5e-4s.  The targetExactTimestep
+
+
+<!-- =========================================================== -->
+    <PeriodicEvent name="timeHistoryCollection"
+                   timeFrequency="1.0e-5"
+                   targetExactTimestep="0"
+                   target="/Tasks/velocityCollection" />
+
+    <PeriodicEvent name="timeHistoryOutput"
+                   timeFrequency="5.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/timeHistoryOutput" />
+<!-- =========================================================== -->
+
+
+
+<!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <!-- PeriodicEvent name="outputs"
@@ -42,11 +58,11 @@
     <BasisFunctions>
         <LagrangeBasis3 name="linearBasis"  degree = "1"  />
     </BasisFunctions>
-    
+
     <QuadratureRules>
         <GaussQuadrature3 name="gaussian"   degree="2"  />
     </QuadratureRules>
-    
+
     <FiniteElements>
         <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
@@ -76,58 +92,68 @@
 
   <FieldSpecifications>
     <FieldSpecification name="source0"
-               initialCondition="1"  
+               initialCondition="1"
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
                component="0"
                scale="-1.0e6"/>
-    <FieldSpecification name="source1"  
-               initialCondition="1"  
+    <FieldSpecification name="source1"
+               initialCondition="1"
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
                component="1"
                scale="-1.0e6"/>
-    <FieldSpecification name="source2"  
-               initialCondition="1"  
+    <FieldSpecification name="source2"
+               initialCondition="1"
                setNames="{source}"
                objectPath="ElementRegions"
                fieldName="shale_stress"
                component="2"
                scale="-1.0e6"/>
 
-    <FieldSpecification name="xconstraint" 
+    <FieldSpecification name="xconstraint"
                objectPath="nodeManager"
                fieldName="Velocity"
-               component="0"  
-               scale="0.0" 
+               component="0"
+               scale="0.0"
                setNames="{xneg}"/>
-               
-    <FieldSpecification name="yconstraint" 
+
+    <FieldSpecification name="yconstraint"
                objectPath="nodeManager"
                fieldName="Velocity"
-               component="1"  
-               scale="0.0" 
+               component="1"
+               scale="0.0"
                setNames="{yneg}"/>
-               
-    <FieldSpecification name="zconstraint" 
+
+    <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="Velocity"
-               component="2"  
-               scale="0.0" 
+               component="2"
+               scale="0.0"
                setNames="{zneg}"/>
 
   </FieldSpecifications>
-  
+
   <Outputs>
-    <Silo name="siloOutput" 
+    <Silo name="siloOutput"
           parallelThreads="32"
-           plotFileRoot="plot" 
+           plotFileRoot="plot"
            slaveDirectory="sub"
            />
     <Restart name="restartOutput"/>
+
+
+<!-- =========================================================== -->
+    <TimeHistory name="timeHistoryOutput" source="/Tasks/velocityCollection" filename="veloc_history.hdf" />
   </Outputs>
+
+  <Tasks>
+    <PackCollection name="velocityCollection" objectPath="nodeManager" fieldName="Velocity" />
+  </Tasks>
+<!-- =========================================================== -->
+
 
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>

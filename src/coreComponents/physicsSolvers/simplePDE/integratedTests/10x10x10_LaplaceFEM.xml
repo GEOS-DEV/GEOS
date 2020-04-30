@@ -38,6 +38,18 @@
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
+    <PeriodicEvent name="timeHistoryCollection"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Tasks/temperaturePackCollection" />
+
+    <!-- this needs to come *after* the collection event if they happen at the same time
+         needs to be resolved -->
+    <PeriodicEvent name="timeHistoryOutput"
+                   timeFrequency="1.0"
+                   targetExactTimestep="1"
+                   target="/Outputs/timeHistoryOutput" />
+
     <PeriodicEvent name="restarts"
                    timeFrequency="1.0"
                    targetExactTimestep="0"
@@ -88,7 +100,13 @@
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
+    <TimeHistory name="timeHistoryOutput" source="/Tasks/temperaturePackCollection" filename="temperature_history.hdf" />
   </Outputs>
+
+  <Tasks>
+    <!-- <PackCollection name="temperaturePackCollection" group="/Solvers/laplace" wrapper="Temperature" /> -->
+    <PackCollection name="temperaturePackCollection" objectPath="nodeManager" fieldName="Temperature" />
+  </Tasks>
 
   <Geometry>
     <Box name="source" xMin="-0.01, -0.01, -0.01" xMax="+0.01, +1.01, +1.01"/>

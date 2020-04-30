@@ -42,14 +42,6 @@ public:
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
-  /*
-  struct viewKeyStruct
-  {
-      constexpr static auto gravityVectorString = "gravityVector";
-      constexpr static auto blockSystemRepositoryString = "blockSystemRepository";
-  } viewKeys;
-  */
-
 private:
   TasksManager() = delete;
 
