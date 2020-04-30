@@ -30,6 +30,12 @@ class FaceManager;
 class NodeManager;
 class CellBlockManager;
 
+
+/**
+ * @class EdgeManager
+ * @brief This class provides an interface to ObjectManagerBase in order to manage edge data.
+ */
+
 class EdgeManager : public ObjectManagerBase
 {
 public:
@@ -53,8 +59,18 @@ public:
   static localIndex faceMapExtraSpacePerEdge()
   { return 4; }
 
+  /**
+   * @brief main constructor for EdgeManager Objects
+   * @param[in] name the name of the EdgeManager object in the repository
+   * @param[in] parent the parent group of the object defined
+   */
   EdgeManager( std::string const & name,
                Group * const parent );
+
+  
+  /**
+   * @brief default destructor
+   */
   ~EdgeManager() override;
 
   virtual void resize( localIndex const newsize ) override;
@@ -133,12 +149,30 @@ public:
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
 
+  /**
+   * @brief return the  maximum number of edges per node
+   */
   constexpr int maxEdgesPerNode() const { return 100; }
-
+  /**
+   * @name Getters for stored value.
+   */
+  ///@{
+  
+  /**
+   * @brief A node list getter
+   * @return a reference to the list of edge to node relation
+   */
   NodeMapType & nodeList()       { return m_toNodesRelation; }
 
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
+  
+  /**
+   * @biref An index of node list getter
+   * @param[in] edgeIndex local index of the edge
+   * @param[in] nodeIndex local index of the node
+   * @return a reference of the index of the edge to node relation
+   */
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
   { return m_toNodesRelation( edgeIndex, nodeIndex ); }
 
@@ -149,6 +183,7 @@ public:
 
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
+  ///@}
 
   // TODO These should be in their own subset of edges when we add that capability.
   /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
