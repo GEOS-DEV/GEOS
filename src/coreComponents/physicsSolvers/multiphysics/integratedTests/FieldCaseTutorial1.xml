@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<Mesh>
+
+  <!-- SPHINX_FIELD_CASE_MESH -->
+  <PAMELAMeshGenerator name="SyntheticMesh"
+                       file="synthethic.msh"/>
+  <!-- SPHINX_FIELD_CASE_MESH_END -->
+
+  <!-- SPHINX_FIELD_CASE_REGION -->
+  <ElementRegion>
+    <CellElementRegion name="Reservoir"
+                       cellBlocks="{1_TETRA}"
+                       materialList="{water, rock}"/>
+
+    <CellElementRegion name="Burden"
+                       cellBlocks="{0_TETRA, 2_TETRA}"
+                       materialList="{water, rock}"/>
+  </ElementRegion>
+  <!-- SPHINX_FIELD_CASE_REGION_END -->
+</Mesh>
