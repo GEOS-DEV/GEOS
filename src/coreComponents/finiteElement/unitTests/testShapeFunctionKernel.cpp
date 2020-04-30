@@ -81,7 +81,7 @@ void testKernelDriver()
                     [=] GEOSX_HOST_DEVICE ( localIndex const )
   {
     real64 N[numQuadraturePoints][numNodes] = {{0}};
-    real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
+    real64 dNdX[numQuadraturePoints][numNodes][3] = {{{0}}};
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
