@@ -95,3 +95,44 @@ We choose the latest in order to keep the burdens for the visualization.
 
 Single Phase Flow
 ^^^^^^^^^^^^^^^^^
+
+We first simulate a single phase flow in the reservoir layer. We define the two materials
+involved in the simulation : the only fluid (water) and the solid (rock).
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
+  :end-before: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
+
+The constitutive parameters such as the density, the viscosity, the compressibility etc. can
+be modified here using the International System of Units. 
+
+.. note::
+  To consider an incompressible fluid, the user has to set the compressibility to 0.
+
+Once the materials are defined, we define the numerical method that will be used in the solver.
+We propose to use the classical two-point flux approximation scheme.
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
+  :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
+
+The ``TwoPointFluxApproximation`` node has to contain the primary field to be solved in
+``fieldName``. For a flow problem it is the pressure.
+
+The ``Solver`` XML tag is then set.
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_SOLVER -->
+  :end-before: <!-- SPHINX_FIELD_CASE_SOLVER_END -->
+
+This node is crucial as it gather all the information previously defined. We use the classical
+``SinglePhaseFVM`` (FVM for Finite Volume Method), with the two-points flux approximation
+previously defined in the ``NumericalMethod`` tag. The ``targetRegions`` refers only
+to the Reservoir, because we just want to solve the flow in this region. The ``fluidNames``
+and ``solidNames`` refers to the previously defined materials in the ``Constitutive`` tag.
+
+The ``NonlinearSolverParameters`` and ``SystemSolverParameters`` are then used to set the
+numerical solver parameters such as the Newton tolerance and the maximum number of
+iterations.

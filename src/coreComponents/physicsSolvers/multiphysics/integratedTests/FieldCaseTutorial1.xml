@@ -1,20 +1,62 @@
 <?xml version="1.0" ?>
-<Mesh>
-
+<Problem>
   <!-- SPHINX_FIELD_CASE_MESH -->
-  <PAMELAMeshGenerator name="SyntheticMesh"
-                       file="synthethic.msh"/>
+  <Mesh>
+    <PAMELAMeshGenerator name="SyntheticMesh"
+                         file="synthethic.msh"/>
+  </Mesh>
   <!-- SPHINX_FIELD_CASE_MESH_END -->
 
   <!-- SPHINX_FIELD_CASE_REGION -->
   <ElementRegion>
     <CellElementRegion name="Reservoir"
-                       cellBlocks="{1_TETRA}"
-                       materialList="{water, rock}"/>
+                         cellBlocks="{1_TETRA}"
+                         materialList="{water, rock}"/>
 
     <CellElementRegion name="Burden"
                        cellBlocks="{0_TETRA, 2_TETRA}"
                        materialList="{water, rock}"/>
   </ElementRegion>
   <!-- SPHINX_FIELD_CASE_REGION_END -->
-</Mesh>
+
+  <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
+  <Constitutive>
+     <CompressibleSinglePhaseFluid name="water"
+                                   defaultDensity="1000"
+                                   defaultViscosity="0.001"
+                                   referencePressure="0.0"
+                                   compressibility="1e-9"
+                                   viscosibility="0.0"/>
+
+     <PoreVolumeCompressibleSolid name="rock"
+                                  referencePressure="0.0"
+                                  compressibility="1e-9"/>
+   </Constitutive>
+  <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
+
+  <!-- SPHINX_FIELD_CASE_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"
+                                 fieldName="pressure"
+                                 boundaryFieldName="facePressure"
+                                 coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
+
+  <!-- SPHINX_FIELD_CASE_SOLVER -->
+  <Solvers gravityVector="0.0, 0.0, -9.81">
+    <SinglePhaseFVM name="SinglePhaseFlow"
+                    logLevel="0"
+                    discretization="singlePhaseTPFA"
+                    fluidNames="{water}"
+                    solidNames="{rock}"
+                    targetRegions="{Reservoir}">
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                   newtonMaxIter="8"/>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
+  </Solvers>
+  <!-- SPHINX_FIELD_CASE_SOLVER_END -->
+</Problem>
