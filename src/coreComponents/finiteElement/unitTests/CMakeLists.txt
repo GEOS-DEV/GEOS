@@ -3,7 +3,7 @@
 #
 
 set(testSources
-#    testShapeFunctionKernel.cpp
+    testShapeFunctionKernel.cpp
    )
 
 if( ENABLE_OPENMP )

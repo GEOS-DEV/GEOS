@@ -16,9 +16,6 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/unitTests/testUtils.hpp"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -33,134 +30,174 @@ int global_argc;
 char * * global_argv;
 }
 
-namespace geosx
+using namespace geosx;
+
+static real64 inverse( real64 (& J)[3][3] )
 {
-double randomOne()
-{
-  return ( 1 + ( 2 * static_cast< double >(rand())/static_cast< double >(RAND_MAX) - 1 )/1e2);
+  real64 scratch[3][3];
+  scratch[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
+  scratch[1][0] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
+  scratch[2][0] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
+  scratch[0][1] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
+  scratch[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
+  scratch[2][1] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
+  scratch[0][2] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
+  scratch[1][2] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
+  scratch[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+  real64 invDet = 1 / ( J[0][0] * scratch[0][0] + J[1][0] * scratch[1][0] + J[2][0] * scratch[2][0] );
+
+  for( int i=0; i<3; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      J[i][j] = scratch[j][i] * invDet;
+    }
+  }
+
+  return invDet;
 }
+
 
 template< typename POLICY >
 void testKernelDriver()
 {
-  localIndex const numElems = atoi( global_argv[1] );
-  int const seed = atoi( global_argv[2] );
-  int const numLaunches = atoi( global_argv[3] );
+  constexpr int numNodes = 8;
+  constexpr int numQuadraturePoints = 8;
 
-  localIndex const numNodes = (numElems+1)*4;
+  array1d<real64> arrDetJ(numQuadraturePoints);
+  array2d<real64> arrN(numQuadraturePoints,numNodes);
+  array3d<real64> arrdNdX(numQuadraturePoints,numNodes,3);
 
-  std::cout<<"numElems = "<<numElems<<std::endl;
-  std::cout<<"numLaunches = "<<numLaunches<<std::endl;
-  srand( seed );
+  arrayView1d<real64> const & viewDetJ = arrDetJ;
+  arrayView2d<real64> const & viewN = arrN;
+  arrayView3d<real64> const & viewdNdX = arrdNdX;
 
-  auto t0 = std::chrono::high_resolution_clock::now();
+  constexpr real64 xCoords[numNodes][3] = { { -1.1, -1.3, -1.1 },
+                                     {  1.3, -1.1, -1.2 },
+                                     { -1.2,  1.1, -1.1 },
+                                     {  1.1,  1.2, -1.3 },
+                                     { -1.3, -1.2,  1.1 },
+                                     {  1.1, -1.3,  1.2 },
+                                     { -1.2,  1.2,  1.3 },
+                                     {  1.2,  1.1,  1.1 } };
 
-
-  array2d< localIndex > elemsToNodesArray;
-  elemsToNodesArray.resize( 8, numElems );
-  arrayView2d< localIndex const > const & elemsToNodes = elemsToNodesArray;
-
-  array1d< R1Tensor > xArray;
-  xArray.resize( numNodes );
-  arrayView1d< R1Tensor const > const & X = xArray;
-
-  array2d< real64 > resultArray;
-  resultArray.resize( 3, numElems );
-  arrayView2d< real64 > const & result = resultArray;
-
-  constexpr real64 pCoords[3][8] = {
-    { -1, 1, -1, 1, -1, 1, -1, 1 },
-    { -1, -1, 1, 1, -1, -1, 1, 1 },
-    { -1, -1, -1, -1, 1, 1, 1, 1 }
-  };
-
-  for( localIndex k=0; k<numElems; ++k )
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
+                          [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    for( localIndex a=0; a<8; ++a )
+    real64 N[numQuadraturePoints][numNodes] = {{0}};
+    real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
+
+    for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      localIndex const nodeIndex = a + k*4;
-      elemsToNodesArray( a, k )= nodeIndex;
-      xArray[nodeIndex][0] = pCoords[0][a] * randomOne();
-      xArray[nodeIndex][1] = pCoords[1][a] * randomOne();
-      xArray[nodeIndex][2] = pCoords[2][a] * randomOne() + k;
-    }
-  }
+      FiniteElementShapeKernel::shapeFunctionValues(q,N[q]);
+      viewDetJ[q] = FiniteElementShapeKernel::shapeFunctionDerivatives( q,
+                                                                        xCoords,
+                                                                        dNdX[q] );
 
-  auto t1 = std::chrono::high_resolution_clock::now();
-  auto setupTime = std::chrono::duration_cast< std::chrono::microseconds >( t1 - t0 ).count();
-  std::cout<<"setuptime = "<<setupTime/1e6<<std::endl;
-
-  std::chrono::high_resolution_clock::time_point t2;
-  for( int iter=0; iter<numLaunches; ++iter )
-  {
-    if( iter==1 )
-    {
-      t2 = std::chrono::high_resolution_clock::now();
-      auto moveTime = std::chrono::duration_cast< std::chrono::microseconds >( t2 - t1 ).count();
-      std::cout<<"movetime = "<<moveTime/1e6<<std::endl;
-
-    }
-    RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                            GEOSX_HOST_DEVICE_LAMBDA ( localIndex const k )
+      for( localIndex a=0 ; a<numNodes ; ++a )
       {
-
-        for( localIndex q=0; q<8; ++q )
+        viewN(q,a) = N[q][a];
+        for( int i = 0; i < 3; ++i )
         {
-          real64 dNdX_data[8][3];
-//        FiniteElementShapeKernel::shapeFunctionDerivatives( k,
-//                                                            q,
-//                                                            elemsToNodes,
-//                                                            X,
-//                                                            dNdX_data );
+          viewdNdX(q,a,i) = dNdX[q][a][i];
+        }
+      }
+    }
+  } );
 
-          for( localIndex a=0; a<8; ++a )
+
+  constexpr real64 pCoords[3][numNodes] = { { -1,  1, -1,  1, -1,  1, -1, 1 },
+                                            { -1, -1,  1,  1, -1, -1,  1, 1 },
+                                            { -1, -1, -1, -1,  1,  1,  1, 1 } };
+
+  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+
+  RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
+                                [=] ( localIndex const k )
+  {
+    for( localIndex q=0 ; q<numQuadraturePoints ; ++q )
+    {
+      real64 const xi[3] = { quadratureFactor*pCoords[0][q],
+                             quadratureFactor*pCoords[1][q],
+                             quadratureFactor*pCoords[2][q] };
+
+      for( localIndex a=0 ; a<numNodes ; ++a )
+      {
+        real64 N = 0.125 * ( 1 + xi[ 0 ]*pCoords[ 0 ][ a ] ) *
+                           ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] ) *
+                           ( 1 + xi[ 2 ]*pCoords[ 2 ][ a ] );
+        EXPECT_FLOAT_EQ( N, viewN[q][a] );
+      }
+
+      real64 J[3][3] = {{0}};
+      for( localIndex a=0 ; a<numNodes ; ++a )
+      {
+        real64 dNdXi[3] = { 0.125 * pCoords[ 0 ][ a ] *
+                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
+                                    pCoords[ 1 ][ a ] *
+                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
+                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                                    pCoords[ 2 ][ a ] };
+        for( int i = 0; i < 3; ++i )
+        {
+          for( int j = 0; j < 3; ++j )
           {
-            for( localIndex i=0; i<3; ++i )
-            {
-              result( i, k ) += dNdX_data[a][i];
-            }
+            J[i][j] = J[i][j] + xCoords[a][i] * dNdXi[j];
           }
         }
-      } );
-  }
-  auto t3 = std::chrono::high_resolution_clock::now();
-
-  auto runtime = std::chrono::duration_cast< std::chrono::microseconds >( t3 - t2 ).count();
-  std::cout<<"runtime = "<<runtime/1e6<<std::endl;
-
-
-  RAJA::ReduceSum< parallelHostReduce, double > sum( 0 );
-
-  RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                GEOSX_LAMBDA ( localIndex const k )
-    {
-      for( localIndex i=0; i<3; ++i )
-      {
-        sum += result( i, k );
       }
-    } );
-  std::cout<<sum.get()<<std::endl;
+      real64 const detJ = 1/inverse( J );
+      EXPECT_FLOAT_EQ( detJ, viewDetJ[q] );
 
+      for( localIndex a=0 ; a<numNodes ; ++a )
+      {
+        real64 dNdX[3] = {0};
+        real64 dNdXi[3] = { 0.125 * pCoords[ 0 ][ a ] *
+                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
+                                    pCoords[ 1 ][ a ] *
+                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
+                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                                    pCoords[ 2 ][ a ] };
 
+        for( int i = 0; i < 3; ++i )
+        {
+          for( int j = 0; j < 3; ++j )
+          {
+            dNdX[i] += dNdXi[j] * J[j][i];
+          }
+        }
+
+        EXPECT_FLOAT_EQ( dNdX[0], viewdNdX[q][a][0] );
+        EXPECT_FLOAT_EQ( dNdX[1], viewdNdX[q][a][1] );
+        EXPECT_FLOAT_EQ( dNdX[2], viewdNdX[q][a][2] );
+
+      }
+
+    }
+  } );
 }
 
 
 #ifdef USE_CUDA
-
-CUDA_TEST( FiniteElementShapeFunctions, testKernelCuda )
+TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< parallelDevicePolicy< 1024 > >();
+  testKernelDriver< geosx::parallelDevicePolicy<32> >();
 }
-#else
+#endif
 TEST( FiniteElementShapeFunctions, testKernelHost )
 {
-  testKernelDriver< parallelHostPolicy >();
+  testKernelDriver< serialPolicy >();
 }
 
-#endif
 
-}
 
+using namespace geosx;
 int main( int argc, char * argv[] )
 {
   logger::InitializeLogger();
@@ -179,10 +216,6 @@ int main( int argc, char * argv[] )
   delete[] global_argv;
 
   logger::FinalizeLogger();
-
-#ifdef USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
 
   return result;
 }

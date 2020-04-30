@@ -187,7 +187,7 @@ struct ExplicitKernel
 
 #if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
-        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( k, q, xLocal, dNdX );
+        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, xLocal, dNdX );
   #define DNDX dNdX
   #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
