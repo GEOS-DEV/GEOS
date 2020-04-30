@@ -64,83 +64,93 @@ void testKernelDriver()
   constexpr int numNodes = 8;
   constexpr int numQuadraturePoints = 8;
 
-  array1d<real64> arrDetJ(numQuadraturePoints);
-  array2d<real64> arrN(numQuadraturePoints,numNodes);
-  array3d<real64> arrdNdX(numQuadraturePoints,numNodes,3);
+  array1d< real64 > arrDetJ( numQuadraturePoints );
+  array2d< real64 > arrN( numQuadraturePoints, numNodes );
+  array3d< real64 > arrdNdX( numQuadraturePoints, numNodes, 3 );
 
-  arrayView1d<real64> const & viewDetJ = arrDetJ;
-  arrayView2d<real64> const & viewN = arrN;
-  arrayView3d<real64> const & viewdNdX = arrdNdX;
+  arrayView1d< real64 > const & viewDetJ = arrDetJ;
+  arrayView2d< real64 > const & viewN = arrN;
+  arrayView3d< real64 > const & viewdNdX = arrdNdX;
 
-  constexpr real64 xCoords[numNodes][3] = { { -1.1, -1.3, -1.1 },
-                                     {  1.3, -1.1, -1.2 },
-                                     { -1.2,  1.1, -1.1 },
-                                     {  1.1,  1.2, -1.3 },
-                                     { -1.3, -1.2,  1.1 },
-                                     {  1.1, -1.3,  1.2 },
-                                     { -1.2,  1.2,  1.3 },
-                                     {  1.2,  1.1,  1.1 } };
+  constexpr real64 xCoords[numNodes][3] = {
+    { -1.1, -1.3, -1.1 },
+    {  1.3, -1.1, -1.2 },
+    { -1.2, 1.1, -1.1 },
+    {  1.1, 1.2, -1.3 },
+    { -1.3, -1.2, 1.1 },
+    {  1.1, -1.3, 1.2 },
+    { -1.2, 1.2, 1.3 },
+    {  1.2, 1.1, 1.1 }
+  };
 
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
                           [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    real64 N[numQuadraturePoints][numNodes] = {{0}};
-    real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
+    real64 N[numQuadraturePoints][numNodes] = {
+      {0}
+    };
+    real64 dNdX[numQuadraturePoints][numNodes][3] = {
+      {0}
+    };
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      FiniteElementShapeKernel::shapeFunctionValues(q,N[q]);
+      FiniteElementShapeKernel::shapeFunctionValues( q, N[q] );
       viewDetJ[q] = FiniteElementShapeKernel::shapeFunctionDerivatives( q,
                                                                         xCoords,
                                                                         dNdX[q] );
 
-      for( localIndex a=0 ; a<numNodes ; ++a )
+      for( localIndex a=0; a<numNodes; ++a )
       {
-        viewN(q,a) = N[q][a];
+        viewN( q, a ) = N[q][a];
         for( int i = 0; i < 3; ++i )
         {
-          viewdNdX(q,a,i) = dNdX[q][a][i];
+          viewdNdX( q, a, i ) = dNdX[q][a][i];
         }
       }
     }
   } );
 
 
-  constexpr real64 pCoords[3][numNodes] = { { -1,  1, -1,  1, -1,  1, -1, 1 },
-                                            { -1, -1,  1,  1, -1, -1,  1, 1 },
-                                            { -1, -1, -1, -1,  1,  1,  1, 1 } };
+  constexpr real64 pCoords[3][numNodes] = {
+    { -1, 1, -1, 1, -1, 1, -1, 1 },
+    { -1, -1, 1, 1, -1, -1, 1, 1 },
+    { -1, -1, -1, -1, 1, 1, 1, 1 }
+  };
 
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
 
   RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
                                 [=] ( localIndex const k )
   {
-    for( localIndex q=0 ; q<numQuadraturePoints ; ++q )
+    for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureFactor*pCoords[0][q],
+      real64 const xi[3] = { quadratureFactor *pCoords[0][q],
                              quadratureFactor*pCoords[1][q],
                              quadratureFactor*pCoords[2][q] };
 
-      for( localIndex a=0 ; a<numNodes ; ++a )
+      for( localIndex a=0; a<numNodes; ++a )
       {
         real64 N = 0.125 * ( 1 + xi[ 0 ]*pCoords[ 0 ][ a ] ) *
-                           ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] ) *
-                           ( 1 + xi[ 2 ]*pCoords[ 2 ][ a ] );
+                   ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] ) *
+                   ( 1 + xi[ 2 ]*pCoords[ 2 ][ a ] );
         EXPECT_FLOAT_EQ( N, viewN[q][a] );
       }
 
-      real64 J[3][3] = {{0}};
-      for( localIndex a=0 ; a<numNodes ; ++a )
+      real64 J[3][3] = {
+        {0}
+      };
+      for( localIndex a=0; a<numNodes; ++a )
       {
         real64 dNdXi[3] = { 0.125 * pCoords[ 0 ][ a ] *
-                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
-                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                            ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
                             0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
-                                    pCoords[ 1 ][ a ] *
-                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            pCoords[ 1 ][ a ] *
+                            ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
                             0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
-                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
-                                    pCoords[ 2 ][ a ] };
+                            ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                            pCoords[ 2 ][ a ] };
         for( int i = 0; i < 3; ++i )
         {
           for( int j = 0; j < 3; ++j )
@@ -152,18 +162,18 @@ void testKernelDriver()
       real64 const detJ = 1/inverse( J );
       EXPECT_FLOAT_EQ( detJ, viewDetJ[q] );
 
-      for( localIndex a=0 ; a<numNodes ; ++a )
+      for( localIndex a=0; a<numNodes; ++a )
       {
         real64 dNdX[3] = {0};
         real64 dNdXi[3] = { 0.125 * pCoords[ 0 ][ a ] *
-                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
-                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                            ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
                             0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
-                                    pCoords[ 1 ][ a ] *
-                                    ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
+                            pCoords[ 1 ][ a ] *
+                            ( 1 + xi[ 2 ] * pCoords[ 2 ][ a ] ),
                             0.125 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
-                                    ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
-                                    pCoords[ 2 ][ a ] };
+                            ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ) *
+                            pCoords[ 2 ][ a ] };
 
         for( int i = 0; i < 3; ++i )
         {
@@ -187,7 +197,7 @@ void testKernelDriver()
 #ifdef USE_CUDA
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
-  testKernelDriver< geosx::parallelDevicePolicy<32> >();
+  testKernelDriver< geosx::parallelDevicePolicy< 32 > >();
 }
 #endif
 TEST( FiniteElementShapeFunctions, testKernelHost )
