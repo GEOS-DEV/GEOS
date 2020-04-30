@@ -58,9 +58,9 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
 
-  char buffer[ 200 ];
-  std::snprintf( buffer, 200, "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::Comm_rank() );
-  return buffer;
+  std::vector< char > buffer( rootPath.size() + 64 );
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::Comm_rank() ), 1024 );
+  return buffer.data();
 }
 
 
@@ -86,8 +86,8 @@ std::string readRootNode( std::string const & rootPath )
 
   MpiWrapper::Broadcast( rankFilePattern, 0 );
 
-  char buffer[ 200 ];
-  std::snprintf( buffer, 200, rankFilePattern.data(), MpiWrapper::Comm_rank() );
+  char buffer[ 1024 ];
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer, 1024, rankFilePattern.data(), MpiWrapper::Comm_rank() ), 1024 );
   return buffer;
 }
 
