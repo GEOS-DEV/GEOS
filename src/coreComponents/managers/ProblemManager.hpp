@@ -46,8 +46,15 @@ public:
   ~ProblemManager() override;
 
   /**
-   * This function is used to inform the schema generator of any
-   * deviations between the xml and GEOS data structures.
+   * @brief Handles deviations between the datastructure and schema
+   * @param schemaRoot schema root node handle
+   * @param schemaParent schema parent node handle
+   * @param documentationType flag to indicate the type of schema (0=input, 1=other)
+   * 
+   * This function handles deviations between the xml and data structure
+   * on the Problem level (Functions, Mesh, etc.).  This can also be used to
+   * add entries to the schema, which are not used during normal code execution
+   * (e.g.: Benchmark)
    */
   virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
