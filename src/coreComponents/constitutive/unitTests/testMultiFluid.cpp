@@ -13,8 +13,7 @@
  */
 
 // Source includes
-#include "SetSignalHandling.hpp"
-#include "stackTrace.hpp"
+#include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
@@ -112,58 +111,58 @@ static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP
 void testNumericalDerivatives( MultiFluidBase * fluid,
                                real64 P,
                                real64 T,
-                               arraySlice1d<real64> const & composition,
+                               arraySlice1d< real64 > const & composition,
                                real64 perturbParameter,
                                real64 relTol,
-                               real64 absTol = std::numeric_limits<real64>::max() )
+                               real64 absTol = std::numeric_limits< real64 >::max() )
 {
   localIndex const NC = fluid->numFluidComponents();
   localIndex const NP = fluid->numFluidPhases();
 
-  auto const & components = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
-  auto const & phases     = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto const & components = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto const & phases     = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
-  std::unique_ptr<ConstitutiveBase> fluidCopyPtr;
+  std::unique_ptr< ConstitutiveBase > fluidCopyPtr;
   fluid->DeliverClone( "fluidCopy", nullptr, fluidCopyPtr );
-  auto fluidCopy = fluidCopyPtr->group_cast<MultiFluidBase *>();
+  auto fluidCopy = fluidCopyPtr->group_cast< MultiFluidBase * >();
 
   fluid->AllocateConstitutiveData( fluid->getParent(), 1 );
   fluidCopy->AllocateConstitutiveData( fluid->getParent(), 1 );
 
   // extract data views from both fluids
 #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-  FLUID->getReference<Array<real64,DIM>>( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+  FLUID->getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY )[0][0]
 
-  CompositionalVarContainer<1> phaseFrac {
+  CompositionalVarContainer< 1 > phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),
     GET_FLUID_DATA( fluid, 3, dPhaseFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<1> phaseDens {
+  CompositionalVarContainer< 1 > phaseDens {
     GET_FLUID_DATA( fluid, 3, phaseDensityString ),
     GET_FLUID_DATA( fluid, 3, dPhaseDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseDensity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseDensity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<1> phaseVisc {
+  CompositionalVarContainer< 1 > phaseVisc {
     GET_FLUID_DATA( fluid, 3, phaseViscosityString ),
     GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dPressureString ),
     GET_FLUID_DATA( fluid, 3, dPhaseViscosity_dTemperatureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseViscosity_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<2> phaseCompFrac {
+  CompositionalVarContainer< 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, 4, phaseCompFractionString ),
     GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dPressureString ),
     GET_FLUID_DATA( fluid, 4, dPhaseCompFraction_dTemperatureString ),
     GET_FLUID_DATA( fluid, 5, dPhaseCompFraction_dGlobalCompFractionString )
   };
 
-  CompositionalVarContainer<0> totalDens {
+  CompositionalVarContainer< 0 > totalDens {
     GET_FLUID_DATA( fluid, 2, totalDensityString ),
     GET_FLUID_DATA( fluid, 2, dTotalDensity_dPressureString ),
     GET_FLUID_DATA( fluid, 2, dTotalDensity_dTemperatureString ),
@@ -179,12 +178,12 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 #undef GET_FLUID_DATA
 
   // set the fluid state to current
-  fluid->PointUpdate(P, T, composition, 0, 0);
+  fluid->PointUpdate( P, T, composition, 0, 0 );
 
   // update pressure and check derivatives
   {
     real64 const dP = perturbParameter * (P + perturbParameter);
-    fluidCopy->PointUpdate(P + dP, T, composition, 0, 0);
+    fluidCopy->PointUpdate( P + dP, T, composition, 0, 0 );
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
@@ -205,7 +204,7 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   // update temperature and check derivatives
   {
     real64 const dT = perturbParameter * (T + perturbParameter);
-    fluidCopy->PointUpdate(P, T + dT, composition, 0, 0);
+    fluidCopy->PointUpdate( P, T + dT, composition, 0, 0 );
 
     checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
     checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
@@ -227,14 +226,14 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
   auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp, NP, NC );
   auto dPhaseDens_dC     = invertLayout( phaseDens.dComp, NP, NC );
   auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp, NP, NC );
-  auto dTotalDens_dC     = invertLayout( totalDens.dComp, NC);
+  auto dTotalDens_dC     = invertLayout( totalDens.dComp, NC );
   auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp, NP, NC, NC );
 
-  array1d<real64> compNew( NC );
-  for (localIndex jc = 0; jc < NC; ++jc)
+  array1d< real64 > compNew( NC );
+  for( localIndex jc = 0; jc < NC; ++jc )
   {
     real64 const dC = perturbParameter * (composition[jc] + perturbParameter);
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
     {
       compNew[ic] = composition[ic];
     }
@@ -242,12 +241,12 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 
     // renormalize
     real64 sum = 0.0;
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
       sum += compNew[ic];
-    for (localIndex ic = 0; ic < NC; ++ic)
+    for( localIndex ic = 0; ic < NC; ++ic )
       compNew[ic] /= sum;
 
-    fluidCopy->PointUpdate(P, T, compNew, 0, 0);
+    fluidCopy->PointUpdate( P, T, compNew, 0, 0 );
     string var = "compFrac[" + components[jc] + "]";
 
     checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
@@ -261,35 +260,35 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 
 MultiFluidBase * makeCompositionalFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup<CompositionalMultiphaseFluid>( name );
+  auto fluid = parent->RegisterGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
   compNames.resize( 4 );
   compNames[0] = "N2"; compNames[1] = "C10"; compNames[2] = "C20"; compNames[3] = "H20";
 
-  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
   molarWgt.resize( 4 );
   molarWgt[0] = 28e-3; molarWgt[1] = 134e-3; molarWgt[2] = 275e-3; molarWgt[3] = 18e-3;
 
-  auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas";
 
-  auto & eqnOfState = fluid->getReference<string_array>( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString );
+  auto & eqnOfState = fluid->getReference< string_array >( CompositionalMultiphaseFluid::viewKeyStruct::equationsOfStateString );
   eqnOfState.resize( 2 );
   eqnOfState[0] = "PR"; eqnOfState[1] = "PR";
 
-  auto & critPres = fluid->getReference<array1d<real64>>( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString );
+  auto & critPres = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalPressureString );
   critPres.resize( 4 );
   critPres[0] = 34e5; critPres[1] = 25.3e5; critPres[2] = 14.6e5; critPres[3] = 220.5e5;
 
-  auto & critTemp = fluid->getReference<array1d<real64>>( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString );
+  auto & critTemp = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentCriticalTemperatureString );
   critTemp.resize( 4 );
   critTemp[0] = 126.2; critTemp[1] = 622.0; critTemp[2] = 782.0; critTemp[3] = 647.0;
 
-  auto & acFactor = fluid->getReference<array1d<real64>>( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString );
+  auto & acFactor = fluid->getReference< array1d< real64 > >( CompositionalMultiphaseFluid::viewKeyStruct::componentAcentricFactorString );
   acFactor.resize( 4 );
   acFactor[0] = 0.04; acFactor[1] = 0.443; acFactor[2] = 0.816; acFactor[3] = 0.344;
 
@@ -303,7 +302,7 @@ protected:
 
   static void SetUpTestCase()
   {
-    parent = std::make_unique<Group>( "parent", nullptr );
+    parent = std::make_unique< Group >( "parent", nullptr );
     parent->resize( 1 );
 
     fluid = makeCompositionalFluid( "fluid", parent.get() );
@@ -313,76 +312,74 @@ protected:
   }
 
   static void TearDownTestCase()
-  {
+  {}
 
-  }
-
-  static std::unique_ptr<Group> parent;
+  static std::unique_ptr< Group > parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<Group> CompositionalFluidTest::parent( nullptr );
+std::unique_ptr< Group > CompositionalFluidTest::parent( nullptr );
 MultiFluidBase * CompositionalFluidTest::fluid( nullptr );
 
-TEST_F(CompositionalFluidTest, numericalDerivativesMolar)
+TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(4);
+  array1d< real64 > comp( 4 );
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-TEST_F(CompositionalFluidTest, numericalDerivativesMass)
+TEST_F( CompositionalFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(4);
+  array1d< real64 > comp( 4 );
   comp[0] = 0.099; comp[1] = 0.3; comp[2] = 0.6; comp[3] = 0.001;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-MultiFluidBase * makeLiveOilFluid(string const & name, Group * parent)
+MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
+  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
 
-  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
   molarWgt.resize( 3 );
   molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
 
-  auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & surfaceDens = fluid->getReference<array1d<real64>>( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  auto & surfaceDens = fluid->getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvto.txt"; tableNames[1] = "pvtg.txt"; tableNames[2] = "pvtw.txt";
 
-  auto & fluidType = fluid->getReference<string>( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = "LiveOil";
 
   fluid->PostProcessInputRecursive();
@@ -391,31 +388,31 @@ MultiFluidBase * makeLiveOilFluid(string const & name, Group * parent)
 
 MultiFluidBase * makeDeadOilFluid( string const & name, Group * parent )
 {
-  auto fluid = parent->RegisterGroup<BlackOilFluid>( name );
+  auto fluid = parent->RegisterGroup< BlackOilFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
-  auto & compNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto & compNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
   compNames.resize( 3 );
   compNames[0] = "oil"; compNames[1] = "gas"; compNames[2] = "water";
 
-  auto & molarWgt = fluid->getReference<array1d<real64>>( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
+  auto & molarWgt = fluid->getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString );
   molarWgt.resize( 3 );
   molarWgt[0] = 114e-3; molarWgt[1] = 16e-3; molarWgt[2] = 18e-3;
 
-  auto & phaseNames = fluid->getReference<string_array>( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto & phaseNames = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 3 );
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
-  auto & surfaceDens = fluid->getReference<array1d<real64>>( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
+  auto & surfaceDens = fluid->getReference< array1d< real64 > >( BlackOilFluid::viewKeyStruct::surfaceDensitiesString );
   surfaceDens.resize( 3 );
   surfaceDens[0] = 800.0; surfaceDens[1] = 0.9907; surfaceDens[2] = 1022.0;
 
-  auto & tableNames = fluid->getReference<string_array>( BlackOilFluid::viewKeyStruct::tableFilesString );
+  auto & tableNames = fluid->getReference< path_array >( BlackOilFluid::viewKeyStruct::tableFilesString );
   tableNames.resize( 3 );
   tableNames[0] = "pvdo.txt"; tableNames[1] = "pvdg.txt"; tableNames[2] = "pvdw.txt";
 
-  auto & fluidType = fluid->getReference<string>( BlackOilFluid::viewKeyStruct::fluidTypeString );
+  auto & fluidType = fluid->getReference< string >( BlackOilFluid::viewKeyStruct::fluidTypeString );
   fluidType = "DeadOil";
 
   fluid->PostProcessInputRecursive();
@@ -446,9 +443,9 @@ protected:
     writeTableToFile( "pvtg.txt", pvtg_str );
     writeTableToFile( "pvtw.txt", pvtw_str );
 
-    parent = std::make_unique<Group>( "parent", nullptr );
+    parent = std::make_unique< Group >( "parent", nullptr );
     parent->resize( 1 );
-    fluid = makeLiveOilFluid("fluid", parent.get());
+    fluid = makeLiveOilFluid( "fluid", parent.get());
 
     parent->Initialize( parent.get() );
     parent->InitializePostInitialConditions( parent.get() );
@@ -461,40 +458,40 @@ protected:
     removeFile( "pvtw.txt" );
   }
 
-  static std::unique_ptr<Group> parent;
+  static std::unique_ptr< Group > parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<Group> LiveOilFluidTest::parent( nullptr );
+std::unique_ptr< Group > LiveOilFluidTest::parent( nullptr );
 MultiFluidBase * LiveOilFluidTest::fluid( nullptr );
 
-TEST_F(LiveOilFluidTest, numericalDerivativesMolar)
+TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(3);
+  array1d< real64 > comp( 3 );
   comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-TEST_F(LiveOilFluidTest, numericalDerivativesMass)
+TEST_F( LiveOilFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(3);
+  array1d< real64 > comp( 3 );
   comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
@@ -511,9 +508,9 @@ protected:
     writeTableToFile( "pvdg.txt", pvdg_str );
     writeTableToFile( "pvdw.txt", pvdw_str );
 
-    parent = std::make_unique<Group>( "parent", nullptr );
+    parent = std::make_unique< Group >( "parent", nullptr );
     parent->resize( 1 );
-    fluid = makeDeadOilFluid("fluid", parent.get());
+    fluid = makeDeadOilFluid( "fluid", parent.get());
 
     parent->Initialize( parent.get() );
     parent->InitializePostInitialConditions( parent.get() );
@@ -526,71 +523,55 @@ protected:
     removeFile( "pvdw.txt" );
   }
 
-  static std::unique_ptr<Group> parent;
+  static std::unique_ptr< Group > parent;
   static MultiFluidBase * fluid;
 };
 
-std::unique_ptr<Group> DeadOilFluidTest::parent( nullptr );
+std::unique_ptr< Group > DeadOilFluidTest::parent( nullptr );
 MultiFluidBase * DeadOilFluidTest::fluid( nullptr );
 
-TEST_F(DeadOilFluidTest, numericalDerivativesMolar)
+TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(3);
+  array1d< real64 > comp( 3 );
   comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
 }
 
-TEST_F(DeadOilFluidTest, numericalDerivativesMass)
+TEST_F( DeadOilFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 
   // TODO test over a range of values
   real64 const P = 5e6;
   real64 const T = 297.15;
-  array1d<real64> comp(3);
+  array1d< real64 > comp( 3 );
   comp[0] = 0.1; comp[1] = 0.3; comp[2] = 0.6;
 
-  real64 const eps = sqrt(std::numeric_limits<real64>::epsilon());
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
   testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
 }
 
-int main(int argc, char** argv)
+int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-
-  MPI_Init(&argc,&argv);
-
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger();
-#endif
-
-  cxx_utilities::setSignalHandling(cxx_utilities::handler1);
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Comm_free( &MPI_COMM_GEOSX );
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
 }

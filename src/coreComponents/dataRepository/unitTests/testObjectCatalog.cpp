@@ -12,14 +12,15 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
-
 #define OBJECTCATALOGVERBOSE 2
+
+// Source includes
 #include "dataRepository/ObjectCatalog.hpp"
-#include "Logger.hpp"
-#include <sys/time.h>
-#include <stdint.h>
-#include <string>
+#include "common/Logger.hpp"
+#include "managers/initialization.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
 
 using namespace cxx_utilities;
 using namespace geosx;
@@ -30,12 +31,12 @@ class Base
 public:
   Base( int & junk, double const & junk2 )
   {
-    GEOS_LOG( "calling Base constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOSX_LOG( "calling Base constructor with arguments ("<<junk<<" "<<junk2<<")" );
   }
 
   virtual ~Base()
   {
-    GEOS_LOG( "calling Base destructor" );
+    GEOSX_LOG( "calling Base destructor" );
   }
 
   using CatalogInterface = dataRepository::CatalogInterface< Base, int &, double const & >;
@@ -56,12 +57,12 @@ public:
   Derived1( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived1 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOSX_LOG( "calling Derived1 constructor with arguments ("<<junk<<" "<<junk2<<")" );
   }
 
   ~Derived1()
   {
-    GEOS_LOG( "calling Derived1 destructor" );
+    GEOSX_LOG( "calling Derived1 destructor" );
   }
   static std::string CatalogName() { return "derived1"; }
   std::string getCatalogName() { return CatalogName(); }
@@ -77,12 +78,12 @@ public:
   Derived2( int & junk, double const & junk2 ):
     Base( junk, junk2 )
   {
-    GEOS_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
+    GEOSX_LOG( "calling Derived2 constructor with arguments ("<<junk<<" "<<junk2<<")" );
   }
 
   ~Derived2()
   {
-    GEOS_LOG( "calling Derived2 destructor" );
+    GEOSX_LOG( "calling Derived2 destructor" );
   }
   static std::string CatalogName() { return "derived2"; }
   std::string getCatalogName() { return CatalogName(); }
@@ -94,7 +95,7 @@ REGISTER_CATALOG_ENTRY( Base, Derived2, int &, double const & )
 //START_SPHINX_TEST
 TEST( testObjectCatalog, testRegistration )
 {
-  GEOS_LOG( "EXECUTING MAIN" );
+  GEOSX_LOG( "EXECUTING MAIN" );
   int junk = 1;
   double junk2 = 3.14;
 
@@ -111,6 +112,19 @@ TEST( testObjectCatalog, testRegistration )
 
   EXPECT_STREQ( derived2->getCatalogName().c_str(),
                 Derived2::CatalogName().c_str() );
-  GEOS_LOG( "EXITING MAIN" );
+  GEOSX_LOG( "EXITING MAIN" );
 }
 //STOP_SPHINX
+
+int main( int argc, char * * argv )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+
+  geosx::basicSetup( argc, argv );
+
+  int const result = RUN_ALL_TESTS();
+
+  geosx::basicCleanup();
+
+  return result;
+}

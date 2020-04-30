@@ -42,11 +42,11 @@ class FlowSolverBase : public SolverBase
 {
 public:
 /**
-   * @brief main constructor for Group Objects
-   * @param name the name of this instantiation of Group in the repository
-   * @param parent the parent group of this instantiation of Group
-   */
-  FlowSolverBase( const std::string& name,
+ * @brief main constructor for Group Objects
+ * @param name the name of this instantiation of Group in the repository
+ * @param parent the parent group of this instantiation of Group
+ */
+  FlowSolverBase( const std::string & name,
                   Group * const parent );
 
 
@@ -71,17 +71,17 @@ public:
   virtual ~FlowSolverBase() override;
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
-  
+
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
-  localIndex fluidIndex() const { return m_fluidIndex; }
+  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
-  localIndex solidIndex() const { return m_solidIndex; }
+  arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
-  
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // input data
@@ -89,99 +89,101 @@ public:
     static constexpr auto permeabilityString      = "permeability";
 
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = "gravityFlag";
-    static constexpr auto gravityDepthString = "gravityDepth";
+    static constexpr auto gravityCoefString = "gravityCoefficient";
 
     // misc inputs
-    static constexpr auto fluidNameString      = "fluidName";
-    static constexpr auto solidNameString      = "solidName";
-    static constexpr auto fluidIndexString     = "fluidIndex";
-    static constexpr auto solidIndexString     = "solidIndex";
+    static constexpr auto fluidNamesString = "fluidNames";
+    static constexpr auto solidNamesString = "solidNames";
 
     static constexpr auto pressureString = "pressure";
     static constexpr auto deltaPressureString = "deltaPressure";
     static constexpr auto deltaVolumeString = "deltaVolume";
 
     static constexpr auto aperture0String  = "aperture_n";
+    static constexpr auto effectiveApertureString = "effectiveAperture";
 
-    using ViewKey = dataRepository::ViewKey;
-
-    // input data
-    ViewKey referencePorosity = { referencePorosityString };
-    ViewKey permeability      = { permeabilityString };
-
-    // gravity term precomputed values
-    ViewKey gravityFlag  = { gravityFlagString };
-    ViewKey gravityDepth = { gravityDepthString };
-
-    // misc inputs
-    ViewKey discretization = { discretizationString };
-    ViewKey fluidName      = { fluidNameString };
-    ViewKey solidName      = { solidNameString };
-    ViewKey fluidIndex     = { fluidIndexString };
-    ViewKey solidIndex     = { solidIndexString };
-
+    static constexpr auto inputFluxEstimateString  = "inputFluxEstimate";
+    static constexpr auto meanPermCoeffString  = "meanPermCoeff";
   } viewKeysFlowSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysFlowSolverBase;
+  {} groupKeysFlowSolverBase;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
   virtual void ResetViews( DomainPartition * const domain );
 
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture;
+  }
+
+  CRSMatrixView< real64, localIndex const > const & getDerivativeFluxResidual_dAperture()
+  {
+    return m_derivativeFluxResidual_dAperture->toView();
+  }
+
+  CRSMatrixView< real64 const, localIndex const > const & getDerivativeFluxResidual_dAperture() const
+  {
+    return m_derivativeFluxResidual_dAperture->toViewConst();
+  }
+
 private:
 
   /**
    * @brief This function generates various discretization information for later use.
-   * @param domain the domain parition
+   * @param domain the domain partition
    */
-  void PrecomputeData(DomainPartition *const domain);
 
 
 protected:
 
-  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+  void PrecomputeData( DomainPartition * const domain );
 
-  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
+  virtual void PostProcessInput() override;
 
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /// name of the fluid constitutive model
-  string m_fluidName;
+  array1d< string > m_fluidModelNames;
 
   /// name of the solid constitutive model
-  string m_solidName;
-
-  /// index of the fluid constitutive model
-  localIndex m_fluidIndex;
-
-  /// index of the solid constitutive model
-  localIndex m_solidIndex;
+  array1d< string > m_solidModelNames;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
 
   /// flag to determine whether or not coupled with wells
   integer m_coupledWellsFlag;
-  
+
   /// the number of Degrees of Freedom per cell
   localIndex m_numDofPerCell;
 
-  
-  /// views into constant data fields
-  ElementRegionManager::ElementViewAccessor<arrayView1d<integer>> m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_volume;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_gravDepth;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_porosityRef;
+  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementArea;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture0;
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_elementAperture;
+  real64 m_fluxEstimate;
+
+  real64 m_meanPermCoeff;
+
+  /// views into constant data fields
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_elemGhostRank;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_volume;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_gravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_porosityRef;
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementArea;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementAperture0;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementAperture;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_effectiveAperture;
+
+#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
+#endif
 
 };
 

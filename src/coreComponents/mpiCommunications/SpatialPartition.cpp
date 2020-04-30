@@ -69,6 +69,7 @@ SpatialPartition::SpatialPartition():
 {
   m_size = 0;
   m_rank = 0;
+  m_numColors = 8,
   setPartitions( 1, 1, 1 );
 }
 
@@ -90,11 +91,11 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
   //check to make sure our dimensions agree
   {
     int check = 1;
-    for( int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0; i < nsdof; i++ )
     {
       check *= this->m_Partitions( i );
     }
-    assert( check == m_size );
+    GEOSX_ERROR_IF_NE( check, m_size );
   }
 
   //get communicator, rank, and coordinates
@@ -116,7 +117,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     AddNeighbors( 0, cartcomm, ncoords );
   }
 
-  MpiWrapper::Comm_free( &cartcomm );
+  MpiWrapper::Comm_free( cartcomm );
 
   //initialize cached requests and status
   m_mpiRequest.resize( 2 * m_neighbors.size() );
@@ -128,10 +129,10 @@ void SpatialPartition::InitializeMetis()
   //get size of problem and decomposition
   m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+
   //check to make sure our dimensions agree
-  {
-    assert( m_sizeMetis == m_size );
-  }
+  GEOSX_ERROR_IF_NE( m_sizeMetis, m_size );
+
   //initialize cached requests and status
   m_mpiRequest.resize( 100 );
   m_mpiStatus.resize( 100 );
@@ -164,16 +165,15 @@ int SpatialPartition::GetColor()
 
 
 
-
 void SpatialPartition::AddNeighbors( const unsigned int idim,
-                                     MPI_Comm& cartcomm,
-                                     int* ncoords )
+                                     MPI_Comm & cartcomm,
+                                     int * ncoords )
 {
 
   if( idim == nsdof )
   {
     bool me = true;
-    for( int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0; i < nsdof; i++ )
     {
       if( ncoords[i] != this->m_coords( i ))
       {
@@ -183,7 +183,7 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
     }
     if( !me )
     {
-      m_neighbors.push_back( NeighborCommunicator());
+      m_neighbors.push_back( NeighborCommunicator( ) );
       int rank;
       rank = MpiWrapper::Cart_rank( cartcomm, ncoords );
       m_neighbors.back().SetNeighborRank( rank );
@@ -196,11 +196,11 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = this->m_Partitions( integer_conversion<localIndex>( idim ) );
-    const bool periodic = this->m_Periodic( integer_conversion<localIndex>(idim) );
-    for( int i = -1 ; i < 2 ; i++ )
+    const int dim = this->m_Partitions( integer_conversion< localIndex >( idim ) );
+    const bool periodic = this->m_Periodic( integer_conversion< localIndex >( idim ) );
+    for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = this->m_coords( integer_conversion<localIndex>(idim) ) + i;
+      ncoords[idim] = this->m_coords( integer_conversion< localIndex >( idim ) ) + i;
       bool ok = true;
       if( periodic )
       {
@@ -221,20 +221,20 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
 }
 
-void SpatialPartition::AddNeighborsMetis( set<globalIndex>& neighborList )
+void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborList )
 {
-  set<globalIndex>::iterator itNeighbor = neighborList.begin();
-  for( ; itNeighbor != neighborList.end() ; itNeighbor++ )
+  SortedArray< globalIndex >::iterator itNeighbor = neighborList.begin();
+  for(; itNeighbor != neighborList.end(); itNeighbor++ )
   {
     m_neighbors.push_back( NeighborCommunicator());
-    m_neighbors.back().SetNeighborRank( integer_conversion<int>( *itNeighbor ) );
+    m_neighbors.back().SetNeighborRank( integer_conversion< int >( *itNeighbor ) );
 
 //    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 
 
-void SpatialPartition::GetPartitionBoundingBox( R1Tensor& xmin, R1Tensor& xmax )
+void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
 {
   xmin = m_xBoundingBoxMin;
   xmax = m_xBoundingBoxMax;
@@ -244,7 +244,7 @@ void SpatialPartition::GetPartitionBoundingBox( R1Tensor& xmin, R1Tensor& xmax )
  * @param min global minimum spatial dimensions
  * @param max global maximum spatial dimensions
  **/
-void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
+void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
 {
 
   {
@@ -254,11 +254,11 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     //check to make sure our dimensions agree
     {
       int check = 1;
-      for( int i = 0 ; i < nsdof ; i++ )
+      for( int i = 0; i < nsdof; i++ )
       {
         check *= this->m_Partitions( i );
       }
-      assert( check == m_size );
+      GEOSX_ERROR_IF_NE( check, m_size );
     }
 
     //get communicator, rank, and coordinates
@@ -280,8 +280,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
       AddNeighbors( 0, cartcomm, ncoords );
     }
 
-    MpiWrapper::Comm_free( &cartcomm );
-
+    MpiWrapper::Comm_free( cartcomm );
   }
 
 
@@ -296,10 +295,10 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
   m_blockSize = m_gridSize;
 
   m_min = min;
-  for( int i=0 ; i<nsdof ; ++i )
+  for( int i=0; i<nsdof; ++i )
   {
     const int nloc = m_Partitions( i ) - 1;
-    const localIndex nlocl = static_cast<localIndex>(nloc);
+    const localIndex nlocl = static_cast< localIndex >(nloc);
     if( m_PartitionLocations[i].empty() )
     {
       // the default "even" spacing
@@ -309,7 +308,7 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
 
       m_PartitionLocations[i].resize( nlocl );
       localIndex j = 0;
-      for( array1d<real64>::iterator it = m_PartitionLocations[i].begin() ; it != m_PartitionLocations[i].end() ; ++it, ++j )
+      for( array1d< real64 >::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j )
       {
         *it = (j+1) * m_blockSize( i );
       }
@@ -335,12 +334,12 @@ void SpatialPartition::setSizes( const R1Tensor& min, const R1Tensor& max )
     }
     else
     {
-      GEOS_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
+      GEOSX_ERROR( "SpatialPartition::setSizes(): number of partition locations does not equal number of partitions - 1\n" );
     }
   }
 }
 
-void SpatialPartition::setGlobalDomainSizes( const R1Tensor& min, const R1Tensor& max )
+void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
 {
   // global values
   // without updating partition sizes.  We need this in mesh generator when we
@@ -351,7 +350,7 @@ void SpatialPartition::setGlobalDomainSizes( const R1Tensor& min, const R1Tensor
   m_gridSize -= min;
 }
 
-void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor& min, R1Tensor& max )
+void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max )
 {
   // We need this in mesh generator when we have extension zones.
   m_min = min;
@@ -359,7 +358,7 @@ void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor& min, R1Tensor&
 }
 
 
-bool SpatialPartition::IsCoordInPartition( const realT& coord, const int dir )
+bool SpatialPartition::IsCoordInPartition( const realT & coord, const int dir )
 {
   bool rval = true;
   const int i = dir;
@@ -380,10 +379,10 @@ bool SpatialPartition::IsCoordInPartition( const realT& coord, const int dir )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter )
+bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter )
 {
   bool rval = true;
-  for( int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0; i < nsdof; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -403,17 +402,17 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter, const int numDistPartition )
+bool SpatialPartition::IsCoordInPartition( const R1Tensor & elemCenter, const int numDistPartition )
 {
   bool rval = true;
   R1Tensor m_xBoundingBoxMinTemp, m_xBoundingBoxMaxTemp;
-  for( unsigned int i = 0 ; i < nsdof ; i++ )
+  for( unsigned int i = 0; i < nsdof; i++ )
   {
     m_xBoundingBoxMinTemp( i ) = m_min( i ) - numDistPartition*m_blockSize( i );
     m_xBoundingBoxMaxTemp( i ) = m_max( i ) + numDistPartition*m_blockSize( i );
   }
 
-  for( int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0; i < nsdof; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -434,11 +433,11 @@ bool SpatialPartition::IsCoordInPartition( const R1Tensor& elemCenter, const int
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor& elemCenter )
+bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor & elemCenter )
 // A variant with intervals closed at both ends
 {
   bool rval = true;
-  for( int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0; i < nsdof; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -458,11 +457,11 @@ bool SpatialPartition::IsCoordInPartitionClosed( const R1Tensor& elemCenter )
   return rval;
 }
 
-bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor& elemCenter )
+bool SpatialPartition::IsCoordInPartitionBoundingBox( const R1Tensor & elemCenter )
 
 {
   bool rval = true;
-  for( int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0; i < nsdof; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -493,10 +492,10 @@ void SpatialPartition::SetContactGhostRange( const realT bufferSize )
   m_contactGhostMax += bufferSize;
 }
 
-bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
+bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
 {
   bool rval = true;
-  for( int i = 0 ; i < nsdof ; i++ )
+  for( int i = 0; i < nsdof; i++ )
   {
     if( m_Periodic( i ))
     {
@@ -519,39 +518,4 @@ bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor& elemCenter )
   return rval;
 }
 
-//
-//void SpatialPartition::WriteSiloDerived( SiloFile& siloFile )
-//{
-//  siloFile.DBWriteWrapper("m_Partitions",m_Partitions);
-//  siloFile.DBWriteWrapper("m_Periodic",m_Periodic);
-//  siloFile.DBWriteWrapper("m_coords",m_coords);
-//  siloFile.DBWriteWrapper("m_PartitionLocations0",m_PartitionLocations[0]);
-//  siloFile.DBWriteWrapper("m_PartitionLocations1",m_PartitionLocations[1]);
-//  siloFile.DBWriteWrapper("m_PartitionLocations2",m_PartitionLocations[2]);
-//  siloFile.DBWriteWrapper("m_blockSize",m_blockSize);
-//  siloFile.DBWriteWrapper("m_min",m_min);
-//  siloFile.DBWriteWrapper("m_max",m_max);
-//  siloFile.DBWriteWrapper("m_gridSize",m_gridSize);
-//  siloFile.DBWriteWrapper("m_gridMin",m_gridMin);
-//  siloFile.DBWriteWrapper("m_gridMax",m_gridMax);
-//
-//}
-//
-//void SpatialPartition::ReadSiloDerived( const SiloFile& siloFile )
-//{
-//  siloFile.DBReadWrapper("m_Partitions",m_Partitions);
-//  siloFile.DBReadWrapper("m_Periodic",m_Periodic);
-//  siloFile.DBReadWrapper("m_coords",m_coords);
-//  siloFile.DBReadWrapper("m_PartitionLocations0",m_PartitionLocations[0]);
-//  siloFile.DBReadWrapper("m_PartitionLocations1",m_PartitionLocations[1]);
-//  siloFile.DBReadWrapper("m_PartitionLocations2",m_PartitionLocations[2]);
-//  siloFile.DBReadWrapper("m_blockSize",m_blockSize);
-//  siloFile.DBReadWrapper("m_min",m_min);
-//  siloFile.DBReadWrapper("m_max",m_max);
-//  siloFile.DBReadWrapper("m_gridSize",m_gridSize);
-//  siloFile.DBReadWrapper("m_gridMin",m_gridMin);
-//  siloFile.DBReadWrapper("m_gridMax",m_gridMax);
-//
-//
-//}
 }

@@ -21,6 +21,8 @@
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 
 #include "LinearElasticIsotropic.hpp"
+#include "LinearElasticAnisotropic.hpp"
+#include "LinearElasticTransverseIsotropic.hpp"
 
 namespace geosx
 {
@@ -33,9 +35,17 @@ bool constitutiveUpdatePassThru( constitutive::ConstitutiveBase * const constitu
                                  LAMBDA && lambda )
 {
   bool rval = true;
-  if( dynamic_cast<LinearElasticIsotropic * >( constitutiveRelation ) )
+  if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
   {
-    lambda( static_cast<LinearElasticIsotropic & >( *constitutiveRelation) );
+    lambda( static_cast< LinearElasticIsotropic & >( *constitutiveRelation) );
+  }
+  else if( dynamic_cast< LinearElasticTransverseIsotropic * >( constitutiveRelation ) )
+  {
+    lambda( static_cast< LinearElasticTransverseIsotropic & >( *constitutiveRelation) );
+  }
+  else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
+  {
+    lambda( static_cast< LinearElasticAnisotropic & >( *constitutiveRelation) );
   }
   else
   {

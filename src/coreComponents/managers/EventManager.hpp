@@ -26,7 +26,7 @@ namespace dataRepository
 {
 namespace keys
 {
-string const Events("Events");
+string const Events( "Events" );
 }
 }
 
@@ -59,13 +59,12 @@ public:
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
    */
-  void Run(dataRepository::Group * domain);
+  void Run( dataRepository::Group * domain );
 
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
     static constexpr auto maxCycleString = "maxCycle";
-    static constexpr auto verbosityString = "verbosity";
 
     static constexpr auto timeString = "time";
     static constexpr auto dtString = "dt";
@@ -77,19 +76,17 @@ public:
     dataRepository::ViewKey cycle = { "cycle" };
     dataRepository::ViewKey maxTime = { "maxTime" };
     dataRepository::ViewKey maxCycle = { "maxCycle" };
-    dataRepository::ViewKey verbosity = { "verbosity" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
 private:
 
   real64 m_maxTime;
   integer m_maxCycle;
-  integer m_verbosity;
 
   real64 m_time;
   real64 m_dt;

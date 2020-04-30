@@ -24,6 +24,23 @@
 namespace geosx
 {
 
+// TODO remove! This option allows for the creation of new mass inside a newly
+// created FaceElement. The new mass will be equal to:
+// creationMass = defaultDensity * defaultAperture * faceArea.
+// If 0, then the beginning of step density is artificially set to zero...which
+// may cause some newton convergence problems.
+#define ALLOW_CREATION_MASS 1
+
+
+// TODO remove! This option sets the pressure in a newly created FaceElement to
+// be the lowest value of all attached non-new FaceElements.
+#define SET_CREATION_PRESSURE 1
+
+// TODO remove! This option sets the nodal displacements attached a newly
+// created FaceElement to some scalar fraction of the aperture of the
+// lowest attached non-new FaceElements.
+#define SET_CREATION_DISPLACEMENT 0
+
 
 /**
  * @struct FaceElementStencil_Traits
@@ -33,22 +50,22 @@ namespace geosx
 struct FaceElementStencil_Traits
 {
   /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = ArrayOfArrays<localIndex>;
+  using IndexContainerType = ArrayOfArrays< localIndex >;
 
   /// The array view type for the stencil indices
-  using IndexContainerViewType = ArrayOfArraysView<localIndex>;
+  using IndexContainerViewType = ArrayOfArraysView< localIndex >;
 
   /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = ArrayOfArraysView<localIndex const>;
+  using IndexContainerViewConstType = ArrayOfArraysView< localIndex const >;
 
   /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = ArrayOfArrays<real64>;
+  using WeightContainerType = ArrayOfArrays< real64 >;
 
   /// The array view type for the stencil weights
-  using WeightContainerViewType = ArrayOfArraysView<real64>;
+  using WeightContainerViewType = ArrayOfArraysView< real64 >;
 
   /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = ArrayOfArraysView<real64 const>;
+  using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
 
   /// Number of points the flux is between (normally 2)
   static localIndex constexpr NUM_POINT_IN_FLUX = 6;
@@ -62,8 +79,8 @@ struct FaceElementStencil_Traits
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementStencil : public StencilBase<FaceElementStencil_Traits,FaceElementStencil>,
-                           public FaceElementStencil_Traits
+class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceElementStencil >,
+  public FaceElementStencil_Traits
 {
 public:
 
@@ -71,17 +88,37 @@ public:
   FaceElementStencil();
 
   virtual void add( localIndex const numPts,
-                    localIndex  const * const elementRegionIndices,
-                    localIndex  const * const elementSubRegionIndices,
-                    localIndex  const * const elementIndices,
+                    localIndex const * const elementRegionIndices,
+                    localIndex const * const elementSubRegionIndices,
+                    localIndex const * const elementIndices,
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
-  virtual localIndex size() const  override final
+  void add( localIndex const numPts,
+            R1Tensor const * const cellCenterToEdgeCenter,
+            integer const * const isGhostConnector,
+            localIndex const connectorIndex );
+
+  virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
 
   localIndex stencilSize( localIndex index ) const
-  { return m_elementRegionIndices.sizeOfArray(index); }
+  { return m_elementRegionIndices.sizeOfArray( index ); }
+
+
+  ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
+  { return m_cellCenterToEdgeCenters; }
+
+  ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
+  { return m_isGhostConnectors; }
+
+
+private:
+
+  ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
+  ArrayOfArrays< integer > m_isGhostConnectors;
+
+
 };
 
 } /* namespace geosx */

@@ -19,11 +19,11 @@
 #ifndef GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 #define GEOSX_DATAREPOSITORY_MAPPEDVECTOR_HPP_
 
-#include "common/GeosxMacros.hpp"
-#include "IntegerConversion.hpp"
-#include "Logger.hpp"
+// Source includes
 #include "KeyIndexT.hpp"
-#include "SFINAE_Macros.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/Logger.hpp"
+#include "cxx-utilities/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -117,17 +117,27 @@ public:
 
 
 
-  /// default copy constructor
-  MappedVector( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy constructor.
+   */
+  MappedVector( MappedVector const & ) = default;
 
-  /// default copy assignment operator
-  MappedVector & operator=( MappedVector const & source ) = default;
+  /**
+   * @brief Default copy assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector const & ) = default;
 
-  /// default move operator
-  MappedVector( MappedVector && source ) = default;
+  /**
+   * @brief Default move operator.
+   */
+  MappedVector( MappedVector && ) = default;
 
-  /// default move assignement operator
-  MappedVector & operator=( MappedVector && source ) = default;
+  /**
+   * @brief Default move assignment operator.
+   * @return
+   */
+  MappedVector & operator=( MappedVector && ) = default;
 
 
 
@@ -220,13 +230,13 @@ public:
 //
 //    if( index==KeyIndex::invalid_index )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // invalid key index passed as const into accessor function\n");
 //    }
 //#if RANGE_CHECKING==1
 //    else if (m_values[index].first!=keyIndex.Key() )
 //    {
-//      GEOS_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
+//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
 // inconsistent key passed as const into accessor function\n")
 //    }
 //#endif
@@ -351,14 +361,14 @@ public:
     // rebuild parts of const key vectors after deleted entry
     m_constKeyValues.resize( index );
     m_constValues.resize( index );
-    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
       m_constKeyValues.emplace_back( m_values[i].first, rawPtr( index ) );
       m_constValues.emplace_back( m_values[i].first, rawPtr( index ) );
     }
 
     // adjust lookup map indices
-    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
       m_keyLookup[m_values[i].first] = i;
     }
@@ -404,7 +414,7 @@ public:
    */
   void clear()
   {
-    for( typename valueContainer::size_type a = 0 ; a < m_values.size() ; ++a )
+    for( typename valueContainer::size_type a = 0; a < m_values.size(); ++a )
     {
       deleteValue( integer_conversion< INDEX_TYPE >( a ) );
     }
@@ -468,7 +478,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOSX_UNUSED_ARG( index ) )
+  deleteValue( INDEX_TYPE GEOSX_UNUSED_PARAM( index ) )
   {}
 
   /// random access container that holds the values
@@ -543,9 +553,9 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( source->get_typeid() != m_values[index].second->get_typeid() )
       {
-        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
-                    ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
-                    m_values[index].second->get_typeid().name() );
+        GEOSX_ERROR( "MappedVector::insert(): Tried to insert existing key ("<<keyName<<
+                     ") with a different type without overwrite flag\n"<<" "<<source->get_typeid().name()<<" != "<<
+                     m_values[index].second->get_typeid().name() );
       }
       else
       {

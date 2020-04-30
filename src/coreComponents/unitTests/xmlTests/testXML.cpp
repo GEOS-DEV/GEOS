@@ -16,59 +16,26 @@
 #include "gtest/gtest.h"
 
 #include "managers/ProblemManager.hpp"
+#include "managers/initialization.hpp"
 
-using namespace geosx;
-using namespace dataRepository;
-namespace
+TEST( testXML, testXML )
 {
-int global_argc;
-char** global_argv;
+  geosx::ProblemManager problemManager( "Problem", nullptr );
+
+  problemManager.InitializePythonInterpreter();
+  problemManager.ParseCommandLineInput();
+  problemManager.ParseInputFile();
 }
 
-int main(int argc, char** argv)
+int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
 
-#ifdef GEOSX_USE_MPI
-  int rank;
-  MPI_Init(&argc,&argv);
-  MPI_Comm_dup( MPI_COMM_WORLD, &MPI_COMM_GEOSX );
-  MPI_Comm_rank(MPI_COMM_GEOSX, &rank);
-  logger::InitializeLogger(MPI_COMM_GEOSX);
-#else
-  logger::InitializeLogger();
-#endif 
-
-  global_argc = argc;
-  global_argv = new char*[global_argc];
-  for( int i = 0 ; i < argc ; ++i )
-  {
-    global_argv[i] = argv[i];
-    std::cout<<argv[i]<<std::endl;
-  }
+  geosx::basicSetup( argc, argv, true );
 
   int const result = RUN_ALL_TESTS();
 
-  logger::FinalizeLogger();
-
-#ifdef GEOSX_USE_MPI
-  MPI_Finalize();
-#endif
+  geosx::basicCleanup();
 
   return result;
-}
-
-
-TEST(testXML,testXML)
-{
-  ProblemManager problemManager("Problem",nullptr);
-
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput( global_argc, global_argv );
-  // {
-  //   dataRepository::Group * commandLine = problemManager.GetGroup<Group>(std::string("commandLine"));
-  //   Wrapper<std::string>::rtype  inputFileName = commandLine->getData<std::string>(std::string("inputFileName"));
-  //   inputFileName = "../../src/components/core/tests/xmlTests/basic_input.xml";
-  // }
-  problemManager.ParseInputFile();
 }

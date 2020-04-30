@@ -28,14 +28,15 @@ using namespace cxx_utilities;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             Group * const parent ):
-  Group( name, parent),
-  m_gravityVector( R1Tensor(0.0) )
+  Group( name, parent ),
+  m_gravityVector( R1Tensor( 0.0 ) )
 {
-  setInputFlags(InputFlags::REQUIRED);
+  setInputFlags( InputFlags::REQUIRED );
 
-  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector, 0 )->
-    setApplyDefaultValue({0,0,0})->
-    setInputFlag(InputFlags::OPTIONAL);
+  this->registerWrapper( viewKeyStruct::gravityVectorString, &m_gravityVector )->
+    setApplyDefaultValue( {0.0, 0.0, -9.81} )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Gravity vector used in the physics solvers" );
 }
 
 PhysicsSolverManager::~PhysicsSolverManager()
@@ -46,9 +47,9 @@ PhysicsSolverManager::~PhysicsSolverManager()
 Group * PhysicsSolverManager::CreateChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
-  if( SolverBase::CatalogInterface::hasKeyName(childKey) )
+  if( SolverBase::CatalogInterface::hasKeyName( childKey ) )
   {
-    GEOS_LOG_RANK_0("Adding Solver of type " << childKey << ", named " << childName);
+    GEOSX_LOG_RANK_0( "Adding Solver of type " << childKey << ", named " << childName );
     rval = RegisterGroup( childName,
                           SolverBase::CatalogInterface::Factory( childKey, childName, this ) );
   }
@@ -59,7 +60,7 @@ Group * PhysicsSolverManager::CreateChild( string const & childKey, string const
 void PhysicsSolverManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SolverBase here
-  for (auto& catalogIter: SolverBase::GetCatalog())
+  for( auto & catalogIter: SolverBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

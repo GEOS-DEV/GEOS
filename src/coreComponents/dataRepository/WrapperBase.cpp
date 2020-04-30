@@ -32,13 +32,13 @@ WrapperBase::WrapperBase( std::string const & name,
   m_parent( parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
-  m_plotLevel( PlotLevel::LEVEL_3 ),
+  m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
   m_registeringObjects(),
   m_conduitNode( parent->getConduitNode()[ name ] )
 {
-  GEOS_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
+  GEOSX_ERROR_IF( parent == nullptr, "Cannot have a view with no parent." );
 }
 
 
@@ -66,18 +66,43 @@ void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
   m_restart_flags = source.m_restart_flags;
 }
 
+string WrapperBase::dumpInputOptions( bool const outputHeader ) const
+{
+  string rval;
+  char temp[1000] = {0};
+  if( outputHeader )
+  {
+    sprintf( temp, "  |         name         |  opt/req  | Description \n" );
+    rval.append( temp );
+    sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
+    rval.append( temp );
+  }
+
+  if( getInputFlag() == InputFlags::OPTIONAL ||
+      getInputFlag() == InputFlags::REQUIRED )
+  {
+    sprintf( temp, "  | %20s | %9s | %s \n",
+             getName().c_str(),
+             InputFlagToString( getInputFlag()).c_str(),
+             getDescription().c_str() );
+    rval.append( temp );
+  }
+
+  return rval;
+}
+
 #if defined(USE_TOTALVIEW_OUTPUT)
 int WrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing WrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
-  TV_ttf_add_row( "m_name", totalview::typeName< string >().c_str(), &m_name );
-  TV_ttf_add_row( "m_parent", totalview::typeName< Group >().c_str(), m_parent );
+  TV_ttf_add_row( "m_name", cxx_utilities::demangle< string >().c_str(), &m_name );
+  TV_ttf_add_row( "m_parent", cxx_utilities::demangle< Group >().c_str(), m_parent );
   TV_ttf_add_row( "m_sizedFromParent", "int", &m_sizedFromParent );
-  TV_ttf_add_row( "m_restart_flags", totalview::typeName< RestartFlags >().c_str(), &m_restart_flags );
-  TV_ttf_add_row( "m_plotLevel", totalview::typeName< PlotLevel >().c_str(), &m_plotLevel );
-  TV_ttf_add_row( "m_inputFlag", totalview::typeName< InputFlags >().c_str(), &m_inputFlag );
-  TV_ttf_add_row( "m_description", totalview::typeName< string >().c_str(), &m_description );
+  TV_ttf_add_row( "m_restart_flags", cxx_utilities::demangle< RestartFlags >().c_str(), &m_restart_flags );
+  TV_ttf_add_row( "m_plotLevel", cxx_utilities::demangle< PlotLevel >().c_str(), &m_plotLevel );
+  TV_ttf_add_row( "m_inputFlag", cxx_utilities::demangle< InputFlags >().c_str(), &m_inputFlag );
+  TV_ttf_add_row( "m_description", cxx_utilities::demangle< string >().c_str(), &m_description );
   size_t junk = m_registeringObjects.size();
   TV_ttf_add_row( "m_registeringObjects",
                   totalview::format< string, size_t >( 1, &junk ).c_str(),

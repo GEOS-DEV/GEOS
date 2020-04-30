@@ -1,24 +1,24 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0,0.0,-0.0"
-    >
+  <Solvers gravityVector="0.0, 0.0, 0.0">
   
     <Hydrofracture 
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
-      verboseLevel="0"
+      couplingTypeOption="FIM"
+      logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
+      <NonlinearSolverParameters 
+        newtonTol="1.0e-5"
+        newtonMaxIter="50"
+        lineSearchMaxCuts="10"
+        />
       <SystemSolverParameters
-        maxIterNewton="50"
-        newtonTol="1e-5"
-        verbosityFlag="0"
-        maxLineSearchCuts="10"
+        logLevel="0"
         useMLPrecond="1"
         scalingOption="2"
         />
@@ -27,45 +27,41 @@
     <SolidMechanicsLagrangianSSLE 
       name="lagsolve" 
       timeIntegrationOption="QuasiStatic"
-      verboseLevel="0"
+      logLevel="0"
       discretization="FE1"
       targetRegions="{Region2}"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       contactRelationName="fractureContact"
       >
-      <SystemSolverParameters 
-        krylovTol="1.0e-10"
-        newtonTol="1.0e-6"
-        maxIterNewton="5"
-        verbosityFlag="0"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
+      <SystemSolverParameters krylovTol="1.0e-10"
+                              logLevel="0"
         />
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow 
+    <SinglePhaseFVM 
       name="SinglePhaseFlow"
-      verboseLevel="0"
-      gravityFlag="1"
+      logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidName="water"
-      solidName="rock"
+      fluidNames="{water}"
+      solidNames="{rock}"
+      meanPermCoeff="0.8"
       >
-      <SystemSolverParameters 
-        name="SystemSolverParameters"
-        krylovTol="1.0e-12"
-        newtonTol="1.0e-5"
-        maxIterNewton="10"
-        verbosityFlag="0"
-        />
-    </SinglePhaseFlow>
+      <NonlinearSolverParameters newtonTol="1.0e-5"
+                                 newtonMaxIter="10"/>
+      <SystemSolverParameters krylovTol="1.0e-12"
+                              logLevel="0"/>
+    </SinglePhaseFVM>
     
     <SurfaceGenerator
       name="SurfaceGen"
-      verboseLevel="0"
+      logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       rockToughness="0.707e7"
       nodeBasedSIF="1"
       mpiCommOrder="1"
@@ -198,10 +194,6 @@
     </Contact>
   </Constitutive>
 
-  <InitialConditions>
-    
-  </InitialConditions>
-
   <FieldSpecifications>
 
     <FieldSpecification name="waterDensity"
@@ -277,10 +269,6 @@
 
   <Functions>
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition>
 
   <Outputs>
       <Silo name="siloOutput"

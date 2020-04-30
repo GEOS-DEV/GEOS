@@ -49,7 +49,7 @@ enum class ExponentApproximationType
  * @tparam T scalar real-valued type used in computation
  * @tparam EAT the type/order of exponent approximation (linear, quadratic, full)
  */
-template<typename T, ExponentApproximationType EAT>
+template< typename T, ExponentApproximationType EAT >
 class ExponentialRelation
 {
 public:
@@ -140,26 +140,26 @@ struct ExponentApproximationTypeWrapper
  * @param type type/order of the approximation (linear, quadratic, full)
  * @param lambda user-provided generic lambda to be called with an instance of EAT wrapper type
  */
-template<typename T, typename LAMBDA>
+template< typename T, typename LAMBDA >
 void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type, T const & x0, T const & y0, T const & alpha, LAMBDA && lambda )
 {
   switch( type )
   {
     case ExponentApproximationType::Full:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Full>(x0, y0, alpha) );
+      return lambda( ExponentialRelation< T, ExponentApproximationType::Full >( x0, y0, alpha ) );
     }
     case ExponentApproximationType::Quadratic:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Quadratic>(x0, y0, alpha) );
+      return lambda( ExponentialRelation< T, ExponentApproximationType::Quadratic >( x0, y0, alpha ) );
     }
     case ExponentApproximationType::Linear:
     {
-      return lambda( ExponentialRelation<T, ExponentApproximationType::Linear>(x0, y0, alpha) );
+      return lambda( ExponentialRelation< T, ExponentApproximationType::Linear >( x0, y0, alpha ) );
     }
     default:
     {
-      GEOS_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
+      GEOSX_ERROR( "ExponentApproximationTypeSwitchBlock() ExponentApproximationType is invalid!" );
     }
   }
 }
@@ -174,12 +174,12 @@ void ExponentApproximationTypeSwitchBlock( ExponentApproximationType const type,
  * @param alpha exponential coefficient
  * @param lambda user-provided generic lambda that will be passed an instance of ExponentialRelation<T,?>
  */
-template<typename T, typename LAMBDA>
+template< typename T, typename LAMBDA >
 void makeExponentialRelation( ExponentApproximationType type,
                               T const & x0, T const & y0, T const & alpha,
                               LAMBDA && lambda )
 {
-  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move(lambda));
+  ExponentApproximationTypeSwitchBlock( type, x0, y0, alpha, std::move( lambda ));
 }
 
 namespace detail
@@ -196,12 +196,12 @@ using std::sqrt;
  * @tparam EAT the type/order of exponent approximation (linear, quadratic, full)
  * @tparam INVERSE whether to compute the inverse of the exponent
  */
-template<typename T, ExponentApproximationType EAT, bool INVERSE = false>
+template< typename T, ExponentApproximationType EAT, bool INVERSE = false >
 struct ExponentialCompute
 {};
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Full, false>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Full, false >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
@@ -215,8 +215,8 @@ struct ExponentialCompute<T, ExponentApproximationType::Full, false>
   }
 };
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Full, true>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Full, true >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
@@ -231,8 +231,8 @@ struct ExponentialCompute<T, ExponentApproximationType::Full, true>
   }
 };
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Quadratic, false>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Quadratic, false >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
@@ -248,8 +248,8 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic, false>
   }
 };
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Quadratic, true>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Quadratic, true >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
@@ -266,8 +266,8 @@ struct ExponentialCompute<T, ExponentApproximationType::Quadratic, true>
   }
 };
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Linear, false>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Linear, false >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & x, T & y )
   {
@@ -281,8 +281,8 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear, false>
   }
 };
 
-template<typename T>
-struct ExponentialCompute<T, ExponentApproximationType::Linear, true>
+template< typename T >
+struct ExponentialCompute< T, ExponentApproximationType::Linear, true >
 {
   inline static void Compute( const T & x0, const T & y0, const T & alpha, const T & y, T & x )
   {
@@ -299,49 +299,47 @@ struct ExponentialCompute<T, ExponentApproximationType::Linear, true>
 
 }
 
-template<typename T, ExponentApproximationType EAT>
-ExponentialRelation<T, EAT>::ExponentialRelation()
-  : ExponentialRelation(T(0), T(1), T(1))
-{
+template< typename T, ExponentApproximationType EAT >
+ExponentialRelation< T, EAT >::ExponentialRelation()
+  : ExponentialRelation( T( 0 ), T( 1 ), T( 1 ))
+{}
 
-}
-
-template<typename T, ExponentApproximationType EAT>
-ExponentialRelation<T, EAT>::ExponentialRelation( T x0, T y0, T alpha )
+template< typename T, ExponentApproximationType EAT >
+ExponentialRelation< T, EAT >::ExponentialRelation( T x0, T y0, T alpha )
 {
   SetCoefficients( x0, y0, alpha );
 }
 
-template<typename T, ExponentApproximationType EAT>
-void ExponentialRelation<T, EAT>::SetCoefficients( T x0, T y0, T alpha )
+template< typename T, ExponentApproximationType EAT >
+void ExponentialRelation< T, EAT >::SetCoefficients( T x0, T y0, T alpha )
 {
   m_x0 = x0;
   m_y0 = y0;
   m_alpha = alpha;
 }
 
-template<typename T, ExponentApproximationType EAT>
-void ExponentialRelation<T, EAT>::Compute( const T & x, T & y ) const
+template< typename T, ExponentApproximationType EAT >
+void ExponentialRelation< T, EAT >::Compute( const T & x, T & y ) const
 {
-  detail::ExponentialCompute<T, EAT>::Compute( m_x0, m_y0, m_alpha, x, y );
+  detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y );
 }
 
-template<typename T, ExponentApproximationType EAT>
-void ExponentialRelation<T, EAT>::Inverse( const T & y, T & x ) const
+template< typename T, ExponentApproximationType EAT >
+void ExponentialRelation< T, EAT >::Inverse( const T & y, T & x ) const
 {
-  detail::ExponentialCompute<T, EAT, true>::Compute( m_x0, m_y0, m_alpha, y, x );
+  detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x );
 }
 
-template<typename T, ExponentApproximationType EAT>
-void ExponentialRelation<T, EAT>::Compute( const T & x, T & y, T & dy_dx ) const
+template< typename T, ExponentApproximationType EAT >
+void ExponentialRelation< T, EAT >::Compute( const T & x, T & y, T & dy_dx ) const
 {
-  detail::ExponentialCompute<T, EAT>::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
+  detail::ExponentialCompute< T, EAT >::Compute( m_x0, m_y0, m_alpha, x, y, dy_dx );
 }
 
-template<typename T, ExponentApproximationType EAT>
-void ExponentialRelation<T, EAT>::Inverse( const T & y, T & x, T & dx_dy ) const
+template< typename T, ExponentApproximationType EAT >
+void ExponentialRelation< T, EAT >::Inverse( const T & y, T & x, T & dx_dy ) const
 {
-  detail::ExponentialCompute<T, EAT, true>::Compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
+  detail::ExponentialCompute< T, EAT, true >::Compute( m_x0, m_y0, m_alpha, y, x, dx_dy );
 }
 
 } // namespace constitutive

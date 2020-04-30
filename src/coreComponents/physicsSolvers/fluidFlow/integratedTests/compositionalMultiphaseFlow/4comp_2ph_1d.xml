@@ -1,22 +1,20 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
   
     <CompositionalMultiphaseFlow name="compflow"
-                                 verboseLevel="1"
-                                 gravityFlag="1"
+                                 logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="297.15"
                                  useMass="0">
-      <SystemSolverParameters newtonTol="1.0e-6"
-                              maxIterNewton="15"
-                              useDirectSolver="1"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="15"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

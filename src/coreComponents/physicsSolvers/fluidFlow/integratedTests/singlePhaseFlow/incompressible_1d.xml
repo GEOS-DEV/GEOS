@@ -1,20 +1,19 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+
+  <Solvers>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
-                     verboseLevel="0"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
+    <SinglePhaseFVM name="SinglePhaseFlow"
+                    logLevel="0"
+                    discretization="singlePhaseTPFA"
+                    fluidNames="{water}"
+                    solidNames="{rock}"
+                    targetRegions="{Region1}">
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
   </Solvers>
   
   <Mesh>

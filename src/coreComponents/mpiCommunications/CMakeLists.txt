@@ -8,6 +8,7 @@ set(mpiCommunications_headers
     NeighborCommunicator.hpp
     PartitionBase.hpp
     SpatialPartition.hpp
+    NeighborData.hpp
    )
 
 
@@ -52,3 +53,5 @@ blt_add_library( NAME                  mpiCommunications
 target_include_directories( mpiCommunications PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX mpiCommunications )
+
+add_subdirectory( unitTests )

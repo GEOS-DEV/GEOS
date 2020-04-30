@@ -2,26 +2,26 @@
 <Problem>
   
   <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+    gravityVector="0.0, 0.0, 0.0">
 
     <SolidMechanicsLagrangianSSLE name="lagSolve" 
                                   timeIntegrationOption="QuasiStatic"
-                                  verboseLevel="0"
+                                  logLevel="0"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="granite"
+                                  solidMaterialNames="{granite}"
                                   >
+      <NonlinearSolverParameters newtonTol="1.0e-3"
+                                 newtonMaxIter="8"/>
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-3"
-                              maxIterNewton="8"
-                              verbosityFlag="0"/>
+                              logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
-                      solidMaterialName="granite"
+                      solidMaterialNames="{granite}"
                       rockToughness="1e6"
                       nodeBasedSIF="1"
-                      verboseLevel="1"
+                      logLevel="1"
                       discretization="FE1"
                       fractureRegion="Fracture"
                       targetRegions="{Region2}"
@@ -157,14 +157,9 @@
                    values     = "{0.0, 1.0, 1.0}" />
     
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
-
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
+    <Silo name="siloOutput" plotLevel="3" parallelThreads="1" plotFileRoot="simple2D"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
