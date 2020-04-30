@@ -44,10 +44,9 @@ class R1TensorT : public TensorBaseT< T_dim >
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS ******************************************
 
-  /**
-   */
-  GEOSX_HOST_DEVICE
-  R1TensorT( void ): TensorBaseT< T_dim >() {}
+  R1TensorT() = default;
+  R1TensorT( R1TensorT const & ) = default;
+  ~R1TensorT() = default;
 
   /**
    * @param[in] data use for initialization of t_data
@@ -71,11 +70,6 @@ public:
 
   //**** CONSTRUCTORS AND DESTRUCTORS
   // *******************************************
-
-  /**
-   * @param[in] rhs reference to R1TensorT object to use in initialization
-   */
-  R1TensorT( const R1TensorT & rhs ) = default;
 
   /**
    * Explicit constructors - will throw compile-time errors if not called with
@@ -169,9 +163,13 @@ public:
   realT ProductOfSquares() const;
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// subtract inner product of Rank2 tensor with Rank 1 tensor
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// multiply (inner product) transpose Rank2 tensor with Rank 1 tensor
@@ -397,7 +395,9 @@ inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1Tens
  * this->t_data.
  */
 template< int T_dim >
-inline void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
   if( T_dim == 1 )
   {
@@ -414,14 +414,16 @@ inline void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim > & A, const 
     this->t_data[1] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
     this->t_data[2] -= A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
   }
-  else
-    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
+//  else
+//    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
 
 }
 
 
 template< int T_dim >
-inline void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
 {
   if( T_dim == 1 )
   {

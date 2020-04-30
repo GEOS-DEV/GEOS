@@ -78,6 +78,9 @@ public:
    */
   explicit R2SymTensorT( const realT data ): TensorBaseT< SIZE >( data ) {}
 
+  /// default destructor
+  ~R2SymTensorT( void ) = default;
+
   /// copy constructor
   R2SymTensorT( const R2SymTensorT & rhs ) = default;
 
@@ -85,11 +88,13 @@ public:
   { TensorBaseT< SIZE >::operator=( rhs ); }
 
   template< int USD >
+  GEOSX_HOST_DEVICE
   R2SymTensorT( LvArray::ArraySlice< realT const, 1, USD > const & src ):
     TensorBaseT< SIZE >()
   { *this = src; }
 
   template< int USD >
+  GEOSX_HOST_DEVICE
   R2SymTensorT( LvArray::ArraySlice< realT, 1, USD > const & src ):
     TensorBaseT< SIZE >()
   { *this = src; }
@@ -140,6 +145,7 @@ public:
     return *this;
   }
 
+  GEOSX_HOST_DEVICE
   R2SymTensorT & operator+=( const R2SymTensorT & rhs );
 
   template< int USD >
@@ -209,7 +215,9 @@ public:
   friend R2SymTensorT operator*( R2SymTensorT V, realT k ){return static_cast< R2SymTensorT >(V*=k); }
 
   //****** TENSOR OPERATIONS **************************************************
+
   realT Inner( void ) const;
+  GEOSX_HOST_DEVICE
   realT Trace( void ) const;
   realT Det( void ) const;
   realT AijAij( void ) const;
@@ -226,6 +234,7 @@ public:
                                                                                   // compiler
                                                                                   // -
                                                                                   // SW
+
   //  void EigenSystem( realT eigenvals[T_dim] , R1TensorT<T_dim> v[T_dim] )
   // const;
   void EigenVecs( const realT eigenvals[T_dim], R1TensorT< T_dim > v[T_dim] ) const;
@@ -245,6 +254,8 @@ public:
   Inverse( R2SymTensorT & tensor );
 
   /// add identity
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void PlusIdentity( const realT rhs )
   {
 //    int c = 0;
@@ -305,7 +316,6 @@ R2SymTensorT< T_dim >::R2SymTensorT( void ):
   TensorBaseT< SIZE >()
 {}
 
-
 //***** ASSIGNMENT OPERATORS **************************************************
 
 // Assigns all components to an integer
@@ -330,7 +340,9 @@ R2SymTensorT< T_dim >::operator=( const realT & rhs )
 
 
 template< int T_dim >
-inline R2SymTensorT< T_dim > & R2SymTensorT< T_dim >::operator+=( const R2SymTensorT< T_dim > & rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2SymTensorT< T_dim > & R2SymTensorT< T_dim >::operator+=( const R2SymTensorT< T_dim > & rhs )
 {
   TensorBaseT< SIZE >::operator+=( rhs );
   return *this;
@@ -409,7 +421,9 @@ inline realT & R2SymTensorT< T_dim >::operator()( const int i, const int j )
  * This function returns the trace of the tensor that it is called from.
  */
 template< int T_dim >
-inline realT R2SymTensorT< T_dim >::Trace( void ) const
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT R2SymTensorT< T_dim >::Trace( void ) const
 {
   realT trace = 0;
   int c = 0;
@@ -1226,7 +1240,8 @@ inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki( const R2TensorT< T_dim > 
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-inline void R2SymTensorT< T_dim >::QijAjkQlk( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & Q )
+GEOSX_FORCE_INLINE
+void R2SymTensorT< T_dim >::QijAjkQlk( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & Q )
 {
 //  if (T_dim == 2)
 //  {

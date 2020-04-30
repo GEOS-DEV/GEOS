@@ -1,0 +1,10 @@
+memroofs 828.758
+mem_roof_names 'HBM'
+comproofs 7068.86 3535.79
+comp_roof_names 'FMA' 'No-FMA'
+
+# omit the following if only plotting roofs
+AI 2.584785579
+FLOPS 2085.756683
+labels 'FMA, nw=1' 'NoFMA, nw=2'
+
