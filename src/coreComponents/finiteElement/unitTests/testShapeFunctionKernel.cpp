@@ -78,7 +78,7 @@ void testKernelDriver()
   };
 
   forAll< POLICY >( 1,
-                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
+                    [=] GEOSX_HOST_DEVICE ( localIndex const )
   {
     real64 N[numQuadraturePoints][numNodes] = {{0}};
     real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
@@ -111,7 +111,7 @@ void testKernelDriver()
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
 
   forAll< serialPolicy >( 1,
-                          [=] ( localIndex const k )
+                          [=] ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
