@@ -40,9 +40,17 @@ class DomainPartition;
 class ProblemManager : public dataRepository::Group
 {
 public:
+  
+  /**
+   * @param name the name of this object manager
+   * @param parent the parent Group
+   */
   explicit ProblemManager( const std::string & name,
                            Group * const parent );
 
+  /**
+   * @brief Destructor, deletes all Groups and Wrappers owned by this Group
+   */
   ~ProblemManager() override;
 
   /**
@@ -60,62 +68,140 @@ public:
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
+  /**
+   * @brief Creates a new sub-Group using the ObjectCatalog functionality.
+   * @param childKey The name of the new object type's key in the
+   *                 ObjectCatalog.
+   * @param childName The name of the new object in the collection of
+   *                  sub-Groups.
+   * @return A pointer to the new Group created by this function.
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief Parses command line input
+   */
   void ParseCommandLineInput();
 
+  /**
+   * @brief Parses a restart file
+   * @param restartFileName the name of the restart file
+   */
   static bool ParseRestart( std::string & restartFileName );
 
+  /**
+   * @brief Initializes a python interpreter within GEOSX
+   *
+   * Note: This is not regularly used or tested, and may be removed in future versions.
+   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
+   */
   void InitializePythonInterpreter();
 
+  /**
+   * @brief Closes the internal python interpreter
+   *
+   * Note: This is not regularly used or tested, and may be removed in future versions.
+   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
+   */
   void ClosePythonInterpreter();
 
+  /**
+   * @brief Generates the xml schema documentation
+   *
+   * This function is called when the code is called with the -s schema_name option.
+   * Before generating the schema, the code builds up a comprehensive datastructure.
+   * (Note: catalog objects throughout the code will typically be registered via the
+   * ExpandObjectCatalogs method.)  Once ready, SchemaUtilities will recusively walk
+   * through the database, generating the xml schema.
+   */
   void GenerateDocumentation();
 
+  /**
+   * @brief Parses the input xml file
+   *
+   * The name of the input file is indicated via the -i option on the command line
+   */
   void ParseInputFile();
 
+  /**
+   * @brief Generates numerical meshes used throughout the code
+   */
   void GenerateMesh();
 
+  /**
+   * @brief Applies numerical methods to objects throughout the code
+   */
   void ApplyNumericalMethods();
 
+  /**
+   * @brief Defines the order in which objects should be initialized
+   */
   void InitializationOrder( string_array & order ) override final;
 
   /**
-   * Function to setup the problem once the input has been read in, or the values
-   * of the objects in the hierarchy have been sufficently set to generate a
-   * mesh, etc.
+   * @brief Sets up the problem after the input has been read in
    */
   void ProblemSetup();
 
   /**
-   * Run the events in the scheduler.
+   * @brief Run the events in the scheduler.
    */
   void RunSimulation();
 
-
+  /**
+   * @brief After initialization, overwrites data using a restart file
+   */
   void ReadRestartOverwrite();
 
+  /**
+   * @brief Applies initial conditions indicated within the input file FieldSpecifications block
+   */
   void ApplyInitialConditions();
 
+  /**
+   * @brief Returns a pointer to the DomainPartition
+   */
   DomainPartition * getDomainPartition();
+
+  /**
+   * @brief Returns a pointer to the DomainPartition
+   */
   DomainPartition const * getDomainPartition() const;
 
+  /**
+   * @brief Returns the problem name
+   */
   const string & getProblemName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
+  /**
+   * @brief Returns the input file name
+   */
   const string & getInputFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
+  /**
+   * @brief Returns the restart file name
+   */
   const string & getRestartFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
+  /**
+   * @brief Returns the schema file name
+   */
   const string & getSchemaFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
 
+  /// Input file xml document handle
   xmlWrapper::xmlDocument xmlDocument;
+
+  /// Input file parsing results
   xmlWrapper::xmlResult xmlResult;
+
+  /// Input file Problem node handle
   xmlWrapper::xmlNode xmlProblemNode;
 
+  /// Command line input viewKeys
   struct viewKeysStruct
   {
     dataRepository::ViewKey inputFileName            = {"inputFileName"};
@@ -131,6 +217,7 @@ public:
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
   } viewKeys;
 
+  /// Child group viewKeys
   struct groupKeysStruct
   {
 //    constexpr auto eventManager="EventManager";
@@ -147,23 +234,37 @@ public:
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
   } groupKeys;
 
+  /**
+   * @brief Returns the PhysicsSolverManager
+   */
   PhysicsSolverManager & GetPhysicsSolverManager()
   {
     return *m_physicsSolverManager;
   }
 
+  /**
+   * @brief Returns the PhysicsSolverManager
+   */
   PhysicsSolverManager const & GetPhysicsSolverManager() const
   {
     return *m_physicsSolverManager;
   }
 
 protected:
+  /**
+   * @brief Post process the command line input
+   */
   virtual void PostProcessInput() override final;
 
 private:
 
+  /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;
+  
+  /// The EventManager
   EventManager * m_eventManager;
+  
+  /// The FunctionManager
   FunctionManager * m_functionManager;
 };
 
