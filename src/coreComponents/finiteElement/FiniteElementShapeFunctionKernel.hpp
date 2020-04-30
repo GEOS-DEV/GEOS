@@ -296,6 +296,8 @@ public:
     }
 
     return 1.0 / invDetJ;
+#undef CALC_DNDXI
+#undef DNDXI
   }
 
   GEOSX_HOST_DEVICE

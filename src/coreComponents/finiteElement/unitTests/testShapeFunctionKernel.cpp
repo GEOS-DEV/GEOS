@@ -17,18 +17,12 @@
  */
 
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-
+#include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 
 #include <chrono>
-
-namespace
-{
-int global_argc;
-char * * global_argv;
-}
 
 using namespace geosx;
 
@@ -83,8 +77,8 @@ void testKernelDriver()
     {  1.2, 1.1, 1.1 }
   };
 
-  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
-                          [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< POLICY >( 1,
+                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     real64 N[numQuadraturePoints][numNodes] = {{0}};
     real64 dNdX[numQuadraturePoints][numNodes][3] = {{0}};
@@ -116,8 +110,8 @@ void testKernelDriver()
 
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
 
-  RAJA::forall< serialPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, 1 ),
-                                [=] ( localIndex const k )
+  forAll< serialPolicy >( 1,
+                          [=] ( localIndex const k )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
@@ -204,22 +198,12 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  logger::InitializeLogger();
 
-  testing::InitGoogleTest( &argc, argv );
-
-  global_argc = argc;
-  global_argv = new char *[static_cast< unsigned int >( global_argc )];
-  for( int i = 0; i < argc; ++i )
-  {
-    global_argv[i] = argv[i];
-  }
+  basicSetup( argc, argv, false );
 
   int const result = RUN_ALL_TESTS();
 
-  delete[] global_argv;
-
-  logger::FinalizeLogger();
+  basicCleanup();
 
   return result;
 }

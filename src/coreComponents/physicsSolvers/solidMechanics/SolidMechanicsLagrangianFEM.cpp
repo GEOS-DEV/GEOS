@@ -499,7 +499,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
   arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
-\
+
   std::map< string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::Velocity );
   fieldNames["node"].push_back( keys::Acceleration );
