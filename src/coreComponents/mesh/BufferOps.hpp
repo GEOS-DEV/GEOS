@@ -29,8 +29,8 @@ namespace geosx
 namespace bufferOps
 {
   /**
-   * @brief Pack (or size) an OrderedVariableToManyElementRelation
-   *        into a buffer.
+   * @brief Pack (or size) relationship information for specific indices from
+   *        an OrderedVariableToManyElementRelation into a buffer.
    * @tparam DO_PACKING Whether to pack or just return the size of the
    *                    data to be packed.
    * @param buffer A properly-sized buffer to contain the packed data.
@@ -51,7 +51,8 @@ localIndex Pack( buffer_unit_type * & buffer,
                  arrayView1d< localIndex const > const & packList,
                  ElementRegionManager const * const elementRegionManager );
   /**
-   * @brief
+   * @brief Pack (or size) relationship information for specifc indices from
+   *        an FixedToManyElementRelation into a buffer.
    * @tparam DO_PACKING Whether to pack or just return the size of
    *                    the data to be packed.
    * @param buffer A properly-sized buffer to contain the packed data.
@@ -72,7 +73,7 @@ localIndex Pack( buffer_unit_type * & buffer,
                  arrayView1d< localIndex const > const & packList,
                  ElementRegionManager const * const elementRegionManager );
   /**
-   * @brief
+   * @brief Unpack expected indices into an OrderedVariableToManyElementRelation.
    * @param buffer A buffer containing packed data.
    * @param var A relationship to unpack into, maps the indices in the
    *            packList to a list of element information (region, subregion,
@@ -91,7 +92,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag );
   /**
-   * @brief
+   * @brief Unpack expected indices into a FixedToManyElementRelation.
    * @param buffer A buffer containing packed data.
    * @param var A relationship to unpack inot, maps the indices in the
    *            packList to a list of element information (region, subregion,

@@ -61,14 +61,14 @@ public:
   }
 
   /**
-   * @brief Get this cast to BASETYPE const &.
-   * @return The object cast to BASETYPE const &.
+   * @brief Get a reference to this object cast to BASETYPE const.
+   * @return A reference to this object cast to BASETYPE const.
    */
   const base_type & Base() const { return static_cast< const BASETYPE & >(*this); }
 
   /**
-   * @brief Get this cast to BASETYPE &.
-   * @return The object cast to BASETYPE &.
+   * @brief Get a reference to this object cast to BASETYPE.
+   * @return A reference to this object cast to BASETYPE.
    */
   base_type & Base() { return dynamic_cast< BASETYPE & >(*this); }
 
