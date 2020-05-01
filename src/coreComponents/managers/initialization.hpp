@@ -57,6 +57,11 @@ struct CommandLineOptions
   /// But leads to non-reproducible results.
   integer useNonblockingMPI = false;
 
+  /// True iff supress the use of pinned memory buffers
+  /// ( if available ) for MPI communication.
+  /// Generally only used by the integration tests.
+  integer suppressPinned = false;
+
   /// The name of the schema.
   std::string schemaName;
 

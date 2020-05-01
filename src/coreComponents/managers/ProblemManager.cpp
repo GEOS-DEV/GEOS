@@ -172,60 +172,7 @@ void ProblemManager::ProblemSetup()
 
 void ProblemManager::ParseCommandLineInput()
 {
-<<<<<<< HEAD
-  Group * commandLine = GetGroup<Group>(groupKeys.commandLine);
-
-  std::string& inputFileName = commandLine->getReference<std::string>(viewKeys.inputFileName);
-  std::string& restartFileName = commandLine->getReference<std::string>(viewKeys.restartFileName);
-  integer& beginFromRestart = commandLine->getReference<integer>(viewKeys.beginFromRestart);
-  integer& xPartitionsOverride = commandLine->getReference<integer>(viewKeys.xPartitionsOverride);
-  integer& yPartitionsOverride = commandLine->getReference<integer>(viewKeys.yPartitionsOverride);
-  integer& zPartitionsOverride = commandLine->getReference<integer>(viewKeys.zPartitionsOverride);
-  integer& overridePartitionNumbers = commandLine->getReference<integer>(viewKeys.overridePartitionNumbers);
-  integer& useNonblockingMPI = commandLine->getReference<integer>(viewKeys.useNonblockingMPI);
-  integer& suppressPinned = commandLine->getReference<integer>(viewKeys.suppressPinned);
-  std::string& schemaName = commandLine->getReference<std::string>(viewKeys.schemaFileName);
-  std::string& problemName = commandLine->getReference<std::string>(viewKeys.problemName);
-  std::string& outputDirectory = commandLine->getReference<std::string>(viewKeys.outputDirectory);
-  outputDirectory = ".";
-  problemName = "";
-
-
-  // Set the options structs and parse
-  enum optionIndex {UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR};
-  const option::Descriptor usage[] =
-  {
-    {UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:"},
-    {HELP, 0, "?", "help", Arg::None, "\t-?, --help"},
-    {INPUT, 0, "i", "input", Arg::NonEmpty, "\t-i, --input, \t Input xml filename (required)"},
-    {RESTART, 0, "r", "restart", Arg::NonEmpty, "\t-r, --restart, \t Target restart filename"},
-    {XPAR, 0, "x", "xpartitions", Arg::Numeric, "\t-x, --x-partitions, \t Number of partitions in the x-direction"},
-    {YPAR, 0, "y", "ypartitions", Arg::Numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction"},
-    {ZPAR, 0, "z", "zpartitions", Arg::Numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction"},
-    {SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema"},
-    {NONBLOCKING_MPI,0,"b","use-nonblocking", Arg::None,"\t-b, --use-nonblocking, \t Use non-blocking MPI communication"},
-    {SUPPRESS_PINNED,0,"s","suppress-pinned", Arg::None,"\t-s, --suppress-pinned,\t Suppress usage of pinned memory for MPI buffers"},
-    {PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output"},
-    {OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files"},
-    { 0, 0, nullptr, nullptr, nullptr, nullptr}
-  };
-
-  argc -= (argc>0);
-  argv += (argc>0);
-  option::Stats stats(usage, argc, argv);
-  option::Option options[100];//stats.options_max];
-  option::Option buffer[100];//stats.buffer_max];
-  option::Parser parse(usage, argc, argv, options, buffer);
-
-
-  // Handle special cases
-  if (parse.error())
-  {
-    GEOSX_ERROR("Bad input arguments");
-  }
-=======
   Group * commandLine = GetGroup< Group >( groupKeys.commandLine );
->>>>>>> develop
 
   CommandLineOptions const & opts = getCommandLineOptions();
 
