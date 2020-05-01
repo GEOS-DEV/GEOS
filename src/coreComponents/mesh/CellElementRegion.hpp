@@ -39,9 +39,9 @@ class CellElementRegion : public ElementRegionBase
 {
 public:
   /**
-   * @brief constructor
-   * @param name The name of the object in the data hierarchy.
-   * @param parent Pointer to the parent group in the data hierarchy.
+   * @brief Constructor.
+   * @param name the name of the object in the data hierarchy.
+   * @param parent a pointer to the parent group in the data hierarchy.
    */
   CellElementRegion( string const & name, Group * const parent );
 
@@ -58,7 +58,10 @@ public:
   virtual const string getCatalogName() const override final
   { return CellElementRegion::CatalogName(); }
 
-
+  /**
+   * @brief Add a cellBlockRegion name to the list.
+   * @param cellBlockName string containing the cell block region name.
+   */
   void AddCellBlockName( string const & cellBlockName )
   {
     m_cellBlockNames.push_back( cellBlockName );
@@ -66,8 +69,17 @@ public:
 
   virtual void GenerateMesh( Group * const cellBlocks ) override;
 
+  /**
+   * @brief Generate the aggregates.
+   * @param faceManager a pointer to the FaceManager
+   * @param nodeManager a pointer to the NodeManager
+   */
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
 
+  /**
+   * @brief A struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     static constexpr auto coarseningRatioString = "coarseningRatio";
@@ -76,7 +88,11 @@ public:
 
 
 private:
+
+  // Cell block names
   string_array m_cellBlockNames;
+
+  // Coarsening ratio
   real64 m_coarseningRatio;
 
 };
