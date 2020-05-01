@@ -80,7 +80,7 @@ public:
     WEIGHT weight;
   };
 
-  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections; }
+  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections.toViewConst(); }
 
 private:
 

@@ -472,7 +472,7 @@ localIndex ObjectManagerBase::PackSets( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< DOPACK >( buffer,
                                              currentSet,
                                              packList,
-                                             SortedArray< globalIndex >(),
+                                             SortedArray< globalIndex >().toViewConst(),
                                              m_localToGlobalMap );
   }
   return packedSize;

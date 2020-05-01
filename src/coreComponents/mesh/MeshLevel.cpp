@@ -74,15 +74,15 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 {
   NodeManager * const nodeManager = getNodeManager();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager->elementRegionList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager->elementRegionList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager->elementSubRegionList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager->elementList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager->elementList().toViewConst();
 
 
   FaceManager * const faceManager = this->getFaceManager();
-  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
 
   ElementRegionManager * const elemManager = this->getElemManager();
 
