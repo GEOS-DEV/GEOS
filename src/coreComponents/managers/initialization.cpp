@@ -269,7 +269,7 @@ struct Arg : public option::Arg
 void parseCommandLineOptions( int argc, char * * argv )
 {
   // Set the options structs and parse
-  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR, TIMERS };
+  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR, TIMERS };
   const option::Descriptor usage[] =
   {
     { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
