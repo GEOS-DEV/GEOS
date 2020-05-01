@@ -101,8 +101,8 @@ public:
   }
 
 /**
- * @brief Get the subregions belonged to the current element region.
- * @return reference to the group of element subregions
+ * @brief Get a collection of the subregions.
+ * @return a collection of the subregions
  */
   subGroupMap const & GetSubRegions() const
   {
@@ -110,9 +110,11 @@ public:
   }
 
 /**
- * @brief Get the subregions of the element region with the name.
- * @param regionName the name of the region
- * @return the group of thesubgreions
+ * @brief Get a pointer to a subregion by specifying its name.
+ * @tparam SUBREGIONTYPE the type of the subregion
+ * @param regionName the name of the subregion
+ * @return a pointer to the subregion
+ * @note
  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
@@ -130,9 +132,10 @@ public:
   }
 
 /**
- * @brief Get the subregions of the element region with the index.
- * @param index the index of the element region
- * @return the subregion with the specified subregion type
+ * @brief Get a pointer to a subregion by specifying its index.
+ * @tparam SUBREGIONTYPE the type of the subregion
+ * @param index the index of the subregion
+ * @return a pointer to the subregion with the specified subregion type
  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
@@ -150,8 +153,8 @@ public:
   }
 
 /**
- * @brief Get the number of subregions contained in the element region.
- * @return the number of subregions contained in the element region
+ * @brief Get the number of subregions in the region.
+ * @return the number of subregions  in the region
  */
   localIndex numSubRegions() const
   {
@@ -159,8 +162,9 @@ public:
   }
 
 /**
- * @brief Get the number of subregions contained in the element region
- *        for specific subregion types listed in the template.
+ * @brief Get the number of subregions  in the region
+ *        for specific subregion types provided as template arguments.
+ * @tparam SUBREGIONTYPES
  * @return the number of elements contained in the element region
  */
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
@@ -175,7 +179,7 @@ public:
   }
 
 /**
- * @brief Apply LAMBDA to the subregions.
+ * @brief Apply a lambda to all subregions.
  * @param lambda the lambda to be applied
  */
   template< typename LAMBDA >
