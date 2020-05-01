@@ -466,7 +466,7 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+  cxx_utilities::setSignalHandling( []( int const signal ) { cxx_utilities::stackTraceHandler( signal, true ); } );
   cxx_utilities::SetFPE();
 }
 
