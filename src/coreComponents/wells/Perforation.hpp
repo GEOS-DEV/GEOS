@@ -14,7 +14,6 @@
 
 /*
  * @file Perforation.hpp
- *
  */
 
 #ifndef GEOSX_WELLS_PERFORATION_HPP
@@ -44,40 +43,45 @@ class Perforation : public dataRepository::Group
 public:
 
   /**
-   * @brief main constructor for Group Objects
-   * @param name the name of this instantiation of Group in the repository
-   * @param parent the parent group of this instantiation of Group
+   * @brief main constructor for Perforation Objects
+   * @param [in] name the name of this instantiation of Perforation in the repository
+   * @param [in] parent the parent group of this instantiation of Perforation
    */
   explicit Perforation( string const & name, dataRepository::Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
+  /// default destructor
   ~Perforation() override;
 
+  
   /// deleted default constructor
   Perforation() = delete;
 
+  
   /// deleted copy constructor
   Perforation( Perforation const & ) = delete;
 
+  
   /// deleted move constructor
   Perforation( Perforation && ) = delete;
 
+  
   /// deleted assignment operator
   Perforation & operator=( Perforation const & ) = delete;
 
+  
   /// deleted move operator
   Perforation & operator=( Perforation && ) = delete;
 
+  
   /**
-   * @brief Getter for the linear distance between the well head and the perforation
-   * @return the distance between the well head and the perforation
+   * @brief Get the linear distance between the well head and the perforation
+   * @return distance between the well head and the perforation
    */
   real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
 
+  
   /**
-   * @brief Getter for the well Peaceman index at the perforation
+   * @brief Get the well Peaceman index at the perforation
    * @return the well Peaceman index
    */
   real64 GetWellTransmissibility() const { return m_wellTransmissibility; }
@@ -87,10 +91,8 @@ public:
   {
     static constexpr auto distanceFromHeadString  = "distanceFromHead";
     static constexpr auto wellTransmissibilityString = "transmissibility";
-
     dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
     dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };
-
   } viewKeysPerforation;
 
 protected:
@@ -99,10 +101,10 @@ protected:
 
 private:
 
-  // linear distance from well head
+  /// linear distance from well head
   real64 m_distanceFromHead;
 
-  // well index at this perforation
+  /// well index at this perforation
   real64 m_wellTransmissibility;
 
 };
