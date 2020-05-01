@@ -769,8 +769,11 @@ INPUT                  = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
                          @PROJECT_SOURCE_DIR@/coreComponents/common \
                          @CMAKE_BINARY_DIR@/include/common \
                          @PROJECT_SOURCE_DIR@/coreComponents/mesh/FaceManager.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/FaceManager.cpp \
                          @PROJECT_SOURCE_DIR@/coreComponents/mesh/NodeManager.hpp \
-                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/EdgeManager.hpp
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/NodeManager.cpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/EdgeManager.hpp \
+                         @PROJECT_SOURCE_DIR@/coreComponents/mesh/EdgeManager.cpp
 
 
 

@@ -407,9 +407,9 @@ private:
   /// face keyed map containing face-to-element relation
   ElemMapType m_toElements;
 
-  /// map keyed by of packing rejected nodes
+  /// map of global  to local  indices for nodes
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
-  /// map keyed by of packing rejected edges
+  /// map of global  to local  indices for edges
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   /// list of faces area
