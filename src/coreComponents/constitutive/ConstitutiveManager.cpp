@@ -31,7 +31,7 @@ ConstitutiveManager::ConstitutiveManager( string const & name,
                                           Group * const parent ):
   Group( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 ConstitutiveManager::~ConstitutiveManager()
@@ -40,15 +40,15 @@ ConstitutiveManager::~ConstitutiveManager()
 
 Group * ConstitutiveManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<ConstitutiveBase> material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
-  return RegisterGroup<ConstitutiveBase>( childName, std::move( material ) );
+  std::unique_ptr< ConstitutiveBase > material = ConstitutiveBase::CatalogInterface::Factory( childKey, childName, this );
+  return RegisterGroup< ConstitutiveBase >( childName, std::move( material ) );
 }
 
 
 void ConstitutiveManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from ConstitutiveBase here
-  for (auto& catalogIter: ConstitutiveBase::GetCatalog())
+  for( auto & catalogIter: ConstitutiveBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
@@ -63,7 +63,7 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   ConstitutiveBase const * const
   constitutiveRelation = GetConstitutiveRelation( constitutiveRelationInstanceName );
 
-  std::unique_ptr<ConstitutiveBase> material;
+  std::unique_ptr< ConstitutiveBase > material;
   constitutiveRelation->DeliverClone( constitutiveRelationInstanceName, parent, material );
 
   material->AllocateConstitutiveData( parent,
@@ -72,11 +72,18 @@ ConstitutiveManager::HangConstitutiveRelation( string const & constitutiveRelati
   dataRepository::Group * constitutiveGroup = parent->GetGroup( groupKeyStruct::constitutiveModelsString );
   if( constitutiveGroup == nullptr )
   {
-    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString );
+    constitutiveGroup = parent->RegisterGroup( groupKeyStruct::constitutiveModelsString )->
+                          setSizedFromParent( 1 );
+    constitutiveGroup->resize( parent->size() );
   }
 
-  return constitutiveGroup->RegisterGroup<ConstitutiveBase>( constitutiveRelationInstanceName,
-                                                             std::move( material ) );
+
+  ConstitutiveBase * const
+  rval = constitutiveGroup->RegisterGroup< ConstitutiveBase >( constitutiveRelationInstanceName,
+                                                               std::move( material ) );
+  rval->setSizedFromParent( 1 );
+  rval->resize( constitutiveGroup->size() );
+  return rval;
 
 
 }

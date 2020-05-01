@@ -20,9 +20,9 @@ namespace geosx
 using namespace dataRepository;
 
 QuadratureRuleManager::QuadratureRuleManager( string const & name, Group * const parent ):
-  Group(name,parent)
+  Group( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 QuadratureRuleManager::~QuadratureRuleManager()
@@ -33,15 +33,15 @@ QuadratureRuleManager::~QuadratureRuleManager()
 
 Group * QuadratureRuleManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<QuadratureBase> quadrature = QuadratureBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup<QuadratureBase>( childName, std::move(quadrature) );
+  std::unique_ptr< QuadratureBase > quadrature = QuadratureBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup< QuadratureBase >( childName, std::move( quadrature ) );
 }
 
 
 void QuadratureRuleManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from QuadratureBase here
-  for (auto& catalogIter: QuadratureBase::GetCatalog())
+  for( auto & catalogIter: QuadratureBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

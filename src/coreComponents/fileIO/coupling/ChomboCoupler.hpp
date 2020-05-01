@@ -20,18 +20,18 @@
 
 #include <string>
 
-namespace geosx 
+namespace geosx
 {
 
 class ChomboCoupler
 {
 public:
 
-  ChomboCoupler(MPI_Comm const comm, const std::string& outputPath, const std::string& inputPath, MeshLevel& mesh);
+  ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
 
-  void write(double dt);
+  void write( double dt );
 
-  void read(bool usePressures);
+  void read( bool usePressures );
 
 private:
   MPI_Comm const m_comm;
@@ -41,7 +41,7 @@ private:
   std::int64_t m_n_faces_written;
   std::int64_t m_node_offset;
   std::int64_t m_n_nodes_written;
-  MeshLevel& m_mesh;
+  MeshLevel & m_mesh;
   int m_counter;
 };
 

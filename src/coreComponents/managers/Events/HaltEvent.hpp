@@ -34,24 +34,24 @@ class HaltEvent : public EventBase
 {
 public:
   /// Constructor
-  HaltEvent(const std::string& name,
-                Group * const parent);
-  
+  HaltEvent( const std::string & name,
+             Group * const parent );
+
   /// Destructor
   virtual ~HaltEvent() override;
 
   // Catalog name interface
   static string CatalogName() { return "HaltEvent"; }
-  
+
   /**
    * This event is designed to look at the external clock. Currently,
    * if the event is triggered it will set a flag, which will
    * instruct the code to exit.  This is useful for managing walltime
    */
-  virtual void EstimateEventTiming(real64 const time,
-                                   real64 const dt, 
-                                   integer const cycle,
-                                   dataRepository::Group * domain) override;
+  virtual void EstimateEventTiming( real64 const time,
+                                    real64 const dt,
+                                    integer const cycle,
+                                    dataRepository::Group * domain ) override;
 
   /// Timing values
   real64 m_externalStartTime;
@@ -62,7 +62,7 @@ public:
   struct viewKeyStruct
   {
     static constexpr auto maxRuntimeString = "maxRuntime";
-    
+
     dataRepository::ViewKey maxRuntime = { "maxRuntime" };
   } haltEventViewKeys;
 

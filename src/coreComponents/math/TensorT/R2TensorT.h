@@ -37,104 +37,114 @@ template< int T_dim > class R6minSymTensorT;
  * tensor.
  */
 template< int T_dim >
-class R2TensorT : public TensorBaseT< T_dim*T_dim >
+class R2TensorT : public TensorBaseT< T_dim *T_dim >
 {
 public:
   //**** CONSTRUCTORS AND DESTRUCTORS *****************************************
   /// default constructor
   GEOSX_HOST_DEVICE
-  R2TensorT(void);
+  R2TensorT( void );
 
   /**
-     * @param[in] data use for initialization of t_data
+   * @param[in] data use for initialization of t_data
    */
-  explicit R2TensorT( const realT data ): TensorBaseT< T_dim*T_dim >(data) {}
+  explicit R2TensorT( const realT data ): TensorBaseT< T_dim *T_dim >( data ) {}
 
   /// copy constructor
-  R2TensorT(const R2TensorT<T_dim>& rhs) = default;
+  R2TensorT( const R2TensorT< T_dim > & rhs ) = default;
 
   /// constructor initialized by raw data
-  explicit R2TensorT( const realT data[T_dim*T_dim] ): TensorBaseT< T_dim*T_dim >(data){}
+  explicit R2TensorT( const realT data[T_dim*T_dim] ): TensorBaseT< T_dim *T_dim >( data ){}
 
   /// explicit constructors
-  R2TensorT(realT Txx,realT Txy,realT Tyx,realT Tyy);  //2D only - throws error
-                                                       // otherwise
-  R2TensorT(realT Txx,realT Txy,realT Txz,realT Tyx,realT Tyy,realT Tyz,realT Tzx,realT Tzy,realT Tzz); //3D
-                                                                                                        // only
-                                                                                                        // -
-                                                                                                        // throws
-                                                                                                        // error
-                                                                                                        // otherwise
+  R2TensorT( realT Txx, realT Txy, realT Tyx, realT Tyy );  //2D only - throws error
+                                                            // otherwise
+  R2TensorT( realT Txx, realT Txy, realT Txz, realT Tyx, realT Tyy, realT Tyz, realT Tzx, realT Tzy, realT Tzz ); //3D
+                                                                                                                  // only
+                                                                                                                  // -
+                                                                                                                  // throws
+                                                                                                                  // error
+                                                                                                                  // otherwise
+
+  /// non-virtual destructor
+  ~R2TensorT( void ) = default;
 
   //***** ASSIGNMENT OPERATORS ************************************************
   /// assignment of all data to an integer
-  R2TensorT<T_dim>& operator=( const int& rhs );
+  GEOSX_HOST_DEVICE
+  R2TensorT< T_dim > & operator=( const int & rhs );
 
   /// assignment to all data to a realT
   GEOSX_HOST_DEVICE
-  R2TensorT<T_dim>& operator=( const realT& rhs );
+  R2TensorT< T_dim > & operator=( const realT & rhs );
 
   /// assignment to another R2TensorT
-  R2TensorT<T_dim>& operator=( const R2TensorT<T_dim>& rhs ) = default;
+  R2TensorT< T_dim > & operator=( const R2TensorT< T_dim > & rhs ) = default;
 
   /// assignment to another R2SymTensorT
-  R2TensorT<T_dim>& operator=( const R2SymTensorT<T_dim>& rhs );
+  R2TensorT< T_dim > & operator=( const R2SymTensorT< T_dim > & rhs );
 
   /// add another R2SymTensorT
-  R2TensorT<T_dim>& operator+=( const R2SymTensorT<T_dim>& rhs );
+  R2TensorT< T_dim > & operator+=( const R2SymTensorT< T_dim > & rhs );
 
-  R2TensorT& operator+=( const R2TensorT<T_dim>& rhs );
+  GEOSX_HOST_DEVICE
+  R2TensorT & operator+=( const R2TensorT< T_dim > & rhs );
 
   //***** ACCESS OPERATORS ****************************************************
   /// const access to data
-  const realT& operator()( const int i, const int j ) const;
+  GEOSX_HOST_DEVICE
+  const realT & operator()( const int i, const int j ) const;
 
   /// non-const access to data
-  realT& operator()( const int i, const int j );
+  GEOSX_HOST_DEVICE
+  realT & operator()( const int i, const int j );
 
 
   //***** MULTIPLICATION OPERATIONS *******************************************
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
-  void AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  GEOSX_HOST_DEVICE
+  void AijBjk( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
-  void AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  GEOSX_HOST_DEVICE
+  void AijBkj( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
-  void AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  void AjiBjk( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Rank2 tensor with Rank 2 tensor
-  void AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  void AjiBkj( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 2 tensor
-  void AijBjk( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  void AijBjk( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 2 tensor
-  void AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B );
+  GEOSX_HOST_DEVICE
+  void AijBkj( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & B );
 
   /// multiply (inner product) Rank2 tensor with Symmetric Rank 2 tensor
-  void AijBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B );
+  void AijBjk( const R2TensorT< T_dim > & A, const R2SymTensorT< T_dim > & B );
 
   /// multiply (inner product) Rank2 tensor with Symmetric Rank 2 tensor
-  void AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B );
+  void AjiBjk( const R2TensorT< T_dim > & A, const R2SymTensorT< T_dim > & B );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor
   GEOSX_HOST_DEVICE
-  void dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
+  void dyadic_ab( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
 
   /// multiply (dyadic product) Rank1 tensor with itself
-  void dyadic_aa( const R1TensorT<T_dim>& a );
+  void dyadic_aa( const R1TensorT< T_dim > & a );
 
   /// multiply (dyadic product) Rank1 tensor with Rank 1 tensor and add
   GEOSX_HOST_DEVICE
-  void plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b );
+  void plus_dyadic_ab( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
 
-  void FillColumn( const int col, const R1TensorT<T_dim>& a );
-  void AddToColumn( const int col, const R1TensorT<T_dim>& a );
+  void FillColumn( const int col, const R1TensorT< T_dim > & a );
+  void AddToColumn( const int col, const R1TensorT< T_dim > & a );
 
-  void FillRow( const int row, const R1TensorT<T_dim>& a );
-  void AddToRow( const int row, const R1TensorT<T_dim>& a );
+  void FillRow( const int row, const R1TensorT< T_dim > & a );
+  void AddToRow( const int row, const R1TensorT< T_dim > & a );
 
   /*
      /// junk
@@ -149,31 +159,37 @@ public:
    */
   //****** SELF TENSOR OPERATIONS **********************************************
   /// Inner Product
-  realT Inner(void) const;
+  realT Inner( void ) const;
 
   /// Trace
   GEOSX_HOST_DEVICE
-  realT Trace(void) const;
+  realT Trace( void ) const;
 
   /// Determinant
-  realT Det(void) const;
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  realT Det( void ) const;
 
   /// One minus Determinant
-  realT OneMinusDet(void) const;
+  realT OneMinusDet( void ) const;
 
   /// Inverse
-  realT Inverse(void) { return Inverse(*this); }
+  realT Inverse( void ) { return Inverse( *this ); }
 
   /// Inverse
-  realT Inverse( R2TensorT<T_dim>& tensor );
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  realT Inverse( R2TensorT< T_dim > & tensor );
 
   /// Inverse of tensor minus identity
-  R2TensorT<T_dim>& Inverse_I(void) { return Inverse_I(*this); }
+  R2TensorT< T_dim > & Inverse_I( void ) { return Inverse_I( *this ); }
 
   /// Inverse of tensor minus identity
-  R2TensorT<T_dim>& Inverse_I( R2TensorT<T_dim>& tensor );
+  R2TensorT< T_dim > & Inverse_I( R2TensorT< T_dim > & tensor );
 
   /// add a realT to the diagonal
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void PlusIdentity( const realT rhs )
   {
     this->t_data[0] += rhs;
@@ -186,25 +202,25 @@ public:
   void RowSwap( const int i1, const int i2 );
 
   /// Pivot rows to a row-reduced echelon form
-  void RREF(void);
+  void RREF( void );
 
   //***** OUTPUT **************************************************************
   /// print function
-  void print( std::ostream& os ) const;
+  void print( std::ostream & os ) const;
 
   //****** TENSOR TRSNSFORMATION **********************************************
 
-  void Aijkl_to_Bmn( const R4minSymTensorT<3>& A);
+  void Aijkl_to_Bmn( const R4minSymTensorT< 3 > & A );
 
   //***** FRIEND DECLARATIONS *************************************************
   /// declare R2SymTensorT a friend so that it can access t_data directly
-  friend class R2SymTensorT<T_dim>;
+  friend class R2SymTensorT< T_dim >;
 
   /// declare R2TensorT a friend so that it can access t_data directly
-  friend class R1TensorT<T_dim>;
-  friend class R4minSymTensorT<T_dim>;
+  friend class R1TensorT< T_dim >;
+  friend class R4minSymTensorT< T_dim >;
   friend class R4minSymTensorT< 3 >;
-  friend class R6minSymTensorT<T_dim>;
+  friend class R6minSymTensorT< T_dim >;
 
 private:
 
@@ -216,11 +232,11 @@ private:
 
 
 template< int T_dim >
-void R2TensorT<T_dim>::print( std::ostream& os ) const
+void R2TensorT< T_dim >::print( std::ostream & os ) const
 {
-  for( int i=0 ; i<T_dim ; ++i )
-    for( int j=0 ; j<T_dim ; ++j )
-      os<<(*this)(i,j)<<'\t';
+  for( int i=0; i<T_dim; ++i )
+    for( int j=0; j<T_dim; ++j )
+      os<<(*this)( i, j )<<'\t';
 }
 
 
@@ -239,8 +255,8 @@ void R2TensorT<T_dim>::print( std::ostream& os ) const
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-R2TensorT<T_dim>::R2TensorT(void):
-  TensorBaseT< T_dim*T_dim >()
+R2TensorT< T_dim >::R2TensorT( void ):
+  TensorBaseT< T_dim *T_dim >()
 {}
 
 /// Explicit 2D constructor
@@ -248,8 +264,8 @@ R2TensorT<T_dim>::R2TensorT(void):
 /// Template specialisation - if templated on another dimension constructor will
 // throw a compile time error.
 template<>
-inline R2TensorT<2>::R2TensorT(realT Txx,realT Txy,
-                               realT Tyx,realT Tyy):
+inline R2TensorT< 2 >::R2TensorT( realT Txx, realT Txy,
+                                  realT Tyx, realT Tyy ):
   TensorBaseT< 2*2 >()
 {
   this->t_data[0] = Txx;
@@ -264,9 +280,9 @@ inline R2TensorT<2>::R2TensorT(realT Txx,realT Txy,
 /// Template specialisation - if templated on another dimension constructor will
 // throw a compile time error.
 template<>
-inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
-                               realT Tyx,realT Tyy,realT Tyz,
-                               realT Tzx,realT Tzy,realT Tzz):
+inline R2TensorT< 3 >::R2TensorT( realT Txx, realT Txy, realT Txz,
+                                  realT Tyx, realT Tyy, realT Tyz,
+                                  realT Tzx, realT Tzy, realT Tzz ):
   TensorBaseT< 3*3 >()
 {
   this->t_data[0] = Txx;
@@ -287,7 +303,9 @@ inline R2TensorT<3>::R2TensorT(realT Txx,realT Txy,realT Txz,
  * @return non-modifiable reference to the tensor data at index (i,j)
  */
 template< int T_dim >
-inline const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) const
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+const realT & R2TensorT< T_dim >::operator()( const int i, const int j ) const
 {
   return (this->t_data[ i*T_dim + j ]);
 }
@@ -298,7 +316,9 @@ inline const realT& R2TensorT<T_dim>::operator()( const int i, const int j ) con
  * @return modifiable reference to the tensor data at index (i,j)
  */
 template< int T_dim >
-inline realT& R2TensorT<T_dim>::operator()( const int i, const int j )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT & R2TensorT< T_dim >::operator()( const int i, const int j )
 {
   return (this->t_data[ i*T_dim + j ]);
 }
@@ -311,9 +331,11 @@ inline realT& R2TensorT<T_dim>::operator()( const int i, const int j )
  * @return reference to this
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2TensorT< T_dim > & R2TensorT< T_dim >::operator=( const int & rhs )
 {
-  TensorBaseT< T_dim*T_dim >::operator=(rhs);
+  TensorBaseT< T_dim *T_dim >::operator=( rhs );
   return *this;
 }
 
@@ -323,27 +345,28 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const int& rhs )
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const realT& rhs )
+inline R2TensorT< T_dim > & R2TensorT< T_dim >::operator=( const realT & rhs )
 {
-  TensorBaseT< T_dim*T_dim >::operator=(rhs);
+  TensorBaseT< T_dim *T_dim >::operator=( rhs );
   return *this;
 }
+
 
 /**
  * @param[in] rhs symmetic tensor to copy
  * @return reference to *this
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator=( const R2SymTensorT<T_dim>& rhs )
+inline R2TensorT< T_dim > & R2TensorT< T_dim >::operator=( const R2SymTensorT< T_dim > & rhs )
 {
-  for( int i=1 ; i<=T_dim ; ++i )
-    for( int j=1 ; j<=T_dim ; ++j )
-      (*this)(i,j) = rhs(i,j);
+  for( int i=1; i<=T_dim; ++i )
+    for( int j=1; j<=T_dim; ++j )
+      (*this)( i, j ) = rhs( i, j );
 
   return *this;
 }
 template<>
-inline R2TensorT<2>& R2TensorT<2>::operator=( const R2SymTensorT<2>& rhs )
+inline R2TensorT< 2 > & R2TensorT< 2 >::operator=( const R2SymTensorT< 2 > & rhs )
 {
   t_data[0] = rhs.t_data[0];
   t_data[1] = rhs.t_data[1];
@@ -353,7 +376,7 @@ inline R2TensorT<2>& R2TensorT<2>::operator=( const R2SymTensorT<2>& rhs )
   return *this;
 }
 template<>
-inline R2TensorT<3>& R2TensorT<3>::operator=( const R2SymTensorT<3>& rhs )
+inline R2TensorT< 3 > & R2TensorT< 3 >::operator=( const R2SymTensorT< 3 > & rhs )
 {
   t_data[0] = rhs.t_data[0];
   t_data[1] = rhs.t_data[1];
@@ -372,9 +395,11 @@ inline R2TensorT<3>& R2TensorT<3>::operator=( const R2SymTensorT<3>& rhs )
 
 
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2TensorT<T_dim>& rhs )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+R2TensorT< T_dim > & R2TensorT< T_dim >::operator+=( const R2TensorT< T_dim > & rhs )
 {
-  TensorBaseT< T_dim*T_dim >::operator+=(rhs);
+  TensorBaseT< T_dim *T_dim >::operator+=( rhs );
   return *this;
 }
 
@@ -384,11 +409,11 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2TensorT<T_dim>& r
  * @return reference to *this
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>& rhs )
+inline R2TensorT< T_dim > & R2TensorT< T_dim >::operator+=( const R2SymTensorT< T_dim > & rhs )
 {
-  for( int i=1 ; i<=T_dim ; ++i )
-    for( int j=1 ; j<=T_dim ; ++j )
-      (*this)(i,j) += rhs(i,j);
+  for( int i=1; i<=T_dim; ++i )
+    for( int j=1; j<=T_dim; ++j )
+      (*this)( i, j ) += rhs( i, j );
 
   return *this;
 }
@@ -403,7 +428,9 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::operator+=( const R2SymTensorT<T_dim>
  *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT< T_dim >::AijBjk( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
   // int ij;
   // int jk;
@@ -419,17 +446,17 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
 //  }
 //  else if( T_dim == 3 )
 //  {
-    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[3] + A.t_data[2]*B.t_data[6];
-    this->t_data[1] = A.t_data[0]*B.t_data[1] + A.t_data[1]*B.t_data[4] + A.t_data[2]*B.t_data[7];
-    this->t_data[2] = A.t_data[0]*B.t_data[2] + A.t_data[1]*B.t_data[5] + A.t_data[2]*B.t_data[8];
+  this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[3] + A.t_data[2]*B.t_data[6];
+  this->t_data[1] = A.t_data[0]*B.t_data[1] + A.t_data[1]*B.t_data[4] + A.t_data[2]*B.t_data[7];
+  this->t_data[2] = A.t_data[0]*B.t_data[2] + A.t_data[1]*B.t_data[5] + A.t_data[2]*B.t_data[8];
 
-    this->t_data[3] = A.t_data[3]*B.t_data[0] + A.t_data[4]*B.t_data[3] + A.t_data[5]*B.t_data[6];
-    this->t_data[4] = A.t_data[3]*B.t_data[1] + A.t_data[4]*B.t_data[4] + A.t_data[5]*B.t_data[7];
-    this->t_data[5] = A.t_data[3]*B.t_data[2] + A.t_data[4]*B.t_data[5] + A.t_data[5]*B.t_data[8];
+  this->t_data[3] = A.t_data[3]*B.t_data[0] + A.t_data[4]*B.t_data[3] + A.t_data[5]*B.t_data[6];
+  this->t_data[4] = A.t_data[3]*B.t_data[1] + A.t_data[4]*B.t_data[4] + A.t_data[5]*B.t_data[7];
+  this->t_data[5] = A.t_data[3]*B.t_data[2] + A.t_data[4]*B.t_data[5] + A.t_data[5]*B.t_data[8];
 
-    this->t_data[6] = A.t_data[6]*B.t_data[0] + A.t_data[7]*B.t_data[3] + A.t_data[8]*B.t_data[6];
-    this->t_data[7] = A.t_data[6]*B.t_data[1] + A.t_data[7]*B.t_data[4] + A.t_data[8]*B.t_data[7];
-    this->t_data[8] = A.t_data[6]*B.t_data[2] + A.t_data[7]*B.t_data[5] + A.t_data[8]*B.t_data[8];
+  this->t_data[6] = A.t_data[6]*B.t_data[0] + A.t_data[7]*B.t_data[3] + A.t_data[8]*B.t_data[6];
+  this->t_data[7] = A.t_data[6]*B.t_data[1] + A.t_data[7]*B.t_data[4] + A.t_data[8]*B.t_data[7];
+  this->t_data[8] = A.t_data[6]*B.t_data[2] + A.t_data[7]*B.t_data[5] + A.t_data[8]*B.t_data[8];
 //  }
 //  else
 //  {
@@ -458,7 +485,9 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2TensorT
  *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT< T_dim >::AijBkj( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
   if( T_dim == 2 )
   {
@@ -487,12 +516,12 @@ inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT
     int ij;
     int kj;
     int ik;
-    for( int i=1 ; i<=T_dim ; ++i )
-      for( int k=1 ; k<=T_dim ; ++k )
+    for( int i=1; i<=T_dim; ++i )
+      for( int k=1; k<=T_dim; ++k )
       {
         ik =  (i-1)*T_dim + (k-1);
         this->t_data[ik] = 0.0;
-        for( int j=1 ; j<=T_dim ; ++j )
+        for( int j=1; j<=T_dim; ++j )
         {
           ij = (i-1)*T_dim + (j-1);
           kj = (k-1)*T_dim + (j-1);
@@ -511,7 +540,7 @@ inline void R2TensorT<T_dim>::AijBkj( const R2TensorT<T_dim>& A, const R2TensorT
  *\f$A_{ji} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+inline void R2TensorT< T_dim >::AjiBjk( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
   int ji;
   int jk;
@@ -541,12 +570,12 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT
   }
   else
   {
-    for( int i=1 ; i<=T_dim ; ++i )
-      for( int k=1 ; k<=T_dim ; ++k )
+    for( int i=1; i<=T_dim; ++i )
+      for( int k=1; k<=T_dim; ++k )
       {
         ik =  (i-1)*T_dim + (k-1);
         this->t_data[ik] = 0.0;
-        for( int j=1 ; j<=T_dim ; ++j )
+        for( int j=1; j<=T_dim; ++j )
         {
           ji = (j-1)*T_dim + (i-1);
           jk = (j-1)*T_dim + (k-1);
@@ -565,7 +594,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2TensorT
  *\f$A_{ji} B_{kj}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+inline void R2TensorT< T_dim >::AjiBkj( const R2TensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
   int ji;
   int kj;
@@ -595,12 +624,12 @@ inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT
   }
   else
   {
-    for( int i=1 ; i<=T_dim ; ++i )
-      for( int k=1 ; k<=T_dim ; ++k )
+    for( int i=1; i<=T_dim; ++i )
+      for( int k=1; k<=T_dim; ++k )
       {
         ik =  (i-1)*T_dim + (k-1);
         this->t_data[ik] = 0.0;
-        for( int j=1 ; j<=T_dim ; ++j )
+        for( int j=1; j<=T_dim; ++j )
         {
           ji = (j-1)*T_dim + (i-1);
           kj = (k-1)*T_dim + (j-1);
@@ -620,7 +649,7 @@ inline void R2TensorT<T_dim>::AjiBkj( const R2TensorT<T_dim>& A, const R2TensorT
  *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+inline void R2TensorT< T_dim >::AijBjk( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
 
   if( T_dim == 2 )
@@ -647,7 +676,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
   }
   else
   {
-    GEOSX_WARNING("R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 ");
+    GEOSX_WARNING( "R2TensorT::AijBjk(R2SymTensorT,R2TensorT) not implemented for dimension > 3 " );
   }
 }
 
@@ -660,7 +689,9 @@ inline void R2TensorT<T_dim>::AijBjk( const R2SymTensorT<T_dim>& A, const R2Tens
  *\f$A_{ij} B_{kj}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2TensorT<T_dim>& B )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void R2TensorT< T_dim >::AijBkj( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & B )
 {
 //  int ij;
 //  int jk;
@@ -676,17 +707,17 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
 //  }
 //  else if( T_dim == 3 )
 //  {
-    this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1] + A.t_data[3]*B.t_data[2];
-    this->t_data[1] = A.t_data[0]*B.t_data[3] + A.t_data[1]*B.t_data[4] + A.t_data[3]*B.t_data[5];
-    this->t_data[2] = A.t_data[0]*B.t_data[6] + A.t_data[1]*B.t_data[7] + A.t_data[3]*B.t_data[8];
+  this->t_data[0] = A.t_data[0]*B.t_data[0] + A.t_data[1]*B.t_data[1] + A.t_data[3]*B.t_data[2];
+  this->t_data[1] = A.t_data[0]*B.t_data[3] + A.t_data[1]*B.t_data[4] + A.t_data[3]*B.t_data[5];
+  this->t_data[2] = A.t_data[0]*B.t_data[6] + A.t_data[1]*B.t_data[7] + A.t_data[3]*B.t_data[8];
 
-    this->t_data[3] = A.t_data[1]*B.t_data[0] + A.t_data[2]*B.t_data[1] + A.t_data[4]*B.t_data[2];
-    this->t_data[4] = A.t_data[1]*B.t_data[3] + A.t_data[2]*B.t_data[4] + A.t_data[4]*B.t_data[5];
-    this->t_data[5] = A.t_data[1]*B.t_data[6] + A.t_data[2]*B.t_data[7] + A.t_data[4]*B.t_data[8];
+  this->t_data[3] = A.t_data[1]*B.t_data[0] + A.t_data[2]*B.t_data[1] + A.t_data[4]*B.t_data[2];
+  this->t_data[4] = A.t_data[1]*B.t_data[3] + A.t_data[2]*B.t_data[4] + A.t_data[4]*B.t_data[5];
+  this->t_data[5] = A.t_data[1]*B.t_data[6] + A.t_data[2]*B.t_data[7] + A.t_data[4]*B.t_data[8];
 
-    this->t_data[6] = A.t_data[3]*B.t_data[0] + A.t_data[4]*B.t_data[1] + A.t_data[5]*B.t_data[2];
-    this->t_data[7] = A.t_data[3]*B.t_data[3] + A.t_data[4]*B.t_data[4] + A.t_data[5]*B.t_data[5];
-    this->t_data[8] = A.t_data[3]*B.t_data[6] + A.t_data[4]*B.t_data[7] + A.t_data[5]*B.t_data[8];
+  this->t_data[6] = A.t_data[3]*B.t_data[0] + A.t_data[4]*B.t_data[1] + A.t_data[5]*B.t_data[2];
+  this->t_data[7] = A.t_data[3]*B.t_data[3] + A.t_data[4]*B.t_data[4] + A.t_data[5]*B.t_data[5];
+  this->t_data[8] = A.t_data[3]*B.t_data[6] + A.t_data[4]*B.t_data[7] + A.t_data[5]*B.t_data[8];
 //  }
 //  else
 //  {
@@ -703,7 +734,7 @@ inline void R2TensorT<T_dim>::AijBkj( const R2SymTensorT<T_dim>& A, const R2Tens
  *\f$A_{ij} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B )
+inline void R2TensorT< T_dim >::AijBjk( const R2TensorT< T_dim > & A, const R2SymTensorT< T_dim > & B )
 {
 
   if( T_dim == 2 )
@@ -730,7 +761,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    GEOSX_WARNING("R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::AijBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3" );
   }
 }
 
@@ -743,7 +774,7 @@ inline void R2TensorT<T_dim>::AijBjk( const R2TensorT<T_dim>& A, const R2SymTens
  *\f$A_{ji} B_{jk}\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTensorT<T_dim>& B )
+inline void R2TensorT< T_dim >::AjiBjk( const R2TensorT< T_dim > & A, const R2SymTensorT< T_dim > & B )
 {
 
   if( T_dim == 2 )
@@ -770,7 +801,7 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
   }
   else
   {
-    GEOSX_WARNING("R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::AjiBjk(R2TensorT,R2SymTensorT) not implemented for dimension > 3" );
   }
 }
 
@@ -784,7 +815,8 @@ inline void R2TensorT<T_dim>::AjiBjk( const R2TensorT<T_dim>& A, const R2SymTens
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
+GEOSX_FORCE_INLINE
+void R2TensorT< T_dim >::dyadic_ab( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
 {
 //  if( T_dim == 2 )
 //  {
@@ -796,17 +828,17 @@ inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1Tens
 //  }
 //  else if( T_dim == 3 )
 //  {
-    this->t_data[0] = a.t_data[0]*b.t_data[0];
-    this->t_data[1] = a.t_data[0]*b.t_data[1];
-    this->t_data[2] = a.t_data[0]*b.t_data[2];
+  this->t_data[0] = a.t_data[0]*b.t_data[0];
+  this->t_data[1] = a.t_data[0]*b.t_data[1];
+  this->t_data[2] = a.t_data[0]*b.t_data[2];
 
-    this->t_data[3] = a.t_data[1]*b.t_data[0];
-    this->t_data[4] = a.t_data[1]*b.t_data[1];
-    this->t_data[5] = a.t_data[1]*b.t_data[2];
+  this->t_data[3] = a.t_data[1]*b.t_data[0];
+  this->t_data[4] = a.t_data[1]*b.t_data[1];
+  this->t_data[5] = a.t_data[1]*b.t_data[2];
 
-    this->t_data[6] = a.t_data[2]*b.t_data[0];
-    this->t_data[7] = a.t_data[2]*b.t_data[1];
-    this->t_data[8] = a.t_data[2]*b.t_data[2];
+  this->t_data[6] = a.t_data[2]*b.t_data[0];
+  this->t_data[7] = a.t_data[2]*b.t_data[1];
+  this->t_data[8] = a.t_data[2]*b.t_data[2];
 //  }
 //  else
 //  {
@@ -823,7 +855,7 @@ inline void R2TensorT<T_dim>::dyadic_ab( const R1TensorT<T_dim>& a, const R1Tens
  *  \f$\mathbf {a \otimes a}\f$ -or- \f$a_i a_j\f$
  */
 template< int T_dim >
-inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
+inline void R2TensorT< T_dim >::dyadic_aa( const R1TensorT< T_dim > & a )
 {
   if( T_dim == 2 )
   {
@@ -850,7 +882,7 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
   }
   else
   {
-    GEOSX_WARNING("R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension > 3" );
   }
 }
 
@@ -864,7 +896,8 @@ inline void R2TensorT<T_dim>::dyadic_aa( const R1TensorT<T_dim>& a )
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R1TensorT<T_dim>& b )
+GEOSX_FORCE_INLINE
+void R2TensorT< T_dim >::plus_dyadic_ab( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b )
 {
 //  if( T_dim == 2 )
 //  {
@@ -876,17 +909,17 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
 //  }
 //  else if( T_dim == 3 )
 //  {
-    this->t_data[0] += a.t_data[0]*b.t_data[0];
-    this->t_data[1] += a.t_data[0]*b.t_data[1];
-    this->t_data[2] += a.t_data[0]*b.t_data[2];
+  this->t_data[0] += a.t_data[0]*b.t_data[0];
+  this->t_data[1] += a.t_data[0]*b.t_data[1];
+  this->t_data[2] += a.t_data[0]*b.t_data[2];
 
-    this->t_data[3] += a.t_data[1]*b.t_data[0];
-    this->t_data[4] += a.t_data[1]*b.t_data[1];
-    this->t_data[5] += a.t_data[1]*b.t_data[2];
+  this->t_data[3] += a.t_data[1]*b.t_data[0];
+  this->t_data[4] += a.t_data[1]*b.t_data[1];
+  this->t_data[5] += a.t_data[1]*b.t_data[2];
 
-    this->t_data[6] += a.t_data[2]*b.t_data[0];
-    this->t_data[7] += a.t_data[2]*b.t_data[1];
-    this->t_data[8] += a.t_data[2]*b.t_data[2];
+  this->t_data[6] += a.t_data[2]*b.t_data[0];
+  this->t_data[7] += a.t_data[2]*b.t_data[1];
+  this->t_data[8] += a.t_data[2]*b.t_data[2];
 //  }
 //  else
 //  {
@@ -901,7 +934,7 @@ inline void R2TensorT<T_dim>::plus_dyadic_ab( const R1TensorT<T_dim>& a, const R
  */
 template< int T_dim >
 GEOSX_HOST_DEVICE
-inline realT R2TensorT<T_dim>::Trace(void) const
+inline realT R2TensorT< T_dim >::Trace( void ) const
 {
   realT trace=0;
 
@@ -909,7 +942,7 @@ inline realT R2TensorT<T_dim>::Trace(void) const
   {
     trace = this->t_data[0] + this->t_data[3];
   }
-  else if (T_dim==3)
+  else if( T_dim==3 )
   {
     trace = this->t_data[0] + this->t_data[4] + this->t_data[8];
   }
@@ -917,7 +950,7 @@ inline realT R2TensorT<T_dim>::Trace(void) const
   {
     int c=0;
 
-    for( int ii=1 ; ii<=T_dim ; ++ii )
+    for( int ii=1; ii<=T_dim; ++ii )
     {
       trace += this->t_data[c];
       c += T_dim;
@@ -934,7 +967,9 @@ inline realT R2TensorT<T_dim>::Trace(void) const
  * This function returns the determinate of the tensor that it is called from.
  */
 template< int T_dim >
-inline realT R2TensorT<T_dim>::Det(void) const
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT R2TensorT< T_dim >::Det( void ) const
 {
   realT det=0;
   if( T_dim == 2 )
@@ -943,11 +978,6 @@ inline realT R2TensorT<T_dim>::Det(void) const
     det = this->t_data[0]*( this->t_data[4]*(this->t_data[8]) - this->t_data[5]*(this->t_data[7]) )
           - this->t_data[3]*( this->t_data[1]*(this->t_data[8]) - this->t_data[2]*(this->t_data[7]) )
           + this->t_data[6]*( this->t_data[1]*(this->t_data[5]) - this->t_data[2]*(this->t_data[4]) );
-  else
-  {
-    GEOSX_WARNING("R2TensorT::Det() not implemented for dimension > 3");
-  }
-
   return det;
 }
 
@@ -958,7 +988,7 @@ inline realT R2TensorT<T_dim>::Det(void) const
  * with itself
  */
 template< int T_dim >
-inline realT R2TensorT<T_dim>::Inner(void) const
+inline realT R2TensorT< T_dim >::Inner( void ) const
 {
   realT rval=0;
   if( T_dim == 2 )
@@ -972,7 +1002,7 @@ inline realT R2TensorT<T_dim>::Inner(void) const
            + this->t_data[8]*(this->t_data[8]);
   else
   {
-    GEOSX_WARNING("R2TensorT::Inner() not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::Inner() not implemented for dimension > 3" );
   }
 
   return rval;
@@ -989,7 +1019,7 @@ inline realT R2TensorT<T_dim>::Inner(void) const
  * \f$\mathbf{F-I}\f$.
  */
 template< int T_dim >
-inline realT R2TensorT<T_dim>::OneMinusDet(void) const
+inline realT R2TensorT< T_dim >::OneMinusDet( void ) const
 {
   realT One_Det=0;
   if( T_dim == 2 )
@@ -1004,7 +1034,7 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
               - ( this->t_data[2]*(this->t_data[3])*(this->t_data[7]) + this->t_data[1]*(this->t_data[5])*(this->t_data[6]) );
   else
   {
-    GEOSX_WARNING("R2TensorT::Det() not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::Det() not implemented for dimension > 3" );
   }
 
   return One_Det;
@@ -1018,7 +1048,9 @@ inline realT R2TensorT<T_dim>::OneMinusDet(void) const
  */
 template< int T_dim >
 //R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
-inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+realT R2TensorT< T_dim >::Inverse( R2TensorT< T_dim > & a )
 {
   realT const o1 = a.t_data[4] * a.t_data[8] - a.t_data[5] * a.t_data[7];
   realT const o2 = a.t_data[2] * a.t_data[7] - a.t_data[1] * a.t_data[8];
@@ -1033,8 +1065,8 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
   realT const det = a.t_data[0] * o1 + a.t_data[3] * o2 + a.t_data[6] * o3;
 
   realT const tol = 1.0e-14 * a.MaxVal();
-  GEOSX_ERROR_IF(std::abs(det) <= tol, "Tolerance error. |det| = " << std::abs(det) << ", tol = " << tol);
-  
+  GEOSX_ERROR_IF( std::abs( det ) <= tol, "Tolerance error. |det| = " << std::abs( det ) << ", tol = " << tol );
+
   realT const o11 = 1.0 / det;
 
   this->t_data[0] = o1 * o11;
@@ -1060,10 +1092,10 @@ inline realT R2TensorT<T_dim>::Inverse( R2TensorT<T_dim>& a )
  * Assigns Value of (*this) to Inverse(F) - I
  */
 template< int T_dim >
-inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
+inline R2TensorT< T_dim > & R2TensorT< T_dim >::Inverse_I( R2TensorT< T_dim > & a )
 {
 
-  if (T_dim == 2)
+  if( T_dim == 2 )
   {
     /* temps - incase matrix is *this */
     realT A0 = a.t_data[0];
@@ -1078,11 +1110,11 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
     this->t_data[2] =-A2*idet;
     this->t_data[3] =  ( A0 + one_det ) * idet;
   }
-  else if (T_dim == 3)
+  else if( T_dim == 3 )
   {
-    realT A11,A12,A13,
-          A21,A22,A23,
-          A31,A32,A33;
+    realT A11, A12, A13,
+          A21, A22, A23,
+          A31, A32, A33;
     const realT one_det = a.OneMinusDet();
     const realT idet = 1.0/( 1.0 - one_det );
 
@@ -1109,14 +1141,14 @@ inline R2TensorT<T_dim>& R2TensorT<T_dim>::Inverse_I( R2TensorT<T_dim>& a )
   }
   else
   {
-    GEOSX_WARNING("R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3");
+    GEOSX_WARNING( "R2TensorT::Inverse( R2TensorT ) not implemented for dimension > 3" );
   }
   return *this;
 }
 
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::FillColumn( const int col, const R1TensorT<T_dim>& a )
+inline void R2TensorT< T_dim >::FillColumn( const int col, const R1TensorT< T_dim > & a )
 {
   this->t_data[0+col]       = a.t_data[0];
   this->t_data[T_dim+col]   = a.t_data[1];
@@ -1124,7 +1156,7 @@ inline void R2TensorT<T_dim>::FillColumn( const int col, const R1TensorT<T_dim>&
 }
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::AddToColumn( const int col, const R1TensorT<T_dim>& a )
+inline void R2TensorT< T_dim >::AddToColumn( const int col, const R1TensorT< T_dim > & a )
 {
   this->t_data[0+col]       += a.t_data[0];
   this->t_data[T_dim+col]   += a.t_data[1];
@@ -1133,7 +1165,7 @@ inline void R2TensorT<T_dim>::AddToColumn( const int col, const R1TensorT<T_dim>
 
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::FillRow( const int row, const R1TensorT<T_dim>& a )
+inline void R2TensorT< T_dim >::FillRow( const int row, const R1TensorT< T_dim > & a )
 {
   this->t_data[row*T_dim+1] = a.t_data[0];
   this->t_data[row*T_dim+2] = a.t_data[1];
@@ -1141,7 +1173,7 @@ inline void R2TensorT<T_dim>::FillRow( const int row, const R1TensorT<T_dim>& a 
 }
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::AddToRow( const int row, const R1TensorT<T_dim>& a )
+inline void R2TensorT< T_dim >::AddToRow( const int row, const R1TensorT< T_dim > & a )
 {
   this->t_data[row*T_dim+1] += a.t_data[0];
   this->t_data[row*T_dim+2] += a.t_data[1];
@@ -1150,15 +1182,15 @@ inline void R2TensorT<T_dim>::AddToRow( const int row, const R1TensorT<T_dim>& a
 
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::RREF( void )
+inline void R2TensorT< T_dim >::RREF( void )
 {
   int pivot_row;
   realT pivot_val;
 
-  for( int i=1 ; i<=T_dim ; ++i )
+  for( int i=1; i<=T_dim; ++i )
   {
     pivot_val = 0;
-    for( int ii=1 ; ii<=T_dim ; ++ii )
+    for( int ii=1; ii<=T_dim; ++ii )
     {
       int index = (ii-1)*T_dim + (i-1);
       if( this->t_data[index] > pivot_val )
@@ -1172,18 +1204,18 @@ inline void R2TensorT<T_dim>::RREF( void )
 
 }
 
-template<int T_dim>
-inline void R2TensorT<T_dim>::Aijkl_to_Bmn( const R4minSymTensorT<3>& A)
+template< int T_dim >
+inline void R2TensorT< T_dim >::Aijkl_to_Bmn( const R4minSymTensorT< 3 > & A )
 {
   int n_dim = 6;
 
-  if (T_dim!=6)
-    GEOSX_WARNING( "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6");
+  if( T_dim!=6 )
+    GEOSX_WARNING( "R2TensorT<T_dim>::Aijkl_to_Bmn not implemented for T_dim /= 6" );
   else
   {
-    for(int ii=0,m=0,j=0 ; m<n_dim ; m+=++ii)
+    for( int ii=0, m=0, j=0; m<n_dim; m+=++ii )
     {
-      for(int i=0, c=m ; c<n_dim ; c+=(++i)+1+ii, ++j)
+      for( int i=0, c=m; c<n_dim; c+=(++i)+1+ii, ++j )
       {
         this->t_data[j*n_dim ] = A.t_data[ 0+c];
         this->t_data[j*n_dim+1] = A.t_data[12+c];
@@ -1201,13 +1233,13 @@ inline void R2TensorT<T_dim>::Aijkl_to_Bmn( const R4minSymTensorT<3>& A)
 //**** META-PROGRAMS **********************************************************
 
 template< int T_dim >
-inline void R2TensorT<T_dim>::RowSwap( const int i1, const int i2 )
+inline void R2TensorT< T_dim >::RowSwap( const int i1, const int i2 )
 {
   realT temp;
   int index1 = (i1-1) * T_dim;
   int index2 = (i2-1) * T_dim;
 
-  for( int i=0 ; i<T_dim ; ++i )
+  for( int i=0; i<T_dim; ++i )
   {
     temp = this->t_data[index1+i];
     this->t_data[index1+i] = this->t_data[index2+i];
@@ -1219,32 +1251,32 @@ inline void R2TensorT<T_dim>::RowSwap( const int i1, const int i2 )
 #ifdef SIG_FIG_TRUNC
 
 template< int T_dim >
-void R2TensorT<T_dim>::SetMaxVal( const R2TensorT<T_dim>& A )
+void R2TensorT< T_dim >::SetMaxVal( const R2TensorT< T_dim > & A )
 {
   if( T_dim == 3 )
   {
-    if( fabs(A.t_data[0]) > (this->t_data[0]) )
-      this->t_data[0] = fabs(A.t_data[0]);
-    if( fabs(A.t_data[1]) > (this->t_data[1]) )
-      this->t_data[1] = fabs(A.t_data[1]);
-    if( fabs(A.t_data[2]) > (this->t_data[2]) )
-      this->t_data[2] = fabs(A.t_data[2]);
-    if( fabs(A.t_data[3]) > (this->t_data[3]) )
-      this->t_data[3] = fabs(A.t_data[3]);
-    if( fabs(A.t_data[4]) > (this->t_data[4]) )
-      this->t_data[4] = fabs(A.t_data[4]);
-    if( fabs(A.t_data[5]) > (this->t_data[5]) )
-      this->t_data[5] = fabs(A.t_data[5]);
-    if( fabs(A.t_data[6]) > (this->t_data[6]) )
-      this->t_data[6] = fabs(A.t_data[6]);
-    if( fabs(A.t_data[7]) > (this->t_data[7]) )
-      this->t_data[7] = fabs(A.t_data[7]);
-    if( fabs(A.t_data[8]) > (this->t_data[8]) )
-      this->t_data[8] = fabs(A.t_data[8]);
+    if( fabs( A.t_data[0] ) > (this->t_data[0]) )
+      this->t_data[0] = fabs( A.t_data[0] );
+    if( fabs( A.t_data[1] ) > (this->t_data[1]) )
+      this->t_data[1] = fabs( A.t_data[1] );
+    if( fabs( A.t_data[2] ) > (this->t_data[2]) )
+      this->t_data[2] = fabs( A.t_data[2] );
+    if( fabs( A.t_data[3] ) > (this->t_data[3]) )
+      this->t_data[3] = fabs( A.t_data[3] );
+    if( fabs( A.t_data[4] ) > (this->t_data[4]) )
+      this->t_data[4] = fabs( A.t_data[4] );
+    if( fabs( A.t_data[5] ) > (this->t_data[5]) )
+      this->t_data[5] = fabs( A.t_data[5] );
+    if( fabs( A.t_data[6] ) > (this->t_data[6]) )
+      this->t_data[6] = fabs( A.t_data[6] );
+    if( fabs( A.t_data[7] ) > (this->t_data[7]) )
+      this->t_data[7] = fabs( A.t_data[7] );
+    if( fabs( A.t_data[8] ) > (this->t_data[8]) )
+      this->t_data[8] = fabs( A.t_data[8] );
 
   }
   else
-    GEOSX_WARNING("R1TensorT not implemented for nsdof>3");
+    GEOSX_WARNING( "R1TensorT not implemented for nsdof>3" );
 
 }
 #endif

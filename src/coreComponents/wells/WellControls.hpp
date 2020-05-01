@@ -38,7 +38,7 @@ static constexpr auto wellControls = "WellControls";
  * @class WellControls
  *
  * This class describes the controls used to operate a well
- */  
+ */
 class WellControls : public dataRepository::Group
 {
 public:
@@ -66,7 +66,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   explicit WellControls( string const & name, dataRepository::Group * const parent );
-  
+
   /**
    * @brief default destructor
    */
@@ -76,7 +76,7 @@ public:
   WellControls() = delete;
 
   /// deleted copy constructor
-  WellControls( WellControls const &) = delete;
+  WellControls( WellControls const & ) = delete;
 
   /// deleted move constructor
   WellControls( WellControls && ) = delete;
@@ -142,7 +142,7 @@ public:
    * @param the index of the component
    * @return the global component fraction for component ic
    */
-  real64 GetInjectionStream( localIndex ic ) const;
+  arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
 
   void Debug() const;
 
@@ -150,15 +150,13 @@ public:
   {
 
     static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
-    static constexpr auto refWellElemDepthString = "referenceDepth";
     static constexpr auto typeString             = "type";
     static constexpr auto controlString          = "control";
     static constexpr auto targetBHPString        = "targetBHP";
     static constexpr auto targetRateString       = "targetRate";
     static constexpr auto injectionStreamString  = "injectionStream";
-    
+
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
-    dataRepository::ViewKey referenceDepth  = { refWellElemDepthString };
     dataRepository::ViewKey type            = { typeString };
     dataRepository::ViewKey control         = { controlString };
     dataRepository::ViewKey targetBHP       = { targetBHPString };
@@ -167,7 +165,7 @@ public:
 
   } viewKeysWellControls;
 
-protected: 
+protected:
 
   virtual void PostProcessInput() override;
 
@@ -180,17 +178,16 @@ private:
   Type m_type;
 
   /// reference index
-  real64 m_refWellElemDepth; // not used yet
   localIndex m_refWellElemIndex;
 
   /// well controls
-  string  m_inputControlString;
+  string m_inputControlString;
   Control m_currentControl;
-  real64  m_targetBHP;
-  real64  m_targetRate;
- 
+  real64 m_targetBHP;
+  real64 m_targetRate;
+
   /// global component fraction at the injector
-  array1d<real64>  m_injectionStream;
+  array1d< real64 >  m_injectionStream;
 
 };
 

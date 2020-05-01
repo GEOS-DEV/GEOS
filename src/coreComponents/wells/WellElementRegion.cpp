@@ -27,15 +27,15 @@ using namespace dataRepository;
 
 WellElementRegion::WellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent ),
-  m_subRegionName(name+"uniqueSubRegion"),
-  m_wellControlsName(""),
-  m_wellGeneratorName("")
+  m_subRegionName( name+"uniqueSubRegion" ),
+  m_wellControlsName( "" ),
+  m_wellGeneratorName( "" )
 {
-  registerWrapper( viewKeyStruct::wellControlsString,  &m_wellControlsName,  false );
-  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName, false );
+  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellGeneratorString, &m_wellGeneratorName );
 
   this->GetGroup( viewKeyStruct::elementSubRegions )
-      ->RegisterGroup<WellElementSubRegion>( m_subRegionName );
+    ->RegisterGroup< WellElementSubRegion >( m_subRegionName );
 
 }
 
@@ -43,18 +43,18 @@ WellElementRegion::~WellElementRegion()
 {}
 
 
-void WellElementRegion::GenerateWell( MeshLevel & mesh, 
+void WellElementRegion::GenerateWell( MeshLevel & mesh,
                                       InternalWellGenerator const & wellGeometry,
                                       globalIndex nodeOffsetGlobal,
                                       globalIndex elemOffsetGlobal )
 {
   // get the (unique) subregion
-  WellElementSubRegion * const 
+  WellElementSubRegion * const
   subRegion = this->GetGroup( ElementRegionBase::viewKeyStruct::elementSubRegions )
-                  ->GetGroup<WellElementSubRegion>( m_subRegionName );
+                ->GetGroup< WellElementSubRegion >( m_subRegionName );
 
-  GEOSX_ERROR_IF( subRegion == nullptr, 
-                 "Well subRegion " << this->m_subRegionName << " not found in well region " << getName() );
+  GEOSX_ERROR_IF( subRegion == nullptr,
+                  "Well subRegion " << this->m_subRegionName << " not found in well region " << getName() );
   subRegion->SetWellControlsName( m_wellControlsName );
 
   PerforationData * const perforationData = subRegion->GetPerforationData();
@@ -63,26 +63,25 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
   globalIndex const numElemsGlobal        = wellGeometry.GetNumElements();
   globalIndex const numPerforationsGlobal = wellGeometry.GetNumPerforations();
 
-
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  perforationData->ConnectToMeshElements( mesh, wellGeometry );
+  subRegion->ConnectPerforationsToMeshElements( mesh, wellGeometry );
 
   globalIndex const matchedPerforations = MpiWrapper::Sum( perforationData->size() );
-  GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal, 
-                 "Invalid mapping perforation-to-element in well " << this->getName() );
+  GEOSX_ERROR_IF( matchedPerforations != numPerforationsGlobal,
+                  "Invalid mapping perforation-to-element in well " << this->getName() );
 
 
   // 2) classify well elements based on connectivity to local mesh partition
-  array1d<integer> elemStatusGlobal( numElemsGlobal );
+  array1d< integer > elemStatusGlobal( numElemsGlobal );
   elemStatusGlobal = WellElementSubRegion::WellElemStatus::UNOWNED;
 
-  arrayView1d<globalIndex const> const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
+  arrayView1d< globalIndex const > const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
 
-  for (localIndex iperfGlobal = 0; iperfGlobal < numPerforationsGlobal; ++iperfGlobal)
+  for( localIndex iperfGlobal = 0; iperfGlobal < numPerforationsGlobal; ++iperfGlobal )
   {
     globalIndex const iwelemGlobal = perfElemIdGlobal[iperfGlobal];
 
-    if (perforationData->m_globalToLocalMap.count( iperfGlobal ) > 0)
+    if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
       elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
     }
@@ -94,22 +93,22 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
 
   // 3) select the local well elements and mark boundary nodes (for ghosting)
-  subRegion->Generate( mesh, 
-                       wellGeometry, 
-                       elemStatusGlobal, 
-                       nodeOffsetGlobal, 
+  subRegion->Generate( mesh,
+                       wellGeometry,
+                       elemStatusGlobal,
+                       nodeOffsetGlobal,
                        elemOffsetGlobal );
 
 
   // 4) find out which rank is the owner of the top segment
   localIndex const refElemIdLocal = subRegion->GetTopWellElementIndex();
 
-  array1d<localIndex> allRankTopElem;
+  array1d< localIndex > allRankTopElem;
   MpiWrapper::allGather( refElemIdLocal, allRankTopElem );
   int topRank = -1;
-  for (int irank = 0; irank < allRankTopElem.size(); ++irank)
+  for( int irank = 0; irank < allRankTopElem.size(); ++irank )
   {
-    if (allRankTopElem[irank] >= 0)
+    if( allRankTopElem[irank] >= 0 )
     {
       GEOSX_ASSERT( topRank < 0 );
       topRank = irank;
@@ -120,9 +119,9 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
 
   // 5) construct the local perforation to well element map
-  perforationData->ConnectToWellElements( wellGeometry, 
-                                          subRegion->m_globalToLocalMap, 
-                                          elemOffsetGlobal );  
+  perforationData->ConnectToWellElements( wellGeometry,
+                                          subRegion->globalToLocalMap(),
+                                          elemOffsetGlobal );
 
 }
 

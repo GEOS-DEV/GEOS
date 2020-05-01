@@ -30,7 +30,15 @@ if (EXISTS ${CONDUIT_DIR})
                         INCLUDES ${CONDUIT_INCLUDE_DIRS}
                         LIBRARIES conduit_relay
                         TREAT_INCLUDES_AS_SYSTEM ON )
-                        
+  
+  # Removes link to Thread library (removes "-pthread" when linking to relay)                      
+  get_target_property(_relay_libraries conduit_relay INTERFACE_LINK_LIBRARIES)
+  set(_new_relay_libraries)
+  string(REPLACE "Threads::Threads;" "" _new_relay_libraries "${_relay_libraries}")
+  set_target_properties (conduit_relay 
+                         PROPERTIES INTERFACE_LINK_LIBRARIES 
+                         "${_new_relay_libraries}" )
+
   set( CONDUIT_FOUND ON CACHE BOOL "" )
   set( thirdPartyLibs ${thirdPartyLibs} conduit conduit_blueprint conduit_relay )
 else()
@@ -42,11 +50,6 @@ endif()
 # AXOM
 ################################
 include(${CMAKE_SOURCE_DIR}/cmake/thirdparty/FindATK.cmake)
-
-################################
-# PTHREADS
-################################
-find_package(Threads)
 
 ################################
 # HDF5
@@ -110,7 +113,7 @@ blt_register_library( NAME raja
                       LIBRARIES ${RAJA_LIBRARY}
                       TREAT_INCLUDES_AS_SYSTEM ON )
 
-set( thirdPartyLibs ${thirdPartyLibs} raja )  
+set( thirdPartyLibs ${thirdPartyLibs} raja )
 
 ################################
 # CHAI
@@ -159,58 +162,46 @@ set( thirdPartyLibs ${thirdPartyLibs} fparser )
 endif()
 
 ################################
-# CALIPER
+# CALIPER and Adiak
 ################################
-if( ENABLE_CALIPER )
-    message( STATUS "setting up caliper" )
+if(ENABLE_CALIPER)
+    if(NOT EXISTS ${ADIAK_DIR})
+        set(ADIAK_DIR ${GEOSX_TPL_DIR}/adiak)
+    endif()
 
-    if( EXISTS ${CALIPER_DIR} )
-        message( STATUS "Found system caliper" )
-        message( STATUS "Using system CALIPER found at ${CALIPER_DIR}")
-        set(CALIPER_FOUND TRUE)    
-    else()
-        message(STATUS "Using CALIPER from thirdPartyLibs")
+    message(STATUS "Using adiak at ${ADIAK_DIR}")
+
+    find_package(adiak REQUIRED
+                 PATHS ${ADIAK_DIR}/lib/cmake/adiak)
+
+    blt_register_library(NAME adiak
+                         INCLUDES ${adiak_INCLUDE_DIRS}
+                         LIBRARIES ${adiak_LIBRARIES}
+                         TREAT_INCLUDES_AS_SYSTEM ON)
+
+    set(thirdPartyLibs ${thirdPartyLibs} adiak)
+
+    if(NOT EXISTS ${CALIPER_DIR})
         set(CALIPER_DIR ${GEOSX_TPL_DIR}/caliper)
-        set(CALIPER_FOUND TRUE)
     endif()
 
-    find_path( CALIPER_INCLUDE_DIRS caliper/Caliper.h
-            PATHS  ${CALIPER_DIR}/include
-            NO_DEFAULT_PATH
-            NO_CMAKE_ENVIRONMENT_PATH
-            NO_CMAKE_PATH
-            NO_SYSTEM_ENVIRONMENT_PATH
-            NO_CMAKE_SYSTEM_PATH)
+    message(STATUS "Using caliper at ${CALIPER_DIR}")
 
-    if( ENABLE_MPI )
-      set( caliper_lib_list caliper-mpi caliper )
+    find_package(caliper REQUIRED
+                 PATHS ${CALIPER_DIR}/share/cmake/caliper)
+ 
+    if(ENABLE_MPI)
+        set(caliper_LIBRARIES caliper-mpi)
     else()
-      set( caliper_lib_list caliper )
+        set(caliper_LIBRARIES caliper)
     endif()
 
-    message(STATUS "looking for libs in ${CALIPER_DIR}")
-    blt_find_libraries( FOUND_LIBS CALIPER_LIBRARIES
-                        NAMES ${caliper_lib_list}
-                        PATHS ${CALIPER_DIR}/lib ${CALIPER_DIR}/lib64
-                    )
+    blt_register_library(NAME caliper
+                         INCLUDES ${caliper_INCLUDE_PATH}
+                         LIBRARIES ${caliper_LIBRARIES}
+                         TREAT_INCLUDES_AS_SYSTEM ON)
 
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(CALIPER  DEFAULT_MSG
-                                    CALIPER_INCLUDE_DIRS
-                                    CALIPER_LIBRARIES )
-
-    if (NOT CALIPER_FOUND)
-        message(FATAL_ERROR "CALIPER not found in ${CALIPER_DIR}. Maybe you need to build it")
-    else() 
-        message(STATUS "CALIPER_INCLUDE_DIRS = ${CALIPER_INCLUDE_DIRS}")
-        message(STATUS "CALIPER_LIBRARIES = ${CALIPER_LIBRARIES}")    
-    endif()
-    blt_register_library( NAME caliper
-                        INCLUDES ${CALIPER_INCLUDE_DIRS}
-                        LIBRARIES ${CALIPER_LIBRARIES}
-                        TREAT_INCLUDES_AS_SYSTEM ON )
-
-    set( thirdPartyLibs ${thirdPartyLibs} caliper )  
+    set(thirdPartyLibs ${thirdPartyLibs} caliper)
 endif()
 
 ################################

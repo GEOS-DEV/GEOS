@@ -38,7 +38,7 @@ public:
 
   void DeliverClone( string const & name,
                      Group * const parent,
-                     std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -48,9 +48,9 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-  virtual void StateUpdatePointPressure(real64 const & pres,
-                                        localIndex const k,
-                                        localIndex const q) override final;
+  virtual void StateUpdatePointPressure( real64 const & pres,
+                                         localIndex const k,
+                                         localIndex const q ) override final;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
@@ -69,15 +69,15 @@ private:
   /// reference pressure parameter
   real64 m_referencePressure;
 
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
+  array2d< real64 > m_poreVolumeMultiplier;
+  array2d< real64 > m_dPVMult_dPressure;
 
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
+  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
 };
 
-inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure(real64 const & pres,
-                                                                  localIndex const k,
-                                                                  localIndex const q)
+inline void PoreVolumeCompressibleSolid::StateUpdatePointPressure( real64 const & pres,
+                                                                   localIndex const k,
+                                                                   localIndex const q )
 {
   m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
 }

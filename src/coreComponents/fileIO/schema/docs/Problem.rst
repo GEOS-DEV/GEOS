@@ -3,6 +3,7 @@
 =================== ==== ================ ============================== 
 Name                Type Default          Description                    
 =================== ==== ================ ============================== 
+Benchmarks          node unique           :ref:`XML_Benchmarks`          
 Constitutive        node unique           :ref:`XML_Constitutive`        
 ElementRegions      node unique           :ref:`XML_ElementRegions`      
 Events              node unique, required :ref:`XML_Events`              

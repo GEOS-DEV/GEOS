@@ -20,18 +20,18 @@
 #include "Kinematics.h"
 namespace geosx
 {
-void IncrementalKinematics( const R2TensorT<3>& A,
-                            R2SymTensorT<3>& Dadt,
-                            R2TensorT<3>& Rhat )
+void IncrementalKinematics( const R2TensorT< 3 > & A,
+                            R2SymTensorT< 3 > & Dadt,
+                            R2TensorT< 3 > & Rhat )
 {
-  R2SymTensorT<3> C_I;
-  R2SymTensorT<3> C_I2;
+  R2SymTensorT< 3 > C_I;
+  R2SymTensorT< 3 > C_I2;
   //static R2SymTensorT<3> C_I3 ;
 //  static R2TensorT<3> Amod ;
 //  static R2TensorT<3> UhatA ;
 
-  C_I.AijAkj_m_Aik_m_Aki(A);
-  C_I2.AijAjk(C_I);
+  C_I.AijAkj_m_Aik_m_Aki( A );
+  C_I2.AijAjk( C_I );
   //C_I3.AijBjk(C_I2,C_I);
 
   C_I *= -0.5;
@@ -73,39 +73,39 @@ void IncrementalKinematics( const R2TensorT<3>& A,
 
 }
 
-void IncrementalRotation( const R2TensorT<3>& A,
-                          R2TensorT<3>& Rot )
+void IncrementalRotation( const R2TensorT< 3 > & A,
+                          R2TensorT< 3 > & Rot )
 {
 //  realT alpha[3];
-  R1TensorT<3> alpha;
+  R1TensorT< 3 > alpha;
 
-  alpha.eijkAjk(A);
+  alpha.eijkAjk( A );
 //  alpha *=-1.0;
 
-  realT Q = 0.25 * Dot(alpha,alpha);
+  realT Q = 0.25 * Dot( alpha, alpha );
 
 
   realT trA = A.Trace();
   realT trFhatinv_1 = ( 2.0 - trA );
   realT P = 0.25 * pow( trFhatinv_1, 2 );
 
-  realT P2 = pow(P,2);
+  realT P2 = pow( P, 2 );
   realT P3 = P2*P;
 
-  realT Q2 = pow(Q,2);
+  realT Q2 = pow( Q, 2 );
 
   realT PpQ = P + Q;
-  realT PpQ2 = pow(PpQ,2);
+  realT PpQ2 = pow( PpQ, 2 );
   realT PpQ3 = PpQ2*PpQ;
 
   realT term1 = sqrt( std::max( P + 3*P2*(1-PpQ)/PpQ2  - 2*P3*(1-PpQ)/PpQ3, 0.0 ) );
 
   realT term2 = 0;
 
-  if( fabs(Q) > 0.01 )
+  if( fabs( Q ) > 0.01 )
   {
     if( trFhatinv_1 > 0.0 )
-      term2 = (1.0 - trFhatinv_1 / fabs(trFhatinv_1) * term1) / ( 4*Q );
+      term2 = (1.0 - trFhatinv_1 / fabs( trFhatinv_1 ) * term1) / ( 4*Q );
     else
       term2 = (1.0) / ( 4*Q );
 
@@ -116,18 +116,18 @@ void IncrementalRotation( const R2TensorT<3>& A,
 
   realT term3 = 0.5 * sqrt( ( P*Q*(3.0-Q) + P3 + Q2 ) / PpQ3 );
 
-  Rot.dyadic_aa(alpha);
+  Rot.dyadic_aa( alpha );
   Rot *= term2;
-  Rot.PlusIdentity(term1);
+  Rot.PlusIdentity( term1 );
 
   alpha *= term3;
 
-  Rot(0,1) += alpha(2);
-  Rot(0,2) -= alpha(1);
-  Rot(1,2) += alpha(0);
-  Rot(1,0) -= alpha(2);
-  Rot(2,0) += alpha(1);
-  Rot(2,1) -= alpha(0);
+  Rot( 0, 1 ) += alpha( 2 );
+  Rot( 0, 2 ) -= alpha( 1 );
+  Rot( 1, 2 ) += alpha( 0 );
+  Rot( 1, 0 ) -= alpha( 2 );
+  Rot( 2, 0 ) += alpha( 1 );
+  Rot( 2, 1 ) -= alpha( 0 );
 
 /*
     Rot.t_data[1] += alpha.t_data[2];

@@ -36,15 +36,16 @@
  * TensorBaseT defines basic operations on the data for use by the derived
  * class.
  */
-template<int T_length>
+template< int T_length >
 class TensorBaseT
 {
 
-  friend std ::istream& operator>>(std::istream& in, TensorBaseT<T_length>& t){
+  friend std ::istream & operator>>( std::istream & in, TensorBaseT< T_length > & t )
+  {
     realT *tp = t.Data();
-    for(int ii = 0 ; ii < T_length ; ++ii)
+    for( int ii = 0; ii < T_length; ++ii )
     {
-      while(in.peek() == ',' || in.peek() == ' ')
+      while( in.peek() == ',' || in.peek() == ' ' )
       {
         in.ignore();
       }
@@ -54,11 +55,12 @@ class TensorBaseT
     return in;
   }
 
-  friend std ::ostream& operator<<(std::ostream& out, const TensorBaseT<T_length>& t){
+  friend std ::ostream & operator<<( std::ostream & out, const TensorBaseT< T_length > & t )
+  {
     const realT *tp = t.Data();
-    for(int ii = 0 ; ii < T_length ; ++ii)
+    for( int ii = 0; ii < T_length; ++ii )
     {
-      if(ii > 0) out << " ";
+      if( ii > 0 ) out << " ";
       out << tp[ii];
     }
     return out;
@@ -73,56 +75,69 @@ public:
   TensorBaseT( void );
 
   /// constructor initialized by single value
+  GEOSX_HOST_DEVICE
   explicit TensorBaseT( const realT data );
 
   /// constructor initialized by raw data
+  GEOSX_HOST_DEVICE
   explicit TensorBaseT( const realT data[T_length] );
 
   /// constructor initialized by another TensorBaseT object
-  TensorBaseT( const TensorBaseT< T_length >& rhs ) = default;
+  TensorBaseT( const TensorBaseT< T_length > & rhs ) = default;
+
+  /// non-virtual destructor. This means that this class in NOT intended to be
+  /// used as a polymorphically.
+  ~TensorBaseT() = default;
 
   //***** ASSIGNMENT OPERATORS *************************************************
   /// assignment of all data to an integer
   GEOSX_HOST_DEVICE
-  TensorBaseT& operator=( const int& rhs );
+  TensorBaseT & operator=( const int & rhs );
 
   /// assignment to all data to a realT
   GEOSX_HOST_DEVICE
-  TensorBaseT& operator=( const realT& rhs );
+  TensorBaseT & operator=( const realT & rhs );
 
   /// assignment to another TensorBaseT
-  TensorBaseT& operator=( const TensorBaseT& rhs ) = default;
+  TensorBaseT & operator=( const TensorBaseT & rhs ) = default;
 
   /// add a realT to data
-  TensorBaseT& operator+=( const realT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator+=( const realT & rhs );
 
   /// subtract a realT from data
-  TensorBaseT& operator-=( const realT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator-=( const realT & rhs );
 
   /// multiply each entry in t_data by a realT
-  TensorBaseT& operator*=( const realT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator*=( const realT & rhs );
 
   /// divide each entry in t_data by a realT
-  TensorBaseT& operator/=( const realT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator/=( const realT & rhs );
 
   /// add another tensor
   GEOSX_HOST_DEVICE
-  TensorBaseT& operator+=( const TensorBaseT& rhs );
+  TensorBaseT & operator+=( const TensorBaseT & rhs );
 
   /// subtract a tensor
   GEOSX_HOST_DEVICE
-  TensorBaseT& operator-=( const TensorBaseT& rhs );
+  TensorBaseT & operator-=( const TensorBaseT & rhs );
 
   /// multiply by a tensor (data component by component)
-  TensorBaseT& operator*=( const TensorBaseT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator*=( const TensorBaseT & rhs );
 
   /// divide by a tensor (data component by component)
-  TensorBaseT& operator/=( const TensorBaseT& rhs );
+  GEOSX_HOST_DEVICE
+  TensorBaseT & operator/=( const TensorBaseT & rhs );
 
-  bool operator<( const TensorBaseT& rhs ) const
+
+  bool operator<( const TensorBaseT & rhs ) const
   {
     bool rval = true;
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
     {
       if( t_data[i] >= rhs.t_data[i] )
       {
@@ -132,10 +147,10 @@ public:
     return rval;
   }
 
-  bool operator<=( const TensorBaseT< T_length >& rhs ) const
+  bool operator<=( const TensorBaseT< T_length > & rhs ) const
   {
     bool rval = true;
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
     {
       if( t_data[i] > rhs.t_data[i] )
       {
@@ -144,11 +159,11 @@ public:
     }
     return rval;
   }
-  
-  bool operator>( const TensorBaseT< T_length >& rhs ) const
+
+  bool operator>( const TensorBaseT< T_length > & rhs ) const
   {
     bool rval = true;
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
     {
       if( t_data[i] <= rhs.t_data[i] )
       {
@@ -158,10 +173,10 @@ public:
     return rval;
   }
 
-  bool operator>=( const TensorBaseT< T_length >& rhs ) const
+  bool operator>=( const TensorBaseT< T_length > & rhs ) const
   {
     bool rval = true;
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
     {
       if( t_data[i] < rhs.t_data[i] )
       {
@@ -171,9 +186,9 @@ public:
     return rval;
   }
 
-  bool operator==( const TensorBaseT< T_length >& rhs ) const
+  bool operator==( const TensorBaseT< T_length > & rhs ) const
   {
-    for (int i = 0; i < T_length; ++i)
+    for( int i = 0; i < T_length; ++i )
     {
       if( (t_data[i] > rhs.t_data[i]) || (t_data[i] < rhs.t_data[i]) )
       {
@@ -185,25 +200,28 @@ public:
 
 
   /// function to add the product of a scalar and tensor
-  inline void plus_cA( const realT& c, const TensorBaseT< T_length >& A )
+  GEOSX_HOST_DEVICE
+  inline void plus_cA( const realT & c, const TensorBaseT< T_length > & A )
   {
-    for (int i = 0 ; i < T_length ; ++i)
-      t_data[i] += c * A.t_data[i];
+    for( int i = 0; i < T_length; ++i )
+      t_data[i] = t_data[i] + c * A.t_data[i];
 
   }
 
   /// function to take the product of a scalar and tensor
-  inline void cA( const realT& c, const TensorBaseT< T_length >& A )
+  GEOSX_HOST_DEVICE
+  inline void cA( const realT & c, const TensorBaseT< T_length > & A )
   {
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
       t_data[i] = c * A.t_data[i];
 
   }
 
   /// function to take the quotient of a tensor by a scalar
-  inline void Adivc( const realT& c, const TensorBaseT< T_length >& A )
+  GEOSX_HOST_DEVICE
+  inline void Adivc( const realT & c, const TensorBaseT< T_length > & A )
   {
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
       t_data[i] = A.t_data[i] / c;
 
   }
@@ -211,19 +229,20 @@ public:
   //***** OUTPUT **************************************************************
 
   /// function to cast data array to float
+  GEOSX_HOST_DEVICE
   void CastDataToFloat( float rval[T_length] ) const
   {
-    for( int a=0 ; a<T_length ; ++a )
+    for( int a=0; a<T_length; ++a )
     {
-      rval[a] = static_cast<float>(t_data[a]);
+      rval[a] = static_cast< float >(t_data[a]);
     }
   }
 
-  inline void StrVal(const std::string& str)
+  inline void StrVal( const std::string & str )
   {
-    std::istringstream iss(str, std::istringstream::in);
-    for ( int i = 0 ; i < T_length ; i++ )
-      GEOSX_ERROR_IF(!(iss >> t_data[i]), "Error");
+    std::istringstream iss( str, std::istringstream::in );
+    for( int i = 0; i < T_length; i++ )
+      GEOSX_ERROR_IF( !(iss >> t_data[i]), "Error" );
   }
 
 /*
@@ -249,7 +268,7 @@ public:
    * @brief returns a non-const realT* which points to t_data
    */
   GEOSX_HOST_DEVICE inline constexpr
-  realT* Data( void )
+  realT * Data( void )
   {
     return t_data;
   }
@@ -259,7 +278,7 @@ public:
    * @brief gives a const realT* which points to t_data
    */
   GEOSX_HOST_DEVICE inline constexpr
-  const realT* Data( void ) const
+  const realT * Data( void ) const
   {
     return t_data;
   }
@@ -268,7 +287,7 @@ public:
    * @return gives a non-const realT* which points to t_data
    * @brief returns a non-const realT* which points to t_data
    */
-  realT* begin( void )
+  realT * begin( void )
   {
     return t_data;
   }
@@ -277,7 +296,8 @@ public:
    * @return gives a const realT* which points to t_data
    * @brief gives a const realT* which points to t_data
    */
-  const realT* begin( void ) const
+  GEOSX_HOST_DEVICE
+  const realT * begin( void ) const
   {
     return t_data;
   }
@@ -288,7 +308,8 @@ public:
    * @brief returns a non-const realT* which points to the past-the-end element
    * of t_data
    */
-  realT* end( void )
+  GEOSX_HOST_DEVICE
+  realT * end( void )
   {
     return t_data+T_length;
   }
@@ -299,7 +320,8 @@ public:
    * @brief gives a const realT* which points to the past-the-end element of
    * t_data
    */
-  const realT* end( void ) const
+  GEOSX_HOST_DEVICE
+  const realT * end( void ) const
   {
     return t_data+T_length;
   }
@@ -320,11 +342,13 @@ public:
    * @return the maximum single value in the t_data
    * @brief gives the maximum single value in the t_data
    */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   realT MaxVal( void ) const
   {
     realT rval = 0;
-    for (int i = 0 ; i < T_length ; ++i)
-      if (fabs( t_data[i] ) > rval)
+    for( int i = 0; i < T_length; ++i )
+      if( fabs( t_data[i] ) > rval )
         rval = fabs( t_data[i] );
     return rval;
   }
@@ -335,31 +359,31 @@ public:
    */
   realT MinVal( void ) const
   {
-    realT rval = std::numeric_limits<realT>::max();
-    for (int i = 0 ; i < T_length ; ++i)
-      if (fabs( t_data[i] ) < rval)
+    realT rval = std::numeric_limits< realT >::max();
+    for( int i = 0; i < T_length; ++i )
+      if( fabs( t_data[i] ) < rval )
         rval = fabs( t_data[i] );
     return rval;
   }
 
-  void SetMax( const TensorBaseT<T_length>& newval )
+  void SetMax( const TensorBaseT< T_length > & newval )
   {
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
       t_data[i] = (t_data[i] < newval.t_data[i]) ? newval.t_data[i] : t_data[i];
   }
 
-  void SetMin( const TensorBaseT<T_length>& newval )
+  void SetMin( const TensorBaseT< T_length > & newval )
   {
-    for (int i = 0 ; i < T_length ; ++i)
+    for( int i = 0; i < T_length; ++i )
       t_data[i] = (t_data[i] > newval.t_data[i]) ? newval.t_data[i] : t_data[i];
   }
 
   friend inline
   GEOSX_HOST_DEVICE
-  realT Dot( const TensorBaseT<T_length>& A,  const TensorBaseT<T_length>& B )
+  realT Dot( const TensorBaseT< T_length > & A, const TensorBaseT< T_length > & B )
   {
     realT rval = 0;
-    for( int i=0 ; i<T_length ; ++i )
+    for( int i=0; i<T_length; ++i )
     {
       rval += A.t_data[i] * B.t_data[i];
     }
@@ -385,22 +409,21 @@ private:
 /**
  * @return none
  */
-template<int T_length>
+template< int T_length >
 GEOSX_HOST_DEVICE
 TensorBaseT< T_length >::TensorBaseT( void )//:
 {
   *this = 0.0;
 }
 
-
 /**
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
-template<int T_length>
+template< int T_length >
 TensorBaseT< T_length >::TensorBaseT( const realT data )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] = data;
 }
 
@@ -408,10 +431,10 @@ TensorBaseT< T_length >::TensorBaseT( const realT data )
  * @param[in] data naked array used for initialization of t_data
  * @return none
  */
-template<int T_length>
+template< int T_length >
 TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] = data[i];
 }
 
@@ -421,12 +444,12 @@ TensorBaseT< T_length >::TensorBaseT( const realT data[T_length] )
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
-template<int T_length>
-GEOSX_HOST_DEVICE
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator=( const int& rhs )
+template< int T_length >
+GEOSX_FORCE_INLINE
+TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator=( const int & rhs )
 {
-  operator=( static_cast< realT > ( rhs ) );
+  operator=( static_cast< realT >( rhs ) );
   return *this;
 }
 
@@ -434,32 +457,34 @@ TensorBaseT< T_length >::operator=( const int& rhs )
  * @param[in] rhs value to set each member of t_data to
  * @return none
  */
-template<int T_length>
+template< int T_length >
+GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator=( const realT& rhs )
+TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator=( const realT & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] = rhs;
   return *this;
 }
+
 
 /**
  * @param[in] rhs value to add to t_data
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator+=( const realT& rhs )
+template< int T_length >
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator+=( const realT & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] += rhs;
   return *this;
 }
 
 template<>
-inline TensorBaseT< 3 >&
-TensorBaseT<3>::operator+=( const realT& rhs )
+inline TensorBaseT< 3 > &
+TensorBaseT< 3 >::operator+=( const realT & rhs )
 {
   t_data[0] += rhs;
   t_data[1] += rhs;
@@ -471,11 +496,11 @@ TensorBaseT<3>::operator+=( const realT& rhs )
  * @param[in] rhs value to subtract from t_data
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator-=( const realT& rhs )
+template< int T_length >
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator-=( const realT & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] -= rhs;
   return *this;
 }
@@ -484,18 +509,20 @@ TensorBaseT< T_length >::operator-=( const realT& rhs )
  * @param[in] rhs value to multiply t_data with
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator*=( const realT& rhs )
+template< int T_length >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator*=( const realT & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] *= rhs;
   return *this;
 }
 
 template<>
-inline TensorBaseT< 3 >&
-TensorBaseT<3>::operator*=( const realT& rhs )
+inline TensorBaseT< 3 > &
+TensorBaseT< 3 >::operator*=( const realT & rhs )
 {
   t_data[0] *= rhs;
   t_data[1] *= rhs;
@@ -507,9 +534,9 @@ TensorBaseT<3>::operator*=( const realT& rhs )
  * @param[in] rhs value to divide t_data with
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator/=( const realT& rhs )
+template< int T_length >
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator/=( const realT & rhs )
 {
   const realT irhs = 1 / rhs;
   operator*=( irhs );
@@ -520,11 +547,12 @@ TensorBaseT< T_length >::operator/=( const realT& rhs )
  * @param[in] rhs tensor to add
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator+=( const TensorBaseT< T_length >& rhs )
+template< int T_length >
+GEOSX_FORCE_INLINE
+TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator+=( const TensorBaseT< T_length > & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] += rhs.t_data[i];
   return *this;
 }
@@ -532,8 +560,8 @@ TensorBaseT< T_length >::operator+=( const TensorBaseT< T_length >& rhs )
 
 template<>
 GEOSX_HOST_DEVICE
-inline TensorBaseT< 3 >&
-TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
+inline TensorBaseT< 3 > &
+TensorBaseT< 3 >::operator+=( const TensorBaseT< 3 > & rhs )
 {
   t_data[0] += rhs.t_data[0];
   t_data[1] += rhs.t_data[1];
@@ -545,12 +573,12 @@ TensorBaseT<3>::operator+=( const TensorBaseT< 3 >& rhs )
  * @param[in] rhs tensor to subract
  * @return none
  */
-template<int T_length>
+template< int T_length >
 GEOSX_HOST_DEVICE
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length >& rhs )
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length > & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] -= rhs.t_data[i];
   return *this;
 }
@@ -559,11 +587,11 @@ TensorBaseT< T_length >::operator-=( const TensorBaseT< T_length >& rhs )
  * @param[in] rhs tensor to multiply by
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator*=( const TensorBaseT< T_length >& rhs )
+template< int T_length >
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator*=( const TensorBaseT< T_length > & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] *= rhs.t_data[i];
   return *this;
 }
@@ -572,11 +600,11 @@ TensorBaseT< T_length >::operator*=( const TensorBaseT< T_length >& rhs )
  * @param[in] rhs tensor to divide by
  * @return none
  */
-template<int T_length>
-inline TensorBaseT< T_length >&
-TensorBaseT< T_length >::operator/=( const TensorBaseT< T_length >& rhs )
+template< int T_length >
+inline TensorBaseT< T_length > &
+TensorBaseT< T_length >::operator/=( const TensorBaseT< T_length > & rhs )
 {
-  for (int i = 0 ; i < T_length ; ++i)
+  for( int i = 0; i < T_length; ++i )
     t_data[i] /= rhs.t_data[i];
   return *this;
 }

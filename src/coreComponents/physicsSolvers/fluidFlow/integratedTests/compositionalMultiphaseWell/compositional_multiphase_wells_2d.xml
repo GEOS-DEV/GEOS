@@ -3,24 +3,24 @@
 
   <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <CompositionalMultiphaseReservoir name="reservoirSystem"
                flowSolverName="compositionalMultiphaseFlow"
                wellSolverName="compositionalMultiphaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
-      <NonlinearSolverParameters newtonTol="1.0e-4"
+      <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </CompositionalMultiphaseReservoir>
     
     <CompositionalMultiphaseFlow name="compositionalMultiphaseFlow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region1}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="297.15"
                                  useMass="0">
     </CompositionalMultiphaseFlow>
@@ -29,29 +29,26 @@
     <CompositionalMultiphaseWell name="compositionalMultiphaseWell"
                                  logLevel="1"
                                  targetRegions="{wellRegion1,wellRegion2,wellRegion3}"
-                                 wellFluidName="fluid1"
-                                 wellRelPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 relPermNames="{relperm}"
                                  wellTemperature="297.15"
                                  useMass="0">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="4e6"
-                      targetRate="1"
-                      referenceDepth="0.5"/>
+                      targetRate="1"/>
         <WellControls name="wellControls2"
                       type="producer"
                       control="BHP"
                       targetBHP="4e6"
-                      targetRate="1"
-                      referenceDepth="0.5"/>
+                      targetRate="1"/>
         <WellControls name="wellControls3"
                       type="injector"
                       control="BHP" 
                       targetBHP="1e7"
                       targetRate="1e4" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"
-                      referenceDepth="0.5"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
  <!-- SPHINX_COMP_WELL_SOLVER_END -->
     
@@ -77,17 +74,14 @@
                                         {14.5, 0.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="14"
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="14"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="11"
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="11"/> 
         <Perforation name="producer1_perf3"
-                     distanceFromHead="8"
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="8"/> 
     </InternalWell> 
 
     <InternalWell name="well_producer2"
@@ -99,17 +93,14 @@
                                         { 0.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
-                     distanceFromHead="14."
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="14."/> 
         <Perforation name="producer2_perf2"
-                     distanceFromHead="10"
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="10"/> 
         <Perforation name="producer2_perf3"
-                     distanceFromHead="6"
-                     transmissibility="5e-11"/> 
+                     distanceFromHead="6"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -119,14 +110,12 @@
                   polylineNodeCoords="{ {0.5,   0.5, 0.5  }, 
                                         {14.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.5"
-                     transmissibility="1e-9"/> 
+                     distanceFromHead="19.5"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="10.45"
-                     transmissibility="1e-9"/> 
+                     distanceFromHead="10.45"/> 
     </InternalWell> 
 
   </Mesh>

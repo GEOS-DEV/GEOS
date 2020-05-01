@@ -7,10 +7,10 @@
                                  logLevel="0"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region2}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 capPressureName="cappressure"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
+                                 capPressureNames="{cappressure}"
                                  temperature="297.15"
                                  useMass="1">
                                  

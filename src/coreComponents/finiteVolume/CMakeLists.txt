@@ -9,6 +9,7 @@ set( finiteVolume_headers
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
+     HybridFVMInnerProduct.hpp
    )
 #
 # Specify all sources
@@ -20,6 +21,7 @@ set( finiteVolume_sources
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
      TwoPointFluxApproximation.cpp
+     HybridFVMInnerProduct.cpp     
    )
 
 if ( BUILD_OBJ_LIBS )

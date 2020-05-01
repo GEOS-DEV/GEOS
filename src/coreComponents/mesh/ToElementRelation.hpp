@@ -36,7 +36,7 @@ public:
   ToElementRelation();
   ~ToElementRelation();
 
-  template< typename... DIMS >
+  template< typename ... DIMS >
   void resize( DIMS... newdims );
 
   localIndex size() const
@@ -67,32 +67,29 @@ public:
 };
 
 template< typename BASETYPE >
-ToElementRelation<BASETYPE>::ToElementRelation():
+ToElementRelation< BASETYPE >::ToElementRelation():
   m_toElementRegion(),
   m_toElementSubRegion(),
   m_toElementIndex(),
-  m_elemRegionManager(nullptr)
-{
-
-}
+  m_elemRegionManager( nullptr )
+{}
 
 template< typename BASETYPE >
-ToElementRelation<BASETYPE>::~ToElementRelation()
-{
-}
+ToElementRelation< BASETYPE >::~ToElementRelation()
+{}
 
 
 template< typename BASETYPE >
-template< typename... DIMS >
-void ToElementRelation<BASETYPE>::resize( DIMS... newdims )
+template< typename ... DIMS >
+void ToElementRelation< BASETYPE >::resize( DIMS... newdims )
 {
-  m_toElementRegion.resize(newdims...);
-  m_toElementSubRegion.resize(newdims...);
-  m_toElementIndex.resize(newdims...);
+  m_toElementRegion.resize( newdims ... );
+  m_toElementSubRegion.resize( newdims ... );
+  m_toElementIndex.resize( newdims ... );
 }
 
-typedef ToElementRelation<array2d<localIndex>> FixedToManyElementRelation;
-typedef ToElementRelation<ArrayOfArrays<localIndex> > OrderedVariableToManyElementRelation;
+typedef ToElementRelation< array2d< localIndex > > FixedToManyElementRelation;
+typedef ToElementRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyElementRelation;
 
 void erase( OrderedVariableToManyElementRelation & relation,
             localIndex const firstIndex,

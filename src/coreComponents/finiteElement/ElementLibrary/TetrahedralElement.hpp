@@ -34,15 +34,18 @@ public:
 
   static string CatalogName() { return "C3D4"; }
 
-  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+               arraySlice1d< localIndex const, -1 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
-  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
+  void reinit( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+               arraySlice1d< localIndex const, 0 > const & mapped_support_points ) override
   { return reinitPrivate( X, mapped_support_points ); }
 
 private:
   template< int USD >
-  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const, USD > const & mapped_support_points )
+  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const,
+                                                                                                          USD > const & mapped_support_points )
   {
     const unsigned int q = 0;
 
@@ -81,13 +84,16 @@ private:
     //
     //6V=x21 (y23 z34 - y34 z23) + x32 (y34 z12 - y12 z34) + x43 (y12 z23 - y23
     // z12),
-    V = (X( n1, 0 ) - X( n0, 0 )) * ((X( n1, 1 ) - X( n2, 1 )) * (X( n2, 2 ) - X( n3, 2 )) - (X( n2, 1 ) - X( n3, 1 )) * (X( n1, 2 ) - X( n2, 2 ))) + (X( n2, 0 ) - X( n1, 0 )) *
+    V = (X( n1, 0 ) - X( n0, 0 )) * ((X( n1, 1 ) - X( n2, 1 )) * (X( n2, 2 ) - X( n3, 2 )) - (X( n2, 1 ) - X( n3, 1 )) * (X( n1, 2 ) - X( n2, 2 ))) + (X( n2,
+                                                                                                                                                          0 ) -
+                                                                                                                                                       X( n1,
+                                                                                                                                                          0 )) *
         ((X( n2, 1 ) - X( n3, 1 )) * (X( n0, 2 ) - X( n1, 2 )) - (X( n0, 1 ) - X( n1, 1 )) * (X( n2, 2 ) - X( n3, 2 ))) + (X( n3, 0 ) - X( n2, 0 )) *
         ((X( n0, 1 ) - X( n1, 1 )) * (X( n1, 2 ) - X( n2, 2 )) - (X( n1, 1 ) - X( n2, 1 )) * (X( n0, 2 ) - X( n1, 2 )));
     V *= sixth;
 
     data[q].jacobian_determinant = V;
-    for( int iNd=0 ; iNd<4 ; ++iNd )
+    for( int iNd=0; iNd<4; ++iNd )
     {
       data[ q ].mapped_gradients( iNd, 0 ) = a[ iNd ] * sixth / data[ q ].jacobian_determinant;
       data[ q ].mapped_gradients( iNd, 1 ) = b[ iNd ] * sixth / data[ q ].jacobian_determinant;
