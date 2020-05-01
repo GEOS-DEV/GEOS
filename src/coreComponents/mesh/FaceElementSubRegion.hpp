@@ -48,6 +48,11 @@ public:
   using FaceMapType = InterObjectRelation< array2d< localIndex > >;
 
   /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+  
+  /**
    * @brief Get catalog name.
    * @return the catalog name
    */
@@ -63,6 +68,13 @@ public:
     return FaceElementSubRegion::CatalogName();
   }
 
+  ///@}
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
   /**
    * @brief Constructor.
    * @param name the group name
@@ -73,6 +85,13 @@ public:
 
   virtual ~FaceElementSubRegion() override;
 
+  ///@}
+
+  /**
+   * @name Geometry computation / Connectivity
+   */
+  ///@{
+  
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override;
   /**
@@ -83,6 +102,13 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
+  ///@}
+
+  /**
+   * @name Overriding packing / Unpacking functions
+   */
+  ///@{
+  
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -97,6 +123,8 @@ public:
 
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
+  ///@}
+  
   /**
    * @brief Function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
    * @param faceManager The face manager group
@@ -150,7 +178,7 @@ public:
   ///@{
 
   /**
-   * @brief Get face element to nodes map.
+   * @brief Get the face element to nodes map.
    * @return the face element to node map
    */
   NodeMapType const & nodeList() const
@@ -167,7 +195,7 @@ public:
   }
 
   /**
-   * @brief Get face element to edges map.
+   * @brief Get the face element to edges map.
    * @return The face element to edge map
    */
   EdgeMapType const & edgeList() const
@@ -184,7 +212,7 @@ public:
   }
 
   /**
-   * @brief Get face element to faces map.
+   * @brief Get the face element to faces map.
    * @return the face element to edges map
    */
   FaceMapType const & faceList() const
@@ -259,41 +287,42 @@ public:
   /// Unmapped face elements to faces map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
-  /// The map between the face elements and the cells
+  /// Map between the face elements and the cells
   FixedToManyElementRelation m_faceElementsToCells;
 
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
 private:
+
   /**
-   * @brief Packs maps to other objects.
-   * @tparam DOPACK
-   * @param buffer
-   * @param packList
-   * @return a localIndex.
+   * @brief Pack element-to-node and element-to-face maps
+   * @tparam the flag for the bufferOps::Pack function
+   * @param buffer the buffer used in the bufferOps::Pack function
+   * @param packList the packList used in the bufferOps::Pack function
+   * @return the pack size
    */
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
-  /// The elements to nodes relation
+  /// Element-to-node relation
   NodeMapType m_toNodesRelation;
 
-  /// The elements to edges relation
+  /// Element-to-edge relation
   EdgeMapType m_toEdgesRelation;
 
-  /// The elements to faces relation
+  /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 
-  /// The member level field for the element center
+  /// Member level field for the element center
   array1d< real64 > m_elementAperture;
 
-  /// The member level field for the element center
+  /// Member level field for the element center
   array1d< real64 > m_elementArea;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  /// The separation coefficient
+  /// Separation coefficient
   array1d< real64 > m_separationCoefficient;
 #endif
 

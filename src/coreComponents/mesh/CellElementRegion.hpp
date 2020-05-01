@@ -38,6 +38,13 @@ class EmbeddedSurfaceGenerator;
 class CellElementRegion : public ElementRegionBase
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+
   /**
    * @brief Constructor.
    * @param name the name of the object in the data hierarchy.
@@ -45,9 +52,21 @@ public:
    */
   CellElementRegion( string const & name, Group * const parent );
 
+  /**
+   * @brief Deleted default constructor.
+   */
   CellElementRegion() = delete;
+
+  /**
+   * @brief Destructor. 
+   */
   virtual ~CellElementRegion() override;
 
+  /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+  
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
@@ -55,9 +74,19 @@ public:
   static const string CatalogName()
   { return "CellElementRegion"; }
 
+  /**
+   * @copydoc CatalogName()
+   */
   virtual const string getCatalogName() const override final
   { return CellElementRegion::CatalogName(); }
 
+  ///@}
+
+  /**
+   * @name Generation of the cell element mesh region
+   */
+  ///@{
+  
   /**
    * @brief Add a cellBlockRegion name to the list.
    * @param cellBlockName string containing the cell block region name.
@@ -74,15 +103,20 @@ public:
    * @param faceManager a pointer to the FaceManager
    * @param nodeManager a pointer to the NodeManager
    */
-  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager );
+  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
+  ///@}
+  
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    /// String key for the coarsening ratio
     static constexpr auto coarseningRatioString = "coarseningRatio";
+    
+    /// String key for the cell block names
     static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
 

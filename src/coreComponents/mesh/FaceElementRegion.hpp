@@ -38,6 +38,12 @@ class EdgeManager;
 class FaceElementRegion : public ElementRegionBase
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
   /**
    * @brief Constructor.
    * @param name the name of the object in the data hierarchy.
@@ -45,12 +51,26 @@ public:
    */
   FaceElementRegion( string const & name, Group * const parent );
 
+  /**
+   * @brief Deleted default constructor.
+   */
   FaceElementRegion() = delete;
+
+ /**
+  * @brief Default destructor.
+  */
   virtual ~FaceElementRegion() override;
 
+  ///@}
+
+  /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+  
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
-   * @return A string containing the key name.
+   * @return a string containing the key name.
    */
   static const string CatalogName()
   { return "FaceElementRegion"; }
@@ -58,12 +78,21 @@ public:
   virtual const string getCatalogName() const override final
   { return FaceElementRegion::CatalogName(); }
 
+  ///@}  
 
+  /**
+   * @name Generation of the face element mesh region
+   */
+  ///@{
+  
   virtual void GenerateMesh( Group * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
-   * @param faceManager A pointer to the FaceManager object.
+   * @param time_np1 rupture time 
+   * @param edgeManager pointer to the EdgeManager object.
+   * @param faceManager pointer to the FaceManager object.
+   * @param originalFaceToEdges face-to-edge map before the rupture.
    * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
    * @param faceIndices the local indices of the new faces that define the face element.
    * @return the local index of the new FaceElement entry.
@@ -75,26 +104,34 @@ public:
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
+  ///@}  
 
+  /**
+   * @name Getters / Setters
+   */
+  ///@{
+  
   /**
    * @brief Get default aperture value.
    * @return default aperture value
    */
   real64 getDefaultAperture() const { return m_defaultAperture; }
 
+  ///@}  
+  
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    // Fracture set string
+    /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
 
-    // Default aperture string
+    /// Default aperture string
     static constexpr auto defaultApertureString = "defaultAperture";
 
-    // Rupture time string
+    /// Rupture time string
     constexpr static auto ruptureTimeString = "ruptureTime";
 
   };

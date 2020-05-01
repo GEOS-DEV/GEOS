@@ -40,80 +40,80 @@ class ElementRegionBase : public ObjectManagerBase
 public:
 
   /**
-   * @name Static Factory Catalog Functions
+   * @name Constructor / Destructor
    */
   ///@{
 
-//  static const string CatalogName()
-//  { return "ElementRegionBase"; }
-//
-//  virtual const string getCatalogName() const override
-//  { return ElementRegionBase::CatalogName(); }
-
-
-  ///@}
-
-/**
- * @brief deleted default constructor
- */
+  /**
+   * @brief Deleted default constructor.
+   */
   ElementRegionBase() = delete;
 
-/**
- * @brief Main constructor.
- * @param name the name of the element region
- * @param parent the pointer to the parent group
- */
+ /**
+  * @brief Main constructor.
+  * @param name the name of the element region
+  * @param parent the pointer to the parent group
+  */
   ElementRegionBase( string const & name, Group * const parent );
 
 
-/**
- * @brief Copy constructor.
- * @param init the element region to be copied
- */
+ /**
+  * @brief Copy constructor.
+  * @param init the element region to be copied
+  */
   ElementRegionBase( const ElementRegionBase & init );
 
-/**
- * @brief Default destructor.
- */
+ /**
+  * @brief Default destructor.
+  */
   virtual ~ElementRegionBase() override;
 
-/**
- * @brief Generate mesh
- * @param cellBlocks cell blocks where the mesh is generated
- */
+  ///@}
+
+  /**
+   * @name Generation of the mesh region
+   */
+  ///@{
+  
+ /**
+  * @brief Generate mesh.
+  * @param cellBlocks cell blocks where the mesh is generated
+  */
   virtual void GenerateMesh( Group * const cellBlocks )
   {
     GEOSX_UNUSED_VAR( cellBlocks );
     GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
   }
 
-//  void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const NodeManager )
-//  {
-//    GEOSX_ERROR( "ElementRegionBase::GenerateAggregates() should be overriden if called.");
-//  }
+   ///@}
 
-/**
- * @copydoc GetSubRegions() const
- */
+  /**
+   * @name Getters / Setters
+   */
+  ///@{
+  
+ /**
+  * @copydoc GetSubRegions() const
+  */
   subGroupMap & GetSubRegions()
   {
     return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
-/**
- * @brief Get the subregions belonged to the current element region.
- * @return reference to the group of element subregions
- */
+ /**
+  * @brief Get the subregions belonged to the current element region.
+  * @return reference to the group of element subregions
+  */
   subGroupMap const & GetSubRegions() const
   {
     return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
   }
 
-/**
- * @brief Get the subregions of the element region with the name.
- * @param regionName the name of the region
- * @return the group of thesubgreions
- */
+ /**
+  * @brief Get the subregions of the element region with the name.
+  * @param regionName the name of the region
+  * @return the group of thesubgreions
+  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( string const & regionName ) const
   {
@@ -174,6 +174,33 @@ public:
     return numElem;
   }
 
+ /**
+  * @copydoc getMaterialList() const
+  */
+  string_array & getMaterialList() {return m_materialList;}
+
+ /**
+  * @brief Get the material list in the element region.
+  * @return the material list
+  */
+  string_array const & getMaterialList() const {return m_materialList;}
+
+  /**
+   * @brief Get the name of the constiutive in the element region.
+   * @return the string_array of the constitutive names
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  string_array getConstitutiveNames() const;
+
+  
+  ///@}
+
+  /**
+   * @name Looping helpers
+   */
+  ///@{
+
+  
 /**
  * @brief Apply LAMBDA to the subregions.
  * @param lambda the lambda to be applied
@@ -268,36 +295,20 @@ public:
     }
   }
 
-
+  ///@}
+  
 /**
  * @brief Struct to serve as a container for variable strings and keys.
  * @struct viewKeyStruct 
 */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// the key for the material list
+    /// String key for the material list
     static constexpr auto materialListString = "materialList";
-    /// the key for the element subregions
+    /// String key for the element subregions
     static constexpr auto elementSubRegions = "elementSubRegions";
   };
 
-/**
- * @copydoc getMaterialList() const
- */
-  string_array & getMaterialList() {return m_materialList;}
-
-/**
- * @brief Get the material list in the element region.
- * @return the material list
- */
-  string_array const & getMaterialList() const {return m_materialList;}
-
-/**
- * @brief Get the name of the constiutive in the element region.
- * @return the string_array of the constitutive names
- */
-  template< typename CONSTITUTIVE_TYPE >
-  string_array getConstitutiveNames() const;
 
 protected:
 
@@ -305,7 +316,10 @@ private:
 
   ElementRegionBase & operator=( const ElementRegionBase & rhs );
 
+  /// List of materials for the element region
   string_array m_materialList;
+
+  /// Name of the numerical method
   string m_numericalMethod;
 
 };
