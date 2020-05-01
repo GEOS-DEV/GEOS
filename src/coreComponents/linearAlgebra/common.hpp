@@ -150,11 +150,17 @@ enum class LAIOutputFormat
  */
 struct MatrixLayout
 {
-  using ROW_MAJOR_PERM = RAJA::PERM_IJ; //!< typedef LAI row major permutation consistent with RAJA order
-  using COL_MAJOR_PERM = RAJA::PERM_JI; //!< typedef LAI col major permutation consistent with RAJA order
+  /// typedef LAI row major permutation consistent with RAJA order
+  using ROW_MAJOR_PERM = RAJA::PERM_IJ;
 
-  constexpr static int const ROW_MAJOR = LvArray::getStrideOneDimension( ROW_MAJOR_PERM {} );  //!< row major data layout
-  constexpr static int const COL_MAJOR = LvArray::getStrideOneDimension( COL_MAJOR_PERM {} );  //!< column major data layout
+  /// typedef LAI col major permutation consistent with RAJA order
+  using COL_MAJOR_PERM = RAJA::PERM_JI;
+
+  /// row major data unit stride dim
+  constexpr static int const ROW_MAJOR = LvArray::getStrideOneDimension( ROW_MAJOR_PERM {} );
+
+  /// column major unit stride dim
+  constexpr static int const COL_MAJOR = LvArray::getStrideOneDimension( COL_MAJOR_PERM {} );
 };
 
 }

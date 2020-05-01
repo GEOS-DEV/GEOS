@@ -63,7 +63,7 @@ public:
     string coarseType = "direct";           //!< Type of coarse solver
     integer numSweeps = 2;                  //!< Number of smoother sweeps at each level
     bool isSymmetric = true;                //!< Whether the system matrix is symmetric
-    bool separateComponents = false;        //!< Whether to use separate component matrix approximation for constructing AMG hierarchy
+    bool separateComponents = false;        //!< Whether to use separate component matrix approximation
     string nullSpaceType = "constantModes"; //!< Type of nullspace information for AMG
   }
   amg;                                      //!< Algebraic Multigrid (AMG) parameters

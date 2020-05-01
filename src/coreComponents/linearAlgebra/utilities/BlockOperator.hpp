@@ -27,7 +27,8 @@ namespace geosx
 /**
  * @brief Concrete representation of a block operator.
  * @tparam VECTOR type of vector that sub-blocks of this view can operate on
- * @tparam OPERATOR type of operator that can operate on @p VECTOR (can be base class or a more specialized derived class)
+ * @tparam OPERATOR type of operator that can operate on @p VECTOR
+ *                  (can be base class or a more specialized derived class)
  *
  * This extends BlockOperatorView class by providing storage for sub-block operators.
  * The @p OPERATOR type needs to be default-constructible.

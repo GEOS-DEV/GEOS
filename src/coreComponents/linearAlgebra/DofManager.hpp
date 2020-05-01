@@ -452,7 +452,7 @@ public:
    * @param fieldName name of the target field
    * @param restrictor resulting operator
    * @param comm MPI communicator
-   * @param transpose create transposed restrictor (a prolongator) 
+   * @param transpose create transposed restrictor (a prolongator)
    * @param loCompIndex starting DOF component index (for partial restriction)
    * @param hiCompIndex index past the ending DOF component (for partial restriction)
    *
