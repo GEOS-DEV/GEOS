@@ -362,10 +362,11 @@ void parseCommandLineOptions( int argc, char * * argv )
         s_commandLineOptions.useNonblockingMPI = true;
       }
       break;
-    case SUPPRESS_PINNED:
+      case SUPPRESS_PINNED:
       {
         s_commandLineOptions.suppressPinned = true;
       }
+      break;
       case SCHEMA:
       {
         s_commandLineOptions.schemaName = opt.arg;
