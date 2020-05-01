@@ -29,10 +29,6 @@ namespace geosx
 {
 using namespace dataRepository;
 
-/**
- *
- * @return
- */
 FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase( "FaceManager", parent )
 {
@@ -62,10 +58,6 @@ FaceManager::FaceManager( string const &, Group * const parent ):
 //  this->AddKeylessDataField<R1Tensor>("FaceCenter",true,true);
 }
 
-/**
- *
- * @return
- */
 FaceManager::~FaceManager()
 {}
 
