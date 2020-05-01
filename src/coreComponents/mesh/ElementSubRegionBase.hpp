@@ -223,7 +223,7 @@ public:
   ///@}
 
   /**
-   * @brief struct to serve as a container for variable strings and keys
+   * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct

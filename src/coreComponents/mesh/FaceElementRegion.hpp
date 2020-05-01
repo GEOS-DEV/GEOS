@@ -39,9 +39,9 @@ class FaceElementRegion : public ElementRegionBase
 {
 public:
   /**
-   * @brief constructor
-   * @param name The name of the object in the data hierarchy.
-   * @param parent Pointer to the parent group in the data hierarchy.
+   * @brief Constructor.
+   * @param name the name of the object in the data hierarchy.
+   * @param parent a pointer to the parent group in the data hierarchy.
    */
   FaceElementRegion( string const & name, Group * const parent );
 
@@ -62,11 +62,11 @@ public:
   virtual void GenerateMesh( Group * ) override {}
 
   /**
-   * @brief This function generates and adds entries to the face/fracture mesh
+   * @brief This function generates and adds entries to the face/fracture mesh.
    * @param faceManager A pointer to the FaceManager object.
-   * @param subRegionName The name of the FaceElementSubRegion to insert the new entries.
-   * @param faceIndices The local indices of the new faces that define the face element.
-   * @return The local index of the new FaceElement entry.
+   * @param subRegionName the name of the FaceElementSubRegion to insert the new entries.
+   * @param faceIndices the local indices of the new faces that define the face element.
+   * @return the local index of the new FaceElement entry.
    */
   localIndex AddToFractureMesh( real64 const time_np1,
                                 EdgeManager * const edgeManager,
@@ -76,13 +76,25 @@ public:
                                 localIndex const faceIndices[2] );
 
 
+  /**
+   * @brief Get default aperture value.
+   * @return default aperture value
+   */
   real64 getDefaultAperture() const { return m_defaultAperture; }
 
-
+  /**
+   * @brief A struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    // Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
+
+    // Default aperture string
     static constexpr auto defaultApertureString = "defaultAperture";
+
+    // Rupture time string
     constexpr static auto ruptureTimeString = "ruptureTime";
 
   };
@@ -92,7 +104,8 @@ protected:
 
 
 private:
-  /// The
+
+  /// The default aperture
   real64 m_defaultAperture;
 };
 
