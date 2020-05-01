@@ -103,16 +103,27 @@ public:
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  
+  /// Catalog interface
   static CatalogInterface::CatalogType & GetCatalog();
 
 private:
-
+  /// Max time for a simulation
   real64 m_maxTime;
+
+  /// Maximum number of cycles for a simulation
   integer m_maxCycle;
 
+  /// Simulation timestamp at the beginning of the cycle
   real64 m_time;
+
+  /// Current timestep request
   real64 m_dt;
+
+  /// Current cycle
   integer m_cycle;
+
+  /// Current subevent index
   integer m_currentSubEvent;
 };
 
