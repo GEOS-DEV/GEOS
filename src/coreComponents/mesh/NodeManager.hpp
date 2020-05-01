@@ -79,14 +79,14 @@ public:
 
   
   /**
-   * @brief Resizes the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
+   * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
    * @param [in] newSize the new number of nodes.
    */
   virtual void resize( localIndex const newsize ) override;
 
   
   /**
-   * @brief Returns the name of the node manager in the object catalog.
+   * @brief Return the name of the node manager in the object catalog.
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string CatalogName()
@@ -94,7 +94,7 @@ public:
 
   
   /**
-   * @brief Provides a virtual access to CatalogName().
+   * @brief Provide a virtual access to CatalogName().
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   const string getCatalogName() const override final
@@ -102,21 +102,21 @@ public:
 
   
   /**
-   * @brief Assigns an EgdeManager to a NodeManager, and performs the node-to-edge mapping.
+   * @brief Assign an EgdeManager to a NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
   
   /**
-   * @brief Assigns an FaceManager to a NodeManager, and performs the node-to-face mapping.
+   * @brief Assign an FaceManager to a NodeManager, and performs the node-to-face mapping.
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
   void SetFaceMaps( FaceManager const * const faceManager );
 
   
   /**
-   * @brief Assigns an ElementRegionManager to a NodeManager, and performs the node-to-element mapping in this region.
+   * @brief Assign an ElementRegionManager to a NodeManager, and performs the node-to-element mapping in this region.
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
    */
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
@@ -130,14 +130,14 @@ public:
 
 
   /**
-   * @brief Creates an array listing all excluded local indices values.
+   * @brief Create an array listing all excluded local indices values.
    * @param [in/out] exclusionList Sorted array with excluded local indices
    */
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   
   /**
-   * @brief Calculates the size that a list would have if it were packed, but without actually packing it.
+   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
    * @param [in] packList the list of node indices that we wish to get the size of after packing
    * @return a localIndex value representing the size of packList if it were packed
    * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
@@ -146,7 +146,7 @@ public:
 
   
   /**
-   * @brief Packs an array of node indices into a buffer.
+   * @brief Pack an array of node indices into a buffer.
    * @param [in/out] buffer_unit_type buffer to pack the node index data into
    * @param [in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
@@ -156,7 +156,7 @@ public:
 
   
   /**
-   * @brief Unpacks a buffer to an array of node indices.
+   * @brief Unpack a buffer to an array of node indices.
    * @param [in] buffer buffer with the packed data
    * @param [in/out] packList an array of localIndex values that we wish to unpack to
    * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
@@ -170,7 +170,7 @@ public:
 
   
   /**
-   * @brief Calls FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
@@ -227,98 +227,98 @@ public:
 
   
   /**
-   * @brief Provides a const accessor to the nodes-to-edges relation.
+   * @brief Provide a const accessor to the nodes-to-edges relation.
    * @return const reference to  nodes-to-edges relation
    */
   EdgeMapType const & edgeList() const { return m_toEdgesRelation; }
 
   
   /**
-   * @brief Gets the node-to-edge relation.
+   * @brief Get the node-to-edges relation.
    * @return reference to nodes-to-edges relation
    */
   EdgeMapType & edgeList() { return m_toEdgesRelation; }
 
 
   /**
-   * @brief Provides a const accessor to the nodes-to-faces relation.
+   * @brief Provide a const accessor to the nodes-to-faces relation.
    * @return const reference to nodes-to-faces relation
    */
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
   
   /**
-   * @brief Gets the nodes-to-faces relation.
+   * @brief Get the nodes-to-faces relation.
    * @return reference to nodes-to-faces relation
    */
   FaceMapType & faceList() { return m_toFacesRelation; }
 
 
   /**
-   * @brief Gets the nodes-to-elements relation.
+   * @brief Get the nodes-to-elements relation.
    * @return reference to nodes-to-elements relation
    */
   OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
   
   
   /**
-   * @brief Provides a const accessor to the nodes-to-elements relation.
+   * @brief Provide a const accessor to the nodes-to-elements relation.
    * @return const reference to nodes-to-elements relation
    */
   OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
 
   
   /**
-   * @brief Gets the nodes-to-elements-regions relation.
+   * @brief Get the nodes-to-elements-regions relation.
    * @return reference to nodes-to-elements-regions relation
    */
   ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
   
   
   /**
-   * @brief Provides an immutable arrayView to the nodes-to-elements-regions relation.
+   * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
    * @return const reference to nodes-to-elements-regions relation
    */
   ArrayOfArraysView< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
 
   
   /**
-   * @brief Gets the nodes-to-elements-subregions relation.
+   * @brief Get the nodes-to-elements-subregions relation.
    * @return reference to nodes-to-elements-subregions relation
    */
   ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
   
   
   /**
-   * @brief Providesan immutable arrayView to the nodes-to-elements-subregions relation.
+   * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
    */
   ArrayOfArraysView< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   
   /**
-   * @brief Gets the nodes-to-elements indices.
+   * @brief Get the nodes-to-elements indices.
    * @return reference to nodes-to-elements indices
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
   
   
   /**
-   * @brief Provides an immutable arrayView to the nodes-to-elements indices.
+   * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
    */
   ArrayOfArraysView< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex.toViewConst(); }
 
   
   /**
-   * @brief Gets the reference position array.
+   * @brief Get the reference position array.
    * @return reference position array
    */
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
 
   
   /**
-   * @brief Provides an immutable arrayView of the reference position.
+   * @brief Provide an immutable arrayView of the reference position.
    * @return an immutable arrayView of the reference position.
    */
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const { return m_referencePosition; }
@@ -336,7 +336,7 @@ public:
 
   
   /**
-   * @brief Provides an immutable arrayView to the total displacement array.
+   * @brief Provide an immutable arrayView to the total displacement array.
    * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
    */
@@ -358,7 +358,7 @@ public:
 
   
   /**
-   * @brief Provides an immutable arrayView to the incremental displacement array.
+   * @brief Provide an immutable arrayView to the incremental displacement array.
    * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total incremental does not exist
    */
@@ -380,7 +380,7 @@ public:
 
   
   /**
-   * @brief Provides an immutable arrayView to the velocity array.
+   * @brief Provide an immutable arrayView to the velocity array.
    * @return immutable arrayView of the velocity array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the velocity array does not exist
    */
@@ -402,7 +402,7 @@ public:
 
   
   /**
-   * @brief Provides an immutable arrayView to the acceleration array.
+   * @brief Provide an immutable arrayView to the acceleration array.
    * @return immutable arrayView of the acceleration array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the acceleration array does not exist
    */
@@ -417,7 +417,7 @@ private:
 
   
   /**
-   * @brief function to pack the upward and downward pointing maps.
+   * @brief Pack the upward and downward pointing maps into a buffer.
    * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
    *                packed and the function returns the size of the packing that would have occured if set to TRUE.
    * @param buffer the buffer to pack data into
