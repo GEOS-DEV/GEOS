@@ -107,10 +107,10 @@ public:
 
 
   ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
-  { return m_cellCenterToEdgeCenters; }
+  { return m_cellCenterToEdgeCenters.toViewConst(); }
 
   ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
-  { return m_isGhostConnectors; }
+  { return m_isGhostConnectors.toViewConst(); }
 
 
 private:

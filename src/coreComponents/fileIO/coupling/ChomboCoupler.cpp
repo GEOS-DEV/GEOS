@@ -43,7 +43,7 @@ void ChomboCoupler::write( double dt )
   FaceManager * faces = m_mesh.getFaceManager();
   NodeManager * nodes = m_mesh.getNodeManager();
 
-  ArrayOfArraysView< localIndex const > const & face_connectivity = faces->nodeList();
+  ArrayOfArraysView< localIndex const > const & face_connectivity = faces->nodeList().toViewConst();
   localIndex const n_faces = face_connectivity.size();
 
   /* Copy the face connectivity into a contiguous array. */

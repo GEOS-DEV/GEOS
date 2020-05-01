@@ -77,7 +77,7 @@ real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const gr
 {
   localIndex N = set.size();
   real64_array sub( N );
-  Evaluate( group, time, set, sub );
+  Evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
   result[0] = 1e10;   // min

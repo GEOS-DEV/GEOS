@@ -1119,7 +1119,7 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
       }
     }
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet,
+    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet.toViewConst(),
                                                                               time + dt,
                                                                               dt,
                                                                               subRegion,

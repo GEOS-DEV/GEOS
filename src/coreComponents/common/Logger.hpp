@@ -32,13 +32,13 @@
  * @brief Log a message on screen.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOSX_LOG( msg ) LVARRAY_LOG( msg )
+#define GEOSX_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
 
 /**
  * @brief Log a variable/expression name and value on screen.
  * @param var a variable or expression accessible from current scope that can be stream inserted
  */
-#define GEOSX_LOG_VAR( var ) GEOSX_LOG( #var << " = " << var )
+#define GEOSX_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
