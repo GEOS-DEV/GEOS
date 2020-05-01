@@ -50,7 +50,7 @@ public:
     INJECTOR   /**< An injection well */
   };
 
-  
+
   /** Types of well controls
    * Used to specifiy a well's operating conditions
    */
@@ -68,7 +68,7 @@ public:
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor for WellControls Objects.
    * @param[in] name the name of this instantiation of WellControls in the repository
@@ -76,7 +76,7 @@ public:
    */
   explicit WellControls( string const & name, dataRepository::Group * const parent );
 
-  
+
   /**
    * @brief Default destructor.
    */
@@ -112,10 +112,10 @@ public:
   ///@}
 
   /**
-   * @name Getters / Setters 
+   * @name Getters / Setters
    */
   ///@{
-  
+
   /**
    * @brief Set the reference well elem index where the control will be enforced.
    * @param[in] refIndex reference well element index where the control will be enforced
@@ -140,44 +140,45 @@ public:
    */
   Type GetType() const { return m_type; }
 
-  
+
   /**
    * @brief Set the control type and numerical value for a well.
    * @param[in] control a Control enum with the type of control that is enforced
-   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a minimum water rate...)
+   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
+   * minimum water rate...)
    */
   void SetControl( Control control, real64 const & val );
 
-  
+
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
   Control GetControl() const { return m_currentControl; }
 
-  
+
   /**
    * @brief Get the target Bottom Hole Pressure value.
    * @return a value for the target Bottom Hole Pressure
    */
   const real64 & GetTargetBHP() const { return m_targetBHP; }
 
-  
+
   /**
    * @brief Get the target rate
    * @return the target rate
    */
   const real64 & GetTargetRate() const { return m_targetRate; }
 
-  
+
   /**
    * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
   arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
 
-  ///@}  
-  
+  ///@}
+
   /// @cond DO_NOT_DOCUMENT
   void Debug() const;
   /// @endcond
@@ -188,7 +189,7 @@ public:
    */
   struct viewKeyStruct
   {
-    /// String key for the reference index (currently unused)    
+    /// String key for the reference index (currently unused)
     static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
     /// String key for the well type
     static constexpr auto typeString             = "type";
@@ -200,7 +201,7 @@ public:
     static constexpr auto targetRateString       = "targetRate";
     /// String key for the well injection stream
     static constexpr auto injectionStreamString  = "injectionStream";
-    /// ViewKey for the reference index (currently unused)        
+    /// ViewKey for the reference index (currently unused)
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
     /// ViewKey for the well type
     dataRepository::ViewKey type            = { typeString };
@@ -210,10 +211,10 @@ public:
     dataRepository::ViewKey targetBHP       = { targetBHPString };
     /// ViewKey for the well target rate
     dataRepository::ViewKey targetRate      = { targetRateString };
-    /// ViewKey for the well injection stream    
+    /// ViewKey for the well injection stream
     dataRepository::ViewKey injectionStream = { injectionStreamString };
   }
-  /// ViewKey struct for the WellControls class 
+  /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
 protected:
@@ -238,7 +239,7 @@ private:
 
   /// Well controls as a Control enum
   Control m_currentControl;
-  
+
   /// Target bottom hole pressure value
   real64 m_targetBHP;
 
@@ -252,4 +253,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_MANAGERS_WELLS_WELLCONTROLS_HPP
+#endif //GEOSX_WELLS_WELLCONTROLS_HPP

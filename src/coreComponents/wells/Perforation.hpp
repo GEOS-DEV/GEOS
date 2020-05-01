@@ -46,7 +46,7 @@ public:
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor for Perforation Objects.
    * @param[in] name the name of this instantiation of Perforation in the repository
@@ -89,17 +89,17 @@ public:
   ///@}
 
   /**
-   * @name Getters 
+   * @name Getters
    */
   ///@{
-  
+
   /**
    * @brief Get the linear distance between the well head and the perforation.
    * @return the distance between the well head and the perforation
    */
   real64 const & GetDistanceFromWellHead() const { return m_distanceFromHead; }
 
-  
+
   /**
    * @brief Get the well Peaceman index at the perforation.
    * @return the well transmissibility
@@ -118,7 +118,7 @@ public:
     static constexpr auto distanceFromHeadString  = "distanceFromHead";
     /// String key for the well transmissibility at this perforation
     static constexpr auto wellTransmissibilityString = "transmissibility";
-    /// ViewKey for the linear distance from well head    
+    /// ViewKey for the linear distance from well head
     dataRepository::ViewKey distanceFromHead  = { distanceFromHeadString };
     /// ViewKey for the well transmissibility at this perforation
     dataRepository::ViewKey wellTransmissibility = { wellTransmissibilityString };

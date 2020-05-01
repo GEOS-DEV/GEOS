@@ -30,7 +30,7 @@ class MeshLevel;
 
 /**
  * @class WellElementRegion
- * @brief This class specializes the element region for the case 
+ * @brief This class specializes the element region for the case
  *        of a well. This class is also in charge of starting the
  *        construction of the well data structure in GenerateWell.
  */
@@ -42,7 +42,7 @@ public:
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
@@ -60,14 +60,14 @@ public:
    */
   WellElementRegion() = delete;
 
-  ///@}  
+  ///@}
 
   /**
    * @name Static Factory Catalog Functions
    */
   ///@{
-  
-  /** 
+
+  /**
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
@@ -75,18 +75,18 @@ public:
   { return "WellElementRegion"; }
 
   /**
-   * @copydoc CatalogName() 
+   * @copydoc CatalogName()
    */
   virtual const string getCatalogName() const override final
   { return WellElementRegion::CatalogName(); }
 
-  ///@}  
+  ///@}
 
   /**
-   * @name Getters / Setters 
+   * @name Getters / Setters
    */
   ///@{
-  
+
   /**
    * @brief Set the name of the InternalWellGenerator object of this well.
    * @param[in] name the name of the InternalWellGenerator object
@@ -117,7 +117,7 @@ public:
    * @name Construction of the well connectivity
    */
   ///@{
-  
+
   /**
    * @brief Not implemented, this task is performed in GenerateWell.
    */
@@ -143,27 +143,27 @@ public:
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    /// String key for the well control name 
+    /// String key for the well control name
     static constexpr auto wellControlsString  = "wellControlsName";
-    /// String key for the well generator name    
+    /// String key for the well generator name
     static constexpr auto wellGeneratorString = "wellGeneratorName";
 
-    /// ViewKey for the well control name     
+    /// ViewKey for the well control name
     dataRepository::ViewKey wellControlsName  = { wellControlsString };
-    /// ViewKey for the well generator name         
+    /// ViewKey for the well generator name
     dataRepository::ViewKey wellGeneratorName = { wellGeneratorString };
 
   }
-  /// ViewKey struct for the WellElementRegiom class 
+  /// ViewKey struct for the WellElementRegion class
   viewKeysWellElementRegion;
 
   /**
    * @brief struct to serve as a container for group strings and keys
    * @struct groupKeyStruct
-   */  
+   */
   struct groupKeyStruct : public ElementRegionBase::groupKeyStruct
   {}
-  /// groupKey struct for the WellElementRegk class
+  /// groupKey struct for the WellElementRegion class
   groupKeysWellElementRegion;
 
 private:
