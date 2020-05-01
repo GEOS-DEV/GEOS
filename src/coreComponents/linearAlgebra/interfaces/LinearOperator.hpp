@@ -27,7 +27,8 @@ namespace geosx
 {
 
 /**
- * @brief Abstract base class for linear operators
+ * @brief Abstract base class for linear operators.
+ *
  * @tparam VECTOR Type of vector this operator can be applied to
  */
 template< typename VECTOR >
@@ -35,17 +36,24 @@ class LinearOperator
 {
 public:
 
-  /// Alias for VECTOR
+  /// Alias for template parameter
   using Vector = VECTOR;
 
+  /**
+   * @brief Constructor
+   */
   LinearOperator() = default;
 
+  /**
+   * @brief Destructor
+   */
   virtual ~LinearOperator() = default;
 
   /**
-   * @brief Apply operator to a vector
-   * @param src Input vector (x).
-   * @param dst Output vector (b).
+   * @brief Apply operator to a vector.
+   *
+   * @param src Input vector (src).
+   * @param dst Output vector (dst).
    */
   virtual void apply( Vector const & src, Vector & dst ) const = 0;
 
@@ -63,14 +71,16 @@ public:
   }
 
   /**
-   * @brief Returns the number of global rows.
-   * @return the number for global rows
+   * @brief Get the number of global rows.
+   *
+   * @return Number of global rows in the operator.
    */
   virtual globalIndex numGlobalRows() const = 0;
 
   /**
-   * @brief Returns the number of global columns.
-   * @return the number of global columns
+   * @brief Get the number of global columns.
+   *
+   * @return Number of global columns in the operator.
    */
   virtual globalIndex numGlobalCols() const = 0;
 };
