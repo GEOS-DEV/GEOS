@@ -37,6 +37,10 @@ namespace geosx
 class PhysicsSolverManager;
 class DomainPartition;
 
+/**
+ * @class ProblemManager
+ * @brief This is the class handling the operation flow of the problem being ran in GEOSX
+ */
 class ProblemManager : public dataRepository::Group
 {
 public:
@@ -54,12 +58,11 @@ public:
   ~ProblemManager() override;
 
   /**
-   * @brief Handles deviations between the datastructure and schema
+   * @brief Handles deviations between the data structure and schema
    * @param schemaRoot schema root node handle
    * @param schemaParent schema parent node handle
    * @param documentationType flag to indicate the type of schema (0=input, 1=other)
-   * 
-   * This function handles deviations between the xml and data structure
+   * @details This function handles deviations between the xml and data structure
    * on the Problem level (Functions, Mesh, etc.).  This can also be used to
    * add entries to the schema, which are not used during normal code execution
    * (e.g.: Benchmark)
@@ -91,25 +94,22 @@ public:
 
   /**
    * @brief Initializes a python interpreter within GEOSX
-   *
-   * Note: This is not regularly used or tested, and may be removed in future versions.
+   * @note This is not regularly used or tested, and may be removed in future versions.
    * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
    */
   void InitializePythonInterpreter();
 
   /**
    * @brief Closes the internal python interpreter
-   *
-   * Note: This is not regularly used or tested, and may be removed in future versions.
+   * @note This is not regularly used or tested, and may be removed in future versions.
    * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
    */
   void ClosePythonInterpreter();
 
   /**
    * @brief Generates the xml schema documentation
-   *
    * This function is called when the code is called with the -s schema_name option.
-   * Before generating the schema, the code builds up a comprehensive datastructure.
+   * @details Before generating the schema, the code builds up a comprehensive datastructure.
    * (Note: catalog objects throughout the code will typically be registered via the
    * ExpandObjectCatalogs method.)  Once ready, SchemaUtilities will recusively walk
    * through the database, generating the xml schema.
@@ -118,8 +118,7 @@ public:
 
   /**
    * @brief Parses the input xml file
-   *
-   * The name of the input file is indicated via the -i option on the command line
+   * @details The name of the input file is indicated via the -i option on the command line
    */
   void ParseInputFile();
 

@@ -50,10 +50,10 @@ struct CommandLineOptions
   /// The number of partitions in the z direction.
   integer zPartitionsOverride;
 
-  /// True iff using the partition override.
+  /// True if using the partition override.
   integer overridePartitionNumbers = false;
 
-  /// True iff processing mpi communications in any order.
+  /// True if processing mpi communications in any order.
   /// But leads to non-reproducible results.
   integer useNonblockingMPI = false;
 
@@ -73,7 +73,7 @@ struct CommandLineOptions
 /**
  * @brief Perform the basic GEOSX initialization and optionally parse the command line input.
  * @param [in] argc The number of command line arguments.
- * @param [in/out] argv The command line arguments.
+ * @param [in,out] argv The command line arguments.
  * @param [in] parseCommandLine True iff the command line options should be parsed.
  */
 void basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
@@ -122,7 +122,7 @@ void setupOpenMP();
 /**
  * @brief Setup MPI.
  * @param [in] argc the number of command line arguments.
- * @param [in/out] argv the command line arguments.
+ * @param [in,out] argv the command line arguments.
  */
 void setupMPI( int argc, char * argv[] );
 
