@@ -29,7 +29,6 @@ class NodeManager;
 class ElementRegionManager;
 class CellElementSubRegion;
 
-
 /**
  * @class FaceManager
  * @brief The FaceManager class provides an interface to ObjectManagerBase in order to manage face data.
@@ -52,168 +51,152 @@ public:
   ///@{
 
   /**
-   * @brief Return the name of the face manager in the object catalog.
-   * @return string that contains the catalog name to generate a new FaceManager object through the object catalog.
+   * @brief Return the name of the FaceManager in the object catalog.
+   * @return string that contains the catalog name of the FaceManager
    */
   static const string CatalogName()
   { return "FaceManager"; }
 
-  
-  /** @brief Provide a virtual access to CatalogName().
-   * @return string that contains the catalog name to generate a new FaceManager object through the object catalog.
+  /**
+   * @brief Provide a virtual access to CatalogName().
+   * @return string that contains the catalog name of the FaceManager
    */
   virtual const string getCatalogName() const override
   { return FaceManager::CatalogName(); }
  ///@}
 
-
-  
   /**
-     @brief Get the default number of node per face in node list
-     @return the default number of node per face in node list
+   * @brief Get the default number of node per face in node list
+   * @return the default number of node per face in node list
    */
   static localIndex nodeMapExtraSpacePerFace()
   { return 4; }
   
-  
   /**
-     @brief Get the default number of edge per face in edge list
-     @return the default number of edge per face in edge list
+   * @brief Get the default number of edge per face in edge list
+   * @return the default number of edge per face in edge list
    */
   static localIndex edgeMapExtraSpacePerFace()
   { return 4; }
 
-
-
-
-   /**
-    *  @name Constructors/destructor
-    */
-
+  /**
+   * @name Constructors/destructor
+   */
   ///@{
 
   /**
-   *  @brief Main Constructor for FaceManager
-   *  @param[in] name the name of FaceManager
-   *  @param[in] parent the parent Group object of FaceManager
+   * @brief Main Constructor for FaceManager
+   * @param[in] name the name of FaceManager
+   * @param[in] parent the parent Group object of FaceManager
    */
   FaceManager( string const & name, Group * const parent );
   
-  
   /**
-   @brief Destructor override from ObjectManager
+   * @brief Destructor override from ObjectManager
    */
   virtual ~FaceManager() override;
   
-  
   /**
-   *@brief Deleted default constructor
+   * @brief Deleted default constructor
    */
   FaceManager() = delete;
   
-  
-   /**
-    *@brief Deleted default constructor
+  /**
+   * @brief Deleted copy constructor
    */
- FaceManager( FaceManager const & ) = delete;
+  FaceManager( FaceManager const & ) = delete;
   
   
-   /**
-    *@brief Deleted copy constructor
+  /**
+   * @brief Deleted move constructor
    */
  FaceManager( FaceManager && ) = delete;
 
   ///@}
 
   /**
-   @brief Extend base class resize method resizing  m_nodeList, m_edgeList member containers.
-   @param[in] newsize new size of nodeList and edgeList containers
+   * @brief Extend base class resize method resizing  m_nodeList, m_edgeList member containers.
+   * @details the \p newSize of this FaceManager is the number of faces it will contain
+   * @param[in] newsize new size the FaceManager.
    */
   virtual void resize( localIndex const newsize ) override;
-
   
  /**
-   @brief Build faces in filling face-to-node and face-to-element mappings.
-   @param[in] nodeManager mesh node manager
-   @param[in] elemManager element manager
- */
+  * @brief Build faces in filling face-to-node and face-to-element mappings.
+  * @param[in] nodeManager mesh node manager
+  * @param[in] elemManager element manager
+  */
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
-  
-  /**
-     @brief Compute faces center, area and normal.
-     @param[in] nodeManager manager of mesh nodes defining the faces
-   */
+ /**
+  * @brief Compute faces center, area and normal.
+  * @param[in] nodeManager NodeManager associated with the current DomainPartition
+  */
   void computeGeometry( NodeManager const * const nodeManager );
 
-  
   /**
-     @brief Return the number of nodes of the faces with the greatest number of nodes.
-     @return the maximum number of nodes a face have
+   * @brief Return the number of nodes of the faces with the greatest number of nodes.
+   * @return the maximum number of nodes a face have
    */
   localIndex getMaxFaceNodes() const;
-
   
-/**
-   @brief Sort all faces nodes counterclockwisely in m_nodeList.
-   @param[in] nodeManager mesh manager allowing access to face nodes coordinates
-   @param[in] elemManager mesh manager allowing access to face elements
- */
+ /**
+  * @brief Sort all faces nodes counterclockwisely in m_nodeList.
+  * @param[in] nodeManager node manager allowing access to face nodes coordinates
+  * @param[in] elemManager element manager allowing access to the cell elements
+  */
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager );
-
   
   /**
-     @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
-     @param[in] X array view of mesh nodes coordinates
-     @param[in] elemCenter coordinate of the element center
-     @param[inout] faceNodes reordered local label list of nodes
-     @param[in] numFaceNodes number of nodes for the face
+   * @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
+   * @param[in] X array view of mesh nodes coordinates
+   * @param[in] elemCenter coordinate of the element center
+   * @param[in,out] faceNodes reordered local label list of nodes
+   * @param[in] numFaceNodes number of nodes for the face
    */
   void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                       R1Tensor const & elemCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
-  
   /**
-     @brief Flag face and nodes'face with at least one element on the boundary.
-     @param[in] nodeManager manager of mesh nodes
+   * @brief Flag face and nodes'face with at least one element on the boundary.
+   * @param[in] nodeManager manager of mesh nodes
    */
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
-
   
   /**
-     @brief Flag points on boundary or external to the Domain.
+   * @brief Flag faces on boundary or external to the DomainPartition.
    */
   void SetIsExternal();
-
   
   /**
    * @name Packing methods
    */
+
   ///@{
 
-  
   /**
    * @brief Create an array listing all excluded local face indices values.
-   * @param [inout] exclusionList Sorted array with excluded local faces indices
+   * @param [in,out] exclusionList Sorted array with excluded local faces indices
    */
- virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
+  virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
   
- /**
-  *@brief Calculate the size that a list would have if it were packed, but without actually packing it.
-  *@param [in] packList the list of node indices that we wish to get the size of after packing
-  *@return a localIndex value representing the size of packList if it were packed
-  *@note This function does not perform any packing, it just evaluates and returns the possible packed size.
-  */
+  /**
+   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
+   * @details Packed data are meant to be communicated to other MPI ranks
+   * @param[in] packList the list of node indices that we wish to get the size of after packing
+   * @return the size of packList if it were packed
+   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
+   */
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   /**
    * @brief Pack an array of node indices into a buffer.
-   * @param [inout] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
+   * @details Packed data are meant to be communicated to other MPI ranks
+   * @param[in,out] buffer buffer to pack the node index data into
+   * @param[in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
    */
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -221,6 +204,7 @@ public:
 
   /**
    * @brief Unpack a buffer to an array of node indices.
+   * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] buffer buffer with the packed data
    * @param [inout] packList an array of localIndex values that we wish to unpack to
    * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
@@ -234,24 +218,25 @@ public:
 
   /**
    * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
+
   ///@}
 
   /**
-   * @brief Compress FaceManager face-to-node and face-to-edge containers so that the values of each array are contiguous with no extra capacity in between.
+   * @brief Compress FaceManager face-to-node and face-to-edge containers so that the values of
+   * each array are contiguous with no extra capacity in between.
    * @note The method used here on each arrays (compress) does not free any memory.
    */
   void compressRelationMaps();
-
   
   /**
    * @brief Enforce child faces and parent faces to have opposite normals.
    * @param[in] targetIndices set of face indices for which the enforcement has to be done
    */
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices ) override;
-  
   
   /**
    * @brief Clean up the mappings from faces to element index, region, subregion on a new (updated) list of faces, in order to keep only relevant mappings.
@@ -271,14 +256,14 @@ public:
    */
   virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
                                                    std::vector< std::vector< globalIndex > > & faceToNodes ) override;
-  
 
   /**
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
+
   /**
-   *  @struct Containing added view access key to be bound with class data member
+   * @struct Containing added view access key to be bound with class data member
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -306,148 +291,137 @@ public:
   ///@}
 
  /**
-    @name Accessors for FaceManager fixed data
+  * @name Accessors for FaceManager fixed data
   */
-
   ///@{
-   /**
-    * @brief Get the constant upper limit for number of faces per Node.
-    * @return constant expression of the maximal number of faces per node
-   */
- constexpr int maxFacesPerNode() const { return 100; }
-
   
   /**
-   * @brief Get an accessor to face area class member.
-   * @return reference to the m_faceArea member
+   * @brief Get the constant upper limit for number of faces per Node.
+   * @return constant expression of the maximal number of faces per node
    */
- array1d< real64 > & faceArea()       { return m_faceArea; }
+  constexpr int maxFacesPerNode() const { return 100; }
   
-  
-   /**
-    * @brief Get an immutable accessor to face area class member.
-    * @return reference to the m_faceArea member
+  /**
+   * @brief Get a mutable accessor to a table containing all the face area
+   * @details this table is mutable so it can be used to compute
+   * or modify the face area in this FaceManager
+   * @return a table containing all the face area
    */
-array1d< real64 > const & faceArea() const { return m_faceArea; }
+  array1d< real64 > & faceArea()       { return m_faceArea; }
   
+  /**
+   * @brief Get an immutable accessor to a table containing all the face area
+   * @return an immutable table containing all the face area
+   */
+  array1d< real64 > const & faceArea() const { return m_faceArea; }
 
   /**
-   * @brief Get an accessor to the face center.
-   * @return const reference to m_faceCenter class member
+   * @brief Get a mutable asscessor to a table containing all the face centers
+   * @details this table is mutable so it can be used to compute
+   * or modify the face centers in this FaceManager
+   * @return a table containing all the face centers
    */
   array1d< R1Tensor > & faceCenter()       { return m_faceCenter; }
   
-  
-   /**
-    * @brief Get an immutable accessor to the face center.
-    * @return const reference to m_faceCenter class member
+  /**
+   * @brief Get an immutable accessor to a table containing all the face centers
+   * @return an immutable table containing all the face centers
    */
   array1d< R1Tensor > const & faceCenter() const { return m_faceCenter; }
 
-  
   /**
-   * @brief Get an accessor to the face normals.
-   * @return const reference to m_faceNormal class member
+   * @brief Get a mutable accessor to a table containing all the face normals
+   * @details this table is mutable so it can be used to compute
+   * or modify the face normals in this FaceManager
+   * @return a table containing all the face normals
    */
   array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
   
-  
-   /**
-    * @brief Get an immutable accessor to the face normals.
-    * @return const reference to m_faceNormal class member
+  /**
+   * @brief Get an immutable accessor to a table containing all the face normals
+   * @return an immutable table containing all the face normals
    */
   array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
-  
 
   /**
-   * @brief Get an accessor to face keyed node map.
-   * @return non-const reference to m_nodeList class member
+   * @brief Get a mutable accessor to a map containing the list of each nodes for each faces
+   * @return non-const reference to a map containing the list of each nodes for each faces
    */
   NodeMapType & nodeList()                    { return m_nodeList; }
   
-  
-   /**
-    * @brief Get an immutable accessor to face keyed node map.
-    * @return non-const reference to m_nodeList class member
+  /**
+   * @brief Get an immutable accessor to a map containing the list of each nodes for each faces
+   * @return const reference to a map containing the list of each nodes for each faces
    */
   NodeMapType const & nodeList() const { return m_nodeList; }
-  
 
   /**
-   * @brief  Get an accessor to face keyed edge map.
-   * @return non-const reference to m_edgeList class member
+   * @brief Get a mutable accessor to a map containing the list of each edges for each faces
+   * @return non-const reference to a map containing the list of each edges for each faces
    */
   EdgeMapType & edgeList()       { return m_edgeList; }
   
-  
-   /**
-    * @brief  Get an immutable accessor to face keyed edge map.
-    * @return non-const reference to m_edgeList class member
+  /**
+   * @brief Get an immutable accessor to a map containing the list of each edges for each faces
+   * @return const reference to a map containing the list of each edges for each faces
    */
   EdgeMapType const & edgeList() const { return m_edgeList; }
-  
 
   /**
-   * @brief Get an accessor to the faces-to-elements relation.
-   * @return const reference to nodes-to-elements relation
+   * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
+   * @return non-const reference to faces-to-ElementRegion relation
    */
   array2d< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
   
-  
-   /**
-    * @brief Get an immutable accessor to the faces-to-elements relation.
-    * @return const reference to nodes-to-elements relation
+  /**
+   * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
+   * @return const reference to nodes-to-ElementRegion relation
    */
   array2d< localIndex > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
   
-  
   /**
-   * @brief Get an accessor to the faces-to-elements relation.
-   * @return const reference to nodes-to-elements relation
+   * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
+   * @return non-const reference to faces-to-ElementSubRegion relation
    */
-
   array2d< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
   
-  
-   /**
-    * @brief Get an accessor to the faces-to-elements relation.
-    * @return const reference to nodes-to-elements relation
+  /**
+   * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
+   * @return const reference to faces-to-ElementSubRegion relation
    */
- array2d< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
-  
+  array2d< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
-   * @brief Get an immutable accessor to the faces-to-elements list.
-   * @return const reference to 2d face-to-element label array
+   * @brief Get a mutable accessor to the faces-to-element-index relation.
+   * @return non-const reference to faces-to-element-index relation
    */
   array2d< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
   
-  
-   /**
-    *@brief Get an immutable accessor to the faces-to-elements list.
-    *@return const reference to 2d face-to-element label array
+  /**
+   * @brief Get an imutable accessor to the faces-to-element-index relation.
+   * @return const reference to faces-to-elements relation
    */
- array2d< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
-  
+  array2d< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   /**
-   * @brief Get an accessor to the faces-to-elements relation.
-   * @return const reference to nodes-to-elements relation
+   * @brief Get a mutable accessor to the faces-to-element-index relation.
+   * @details The returned ElemMapType gives access, for one face
+   * to the element index, the element sub region, and the element region.
+   * @return non-const reference to faces-to-element-index relation
    */
   ElemMapType & toElementRelation()       { return m_toElements; }
   
-  
-   /**
-    * @brief Get an immutable accessor to the faces-to-elements relation.
-    * @return const reference to nodes-to-elements relation
+  /**
+   * @brief Get an immutable accessor to the faces-to-element-index relation.
+   * @details The returned ElemMapType gives access, for one face
+   * to the element index, the element sub region, and the element region.
+   * @return non-const reference to faces-to-element-index relation
    */
   ElemMapType const & toElementRelation() const { return m_toElements; }
-  
   
   ///}@
 
 private:
-  
   
   /**
    * @brief Pack the upward and downward pointing maps.
@@ -460,7 +434,6 @@ private:
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
-  
 
   /// face keyed map containing face-to-node relation
   NodeMapType m_nodeList;
@@ -471,7 +444,7 @@ private:
   /// face keyed map containing face-to-element relation
   ElemMapType m_toElements;
 
-  /// map of global  to local  indices for nodes
+  /// map of global to local indices for nodes
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
   
   /// map of global  to local  indices for edges

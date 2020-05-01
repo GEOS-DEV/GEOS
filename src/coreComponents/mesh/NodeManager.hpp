@@ -60,19 +60,20 @@ public:
    */
   inline localIndex getEdgeMapOverallocation()
   { return 8; }
+
   /**
    * @brief return default size of the value in the node-to-face mapping
    * @return default size of value array in the node-to-face mapping
    */
   inline localIndex getFaceMapOverallocation()
   { return 8; }
+
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
   inline localIndex getElemMapOverAllocation()
   { return 8; }
-
 
 /**
    * @name Constructors/destructor
@@ -81,20 +82,19 @@ public:
 
   /**
    * @brief Main constructor for NodeManager Objects.
-   * @param [in] name the name of this instantiation of NodeManager in the repository
+   * @param [in] name the name of this instantiation of NodeManager
    * @param [in] parent the parent group of this instantiation of NodeManager
    */
   NodeManager( std::string const & name,
                dataRepository::Group * const parent );
 
-  
   /**
-   * @brief A default NodeManager destructor.
+   * @brief The default NodeManager destructor.
    */
   ~NodeManager() override;
 
   /**
-  * @brief  deleted constructor
+  * @brief deleted constructor
   */
   NodeManager() = delete;
 
@@ -112,7 +112,8 @@ public:
   
   /**
    * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
-   * @param[in] newSize the new number of nodes.
+   * @details the size of the NodeManager is the number of nodes
+   * @param[in] newSize the new size of the NodeManager
    */
   virtual void resize( localIndex const newsize ) override;
 
@@ -123,46 +124,43 @@ public:
 
   /**
    * @brief Return the name of the node manager in the object catalog.
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the NodeManager catalog name
    */
   static string CatalogName()
   { return "NodeManager"; }
 
-  
   /**
    * @brief Provide a virtual access to CatalogName().
-   * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
+   * @return string that contains the NodeManager catalog name
    */
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
- ///@}
+  
+  ///@}
   
   /**
-   * @brief Assign an EgdeManager to a NodeManager, and performs the node-to-edge mapping.
+   * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
    */
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
-  
   /**
-   * @brief Assign an FaceManager to a NodeManager, and performs the node-to-face mapping.
+   * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
   void SetFaceMaps( FaceManager const * const faceManager );
-
   
   /**
-   * @brief Assign an ElementRegionManager to a NodeManager, and performs the node-to-element mapping in this region.
+   * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
    */
   void SetElementMaps( ElementRegionManager const * const elementRegionManager );
 
-  
   /**
-   * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity in between.
+   * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
    * @note The method used here on each arrays (compress) does not free any memory.
    */
-  void CompressRelationMaps( );
+  void CompressRelationMaps();
 
  /**
    * @name Packing methods
@@ -171,32 +169,32 @@ public:
 
   /**
    * @brief Creates an array listing all excluded local indices values.
-   * @param [inout] exclusionList Sorted array with excluded local indices
+   * @param [in,out] exclusionList Sorted array with excluded local indices
    */
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
   
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
+   * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] packList the list of node indices that we wish to get the size of after packing
    * @return a localIndex value representing the size of packList if it were packed
    * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
    */
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-  
   /**
    * @brief Packs an array of node indices into a buffer.
-   * @param [inout] buffer buffer to pack the node index data into
+   * @details Packed data are meant to be communicated to other MPI ranks
+   * @param [in,out] buffer buffer to pack the node index data into
    * @param [in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
    */
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
-  
   /**
    * @brief Unpack a buffer to an array of node indices.
+   * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] buffer buffer with the packed data
    * @param [inout] packList an array of localIndex values that we wish to unpack to
    * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
@@ -207,13 +205,14 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
-
   
   /**
    * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
+   * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
+  
   ///@}
   
   /**
@@ -232,6 +231,7 @@ public:
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
+
   /**
    *  @struct Containing added view access key to be bound with class data member
    */
@@ -258,32 +258,30 @@ public:
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   } viewKeys;
 
- /**
-   *  @struct Containing added group access key to be bound with class in group hierarchy
+  /**
+   * @struct Containing added group access key to be bound with class in group hierarchy
    */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
+  
   ///@}
 
   /**
    * \defgroup Accessors for NodeManager fixed data
    * @{
    */
-
   
   /**
-   * @brief Provide a const accessor to the nodes-to-edges relation.
+   * @brief Provide an immutable accessor to the nodes-to-edges relation.
    * @return const reference to  nodes-to-edges relation
    */
   EdgeMapType const & edgeList() const { return m_toEdgesRelation; }
-
   
   /**
-   * @brief Get the node-to-edges relation.
+   * @brief Get a mutable accessor to the node-to-edges relation.
    * @return reference to nodes-to-edges relation
    */
   EdgeMapType & edgeList() { return m_toEdgesRelation; }
-
 
   /**
    * @brief Provide a const accessor to the nodes-to-faces relation.
@@ -291,34 +289,32 @@ public:
    */
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
-  
   /**
    * @brief Get the nodes-to-faces relation.
    * @return reference to nodes-to-faces relation
    */
   FaceMapType & faceList() { return m_toFacesRelation; }
 
-
   /**
    * @brief Get the nodes-to-elements relation.
    * @return reference to nodes-to-elements relation
    */
-  OrderedVariableToManyElementRelation & toElementRelation() {return m_toElements;}
-  
+  ElemMapType & toElementRelation() {return m_toElements;}
   
   /**
    * @brief Provide a const accessor to the nodes-to-elements relation.
+   * @details The returned ElemMapType gives access, for one node
+   * to the element index, the element sub region, and the element region
+   * in relation with a node
    * @return const reference to nodes-to-elements relation
    */
-  OrderedVariableToManyElementRelation const & toElementRelation() const {return m_toElements;}
-
+  ElemMapType const & toElementRelation() const {return m_toElements;}
   
   /**
-   * @brief Get the nodes-to-elements-regions relation.
+   * @brief Get the mutable nodes-to-elements-regions relation.
    * @return reference to nodes-to-elements-regions relation
    */
   ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
-  
   
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
@@ -326,51 +322,44 @@ public:
    */
   ArrayOfArraysView< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
 
-  
   /**
-   * @brief Get the nodes-to-elements-subregions relation.
+   * @brief Get the mutable nodes-to-elements-subregions relation.
    * @return reference to nodes-to-elements-subregions relation
    */
   ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
-  
   
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
    */
   ArrayOfArraysView< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
-
   
   /**
-   * @brief Get the nodes-to-elements indices.
+   * @brief Get the mutable nodes-to-elements indices.
    * @return reference to nodes-to-elements indices
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
-  
   
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
    */
   ArrayOfArraysView< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex.toViewConst(); }
-
   
   /**
-   * @brief Get the reference position array.
+   * @brief Get the mutable reference position array. This table will contain all the node coordinates.
    * @return reference position array
    */
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
-
   
   /**
-   * @brief Provide an immutable arrayView of the reference position.
+   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
    * @return an immutable arrayView of the reference position.
    */
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const { return m_referencePosition; }
-
   
   /**
-   * @brief Get the total displacement array.
+   * @brief Get a mutable total displacement array.
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the total displacement does not exist
    */
@@ -378,7 +367,6 @@ public:
   {
     return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
   }
-
   
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
@@ -389,10 +377,9 @@ public:
   {
     return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
   }
-
   
   /**
-   * @brief Get the incremental displacement array.
+   * @brief Get a mutable incremental displacement array.
    * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the incremental displacement does not exist
    */
@@ -400,7 +387,6 @@ public:
   {
     return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement );
   }
-
   
   /**
    * @brief Provide an immutable arrayView to the incremental displacement array.
@@ -412,9 +398,8 @@ public:
     return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement );
   }
 
-
   /**
-   * @brief Get the velocity array.
+   * @brief Get a mutable velocity array.
    * @return the velocity array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the velocity array does not exist
    */
@@ -422,7 +407,6 @@ public:
   {
     return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
   }
-
   
   /**
    * @brief Provide an immutable arrayView to the velocity array.
@@ -433,10 +417,9 @@ public:
   {
     return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
   }
-
   
   /**
-   * @brief Get the acceleration array.
+   * @brief Get a mutable acceleration array.
    * @return the acceleration array if it exists, or an error is thrown if it does not exist
    * @note An error is thrown if the acceleration array does not exist
    */
@@ -444,7 +427,6 @@ public:
   {
     return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration );
   }
-
   
   /**
    * @brief Provide an immutable arrayView to the acceleration array.
@@ -460,7 +442,6 @@ public:
   
 private:
 
-  
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
    * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
@@ -485,15 +466,14 @@ private:
   /// nodes-to-element relation
   ElemMapType m_toElements;
 
-  /// map of global  to local  indices for edges
+  /// map of global to local indices for edges
   map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
-  /// map of global  to local  indices for faces
+  /// map of global to local indices for faces
   map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
-  /// map of global  to local  indices for elements
+  /// map of global to local indices for elements
   map< localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
-
 
 };
 }
