@@ -14,7 +14,6 @@
 
 /*
  * @file PerforationData.hpp
- *
  */
 
 #ifndef GEOSX_WELLS_PERFORATIONDATA_HPP
@@ -43,125 +42,146 @@ class PerforationData : public ObjectManagerBase
 public:
 
   /**
-   * @brief main constructor for Group Objects
-   * @param name the name of this instantiation of Group in the repository
-   * @param parent the parent group of this instantiation of Group
+   * @brief main constructor for PerforationData Objects
+   * @param [in] name the name of this instantiation of PerforationData in the repository
+   * @param [in] parent the parent group of this instantiation of PerforationData
    */
-  explicit PerforationData( string const & name,
-                            dataRepository::Group * const parent );
+  explicit PerforationData( string const & name, dataRepository::Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
+
+  /// default destructor
   ~PerforationData() override;
+
 
   /// deleted default constructor
   PerforationData() = delete;
 
+
   /// deleted copy constructor
   PerforationData( PerforationData const & ) = delete;
 
+  
   /// deleted move constructor
   PerforationData( PerforationData && ) = delete;
 
+  
   /// deleted assignment operator
   PerforationData & operator=( PerforationData const & ) = delete;
 
+  
   /// deleted move operator
   PerforationData & operator=( PerforationData && ) = delete;
 
+  
+  /// Get the catalog name
   static string CatalogName() { return "PerforationData"; }
 
+  
+  /// Get a const catalog name
   virtual const string getCatalogName() const override { return CatalogName(); }
 
+  
   /**
-   * @brief Setter for the global number of perforations (used for well initialization)
-   * @param nPerfs the global number of perforations (obtained for InternalWellGenerator)
+   * @brief Set the global number of perforations used for well initialization.
+   * @param [in] nPerfs global number of perforations (obtained for InternalWellGenerator)
    */
   void SetNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
 
+  
   /**
-   * @brief Getter for the global number of perforations (used for well initialization)
-   * @return the global number of perforations
+   * @brief Get the global number of perforations (used for well initialization).
+   * @return global number of perforations
    */
   globalIndex GetNumPerforationsGlobal() const { return m_numPerforationsGlobal; }
 
+  
   /**
-   * @brief Getter for perforation to mesh element connectivity
-   * @return list of element region/subregion/index conencted to each perforation
+   * @brief Get perforation-to-mesh-element connectivity.
+   * @return list of element region/subregion/index connected to each perforation
    */
   ToElementRelation< array1d< localIndex > > & GetMeshElements() { return m_toMeshElements; }
 
+  
   /**
-   * @brief Const getter for perforation to mesh element connectivity
+   * @brief Provides an immutable accessor to a const perforation-to-mesh-element connectivity.
    * @return list of element region/subregion/index connected to each perforation
    */
   ToElementRelation< array1d< localIndex > > const & GetMeshElements() const { return m_toMeshElements; }
 
+  
   /**
-   * @brief Getter for perforation to well element connectivity
+   * @brief Get perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
   arrayView1d< localIndex > & GetWellElements() { return m_wellElementIndex; }
 
+  
   /**
-   * @brief Const getter for perforation to well element connectivity
+   * @brief Provides an immutable accessor to a const perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation
    */
   arrayView1d< localIndex const > const & GetWellElements() const { return m_wellElementIndex; }
 
+  
   /**
-   * @brief Getter for perforation locations
+   * @brief Get perforation locations.
    * @return list of perforation locations
    */
   arrayView1d< R1Tensor > & GetLocation() { return m_location; }
 
+  
   /**
-   * @brief Const getter for perforation locations
+   * @brief Provides an immutable accessor to a const perforation location arrayView.
    * @return list of perforation locations
    */
   arrayView1d< R1Tensor const > const & GetLocation() const { return m_location; }
 
+  
   /**
-   * @brief Const getter for perforation well indices
+   * @brief Provides an immutable accessor to a const perforation well indices array.
    * @return list of perforation well indices
    */
   arrayView1d< real64 const > const & GetWellTransmissibility() const { return m_wellTransmissibility; }
 
+  
   /**
-   * @brief Getter for perforation well indices
+   * @brief Get perforation well indices.
    * @return list of perforation well indices
    */
   arrayView1d< real64 > & GetWellTransmissibility() { return m_wellTransmissibility; }
 
+  
   /**
-   * @brief Computes the well transmissibility for each local perforation on this well
-   * @param[in] mesh the target mesh level
-   * @param[in] wellElementSubRegion the subRegion corresponding to this well
+   * @brief Computes the well transmissibility for each local perforation on this well.
+   * @param[in] mesh target mesh level
+   * @param[in] wellElementSubRegion  subRegion corresponding to this well
    * @param[in] permeabilityKey key to access the permeability in the reservoir
    */
   void ComputeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const * const wellElemSubRegion,
                                     string const & permeabilityKey );
 
+  
   /**
-   * @brief Locates connected local mesh elements and resizes current object appropriately
-   * @param[in] mesh the target mesh level
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
+   * @brief Locates connected local mesh elements and resizes current object appropriately.
+   * @param[in] mesh target mesh level
+   * @param[in] wellGeometry  InternalWellGenerator containing the global well topology
    */
   void ConnectToMeshElements( MeshLevel const & mesh,
                               InternalWellGenerator const & wellGeometry );
 
+  
   /**
-   * @brief Connects each perforation to a local wellbore element
-   * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   * @param[in] wellElementGlobalToLocalMap the global to local map of wellbore elements
+   * @brief Connects each perforation to a local wellbore element.
+   * @param[in] wellGeometry InternalWellGenerator containing the global well topology
+   * @param[in] wellElementGlobalToLocalMap  global-to-local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void ConnectToWellElements( InternalWellGenerator const & wellGeometry,
                               unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 
+  
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
 
@@ -190,12 +210,12 @@ public:
 private:
 
   /**
-   * @brief Computes the approximate dimensions of the reservoir element containing a perforation
+   * @brief Computes the approximate dimensions of the reservoir element containing a perforation.
    *        This is done by computing a bounding box containing the element
-   * @param[in] mesh the target mesh level
-   * @param[in] er the index of the element region containing the reservoir element
-   * @param[in] esr the index of the element subRegion containing the reservoir element
-   * @param[in] ei the index of the reservoir element
+   * @param[in] mesh target mesh level
+   * @param[in] er  index of the element region containing the reservoir element
+   * @param[in] esr  index of the element subRegion containing the reservoir element
+   * @param[in] ei  index of the reservoir element
    * @param[inout] dx dimension of the element in the x-direction
    * @param[inout] dy dimension of the element in the y-direction
    * @param[inout] dz dimension of the element in the z-direction
@@ -203,8 +223,9 @@ private:
   void GetReservoirElementDimensions( MeshLevel const & mesh,
                                       localIndex const er, localIndex const esr, localIndex const ei,
                                       real64 & dx, real64 & dy, real64 & dz ) const;
+
   /**
-   * @brief Checks if the well is along the x-, y-, or z- directions
+   * @brief Checks if the well is along the x-, y-, or z- directions.
    * @param[in] vecWellElemCenterToPerf vector connecting the well element center to the perforation
    * @param[in] dx dimension of the element in the x-direction
    * @param[in] dy dimension of the element in the y-direction
@@ -222,6 +243,7 @@ private:
                             real64 & d1, real64 & d2, real64 & h,
                             real64 & k1, real64 & k2 ) const;
 
+  /// Console output of perforations for debugging purposes
   void DebugLocalPerforations() const;
 
   /// global number of perforations
