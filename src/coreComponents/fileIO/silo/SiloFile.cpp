@@ -43,8 +43,8 @@
 
 
 #if !defined(GEOSX_USE_MPI)
-int MPI_Comm_size( MPI_Comm, int * ) {return 1;}
-int MPI_Comm_rank( MPI_Comm, int * ) {return 1;}
+int MPI_Comm_size( MPI_Comm, int * size ) { *size=1; return 0; }
+int MPI_Comm_rank( MPI_Comm, int * rank ) { *rank=1; return 0; }
 
 int MPI_Ssend( const void *, int, MPI_Datatype, int, int,
                MPI_Comm )
