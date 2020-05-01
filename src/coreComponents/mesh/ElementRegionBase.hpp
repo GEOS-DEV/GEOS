@@ -59,27 +59,27 @@ public:
   ElementRegionBase() = delete;
 
 /**
- * @brief main constructor
- * @param[in] name the name of the element region
- * @param[in] parent the pointer to the parent group
+ * @brief Main constructor.
+ * @param name the name of the element region
+ * @param parent the pointer to the parent group
  */
   ElementRegionBase( string const & name, Group * const parent );
 
 
 /**
- * @brief copy constructor
- * @param[in] init the element region to be copied
+ * @brief Copy constructor.
+ * @param init the element region to be copied
  */
   ElementRegionBase( const ElementRegionBase & init );
 
 /**
- * @brief default destructor
+ * @brief Default destructor.
  */
   virtual ~ElementRegionBase() override;
 
 /**
- * @brief generate mesh
- * @param[in] cellBlocks cellBlocks where the mesh is generated
+ * @brief Generate mesh
+ * @param cellBlocks cell blocks where the mesh is generated
  */
   virtual void GenerateMesh( Group * const cellBlocks )
   {
@@ -101,7 +101,7 @@ public:
   }
 
 /**
- * @brief get the subregions belonged to the current element region
+ * @brief Get the subregions belonged to the current element region.
  * @return reference to the group of element subregions
  */
   subGroupMap const & GetSubRegions() const
@@ -110,8 +110,8 @@ public:
   }
 
 /**
- * @brief get the subregions of the element region with the name
- * @param[in] regionName the name of the region
+ * @brief Get the subregions of the element region with the name.
+ * @param regionName the name of the region
  * @return the group of thesubgreions
  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
@@ -130,8 +130,8 @@ public:
   }
 
 /**
- * @brief get the subregions of the element region with the index 
- * @param[in] index the index of the element region
+ * @brief Get the subregions of the element region with the index.
+ * @param index the index of the element region
  * @return the subregion with the specified subregion type
  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
@@ -150,7 +150,7 @@ public:
   }
 
 /**
- * @brief get the number of subregions contained in the element region 
+ * @brief Get the number of subregions contained in the element region.
  * @return the number of subregions contained in the element region
  */
   localIndex numSubRegions() const
@@ -159,8 +159,8 @@ public:
   }
 
 /**
- * @brief get the number of subregions contained in the element region 
- *        for specific subregion types listed in the template
+ * @brief Get the number of subregions contained in the element region
+ *        for specific subregion types listed in the template.
  * @return the number of elements contained in the element region
  */
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
@@ -175,8 +175,8 @@ public:
   }
 
 /**
- * @brief apply LAMBDA to the subregions
- * @param[in] lambda the lambda to be applied
+ * @brief Apply LAMBDA to the subregions.
+ * @param lambda the lambda to be applied
  */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -194,9 +194,9 @@ public:
   }
 
 /**
- * @brief apply LAMBDA to the subregions with the specific subregion types
- *        listed in the template
- * @param[in] lambda the lambda to be applied
+ * @brief Apply LAMBDA to the subregions with the specific subregion types
+ *        listed in the template.
+ * @param lambda the lambda to be applied
  */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -216,8 +216,8 @@ public:
   }
 
 /**
- * @brief apply LAMBDA to the subregions, loop using subregion indices
- * @param[in] lambda the lambda to be applied
+ * @brief Apply LAMBDA to the subregions, loop using subregion indices.
+ * @param lambda the lambda to be applied
  */
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
@@ -235,9 +235,9 @@ public:
   }
 
 /**
- * @brief apply LAMBDA to the subregions with the specific subregion types
- *        listed in the template, loop using subregion indices
- * @param[in] lambda the lambda to be applied
+ * @brief Apply LAMBDA to the subregions with the specific subregion types
+ *        listed in the template, loop using subregion indices.
+ * @param lambda the lambda to be applied
  */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
@@ -270,7 +270,7 @@ public:
 
 
 /**
- * @brief struct to serve as a container for variable strings and keys
+ * @brief Struct to serve as a container for variable strings and keys.
  * @struct viewKeyStruct 
 */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
@@ -287,13 +287,13 @@ public:
   string_array & getMaterialList() {return m_materialList;}
 
 /**
- * @brief get the material list in the element region
+ * @brief Get the material list in the element region.
  * @return the material list
  */
   string_array const & getMaterialList() const {return m_materialList;}
 
 /**
- * @brief get the name of the constiutive in the element region
+ * @brief Get the name of the constiutive in the element region.
  * @return the string_array of the constitutive names
  */
   template< typename CONSTITUTIVE_TYPE >
