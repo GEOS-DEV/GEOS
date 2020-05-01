@@ -54,14 +54,30 @@ public:
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
+  /**
+   * @brief return default size of the value array in the node-to-edge mapping
+   * @return default size of value array in the node-to-edge mapping
+   */
   inline localIndex getEdgeMapOverallocation()
   { return 8; }
-
+  /**
+   * @brief return default size of the value in the node-to-face mapping
+   * @return default size of value array in the node-to-face mapping
+   */
   inline localIndex getFaceMapOverallocation()
   { return 8; }
-
+  /**
+   * @brief return default size of the value array in the node-to-element mapping
+   * @return default size of value array in the node-to-element mapping
+   */
   inline localIndex getElemMapOverAllocation()
   { return 8; }
+
+
+/**
+   * @name Constructors/destructor
+   */
+  ///@{
 
   /**
    * @brief Main constructor for NodeManager Objects.
@@ -77,14 +93,34 @@ public:
    */
   ~NodeManager() override;
 
+  /**
+  * @brief  deleted constructor
+  */
+  NodeManager() = delete;
+
+  /**
+   * @brief deleted copy constructor
+   */
+  NodeManager( const NodeManager & init ) = delete;
+
+  /**
+  * @brief deleted assignement operator
+  */
+  NodeManager & operator=( const NodeManager & ) = delete;
+
+  ///@}
   
   /**
    * @brief Resizes the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
-   * @param [in] newSize the new number of nodes.
+   * @param [in] newsize the new number of nodes.
    */
   virtual void resize( localIndex const newsize ) override;
 
-  
+   /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
   /**
    * @brief Returns the name of the node manager in the object catalog.
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
@@ -99,7 +135,7 @@ public:
    */
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
-
+ ///@}
   
   /**
    * @brief Assigns an EgdeManager to a NodeManager, and performs the node-to-edge mapping.
@@ -128,10 +164,14 @@ public:
    */
   void CompressRelationMaps( );
 
+ /**
+   * @name Packing methods
+   */
+  ///@{
 
   /**
    * @brief Creates an array listing all excluded local indices values.
-   * @param [in/out] exclusionList Sorted array with excluded local indices
+   * @param [inout] exclusionList Sorted array with excluded local indices
    */
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
@@ -147,7 +187,7 @@ public:
   
   /**
    * @brief Packs an array of node indices into a buffer.
-   * @param [in/out] buffer_unit_type buffer to pack the node index data into
+   * @param [inout] buffer buffer to pack the node index data into
    * @param [in] packList the indices of nodes that should be packed
    * @return a localIndex value representing the size of the packed data
    */
@@ -158,7 +198,7 @@ public:
   /**
    * @brief Unpacks a buffer to an array of node indices.
    * @param [in] buffer buffer with the packed data
-   * @param [in/out] packList an array of localIndex values that we wish to unpack to
+   * @param [inout] packList an array of localIndex values that we wish to unpack to
    * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
    * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
    * @return a localIndex value representing the size of the unpacked list
@@ -174,7 +214,7 @@ public:
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
-
+  ///@}
   
   /**
    * @brief Clean up the mappings between nodes and edges, faces, elements based on a new (updated) list of nodes, in order to keep only relevant mappings.
@@ -188,7 +228,13 @@ public:
                          ArrayOfArraysView< localIndex const > const & facesToNodes,
                          ElementRegionManager const & elemRegionManager );
 
-  
+   /**
+   * @name viewKeyStruct/groupKeyStruct
+   */
+  ///@{
+  /**
+   *  @struct Containing added view access key to be bound with class data member
+   */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString       = "ReferencePosition";
@@ -212,13 +258,12 @@ public:
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
   } viewKeys;
 
-
-  /**
-   * @struct
+ /**
+   *  @struct Containing added group access key to be bound with class in group hierarchy
    */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {} groupKeys;
-
+  ///@}
 
   /**
    * \defgroup Accessors for NodeManager fixed data
@@ -449,14 +494,6 @@ private:
   /// map of global  to local  indices for elements
   map< localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
 
-  /// deleted constructor
-  NodeManager() = delete;
-
-  /// deleted copy constructor
-  NodeManager( const NodeManager & init ) = delete;
-
-  /// deleted assignement operator
-  NodeManager & operator=( const NodeManager & ) = delete;
 
 };
 }

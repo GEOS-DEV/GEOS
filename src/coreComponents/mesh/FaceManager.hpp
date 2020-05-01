@@ -63,21 +63,23 @@ public:
    */
   virtual const string getCatalogName() const override
   { return FaceManager::CatalogName(); }
+ ///@}
+
 
   /**
      @brief Get the default number of node per face in node list
-     @ return the default number of node per face in node list
+     @return the default number of node per face in node list
    */
   static localIndex nodeMapExtraSpacePerFace()
   { return 4; }
   /**
      @brief Get the default number of edge per face in edge list
-     @ return the default number of edge per face in edge list
+     @return the default number of edge per face in edge list
    */
   static localIndex edgeMapExtraSpacePerFace()
   { return 4; }
 
-  ///@}
+
 
 
    /**
@@ -120,7 +122,7 @@ public:
  /**
    @brief Build faces in filling face-to-node and face-to-element mappings
    @param[in] nodeManager mesh node manager
-   @param[in] elemManager discrete element manager
+   @param[in] elemManager element manager
  */
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
