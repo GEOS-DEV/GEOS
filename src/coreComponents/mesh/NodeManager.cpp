@@ -13,7 +13,7 @@
  */
 
 /**
- * @file NodeManager.hpp
+ * @file NodeManager.cpp
  */
 
 #include "NodeManager.hpp"
@@ -25,42 +25,30 @@
 #include "ElementRegionManager.hpp"
 
 namespace geosx
+
 {
+
 using namespace dataRepository;
 
-// *********************************************************************************************************************
-/**
- * @return
- */
+
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
-
   this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
-
   this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
-
   this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );
-
   this->registerWrapper( viewKeyStruct::elementSubRegionListString, &elementSubRegionList() );
-
   this->registerWrapper( viewKeyStruct::elementListString, &elementList() );
 
 }
 
 
-
-// *********************************************************************************************************************
-
-// *********************************************************************************************************************
-/**
- * @return
- */
 NodeManager::~NodeManager()
 {}
+
 
 void NodeManager::resize( localIndex const newSize )
 {
@@ -69,12 +57,10 @@ void NodeManager::resize( localIndex const newSize )
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
   m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
-
   ObjectManagerBase::resize( newSize );
 }
 
 
-//**************************************************************************************************
 void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -123,7 +109,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
   m_toEdgesRelation.SetRelatedObject( edgeManager );
 }
 
-//**************************************************************************************************
+
 void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -174,7 +160,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
   m_toFacesRelation.SetRelatedObject( faceManager );
 }
 
-//**************************************************************************************************
+
 void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
@@ -182,14 +168,12 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
   ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
-
-
   localIndex const numNodes = size();
 
-  /// The number of elements attached to the each node.
+  // The number of elements attached to the each node.
   array1d< localIndex > elemsPerNode( numNodes );
 
-  /// The total number of elements, the sum of elemsPerNode.
+  // The total number of elements, the sum of elemsPerNode.
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
 
   elementRegionManager->
@@ -226,7 +210,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   toElementSubRegionList.reserveValues( valuesToReserve );
   toElementList.reserveValues( valuesToReserve );
 
-  /// Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
+  // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     toElementRegionList.appendArray( 0 );
@@ -238,9 +222,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
     toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
   }
 
-  /// Populate the element maps. Note that this can't be done in parallel because the three element lists must be in the
-  /// same order.
-  /// If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
+  // Populate the element maps.
+  // Note that this can't be done in parallel because the three element lists must be in the same order.
+  // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
   elementRegionManager->
     forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
                                                             ( localIndex const er, localIndex const esr, ElementRegionBase const &,
@@ -262,6 +246,7 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
   this->m_toElements.setElementRegionManager( elementRegionManager );
 }
 
+
 void NodeManager::CompressRelationMaps()
 {
   m_toEdgesRelation.compress();
@@ -271,7 +256,7 @@ void NodeManager::CompressRelationMaps()
   m_toElements.m_toElementIndex.compress();
 }
 
-//**************************************************************************************************
+
 void NodeManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::ViewPackingExclusionList( exclusionList );
@@ -287,21 +272,21 @@ void NodeManager::ViewPackingExclusionList( SortedArray< localIndex > & exclusio
   }
 }
 
-//**************************************************************************************************
+
 localIndex NodeManager::PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackUpDownMapsPrivate< false >( junk, packList );
 }
 
-//**************************************************************************************************
+
 localIndex NodeManager::PackUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
   return PackUpDownMapsPrivate< true >( buffer, packList );
 }
 
-//**************************************************************************************************
+
 template< bool DOPACK >
 localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
@@ -332,7 +317,7 @@ localIndex NodeManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-//**************************************************************************************************
+
 localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
@@ -372,6 +357,7 @@ localIndex NodeManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
   return unPackedSize;
 }
 
+
 void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::FixUpDownMaps( m_toEdgesRelation,
@@ -385,6 +371,7 @@ void NodeManager::FixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 
 }
+
 
 void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes,
                                     array2d< localIndex > const & edgesToNodes,
