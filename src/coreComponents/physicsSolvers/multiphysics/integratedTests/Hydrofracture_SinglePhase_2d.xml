@@ -9,7 +9,7 @@
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="0"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
@@ -30,7 +30,7 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{Region2}"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       contactRelationName="fractureContact"
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
@@ -46,8 +46,8 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidName="water"
-      solidName="rock"
+      fluidNames="{water}"
+      solidNames="{rock}"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
@@ -62,7 +62,7 @@
       logLevel="0"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       rockToughness="1.0e6"
       >
     </SurfaceGenerator>

@@ -22,10 +22,9 @@ namespace geosx
 {
 using namespace dataRepository;
 
-void xmlWrapper::StringToInputVariable( R1Tensor & target, string inputValue )
+void xmlWrapper::StringToInputVariable( R1Tensor & target, string const & inputValue )
 {
-  string csvstr = inputValue;
-  std::istringstream ss( csvstr );
+  std::istringstream ss( inputValue );
 
   real64 value;
   int count = 0;
@@ -52,7 +51,7 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
 
   xmlNode includedNode = targetNode.child( "Included" );
 
-  for( xmlWrapper::xmlNode childNode=includedNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  for( xmlWrapper::xmlNode childNode=includedNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
     string childName = childNode.name();
@@ -70,7 +69,7 @@ void xmlWrapper::addIncludedXML( xmlNode & targetNode )
 
     // To validate correctly, included files should contain the root Problem node
     xmlNode includedRootNode = includedXmlDocument.child( "Problem" );
-    for( xmlNode importNode=includedRootNode.first_child() ; importNode ; importNode=importNode.next_sibling())
+    for( xmlNode importNode=includedRootNode.first_child(); importNode; importNode=importNode.next_sibling())
     {
       targetNode.append_copy( importNode );
     }

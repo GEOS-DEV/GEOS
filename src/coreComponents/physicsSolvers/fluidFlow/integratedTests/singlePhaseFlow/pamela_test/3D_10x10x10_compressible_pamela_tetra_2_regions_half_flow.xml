@@ -6,8 +6,8 @@
 
     <SinglePhaseFVM name="SinglePhaseFlow"
                           logLevel="1"
-                          fluidName="water"
-                          solidName="rock"
+                          fluidNames="{water}"
+                          solidNames="{rock}"
                           discretization="singlePhaseTPFA"
                           targetRegions="{Bot}">
       <NonlinearSolverParameters newtonTol="1.0e-6"

@@ -1,0 +1,11 @@
+memroofs 14336 2996.77 828.758
+mem_roof_names 'L1' 'L2' 'HBM'
+comproofs 7068.86 3535.79
+comp_roof_names 'FMA' 'No-FMA'
+
+# omit the following if only plotting roofs
+AI_HBM	3.27E+01	4.16E+00    1.29   4.69
+AI_L2	-4.34E+00	-1.77E+00  -0.989  -3.25
+AI_L1	-1.49E+01	-7.72E+00  -0.697  -2.33
+FLOPS	5.85E+03	1.47E+03  764.8    2183
+labels	'SSLE-NoStressUpdt' 'SSLE-StressUpdt' 'FS-Precalc dNdX' 'FS-NoPrecalc dNdX'

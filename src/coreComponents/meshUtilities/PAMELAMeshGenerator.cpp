@@ -39,28 +39,28 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
   MeshGeneratorBase( name, parent )
 {
 
-  registerWrapper(viewKeyStruct::filePathString, &m_filePath, false)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setRestartFlags(RestartFlags::NO_WRITE)->
-    setDescription("path to the mesh file");
-  registerWrapper(viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Fields to be imported from the external mesh file");
-  registerWrapper(viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Name of the fields within GEOSX");
-  registerWrapper(viewKeyStruct::scaleString, &m_scale, false)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDefaultValue(1.)->setDescription("Scale the coordinates of the vertices");
-  registerWrapper(viewKeyStruct::reverseZString, &m_isZReverse, false)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDefaultValue(0)->setDescription("0 : Z coordinate is upward, 1 : Z coordinate is downward");
+  registerWrapper( viewKeyStruct::filePathString, &m_filePath )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setDescription( "path to the mesh file" );
+  registerWrapper( viewKeyStruct::fieldsToImportString, &m_fieldsToImport )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Fields to be imported from the external mesh file" );
+  registerWrapper( viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Name of the fields within GEOSX" );
+  registerWrapper( viewKeyStruct::scaleString, &m_scale )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDefaultValue( 1. )->setDescription( "Scale the coordinates of the vertices" );
+  registerWrapper( viewKeyStruct::reverseZString, &m_isZReverse )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDefaultValue( 0 )->setDescription( "0 : Z coordinate is upward, 1 : Z coordinate is downward" );
 }
 
 PAMELAMeshGenerator::~PAMELAMeshGenerator()
 {}
 
-void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) )
+void PAMELAMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
 void PAMELAMeshGenerator::PostProcessInput()
@@ -73,8 +73,8 @@ void PAMELAMeshGenerator::PostProcessInput()
                                                PAMELA::ELEMENTS::FAMILY::POLYGON );
   m_pamelaMesh->CreateLineGroupWithAdjacency(
     "TopologicalC2C",
-  m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
-                                                             PAMELA::ELEMENTS::FAMILY::POLYGON ));
+    m_pamelaMesh->getAdjacencySet()->get_TopologicalAdjacency( PAMELA::ELEMENTS::FAMILY::POLYHEDRON, PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
+                                                               PAMELA::ELEMENTS::FAMILY::POLYGON ));
 }
 
 void PAMELAMeshGenerator::RemapMesh( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) )
@@ -89,69 +89,74 @@ Group * PAMELAMeshGenerator::CreateChild( string const & GEOSX_UNUSED_PARAM( chi
 
 void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 {
-  GEOSX_LOG_RANK_0("Writing into the GEOSX mesh data structure");
+  GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
   domain->getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group * const meshBodies = domain->GetGroup( std::string( "MeshBodies" ));
-  MeshBody * const meshBody = meshBodies->RegisterGroup<MeshBody>( this->getName() );
+  MeshBody * const meshBody = meshBodies->RegisterGroup< MeshBody >( this->getName() );
 
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel * const meshLevel0 = meshBody->RegisterGroup<MeshLevel>( std::string( "Level0" ));
+  MeshLevel * const meshLevel0 = meshBody->RegisterGroup< MeshLevel >( std::string( "Level0" ));
   NodeManager * nodeManager = meshLevel0->getNodeManager();
-  CellBlockManager * cellBlockManager = domain->GetGroup<CellBlockManager>( keys::cellManager );
+  CellBlockManager * cellBlockManager = domain->GetGroup< CellBlockManager >( keys::cellManager );
 
 
   // Use the PartMap of PAMELA to get the mesh
-  auto polyhedronPartMap = std::get<0>( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0));
+  auto polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
 
   // Vertices are written first
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
-  nodeManager->resize(m_pamelaMesh->get_PointCollection()->size_all());
-    R1Tensor xMax( std::numeric_limits< real64 >::min(),
-                   std::numeric_limits< real64 >::min(),
-                   std::numeric_limits< real64 >::min());
+  nodeManager->resize( m_pamelaMesh->get_PointCollection()->size_all());
 
-    R1Tensor xMin( std::numeric_limits< real64 >::max(),
-                   std::numeric_limits< real64 >::max(),
-                   std::numeric_limits< real64 >::max());
+  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
+
+  R1Tensor xMax( std::numeric_limits< real64 >::min(),
+                 std::numeric_limits< real64 >::min(),
+                 std::numeric_limits< real64 >::min());
+
+  R1Tensor xMin( std::numeric_limits< real64 >::max(),
+                 std::numeric_limits< real64 >::max(),
+                 std::numeric_limits< real64 >::max());
+
   double zReverseFactor = 1.;
   if( m_isZReverse )
   {
     zReverseFactor = -1.;
   }
-  for( auto const & verticesIterator : *m_pamelaMesh->get_PointCollection()) {
+  for( auto const & verticesIterator : *m_pamelaMesh->get_PointCollection())
+  {
     localIndex const vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex const vertexGlobalIndex = verticesIterator->get_globalIndex();
     X( vertexLocalIndex, 0 ) = verticesIterator->get_coordinates().x * m_scale;
     X( vertexLocalIndex, 1 ) = verticesIterator->get_coordinates().y * m_scale;
     X( vertexLocalIndex, 2 ) = verticesIterator->get_coordinates().z * m_scale * zReverseFactor;
-    
-    nodeManager->m_localToGlobalMap[vertexLocalIndex] = vertexGlobalIndex;
-    for( int i = 0; i < 3 ; i++ )
+
+    nodeLocalToGlobal[vertexLocalIndex] = vertexGlobalIndex;
+    for( int i = 0; i < 3; i++ )
     {
       if( X( vertexLocalIndex, i ) > xMax[i] )
       {
-        xMax[i] = X( vertexLocalIndex, i ) ;
+        xMax[i] = X( vertexLocalIndex, i );
       }
       if( X( vertexLocalIndex, i ) < xMin[i] )
       {
-        xMin[i] = X( vertexLocalIndex, i ) ;
+        xMin[i] = X( vertexLocalIndex, i );
       }
     }
   }
   xMax -= xMin;
   meshBody->setGlobalLengthScale( std::fabs( xMax.L2_Norm() ) );
-  
+
   // First loop which iterate on the regions
   array1d< globalIndex > globalIndexRegionOffset( polyhedronPartMap.size() +1 );
-  for( auto regionItr = polyhedronPartMap.begin() ; regionItr != polyhedronPartMap.end() ; ++regionItr )
+  for( auto regionItr = polyhedronPartMap.begin(); regionItr != polyhedronPartMap.end(); ++regionItr )
   {
     auto regionPtr = regionItr->second;
     auto regionIndex = regionPtr->Index;
-    auto regionIndexStr = std::to_string(regionIndex);
+    auto regionIndexStr = std::to_string( regionIndex );
 
     // Iterate on cell types
-    for( auto cellBlockIterator = regionPtr->SubParts.begin() ;
-        cellBlockIterator != regionPtr->SubParts.end() ; cellBlockIterator++ )
+    for( auto cellBlockIterator = regionPtr->SubParts.begin();
+         cellBlockIterator != regionPtr->SubParts.end(); cellBlockIterator++ )
     {
       auto cellBlockPAMELA = cellBlockIterator->second;
       auto cellBlockType = cellBlockPAMELA->ElementType;
@@ -160,18 +165,21 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       if( cellBlockName == "HEX" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if ( nbCells == 0 ) continue;
+        if( nbCells == 0 )
+          continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-        cellBlock -> SetElementType("C3D8");
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+        cellBlock->SetElementType( "C3D8" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 8 );
 
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
+
         // Iterate on cells
-        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-            cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
-            cellItr++ )
+        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
+             cellItr != cellBlockPAMELA->SubCollection.end_owned();
+             cellItr++ )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
@@ -194,24 +202,27 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][7] =
             cornerList[6]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "TETRA" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if ( nbCells == 0 ) continue;
+        if( nbCells == 0 )
+          continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-        cellBlock -> SetElementType("C3D4");
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+        cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 4 );
 
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
+
         // Iterate on cells
-        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-            cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
-            cellItr++ )
+        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
+             cellItr != cellBlockPAMELA->SubCollection.end_owned();
+             cellItr++ )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
@@ -226,24 +237,27 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][3] =
             cornerList[3]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "WEDGE" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if ( nbCells == 0 ) continue;
+        if( nbCells == 0 )
+          continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-        cellBlock -> SetElementType("C3D6");
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+        cellBlock->SetElementType( "C3D6" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 6 );
 
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
+
         // Iterate on cells
-        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-            cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
-            cellItr++ )
+        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
+             cellItr != cellBlockPAMELA->SubCollection.end_owned();
+             cellItr++ )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
@@ -262,24 +276,27 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][5] =
             cornerList[5]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       else if( cellBlockName == "PYRAMID" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
-        if ( nbCells == 0 ) continue;
+        if( nbCells == 0 )
+          continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup<CellBlock>( regionIndexStr + "_" + cellBlockName);
-        cellBlock -> SetElementType("C3D5");
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+        cellBlock->SetElementType( "C3D5" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
         cellToVertex.resize( nbCells, 5 );
 
+        arrayView1d< globalIndex > const & localToGlobal = cellBlock->localToGlobalMap();
+
         // Iterate on cells
-        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned() ;
-            cellItr != cellBlockPAMELA->SubCollection.end_owned() ;
-            cellItr++ )
+        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
+             cellItr != cellBlockPAMELA->SubCollection.end_owned();
+             cellItr++ )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
@@ -296,7 +313,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           cellToVertex[cellLocalIndex][4] =
             cornerList[4]->get_localIndex();
 
-          cellBlock->m_localToGlobalMap[cellLocalIndex] = cellGlobalIndex;
+          localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
       /// Import ppt
@@ -309,9 +326,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
             real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF(property.size() != integer_conversion< localIndex >( meshProperty->size() ),
-                "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
-                << meshProperty->size() << ") on " <<cellBlock->getName() );
+            GEOSX_ERROR_IF( property.size() != integer_conversion< localIndex >( meshProperty->size() ),
+                            "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
+                                            << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < property.size(); cellIndex++ )
             {
               property[cellIndex] = meshProperty->get_data( cellIndex )[0];
@@ -320,9 +337,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
             array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF(property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
-                "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
-                << meshProperty->size() << ") on " <<cellBlock->getName() );
+            GEOSX_ERROR_IF( property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
+                            "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
+                                            << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )
             {
               for( int dim = 0; dim < 3; dim++ )
@@ -333,7 +350,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           }
           else
           {
-            GEOSX_ERROR("Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX");
+            GEOSX_ERROR( "Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX" );
           }
         }
       }
@@ -342,9 +359,9 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 }
 
-void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string& GEOSX_UNUSED_PARAM( elementType ),
+void PAMELAMeshGenerator::GetElemToNodesRelationInBox( const std::string & GEOSX_UNUSED_PARAM( elementType ),
                                                        const int GEOSX_UNUSED_PARAM( index )[],
-                                                       const int& GEOSX_UNUSED_PARAM( iEle ),
+                                                       const int & GEOSX_UNUSED_PARAM( iEle ),
                                                        int GEOSX_UNUSED_PARAM( nodeIDInBox )[],
                                                        const int GEOSX_UNUSED_PARAM( node_size ) )
 {}

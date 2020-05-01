@@ -1,10 +1,10 @@
 
 
-=============== ====================== ========================== 
-Name            Type                   Description                
-=============== ====================== ========================== 
-cellStencil     CellElementStencilTPFA (no description available) 
-fractureStencil FaceElementStencil     (no description available) 
-=============== ====================== ========================== 
+=============== ============================ ========================== 
+Name            Type                         Description                
+=============== ============================ ========================== 
+cellStencil     geosx_CellElementStencilTPFA (no description available) 
+fractureStencil geosx_FaceElementStencil     (no description available) 
+=============== ============================ ========================== 
 
 

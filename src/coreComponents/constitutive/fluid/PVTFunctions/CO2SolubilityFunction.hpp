@@ -34,7 +34,7 @@ public:
   CO2SolubilityFunction( string_array const & inputPara,
                          string_array const & phaseNames,
                          string_array const & componentNames,
-                         real64_array const & componentMolarWeight);
+                         real64_array const & componentMolarWeight );
 
   ~CO2SolubilityFunction() override
   {}
@@ -45,13 +45,13 @@ public:
 
   virtual void Partition( EvalVarArgs const & pressure,
                           EvalVarArgs const & temperature,
-                          arraySlice1d<EvalVarArgs const> const & compFraction,
-                          arraySlice1d<EvalVarArgs> const & phaseFraction,
-                          arraySlice2d<EvalVarArgs> const & phaseCompFraction) const override;
+                          arraySlice1d< EvalVarArgs const > const & compFraction,
+                          arraySlice1d< EvalVarArgs > const & phaseFraction,
+                          arraySlice2d< EvalVarArgs > const & phaseCompFraction ) const override;
 
 private:
 
-  void MakeTable(const string_array& inputPara);
+  void MakeTable( const string_array & inputPara );
 
   TableFunctionPtr m_CO2SolubilityTable;
   localIndex m_CO2Index;

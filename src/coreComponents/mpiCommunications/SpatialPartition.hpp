@@ -57,19 +57,21 @@ public:
   void SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max );
 
   void setPartitions( unsigned int xPartitions, unsigned int yPartitions,
-                      unsigned int zPartitions ) {
+                      unsigned int zPartitions )
+  {
     m_Partitions.resize( 3 );
     m_Partitions( 0 ) = xPartitions;
     m_Partitions( 1 ) = yPartitions;
     m_Partitions( 2 ) = zPartitions;
     m_size = 1;
-    for( int i = 0 ; i < nsdof ; i++ )
+    for( int i = 0; i < nsdof; i++ )
       m_size *= m_Partitions( i );
     SetContactGhostRange( 0.0 );
   }
 
   void setPeriodic( unsigned int xPeriodic, unsigned int yPeriodic,
-                    unsigned int zPeriodic ) {
+                    unsigned int zPeriodic )
+  {
     m_Periodic( 0 ) = xPeriodic;
     m_Periodic( 1 ) = yPeriodic;
     m_Periodic( 2 ) = zPeriodic;
@@ -96,25 +98,31 @@ public:
 
   int GetColor();
 
-  const array1d< integer > & GetPartitions() const {
+  const array1d< integer > & GetPartitions() const
+  {
     return m_Partitions;
   }
 
-  const array1d< integer > & GetCoords() const {
+  const array1d< integer > & GetCoords() const
+  {
     return m_coords;
   }
 
-  const R1Tensor & xMin() const {
+  const R1Tensor & xMin() const
+  {
     return m_min;
   }
-  const R1Tensor & xMax() const {
+  const R1Tensor & xMax() const
+  {
     return m_max;
   }
 
-  realT xMin( const int i ) const {
+  realT xMin( const int i ) const
+  {
     return m_min[i];
   }
-  realT xMax( const int i ) const {
+  realT xMax( const int i ) const
+  {
     return m_max[i];
   }
 

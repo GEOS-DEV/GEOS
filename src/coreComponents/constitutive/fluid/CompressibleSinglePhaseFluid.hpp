@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file CompressibleSinglePhaseFluid.hpp
-  */
+ * @file CompressibleSinglePhaseFluid.hpp
+ */
 
 #ifndef GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_
@@ -41,7 +41,7 @@ public:
 
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   static std::string CatalogName() { return "CompressibleSinglePhaseFluid"; }
 
@@ -54,7 +54,7 @@ public:
 
   virtual void PointUpdate( real64 const & pressure, localIndex const k, localIndex const q ) override;
 
-  virtual void BatchUpdate( arrayView1d<real64 const> const & pressure ) override;
+  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure ) override;
 
   virtual void Compute( real64 const & pressure,
                         real64 & density,
@@ -72,11 +72,11 @@ public:
    * @param[out] dProperty_dPressure
    * @param[in]  propertyRelation property exponential relation
    */
-  template<ExponentApproximationType EAT>
+  template< ExponentApproximationType EAT >
   inline static void Compute( real64 const & pressure,
                               real64 & property,
                               real64 & dProperty_dPressure,
-                              ExponentialRelation<real64, EAT> const & propertyRelation );
+                              ExponentialRelation< real64, EAT > const & propertyRelation );
 
   /**
    * @brief Compute kernel for the full constitutive update
@@ -90,14 +90,14 @@ public:
    * @param[in]  densityRelation density exponential relation
    * @param[in]  viscosityRelation viscosity exponential relation
    */
-  template<ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT>
+  template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
   inline static void Compute( real64 const & pressure,
                               real64 & density,
                               real64 & dDensity_dPressure,
                               real64 & viscosity,
                               real64 & dViscosity_dPressure,
-                              ExponentialRelation<real64, DENS_EAT> const & densityRelation,
-                              ExponentialRelation<real64, VISC_EAT> const & viscosityRelation );
+                              ExponentialRelation< real64, DENS_EAT > const & densityRelation,
+                              ExponentialRelation< real64, VISC_EAT > const & viscosityRelation );
 
   // *** Data repository keys
 
@@ -155,20 +155,20 @@ private:
 };
 
 
-template<ExponentApproximationType EAT>
+template< ExponentApproximationType EAT >
 inline void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
                                                    real64 & property, real64 & dProperty_dPressure,
-                                                   ExponentialRelation<real64, EAT> const & propertyRelation )
+                                                   ExponentialRelation< real64, EAT > const & propertyRelation )
 {
   propertyRelation.Compute( pressure, property, dProperty_dPressure );
 }
 
-template<ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT>
+template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT >
 inline void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
                                                    real64 & density, real64 & dDensity_dPressure,
                                                    real64 & viscosity, real64 & dViscosity_dPressure,
-                                                   ExponentialRelation<real64, DENS_EAT> const & densityRelation,
-                                                   ExponentialRelation<real64, VISC_EAT> const & viscosityRelation )
+                                                   ExponentialRelation< real64, DENS_EAT > const & densityRelation,
+                                                   ExponentialRelation< real64, VISC_EAT > const & viscosityRelation )
 {
   Compute( pressure, density, dDensity_dPressure, densityRelation );
   Compute( pressure, viscosity, dViscosity_dPressure, viscosityRelation );

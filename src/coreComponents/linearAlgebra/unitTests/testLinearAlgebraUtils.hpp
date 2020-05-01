@@ -22,6 +22,18 @@
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
+/*! @name Utility functions.
+ * @brief Functions used to construct useful matrices in the test files.
+ */
+//@{
+
+/**
+ * @brief Compute an identity matrix
+ *
+ * @param comm MPI communicator.
+ * @param N global size of the square identity matrix.
+ */
+
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 
 // ==============================
@@ -29,19 +41,18 @@
 // ==============================
 // This function computes the identity matrix. It can be used to generate a dummy
 // preconditioner.
-template<typename LAI>
+template< typename MATRIX >
 void computeIdentity( MPI_Comm comm,
-                      geosx::globalIndex n,
-                      typename LAI::ParallelMatrix &I )
+                      geosx::globalIndex N,
+                      MATRIX & I )
 {
-  // total dofs = n^2
-  geosx::globalIndex N = n * n;
-
   // Create a matrix of size N with 1 non-zero per row
   I.createWithGlobalSize( N, 1, comm );
 
+  I.open();
+
   // Loop over rows to fill the matrix
-  for( geosx::globalIndex i = I.ilower() ; i < I.iupper() ; i++ )
+  for( geosx::globalIndex i = I.ilower(); i < I.iupper(); i++ )
   {
     // Set the value for element (i,i) to 1
     I.insert( i, i, 1.0 );
@@ -51,11 +62,21 @@ void computeIdentity( MPI_Comm comm,
   I.close();
 }
 
+template< typename MATRIX >
+void computeZero( MPI_Comm comm,
+                  geosx::globalIndex N,
+                  MATRIX & I )
+{
+  I.createWithGlobalSize( N, 0, comm );
+  I.open();
+  I.close();
+}
+
 /**
  * @brief Compute the 2D Laplace operator
  *
- * \param comm MPI communicator.
- * \param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
+ * @param comm MPI communicator.
+ * @param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
  */
 
 // ==============================
@@ -64,10 +85,10 @@ void computeIdentity( MPI_Comm comm,
 // This function computes the matrix corresponding to a 2D Laplace operator. These
 // matrices arise from a classical finite volume formulation on a cartesian mesh
 // (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
-template<typename LAI>
+template< typename MATRIX >
 void compute2DLaplaceOperator( MPI_Comm comm,
                                geosx::globalIndex n,
-			        		             typename LAI::ParallelMatrix &laplace2D )
+                               MATRIX & laplace2D )
 {
   // total dofs = n^2
   geosx::globalIndex N = n * n;
@@ -79,8 +100,11 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   geosx::real64 values[5];
   geosx::globalIndex cols[5];
 
+  // Open the matrix
+  laplace2D.open();
+
   // Loop over rows to fill the matrix
-  for( geosx::globalIndex i = laplace2D.ilower() ; i < laplace2D.iupper() ; i++ )
+  for( geosx::globalIndex i = laplace2D.ilower(); i < laplace2D.iupper(); i++ )
   {
     // Re-set the number of non-zeros for row i to 0.
     geosx::localIndex nnz = 0;
@@ -130,6 +154,8 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   laplace2D.close();
 
 }
+
+// END_RST_NARRATIVE
 
 //@}
 

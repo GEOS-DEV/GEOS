@@ -33,7 +33,7 @@ public:
 
   BrineCO2DensityFunction( string_array const & inputPara,
                            string_array const & componentNames,
-                           real64_array const & componentMolarWeight);
+                           real64_array const & componentMolarWeight );
   ~BrineCO2DensityFunction() override {}
 
 
@@ -43,24 +43,24 @@ public:
 
 
   virtual PVTFuncType FunctionType() const override
-      {
+  {
     return PVTFuncType::DENSITY;
 
-      }
+  }
 
   virtual void Evaluation( EvalVarArgs const & pressure,
                            EvalVarArgs const & temperature,
-                           arraySlice1d<EvalVarArgs const> const & phaseComposition,
+                           arraySlice1d< EvalVarArgs const > const & phaseComposition,
                            EvalVarArgs & value,
-                           bool useMass = 0) const override;
+                           bool useMass = 0 ) const override;
 
 
 private:
 
-  void MakeTable(string_array const & inputPara);
+  void MakeTable( string_array const & inputPara );
 
-  void CalculateBrineDensity(real64_array const & pressure, real64_array const & temperature, real64 const & salinity, real64_array2d const & density);
-  
+  void CalculateBrineDensity( real64_array const & pressure, real64_array const & temperature, real64 const & salinity, real64_array2d const & density );
+
   TableFunctionPtr m_BrineDensityTable;
   localIndex m_CO2Index;
   localIndex m_waterIndex;
