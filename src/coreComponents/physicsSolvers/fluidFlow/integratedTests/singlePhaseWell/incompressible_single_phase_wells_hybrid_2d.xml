@@ -3,7 +3,7 @@
 
   <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <SinglePhaseReservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
                logLevel="1"
@@ -12,38 +12,35 @@
                                  newtonMaxIter="40"/>
       <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
     <SinglePhaseHybridFVM name="singlePhaseFlow"
                      logLevel="1"
                      discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
+                     fluidNames="{water}"
+                     solidNames="{rock}"
                      targetRegions="{Region1}">
     </SinglePhaseHybridFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
-                     wellFluidName="water"
+                     fluidNames="{water}"
                      targetRegions="{wellRegion1,wellRegion2,wellRegion3}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls3"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
-                      targetRate="1e-2" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-2"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -68,17 +65,17 @@
                                         {14.5, 0.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
                      distanceFromHead="14"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.02e-14"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="11"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.02e-14"/> 
         <Perforation name="producer1_perf3"
                      distanceFromHead="8"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.02e-14"/> 
     </InternalWell> 
 
     <InternalWell name="well_producer2"
@@ -90,17 +87,14 @@
                                         { 0.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1},
                                          {1, 2} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="17">
         <Perforation name="producer2_perf1"
-                     distanceFromHead="14."
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="14."/> 
         <Perforation name="producer2_perf2"
-                     distanceFromHead="10"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="10"/> 
         <Perforation name="producer2_perf3"
-                     distanceFromHead="6"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="6"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -110,30 +104,30 @@
                   polylineNodeCoords="{ {0.5,   0.5, 0.5  }, 
                                         {14.5, 14.5, 0.2  } }"
                   polylineSegmentConn="{ {0, 1} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.5"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.02e-14"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="10.45"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.02e-14"/> 
     </InternalWell> 
   </Mesh>
 
 
-  <Events maxTime="1e6">
+  <Events maxTime="1e5">
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e5"
+                   forceDt="1e4"
                    target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="1e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e5"
+                   timeFrequency="5e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 

@@ -23,8 +23,7 @@ namespace geosx
 namespace dataRepository
 {
 namespace keys
-{
-}
+{}
 }
 
 
@@ -32,11 +31,11 @@ class BasisFunctionManager : public dataRepository::Group
 {
 public:
   BasisFunctionManager() = delete;
-  BasisFunctionManager(string const & name, Group * const parent);
+  BasisFunctionManager( string const & name, Group * const parent );
   virtual ~BasisFunctionManager() override final;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
-  
+
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 

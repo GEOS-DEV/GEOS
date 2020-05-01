@@ -24,32 +24,6 @@
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
 
-/// Specify default capture mode for GEOSX lambdas.
-#define GEOSX_LAMBDA [=]
-
-/**
- * @name Unused variable markers.
- *
- * These macros are used to explicitly mark a variable/argument as unused
- * and thus silence compiler warnings.
- */
-///@{
-
-/// Mark an unused argument and silence compiler warnings.
-#define GEOSX_UNUSED_PARAM( X )
-
-/// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( X ) ( ( void ) X )
-
-/// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
-
-#if defined(GEOSX_USE_OPENMP)
-  #define PRAGMA_OMP( clause ) _Pragma(STRINGIZE(clause))
-#else
-  #define PRAGMA_OMP( clause )
-#endif
-
 /**
  * @name Host-device markers
  *
@@ -63,9 +37,8 @@
   #define GEOSX_HOST __host__
   #define GEOSX_DEVICE __device__
   #define GEOSX_HOST_DEVICE __host__ __device__
-  #define GEOSX_DEVICE_LAMBDA [=] __device__
-  #define GEOSX_HOST_DEVICE_LAMBDA [=] __host__ __device__
   #define GEOSX_FORCE_INLINE __forceinline__
+  #define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.
   #define GEOSX_HOST
@@ -73,15 +46,42 @@
   #define GEOSX_DEVICE
 /// Marks a host-device function.
   #define GEOSX_HOST_DEVICE
-/// Marks a device-only lambda
-  #define GEOSX_DEVICE_LAMBDA [=]
-/// Marks a host-device lambda
-  #define GEOSX_HOST_DEVICE_LAMBDA [=]
 /// Marks a function or lambda for inlining
   #define GEOSX_FORCE_INLINE inline
+/// Compiler directive specifying to unroll the loop.
+  #define PRAGMA_UNROLL
 #endif
 
 ///@}
+
+/**
+ * @name Unused variable markers.
+ *
+ * These macros are used to explicitly mark a variable/argument as unused
+ * and thus silence compiler warnings.
+ */
+///@{
+
+/// Mark an unused argument and silence compiler warnings.
+#define GEOSX_UNUSED_PARAM( X )
+
+/// Used to silence unused variable warnings, cuda doesn't respect casting to void.
+template< typename T >
+GEOSX_HOST_DEVICE inline constexpr
+void i_g_n_o_r_e( T & ) {}
+
+/// Mark an unused variable and silence compiler warnings.
+#define GEOSX_UNUSED_VAR( X ) i_g_n_o_r_e( X );
+
+/// Mark a debug variable and silence compiler warnings.
+#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+
+#if defined(GEOSX_USE_OPENMP)
+  #define PRAGMA_OMP( clause ) _Pragma( clause )
+//  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
+#else
+  #define PRAGMA_OMP( clause )
+#endif
 
 /// preprocessor variable for the C99 restrict keyword for use with pointers
 #define GEOSX_RESTRICT LVARRAY_RESTRICT

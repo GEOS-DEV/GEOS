@@ -32,7 +32,7 @@ WrapperBase::WrapperBase( std::string const & name,
   m_parent( parent ),
   m_sizedFromParent( 1 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
-  m_plotLevel( PlotLevel::LEVEL_3 ),
+  m_plotLevel( PlotLevel::NOPLOT ),
   m_inputFlag( InputFlags::INVALID ),
   m_description(),
   m_registeringObjects(),
@@ -64,6 +64,31 @@ void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
   m_name = source.m_name;
   m_sizedFromParent = source.m_sizedFromParent;
   m_restart_flags = source.m_restart_flags;
+}
+
+string WrapperBase::dumpInputOptions( bool const outputHeader ) const
+{
+  string rval;
+  char temp[1000] = {0};
+  if( outputHeader )
+  {
+    sprintf( temp, "  |         name         |  opt/req  | Description \n" );
+    rval.append( temp );
+    sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
+    rval.append( temp );
+  }
+
+  if( getInputFlag() == InputFlags::OPTIONAL ||
+      getInputFlag() == InputFlags::REQUIRED )
+  {
+    sprintf( temp, "  | %20s | %9s | %s \n",
+             getName().c_str(),
+             InputFlagToString( getInputFlag()).c_str(),
+             getDescription().c_str() );
+    rval.append( temp );
+  }
+
+  return rval;
 }
 
 #if defined(USE_TOTALVIEW_OUTPUT)

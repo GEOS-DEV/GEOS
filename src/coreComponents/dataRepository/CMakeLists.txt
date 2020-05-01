@@ -14,7 +14,7 @@ set(dataRepository_headers
     ReferenceWrapper.hpp
     RestartFlags.hpp
     ConduitRestart.hpp
-    WrapperHelpers.hpp
+    wrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
     xmlWrapper.hpp

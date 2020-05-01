@@ -48,19 +48,19 @@ using ACCELERATION_PERM = RAJA::PERM_JI;
 #else
 
 /// Node reference position permutation when not using cuda.
-using REFERENCE_POSITION_PERM = RAJA::PERM_JI;
+using REFERENCE_POSITION_PERM = RAJA::PERM_IJ;
 
 /// Node total displacement permutation when not using cuda.
-using TOTAL_DISPLACEMENT_PERM = RAJA::PERM_JI;
+using TOTAL_DISPLACEMENT_PERM = RAJA::PERM_IJ;
 
 /// Node incremental displacement permutation when not using cuda.
-using INCR_DISPLACEMENT_PERM = RAJA::PERM_JI;
+using INCR_DISPLACEMENT_PERM = RAJA::PERM_IJ;
 
 /// Node velocity permutation when not using cuda.
-using VELOCITY_PERM = RAJA::PERM_JI;
+using VELOCITY_PERM = RAJA::PERM_IJ;
 
 /// Node acceleration permutation when not using cuda.
-using ACCELERATION_PERM = RAJA::PERM_JI;
+using ACCELERATION_PERM = RAJA::PERM_IJ;
 
 #endif
 
@@ -109,15 +109,24 @@ namespace solid
 /// Constitutive model stress permutation when using cuda.
 using STRESS_PERMUTATION = RAJA::PERM_KJI;
 
+/// Constitutive model stiffness permutation when using cuda.
+using STIFFNESS_PERMUTATION = RAJA::PERM_KJI;
+
 #else
 
 /// Constitutive model stress permutation when not using cuda.
 using STRESS_PERMUTATION = RAJA::PERM_IJK;
 
+/// Constitutive model stiffness permutation when not using cuda.
+using STIFFNESS_PERMUTATION = RAJA::PERM_IJK;
+
 #endif
 
 /// Constitutive model stress unit stride dimension.
 static constexpr int STRESS_USD = LvArray::getStrideOneDimension( STRESS_PERMUTATION {} );
+
+/// Constitutive model stiffness unit stride dimension.
+static constexpr int STIFFNESS_USD = LvArray::getStrideOneDimension( STIFFNESS_PERMUTATION {} );
 
 } // namespace solid
 

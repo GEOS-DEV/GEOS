@@ -32,7 +32,7 @@ public:
   SystemSolverParameters( std::string const & name,
                           Group * const parent );
 
-  SystemSolverParameters(SystemSolverParameters &&) = default;
+  SystemSolverParameters( SystemSolverParameters && ) = default;
 
   virtual ~SystemSolverParameters() override = default;
 
@@ -61,41 +61,39 @@ public:
   struct groupKeysStruct
   {} groupKeys;
 
-  string  solverType() const                  { return m_solverType; }
-  real64 krylovTol() const                    { return m_krylovTol; }
-  integer useAdaptiveKrylovTol() const        { return m_useAdaptiveKrylovTol; }
-  integer  numKrylovIter() const              { return m_numKrylovIter; }
-  integer  kspace() const                     { return m_kspace; }
-  real64 ilut_fill() const                    { return m_ilut_fill; }
-  real64 ilut_drop() const                    { return m_ilut_drop; }
-  integer   useMLPrecond() const              { return m_useMLPrecond; }
-  integer   useInnerSolver() const            { return m_useInnerSolver; }
-  integer  scalingOption() const              { return m_scalingOption; }
-  integer   useBicgstab() const               { return m_useBicgstab; }
-  integer   useDirectSolver() const           { return m_useDirectSolver; }
-  real64 krylovResidualInit() const           { return m_krylovResidualInit; }
-  real64 krylovResidualFinal() const          { return m_krylovResidualFinal; }
+  string  solverType() const { return m_solverType; }
+  real64 krylovTol() const { return m_krylovTol; }
+  integer useAdaptiveKrylovTol() const { return m_useAdaptiveKrylovTol; }
+  integer  numKrylovIter() const { return m_numKrylovIter; }
+  integer  kspace() const { return m_kspace; }
+  real64 ilut_fill() const { return m_ilut_fill; }
+  real64 ilut_drop() const { return m_ilut_drop; }
+  integer   useMLPrecond() const { return m_useMLPrecond; }
+  integer   useInnerSolver() const { return m_useInnerSolver; }
+  integer  scalingOption() const { return m_scalingOption; }
+  integer   useBicgstab() const { return m_useBicgstab; }
+  integer   useDirectSolver() const { return m_useDirectSolver; }
+  real64 krylovResidualInit() const { return m_krylovResidualInit; }
+  real64 krylovResidualFinal() const { return m_krylovResidualFinal; }
 
-  string  m_solverType;
-  real64  m_krylovTol;
+  string m_solverType;
+  real64 m_krylovTol;
   integer m_useAdaptiveKrylovTol;
   integer m_numKrylovIter;
   integer m_kspace;
-  real64  m_ilut_fill;
-  real64  m_ilut_drop;
+  real64 m_ilut_fill;
+  real64 m_ilut_drop;
   integer m_useMLPrecond;
   integer m_useInnerSolver;
   integer m_scalingOption;
   integer m_useBicgstab;
   integer m_useDirectSolver;
-  real64  m_krylovResidualInit;
-  real64  m_krylovResidualFinal;
-  real64  m_krylovAuxTime;
-  real64  m_krylovSetupTime;
-  real64  m_krylovSolveTime;
+  real64 m_krylovResidualInit;
+  real64 m_krylovResidualFinal;
+  real64 m_krylovAuxTime;
+  real64 m_krylovSetupTime;
+  real64 m_krylovSolveTime;
   integer m_maxIters = 1000;
-
-
 };
 
 } /* namespace geosx */

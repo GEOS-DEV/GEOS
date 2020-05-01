@@ -5,19 +5,19 @@
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="368.15"
                                  useMass="1"
                                  targetRegions="{Region1}">
       <NonlinearSolverParameters newtonTol="1.0e-5"
-				 newtonMaxIter="100"
+                                 newtonMaxIter="100"
                                  maxTimeStepCuts="5"
                                  lineSearchAction="0"/>
       <SystemSolverParameters krylovTol="1.0e-7"
                               useDirectSolver="0"
-			      useBicgstab="1"/>      
+                              useBicgstab="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   
