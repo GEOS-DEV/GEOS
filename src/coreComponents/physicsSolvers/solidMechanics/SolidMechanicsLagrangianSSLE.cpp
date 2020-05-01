@@ -42,7 +42,7 @@ SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofManager,
                                                         ParallelVector const & solution,
                                                         real64 const scalingFactor,
-                                                        DomainPartition * const domain  )
+                                                        DomainPartition * const domain )
 {
   SolidMechanicsLagrangianFEM::ApplySystemSolution( dofManager, solution, scalingFactor, domain );
 }
@@ -51,59 +51,50 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 void
 SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager  * const constitutiveManager = domain->GetGroup<ConstitutiveManager >(dataRepository::keys::ConstitutiveManager);
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup<NumericalMethodsManager>(dataRepository::keys::numericalMethodsManager);
-  FiniteElementDiscretizationManager const * feDiscretizationManager = numericalMethodManager->GetGroup<FiniteElementDiscretizationManager>(dataRepository::keys::finiteElementDiscretizations);
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager & nodeManager = *mesh.getNodeManager();
 
-  arrayView2d<real64 const, nodes::INCR_DISPLACEMENT_USD> const & incDisp = nodeManager->incrementalDisplacement();
+  NumericalMethodsManager const & numericalMethodManager =
+    *domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    *numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( dataRepository::keys::finiteElementDiscretizations );
+  FiniteElementDiscretization const & feDiscretization =
+    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
-  ElementRegionManager::ConstitutiveRelationAccessor<ConstitutiveBase>
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor<ConstitutiveBase>(constitutiveManager);
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incDisp = nodeManager.incrementalDisplacement();
 
   // begin region loop
-  for( localIndex er=0 ; er<elemManager->numRegions() ; ++er )
+  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          CellElementSubRegion & elementSubRegion )
   {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion(er);
+    arrayView3d< R1Tensor const > const &
+    dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
 
-    FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup<FiniteElementDiscretization>(m_discretizationName);
+    arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( dataRepository::keys::detJ );
 
-    elementRegion->forElementSubRegionsIndex<CellElementSubRegion>([&]( localIndex const esr,
-                                                                        CellElementSubRegion const * const elementSubRegion )
-    {
-      arrayView3d<R1Tensor const> const &
-      dNdX = elementSubRegion->getReference< array3d<R1Tensor> >(dataRepository::keys::dNdX);
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
-      arrayView2d<real64 const> const & detJ = elementSubRegion->getReference< array2d<real64> >(dataRepository::keys::detJ);
+    std::unique_ptr< FiniteElementBase >
+    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
 
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion->nodeList();
-      localIndex const numNodesPerElement = elemsToNodes.size(1);
+    SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( elementSubRegion, m_solidMaterialNames[targetIndex] );
 
-      std::unique_ptr<FiniteElementBase>
-      fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+    // space for element matrix and rhs
 
-      // space for element matrix and rhs
-
-      using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
-      return SolidMechanicsLagrangianFEMKernels::
-             ElementKernelLaunchSelector<Kernels>( numNodesPerElement,
-                                                   fe->n_quadrature_points(),
-                                                   constitutiveRelations[er][esr][m_solidMaterialFullIndex],
-                                                   elementSubRegion->size(),
-                                                   elemsToNodes,
-                                                   dNdX,
-                                                   detJ,
-                                                   incDisp );
-
-    });
-  }
-
+    using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
+    return SolidMechanicsLagrangianFEMKernels::
+      ElementKernelLaunchSelector< Kernels >( numNodesPerElement,
+                                              fe->n_quadrature_points(),
+                                              &constitutiveRelation,
+                                              elementSubRegion.size(),
+                                              elemsToNodes,
+                                              dNdX,
+                                              detJ,
+                                              incDisp );
+  } );
 }
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */
-

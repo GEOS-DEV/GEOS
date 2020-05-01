@@ -29,6 +29,7 @@ namespace geosx
 class DomainPartition;
 class MeshLevel;
 class ObjectManagerBase;
+class FluxApproximationBase;
 
 /**
  * @class DofManager
@@ -58,13 +59,14 @@ public:
    * enum is nearly identical to Location, but we keep both for code readability
    * in function calls.
    */
-  enum class Connectivity
+  enum class Connector
   {
     Elem, //!< connectivity is element (like in finite elements)
     Face, //!< connectivity is face (like in finite volumes TPFA)
     Edge, //!< connectivity is edge (like fracture element connectors)
     Node, //!< connectivity is node (like in finite volumes MPFA)
-    None  //!< there is no connectivity (self connected field, like a lumped mass matrix)
+    None,  //!< there is no connectivity (self connected field, like a lumped mass matrix)
+    Stencil //!< connectivity is through a (set of) user-provided stencil(s)
   };
 
   /**
@@ -88,6 +90,13 @@ public:
     globalIndex blockOffset;  //!< offset of this field's block in a block-wise ordered system
     globalIndex rankOffset; //!< field's first DoF on current processor (within its block, ignoring other fields)
     globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
+  };
+
+  struct CouplingDescription
+  {
+    Connector connector = Connector::None;
+    string_array regions;
+    FluxApproximationBase const * stencils = nullptr;
   };
 
   /**
@@ -146,11 +155,11 @@ public:
    *
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] regions string_array where this field is defined.
+   * @param [in] regions names of regions where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
-                 string_array const & regions );
+                 arrayView1d< string const > const & regions );
 
   /**
    * @brief The user can add a field with a support location, connectivity type, string key, number of scalar
@@ -175,12 +184,12 @@ public:
    * @param [in] field string the name of the field.
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
-   * @param [in] regions string_array where this field is defined.
+   * @param [in] regions names of regions where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
                  localIndex const components,
-                 string_array const & regions );
+                 arrayView1d< string const > const & regions );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -191,7 +200,7 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity );
+                    Connector const connectivity );
 
   /**
    * @brief Just another interface to allow four parameters (no symmetry, default is true).
@@ -199,12 +208,12 @@ public:
    * @param [in] rowFieldName string the name of the row field.
    * @param [in] colFieldName string the name of the col field.
    * @param [in] connectivity Connectivity through what they are connected.
-   * @param [in] regions string_array where this coupling is defined.
+   * @param [in] regions names of regions where this coupling is defined.
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
-                    string_array const & regions );
+                    Connector const connectivity,
+                    arrayView1d< string const > const & regions );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -216,8 +225,43 @@ public:
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
-                    Connectivity const connectivity,
+                    Connector const connectivity,
                     bool const symmetric );
+
+  /**
+   * @brief Add coupling between two fields.
+   * The connectivity argument defines how the two fields couple. If the first field has support location A,
+   * the second field has support location B, and the connecting object is C, the sparsity pattern will be
+   * defined as (AC)(CB). The final argument indicates if the coupling is symmetric, in the sense that there
+   * is a two-way coupling between the fields. Without this argument, a nonzero block will be added to the
+   * system matrix for block AB, but block BA will remain zero (one-way coupling).
+   *
+   * - Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling)
+   * - Example 2 = ("node_field_1","node_field_2", NODE, true) couples all dofs sharing a common node (two-way coupling)
+   * - Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
+   *
+   * @param [in] rowFieldName string the name of the row field.
+   * @param [in] colFieldName string the name of the col field.
+   * @param [in] connectivity Connectivity through what they are connected.
+   * @param [in] regions names of regions where this coupling is defined.
+   * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
+   */
+  void addCoupling( string const & rowFieldName,
+                    string const & colFieldName,
+                    Connector const connectivity,
+                    arrayView1d< string const > const & regions,
+                    bool const symmetric );
+
+  /**
+   * @brief Special interface for self-connectivity through a stencil.
+   * @param [in] fieldName name of the field (this is only for diagonal blocks)
+   * @param [in] stencils a pointer to FluxApproximation storing the stencils
+   *
+   * The field must be defined on element support. The set of regions is taken
+   * automatically from the field definition.
+   */
+  void addCoupling( string const & fieldName,
+                    FluxApproximationBase const * stencils );
 
   /**
    * @brief Finish populating fields and apply appropriate dof renumbering
@@ -235,30 +279,6 @@ public:
    *       global offset used to insert the field's sparsity block into a global coupled system.
    */
   void reorderByRank();
-
-  /**
-   * @brief Add coupling between two fields.
-   * The connectivity argument defines how the two fields couple. If the first field has support location A,
-   * the second field has support location B, and the connecting object is C, the sparsity pattern will be
-   * defined as (AC)(CB). The final argument indicates if the coupling is symmetric, in the sense that there
-   * is a two-way coupling between the fields. Without this argument, a nonzero block will be added to the
-   * system matrix for block AB, but block BA will remain zero (one-way coupling).
-   *
-   * - Example 1 = ("node_field","elem_field", ELEM, true) couples all dofs sharing a common element (two-way coupling)
-   * - Example 2 = ("node_field_1","node_field_2", NODE, true) couples all dofs sharing a common node (two-way coupling)
-   * - Example 3 = ("node_field_1","face_field", NODE, false) couples nodal dofs to adjacent faces (one-way coupling)
-   *
-   * @param [in] rowFieldName string the name of the row field.
-   * @param [in] colFieldName string the name of the col field.
-   * @param [in] connectivity Connectivity through what they are connected.
-   * @param [in] regions string_array where this coupling is defined.
-   * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
-   */
-  void addCoupling( string const & rowFieldName,
-                    string const & colFieldName,
-                    Connectivity const connectivity,
-                    string_array const & regions,
-                    bool const symmetric );
 
   /**
    * @brief Check if string key is already being used
@@ -295,6 +315,14 @@ public:
    * @param [in] fieldName Optional string the name of the field.
    */
   localIndex rankOffset( string const & fieldName = "" ) const;
+
+  /**
+   * @brief Return the number of components in a field. If @p fieldName is empty, return
+   * total number of components across all fields.
+   * @param fieldName the name of the field
+   * @return the number of dof components
+   */
+  localIndex numComponents( string const & fieldName = "" ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -417,6 +445,26 @@ public:
                          localIndex const hiCompIndex = -1 ) const;
 
   /**
+   * @brief Create a matrix that restricts full vectors to one field vectors
+   * @param fieldName name of the target field
+   * @param restrictor resulting operator
+   * @param loCompIndex starting DOF component index (for partial restriction)
+   * @param hiCompIndex index past the ending DOF component (for partial restriction)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   *
+   * @note Can only be called after close()
+   */
+  template< typename MATRIX >
+  void makeRestrictor( string const & fieldName,
+                       MATRIX & restrictor,
+                       MPI_Comm const comm,
+                       bool const transpose = false,
+                       localIndex const loCompIndex = 0,
+                       localIndex const hiCompIndex = -1 ) const;
+
+  /**
    * @brief Print the summary of declared fields and coupling.
    */
   void printFieldInfo( std::ostream & os = std::cout ) const;
@@ -455,6 +503,9 @@ private:
   void setSparsityPatternOneBlock( MATRIX & pattern,
                                    localIndex const rowFieldIndex,
                                    localIndex const colFieldIndex ) const;
+
+  template< typename MATRIX >
+  void setSparsityPatternFromStencil( MATRIX & pattern, localIndex const fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -512,13 +563,10 @@ private:
   MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  array1d<FieldDescription> m_fields;
+  array1d< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  array2d<Connectivity> m_connectivity;
-
-  /// For each field-field coupling, list of regions where coupling is defined
-  array2d< string_array > m_couplingRegions;
+  array2d< CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

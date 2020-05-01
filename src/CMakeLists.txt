@@ -1,5 +1,3 @@
-message( "Entering /src/CMakeLists.txt")
-
 cmake_minimum_required(VERSION 3.9)
 
 ################################
@@ -21,6 +19,21 @@ option(ENABLE_BENCHMARKS "Enables benchmarks" ON)
 include(cmake/blt/SetupBLT.cmake)
 set(BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/)
 
+# Removes -pthread from BLT CUDA libraries lists
+if (ENABLE_CUDA)
+  set(_cuda_libraries)
+  foreach(_lib ${BLT_CUDA_LIBRARIES})
+    if ("${_lib}" STREQUAL "-pthread")
+      list(APPEND _cuda_libraries "-lpthread")
+    else()
+      list(APPEND _cuda_libraries "${_lib}")
+    endif()
+  endforeach()
+
+  set(BLT_CUDA_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+  set(BLT_CUDA_RUNTIME_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE)
+endif()
+
 ################################
 # Include standard build system logic and options
 ################################
@@ -40,6 +53,7 @@ add_subdirectory(thirdparty)
 set( externalComponentsLinkList "" ) 
 add_subdirectory(externalComponents)
 add_subdirectory(coreComponents)
+add_subdirectory(main)
 
 
 ################################
@@ -48,9 +62,6 @@ add_subdirectory(coreComponents)
 if (ENABLE_DOCS)
   add_subdirectory(docs)
 endif()
-
-
-#add_code_check_targets(uncrustify.cfg)
 
 
 ################################
@@ -107,7 +118,7 @@ set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
   add_custom_target( geosx_update_rst_tables
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/updateRstTables.bash ${CMAKE_SOURCE_DIR} > updateRstTables.log
@@ -117,7 +128,7 @@ if( ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA )
 
   add_custom_target( geosx_validate_all_xml_files
                      ALL
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateAllXMLFiles.bash ${CMAKE_SOURCE_DIR}
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_update_rst_tables
                      )
@@ -127,4 +138,11 @@ if( ${SPHINX_FOUND} )
   blt_add_sphinx_target( geosx_docs )
 endif()
 
-message( "Exiting /src/CMakeLists.txt")
+
+install( DIRECTORY ../examples/ 
+     DESTINATION examples
+     )
+
+install( DIRECTORY ../scripts/ 
+     DESTINATION scripts
+     )

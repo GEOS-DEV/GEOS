@@ -4,14 +4,14 @@ Continuous Integration process
 To save building time, the third party libraries (that do not change so often) and GEOSX are build separately.
 
 Everytime a pull is requested in the TPL repository, docker images are generated and deployed on `dockerhub <https://hub.docker.com/r/geosx>`_.
-The repository names (`ubuntu18.04-gcc7 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc7>`_, `ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
+The repository names (`ubuntu18.04-gcc8 <https://hub.docker.com/r/geosx/ubuntu18.04-gcc8>`_,
 `centos7.5.1804-clang6.0.1 <https://hub.docker.com/r/geosx/centos7.5.1804-clang6.0.1>`_ and `centos7.5.1804-clang7.0.0 <https://hub.docker.com/r/geosx/centos7.5.1804-clang7.0.0>`_)
 obviously reflect the OS and the compiler flavour used.
 For each image, the unique `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` tag is used so we can connect the related code source in a rather convenient way.
 Each docker contains the `org.opencontainers.image.created` and `org.opencontainers.image.revision` labels to provide additional information.
 
 For the OSX builds, we construct a tarball of the TPLs and save them in a remote cloud storage.
-There is currently only one mac osx tested environment (xcode 10.2) and the same `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` pattern is used as an identifier for the build. 
+There is currently only one mac osx tested environment (xcode 11.2) and the same `${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER}` pattern is used as an identifier for the build.
 An important counterpart to using a tarball and not a docker image is that the tarball does not provide the whole system the precompiled binaries rely on.
 Problems may arise since we use the rolling release `Homebrew <https://brew.sh/>`_ (to install open-mpi in particular).
 To circumvent this potential issue, the brew version is fixed to a specific commit (see BREW_HASH variable in `third party's .travis.yml <https://github.com/GEOSX/thirdPartyLibs/blob/master/.travis.yml>`_)

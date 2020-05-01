@@ -436,6 +436,11 @@ inline localIndex Unpack( buffer_unit_type const * & buffer,
                           mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap );
 
 //------------------------------------------------------------------------------
+inline localIndex UnpackSyncList( buffer_unit_type const * & buffer,
+                                  localIndex_array & var,
+                                  std::unordered_map< globalIndex, localIndex > const & globalToLocalMap );
+
+//------------------------------------------------------------------------------
 template< typename SORTED, int USD >
 inline
 localIndex
