@@ -30,67 +30,102 @@ class MeshLevel;
 
 /**
  * @class WellElementRegion
- *
+ * @brief This class specializes the element region for the case 
+ *        of a well. This class is also in charge of starting the
+ *        construction of the well data structure in GenerateWell.
  */
 class WellElementRegion : public ElementRegionBase
 {
 public:
 
   /**
-   * @brief constructor
-   * @param name The name of the object in the data hierarchy.
-   * @param parent Pointer to the parent group in the data hierarchy.
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
    */
   WellElementRegion( string const & name, Group * const parent );
 
-  WellElementRegion() = delete;
+  /**
+   * @brief Default destructor.
+   */
   virtual ~WellElementRegion() override;
 
   /**
-   * @brief The key name for the WellElementRegion in the object catalog.
-   * @return A string containing the key name.
+   * @brief Deleted default constructor.
+   */
+  WellElementRegion() = delete;
+
+  ///@}  
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+  
+  /** 
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
    */
   static const string CatalogName()
   { return "WellElementRegion"; }
 
   /**
-   *
-   * @return the name of this type in the catalog
+   * @copydoc CatalogName() 
    */
   virtual const string getCatalogName() const override final
   { return WellElementRegion::CatalogName(); }
 
+  ///@}  
+
   /**
-   * @brief Setter for the name of the InternalWellGenerator object of this well
-   * @param name the name of the InternalWellGenerator object
+   * @name Getters / Setters 
+   */
+  ///@{
+  
+  /**
+   * @brief Set the name of the InternalWellGenerator object of this well.
+   * @param[in] name the name of the InternalWellGenerator object
    */
   void SetWellGeneratorName( string const & name ) { m_wellGeneratorName = name; }
 
   /**
-   * @brief Getter for the name of the InternalWellGenerator object of this well
-   * @param the name of the InternalWellGenerator object
+   * @brief Get the name of the InternalWellGenerator object of this well.
+   * @return the name of the InternalWellGenerator object
    */
   string const & GetWellGeneratorName() const { return m_wellGeneratorName; }
 
   /**
-   * @brief Setter for the name of the WellControls object of this well
+   * @brief Set the name of the WellControls object of this well.
    * @param name the name of the WellControls object
    */
   void SetWellControlsName( string const & name ) { m_wellControlsName = name; }
 
   /**
-   * @brief Getter for the name of the subRegion
-   * @param the name of the subRegion object
+   * @brief Get the name of the subRegion.
+   * @return the name of the subRegion object
    */
   string const & GetSubRegionName() const { return m_subRegionName; }
 
+  ///@}
 
-  // not implemented, this task is performed in GenerateWell
+  /**
+   * @name Construction of the well connectivity
+   */
+  ///@{
+  
+  /**
+   * @brief Not implemented, this task is performed in GenerateWell.
+   */
   virtual void GenerateMesh( Group * ) override {}
 
   /**
-   * @brief Build the local well elements and perforations from global well geometry
-   * @param[in] meshLevel the mesh object (single level only)
+   * @brief Build the local well elements and perforations from global well geometry.
+   * @param[in] mesh the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
@@ -100,28 +135,46 @@ public:
                      globalIndex nodeOffsetGlobal,
                      globalIndex elemOffsetGlobal );
 
+  ///@}
+
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
+    /// String key for the well control name 
     static constexpr auto wellControlsString  = "wellControlsName";
+    /// String key for the well generator name    
     static constexpr auto wellGeneratorString = "wellGeneratorName";
 
+    /// ViewKey for the well control name     
     dataRepository::ViewKey wellControlsName  = { wellControlsString };
+    /// ViewKey for the well generator name         
     dataRepository::ViewKey wellGeneratorName = { wellGeneratorString };
 
-  } viewKeysWellElementRegion;
+  }
+  /// ViewKey struct for the WellElementRegiom class 
+  viewKeysWellElementRegion;
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct groupKeyStruct
+   */  
   struct groupKeyStruct : public ElementRegionBase::groupKeyStruct
-  {} groupKeysWellElementRegion;
+  {}
+  /// groupKey struct for the WellElementRegk class
+  groupKeysWellElementRegion;
 
 private:
 
-  /// name of the (unique) subregion
+  /// Name of the (unique) subregion
   const string m_subRegionName;
 
-  /// name of the well constraint
+  /// Name of the well constraint
   string m_wellControlsName;
 
-  /// name of the well generator
+  /// Name of the well generator
   string m_wellGeneratorName;
 
 };

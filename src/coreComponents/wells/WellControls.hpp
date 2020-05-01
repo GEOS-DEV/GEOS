@@ -63,51 +63,70 @@ public:
     LIQUIDRATE /**< The well operates at a specified liquid flow rate (oil + water) */
   };
 
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
   
   /**
-   * @brief Main constructor for WellControls Objects
-   * @param [in] name the name of this instantiation of WellControls in the repository
-   * @param [in] parent the parent group of this instantiation of WellControls
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
    */
   explicit WellControls( string const & name, dataRepository::Group * const parent );
 
   
-  /// default destructor
+  /**
+   * @brief Default destructor.
+   */
   ~WellControls() override;
 
-  
-  /// deleted default constructor
+  /**
+   * @brief Deleted default constructor.
+   */
   WellControls() = delete;
 
-  
-  /// deleted copy constructor
+  /**
+   * @brief Deleted copy constructor.
+   */
   WellControls( WellControls const & ) = delete;
 
-  
-  /// deleted move constructor
+  /**
+   * @brief Deleted move constructor.
+   */
   WellControls( WellControls && ) = delete;
 
-  
-  /// deleted assignment operator
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a perforation object
+   */
   WellControls & operator=( WellControls const & ) = delete;
 
-  
-  /// deleted move operator
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a perforation object
+   */
   WellControls & operator=( WellControls && ) = delete;
 
+  ///@}
+
+  /**
+   * @name Getters / Setters 
+   */
+  ///@{
   
   /**
    * @brief Set the reference well elem index where the control will be enforced.
-   * @param [in] refIndex the reference well elem index where the control will be enforced
+   * @param[in] refIndex reference well element index where the control will be enforced
    */
   void SetReferenceWellElementIndex( localIndex refIndex )
   {
     m_refWellElemIndex = refIndex;
   }
 
-
   /**
-   * @brief Get the reference well elem index where the control will be enforced.
+   * @brief Get the reference well element index where the control will be enforced.
    * @return a localIndex value representing the reference well element index where the control will be enforced
    */
   localIndex const & GetReferenceWellElementIndex() const
@@ -115,7 +134,6 @@ public:
     return m_refWellElemIndex;
   }
 
-  
   /**
    * @brief Get the well type (injector or producer).
    * @return a well Type enum
@@ -125,8 +143,8 @@ public:
   
   /**
    * @brief Set the control type and numerical value for a well.
-   * @param [in] control a Control enum with the type of control that is enforced
-   * @param [in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a minimum water rate...)
+   * @param[in] control a Control enum with the type of control that is enforced
+   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a minimum water rate...)
    */
   void SetControl( Control control, real64 const & val );
 
@@ -153,33 +171,50 @@ public:
 
   
   /**
-   * @brief Get the composition of the injection rate
+   * @brief Const accessor for the composition of the injection rate
    * @return a global component fraction vector
    */
   arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
 
+  ///@}  
   
-  /**
-   * @brief Print a console output with some WellControl variables (for console debugging purposes)
-   */
+  /// @cond DO_NOT_DOCUMENT
   void Debug() const;
+  /// @endcond
 
-  
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct
   {
+    /// String key for the reference index (currently unused)    
     static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
+    /// String key for the well type
     static constexpr auto typeString             = "type";
+    /// String key for the well control
     static constexpr auto controlString          = "control";
+    /// String key for the well target BHP
     static constexpr auto targetBHPString        = "targetBHP";
+    /// String key for the well target rate
     static constexpr auto targetRateString       = "targetRate";
+    /// String key for the well injection stream
     static constexpr auto injectionStreamString  = "injectionStream";
+    /// ViewKey for the reference index (currently unused)        
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    /// ViewKey for the well type
     dataRepository::ViewKey type            = { typeString };
+    /// ViewKey for the well control
     dataRepository::ViewKey control         = { controlString };
+    /// ViewKey for the well target BHP
     dataRepository::ViewKey targetBHP       = { targetBHPString };
+    /// ViewKey for the well target rate
     dataRepository::ViewKey targetRate      = { targetRateString };
+    /// ViewKey for the well injection stream    
     dataRepository::ViewKey injectionStream = { injectionStreamString };
-  } viewKeysWellControls;
+  }
+  /// ViewKey struct for the WellControls class 
+  viewKeysWellControls;
 
 protected:
 
@@ -189,19 +224,19 @@ protected:
 
 private:
 
-  /// well type as string
+  /// Well type as string
   string m_typeString;
 
-  /// well type (as Type enum)
+  /// Well type (as Type enum)
   Type m_type;
 
-  /// reference index
+  /// Reference index (currently unused)
   localIndex m_refWellElemIndex;
 
-  /// well controls as string
+  /// Well controls as string
   string m_inputControlString;
 
-  /// well controls as a Control enum
+  /// Well controls as a Control enum
   Control m_currentControl;
   
   /// Target bottom hole pressure value
@@ -210,7 +245,7 @@ private:
   /// Target rate value
   real64 m_targetRate;
 
-  /// vector with global component fractions at the injector
+  /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
 
 };

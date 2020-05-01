@@ -34,7 +34,6 @@ class CellBlock;
 
 /**
  * @class PerforationData
- *
  * This class keeps track of all the local perforations on this rank
  */
 class PerforationData : public ObjectManagerBase
@@ -42,48 +41,77 @@ class PerforationData : public ObjectManagerBase
 public:
 
   /**
-   * @brief main constructor for PerforationData Objects
-   * @param [in] name the name of this instantiation of PerforationData in the repository
-   * @param [in] parent the parent group of this instantiation of PerforationData
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
+  /**
+   * @brief Constructor for PerforationData Objects.
+   * @param[in] name name of this instantiation of PerforationData in the repository
+   * @param[in] parent parent group of this instantiation of PerforationData
    */
   explicit PerforationData( string const & name, dataRepository::Group * const parent );
 
-
-  /// default destructor
+  /**
+   * @brief Default destructor.
+   */
   ~PerforationData() override;
 
-
-  /// deleted default constructor
+  /**
+   * @brief Deleted default constructor.
+   */
   PerforationData() = delete;
 
-
-  /// deleted copy constructor
+  /**
+   * @brief Deleted copy constructor.
+   */
   PerforationData( PerforationData const & ) = delete;
 
-  
-  /// deleted move constructor
+  /**
+   * @brief Deleted move constructor.
+   */
   PerforationData( PerforationData && ) = delete;
 
-  
-  /// deleted assignment operator
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a PerforationData object
+   */
   PerforationData & operator=( PerforationData const & ) = delete;
 
-  
-  /// deleted move operator
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a PerforationData object
+   */
   PerforationData & operator=( PerforationData && ) = delete;
 
-  
-  /// Get the catalog name
+  ///@}
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  /** 
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
+   */
   static string CatalogName() { return "PerforationData"; }
 
-  
-  /// Get a const catalog name
+  /**
+   * @copydoc CatalogName() 
+   */
   virtual const string getCatalogName() const override { return CatalogName(); }
 
+  ///@}  
+
+  /**
+   * @name Getters / Setters 
+   */
+  ///@{
   
   /**
    * @brief Set the global number of perforations used for well initialization.
-   * @param [in] nPerfs global number of perforations (obtained for InternalWellGenerator)
+   * @param[in] nPerfs global number of perforations (obtained from InternalWellGenerator)
    */
   void SetNumPerforationsGlobal( globalIndex nPerfs ) { m_numPerforationsGlobal = nPerfs; }
 
@@ -150,17 +178,29 @@ public:
    */
   arrayView1d< real64 > & GetWellTransmissibility() { return m_wellTransmissibility; }
 
+  ///@}    
+
+  /**
+   * @name Well transmissibility computation 
+   */
+  ///@{
   
   /**
    * @brief Computes the well transmissibility for each local perforation on this well.
    * @param[in] mesh target mesh level
-   * @param[in] wellElementSubRegion  subRegion corresponding to this well
+   * @param[in] wellElemSubRegion  subRegion corresponding to this well
    * @param[in] permeabilityKey key to access the permeability in the reservoir
    */
   void ComputeWellTransmissibility( MeshLevel const & mesh,
                                     WellElementSubRegion const * const wellElemSubRegion,
                                     string const & permeabilityKey );
 
+  ///@}
+  
+  /**
+   * @name Construction of the connectivity  
+   */
+  ///@{
   
   /**
    * @brief Locates connected local mesh elements and resizes current object appropriately.
@@ -174,51 +214,81 @@ public:
   /**
    * @brief Connects each perforation to a local wellbore element.
    * @param[in] wellGeometry InternalWellGenerator containing the global well topology
-   * @param[in] wellElementGlobalToLocalMap  global-to-local map of wellbore elements
+   * @param[in] globalToLocalWellElementMap  global-to-local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void ConnectToWellElements( InternalWellGenerator const & wellGeometry,
                               unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 
+  ///@}
   
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-
+    /// String key for the global number of perforations
     static constexpr auto numPerforationsGlobalString     = "numPerforationsGlobal";
+    /// String key for the reservoir element region index
     static constexpr auto reservoirElementRegionString    = "reservoirElementRegion";
+    /// String key for the reservoir element subregion index
     static constexpr auto reservoirElementSubregionString = "reservoirElementSubregion";
+    /// String key for the reservoir element index
     static constexpr auto reservoirElementIndexString     = "reservoirElementIndex";
+    /// String key for the well element index    
     static constexpr auto wellElementIndexString          = "wellElementIndex";
+    /// String key for the perforation location
     static constexpr auto locationString                  = "location";
+    /// String key for the well transmissibility    
     static constexpr auto wellTransmissibilityString      = "wellTransmissibility";
 
+    /// ViewKey for the global number of perforations
     dataRepository::ViewKey numPerforationsGlobal     = { numPerforationsGlobalString };
+    /// ViewKey for the reservoir element region index
     dataRepository::ViewKey reservoirElementRegion    = { reservoirElementRegionString };
+    /// ViewKey for the reservoir element subregion index
     dataRepository::ViewKey reservoirElementSubregion = { reservoirElementSubregionString };
+    /// ViewKey for the reservoir element index   
     dataRepository::ViewKey reservoirElementIndex     = { reservoirElementIndexString };
+    /// ViewKey for the well element index
     dataRepository::ViewKey wellElementIndex          = { wellElementIndexString };
+    /// ViewKey for the well location
     dataRepository::ViewKey location                  = { locationString };
+    /// ViewKey for the well transmissibility   
     dataRepository::ViewKey wellTransmissibility      = { wellTransmissibilityString };
 
-  } viewKeysPerforationData;
+  }
+  /// ViewKey struct for the PerforationData class
+  viewKeysPerforationData;
 
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct groupKeyStruct
+   */  
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
-  {} groupKeysPerforationData;
-
+  {}
+  /// groupKey struct for the PerforationData class
+  groupKeysPerforationData;
 
 private:
 
   /**
+   * @name Helpers for transmissibility computation
+   */
+  ///@{
+  
+  /**
    * @brief Computes the approximate dimensions of the reservoir element containing a perforation.
-   *        This is done by computing a bounding box containing the element
+   *        This is done by computing a bounding box containing the element.
    * @param[in] mesh target mesh level
    * @param[in] er  index of the element region containing the reservoir element
    * @param[in] esr  index of the element subRegion containing the reservoir element
    * @param[in] ei  index of the reservoir element
-   * @param[inout] dx dimension of the element in the x-direction
-   * @param[inout] dy dimension of the element in the y-direction
-   * @param[inout] dz dimension of the element in the z-direction
+   * @param[out] dx dimension of the element in the x-direction
+   * @param[out] dy dimension of the element in the y-direction
+   * @param[out] dz dimension of the element in the z-direction
    */
   void GetReservoirElementDimensions( MeshLevel const & mesh,
                                       localIndex const er, localIndex const esr, localIndex const ei,
@@ -231,11 +301,11 @@ private:
    * @param[in] dy dimension of the element in the y-direction
    * @param[in] dz dimension of the element in the z-direction
    * @param[in] perm absolute permeability in the reservoir element
-   * @param[inout] d1 dimension of the element in the first direction
-   * @param[inout] d2 dimension of the element in the second direction
-   * @param[inout] h dimension of the element in the third direction
-   * @param[inout] k1 absolute permeability in the reservoir element (first direction)
-   * @param[inout] k2 absolute permeability in the reservoir element (second direction)
+   * @param[out] d1 dimension of the element in the first direction
+   * @param[out] d2 dimension of the element in the second direction
+   * @param[out] h dimension of the element in the third direction
+   * @param[out] k1 absolute permeability in the reservoir element (first direction)
+   * @param[out] k2 absolute permeability in the reservoir element (second direction)
    */
   void DecideWellDirection( R1Tensor const & vecWellElemCenterToPerf,
                             real64 const & dx, real64 const & dy, real64 const & dz,
@@ -243,22 +313,25 @@ private:
                             real64 & d1, real64 & d2, real64 & h,
                             real64 & k1, real64 & k2 ) const;
 
-  /// Console output of perforations for debugging purposes
+  ///@}
+  
+  /// @cond DO_NOT_DOCUMENT
   void DebugLocalPerforations() const;
-
-  /// global number of perforations
+  /// @endcond
+  
+  /// Global number of perforations
   globalIndex m_numPerforationsGlobal;
 
-  /// indices of the mesh elements connected to perforations
+  /// Indices of the mesh elements connected to perforations
   ToElementRelation< array1d< localIndex > > m_toMeshElements;
 
-  /// indices of the well element to which perforations are attached
+  /// Indices of the well elements to which perforations are attached
   array1d< localIndex > m_wellElementIndex;
 
-  /// location of the perforations
+  /// Location of the perforations
   array1d< R1Tensor > m_location;
 
-  /// well index of the perforations
+  /// Well transmissibility at the perforations
   array1d< real64 > m_wellTransmissibility;
 
 };

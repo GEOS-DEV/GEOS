@@ -24,8 +24,7 @@ namespace geosx
 
 /**
  * @class WellElementSubRegion
- *
- * This class describes a collection of local well elements and perforations
+ * @brief This class describes a collection of local well elements and perforations.
  */
 class WellElementSubRegion : public ElementSubRegionBase
 {
@@ -47,37 +46,64 @@ public:
   };
 
   /**
-   * @brief main constructor for Group Objects
-   * @param name the name of this instantiation of Group in the repository
-   * @param parent the parent group of this instantiation of Group
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
    */
   WellElementSubRegion( string const & name,
                         Group * const parent );
 
   /**
-   * @brief default destructor
+   * @brief Default destructor.
    */
   virtual ~WellElementSubRegion() override;
 
+  ///@}  
+
   /**
-   * @return the name of this type in the catalog
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+  
+  /** 
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
    */
   static const string CatalogName() { return "wellElementSubRegion"; }
 
   /**
-   *
-   * @return the name of this type in the catalog
+   * @copydoc CatalogName() 
    */
   virtual const string getCatalogName() const override { return WellElementSubRegion::CatalogName(); }
 
+  ///@}
+
+  /**
+   * @name Geometry computation / Connectivity
+   */
+  ///@{
+  
   virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                     FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override
   {}
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
 
+  ///@}
+
   /**
-   * @return the element to edge map
+   * @name Accessors / Setters
+   */
+  ///@{
+  
+  /**
+   * @brief Accessor for the element-to-edge map.
+   * @return a reference to element-to-edge map
    */
   FixedOneToManyRelation & edgeList()
   {
@@ -85,7 +111,8 @@ public:
   }
 
   /**
-   * @return the element to edge map
+   * @brief Const accessor for the element-to-edge map.
+   * @return a const reference to the element-to-edge map
    */
   FixedOneToManyRelation const & edgeList() const
   {
@@ -93,7 +120,8 @@ public:
   }
 
   /**
-   * @return the element to face map
+   * @brief Accessor for the element-to-face map.
+   * @return a reference to the element to face map
    */
   FixedOneToManyRelation & faceList()
   {
@@ -101,7 +129,8 @@ public:
   }
 
   /**
-   * @return the element to face map
+   * @brief Const accessor for the element-to-face map.
+   * @return a const reference to the element-to-face map
    */
   FixedOneToManyRelation const & faceList() const
   {
@@ -109,7 +138,8 @@ public:
   }
 
   /**
-   * @return the element to node map
+   * @brief Accessor for the element-to-node map.
+   * @return a reference to the element-to-node map
    */
   NodeMapType & nodeList()
   {
@@ -117,7 +147,8 @@ public:
   }
 
   /**
-   * @return the element to node map
+   * @brief Const accessor for the element-to-node map.
+   * @return a const reference to the element-to-node map
    */
   NodeMapType const & nodeList() const
   {
@@ -125,7 +156,7 @@ public:
   }
 
   /**
-   * @brief Getter for the top element index
+   * @brief Get for the top element index.
    * @return local index of well's top element or -1 if it is not on current rank
    */
   localIndex GetTopWellElementIndex() const
@@ -134,8 +165,8 @@ public:
   }
 
   /**
-   * @brief Setter for the name of the WellControls object of this well
-   * @param name the name of the WellControls object
+   * @brief Set the name of the WellControls object of this well.
+   * @param[in] name the name of the WellControls object
    */
   void SetWellControlsName( string const & name )
   {
@@ -143,7 +174,7 @@ public:
   }
 
   /**
-   * @brief Getter for the name of the WellControls object of this well
+   * @brief Get the name of the WellControls object of this well.
    * @return a string containing the name of the WellControls object
    */
   string const & GetWellControlsName() const
@@ -152,7 +183,7 @@ public:
   }
 
   /**
-   * @brief Getter for the perforations
+   * @brief Get all the local perforations.
    * @return a pointer to the PerforationData object
    */
   PerforationData * GetPerforationData()
@@ -161,7 +192,7 @@ public:
   }
 
   /**
-   * @brief Getter for the perforation data
+   * @brief Get all the local perforations. 
    * @return a pointer to the const PerforationData object
    */
   PerforationData const * GetPerforationData() const
@@ -170,7 +201,7 @@ public:
   }
 
   /**
-   * @brief Setter fpr the MPI rank that owns this well (i.e. the top segment)
+   * @brief Set for the MPI rank that owns this well (i.e. the top segment).
    * @param MPI rank of the owner process
    */
   void SetTopRank( int rank )
@@ -179,7 +210,7 @@ public:
   }
 
   /**
-   * @brief Getter for the MPI rank that owns this well (i.e. the top segment)
+   * @brief Get the MPI rank that owns this well (i.e. the top segment).
    * @return MPI rank of the owner process
    */
   int GetTopRank() const
@@ -193,13 +224,15 @@ public:
    */
   bool IsLocallyOwned() const;
 
+  ///@}
+  
   /**
-   * @brief Build the local well elements from global well element data
-   * @param[in] meshLevel the mesh object (single level only)
+   * @brief Build the local well elements from global well element data.
+   * @param[in] mesh the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
-   * @param[in] wellElemStatus list of well element status, as determined by perforations connected
-   *                           to local or remote mesh partitions. Status values are defined in
-   *                           enum SegmentStatus. They are used to partition well elements.
+   * @param[in] elemStatus list of well element status, as determined by perforations connected
+   *                       to local or remote mesh partitions. Status values are defined in
+   *                       enum SegmentStatus. They are used to partition well elements.
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
@@ -210,8 +243,8 @@ public:
                  globalIndex elemOffsetGlobal );
 
   /**
-   * @brief For each perforation, find the reservoir element that contains the perforation
-   * @param[in] meshLevel the mesh object (single level only)
+   * @brief For each perforation, find the reservoir element that contains the perforation.
+   * @param[in] mesh the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    */
   void ConnectPerforationsToMeshElements( MeshLevel & mesh,
@@ -271,7 +304,7 @@ private:
 
   /**
    * @brief Assign the unowned well elements ( = well elem without perforation ) that are
-            in the reservoir (and that can therefore be matched with a reservoir element) to an MPI rank
+            in the reservoir (and that can therefore be matched with a reservoir element) to an MPI rank.
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] unownedElems set of unowned well elems.
@@ -289,7 +322,7 @@ private:
 
   /**
    * @brief Check that all the well elements have been assigned to a single rank
-   *        Also check that if two ranks are neighbors in the well, they are also neighbors in the mesh
+   *        Also check that if two ranks are neighbors in the well, they are also neighbors in the mesh.
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[inout] localElems set of local well elems.
    * @param[inout] wellElemStatus list of current well element status. Status values are defined in
@@ -300,8 +333,8 @@ private:
                                   arrayView1d< integer > & elemStatusGlobal ) const;
 
   /**
-   * @brief Add the well nodes to the nodeManager (properly resized)
-            The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function
+   * @brief Add the well nodes to the nodeManager (properly resized).
+            The function WellElementSubRegion::CollectLocalAndBoundaryNodes must have been called before this function.
    * @param[in] meshLevel the mesh object (single level only)
    * @param[in] wellGeometry the InternalWellGenerator containing the global well topology
    * @param[in] localNodes set of local well nodes (includes boundary nodes). At this point all the nodes have been
