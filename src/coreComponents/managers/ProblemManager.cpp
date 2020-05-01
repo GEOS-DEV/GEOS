@@ -136,7 +136,7 @@ ProblemManager::ProblemManager( const std::string & name,
     setRestartFlags( RestartFlags::WRITE )->
     setDescription( "Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering)." );
 
-  commandLine->registerWrapper<integer>( viewKeys.suppressPinned.Key( ) )->
+  commandLine->registerWrapper< integer >( viewKeys.suppressPinned.Key( ) )->
     setApplyDefaultValue( 0 )->
     setRestartFlags( RestartFlags::WRITE )->
     setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
@@ -493,7 +493,7 @@ void ProblemManager::PostProcessInput()
   integer const & zparCL = commandLine->getReference< integer >( viewKeys.zPartitionsOverride );
 
   integer const & suppressPinned = commandLine->getReference< integer >( viewKeys.suppressPinned );
-  buffer_allocator<buffer_unit_type>::preferPinned((suppressPinned == 0));
+  buffer_allocator< buffer_unit_type >::preferPinned((suppressPinned == 0));
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
   bool repartition = false;
