@@ -8,7 +8,7 @@
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
@@ -254,7 +254,7 @@ public:
   
   
   /**
-   * @brief Clean up the mappings from faces to elment index, region, subregion on a new (updated) list of faces, in order to keep only relevant mappings.
+   * @brief Clean up the mappings from faces to element index, region, subregion on a new (updated) list of faces, in order to keep only relevant mappings.
    * @param [in] receivedFaces the new list of target node indices
    * @param [in] elemRegionManager Element Region Manager
    */
@@ -311,7 +311,7 @@ public:
 
   ///@{
    /**
-    * @brief Get the constant upper limit for numer of faces per Node.
+    * @brief Get the constant upper limit for number of faces per Node.
     * @return constant expression of the maximal number of faces per node
    */
  constexpr int maxFacesPerNode() const { return 100; }
@@ -452,7 +452,7 @@ private:
   /**
    * @brief Pack the upward and downward pointing maps.
    * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   *                packed and the function returns the size of the packing that would have occurred if set to TRUE.
    * @param[inout] buffer the buffer to pack data into
    * @param[in] packList the indices of faces that should be packed.
    * @return size of data packed in terms of number of chars

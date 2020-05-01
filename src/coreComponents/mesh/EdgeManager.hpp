@@ -8,7 +8,7 @@
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
@@ -57,7 +57,7 @@ public:
 
   
   /**
-   * @brief Getter used to acces the edge manager catalog name.
+   * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
    */
   virtual const string getCatalogName() const override
@@ -70,7 +70,7 @@ public:
   { return 4; }
 
   /**
-   * @name Constructors/destructos
+   * @name Constructors/destructors
    */
   ///@{
   
@@ -132,7 +132,7 @@ public:
   /**
    * @brief Calculate the future size of a packed list.
    * @param[in] packList the list of edge indices to be packed
-   * @return a local index representing the of the future paked list
+   * @return a local index representing the of the future packed list
    */
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -140,7 +140,7 @@ public:
   /**
    * @brief Pack an array of edge indices in a buffer.
    * @param[inout] buffer a buffer to pack the edge index data into
-   * @param[in] packList thes indices of edge to pack
+   * @param[in] packList the indices of edge to pack
    * @return a localIndex type value representing the size of the packed array
    */
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -204,7 +204,7 @@ public:
 
   
   /**
-   * @brief Split an edge (separate its two extremitiy nodes)
+   * @brief Split an edge (separate its two extremity nodes)
    * @param[in] indexToSplit Index of the edge to split
    * @param[in] parentNodeIndex index of the parent node
    * @param[in] childNodeIndex index of the child node
@@ -251,7 +251,7 @@ public:
   ///@{
 
   /**
-   * @struct Container of keys needed to acces the data of the class member
+   * @struct Container of keys needed to access the data of the class member
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -349,10 +349,10 @@ public:
 
 private:
 
-  /// Map for the nodes-to-eges relation
+  /// Map for the nodes-to-edges relation
   NodeMapType m_toNodesRelation;
 
-  /// Map for the faces-to-eges relation
+  /// Map for the faces-to-edges relation
   FaceMapType m_toFacesRelation;
 
   /// Unmaped edge indices (those that are not in the nodes-to-edges relation map)
@@ -365,7 +365,7 @@ private:
   /**
    * @brief function to pack the upward and downward pointing maps.
    * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   *                packed and the function returns the size of the packing that would have occurred if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
