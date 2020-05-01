@@ -243,7 +243,7 @@ TEST_F( MeshGenerationTest, elemToNodeMap )
 
 TEST_F( MeshGenerationTest, nodeToElemMap )
 {
-  ArrayOfArraysView< localIndex const > const & nodeToElemMap = m_nodeManager->elementList();
+  ArrayOfArraysView< localIndex const > const & nodeToElemMap = m_nodeManager->elementList().toViewConst();
 
   localIndex nodeID = 0;
   for( localIndex i = 0; i < numNodesInX; ++i )
@@ -301,10 +301,10 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
 
 TEST_F( MeshGenerationTest, faceNodeMaps )
 {
-  arrayView2d< localIndex const > const & elementToFaceMap = m_subRegion->faceList();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = m_faceManager->nodeList();
-  arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList();
-  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = m_nodeManager->faceList();
+  arrayView2d< localIndex const > const & elementToFaceMap = m_subRegion->faceList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = m_faceManager->nodeList().toViewConst();
+  arrayView2d< localIndex const > const & faceToElementMap = m_faceManager->elementList().toViewConst();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = m_nodeManager->faceList().toViewConst();
 
   GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 
@@ -437,7 +437,7 @@ bool walkEdgesToFindNeighbor( localIndex const node0,
 
 TEST_F( MeshGenerationTest, edgeNodeMaps )
 {
-  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = m_nodeManager->edgeList();
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = m_nodeManager->edgeList().toViewConst();
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
 
   GEOSX_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
@@ -491,10 +491,10 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
 TEST_F( MeshGenerationTest, edgeFaceMaps )
 {
   arrayView2d< localIndex const > const & elementToFaceMap = m_subRegion->faceList();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = m_faceManager->nodeList();
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = m_faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = m_faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = m_faceManager->edgeList().toViewConst();
   arrayView2d< localIndex const > const & edgeToNodeMap = m_edgeManager->nodeList();
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = m_edgeManager->faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = m_edgeManager->faceList().toViewConst();
 
   GEOSX_ERROR_IF_NE( elementToFaceMap.size( 1 ), 6 );
 

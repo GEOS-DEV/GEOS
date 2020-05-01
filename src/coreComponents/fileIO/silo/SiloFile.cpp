@@ -1738,7 +1738,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     FaceManager const * const faceManager = meshLevel->getFaceManager();
     localIndex const numFaces = faceManager->size();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     // face mesh
     const std::string facemeshName( "face_mesh" );
@@ -1862,7 +1862,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   {
     // write edges
     FaceManager const * const faceManager = meshLevel->getFaceManager();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
     localIndex const numEdges = edgeManager->size();
