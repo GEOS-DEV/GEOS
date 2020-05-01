@@ -625,13 +625,11 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
     }
   } );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
