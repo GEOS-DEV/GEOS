@@ -1329,7 +1329,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   if( newtonIter==0 )
   {
     m_blockDiagUU.reset( new ParallelMatrix());
-    LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
+    LAIHelperFunctions::SeparateComponentFilter( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
   }
 
   // create schur complement approximation matrix
