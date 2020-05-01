@@ -49,12 +49,12 @@ public:
   using FaceMapType = FixedOneToManyRelation;
 
   /**
-   * @name Static Factory Catalog Functions
+   * @name Static factory catalog functions
    */
   ///@{
 
   /**
-   * @brief Const accessor for the catalog name.
+   * @brief Const getter for the catalog name.
    * @return the name of this type in the catalog
    */
   static const string CatalogName()
@@ -179,14 +179,14 @@ public:
   ///@}
 
   /**
-   * @name Accessors / Setters
+   * @name Getters / Setters
    */
   ///@{
 
   virtual void SetElementType( string const & elementType ) override;
 
   /**
-   * @brief Const accessor for the number of the nodes in a face of the element.
+   * @brief Get the number of the nodes in a face of the element.
    * @param elementIndex the local index of the target element
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @return the number of nodes of this face
@@ -195,7 +195,7 @@ public:
                               localIndex const localFaceIndex ) const;
 
   /**
-   * @brief Accessor for the local indices of the nodes in a face of the element.
+   * @brief Get the local indices of the nodes in a face of the element.
    * @param elementIndex the local index of the target element
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @param nodeIndices a pointer to the node indices of the face
@@ -207,7 +207,7 @@ public:
 
 
   /**
-   * @brief Accessor for the local indices of the nodes in a face of the element.
+   * @brief Get the local indices of the nodes in a face of the element.
    * @param elementIndex the local index of the target element
    * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
    * @param nodeIndices a reference to the array of node indices of the face
@@ -218,19 +218,18 @@ public:
 
 
   /**
-   * @brief Accessor for the element-to-node map.
+   * @brief Get the element-to-node map.
    * @return a reference to the element-to-node map
    */
   NodeMapType & nodeList() { return m_toNodesRelation; }
 
   /**
-   * @brief Const accessor for the element-to-node map.
-   * @return a const reference to the element-to-node map
+   * @copydoc nodeList()
    */
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   /**
-   * @brief Accessor for the local index of the a-th node of the k-th element.
+   * @brief Get the local index of the a-th node of the k-th element.
    * @param[in] k the index of the element
    * @param[in] a the index of the node in the element
    * @return a reference to the local index of the node
@@ -238,34 +237,29 @@ public:
   localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
 
   /**
-   * @brief Const accessor for the local index of the a-th node of the k-th element.
-   * @param[in] k the index of the element
-   * @param[in] a the index of the node in the element
-   * @return a const reference to the local index of the node
+   * @copydoc nodeList( localIndex const k, localIndex a )
    */
   localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
-   * @brief Accessor for the element-to-edge map.
+   * @brief Get the element-to-edge map.
    * @return a reference to element-to-edge map
    */
   FixedOneToManyRelation & edgeList() { return m_toEdgesRelation; }
 
   /**
-   * @brief Const accessor for the element-to-edge map.
-   * @return a const reference to the element-to-edge map
+   * @copydoc edgeList()
    */
   FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
 
   /**
-   * @brief Accessor for the element-to-face map.
+   * @brief Get the element-to-face map.
    * @return a reference to the element to face map
    */
   FixedOneToManyRelation & faceList() { return m_toFacesRelation; }
 
   /**
-   * @brief Const accessor for the element-to-face map.
-   * @return a const reference to the element-to-face map
+   * @copydoc faceList()
    */
   FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
 
@@ -308,13 +302,13 @@ public:
 
 protected:
 
-  /// The element-to-node relation
+  /// Element-to-node relation
   NodeMapType m_toNodesRelation;
 
-  /// The element-to-edge relation
+  /// Element-to-edge relation
   EdgeMapType m_toEdgesRelation;
 
-  /// The element-to-face relation
+  /// Element-to-face relation
   FaceMapType m_toFacesRelation;
 
 private:

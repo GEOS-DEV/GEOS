@@ -16,8 +16,8 @@
  * @file EmbeddedSurfaceSubRegion.hpp
  */
 
-#ifndef EMBEDDEDSURFACESUBREGION_HPP_
-#define EMBEDDEDSURFACESUBREGION_HPP_
+#ifndef GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
+#define GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_
 
 #include "ElementSubRegionBase.hpp"
 #include "InterObjectRelation.hpp"
@@ -49,6 +49,11 @@ public:
   using FaceMapType = FixedOneToManyRelation;
 
   /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+  
+  /**
    * @brief Get catalog name.
    * @return the catalog name
    */
@@ -64,6 +69,13 @@ public:
     return EmbeddedSurfaceSubRegion::CatalogName();
   }
 
+  ///@}
+  
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+  
   /**
    * @brief Constructor.
    * @param name the group name
@@ -74,6 +86,12 @@ public:
 
   virtual ~EmbeddedSurfaceSubRegion() override;
 
+  ///@}
+
+  /**
+   * @name Geometry computation / Connectivity
+   */
+  ///@{
 
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & facemanager ) override;
@@ -93,7 +111,7 @@ public:
                                               localIndex k );
 
   /**
-   * @brief Function add a new embedded surface element.
+   * @brief Function to add a new embedded surface element.
    * @param cellIndex index of the cell element cut by the new embedded surface element
    * @param normalVector unit normal vector to the embedded surface
    */
@@ -101,7 +119,7 @@ public:
                               R1Tensor normalVector );
 
   /**
-   * @brief Function .
+   * @brief Function to add a new embedded surface element.
    * @param cellIndex cell element index
    * @param regionIndex cell element region index
    * @param subRegionIndex cell element subregion index
@@ -119,6 +137,8 @@ public:
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * plane );
 
+  ///@}
+  
   /**
    * @brief Struct containing the keys to all embedded surface element views.
    * @struct viewKeyStruct
@@ -156,7 +176,7 @@ public:
   ///@{
 
   /**
-   * @brief Get embedded surface element to nodes map (background grid nodes).
+   * @brief Get the embedded surface element to nodes map (background grid nodes).
    * @return the embedded surface element to node map
    */
   NodeMapType const & nodeList() const
@@ -172,7 +192,7 @@ public:
   }
 
   /**
-   * @brief Get embedded surface element to region map (background grid nodes).
+   * @brief Get the embedded surface element to region map (background grid nodes).
    * @return the embedded surface element to region map
    */
   arrayView1d< localIndex > const & getSurfaceToRegionList()       { return m_embeddedSurfaceToRegion; }
@@ -183,7 +203,7 @@ public:
   arrayView1d< localIndex const > const & getSurfaceToRegionList() const { return m_embeddedSurfaceToRegion; }
 
   /**
-   * @brief Get embedded surface element to subregion map (of cell elemtns being cut).
+   * @brief Get the embedded surface element to subregion map (of cell elemtns being cut).
    * @return the embedded surface element to subregion map
    */
   arrayView1d< localIndex > const & getSurfaceToSubRegionList()       { return m_embeddedSurfaceToSubRegion; }
@@ -194,7 +214,7 @@ public:
   arrayView1d< localIndex const > const & getSurfaceToSubRegionList() const { return m_embeddedSurfaceToSubRegion; }
 
   /**
-   * @brief Get embedded surface element to cell element map
+   * @brief Get the embedded surface element to cell element map
    * @return the embedded surface element to cell element map
    */
   arrayView1d< localIndex > const & getSurfaceToCellList()       { return m_embeddedSurfaceToCell; }
@@ -223,7 +243,7 @@ public:
   arrayView1d< real64 const > const & getElementAperture() const { return m_elementAperture; }
 
   /**
-   * @brief Get embedded surface elements surface area.
+   * @brief Get the embedded surface elements surface area.
    * @return the surface area of the embedded surface elements
    */
   arrayView1d< real64 > const & getElementArea()       { return m_elementArea; }
@@ -339,4 +359,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* EMBEDDEDSURFACESUBREGION_HPP_ */
+#endif /* GEOSX_MESH_EMBEDDEDSURFACESUBREGION_HPP_ */

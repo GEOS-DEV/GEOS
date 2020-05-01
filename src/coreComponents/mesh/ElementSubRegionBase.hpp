@@ -93,19 +93,18 @@ public:
   ///@}
 
   /**
-   * @name Accessors / Setters
+   * @name Getters / Setters
    */
   ///@{
 
   /**
-   * @brief Const accessor for the number of nodes per element.
+   * @brief Get the number of nodes per element.
    * @return number of nodes per element
    */
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
-   * @brief Const accessor for the number of nodes of a specific element.
-   * @return the number of nodes in the element
+   * @copydoc numNodesPerElement() const
    */
   virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
 
@@ -119,7 +118,7 @@ public:
   }
 
   /**
-   * @brief Const accessor for the number of independent nodes per element.
+   * @brief Get the number of independent nodes per element.
    * @return numNodes the number of independent nodes per element
    *
    * Currently, the number of independent nodes per element is always
@@ -138,7 +137,7 @@ public:
   }
 
   /**
-   * @brief Const accessor for the number of edges per element.
+   * @brief Get the number of edges per element.
    * @return the number of edges per element
    */
   localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
@@ -153,7 +152,7 @@ public:
   }
 
   /**
-   * @brief Const accessor for the number of faces per element.
+   * @brief Get the number of faces per element.
    * @return number of faces per element
    */
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
@@ -166,42 +165,40 @@ public:
   { m_numFacesPerElement = numFaces; }
 
   /**
-   * @brief Const accessor for the center of each element in this subregion.
+   * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
   arrayView1d< R1Tensor const > const & getElementCenter() const
   { return m_elementCenter; }
 
   /**
-   * @brief Accessor for the center of each element in this subregion.
-   * @return an arrayView1d of element centers
+   * @copydoc getElementCenter() const
    */
   arrayView1d< R1Tensor > const & getElementCenter()
   { return m_elementCenter; }
 
   /**
-   * @brief Accessor for the volume of each element in this subregion.
+   * @brief Get the volume of each element in this subregion.
    * @return an arrayView1d of const element volumes
    */
   arrayView1d< real64 const > const & getElementVolume() const
   { return m_elementVolume; }
 
   /**
-   * @brief Const accessor for the group in which the constitutive models of this subregion are registered.
+   * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
   dataRepository::Group const * GetConstitutiveModels() const
   { return &m_constitutiveModels; }
 
   /**
-   * @brief Accessor for the group in which the constitutive models of this subregion are registered.
-   * @return a pointer to the group in which the constitutive models are registered
+   * @copydoc GetConstitutiveModels() const
    */
   dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
 
   /**
-   * @brief Accessor for the type of element in this subregion.
+   * @brief Get the type of element in this subregion.
    * @return a string specifying the type of element in this subregion
    *
    * See class FiniteElementBase for possible element type.
@@ -215,7 +212,7 @@ public:
   virtual void SetElementType( string const & elementType );
 
   /**
-   * @brief Accessor for the VTK ordering for this subregion.
+   * @brief Get the VTK ordering for this subregion.
    * @return the VTK node ordering
    */
   std::vector< int > getVTKNodeOrdering() const;
@@ -229,21 +226,21 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
 
-    /// The string key for the number of nodes per element in this subregion.
+    /// String key for the number of nodes per element in this subregion.
     static constexpr auto numNodesPerElementString = "numNodesPerElement";
-    /// The string key for the element-to-node relation
+    /// String key for the element-to-node relation
     static constexpr auto nodeListString           = "nodeList";
-    /// The string key for the number of edges per element in this subregion.
+    /// String key for the number of edges per element in this subregion.
     static constexpr auto numEdgesPerElementString = "numEdgesPerElement";
-    /// The string key for the element-to-edge relation
+    /// String key for the element-to-edge relation
     static constexpr auto edgeListString           = "edgeList";
-    /// The string key for the number of faces per element in this subregion.
+    /// String key for the number of faces per element in this subregion.
     static constexpr auto numFacesPerElementString = "numFacesPerElement";
-    /// The string key for the element-to-face relation
+    /// String key for the element-to-face relation
     static constexpr auto faceListString           = "faceList";
-    /// The string key for the member level field for the element center.
+    /// String key for the member level field for the element center.
     static constexpr auto elementCenterString      = "elementCenter";
-    /// The string key for the member level field for the element volume.
+    /// String key for the member level field for the element volume.
     static constexpr auto elementVolumeString      = "elementVolume";
   };
 
@@ -253,37 +250,37 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// The key for the group in which the constitutive models of this subregion are registered.
+    /// String key for the group in which the constitutive models of this subregion are registered.
     static constexpr auto constitutiveModelsString = "ConstitutiveModels";
   };
 
 private:
-  /// The group in which the constitutive models of this subregion are registered
+  /// Group in which the constitutive models of this subregion are registered
   dataRepository::Group m_constitutiveModels;
 
 protected:
-  /// The number of nodes per element in this subregion.
+  /// Number of nodes per element in this subregion.
   localIndex m_numNodesPerElement;
 
-  /// The number of independent nodes per element in this subregion.
+  /// Number of independent nodes per element in this subregion.
   localIndex m_numIndependentNodesPerElement;
 
-  /// The number of edges per element in this subregion.
+  /// Number of edges per element in this subregion.
   localIndex m_numEdgesPerElement;
 
-  /// The number of faces per element in this subregion.
+  /// Number of faces per element in this subregion.
   localIndex m_numFacesPerElement;
 
-  /// The member level field for the element center.
+  /// Member level field for the element center.
   array1d< R1Tensor > m_elementCenter;
 
-  /// The member level field for the element volume.
+  /// Member level field for the element volume.
   array1d< real64 > m_elementVolume;
 
-  /// The type of element in this subregion.
+  /// Type of element in this subregion.
   string m_elementTypeString;
 
-  /// The type of element in this subregion.
+  /// Type of element in this subregion.
   FiniteElementBase::ElementType m_elementType;
 };
 

@@ -36,6 +36,12 @@ class EdgeManager;
 class EmbeddedSurfaceRegion : public ElementRegionBase
 {
 public:
+
+    /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
   /**
    * @brief Constructor.
    * @param name the name of the object in the data hierarchy.
@@ -43,9 +49,23 @@ public:
    */
   EmbeddedSurfaceRegion( string const & name, Group * const parent );
 
+  /**
+   * @brief Deleted default constructor.
+   */
   EmbeddedSurfaceRegion() = delete;
+
+ /**
+  * @brief Default destructor.
+  */
   virtual ~EmbeddedSurfaceRegion() override;
 
+  ///@}
+  
+  /**
+   * @name Static factory catalog functions
+   */
+  ///@{
+  
   /**
    * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
@@ -56,13 +76,15 @@ public:
   virtual const string getCatalogName() const override final
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
+  ///@}
+  
   /**
    * @brief A struct to serve as a container for variable strings and keys.
-   * @struct vieKeyStruct
+   * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
-    // Fracture set string
+    /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
   };
 

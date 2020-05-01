@@ -72,7 +72,7 @@ public:
   ///@}
 
   /**
-   * @name Overridden packing / Unpacking functions
+   * @name Overriding packing / Unpacking functions
    */
   ///@{
 
@@ -120,46 +120,46 @@ public:
    */
   struct viewKeyStruct : public CellBlock::viewKeyStruct
   {
-    /// The string key for the constitutive point volume fraction
+    /// String key for the constitutive point volume fraction
     static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
-    /// The string key for the derivatives of the shape functions with respect to the reference configuration
+    /// String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr auto dNdXString = "dNdX";
 
-    /// The string key for the constitutive grouping
+    /// String key for the constitutive grouping
     static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
-    /// The string key for the constitutive map
+    /// String key for the constitutive map
     static constexpr auto constitutiveMapString = "ConstitutiveMap";
 
-    /// The ViewKey for the constitutive grouping
+    /// ViewKey for the constitutive grouping
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
-    /// The ViewKey for the constitutive map
+    /// ViewKey for the constitutive map
     dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
-    /// The ViewKey for the derivatives of the shape functions with respect to the reference configuration
+    /// ViewKey for the derivatives of the shape functions with respect to the reference configuration
     dataRepository::ViewKey dNdX                  = { dNdXString };
 
   }
-  /// xxx
+  /// viewKey struct for the CellElementSubRegion class 
   m_CellBlockSubRegionViewKeys;
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
 
-  /// The map used for constitutive grouping
+  /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
 
-  /// The array of constitutive point volume fraction
+  /// Array of constitutive point volume fraction
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-  /// The derivatives of the shape functions wrt the reference configuration
+  /// Derivatives of the shape functions wrt the reference configuration
   array3d< R1Tensor > m_dNdX;
 
 
 private:
 
-  /// The map of unmapped global indices in the element-to-node map
+  /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
-  /// The map of unmapped global indices in the element-to-face map
+  /// Map of unmapped global indices in the element-to-face map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
   /**
