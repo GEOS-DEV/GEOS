@@ -112,7 +112,7 @@ public:
 
 /**
  * @brief Get a pointer to a subregion by specifying its name.
- * @tparam SUBREGIONTYPE the type of the subregion
+ * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
  * @param regionName the name of the subregion
  * @return a pointer to the subregion
  * @note
@@ -134,9 +134,9 @@ public:
 
 /**
  * @brief Get a pointer to a subregion by specifying its index.
- * @tparam SUBREGIONTYPE the type of the subregion
+ * @tparam SUBREGIONTYPE the type that will be used to attempt casting the subregion
  * @param index the index of the subregion
- * @return a pointer to the subregion with the specified subregion type
+ * @return a pointer to the subregion
  */
   template< typename SUBREGIONTYPE=ElementSubRegionBase >
   SUBREGIONTYPE const * GetSubRegion( localIndex const & index ) const
@@ -163,10 +163,13 @@ public:
   }
 
 /**
- * @brief Get the number of subregions  in the region
+ * @brief Get the number of elements  in the region
  *        for specific subregion types provided as template arguments.
- * @tparam SUBREGIONTYPES
+ * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
+ * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
  * @return the number of elements contained in the element region
+ * @note This function requires that the subRegion types specified
+ *       in the variadic template argument can be casted to ElementSubRegionBase
  */
   template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
   localIndex getNumberOfElements() const
@@ -192,6 +195,7 @@ public:
 
   /**
    * @brief Get the name of the constiutive in the element region.
+   * @tparam CONSTITUTIVE_TYPE the type of the constitutive model
    * @return the string_array of the constitutive names
    */
   template< typename CONSTITUTIVE_TYPE >
@@ -201,7 +205,7 @@ public:
   ///@}
 
   /**
-   * @name Looping helpers
+   * @name Functor-based loops over subregions
    */
   ///@{
 
@@ -249,7 +253,8 @@ public:
 
 /**
  * @brief Apply LAMBDA to the subregions, loop using subregion indices.
- * @param lambda the lambda to be applied
+ * @tparam LAMBDA type of functor to call
+ * @param lambda the the functor to be applied to all subregions
  */
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
@@ -269,6 +274,9 @@ public:
 /**
  * @brief Apply LAMBDA to the subregions with the specific subregion types
  *        listed in the template, loop using subregion indices.
+ * @tparam SUBREGIONTYPE the first subregion type
+ * @tparam SUBREGIONTYPES a variadic list of subregion types
+ * @tparam LAMBDA type of functor to call
  * @param lambda the lambda to be applied
  */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
@@ -334,6 +342,13 @@ private:
 ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////
 
+
+/**
+ * @brief Get the names of all constitutive models of a specific type
+ *
+ * @tparam CONSTITUTIVE_TYPE type of constitutive model
+ * return string array with the names of the constitutive models
+ */
 template< typename CONSTITUTIVE_TYPE >
 string_array ElementRegionBase::getConstitutiveNames() const
 {
