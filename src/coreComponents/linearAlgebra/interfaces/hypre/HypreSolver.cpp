@@ -116,9 +116,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
     if( m_parameters.ilu.fill >= 0 )
     {
-      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond,
-                                                      integer_conversion< HYPRE_Int >(
-                                                        m_parameters.ilu.fill ) ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond, LvArray::integerConversion< HYPRE_Int >( m_parameters.ilu.fill ) ) );
     }
     precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
     precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
@@ -134,7 +132,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     if( m_parameters.ilu.fill >= 0 )
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxNnzPerRow( precond,
-                                                       integer_conversion< HYPRE_Int >(
+                                                       LvArray::integerConversion< HYPRE_Int >(
                                                          m_parameters.ilu.fill ) ) );
     }
     if( m_parameters.ilu.threshold >= 0 )
