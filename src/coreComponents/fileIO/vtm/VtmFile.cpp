@@ -134,7 +134,7 @@ void VtmFile::Load( string const & fileName, bool loadMesh, bool loadProperties 
   std::vector< RankBlock > rankBlocks;
   SetRanksAndBlocks( vtmDoc, rankBlocks );
   // Retrieve the number of partitions
-  int const numFiles = integer_conversion< int >( rankBlocks.size());
+  int const numFiles = LvArray::integerConversion< int >( rankBlocks.size());
 
   // Next part of this method is dedicated to the optimization of file loading
   //

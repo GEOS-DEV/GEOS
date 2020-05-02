@@ -1124,7 +1124,7 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
                                                                               dt,
                                                                               subRegion,
                                                                               dofNumber,
-                                                                              integer_conversion< int >( m_numDofPerCell ),
+                                                                              LvArray::integerConversion< int >( m_numDofPerCell ),
                                                                               *matrix,
                                                                               *rhs,
                                                                               [&] ( localIndex const GEOSX_UNUSED_PARAM( a )) -> real64

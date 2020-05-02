@@ -99,7 +99,7 @@ public:
 //  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                       const CommRegistry::commID commID  );
 //
-//  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
+//  int NumberOfNeighbors( ) {return LvArray::integerConversion<int>(m_neighbors.size());}
 
   int m_size;
   int m_sizeMetis;

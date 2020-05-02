@@ -684,7 +684,7 @@ void vectorToFieldImpl( VECTOR const & vector,
         {
           FIELD_OP::template SpecifyFieldValue( field,
                                                 i,
-                                                integer_conversion< integer >( c - loComp ),
+                                                LvArray::integerConversion< integer >( c - loComp ),
                                                 scalingFactor * localVector[lid + c] );
         }
       }
@@ -729,7 +729,7 @@ void fieldToVectorImpl( VECTOR & vector,
         {
           FIELD_OP::template ReadFieldValue( field,
                                              i,
-                                             integer_conversion< integer >( c - loComp ),
+                                             LvArray::integerConversion< integer >( c - loComp ),
                                              localVector[lid + c] );
         }
       }

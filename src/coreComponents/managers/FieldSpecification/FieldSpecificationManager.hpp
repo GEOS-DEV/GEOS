@@ -194,7 +194,7 @@ public:
           ( !isInitialCondition && fs->GetObjectPath().find( fieldPath ) != string::npos ) )
       {
         string_array const targetPath = stringutilities::Tokenize( fs->GetObjectPath(), "/" );
-        localIndex const targetPathLength = integer_conversion< localIndex >( targetPath.size());
+        localIndex const targetPathLength = LvArray::integerConversion< localIndex >( targetPath.size());
         string const targetName = fs->GetFieldName();
 
         if( ( isInitialCondition && fieldName=="" ) ||

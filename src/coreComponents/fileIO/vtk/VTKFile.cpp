@@ -208,7 +208,7 @@ public:
   void WriteSize( localIndex nbTotalCells, localIndex factor )
   {
     std::stringstream stream;
-    std::uint32_t size = integer_conversion< std::uint32_t >( nbTotalCells * factor );
+    std::uint32_t size = LvArray::integerConversion< std::uint32_t >( nbTotalCells * factor );
     stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
     m_outFile << stream.rdbuf();
   }
@@ -232,7 +232,7 @@ private:
   void WriteBinaryVertices( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & vertices )
   {
     std::stringstream stream;
-    std::uint32_t size = integer_conversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
+    std::uint32_t size = LvArray::integerConversion< std::uint32_t >( vertices.size() ) * sizeof( real64 );
     stream << stringutilities::EncodeBase64( reinterpret_cast< const unsigned char * >( &size ), sizeof( std::uint32_t ) );
     for( localIndex i = 0; i < vertices.size( 0 ); ++i )
     {

@@ -47,7 +47,7 @@ integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex numVars = integer_conversion< localIndex >( inputVarNames.size());
+  localIndex numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
 
   if( numVars==1 )
   {
