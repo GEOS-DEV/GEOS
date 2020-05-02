@@ -97,7 +97,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
     localNodes.insert( inodeBottomGlobal );
 
     localIndex const nextGlobal =
-      integer_conversion< localIndex >( nextElemIdGlobal[ integer_conversion< localIndex >( currGlobal ) ] );
+      LvArray::integerConversion< localIndex >( nextElemIdGlobal[ LvArray::integerConversion< localIndex >( currGlobal ) ] );
 
     // if the next well elem is not local, add the node in between curr and next to boundaryNodes
     if( nextGlobal >= 0 && !localElems.contains( nextGlobal ))
