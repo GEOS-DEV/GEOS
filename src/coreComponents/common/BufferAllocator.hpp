@@ -27,16 +27,18 @@
 
 namespace geosx
 {
+extern bool prefer_pinned_buffer;
+
 /**
- * @brief Set the current desired behaviour of the buffer_allocator
- * @param p Whether or not buffer_allocators should be instantiated
+ * @brief Set the current desired behaviour of the BufferAllocator
+ * @param p Whether or not BufferAllocators should be instantiated
  *          with a preference for using pinned memory.
  */
 void setPreferPinned( bool p );
 
 /**
- * @brief Get the current desired behaviour of the buffer_allocator
- * @return Whether or not buffer_allocators should be instantiated
+ * @brief Get the current desired behaviour of the BufferAllocator
+ * @return Whether or not BufferAllocators should be instantiated
  *         with a preference for using pinned memory.
  */
 bool getPreferPinned( );
@@ -51,12 +53,12 @@ bool getPreferPinned( );
  *       At the moment our usage looks like:
  *         buffer_type(size)
  *       but if this was a singleton it would necessitate that we create buffers as: (outside of neighbor comm)
- *         buffer_type(size,buffer_allocator<buffer_type>::getInstance())
+ *         buffer_type(size,BufferAllocator<buffer_type>::getInstance())
  *       which is messy. Changing the buffer_type can fix the issue but would introduce additional refactoring so for
  *       the moment this implementation suffices.
  */
 template< typename T >
-class buffer_allocator
+class BufferAllocator
 {
 public:
   // The type used to instantiate the class, and the underlying umpire allocator.
@@ -71,33 +73,53 @@ public:
    *        provided by umpire for the target platform, and getPreferPinned returns true,
    *        use that instead.
    */
-  buffer_allocator();
+  BufferAllocator()
+    : m_alloc( umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host )))
+    , m_prefer_pinned_l( prefer_pinned_buffer )
+  {
+    auto & rm = umpire::ResourceManager::getInstance();
+    if( rm.isAllocator( "PINNED" ) && m_prefer_pinned_l )
+      m_alloc = umpire::TypedAllocator< T >( rm.getAllocator( umpire::resource::Pinned ));
+  }
   /**
    * @brief Allocate a buffer.
    * @param sz The number of elements of type value_type to allocate a buffer for.
    * @return A pointer to the allocated buffer.
    */
-  value_type * allocate( size_t sz );
+  value_type * allocate( size_t sz )
+  {
+    return m_alloc.allocate( sz );
+  }
   /**
    * @brief Deallocate a buffer.
    * @param buffer A pointer to the buffer to deallocate
    * @param sz The size of the buffer to deallocate.
    */
-  void deallocate( value_type * buffer, size_t sz );
+  void deallocate( value_type * buffer, size_t sz )
+  {
+    if( buffer != nullptr )
+      m_alloc.deallocate( buffer, sz );
+  }
   /**
    * @brief Inequality operator.
-   * @param The other buffer_allocator to test against this buffer allocator for inequality.
+   * @param The other BufferAllocator to test against this buffer allocator for inequality.
    * @return Always false. Since the actual umpire allocator is a singleton, so any properly-typed
-   *         buffer can be deallocated from any properly-typed buffer_allocator.
+   *         buffer can be deallocated from any properly-typed BufferAllocator.
    */
-  bool operator!=( const buffer_allocator & );
+  bool operator!=( const BufferAllocator & )
+  {
+    return false;
+  }
   /**
    * @brief Equality operator.
-   * @param other The other buffer_allocator to test against this buffer allocator for equality.
+   * @param other The other BufferAllocator to test against this buffer allocator for equality.
    * return Always true. Since the actual umpire allocator is a singleton, so any properly-typed
-   *        buffer can be deallocated from any properly-typed buffer_allocator.
+   *        buffer can be deallocated from any properly-typed BufferAllocator.
    */
-  bool operator==( const buffer_allocator & other );
+  bool operator==( const BufferAllocator & other )
+  {
+    return !operator!=( other );
+  }
 };
 
 }
