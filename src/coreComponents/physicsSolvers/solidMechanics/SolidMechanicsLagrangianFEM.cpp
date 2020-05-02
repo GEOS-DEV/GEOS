@@ -972,27 +972,24 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
   matrix.open();
 
   {
-    array1d<string> fractureRegion(1);
-    fractureRegion[0] = "Fracture";
-
     physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy,
                                                                  SolidMechanicsLagrangianFEMKernels::QuasiStatic,
                                                                  FaceElementSubRegion >( mesh,
-                                                                                      fractureRegion,
-                                                                                      nullptr,
-                                                                                      dofNumber,
-                                                                                      matrix,
-                                                                                      rhs );
+                                                                                         targetRegionNames(),
+                                                                                         nullptr,
+                                                                                         dofNumber,
+                                                                                         matrix,
+                                                                                         rhs );
 
   }
   physicsLoopInterface::FiniteElementRegionLoop::FillSparsity< serialPolicy,
                                                                SolidMechanicsLagrangianFEMKernels::QuasiStatic,
                                                                CellElementSubRegion >( mesh,
-                                                                                    targetRegionNames(),
-                                                                                    nullptr,
-                                                                                    dofNumber,
-                                                                                    matrix,
-                                                                                    rhs );
+                                                                                       targetRegionNames(),
+                                                                                       nullptr,
+                                                                                       dofNumber,
+                                                                                       matrix,
+                                                                                       rhs );
 
 
   matrix.close();
