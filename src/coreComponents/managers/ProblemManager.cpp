@@ -183,6 +183,7 @@ void ProblemManager::ParseCommandLineInput()
   commandLine->getReference< integer >( viewKeys.zPartitionsOverride ) = opts.zPartitionsOverride;
   commandLine->getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
   commandLine->getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
+  commandLine->getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
   std::string & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
   inputFileName = opts.inputFileName;
@@ -493,7 +494,7 @@ void ProblemManager::PostProcessInput()
   integer const & zparCL = commandLine->getReference< integer >( viewKeys.zPartitionsOverride );
 
   integer const & suppressPinned = commandLine->getReference< integer >( viewKeys.suppressPinned );
-  buffer_allocator< buffer_unit_type >::preferPinned((suppressPinned == 0));
+  setPreferPinned((suppressPinned == 0));
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
   bool repartition = false;
