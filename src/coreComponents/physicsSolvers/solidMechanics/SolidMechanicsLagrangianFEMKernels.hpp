@@ -22,10 +22,10 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
 namespace geosx
@@ -88,25 +88,7 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
   } );
 }
 
-template< int N >
-inline void Integrate( const R2SymTensor & fieldvar,
-                       arraySlice1d< R1Tensor const > const & dNdX,
-                       real64 const & detJ,
-                       real64 const & detF,
-                       const R2Tensor & fInv,
-                       R1Tensor * GEOSX_RESTRICT const result )
-{
-  real64 const integrationFactor = detJ * detF;
 
-  R2Tensor P;
-  P.AijBkj( fieldvar, fInv );
-  P *= integrationFactor;
-
-  for( int a=0; a<N; ++a )    // loop through all shape functions in element
-  {
-    result[a].minusAijBj( P, dNdX[a] );
-  }
-}
 
 /**
  * @brief Function to select which templated kernel function to call.
@@ -152,6 +134,52 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
  */
 struct ExplicitKernel
 {
+
+#if defined(GEOSX_USE_CUDA)
+  #define CALCFEMSHAPE
+#endif
+
+
+  template< int N, int USD >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static
+  void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
+  #if defined(CALCFEMSHAPE)
+                  real64 const (&dNdX)[8][3],
+  #else
+                  arraySlice1d< R1Tensor const > const & dNdX,
+  #endif
+                  real64 const detJ,
+                  real64 const detF,
+                  R2Tensor const & fInv,
+                  R1Tensor (& result)[N] )
+  {
+    GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
+
+    real64 const integrationFactor = detJ * detF;
+
+    real64 P[ 3 ][ 3 ];
+    P[ 0 ][ 0 ] = ( fieldVar[ 0 ] * fInv( 0, 0 ) + fieldVar[ 5 ] * fInv( 0, 1 ) + fieldVar[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 0 ][ 1 ] = ( fieldVar[ 0 ] * fInv( 1, 0 ) + fieldVar[ 5 ] * fInv( 1, 1 ) + fieldVar[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 0 ][ 2 ] = ( fieldVar[ 0 ] * fInv( 2, 0 ) + fieldVar[ 5 ] * fInv( 2, 1 ) + fieldVar[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    P[ 1 ][ 0 ] = ( fieldVar[ 5 ] * fInv( 0, 0 ) + fieldVar[ 1 ] * fInv( 0, 1 ) + fieldVar[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 1 ][ 1 ] = ( fieldVar[ 5 ] * fInv( 1, 0 ) + fieldVar[ 1 ] * fInv( 1, 1 ) + fieldVar[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 1 ][ 2 ] = ( fieldVar[ 5 ] * fInv( 2, 0 ) + fieldVar[ 1 ] * fInv( 2, 1 ) + fieldVar[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    P[ 2 ][ 0 ] = ( fieldVar[ 4 ] * fInv( 0, 0 ) + fieldVar[ 3 ] * fInv( 0, 1 ) + fieldVar[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
+    P[ 2 ][ 1 ] = ( fieldVar[ 4 ] * fInv( 1, 0 ) + fieldVar[ 3 ] * fInv( 1, 1 ) + fieldVar[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
+    P[ 2 ][ 2 ] = ( fieldVar[ 4 ] * fInv( 2, 0 ) + fieldVar[ 3 ] * fInv( 2, 1 ) + fieldVar[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+    for( int a=0; a<N; ++a )    // loop through all shape functions in element
+    {
+      result[a][0] -= P[ 0 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 0 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 0 ][ 2 ] * dNdX[ a ][ 2 ];
+      result[a][1] -= P[ 1 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 1 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 1 ][ 2 ] * dNdX[ a ][ 2 ];
+      result[a][2] -= P[ 2 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 2 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 2 ][ 2 ] * dNdX[ a ][ 2 ];
+    }
+  }
+
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -172,37 +200,68 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          SortedArrayView< localIndex const > const & elementList,
+          LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView3d< R1Tensor const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
           arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
           arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
           real64 const dt )
   {
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    forAll< serialPolicy >( elementList.size(), [=] ( localIndex const i )
+#if defined(CALCFEMSHAPE)
+    GEOSX_UNUSED_VAR( dNdX );
+    GEOSX_UNUSED_VAR( detJ );
+#else
+    GEOSX_UNUSED_VAR( X );
+#endif
+
+
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+
+    using KERNEL_POLICY = parallelDevicePolicy< 32 >;
+    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
+                                   [=] GEOSX_DEVICE ( localIndex const index )
     {
-      localIndex const k = elementList[ i ];
+      localIndex const k = elementList[ index ];
+
       R1Tensor v_local[NUM_NODES_PER_ELEM];
       R1Tensor u_local[NUM_NODES_PER_ELEM];
       R1Tensor f_local[NUM_NODES_PER_ELEM];
-
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+#if defined(CALCFEMSHAPE)
+      real64 X_local[8][3];
+#endif
+      for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nodeIndex = elemsToNodes( k, a );
-        u_local[ a ] = u[ nodeIndex ];
-        v_local[ a ] = vel[ nodeIndex ];
+        for( int i=0; i<3; ++i )
+        {
+#if defined(CALCFEMSHAPE)
+          X_local[ a ][ i ] = X[ nodeIndex ][ i ];
+#endif
+          u_local[ a ][ i ] = u[ nodeIndex ][ i ];
+          v_local[ a ][ i ] = vel[ nodeIndex ][ i ];
+        }
       }
 
       //Compute Quadrature
       for( localIndex q = 0; q<NUM_QUADRATURE_POINTS; ++q )
       {
+#if defined(CALCFEMSHAPE)
+        real64 dNdX[ 8 ][ 3 ];
+        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+#define DNDX dNdX
+#define DETJ detJ
+#else
+#define DNDX dNdX[k][q]
+#define DETJ detJ( k, q )
+#endif
         R2Tensor dUhatdX, dUdX;
-        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, dNdX[k][q] );
+        CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, DNDX );
         dUhatdX *= dt;
 
         R2Tensor F, Ldt, fInv;
@@ -221,7 +280,7 @@ struct ExplicitKernel
         F = dUhatdX;
         F += dUdX;
         F.PlusIdentity( 1.0 );
-        real64 detF = F.Det();
+        real64 const detF = F.Det();
         fInv.Inverse( F );
 
 
@@ -231,21 +290,31 @@ struct ExplicitKernel
 
         constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
 
-        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q], dNdX[k][q], detJ[k][q], detF, fInv, f_local );
-      }//quadrature loop
+        Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(),
+                                         DNDX,
+                                         DETJ,
+                                         detF,
+                                         fInv,
+                                         f_local );
+// );
+      }    //quadrature loop
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nodeIndex = elemsToNodes( k, a );
-        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 0 ), f_local[ a ][ 0 ] );
-        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 1 ), f_local[ a ][ 1 ] );
-        RAJA::atomicAdd< serialAtomic >( &acc( nodeIndex, 2 ), f_local[ a ][ 2 ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 0 ), f_local[ a ][ 0 ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 1 ), f_local[ a ][ 1 ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, 2 ), f_local[ a ][ 2 ] );
       }
 
     } );
 
     return dt;
   }
+
+#undef CALCFEMSHAPE
+#undef DNDX
+#undef DETJ
 
 
   static inline real64

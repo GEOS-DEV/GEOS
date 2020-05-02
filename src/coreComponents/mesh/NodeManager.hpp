@@ -58,11 +58,14 @@ public:
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
-  inline localIndex GetEdgeMapOverallocation()
-  { return 4; }
+  inline localIndex getEdgeMapOverallocation()
+  { return 8; }
 
-  inline localIndex GetFaceMapOverallocation()
-  { return 4; }
+  inline localIndex getFaceMapOverallocation()
+  { return 8; }
+
+  inline localIndex getElemMapOverAllocation()
+  { return 8; }
 
   /**
    * @brief main constructor for NodeManager Objects
@@ -76,6 +79,8 @@ public:
    *  @brief default destructor
    */
   ~NodeManager() override;
+
+  virtual void resize( localIndex const newsize ) override;
 
   /**
    * @brief name of the node manager in the object catalog
