@@ -122,7 +122,7 @@ public:
 
   CRSMatrixView< real64, localIndex const > const & getDerivativeFluxResidual_dAperture()
   {
-    return m_derivativeFluxResidual_dAperture->toViewSemiConst();
+    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
   }
 
   CRSMatrixView< real64 const, localIndex const > const & getDerivativeFluxResidual_dAperture() const

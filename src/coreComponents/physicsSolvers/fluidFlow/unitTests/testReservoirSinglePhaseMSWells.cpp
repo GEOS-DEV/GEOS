@@ -143,7 +143,7 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
           residual.close();
           jacobian.close();
 
-          globalIndex const dofIndex = integer_conversion< long long >( eiOffset );
+          globalIndex const dofIndex = LvArray::integerConversion< long long >( eiOffset );
 
           // consider mass balance eq lid in RESERVOIR elems and WELL elems
           // this is computing J_RR and J_RW
@@ -251,7 +251,7 @@ void testNumericalJacobian( SinglePhaseReservoir * solver,
         residual.close();
         jacobian.close();
 
-        globalIndex const dofIndex = integer_conversion< globalIndex >( iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
+        globalIndex const dofIndex = LvArray::integerConversion< globalIndex >( iwelemOffset + SinglePhaseWell::ColOffset::DRATE );
 
         // consider mass balance eq lid in RESERVOIR elems and WELL elems
         //      this is computing J_RW and J_WW

@@ -416,7 +416,7 @@ public:
   {
     for( typename valueContainer::size_type a = 0; a < m_values.size(); ++a )
     {
-      deleteValue( integer_conversion< INDEX_TYPE >( a ) );
+      deleteValue( LvArray::integerConversion< INDEX_TYPE >( a ) );
     }
     m_constKeyValues.clear();
     m_constValues.clear();
@@ -434,7 +434,7 @@ public:
    */
   inline INDEX_TYPE size() const
   {
-    return integer_conversion< INDEX_TYPE >( m_values.size() );
+    return LvArray::integerConversion< INDEX_TYPE >( m_values.size() );
   }
 
   /**

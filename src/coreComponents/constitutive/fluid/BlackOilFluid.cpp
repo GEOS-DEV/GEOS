@@ -109,7 +109,7 @@ void BlackOilFluid::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( integer_conversion< localIndex >((data).size()) != integer_conversion< localIndex >( expected )) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
     GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
                  << (attr) << " attribute (" \
