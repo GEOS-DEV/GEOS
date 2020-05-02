@@ -121,7 +121,7 @@ void SolverBase::SetLinearSolverParameters()
 
   if( m_systemSolverParameters.scalingOption() )
   {
-    m_linearSolverParameters.scaling.useRowScaling = true;
+    m_linearSolverParameters.scaling.useRowScaling = true;  //TODO: this should not be the default
   }
 
   if( m_systemSolverParameters.useDirectSolver() )

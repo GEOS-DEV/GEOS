@@ -35,7 +35,7 @@ class LinearSolverParameters
 public:
 
   integer logLevel = 0;                //!< Output level [0=none, 1=basic, 2=everything]
-  string solverType = "cg";            //!< Solver type [direct, cg, gmres, bicgstab]
+  string solverType = "cg";            //!< Solver type [direct, cg, gmres, bicgstab, preconditioner]
   string preconditionerType = "ilut";  //!< Preconditioner type [none, ilu, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
 
@@ -50,10 +50,10 @@ public:
 
   struct
   {
-    bool useRowScaling = false;
-    bool useRowColScaling = false;
+    bool useRowScaling = false; 
+    bool useRowColScaling = false; // not currently used
   }
-  scaling; //TODO: not implemented
+  scaling;
 
   struct
   {
@@ -62,6 +62,7 @@ public:
     string smootherType = "gaussSeidel";
     string coarseType = "direct";
     integer numSweeps = 2;
+    real64 aggregationThreshold = 0.0;
     bool isSymmetric = true;
     bool separateComponents = false;
     string nullSpaceType = "constantModes";
@@ -80,7 +81,7 @@ public:
     integer overlap = 0;
   }
   dd;
-
+  
   /**
    * @brief Constructor.
    */
