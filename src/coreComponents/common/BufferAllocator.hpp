@@ -19,10 +19,27 @@
 #ifndef GEOSX_BUFFER_ALLOCATOR_HPP
 #define GEOSX_BUFFER_ALLOCATOR_HPP
 
-#ifdef USE_CHAI
+#include "common/GeosxConfig.hpp"
+
+#ifdef GEOSX_USE_CHAI
 #include <umpire/ResourceManager.hpp>
 #include <umpire/TypedAllocator.hpp>
 
+namespace geosx
+{
+/**
+ * @brief Set the current desired behaviour of the buffer_allocator
+ * @param p Whether or not buffer_allocators should be instantiated
+ *          with a preference for using pinned memory.
+ */
+void setPreferPinned( bool p );
+
+/**
+ * @brief Get the current desired behaviour of the buffer_allocator
+ * @return Whether or not buffer_allocators should be instantiated
+ *         with a preference for using pinned memory.
+ */
+bool getPreferPinned( );
 
 /**
  * @brief Wrapper class for umpire allocator, only used to determine which umpire allocator to use based on
@@ -43,74 +60,47 @@ class buffer_allocator
 {
 public:
   // The type used to instantiate the class, and the underlying umpire allocator.
-  typedef T value_type;
+  using value_type = T;
 private:
   // An umpire allocator allocating the type for which this class is instantiated.
-  static bool prefer_pinned;
-  umpire::TypedAllocator< value_type > alloc;
-  bool prefer_pinned_l;
+  umpire::TypedAllocator< value_type > m_alloc;
+  bool m_prefer_pinned_l;
 public:
   /**
-   * @brief Changed the default behavior of the class to either prefer using pinned memory
-   *        ( if a pinned memory allocator is available ), or to prefer host memory.
-   *        This option can be changed at any time and will not effect the behavior of existing
-   *        buffer_allocator objects.
-   * @note It would be preferable in some ways to have a
-   *       factory returning pointers to the requester allocator but the buffer_allocator
-   *       needs to have the default constructor usable to allow the vector and vector of vectors
-   *       containing the buffers to be built without needing additional reworking.
-   *       If we decide we want a richer set of runtime decisions other than just pinned/host
-   *       that refactoring would likely be worthwhile.
-   */
-  static void preferPinned( bool p ) { prefer_pinned = p; }
-  /**
    * @brief Default behavior is to allocate host memory, if there is a pinned memory allocator
-   *        provided by umpire for the target platform, use that instead.
+   *        provided by umpire for the target platform, and getPreferPinned returns true,
+   *        use that instead.
    */
-  buffer_allocator()
-    : alloc( umpire::TypedAllocator< value_type >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host )))
-    , prefer_pinned_l( prefer_pinned )
-  {
-    auto & rm = umpire::ResourceManager::getInstance();
-
-    if( rm.isAllocator( "PINNED" ) && prefer_pinned_l )
-      alloc = umpire::TypedAllocator< value_type >( rm.getAllocator( umpire::resource::Pinned ));
-  }
+  buffer_allocator();
   /**
    * @brief Allocate a buffer.
    * @param sz The number of elements of type value_type to allocate a buffer for.
    * @return A pointer to the allocated buffer.
    */
-  value_type * allocate( size_t sz ) { return alloc.allocate( sz ); }
+  value_type * allocate( size_t sz );
   /**
    * @brief Deallocate a buffer.
    * @param buffer A pointer to the buffer to deallocate
    * @param sz The size of the buffer to deallocate.
    */
-  void deallocate( value_type * buffer, size_t sz )
-  {
-    if( buffer != nullptr )
-      alloc.deallocate( buffer, sz );
-  }
+  void deallocate( value_type * buffer, size_t sz );
   /**
    * @brief Inequality operator.
    * @param The other buffer_allocator to test against this buffer allocator for inequality.
    * @return Always false. Since the actual umpire allocator is a singleton, so any properly-typed
    *         buffer can be deallocated from any properly-typed buffer_allocator.
    */
-  bool operator!=( const buffer_allocator & ) { return false; }
+  bool operator!=( const buffer_allocator & );
   /**
    * @brief Equality operator.
    * @param other The other buffer_allocator to test against this buffer allocator for equality.
    * return Always true. Since the actual umpire allocator is a singleton, so any properly-typed
    *        buffer can be deallocated from any properly-typed buffer_allocator.
    */
-  bool operator==( const buffer_allocator & other ) { return !operator!=( other ); }
+  bool operator==( const buffer_allocator & other );
 };
 
-template< typename T >
-bool buffer_allocator< T >::prefer_pinned = true;
-
+}
 #endif
 
 #endif
