@@ -33,12 +33,16 @@ public:
 
   virtual ~PreconditionerBase() = default;
 
+  /// Alias for vector type
   using Vector = typename LinearOperator< typename LAI::ParallelVector >::Vector;
+
+  /// Alias for matrix type
   using Matrix = typename LAI::ParallelMatrix;
 
   /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
+   * @brief Compute the preconditioner from a matrix.
+   *
+   * @param mat the matrix to precondition.
    */
   virtual void compute( Matrix const & mat )
   {
@@ -52,8 +56,9 @@ public:
    * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
   virtual void compute( Matrix const & mat,
-                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ) )
+                        DofManager const & dofManager )
   {
+    GEOSX_UNUSED_VAR( dofManager );
     compute( mat );
   }
 

@@ -8,7 +8,7 @@
   <!-- SPHINX_FIELD_CASE_MESH_END -->
 
   <!-- SPHINX_FIELD_CASE_REGION -->
-  <ElementRegion>
+  <ElementRegions>
     <CellElementRegion name="Reservoir"
                          cellBlocks="{1_TETRA}"
                          materialList="{water, rock}"/>
@@ -16,7 +16,7 @@
     <CellElementRegion name="Burden"
                        cellBlocks="{0_TETRA, 2_TETRA}"
                        materialList="{water, rock}"/>
-  </ElementRegion>
+  </ElementRegions>
   <!-- SPHINX_FIELD_CASE_REGION_END -->
 
   <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->

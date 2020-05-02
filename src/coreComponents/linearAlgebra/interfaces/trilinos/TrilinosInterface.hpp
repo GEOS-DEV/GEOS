@@ -27,18 +27,33 @@ namespace geosx
 {
 
 /**
- * \class TrilinosInterface
- * \brief This class holds aliases based on the Trilinos library.
+ * @class TrilinosInterface
+ * @brief This class holds aliases based on the Trilinos library.
  */
-
 struct TrilinosInterface
 {
-  static void initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) ) {}
+  /**
+   * @brief Initializes the MPI environment for the Trilinos library
+   *
+   * @param[in] argc standard argc as in any C main
+   * @param[in] argv standard argv as in any C main
+   */
+  static void initialize( int & argc, char * * & argv )
+  {
+    GEOSX_UNUSED_VAR( argc );
+    GEOSX_UNUSED_VAR( argv );
+  }
 
+  /**
+   * @brief Finalizes the MPI environment for the Trilinos library
+   */
   static void finalize() {}
 
+  /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;
+  /// Alias for EpetraVector
   using ParallelVector = EpetraVector;
+  /// Alias for TrilinosSolver
   using LinearSolver   = TrilinosSolver;
 };
 

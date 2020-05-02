@@ -768,7 +768,8 @@ WARN_LOGFILE           =
 INPUT                  = @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
                          @PROJECT_SOURCE_DIR@/coreComponents/common \
                          @PROJECT_SOURCE_DIR@/coreComponents/wells \			 
-			 @CMAKE_BINARY_DIR@/include/common
+                         @CMAKE_BINARY_DIR@/include/common \
+                         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra
 
 
 # This tag can be used to specify the character encoding of the source files
