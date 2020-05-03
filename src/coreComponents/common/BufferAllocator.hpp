@@ -27,8 +27,6 @@
 
 namespace geosx
 {
-extern bool prefer_pinned_buffer;
-
 /**
  * @brief Set the current desired behaviour of the BufferAllocator
  * @param p Whether or not BufferAllocators should be instantiated
@@ -75,7 +73,7 @@ public:
    */
   BufferAllocator()
     : m_alloc( umpire::TypedAllocator< T >( umpire::ResourceManager::getInstance().getAllocator( umpire::resource::Host )))
-    , m_prefer_pinned_l( prefer_pinned_buffer )
+    , m_prefer_pinned_l( getPreferPinned( ) )
   {
     auto & rm = umpire::ResourceManager::getInstance();
     if( rm.isAllocator( "PINNED" ) && m_prefer_pinned_l )
