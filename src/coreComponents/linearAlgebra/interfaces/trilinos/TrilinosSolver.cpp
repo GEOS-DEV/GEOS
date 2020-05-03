@@ -21,6 +21,7 @@
 #include "interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "common/Stopwatch.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
@@ -29,7 +30,6 @@
 #include <AztecOO.h>
 #include <Amesos.h>
 #include <ml_MultiLevelPreconditioner.h>
-#include <Teuchos_Time.hpp>
 
 #include <memory>
 
@@ -78,8 +78,8 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                    EpetraVector & rhs )
 {
   // Time setup and solve
-  Teuchos::Time clock( "performanceClock" );
-  clock.start(true);
+  Stopwatch watch;
+  watch.zero();
   
   // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( &mat.unwrapped(),
@@ -95,12 +95,12 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   // Factorize the matrix
   GEOSX_LAI_CHECK_ERROR( solver->SymbolicFactorization() );
   GEOSX_LAI_CHECK_ERROR( solver->NumericFactorization() );
-  m_setupTime = clock.stop();
+  m_setupTime = watch.elapsedTime();
   
   // Solve the system
-  clock.start(true);
+  watch.zero();
   GEOSX_LAI_CHECK_ERROR( solver->Solve() );
-  m_solveTime = clock.stop();
+  m_solveTime = watch.elapsedTime();
   
   // Basic output
   if( m_parameters.logLevel > 0 )
@@ -116,8 +116,8 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
                                    EpetraVector & rhs )
 {
   // Time setup and solve
-  Teuchos::Time clock( "performanceClock" );
-  clock.start(true);
+  Stopwatch watch;
+  watch.zero();
   
   // Create Epetra linear problem.
   Epetra_LinearProblem problem( &mat.unwrapped(),
@@ -262,13 +262,13 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_none ) );
     }
   }
-  m_setupTime = clock.stop();
+  m_setupTime = watch.elapsedTime();
   
   // Actually solve
-  clock.start(true);
+  watch.zero();
   int const result = solver.Iterate( m_parameters.krylov.maxIterations,
                                      m_parameters.krylov.tolerance );
-  m_solveTime = clock.stop();
+  m_solveTime = watch.elapsedTime();
   
   GEOSX_WARNING_IF( result, "TrilinosSolver: Krylov convergence not achieved" );
 
