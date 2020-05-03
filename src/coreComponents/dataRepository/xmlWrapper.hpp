@@ -74,12 +74,19 @@ public:
    * @name Constructors/destructor/assignment.
    */
   ///@{
+
+  /// Deleted default constructor.
   xmlWrapper() = delete;
+
+  /// Deleted default default destructor.
   ~xmlWrapper() = delete;
+
+  /// Deleted copy constructor.
   xmlWrapper( xmlWrapper const & ) = delete;
+
+  /// Deleted move constructor.
   xmlWrapper( xmlWrapper && ) = delete;
-  xmlWrapper & operator=( xmlWrapper const & ) = delete;
-  xmlWrapper & operator=( xmlWrapper && ) = delete;
+
   ///@}
 
   /**
