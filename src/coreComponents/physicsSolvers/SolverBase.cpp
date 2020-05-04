@@ -33,6 +33,7 @@ SolverBase::SolverBase( std::string const & name,
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_dofManager( name ),
+  alt_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -650,8 +651,10 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
 {
   GEOSX_MARK_FUNCTION;
   // Create a solver from the parameter list
-  LinearSolver solver( m_linearSolverParameters );
+  LinearSolver solver( alt_linearSolverParameters );
 
+  alt_linearSolverParameters.solverType = "direct";
+  
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );
 

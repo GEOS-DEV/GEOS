@@ -507,6 +507,7 @@ public:
 
   struct groupKeyStruct
   {
+    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
     constexpr static auto systemSolverParametersString = "SystemSolverParameters";
     constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
@@ -659,8 +660,9 @@ protected:
   void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
 
-  SystemSolverParameters m_systemSolverParameters;
 
+  SystemSolverParameters m_systemSolverParameters;
+  
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -678,7 +680,8 @@ protected:
 
   /// Linear solver parameters
   LinearSolverParameters m_linearSolverParameters;
-
+  LinearSolverParametersGroup alt_linearSolverParameters;
+  
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
 

@@ -19,13 +19,13 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
 
 /**
- * \class LinearSolverParameters
+ * @class LinearSolverParameters
  * This class holds a simple tree of linear solver options.  They are set to
  * default values, but can be overwritten as needed.
  */
@@ -35,8 +35,8 @@ class LinearSolverParameters
 public:
 
   integer logLevel = 0;                //!< Output level [0=none, 1=basic, 2=everything]
-  string solverType = "cg";            //!< Solver type [direct, cg, gmres, bicgstab, preconditioner]
-  string preconditionerType = "ilut";  //!< Preconditioner type [none, ilu, ilut, icc, amg]
+  string solverType = "direct";        //!< Solver type [direct, cg, gmres, bicgstab, preconditioner]
+  string preconditionerType = "ilut";  //!< Preconditioner type [none, iluk, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
 
   struct
@@ -44,14 +44,14 @@ public:
     real64 tolerance = 1e-6;
     integer maxIterations = 200;
     integer maxRestart = 200;
-    bool useAdaptiveTol = false;
+    integer useAdaptiveTol = false;
   }
   krylov;
 
   struct
   {
-    bool useRowScaling = false; 
-    bool useRowColScaling = false; // not currently used
+    integer useRowScaling = false;
+    integer useRowColScaling = false; // not currently used
   }
   scaling;
 
@@ -63,8 +63,8 @@ public:
     string coarseType = "direct";
     integer numSweeps = 2;
     real64 aggregationThreshold = 0.0;
-    bool isSymmetric = true;
-    bool separateComponents = false;
+    integer isSymmetric = true;
+    integer separateComponents = false;
     string nullSpaceType = "constantModes";
   }
   amg;
@@ -81,7 +81,7 @@ public:
     integer overlap = 0;
   }
   dd;
-  
+
   /**
    * @brief Constructor.
    */
@@ -89,13 +89,11 @@ public:
 
   /**
    * @brief Destructor.
-   *
    */
   ~LinearSolverParameters() = default;
 
   /**
    * @brief Einsenstat-Walker adaptive tolerance
-   *
    */
   static real64 eisenstatWalker( real64 newNewtonNorm, real64 oldNewtonNorm )
   {
@@ -116,6 +114,56 @@ public:
 
     return krylovTol;
   };
+};
+
+/**
+ * @class LinearSolverParametersGroup
+ * This class is a derived version of LinearSolverParameters with
+ * dataRepository::Group capabilities (to allow for XML input)
+ */
+class LinearSolverParametersGroup : public LinearSolverParameters, public dataRepository::Group
+{
+public:
+
+  LinearSolverParametersGroup() = delete;
+
+  LinearSolverParametersGroup( std::string const & name, Group * const parent );
+
+  LinearSolverParametersGroup( LinearSolverParametersGroup && ) = default;
+
+  virtual ~LinearSolverParametersGroup() override = default;
+
+  static string CatalogName() { return "LinearSolverParameters"; }
+
+  virtual void PostProcessInput() override;
+
+  // note: Only a subset of frequently used parameters should be exposed to users.
+  //       Many advanced parameters can be set by the physicSolver itself
+  //       (e.g. a solver will already know how many dofsPerNode it has).
+  //       In typical usage the user really should just choose between
+  //       direct and krylov, and set the solver tolerance for the latter.
+  //       The physicsSolver be set up with ``optimal`` strategies by default.
+
+  struct viewKeysStruct
+  {
+    static constexpr auto solverTypeString         = "solverType";
+    static constexpr auto preconditionerTypeString = "preconditionerType";
+
+    static constexpr auto krylovTolString         = "krylovTol";
+    static constexpr auto krylovAdaptiveTolString = "krylovAdaptiveTol";
+    static constexpr auto krylovMaxIterString     = "krylovMaxIter";
+
+    static constexpr auto amgNumSweepsString   = "amgNumSweeps";
+    static constexpr auto amgSmootherString    = "amgSmootherType";
+    static constexpr auto amgCoarseString      = "amgCoarseSolver";
+    static constexpr auto amgAggregationString = "amgAggregationThreshold";
+
+    static constexpr auto iluFillString      = "iluFill";
+    static constexpr auto iluThresholdString = "iluThreshold";
+  } viewKeys;
+
+  //struct groupKeysStruct
+  //{} groupKeys;
 };
 
 } /* namespace geosx */

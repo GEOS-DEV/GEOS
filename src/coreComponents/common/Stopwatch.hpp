@@ -23,6 +23,7 @@
 
 namespace geosx
 {
+
 /**
  * @class Stopwatch
  * @brief Class defining a simple stopwatch for interval timing.
