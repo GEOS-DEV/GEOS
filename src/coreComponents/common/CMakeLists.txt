@@ -17,6 +17,7 @@ set(common_headers
 # Specify all sources
 #
 set(common_sources
+    BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
    )
