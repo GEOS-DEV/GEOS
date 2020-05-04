@@ -23,9 +23,11 @@ The following is the list of GEOSX contributors as of January 2019:
    * - Pengcheng Fu
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Hervé Gross
-     - *Total*
+     - *Total, S.A.*
    * - François Hamon
-     - *Total*
+     - *Total, S.A.*
+   * - Thomas Gazzola
+     - *Total, S.A.*
    * - Jixiang Huang
      - *Atmospheric, Earth, and Energy Division, Lawrence Livermore National Laboratory*
    * - Sergey Klevtsov
