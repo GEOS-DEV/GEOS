@@ -50,16 +50,12 @@ public:
     return "CellBlockManager";
   }
 
-  /**
-   * @brief Virtual access to CatalogName() 
-   * @return string that contains the catalog name used to register/lookup this class in the object catalog 
-   */
   virtual const string getCatalogName() const override final
   { return CellBlockManager::CatalogName(); }
 
 
   /**
-   * @brief Constructor for CellBlockManager object
+   * @brief Constructor for CellBlockManager object.
    * @param name name of this instantiation of CellBlockManager 
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager
    */  
@@ -70,18 +66,12 @@ public:
    */  
   virtual ~CellBlockManager() override;
 
-  /**
-   * @brief Create a new CellBlock object as a child of this group.
-   * @param childKey catalog key of the new CellBlock derived type to create
-   * @param childName name of the new CellBlock object
-   * @return pointer to the created CellBlock object
-   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   using Group::resize;
 
   /**
-   * @brief Set the number of elements for a set of element regions
+   * @brief Set the number of elements for a set of element regions.
    * @param numElements list of the new element numbers 
    * @param regionNames list of the element region names
    * @param elementTypes list of the element types 
@@ -95,7 +85,7 @@ public:
 //                               integer const & numElements );
 
   /**
-   * @brief Get element sub-region
+   * @brief Get element sub-region.
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region 
    */

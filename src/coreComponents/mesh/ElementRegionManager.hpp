@@ -49,21 +49,21 @@ public:
   constexpr static int maxNumNodesPerElem = 8;
 
   /**
-   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE
+   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
 
   /**
-   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE
+   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE.
    * @tparam VIEWTYPE data type 
    */
   template< typename VIEWTYPE >
   using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > >;
 
   /**
-   * @brief The MaterialViewAccessor at the ElementRegionManager level is a 3D array of VIEWTYPE
+   * @brief The MaterialViewAccessor at the ElementRegionManager level is a 3D array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    * var[elementRegionIndex][elementSubRegionIndex][materialIndexInRegion]
    */
@@ -92,7 +92,7 @@ public:
   { return ElementRegionManager::CatalogName(); }
 
   /**
-   * @brief Constructor
+   * @brief Constructor.
    * @param [in] name the name of this ObjectManager
    * @param [in] parent the parent Group
    */
@@ -104,7 +104,7 @@ public:
   virtual ~ElementRegionManager() override;
 
   /**
-   * @brief Get the number of elements in all ElementSubRegions of type T
+   * @brief Get the number of elements in all ElementSubRegions of type T.
    * @return number of elements
    */
   template< typename T = ElementSubRegionBase >
@@ -121,7 +121,7 @@ public:
 //  void Initialize(  ){}
 
   /**
-   * @brief Generate the mesh
+   * @brief Generate the mesh.
    * @param [in] cellBlockManager pointer to the CellBlockManager
    */
   void GenerateMesh( Group * const cellBlockManager );
@@ -133,14 +133,14 @@ public:
   void GenerateCellToEdgeMaps( FaceManager const * const faceManager );
 
   /**
-   * @brief Generate the aggregates 
+   * @brief Generate the aggregates.
    * @param [in] faceManager pointer to the FaceManager
    * @param [in] nodeManager pointer to the NodeManager
    */
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
   /**
-   * @brief Generate the wells 
+   * @brief Generate the wells.
    * @param [in] meshManager pointer to meshManager
    * @param [in] meshLevel pointer to meshLevel
    */
@@ -173,7 +173,7 @@ public:
   using Group::resize;
 
   /**
-   * @brief Set the number of elements for a set of element regions
+   * @brief Set the number of elements for a set of element regions.
    * @param numElements list of the new element numbers 
    * @param regionNames list of the element region names
    * @param elementTypes list of the element types 
@@ -183,7 +183,7 @@ public:
                string_array const & elementTypes );
 
   /**
-   * @brief Set the maximum local and global index
+   * @brief Set the maximum local and global index.
    */
   void SetMaxGlobalIndex();
 
@@ -197,7 +197,7 @@ public:
   }
 
   /**
-   * @brief Get a collection of element regions
+   * @brief Get a collection of element regions.
    * @return reference to mutable subGroupMap
    */
   subGroupMap & GetRegions()
@@ -206,7 +206,7 @@ public:
   }
 
   /**
-   * @brief Get a element region
+   * @brief Get a element region.
    * @param regionName name of element region
    * @return pointer to const ElementRegionBase
    */
@@ -217,7 +217,7 @@ public:
   }
 
   /**
-   * @brief Get a element region
+   * @brief Get a element region.
    * @param regionName name of element region
    * @return pointer to ElementRegionBase
    */
@@ -228,7 +228,7 @@ public:
   }
 
   /**
-   * @brief This is a const function to get a element region
+   * @brief This is a const function to get a element region.
    * @param index index of element region
    * @return pointer to const ElementRegionBase
    */
@@ -239,7 +239,7 @@ public:
   }
 
   /**
-   * @brief This is a function to get a element region
+   * @brief This is a function to get a element region.
    * @param index index of element region
    * @return pointer to ElementRegionBase
    */
@@ -250,7 +250,7 @@ public:
   }
 
   /**
-   * @brief Get number of the regions
+   * @brief Get number of the regions.
    * @return number of the regions
    */
   localIndex numRegions() const
@@ -259,7 +259,7 @@ public:
   }
 
   /**
-   * @brief Get number of the cell blocks
+   * @brief Get number of the cell blocks.
    * @return number of the cell blocks
    */
   localIndex numCellBlocks() const;
@@ -530,7 +530,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element subregions with the specified subregion types
+   * @brief This function is used to launch kernel function over the specified target element subregions with the specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
    * @param targetRegions target element region names or indices
@@ -551,7 +551,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element subregions with the specified subregion types
+   * @brief This const function is used to launch kernel function over the specified target element subregions with the specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
    * @param targetRegions target element region names or indices
@@ -724,7 +724,7 @@ public:
   }
 
   /**
-   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh 
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param name view name of the data
    * @param neighborName neighbor data name
@@ -735,7 +735,7 @@ public:
                                                     string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh 
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param name view name of the data
    * @param neighborName neighbor data name
@@ -746,7 +746,7 @@ public:
                                                     string const & neighborName = string() );
 
   /**
-   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh 
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param neighborName neighbor data name
@@ -757,7 +757,7 @@ public:
   ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh 
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param neighborName neighbor data name
@@ -768,7 +768,7 @@ public:
   ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() );
 
   /**
-   * @brief This is a const function to construct a MaterialViewAccessor to access the material data
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param cm pointer to ConstitutiveManager 
@@ -780,7 +780,7 @@ public:
                                      constitutive::ConstitutiveManager const * const cm ) const;
 
   /**
-   * @brief This is a function to construct a MaterialViewAccessor to access the material data
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param cm pointer to ConstitutiveManager 
@@ -792,7 +792,7 @@ public:
                                      constitutive::ConstitutiveManager const * const cm );
 
   /**
-   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified regions/materials
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified regions/materials.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
@@ -808,7 +808,7 @@ public:
                                  bool const allowMissingViews = false ) const;
 
   /**
-   * @brief This is a function to construct a MaterialViewAccessor to access the material data for specified regions/materials
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data for specified regions/materials.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
@@ -825,7 +825,7 @@ public:
 
 
   /**
-   * @brief Construct a ConstitutiveRelationAccessor
+   * @brief Construct a ConstitutiveRelationAccessor.
    * @tparam CONSTITUTIVE_TYPE constitutive type
    * @param cm pointer to ConstitutiveManager
    * @return ConstitutiveRelationAccessor
@@ -844,7 +844,7 @@ public:
   using ObjectManagerBase::UnpackUpDownMaps;
 
   /**
-   * @brief Get the buffer size needed to pack a list of wrappers
+   * @brief Get the buffer size needed to pack a list of wrappers.
    * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
@@ -854,10 +854,10 @@ public:
 
   /**
    * @brief Pack a list of wrappers to a buffer.
-   * @param buffer pointer to the buffer to be packed.
+   * @param buffer pointer to the buffer to be packed
    * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
-   * @return the size of data packed to the buffer.
+   * @return the size of data packed to the buffer
    */  
   int Pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
@@ -867,16 +867,16 @@ public:
 
   /**
    * @brief Unpack a buffer.
-   * @param buffer pointer to the buffer to be unpacked.
+   * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to unpack
-   * @return the size of data unpacked.
+   * @return the size of data unpacked
    */  
   int Unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor< arrayView1d< localIndex > > & packList );
 
   /**
    * @brief Unpack a buffer.
-   * @param buffer pointer to the buffer to be unpacked.
+   * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to unpack
    * @return the size of data unpacked.
    */  
@@ -884,14 +884,14 @@ public:
               ElementReferenceAccessor< array1d< localIndex > > & packList );
 
   /**
-   * @brief Get the size of the buffer to be packed
+   * @brief Get the size of the buffer to be packed.
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
   int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack a buffer
+   * @brief Pack a buffer.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of the data packed
@@ -900,7 +900,7 @@ public:
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Unpack a buffer
+   * @brief Unpack a buffer.
    * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to pack
    * @return the size of the data unpacked
@@ -909,21 +909,21 @@ public:
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
   /**
-   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
   int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
   int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps
+   * @brief Pack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of data packed.
@@ -932,7 +932,7 @@ public:
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps
+   * @brief Pack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of data packed.
@@ -941,7 +941,7 @@ public:
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Unpack element-to-node and element-to-face maps
+   * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to pack
    * @param overwriteMap flag to indicate whether to overwrite the local map
@@ -963,7 +963,7 @@ public:
 private:
 
   /**
-   * @brief Pack a list of wrappers or get the buffer size needed to pack
+   * @brief Pack a list of wrappers or get the buffer size needed to pack.
    * @param buffer pointer to the buffer to be packed
    * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
@@ -975,7 +975,7 @@ private:
                    ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
-   * @brief Pack a buffer or get the buffer size
+   * @brief Pack a buffer or get the buffer size.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of the data packed
@@ -985,7 +985,7 @@ private:
                              ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size
+   * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of the data packed
@@ -995,7 +995,7 @@ private:
   PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                          T const & packList ) const;
   /**
-   * @brief Unpack element-to-node and element-to-face maps
+   * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to pack
    * @return the size of the data unpacked

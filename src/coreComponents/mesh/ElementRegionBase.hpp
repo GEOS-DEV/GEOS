@@ -212,7 +212,7 @@ public:
   
 /**
  * @brief Apply a lambda to all subregions.
- * @param lambda the lambda to be applied
+ * @param lambda the functor to be applied
  */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -232,7 +232,7 @@ public:
 /**
  * @brief Apply LAMBDA to the subregions with the specific subregion types
  *        listed in the template.
- * @param lambda the lambda to be applied
+ * @param lambda the functor to be applied
  */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
@@ -254,7 +254,7 @@ public:
 /**
  * @brief Apply LAMBDA to the subregions, loop using subregion indices.
  * @tparam LAMBDA type of functor to call
- * @param lambda the the functor to be applied to all subregions
+ * @param lambda the functor to be applied to all subregions
  */
   template< typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
@@ -277,7 +277,7 @@ public:
  * @tparam SUBREGIONTYPE the first subregion type
  * @tparam SUBREGIONTYPES a variadic list of subregion types
  * @tparam LAMBDA type of functor to call
- * @param lambda the lambda to be applied
+ * @param lambda the functor to be applied
  */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsIndex( LAMBDA && lambda ) const
