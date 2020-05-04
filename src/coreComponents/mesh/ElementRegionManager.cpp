@@ -17,6 +17,7 @@
 
 #include "ElementRegionManager.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
@@ -524,7 +525,6 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                         ElementReferenceAccessor< localIndex_array > & packList,
                                         bool const overwriteMap )
 {
-  GEOSX_MARK_FUNCTION;
   int unpackedSize = 0;
 
   localIndex numRegionsRead;

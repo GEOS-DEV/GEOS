@@ -495,6 +495,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
   arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
 
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
   arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
@@ -569,6 +570,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                  elemsToNodes,
                                  dNdX,
                                  detJ,
+                                 X,
                                  u,
                                  vel,
                                  acc,
@@ -607,6 +609,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                  elemsToNodes,
                                  dNdX,
                                  detJ,
+                                 X,
                                  u,
                                  vel,
                                  acc,
@@ -714,7 +717,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
     else
     {
       FunctionBase const * const function = functionManager.GetGroup< FunctionBase >( functionName );
-      assert( function!=nullptr );
+      GEOSX_ASSERT( function != nullptr );
 
       if( function->isFunctionOfTime()==2 )
       {

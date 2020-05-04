@@ -16,6 +16,7 @@
 #define DATAREPOSITORY_BUFFEROPS_INLINE_H_
 
 #include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
@@ -970,6 +971,7 @@ Unpack( buffer_unit_type const * & buffer,
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
+
   var.resizeArray( subArrayIndex, length );
   unmappedGlobalIndices.resize( length );
   unmappedGlobalIndices = unmappedLocalIndexValue;
@@ -1446,9 +1448,15 @@ Unpack( buffer_unit_type const * & buffer,
 
   indices.resize( numIndicesUnpacked );
 
+  // for objects related to the above local index li (e.g. up/down mappings)
+  // global indices not yet known on the local rank
+  std::vector< globalIndex > unmapped;
+
+  // local indices of known global indices
+  std::vector< localIndex > mapped;
+
   for( localIndex a=0; a<numIndicesUnpacked; ++a )
   {
-
     globalIndex gi;
     sizeOfUnpackedChars += Unpack( buffer, gi );
 
@@ -1464,12 +1472,6 @@ Unpack( buffer_unit_type const * & buffer,
       li = globalToLocalMap.at( gi );
     }
 
-    // for objects related to the above local index li (e.g. up/down mappings)
-    // global indices not yet known on the local rank
-    SortedArray< globalIndex > unmapped;
-    // local indices of known global indices
-    SortedArray< localIndex > mapped;
-
     if( clearFlag )
     {
       var.clearSet( li );
@@ -1477,9 +1479,6 @@ Unpack( buffer_unit_type const * & buffer,
 
     localIndex set_length;
     sizeOfUnpackedChars += Unpack( buffer, set_length );
-
-    mapped.reserve( set_length );
-    unmapped.reserve( set_length );
 
     mapped.clear();
     unmapped.clear();
@@ -1496,22 +1495,25 @@ Unpack( buffer_unit_type const * & buffer,
       //  for the recv'd global index
       if( iter == relatedObjectGlobalToLocalMap.end() )
       {
-        unmapped.insert( temp );
+        unmapped.push_back( temp );
       }
       // if we have existing global-to-local information
       //  use that mapping and store the local index
       else
       {
-        mapped.insert( iter->second );
+        mapped.push_back( iter->second );
       }
     }
 
     // insert known local indices into the set of indices
     //  related to the local index
-    var.insertSortedIntoSet( li, mapped.data(), mapped.size() );
+    localIndex const numUniqueMapped = LvArray::sortedArrayManipulation::makeSortedUnique( mapped.begin(), mapped.end() );
+    var.insertIntoSet( li, mapped.begin(), mapped.begin() + numUniqueMapped );
+
     // insert unknown global indices related to the local index
     //  into an additional mapping to resolve externally
-    unmappedGlobalIndices[li].insertSorted( unmapped.data(), unmapped.size() );
+    localIndex const numUniqueUnmapped = LvArray::sortedArrayManipulation::makeSortedUnique( unmapped.begin(), unmapped.end() );
+    unmappedGlobalIndices[li].insert( unmapped.begin(), unmapped.begin() + numUniqueUnmapped );
   }
   return sizeOfUnpackedChars;
 }

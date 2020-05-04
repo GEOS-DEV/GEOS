@@ -130,7 +130,7 @@ using TestTypes = ::testing::Types< int,
                                     map< long, int >,
                                     unordered_map< long, int >
                                     >;
-TYPED_TEST_CASE( SingleWrapperTest, TestTypes );
+TYPED_TEST_SUITE( SingleWrapperTest, TestTypes, );
 
 TYPED_TEST( SingleWrapperTest, WriteAndRead )
 {
