@@ -1,8 +1,5 @@
 .. _TutorialSinglePhaseFlowWithInternalMesh:
 
-.. role:: verbatim(code)
-   :language: bash
-   
 #####################################################
 First steps with GEOSX: the single-phase flow solver
 #####################################################
@@ -39,14 +36,14 @@ GEOSX input files
 ------------------------------------
 
 GEOSX runs by reading user input information from one or multiple XML files.
-For instance, if everything we need to run is contained in a file called :verbatim:`my_input.xml`,
+For instance, if everything we need to run is contained in a file called ``my_input.xml``,
 GEOSX runs this file by executing:
 
 .. code-block:: console
 
   /your/path/to/GEOSX -i my_input.xml
   
-The :verbatim:`-i` flag indicates the path to the XML input file.
+The ``-i`` flag indicates the path to the XML input file.
 
 
 XML files store information in a tree-like structure using nested blocks of information called *elements*.
@@ -55,16 +52,16 @@ All elements in an XML file have names (commonly called *tags*) and properties (
 A typical GEOSX input file contains the following XML tags:
 
 
- #. :ref:`Solver <Solver_tag_singlephaseinternal>`
- #. :ref:`Mesh <Mesh_tag_singlephaseinternal>`
- #. :ref:`Geometry <Geometry_tag_singlephaseinternal>`
- #. :ref:`Events <Events_tag_singlephaseinternal>`
- #. :ref:`NumericalMethods <NumericalMethods_tag_singlephaseinternal>`
- #. :ref:`ElementRegions <ElementRegions_tag_singlephaseinternal>`
- #. :ref:`Constitutive <Constitutive_tag_singlephaseinternal>`
- #. :ref:`FieldSpecifications <FieldSpecifications_tag_singlephaseinternal>`
- #. :ref:`Functions and Partition <Functions_tag_singlephaseinternal>`
- #. :ref:`Outputs <Outputs_tag_singlephaseinternal>`
+ #. :ref:`Solver <Solver_tag_single_phase_internal_mesh>`
+ #. :ref:`Mesh <Mesh_tag_single_phase_internal_mesh>`
+ #. :ref:`Geometry <Geometry_tag_single_phase_internal_mesh>`
+ #. :ref:`Events <Events_tag_single_phase_internal_mesh>`
+ #. :ref:`NumericalMethods <NumericalMethods_tag_single_phase_internal_mesh>`
+ #. :ref:`ElementRegions <ElementRegions_tag_single_phase_internal_mesh>`
+ #. :ref:`Constitutive <Constitutive_tag_single_phase_internal_mesh>`
+ #. :ref:`FieldSpecifications <FieldSpecifications_tag_single_phase_internal_mesh>`
+ #. :ref:`Functions and Partition <Functions_tag_single_phase_internal_mesh>`
+ #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
 
 
 In addition to the data required to solve the problem we wish to address,
@@ -80,21 +77,51 @@ The attributes ``xmlns:xsi`` and ``xsi:noNamespaceSchemaLocation`` are used to d
 While optional, they may be used to configure various xml validation tools.
 
 
-.. _Solver_tag_singlephaseinternal:
+.. _Solver_tag_single_phase_internal_mesh:
 
 Solvers tag
 ------------
 
-The Solvers tag defines the particular physics solver we will use.
-Here, we will use a standard Two-Point Flux Approximation (TPFA) finite volume scheme.
-This is done using ``singlePhaseTPFA`` value for the discretization node.
+GEOSX is a multi-physics tool. The solution to each physical problem
+(diffusion, convection, deformation, etc.) is found using one or many numerical solvers and
+the **Solvers** tag is used to list and parameterize them.
+Several solvers can be defined in the input file,
+and different combinations of solvers can be applied
+in different regions of the mesh at specific moments of the simulation.
+
+
+Here, to keep things simple, we use one type of solver in the entire domain and
+for the entire duration of the simulation. This solver is going to perform a single-phase flow solve.
+In GEOSX, such a solver is identified by a **SinglePhaseFVM** element (part of a family of cell-centered single-phase finite volume methods).
+
+
+The XML block used to define this single-phase finite volume solver is shown here:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
-.. _Mesh_tag_singlephaseinternal:
+Each type of solver has a specific set of parameters that are required and
+some that are optional (usually with sensible default values).
+Here, for instance, we see that our solver is declared with a user-chosen name (``SinglePhaseFlow``),
+a level of on-console logging (set to 1).
+
+For solvers of the ``SinglePhaseFVM`` family, we must specify a discretization scheme.
+Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme, a typical discretization scheme
+used in cartesian cell-centered finite volume methods.
+
+We have also specified a collection of fluids, rocks, and
+target regions of the mesh on which this solver will be applied (``Region2``).
+The curly brackets used here are necessary, even if the collection contains a single value.
+
+Finally, note that other XML elements can be nested inside the ``Solvers`` element.
+Here, for instance, we specify values for numerical tolerances
+(the solver has converged when numerical residuals are smaller than these tolerances)
+and for the maximum number of iterations allowed to reach convergence.
+
+
+.. _Mesh_tag_single_phase_internal_mesh:
 
 Mesh tag
 -------------
@@ -106,7 +133,7 @@ For this test case, we will use an internally generated 10x10x10 uniform regular
   :start-after: <!-- SPHINX_TUT_INT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_MESH_END -->
 
-.. _Geometry_tag_singlephaseinternal:
+.. _Geometry_tag_single_phase_internal_mesh:
 
 Geometry tag
 -----------------
@@ -119,7 +146,7 @@ On the Geometry side, we will define and name our boxes for source and sink pres
 
 One could also define surfaces on which to specified a Dirichlet boundary condition.
 
-.. _Events_tag_singlephaseinternal:
+.. _Events_tag_single_phase_internal_mesh:
 
 Events tag
 ---------------
@@ -133,7 +160,7 @@ The Event tag includes the final time of our simulation under ``maxTime`` node. 
   :start-after: <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
 
-.. _NumericalMethods_tag_singlephaseinternal:
+.. _NumericalMethods_tag_single_phase_internal_mesh:
 
 NumericalMethods tag
 ------------------------
@@ -147,7 +174,7 @@ The two-point flux approximation, which was first introduced under the *Solver>S
 
 Here the ``boundaryFieldName`` node specifies that for Dirichlet boundary conditions the face located value is considered. The ``coefficientName`` node refers to the field which has to be considered in the stencil computation.
 
-.. _ElementRegions_tag_singlephaseinternal:
+.. _ElementRegions_tag_single_phase_internal_mesh:
 
 Element Regions tag
 ---------------------
@@ -161,7 +188,7 @@ and contains ``water`` and ``rock`` only.
   :start-after: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
 
-.. _Constitutive_tag_singlephaseinternal:
+.. _Constitutive_tag_single_phase_internal_mesh:
 
 Constitutive tag
 ---------------------
@@ -173,7 +200,7 @@ The physical properties of ``water`` and ``rock`` elements can be found and set 
   :start-after: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
 
-.. _FieldSpecifications_tag_singlephaseinternal:
+.. _FieldSpecifications_tag_single_phase_internal_mesh:
 
 FieldSpecifications tag
 ---------------------------
@@ -184,14 +211,14 @@ Here, fields such as porosity, permeability, source and sink terms or initial fi
 
 The ``setNames`` node value specifies the geometric zone where the value should be applied.
 These directional permeabilities are followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
-The other fields to be specified are a constant homogenious reference porosity for the whole domain, initial pressure, and source and sink term pressures.
+The other fields to be specified are a constant homogeneous reference porosity for the whole domain, initial pressure, and source and sink term pressures.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
 
-.. _Functions_tag_singlephaseinternal:
+.. _Functions_tag_single_phase_internal_mesh:
 
 Here we leave ``Functions`` and ``Partition`` tags unspecified as the description of their use are detailed in other tutorials.
 
@@ -200,7 +227,7 @@ Here we leave ``Functions`` and ``Partition`` tags unspecified as the descriptio
   :start-after: <!-- SPHINX_TUT_INT_HEX_BLANKS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
 
-.. _Outputs_tag_singlephaseinternal:
+.. _Outputs_tag_single_phase_internal_mesh:
 
 Outputs tag
 ----------------

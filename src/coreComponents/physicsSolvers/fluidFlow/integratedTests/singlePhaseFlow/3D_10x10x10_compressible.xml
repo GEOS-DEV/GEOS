@@ -8,15 +8,13 @@
   
   <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   <Solvers>
-    
     <SinglePhaseFVM name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
       fluidNames="{water}"
       solidNames="{rock}"
       targetRegions="{Region2}">
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-      newtonMaxIter="8"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="8"/>
       <SystemSolverParameters krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
