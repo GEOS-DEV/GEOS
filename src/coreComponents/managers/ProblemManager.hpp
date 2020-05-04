@@ -126,6 +126,7 @@ public:
 
   struct groupKeysStruct
   {
+    static constexpr auto numericalMethodsManagerString = "NumericalMethods";
 //    constexpr auto eventManager="EventManager";
     dataRepository::GroupKey commandLine    = { "commandLine" };
     dataRepository::GroupKey constitutiveManager = { "Constitutive" };
@@ -135,7 +136,7 @@ public:
     dataRepository::GroupKey functionManager = { "Functions" };
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };
     dataRepository::GroupKey meshManager = { "Mesh" };
-    dataRepository::GroupKey numericalMethodsManager = { "NumericalMethods" };
+    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString };
     dataRepository::GroupKey outputManager = { "Outputs" };
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };
   } groupKeys;

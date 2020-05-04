@@ -26,13 +26,20 @@ namespace geosx
 {
 
 /**
- * @brief An 'thin' BlockVectorView that allows setting individual vector pointers.
- * @tparam VECTOR type of underlying vector
+ * @brief "Shallow" representation of a block vector.
+ * @tparam VECTOR type of sub-vectors
+ *
+ * This extends BlockVectorView class by providing a way to assign sub-block pointers.
+ * The sub-blocks themselves must be stored elsewhere.
+ * Therefore, it's an easy way to assemble a block vector representation from pre-existing blocks.
  */
 template< typename VECTOR >
 class BlockVectorWrapper : public BlockVectorView< VECTOR >
 {
 public:
+
+  /// Alias for base type
+  using Base = BlockVectorView< VECTOR >;
 
   /**
    * @brief Create a vector wrapper of @p nBlocks blocks.
@@ -43,26 +50,26 @@ public:
   {}
 
   /**
-   * @brief Deleted copy constructor
+   * @brief Deleted copy constructor.
    * @param rhs the block vector to copy
    */
   BlockVectorWrapper( BlockVectorWrapper< VECTOR > const & rhs ) = default;
 
   /**
-   * @brief Deleted move constructor
+   * @brief Deleted move constructor.
    * @param rhs the block vector to move from
    */
   BlockVectorWrapper( BlockVectorWrapper< VECTOR > && rhs ) = default;
 
   /**
-   * @brief Destructor
+   * @brief Destructor.
    */
   virtual ~BlockVectorWrapper() override = default;
 
   /**
-   * @brief Set block <tt>blockIndex</tt> using <tt>vector</tt>.
-   * @param blockIndex Index of the block to return.
-   * @param vector Input vector to put in the block <tt>blockIndex</tt>.
+   * @brief Assign a sub-block to point to a given vector.
+   * @param blockIndex index of the block
+   * @param vec        target vector (must not go out of scope before the wrapper object)
    */
   void set( localIndex const blockIndex, VECTOR & vec )
   {

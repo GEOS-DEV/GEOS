@@ -94,7 +94,8 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
                            string_array const & regions,
                            array1d< globalIndex > & dofNumbers )
 {
-  ObjectManagerBase const * const manager = mesh->GetGroup< ObjectManagerBase >( testMeshHelper< LOC >::managerKey );
+  ObjectManagerBase const * const manager =
+    mesh->GetGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey );
   arrayView1d< globalIndex const > dofIndex = manager->getReference< array1d< globalIndex > >( dofIndexKey );
 
   forLocalObjects< LOC >( mesh, regions, [&]( localIndex const idx )
