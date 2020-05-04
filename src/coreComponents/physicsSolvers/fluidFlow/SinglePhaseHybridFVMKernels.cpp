@@ -18,15 +18,22 @@
 
 #include "SinglePhaseHybridFVMKernels.hpp"
 
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "linearAlgebra/DofManager.hpp"
+
+
 namespace geosx
 {
 
 namespace SinglePhaseHybridFVMKernels
 {
 
-/******************************** FluxKernelHelper ********************************/
+/******************************** AssemblerKernelHelper ********************************/
 
-void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
+template< localIndex NF >
+void
+AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
                                                  arrayView1d< real64 const > const & dFacePres,
                                                  arrayView1d< real64 const > const & faceGravCoef,
                                                  arraySlice1d< localIndex const > const elemToFaces,
@@ -35,30 +42,20 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
                                                  real64 const & elemGravCoef,
                                                  real64 const & elemDens,
                                                  real64 const & dElemDens_dp,
-                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                               *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix,
-                                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & oneSidedVolFlux,
-                                                 stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dp,
-                                                 stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                               *HybridFVMInnerProduct::MAX_NUM_FACES > & dOneSidedVolFlux_dfp )
+                                                 arraySlice2d< real64 const > const & transMatrix,
+                                                 arraySlice1d< real64 > const & oneSidedVolFlux,
+                                                 arraySlice1d< real64 > const & dOneSidedVolFlux_dp,
+                                                 arraySlice2d< real64 > const & dOneSidedVolFlux_dfp )
 {
-  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
-
-  localIndex const numFacesInElem = elemToFaces.size();
-
-  oneSidedVolFlux      = 0;
-  dOneSidedVolFlux_dp  = 0;
-  dOneSidedVolFlux_dfp = 0;
-
-  stackArray1d< real64, maxNumFaces > potDif( numFacesInElem );
-  stackArray1d< real64, maxNumFaces > dPotDif_dp( numFacesInElem );
-  stackArray1d< real64, maxNumFaces > dPotDif_dfp( numFacesInElem );
+  stackArray1d< real64, NF > potDif( NF );
+  stackArray1d< real64, NF > dPotDif_dp( NF );
+  stackArray1d< real64, NF > dPotDif_dfp( NF );
   potDif      = 0;
   dPotDif_dp  = 0;
   dPotDif_dfp = 0;
 
   // 1) precompute the potential difference at each one-sided face
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
 
     // 1) compute the potential diff between the cell center and the face center
@@ -91,11 +88,11 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
 
   // 2) multiply the potential difference by the transmissibility
   //    to obtain the total volumetrix flux
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     // now in the following nested loop,
     // we compute the contribution of face jfaceLoc to the one sided total volumetric flux at face iface
-    for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
       // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
       oneSidedVolFlux[ifaceLoc]                += transMatrix[ifaceLoc][jfaceLoc] * potDif[jfaceLoc];
@@ -105,26 +102,26 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
   }
 }
 
-void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
+template< localIndex NF >
+void
+AssemblerKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
                                                    array2d< localIndex > const & elemSubRegionList,
                                                    array2d< localIndex > const & elemList,
                                                    SortedArray< localIndex > const & regionFilter,
                                                    arraySlice1d< localIndex const > const elemToFaces,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & mob,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & dMob_dp,
-                                                   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst const & elemDofNumber,
+                                                   ElementView< arrayView1d< real64 const > > const & mob,
+                                                   ElementView< arrayView1d< real64 const > > const & dMob_dp,
+                                                   ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
                                                    localIndex const er,
                                                    localIndex const esr,
                                                    localIndex const ei,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & upwMobility,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > & dUpwMobility_dp,
-                                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > & upwDofNumber )
+                                                   arraySlice1d< real64 const > const & oneSidedVolFlux,
+                                                   arraySlice1d< real64 > const & upwMobility,
+                                                   arraySlice1d< real64 > const & dUpwMobility_dp,
+                                                   arraySlice1d< globalIndex > const & upwDofNumber )
 {
-  localIndex const numFacesInElem = elemToFaces.size();
-
   // for this element, loop over the local (one-sided) faces
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
 
     // we initialize these upw quantities with the values of the local elem
@@ -170,41 +167,37 @@ void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const &
   }
 }
 
-
-void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
+template< localIndex NF >
+void
+AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
                                                    arrayView1d< globalIndex const > const & faceDofNumber,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    globalIndex const elemDofNumber,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                                                   stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                                 *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwMobility,
-                                                   stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dUpwMobility_dp,
-                                                   stackArray1d< globalIndex, HybridFVMInnerProduct::MAX_NUM_FACES > const & upwDofNumber,
+                                                   arraySlice1d< real64 const > const & oneSidedVolFlux,
+                                                   arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
+                                                   arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
+                                                   arraySlice1d< real64 const > const & upwMobility,
+                                                   arraySlice1d< real64 const > const & dUpwMobility_dp,
+                                                   arraySlice1d< globalIndex const > const & upwDofNumber,
                                                    ParallelMatrix * const matrix,
                                                    ParallelVector * const rhs )
 {
-  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
-
-  localIndex const numFacesInElem = elemToFaces.size();
-
   // fluxes
   real64 sumLocalMassFluxes     = 0;
-  stackArray1d< real64, 1+maxNumFaces > dSumLocalMassFluxes_dElemVars( 1+numFacesInElem );
-  stackArray1d< real64, maxNumFaces >   dSumLocalMassFluxes_dFaceVars( numFacesInElem );
+  stackArray1d< real64, 1+NF > dSumLocalMassFluxes_dElemVars( 1+NF );
+  stackArray1d< real64, NF >   dSumLocalMassFluxes_dFaceVars( NF );
   sumLocalMassFluxes = 0;
   dSumLocalMassFluxes_dElemVars = 0;
   dSumLocalMassFluxes_dFaceVars = 0;
 
   // dof numbers
   globalIndex const eqnRowIndex = elemDofNumber;
-  stackArray1d< globalIndex, 1+maxNumFaces > elemDofColIndices( 1+numFacesInElem );
-  stackArray1d< globalIndex, maxNumFaces >   faceDofColIndices( numFacesInElem );
+  stackArray1d< globalIndex, 1+NF > elemDofColIndices( 1+NF );
+  stackArray1d< globalIndex, NF >   faceDofColIndices( NF );
   elemDofColIndices[0] = elemDofNumber;
 
   // for each element, loop over the one-sided faces
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
 
     // compute the mass flux at the one-sided face plus its derivatives
@@ -212,7 +205,7 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
     sumLocalMassFluxes                        += dt * upwMobility[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
     dSumLocalMassFluxes_dElemVars[0]          += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dp[ifaceLoc];
     dSumLocalMassFluxes_dElemVars[ifaceLoc+1]  = dt * dUpwMobility_dp[ifaceLoc] * oneSidedVolFlux[ifaceLoc];
-    for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
       dSumLocalMassFluxes_dFaceVars[jfaceLoc] += dt * upwMobility[ifaceLoc] * dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc];
     }
@@ -241,30 +234,27 @@ void FluxKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
 }
 
 
-void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+template< localIndex NF >
+void
+AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                                             arraySlice1d< localIndex const > const elemToFaces,
                                             globalIndex const elemDofNumber,
-                                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & oneSidedVolFlux,
-                                            stackArray1d< real64, HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dp,
-                                            stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                          *HybridFVMInnerProduct::MAX_NUM_FACES > const & dOneSidedVolFlux_dfp,
+                                            arraySlice1d< real64 const > const & oneSidedVolFlux,
+                                            arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
+                                            arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
                                             ParallelMatrix * const matrix,
                                             ParallelVector * const rhs )
 {
-  localIndex constexpr maxNumFaces = HybridFVMInnerProduct::MAX_NUM_FACES;
-
-  localIndex const numFacesInElem = elemToFaces.size();
-
   // fluxes
-  stackArray1d< real64, maxNumFaces > dFlux_dfp( numFacesInElem );
+  stackArray1d< real64, NF > dFlux_dfp( NF );
 
   // dof numbers
-  stackArray1d< globalIndex, maxNumFaces > dofColIndicesFacePres( numFacesInElem );
+  stackArray1d< globalIndex, NF > dofColIndicesFacePres( NF );
   globalIndex const dofColIndexElemPres = elemDofNumber;
 
 
   // for each element, loop over the local (one-sided) faces
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     // flux at this face
     real64 const flux      = oneSidedVolFlux[ifaceLoc];
@@ -274,7 +264,7 @@ void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
     globalIndex const eqnRowIndex = faceDofNumber[elemToFaces[ifaceLoc]];
 
     dFlux_dfp = 0.0;
-    for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
       dFlux_dfp[jfaceLoc] = dOneSidedVolFlux_dfp[ifaceLoc][jfaceLoc];
       dofColIndicesFacePres[jfaceLoc] = faceDofNumber[elemToFaces[jfaceLoc]];
@@ -295,6 +285,264 @@ void FluxKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
                  dFlux_dfp );
   }
 }
+
+/******************************** AssemblerKernel ********************************/
+
+template< localIndex NF >
+void
+AssemblerKernel::Compute( localIndex const er,
+                          localIndex const esr,
+                          localIndex const ei,
+                          SortedArray< localIndex > const & regionFilter,
+                          array2d< localIndex > const & elemRegionList,
+                          array2d< localIndex > const & elemSubRegionList,
+                          array2d< localIndex > const & elemList,
+                          arrayView1d< globalIndex const > const & faceDofNumber,
+                          arrayView1d< real64 const > const & facePres,
+                          arrayView1d< real64 const > const & dFacePres,
+                          arrayView1d< real64 const > const & faceGravCoef,
+                          arraySlice1d< localIndex const > const elemToFaces,
+                          real64 const & elemPres,
+                          real64 const & dElemPres,
+                          real64 const & elemGravCoef,
+                          real64 const & elemDens,
+                          real64 const & dElemDens_dp,
+                          ElementView< arrayView1d< real64 const > > const & mobility,
+                          ElementView< arrayView1d< real64 const > > const & dMobility_dp,
+                          ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                          arraySlice2d< real64 const > const & transMatrix,
+                          real64 const & dt,
+                          ParallelMatrix * const matrix,
+                          ParallelVector * const rhs )
+{
+
+  // one sided flux
+  stackArray1d< real64, NF > oneSidedVolFlux( NF );
+  stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
+  stackArray2d< real64, NF *NF > dOneSidedVolFlux_dfp( NF, NF );
+  oneSidedVolFlux = 0;
+  dOneSidedVolFlux_dp = 0;
+  dOneSidedVolFlux_dfp = 0;
+
+  // upwinded mobility
+  stackArray1d< real64, NF > upwMobility( NF );
+  stackArray1d< real64, NF > dUpwMobility_dp( NF );
+  stackArray1d< globalIndex, NF > upwDofNumber( NF );
+
+  /*
+   * compute auxiliary quantities at the one sided faces of this element:
+   * 1) One-sided volumetric fluxes
+   * 2) Upwinded mobilities
+   */
+
+  // for each one-sided face of the elem,
+  // compute the volumetric flux using transMatrix
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( facePres,
+                                                         dFacePres,
+                                                         faceGravCoef,
+                                                         elemToFaces,
+                                                         elemPres,
+                                                         dElemPres,
+                                                         elemGravCoef,
+                                                         elemDens,
+                                                         dElemDens_dp,
+                                                         transMatrix,
+                                                         oneSidedVolFlux,
+                                                         dOneSidedVolFlux_dp,
+                                                         dOneSidedVolFlux_dfp );
+
+  // at this point, we know the local flow direction in the element
+  // so we can upwind the transport coefficients (mobilities) at the one sided faces
+  // ** this function needs non-local information **
+  AssemblerKernelHelper::UpdateUpwindedCoefficients< NF >( elemRegionList,
+                                                           elemSubRegionList,
+                                                           elemList,
+                                                           regionFilter,
+                                                           elemToFaces,
+                                                           mobility,
+                                                           dMobility_dp,
+                                                           elemDofNumber,
+                                                           er, esr, ei,
+                                                           oneSidedVolFlux,
+                                                           upwMobility,
+                                                           dUpwMobility_dp,
+                                                           upwDofNumber );
+
+  /*
+   * perform assembly in this element in two steps:
+   * 1) mass conservation equations
+   * 2) face constraints
+   */
+
+  // use the computed one sided vol fluxes and the upwinded mobilities
+  // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
+  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                           faceDofNumber,
+                                                           elemToFaces,
+                                                           elemDofNumber[er][esr][ei],
+                                                           oneSidedVolFlux,
+                                                           dOneSidedVolFlux_dp,
+                                                           dOneSidedVolFlux_dfp,
+                                                           upwMobility,
+                                                           dUpwMobility_dp,
+                                                           upwDofNumber,
+                                                           matrix,
+                                                           rhs );
+
+  // use the computed one sided vol fluxes to assemble the constraints
+  // enforcing flux continuity at this element's faces
+  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    elemToFaces,
+                                                    elemDofNumber[er][esr][ei],
+                                                    oneSidedVolFlux,
+                                                    dOneSidedVolFlux_dp,
+                                                    dOneSidedVolFlux_dfp,
+                                                    matrix,
+                                                    rhs );
+}
+
+
+/******************************** FluxKernel ********************************/
+
+template< localIndex NF >
+void
+FluxKernel::Launch( localIndex er,
+                    localIndex esr,
+                    CellElementSubRegion const & subRegion,
+                    SortedArray< localIndex > regionFilter,
+                    MeshLevel const & mesh,
+                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                    array2d< localIndex > const & elemRegionList,
+                    array2d< localIndex > const & elemSubRegionList,
+                    array2d< localIndex > const & elemList,
+                    ArrayOfArraysView< localIndex const > const & faceToNodes,
+                    arrayView1d< globalIndex const > const & faceDofNumber,
+                    arrayView1d< real64 const > const & facePres,
+                    arrayView1d< real64 const > const & dFacePres,
+                    arrayView1d< real64 const > const & faceGravCoef,
+                    arrayView2d< real64 const > const & elemDens,
+                    arrayView2d< real64 const > const & dElemDens_dp,
+                    ElementView< arrayView1d< real64 const > > const & mobility,
+                    ElementView< arrayView1d< real64 const > > const & dMobility_dp,
+                    real64 const lengthTolerance,
+                    real64 const dt,
+                    DofManager const * const dofManager,
+                    ParallelMatrix * const matrix,
+                    ParallelVector * const rhs )
+{
+  // get the cell-centered DOF numbers and ghost rank for the assembly
+  string const elemDofKey = dofManager->getKey( SinglePhaseBase::viewKeyStruct::pressureString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+  elemDofNumber = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
+                                                                arrayView1d< globalIndex const > >( elemDofKey );
+  arrayView1d< integer const > const & elemGhostRank =
+    subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  // get the map from elem to faces
+  arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+
+  // get the cell-centered pressures
+  arrayView1d< real64 const > const & elemPres  =
+    subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const & dElemPres =
+    subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString );
+
+  // get the element data needed for transmissibility computation
+  arrayView1d< R1Tensor const > const & elemCenter =
+    subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+  arrayView1d< real64 const > const & elemVolume =
+    subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+  arrayView1d< R1Tensor const > const & elemPerm =
+    subRegion.getReference< array1d< R1Tensor > >( SinglePhaseBase::viewKeyStruct::permeabilityString );
+
+  // get the cell-centered depth
+  arrayView1d< real64 const > const & elemGravCoef =
+    subRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString );
+
+  // assemble the residual and Jacobian element by element
+  // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
+  forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+  {
+
+    if( elemGhostRank[ei] < 0 )
+    {
+
+      // transmissibility matrix
+      stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+
+      // recompute the local transmissibility matrix at each iteration
+      // we can decide later to precompute transMatrix if needed
+      HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                         faceToNodes,
+                                                                         elemToFaces[ei],
+                                                                         elemCenter[ei],
+                                                                         elemVolume[ei],
+                                                                         elemPerm[ei],
+                                                                         2,
+                                                                         lengthTolerance,
+                                                                         transMatrix );
+
+      // perform flux assembly in this element
+      SinglePhaseHybridFVMKernels::AssemblerKernel::Compute< NF >( er, esr, ei,
+                                                                   regionFilter,
+                                                                   elemRegionList,
+                                                                   elemSubRegionList,
+                                                                   elemList,
+                                                                   faceDofNumber,
+                                                                   facePres,
+                                                                   dFacePres,
+                                                                   faceGravCoef,
+                                                                   elemToFaces[ei],
+                                                                   elemPres[ei],
+                                                                   dElemPres[ei],
+                                                                   elemGravCoef[ei],
+                                                                   elemDens[ei][0],
+                                                                   dElemDens_dp[ei][0],
+                                                                   mobility,
+                                                                   dMobility_dp,
+                                                                   elemDofNumber.toViewConst(),
+                                                                   transMatrix,
+                                                                   dt,
+                                                                   matrix,
+                                                                   rhs );
+
+    }
+  } );
+}
+
+
+#define INST_FluxKernel( NF ) \
+  template \
+  void FluxKernel::Launch< NF >( localIndex er, \
+                                 localIndex esr, \
+                                 CellElementSubRegion const & subRegion, \
+                                 SortedArray< localIndex > regionFilter, \
+                                 MeshLevel const & mesh, \
+                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
+                                 array2d< localIndex > const & elemRegionList, \
+                                 array2d< localIndex > const & elemSubRegionList, \
+                                 array2d< localIndex > const & elemList, \
+                                 ArrayOfArraysView< localIndex const > const & faceToNodes, \
+                                 arrayView1d< globalIndex const > const & faceDofNumber, \
+                                 arrayView1d< real64 const > const & facePres, \
+                                 arrayView1d< real64 const > const & dFacePres, \
+                                 arrayView1d< real64 const > const & faceGravCoef, \
+                                 arrayView2d< real64 const > const & elemDens, \
+                                 arrayView2d< real64 const > const & dElemDens_dp, \
+                                 ElementView< arrayView1d< real64 const > > const & mobility, \
+                                 ElementView< arrayView1d< real64 const > > const & dMobility_dp, \
+                                 real64 const lengthTolerance, \
+                                 real64 const dt, \
+                                 DofManager const * const dofManager, \
+                                 ParallelMatrix * const matrix, \
+                                 ParallelVector * const rhs );
+
+INST_FluxKernel( 4 );
+INST_FluxKernel( 5 );
+INST_FluxKernel( 6 );
+
+#undef INST_FluxKernel
+
 
 } // namespace SinglePhaseHybridFVMKernels
 

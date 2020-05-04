@@ -291,6 +291,7 @@ real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJ
 
 #else
 
+  // TODO: is that really a good idea? This is what we do with Lapack
   array1d< real64 > rowSum;
   rowSum.resize( A.size( 0 ) );
   rowSum = 0;
@@ -595,8 +596,6 @@ void DenseLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::RO
 
 #else
 
-  vectorScale( beta, Y );
-
   for( localIndex i = 0; i < A.size( 0 ); ++i )
   {
     real64 sum_A_ij_X_j = 0;
@@ -604,6 +603,7 @@ void DenseLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::RO
     {
       sum_A_ij_X_j += A( i, j ) * X( j );
     }
+    Y( i ) *= beta;
     Y( i ) += alpha * sum_A_ij_X_j;
   }
 
@@ -637,6 +637,7 @@ void DenseLA::matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::R
 
 #else
 
+  // unclear if it is better to do that first, or in the main loop (but then I have to loop first in i and then in j)
   vectorScale( beta, Y );
 
   for( localIndex j = 0; j < A.size( 0 ); ++j )
@@ -680,7 +681,8 @@ void DenseLA::matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::RO
 
 #else
 
-  // TODO: double-check loop order, see if the loops need to be interchanged
+  // TODO: double-check loop order, see if the loops need to be interchanged, see if calling matrixScale first is a good
+  // idea
   // TODO: see if using the raw pointer instead of the accessors is more efficient
 
   // compute beta * C
@@ -787,9 +789,6 @@ void DenseLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::R
   // TODO: double-check loop order, see if the loops need to be interchanged
   // TODO: see if using the raw pointer instead of the accessors is more efficient
 
-  // compute beta * C
-  matrixScale( beta, C );
-
   // add alpha * A * B
   for( localIndex i = 0; i < A.size( 0 ); ++i )
   {
@@ -800,6 +799,7 @@ void DenseLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::R
       {
         sum_a_ik_b_jk += A( i, k ) * B( j, k );
       }
+      C( i, j ) *= beta;
       C( i, j ) += alpha * sum_a_ik_b_jk;
     }
   }
@@ -837,9 +837,6 @@ void DenseLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::
 
   // TODO: what could be a good loop ordering for this one??
 
-  // compute beta * C
-  matrixScale( beta, C );
-
   // add alpha * A * B
   for( localIndex i = 0; i < A.size( 1 ); ++i )
   {
@@ -850,6 +847,7 @@ void DenseLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::
       {
         sum_a_ki_b_jk += A( k, i ) * B( j, k );
       }
+      C( i, j ) *= beta;
       C( i, j ) += alpha * sum_a_ki_b_jk;
     }
   }
@@ -1191,6 +1189,7 @@ void DenseLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > 
 
 #endif
 }
+
 
 // below, this is work in progress
 

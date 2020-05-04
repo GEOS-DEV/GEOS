@@ -28,10 +28,9 @@ namespace HybridFVMInnerProduct
 {
 
 void
-HybridFVMInnerProductHelper::makeFullTensor( R1Tensor const & values,
-                                             stackArray2d< real64, 9 > & result )
+HybridFVMInnerProductHelper::MakeFullTensor( R1Tensor const & values,
+                                             arraySlice2d< real64 > const & result )
 {
-  result = 0.0;
   R1Tensor axis;
   R2SymTensor temp;
 
@@ -57,6 +56,41 @@ HybridFVMInnerProductHelper::makeFullTensor( R1Tensor const & values,
   }
 }
 
+
+template< localIndex NF >
+void
+HybridFVMInnerProductHelper::Orthonormalize( arraySlice1d< real64 > const & q0,
+                                             arraySlice1d< real64 > const & q1,
+                                             arraySlice1d< real64 > const & q2,
+                                             arraySlice2d< real64 > const & cellToFaceMat )
+{
+  // modified Gram-Schmidt algorithm
+
+  // q0
+  DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q0 ), q0 );
+
+  // q1
+  real64 const q0Dotq1 = DenseLA::vectorDot( q0, q1 );
+  DenseLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
+  DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q1 ), q1 );
+
+  // q2
+  real64 const q0Dotq2 = DenseLA::vectorDot( q0, q2 );
+  DenseLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
+  real64 const q1Dotq2 = DenseLA::vectorDot( q1, q2 );
+  DenseLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
+  DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q2 ), q2 );
+
+  for( localIndex i = 0; i < NF; ++i )
+  {
+    cellToFaceMat( i, 0 ) = q0( i );
+    cellToFaceMat( i, 1 ) = q1( i );
+    cellToFaceMat( i, 2 ) = q2( i );
+  }
+}
+
+
+template< localIndex NF >
 void
 TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                      ArrayOfArraysView< localIndex const > const & faceToNodes,
@@ -64,22 +98,20 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
                                      R1Tensor const & elemCenter,
                                      R1Tensor const & elemPerm,
                                      real64 const & lengthTolerance,
-                                     stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > const & transMatrix )
+                                     arraySlice2d< real64 > const & transMatrix )
 {
   localIndex constexpr dim = 3;
-  localIndex const numFacesInElem = elemToFaces.size();
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   stackArray2d< real64, dim *dim > permTensor( dim, dim );
-  permTensor = 0;
 
   // we are ready to compute the transmissibility matrix
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    for( localIndex jfaceLoc = 0; jfaceLoc < numFacesInElem; ++jfaceLoc )
+    for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
       // for now, TPFA trans
       if( ifaceLoc == jfaceLoc )
@@ -105,7 +137,8 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
         // 2) assemble full coefficient tensor from principal axis/components
-        HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permTensor );
+        permTensor = 0.0;
+        HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
 
         // TODO: take symmetry into account to optimize this
         faceConormal( 0 ) = permTensor( 0, 0 ) * faceNormal( 0 )
@@ -133,6 +166,7 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
 }
 
 
+template< localIndex NF >
 void
 QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
                                       ArrayOfArraysView< localIndex const > const & faceToNodes,
@@ -142,88 +176,60 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                       R1Tensor const & elemPerm,
                                       real64 const & tParam,
                                       real64 const & lengthTolerance,
-                                      bool const & orthonormalizeWithSVD,
-                                      stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > const & transMatrix )
+                                      arraySlice2d< real64 > const & transMatrix )
 {
   localIndex constexpr dim = 3;
-  localIndex const numFacesInElem = elemToFaces.size();
 
-  R1Tensor faceCenter, faceNormal, cellToFaceVec;
+  R1Tensor faceCenter, faceNormal;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
-  stackArray2d< real64, dim *MAX_NUM_FACES > cellToFaceMat( numFacesInElem, dim );
-  stackArray2d< real64, dim *MAX_NUM_FACES > normalsMat( numFacesInElem, dim );
+  stackArray2d< real64, NF *dim > cellToFaceMat( NF, dim );
+  stackArray2d< real64, NF *dim > normalsMat( NF, dim );
   stackArray2d< real64, dim *dim > permMat( dim, dim );
-  cellToFaceMat = 0;
-  normalsMat = 0;
-  permMat = 0;
 
-  stackArray1d< real64, dim > work_dim( dim );
-  stackArray2d< real64, dim *dim > work_dimByDim ( dim, dim );
-  stackArray2d< real64, dim *MAX_NUM_FACES > work_dimByNumFaces( dim, numFacesInElem );
-  stackArray2d< real64, dim *MAX_NUM_FACES > work_numFacesByDim( numFacesInElem, dim );
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  work_dim = 0;
-  work_dimByDim = 0;
-  work_dimByNumFaces = 0;
-  work_numFacesByDim = 0;
-  worka_numFacesByNumFaces = 0;
-  workb_numFacesByNumFaces = 0;
-  workc_numFacesByNumFaces = 0;
+  stackArray2d< real64, dim *NF > work_dimByNumFaces( dim, NF );
+  stackArray2d< real64, NF *NF > worka_numFacesByNumFaces( NF, NF );
+  stackArray2d< real64, NF *NF > workb_numFacesByNumFaces( NF, NF );
+  stackArray2d< real64, NF *NF > workc_numFacesByNumFaces( NF, NF );
 
-  stackArray1d< real64, MAX_NUM_FACES > q0( numFacesInElem );
-  stackArray1d< real64, MAX_NUM_FACES > q1( numFacesInElem );
-  stackArray1d< real64, MAX_NUM_FACES > q2( numFacesInElem );
-  q0 = 0;
-  q1 = 0;
-  q2 = 0;
+  stackArray1d< real64, NF > q0( NF );
+  stackArray1d< real64, NF > q1( NF );
+  stackArray1d< real64, NF > q2( NF );
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
-  for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
+  for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
 
     // compute the face geometry data: center, normal, vector from cell center to face center
-    computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                               faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
-                                               nodePosition,
-                                               faceCenter,
-                                               faceNormal,
-                                               areaTolerance );
+    real64 const faceArea =
+      computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+                                                 faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
+                                                 nodePosition,
+                                                 faceCenter,
+                                                 faceNormal,
+                                                 areaTolerance );
 
-    cellToFaceVec  = faceCenter;
-    cellToFaceVec -= elemCenter;
+    q0( ifaceLoc ) = faceCenter( 0 ) - elemCenter( 0 );
+    q1( ifaceLoc ) = faceCenter( 1 ) - elemCenter( 1 );
+    q2( ifaceLoc ) = faceCenter( 2 ) - elemCenter( 2 );
 
-    if( orthonormalizeWithSVD )
-    {
-      cellToFaceMat( ifaceLoc, 0 ) = cellToFaceVec( 0 );
-      cellToFaceMat( ifaceLoc, 1 ) = cellToFaceVec( 1 );
-      cellToFaceMat( ifaceLoc, 2 ) = cellToFaceVec( 2 );
-    }
-    else
-    {
-      q0( ifaceLoc ) = cellToFaceVec( 0 );
-      q1( ifaceLoc ) = cellToFaceVec( 1 );
-      q2( ifaceLoc ) = cellToFaceVec( 2 );
-    }
-
-    if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
+    real64 const dotProduct = q0( ifaceLoc ) * faceNormal( 0 )
+                              + q1( ifaceLoc ) * faceNormal( 1 )
+                              + q2( ifaceLoc ) * faceNormal( 2 );
+    if( dotProduct < 0.0 )
     {
       faceNormal *= -1;
     }
 
-    normalsMat( ifaceLoc, 0 ) = faceNormal( 0 );
-    normalsMat( ifaceLoc, 1 ) = faceNormal( 1 );
-    normalsMat( ifaceLoc, 2 ) = faceNormal( 2 );
+    normalsMat( ifaceLoc, 0 ) = faceArea * faceNormal( 0 );
+    normalsMat( ifaceLoc, 1 ) = faceArea * faceNormal( 1 );
+    normalsMat( ifaceLoc, 2 ) = faceArea * faceNormal( 2 );
 
   }
 
   // 2) assemble full coefficient tensor from principal axis/components
-  HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permMat );
-
-  // TODO: replace the BlasLapack calls below with explicitly for loops
-  //       this should be easy if MGS orthonormalization is as robust as SVD
+  permMat = 0;
+  HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
 
   // 3) compute N K N'
   DenseLA::matrixMatrixTMultiply( permMat,
@@ -234,74 +240,74 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                  transMatrix );
 
   // 4) compute the orthonormalization of the matrix cellToFaceVec
-  //    This is done either with SVD or MGS
-  //    If we find that MGS is stable, I will remove SVD
-
-  if( orthonormalizeWithSVD )
-  {
-    // calling SVD seems to be an overkill to orthonormalize the 3 columns of cellToFaceMat...
-    DenseLA::matrixSVD( cellToFaceMat,
-                        work_numFacesByDim,
-                        work_dim,
-                        work_dimByDim );
-  }
-  else
-  {
-    // q0
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q0 ), q0 );
-
-    // q1
-    real64 const q0Dotq1 = DenseLA::vectorDot( q0, q1 );
-    DenseLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q1 ), q1 );
-
-    // q2
-    real64 const q0Dotq2 = DenseLA::vectorDot( q0, q2 );
-    DenseLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
-    real64 const q1Dotq2 = DenseLA::vectorDot( q1, q2 );
-    DenseLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q2 ), q2 );
-
-    // TODO: remove the copies once the DenseLA calls have been removed
-    for( int i = 0; i < numFacesInElem; ++i )
-    {
-      work_numFacesByDim( i, 0 ) = q0( i );
-      work_numFacesByDim( i, 1 ) = q1( i );
-      work_numFacesByDim( i, 2 ) = q2( i );
-    }
-  }
+  HybridFVMInnerProductHelper::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
 
   // 5) compute P_Q = I - QQ'
-  DenseLA::matrixMatrixTMultiply( work_numFacesByDim,
-                                  work_numFacesByDim,
-                                  worka_numFacesByNumFaces );
-  DenseLA::matrixScale( -1, worka_numFacesByNumFaces );
-  for( localIndex i = 0; i < numFacesInElem; ++i )
+  worka_numFacesByNumFaces = 0;
+  for( localIndex i = 0; i < NF; ++i )
   {
-    worka_numFacesByNumFaces( i, i )++;
+    worka_numFacesByNumFaces( i, i ) = 1;
   }
+  DenseLA::matrixMatrixTMultiply( cellToFaceMat,
+                                  cellToFaceMat,
+                                  worka_numFacesByNumFaces,
+                                  -1, 1 );
 
-  // 6) compute P_Q D P_Q where D = diag(diag(N K N')
-  for( localIndex i = 0; i < numFacesInElem; ++i )
+  // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
+  // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
+  // Note that 7) is done at the last call to matrixMatrixMultiply
+  workb_numFacesByNumFaces = 0;
+  for( localIndex i = 0; i < NF; ++i )
   {
-    for( localIndex j = 0; j < numFacesInElem; ++j )
-    {
-      workb_numFacesByNumFaces( i, j ) = (i == j ) ?  transMatrix( i, j ) : 0.0;
-    }
+    workb_numFacesByNumFaces( i, i ) = transMatrix( i, i );
   }
   DenseLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
                                  worka_numFacesByNumFaces,
                                  workc_numFacesByNumFaces );
+  real64 const elemVolumeInv = 1. / elemVolume;
   DenseLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
                                  workc_numFacesByNumFaces,
-                                 workb_numFacesByNumFaces );
-
-  // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
-  DenseLA::matrixScale( tParam, workb_numFacesByNumFaces );
-  DenseLA::matrixMatrixAdd( workb_numFacesByNumFaces, transMatrix );
-  DenseLA::matrixScale( 1/elemVolume, transMatrix );
+                                 transMatrix,
+                                 tParam * elemVolumeInv, elemVolumeInv );
 
 }
+
+#define INST_TPFACellInnerProduct( NF ) \
+  template \
+  void TPFACellInnerProductKernel::Compute< NF >( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
+                                                  ArrayOfArraysView< localIndex const > const & faceToNodes, \
+                                                  arraySlice1d< localIndex const > const elemToFaces, \
+                                                  R1Tensor const & elemCenter, \
+                                                  R1Tensor const & elemPerm, \
+                                                  real64 const & lengthTolerance, \
+                                                  arraySlice2d< real64 > const & transMatrix );
+
+INST_TPFACellInnerProduct( 4 );
+INST_TPFACellInnerProduct( 5 );
+INST_TPFACellInnerProduct( 6 );
+
+#undef INST_TPFACellInnerProduct
+
+#define INST_QTPFACellInnerProduct( NF ) \
+  template \
+  void QTPFACellInnerProductKernel::Compute< NF >( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
+                                                   ArrayOfArraysView< localIndex const > const & faceToNodes, \
+                                                   arraySlice1d< localIndex const > const elemToFaces, \
+                                                   R1Tensor const & elemCenter, \
+                                                   real64 const & elemVolume, \
+                                                   R1Tensor const & elemPerm, \
+                                                   real64 const & tParam, \
+                                                   real64 const & lengthTolerance, \
+                                                   arraySlice2d< real64 > const & transMatrix );
+
+INST_QTPFACellInnerProduct( 4 );
+INST_QTPFACellInnerProduct( 5 );
+INST_QTPFACellInnerProduct( 6 );
+
+#undef INST_QTPFACellInnerProduct
+
+#undef INST_HybridFVMInnerProduct
+
 
 }
 
