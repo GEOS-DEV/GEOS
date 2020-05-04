@@ -35,7 +35,6 @@ We open the XML file with the Problem block,
 
 The attributes ``xmlns:xsi`` and ``xsi:noNamespaceSchemaLocation`` are used to define the file format and schema.
 While optional, they may be used to configure various xml validation tools.
-Further information on XML validation may be found here: :ref:`Input File Validation`.
 
 
 .. _Solver_tag:

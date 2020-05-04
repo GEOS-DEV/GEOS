@@ -1,7 +1,7 @@
 GEOSX Documentation
 =================================
 
-GEOSX is a simulation platform focused on enabling streamlined development of HPC physics simulators.
+GEOSX is a numerical platform designed for the development of HPC multi-physics simulators.
 
 
 .. toctree::
