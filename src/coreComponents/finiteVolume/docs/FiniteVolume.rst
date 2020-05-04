@@ -1,9 +1,10 @@
-.. _FiniteVolume:
+.. _FiniteVolumeDiscrteization:
 
 Finite Volume Discretization
 -------------------------------
 
-In the current implementation of the :ref:`SinglePhaseFlow` and the :ref:`CompositionalMultiphaseFlow`, the discretization is based on a cell-centered finite-volume scheme.
+In the current implementation of the :ref:`SinglePhaseFlow` and the :ref:`CompositionalMultiphaseFlow`,
+the discretization is based on a cell-centered finite-volume scheme.
 
 
 The flux is computed using a Two-Point Flux Approximation (TPFA). 

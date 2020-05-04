@@ -17,7 +17,9 @@ and how to extend its functionalities.
 .. toctree::
    :maxdepth: 1
 
-   singlePhaseFlow/Tutorial
+   singlePhaseFlowInternalMesh/Tutorial
+
+   singlePhaseFlowExternalMesh/Tutorial
 
    elasticity/Tutorial
 

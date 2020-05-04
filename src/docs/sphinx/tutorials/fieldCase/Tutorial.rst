@@ -223,8 +223,8 @@ The final steps is to organize events so the simulation and the outputs can be t
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
-  :start-after: <!-- SPHINX_FIELD_CASE_EVENTS -->
-  :end-before: <!-- SPHINX_FIELD_CASE_EVENTS_END -->
+  :start-after: <!-- SPHINX_FIELD_EVENTS -->
+  :end-before: <!-- SPHINX_FIELD_EVENTS_END -->
 
 The ``Events`` tag is associated with the ``maxTime`` keyword defining the maximum time. If this time is
 ever reached or exceeded, the simulation will end.
@@ -239,7 +239,7 @@ Lauching the simulation
 
 The simulation can be launched with:
 
-.. codeblock:: sh
+.. code-block:: console
 
   geosx -i FieldCaseTutorial1.xml
 
