@@ -22,6 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
 
@@ -129,6 +130,18 @@ public:
    */
   constitutive::ConstitutiveManager * getConstitutiveManager()
   { return this->GetGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
+
+  /**
+   * @brief @return Return a reference to const #NumericalMethodsManager from #ProblemManager
+   */
+  NumericalMethodsManager const & getNumericalMethodManager() const
+  { return *(this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" )); }
+
+  /**
+   * @brief @return Return a reference to #NumericalMethodsManager from #ProblemManager
+   */
+  NumericalMethodsManager & getNumericalMethodManager()
+  { return *(this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" )); }
 
   /**
    * @brief Get the mesh bodies, const version.

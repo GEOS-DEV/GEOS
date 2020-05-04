@@ -276,12 +276,13 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager =
-    *domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const & feDiscretizationManager =
-    *numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const &
+  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
@@ -405,9 +406,10 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   MeshLevel const & mesh = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
-    keys::finiteElementDiscretizations );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager->getReference< globalIndex_array >( uDofKey );
@@ -417,7 +419,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix->open();
   rhs->open();

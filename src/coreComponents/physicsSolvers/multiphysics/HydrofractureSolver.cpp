@@ -625,13 +625,11 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
     }
   } );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
@@ -1329,7 +1327,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   if( newtonIter==0 )
   {
     m_blockDiagUU.reset( new ParallelMatrix());
-    LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
+    LAIHelperFunctions::SeparateComponentFilter( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
   }
 
   // create schur complement approximation matrix
