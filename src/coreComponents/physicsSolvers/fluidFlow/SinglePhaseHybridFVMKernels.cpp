@@ -511,6 +511,54 @@ FluxKernel::Launch( localIndex er,
 }
 
 
+#define INST_AssembleKernelHelper( NF ) \
+  template \
+  void \
+  AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( arrayView1d< real64 const > const & facePres, \
+                                                         arrayView1d< real64 const > const & dFacePres, \
+                                                         arrayView1d< real64 const > const & faceGravCoef, \
+                                                         arraySlice1d< localIndex const > const elemToFaces, \
+                                                         real64 const & elemPres, \
+                                                         real64 const & dElemPres, \
+                                                         real64 const & elemGravDepth, \
+                                                         real64 const & elemDens, \
+                                                         real64 const & dElemDens_dp, \
+                                                         arraySlice2d< real64 const > const & transMatrix, \
+                                                         arraySlice1d< real64 > const & oneSidedVolFlux, \
+                                                         arraySlice1d< real64 > const & dOneSidedVolFlux_dp, \
+                                                         arraySlice2d< real64 > const & dOneSidedVolFlux_dfp ); \
+  template \
+  void \
+  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( real64 const & dt, \
+                                                           arrayView1d< globalIndex const > const & faceDofNumber, \
+                                                           arraySlice1d< localIndex const > const elemToFaces, \
+                                                           globalIndex const elemDofNumber, \
+                                                           arraySlice1d< real64 const > const & oneSidedVolFlux, \
+                                                           arraySlice1d< real64 const > const & dOneSidedVolFlux_dp, \
+                                                           arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp, \
+                                                           arraySlice1d< real64 const > const & upwMobility, \
+                                                           arraySlice1d< real64 const > const & dUpwMobility_dp, \
+                                                           arraySlice1d< globalIndex const > const & upwDofNumber, \
+                                                           ParallelMatrix * const matrix, \
+                                                           ParallelVector * const rhs ); \
+  template \
+  void \
+  AssemblerKernelHelper::AssembleConstraints< NF >( arrayView1d< globalIndex const > const & faceDofNumber, \
+                                                    arraySlice1d< localIndex const > const elemToFaces, \
+                                                    globalIndex const elemDofNumber, \
+                                                    arraySlice1d< real64 const > const & oneSidedVolFlux, \
+                                                    arraySlice1d< real64 const > const & dOneSidedVolFlux_dp, \
+                                                    arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp, \
+                                                    ParallelMatrix * const matrix, \
+                                                    ParallelVector * const rhs )
+
+INST_AssembleKernelHelper( 4 );
+INST_AssembleKernelHelper( 5 );
+INST_AssembleKernelHelper( 6 );
+
+#undef INST_AssembleKernelHelper
+
+
 #define INST_FluxKernel( NF ) \
   template \
   void FluxKernel::Launch< NF >( localIndex er, \
@@ -535,7 +583,7 @@ FluxKernel::Launch( localIndex er,
                                  real64 const dt, \
                                  DofManager const * const dofManager, \
                                  ParallelMatrix * const matrix, \
-                                 ParallelVector * const rhs );
+                                 ParallelVector * const rhs )
 
 INST_FluxKernel( 4 );
 INST_FluxKernel( 5 );

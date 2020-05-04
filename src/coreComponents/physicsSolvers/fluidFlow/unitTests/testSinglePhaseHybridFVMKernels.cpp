@@ -38,7 +38,7 @@ void updateDensity( real64 const & refPres,
                     real64 & dElemDens_dp )
 {
   // we assume (very) compressible flow to catch wrong derivatives
-  real64 const compressibility = 0;//1e-3;
+  real64 const compressibility = 1e-3;
   real64 const refDens = 1000;
 
   // hard-coded relationship between pressure and density

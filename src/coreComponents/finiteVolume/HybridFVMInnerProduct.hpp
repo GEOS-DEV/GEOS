@@ -84,7 +84,7 @@ struct TPFACellInnerProductKernel
                                                   R1Tensor const & elemCenter, \
                                                   R1Tensor const & elemPerm, \
                                                   real64 const & lengthTolerance, \
-                                                  arraySlice2d< real64 > const & transMatrix );
+                                                  arraySlice2d< real64 > const & transMatrix )
 
 INST_TPFACellInnerProduct( 4 );
 INST_TPFACellInnerProduct( 5 );
@@ -137,7 +137,7 @@ struct QTPFACellInnerProductKernel
                                                    R1Tensor const & elemPerm, \
                                                    real64 const & tParam, \
                                                    real64 const & lengthTolerance, \
-                                                   arraySlice2d< real64 > const & transMatrix );
+                                                   arraySlice2d< real64 > const & transMatrix )
 
 INST_QTPFACellInnerProduct( 4 );
 INST_QTPFACellInnerProduct( 5 );
