@@ -14,8 +14,6 @@
 
 /**
  * @file Stopwatch.hpp
- *
- * Defines a simple timer to measure execution intervals
  */
 
 #ifndef GEOSX_STOPWATCH_HPP
@@ -25,47 +23,46 @@
 
 namespace geosx
 {
+/**
+ * @class Stopwatch
+ * @brief Class defining a simple stopwatch for interval timing.
+ * @note Current implementation relies on std::chrono::steady_clock
+ */
+class Stopwatch
+{
+public:
   /**
-   * @brief Class defining a simple stopwatch for interval timing.
-   *
-   * @note Current implementation relies on std::chrono::steady_clock
+   * @brief Constructor.  Calls zero().
    */
-  class Stopwatch
+  Stopwatch()
   {
-  public:
-    /**
-     * Constructor.  Calls zero().
-     */
-    Stopwatch()
-    {
-      zero();
-    }
-    
-    /**
-     * Zero out the timer.
-     */
-    void zero()
-    {
-      start = std::chrono::steady_clock::now();
-    }
-    
-    /**
-     * Return elapsed time in seconds since zero() was last called.
-     */
-    real64 elapsedTime()
-    {
-      end = std::chrono::steady_clock::now();
-      diff = end-start;
-      return diff.count();
-    }
-    
-  private:
-    std::chrono::steady_clock::time_point start;
-    std::chrono::steady_clock::time_point end;
-    std::chrono::duration<real64>         diff;
-  };
-  
+    zero();
+  }
+
+  /**
+   * @brief Zero out the timer.
+   */
+  void zero()
+  {
+    start = std::chrono::steady_clock::now();
+  }
+
+  /**
+   * @brief Return elapsed time in seconds since zero() was last called.
+   */
+  real64 elapsedTime()
+  {
+    end = std::chrono::steady_clock::now();
+    diff = end-start;
+    return diff.count();
+  }
+
+private:
+  std::chrono::steady_clock::time_point start;
+  std::chrono::steady_clock::time_point end;
+  std::chrono::duration< real64 > diff;
+};
+
 } // end geosx
 
 #endif
-
