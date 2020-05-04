@@ -52,7 +52,7 @@ public:
    * @name Static factory catalog functions
    */
   ///@{
-  
+
   /**
    * @brief Get catalog name.
    * @return the catalog name
@@ -70,12 +70,12 @@ public:
   }
 
   ///@}
-  
+
   /**
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor.
    * @param name the group name
@@ -108,7 +108,7 @@ public:
    * @param k index of the face element
    */
   void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
-                                              localIndex k );
+                                            localIndex k );
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -138,7 +138,7 @@ public:
                               BoundedPlane const * plane );
 
   ///@}
-  
+
   /**
    * @brief Struct containing the keys to all embedded surface element views.
    * @struct viewKeyStruct

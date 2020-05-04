@@ -51,7 +51,7 @@ public:
    * @name Static factory catalog functions
    */
   ///@{
-  
+
   /**
    * @brief Get catalog name.
    * @return the catalog name
@@ -74,7 +74,7 @@ public:
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor.
    * @param name the group name
@@ -91,7 +91,7 @@ public:
    * @name Geometry computation / Connectivity
    */
   ///@{
-  
+
   virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                     FaceManager const & faceManager ) override;
   /**
@@ -108,7 +108,7 @@ public:
    * @name Overriding packing / Unpacking functions
    */
   ///@{
-  
+
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
@@ -124,7 +124,7 @@ public:
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   ///@}
-  
+
   /**
    * @brief Function to set the ghostRank for a list of FaceElements and set them to the value of their bounding faces.
    * @param faceManager The face manager group
@@ -231,9 +231,9 @@ public:
 
 
   /**
-    * @name Properties Getters
-    * @brief Getters to face element properties.
-    */
+   * @name Properties Getters
+   * @brief Getters to face element properties.
+   */
   ///@{
 
   /**

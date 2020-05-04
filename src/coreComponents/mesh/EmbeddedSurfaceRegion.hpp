@@ -31,13 +31,14 @@ class EdgeManager;
  * @class EmbeddedSurfaceRegion
  *
  * The EmbeddedSurfaceRegion class contains the functionality to support the concept of a EmbeddedSurfaceRegion in the
- * element hierarchy. EmbeddedSurfaceRegion derives from ElementRegion and has an entry in the ObjectManagerBase catalog.
+ * element hierarchy. EmbeddedSurfaceRegion derives from ElementRegion and has an entry in the ObjectManagerBase
+ * catalog.
  */
 class EmbeddedSurfaceRegion : public ElementRegionBase
 {
 public:
 
-    /**
+  /**
    * @name Constructor / Destructor
    */
   ///@{
@@ -54,18 +55,18 @@ public:
    */
   EmbeddedSurfaceRegion() = delete;
 
- /**
-  * @brief Default destructor.
-  */
+  /**
+   * @brief Default destructor.
+   */
   virtual ~EmbeddedSurfaceRegion() override;
 
   ///@}
-  
+
   /**
    * @name Static factory catalog functions
    */
   ///@{
-  
+
   /**
    * @brief Get the key name for the EmbeddedSurfaceRegion in the object catalog.
    * @return A string containing the key name.
@@ -77,7 +78,7 @@ public:
   { return EmbeddedSurfaceRegion::CatalogName(); }
 
   ///@}
-  
+
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct

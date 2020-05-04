@@ -43,7 +43,7 @@ public:
 
   /**
    * @brief The function is to return the name of the CellBlockManager in the object catalog
-   * @return string that contains the catalog name used to register/lookup this class in the object catalog 
+   * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
   static string CatalogName()
   {
@@ -56,14 +56,14 @@ public:
 
   /**
    * @brief Constructor for CellBlockManager object.
-   * @param name name of this instantiation of CellBlockManager 
+   * @param name name of this instantiation of CellBlockManager
    * @param parent pointer to the parent Group of this instantiation of CellBlockManager
-   */  
+   */
   CellBlockManager( string const & name, Group * const parent );
 
   /**
    * @brief Destructor
-   */  
+   */
   virtual ~CellBlockManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
@@ -72,9 +72,9 @@ public:
 
   /**
    * @brief Set the number of elements for a set of element regions.
-   * @param numElements list of the new element numbers 
+   * @param numElements list of the new element numbers
    * @param regionNames list of the element region names
-   * @param elementTypes list of the element types 
+   * @param elementTypes list of the element types
    */
   void resize( integer_array const & numElements,
                string_array const & regionNames,
@@ -87,7 +87,7 @@ public:
   /**
    * @brief Get element sub-region.
    * @param regionName name of the element sub-region
-   * @return pointer to the element sub-region 
+   * @return pointer to the element sub-region
    */
   CellBlock * GetRegion( string const & regionName )
   {
@@ -99,7 +99,7 @@ public:
    * @brief Launch kernel function over all the sub-regions
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
-   */  
+   */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {

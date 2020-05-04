@@ -138,7 +138,7 @@ public:
     dataRepository::ViewKey dNdX                  = { dNdXString };
 
   }
-  /// viewKey struct for the CellElementSubRegion class 
+  /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }

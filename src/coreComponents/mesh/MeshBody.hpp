@@ -26,7 +26,7 @@ namespace geosx
 {
 
 class MeshLevel;
- 
+
 /**
  * @class MeshBody
  * @brief The class is used to manage mesh body
@@ -38,7 +38,7 @@ public:
   /**
    * @brief Constructor for MeshBody object
    * @param [in] name the name of this instantiation of MeshBody
-   * @param [in] parent the parent group of this instantiation of MeshBody 
+   * @param [in] parent the parent group of this instantiation of MeshBody
    */
   MeshBody( string const & name,
             Group * const parent );
@@ -52,33 +52,33 @@ public:
    * @brief Create a new mesh level
    * @param [in] newLevel index of the new mesh level
    * @return pointer to the created MeshLevel
-   */  
+   */
   MeshLevel * CreateMeshLevel( localIndex const newLevel );
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
-   */  
+   */
   MeshLevel * getMeshLevel( localIndex const level ) { return this->GetGroup< MeshLevel >( level ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
-   */  
+   */
   MeshLevel const * getMeshLevel( localIndex const level ) const { return this->GetGroup< MeshLevel >( level ); }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
    * @param [in] scale length scale
-   */  
+   */
   void setGlobalLengthScale( real64 scale );
 
   /**
    * @brief Get mesh length scale
    * @return value of mesh length scale
-   */    
+   */
   real64 getGlobalLengthScale() const
   {
     return m_globalLengthScale;

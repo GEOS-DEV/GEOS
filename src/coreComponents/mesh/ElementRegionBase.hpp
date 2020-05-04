@@ -32,7 +32,7 @@ class FaceManager;
  * @class ElementRegionBase
  * @brief The ElementRegionBase is the base class to manage the data stored at the element level.
  *
- * The ElementRegion base is the base class for classes such as CellElementRegion, FaceElementRegion, 
+ * The ElementRegion base is the base class for classes such as CellElementRegion, FaceElementRegion,
  * WellElementRegion, and EmbeddedSurfaceRegion.
  */
 class ElementRegionBase : public ObjectManagerBase
@@ -49,23 +49,23 @@ public:
    */
   ElementRegionBase() = delete;
 
- /**
-  * @brief Main constructor.
-  * @param name the name of the element region
-  * @param parent the pointer to the parent group
-  */
+  /**
+   * @brief Main constructor.
+   * @param name the name of the element region
+   * @param parent the pointer to the parent group
+   */
   ElementRegionBase( string const & name, Group * const parent );
 
 
- /**
-  * @brief Copy constructor.
-  * @param init the element region to be copied
-  */
+  /**
+   * @brief Copy constructor.
+   * @param init the element region to be copied
+   */
   ElementRegionBase( const ElementRegionBase & init );
 
- /**
-  * @brief Default destructor.
-  */
+  /**
+   * @brief Default destructor.
+   */
   virtual ~ElementRegionBase() override;
 
   ///@}
@@ -74,27 +74,27 @@ public:
    * @name Generation of the mesh region
    */
   ///@{
-  
- /**
-  * @brief Generate mesh.
-  * @param cellBlocks cell blocks where the mesh is generated
-  */
+
+  /**
+   * @brief Generate mesh.
+   * @param cellBlocks cell blocks where the mesh is generated
+   */
   virtual void GenerateMesh( Group * const cellBlocks )
   {
     GEOSX_UNUSED_VAR( cellBlocks );
     GEOSX_ERROR( "ElementRegionBase::GenerateMesh() should be overriden if called." );
   }
 
-   ///@}
+  ///@}
 
   /**
    * @name Getters / Setters
    */
   ///@{
-  
- /**
-  * @copydoc GetSubRegions() const
-  */
+
+  /**
+   * @copydoc GetSubRegions() const
+   */
   subGroupMap & GetSubRegions()
   {
     return GetGroup( viewKeyStruct::elementSubRegions )->GetSubGroups();
@@ -182,15 +182,15 @@ public:
     return numElem;
   }
 
- /**
-  * @copydoc getMaterialList() const
-  */
+  /**
+   * @copydoc getMaterialList() const
+   */
   string_array & getMaterialList() {return m_materialList;}
 
- /**
-  * @brief Get the material list in the element region.
-  * @return the material list
-  */
+  /**
+   * @brief Get the material list in the element region.
+   * @return the material list
+   */
   string_array const & getMaterialList() const {return m_materialList;}
 
   /**
@@ -201,7 +201,7 @@ public:
   template< typename CONSTITUTIVE_TYPE >
   string_array getConstitutiveNames() const;
 
-  
+
   ///@}
 
   /**
@@ -209,7 +209,7 @@ public:
    */
   ///@{
 
-  
+
 /**
  * @brief Apply a lambda to all subregions.
  * @param lambda the functor to be applied
@@ -309,11 +309,11 @@ public:
   }
 
   ///@}
-  
+
 /**
  * @brief Struct to serve as a container for variable strings and keys.
- * @struct viewKeyStruct 
-*/
+ * @struct viewKeyStruct
+ */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
     /// String key for the material list

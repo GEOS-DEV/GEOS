@@ -43,7 +43,7 @@ public:
    * @name Constructor / Destructor
    */
   ///@{
-  
+
   /**
    * @brief Constructor.
    * @param name the name of the object in the data hierarchy.
@@ -56,9 +56,9 @@ public:
    */
   FaceElementRegion() = delete;
 
- /**
-  * @brief Default destructor.
-  */
+  /**
+   * @brief Default destructor.
+   */
   virtual ~FaceElementRegion() override;
 
   ///@}
@@ -67,7 +67,7 @@ public:
    * @name Static factory catalog functions
    */
   ///@{
-  
+
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return a string containing the key name.
@@ -78,18 +78,18 @@ public:
   virtual const string getCatalogName() const override final
   { return FaceElementRegion::CatalogName(); }
 
-  ///@}  
+  ///@}
 
   /**
    * @name Generation of the face element mesh region
    */
   ///@{
-  
+
   virtual void GenerateMesh( Group * ) override {}
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
-   * @param time_np1 rupture time 
+   * @param time_np1 rupture time
    * @param edgeManager pointer to the EdgeManager object.
    * @param faceManager pointer to the FaceManager object.
    * @param originalFaceToEdges face-to-edge map before the rupture.
@@ -104,21 +104,21 @@ public:
                                 string const & subRegionName,
                                 localIndex const faceIndices[2] );
 
-  ///@}  
+  ///@}
 
   /**
    * @name Getters / Setters
    */
   ///@{
-  
+
   /**
    * @brief Get default aperture value.
    * @return default aperture value
    */
   real64 getDefaultAperture() const { return m_defaultAperture; }
 
-  ///@}  
-  
+  ///@}
+
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct

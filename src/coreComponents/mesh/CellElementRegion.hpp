@@ -58,7 +58,7 @@ public:
   CellElementRegion() = delete;
 
   /**
-   * @brief Destructor. 
+   * @brief Destructor.
    */
   virtual ~CellElementRegion() override;
 
@@ -66,7 +66,7 @@ public:
    * @name Static factory catalog functions
    */
   ///@{
-  
+
   /**
    * @brief The key name for the FaceElementRegion in the object catalog.
    * @return A string containing the key name.
@@ -86,7 +86,7 @@ public:
    * @name Generation of the cell element mesh region
    */
   ///@{
-  
+
   /**
    * @brief Add a cellBlockRegion name to the list.
    * @param cellBlockName string containing the cell block region name.
@@ -106,7 +106,7 @@ public:
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
   ///@}
-  
+
   /**
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -115,7 +115,7 @@ public:
   {
     /// String key for the coarsening ratio
     static constexpr auto coarseningRatioString = "coarseningRatio";
-    
+
     /// String key for the cell block names
     static constexpr auto sourceCellBlockNames = "cellBlocks";
   };
