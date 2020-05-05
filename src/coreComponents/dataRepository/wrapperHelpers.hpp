@@ -143,7 +143,7 @@ real64 const * getPointerToComponent( R2SymTensor const & var, int const compone
 template< typename T >
 inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
 size( T const & value )
-{ return integer_conversion< localIndex >( value.size() ); }
+{ return LvArray::integerConversion< localIndex >( value.size() ); }
 
 template< typename T >
 inline std::enable_if_t< !traits::HasMemberFunction_size< T >, localIndex >
@@ -359,7 +359,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_child( "__values__" );
 
-  localIndex const byteSize = integer_conversion< localIndex >( valuesNode.dtype().strided_bytes() );
+  localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
 
   resize( var, numElements );
@@ -374,7 +374,7 @@ pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_child( "__values__" );
 
-  localIndex const byteSize = integer_conversion< localIndex >( valuesNode.dtype().strided_bytes() );
+  localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
 
   T const * const values = reinterpret_cast< T const * >( valuesNode.data_ptr() );

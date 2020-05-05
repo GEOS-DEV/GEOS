@@ -165,7 +165,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
   array1d< int >  receiveBufferSizes( neighbors.size());
   array1d< globalIndex_array > receiveBuffers( neighbors.size());
 
-  int const sendSize = integer_conversion< int const >( objectToCompositionObjectSendBuffer.size() );
+  int const sendSize = LvArray::integerConversion< int const >( objectToCompositionObjectSendBuffer.size() );
 
   for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
@@ -230,7 +230,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
     while( recBuffer < endBuffer )
     {
       // the first thing packed was the data size for a given object
-      localIndex dataSize = integer_conversion< localIndex >( *recBuffer++ );
+      localIndex dataSize = LvArray::integerConversion< localIndex >( *recBuffer++ );
 
       // the second thing packed was the globalIndex of that object
       const globalIndex neighborGlobalIndex = *( recBuffer++ );

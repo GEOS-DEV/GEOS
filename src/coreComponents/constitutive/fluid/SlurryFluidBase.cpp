@@ -101,7 +101,7 @@ void SlurryFluidBase::PostProcessInput()
 
 localIndex SlurryFluidBase::numFluidComponents() const
 {
-  return integer_conversion< localIndex >( m_componentNames.size());
+  return LvArray::integerConversion< localIndex >( m_componentNames.size());
 }
 
 string const & SlurryFluidBase::componentName( localIndex ic ) const

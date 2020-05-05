@@ -444,7 +444,7 @@ localIndex PetscVector::getLocalRowID( globalIndex const globalRow ) const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( VecGetOwnershipRange( m_vec, &low, &high ) );
-  return ( globalRow >= low && globalRow < high) ? integer_conversion< localIndex >( globalRow - low ) : -1;
+  return ( globalRow >= low && globalRow < high) ? LvArray::integerConversion< localIndex >( globalRow - low ) : -1;
 }
 
 globalIndex PetscVector::getGlobalRowID( localIndex const localRow ) const
