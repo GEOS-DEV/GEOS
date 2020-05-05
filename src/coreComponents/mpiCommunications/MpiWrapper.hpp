@@ -576,7 +576,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                            array1d< T > & allValues,
                            MPI_Comm MPI_PARAM( comm ) )
 {
-  int const sendSize = integer_conversion< int >( sendValues.size() );
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
 #ifdef GEOSX_USE_MPI
   int const mpiSize = Comm_size( comm );
   allValues.resize( mpiSize * sendSize );

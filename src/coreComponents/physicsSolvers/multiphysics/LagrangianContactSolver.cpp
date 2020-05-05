@@ -472,7 +472,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
   FaceManager * const faceManager = meshLevel->getFaceManager();
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
 
@@ -1132,7 +1132,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   arrayView1d< R1Tensor > const &
   fext = nodeManager->getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -1173,7 +1173,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
           globalIndex colDOF[3];
           for( localIndex i=0; i<3; ++i )
           {
-            colDOF[i] = tracDofNumber[kfe] + integer_conversion< globalIndex >( i );
+            colDOF[i] = tracDofNumber[kfe] + LvArray::integerConversion< globalIndex >( i );
           }
 
           real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
@@ -1193,7 +1193,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
             {
               for( localIndex i=0; i<3; ++i )
               {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
+                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
                 nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
                 fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
@@ -1241,7 +1241,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup< ContactRelationBase const >( m_contactRelationName );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -1282,7 +1282,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
           globalIndex elemDOF[3];
           for( localIndex i=0; i<3; ++i )
           {
-            elemDOF[i] = tracDofNumber[kfe] + integer_conversion< globalIndex >( i );
+            elemDOF[i] = tracDofNumber[kfe] + LvArray::integerConversion< globalIndex >( i );
           }
 
           real64 elemRHS[3];
@@ -1317,7 +1317,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     for( localIndex i=0; i<3; ++i )
                     {
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
-                                                                integer_conversion< globalIndex >( i );
+                                                                LvArray::integerConversion< globalIndex >( i );
 
                       dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
                       dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
@@ -1339,7 +1339,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     for( localIndex i=0; i<3; ++i )
                     {
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
-                                                                integer_conversion< globalIndex >( i );
+                                                                LvArray::integerConversion< globalIndex >( i );
                       dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
                     }
                   }
@@ -1656,7 +1656,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           fractureIndex[kf] = sei[iconn][kf];
           for( localIndex i=0; i<3; ++i )
           {
-            elemDOF[kf][i] = tracDofNumber[fractureIndex[kf]] + integer_conversion< globalIndex >( i );
+            elemDOF[kf][i] = tracDofNumber[fractureIndex[kf]] + LvArray::integerConversion< globalIndex >( i );
           }
           nDof[kf] = 0;
           switch( fractureState[fractureIndex[kf]] )
