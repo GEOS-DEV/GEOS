@@ -8,8 +8,8 @@ First steps with GEOSX: the single-phase flow solver
 
 In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
 from GEOSX to solve for pressure propagation on a simple discretized 10x10x10 cube mesh.
-A pressure source term will be set in the top-right corner block of the cube,
-and a sink pressure term will be set in the bottom-left corner block.
+A pressure source term will be set on one side of the cube, along a face, and
+a sink term will be set on the opposite face of the cube.
 
 **Objectives**
 
@@ -79,15 +79,15 @@ While optional, they may be used to configure various xml validation tools.
 
 .. _Solver_tag_single_phase_internal_mesh:
 
-Solvers tag
-------------
+Defining a solver
+-----------------
 
 GEOSX is a multi-physics tool. The solution to each physical problem
 (diffusion, convection, deformation, etc.) is found using one or many numerical solvers and
 the **Solvers** tag is used to list and parameterize them.
 Several solvers can be defined in the input file,
 and different combinations of solvers can be applied
-in different regions of the mesh at specific moments of the simulation.
+in different regions of the mesh at different moments of the simulation.
 
 
 Here, to keep things simple, we use one type of solver in the entire domain and
@@ -104,8 +104,9 @@ The XML block used to define this single-phase finite volume solver is shown her
 
 Each type of solver has a specific set of parameters that are required and
 some that are optional (usually with sensible default values).
-Here, for instance, we see that our solver is declared with a user-chosen name (``SinglePhaseFlow``),
-a level of on-console logging (set to 1).
+Here, for instance, we see that our solver is registered with a user-chosen name (``SinglePhaseFlow``).
+From now on, this unique name will be used in the parameter file and in the code to point to this instance of a SinglePhaseFVM solver.
+We also set a solver-specific level of on-console logging (set to 1 here).
 
 For solvers of the ``SinglePhaseFVM`` family, we must specify a discretization scheme.
 Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme, a typical discretization scheme
@@ -121,30 +122,69 @@ Here, for instance, we specify values for numerical tolerances
 and for the maximum number of iterations allowed to reach convergence.
 
 
+
+
 .. _Mesh_tag_single_phase_internal_mesh:
 
-Mesh tag
--------------
-GEOSX  allows you to either internally build your mesh or import it from a compatible format thanks to PAMELA (see :ref:`ImportingExternalMesh`).
-For this test case, we will use an internally generated 10x10x10 uniform regular mesh
+Specifying a computational Mesh
+----------------------------------
+
+The single-phase flow solver in GEOSX uses cell-centered finite volume computations.
+We must thus a define a mesh (or grid) as a numerical support to work on.
+The **Mesh** element allows users to specify this support.
+
+There are two approaches to specifying meshes in GEOSX: internal or external.
+The external approach consists of importing mesh files created outside of GEOSX, such as a
+corner-point grids or generic unstructured grids.
+The internal approach consists of using a tool in GEOSX called the internal mesh generator.
+The internal mesh generator is useful to create grids on-the-fly
+from a small number of geometric parameters, without external file imports.
+
+In this tutorial, to keep things as simple and self-contained as possible,
+we use GEOSX's internal mesh generator, parameterized in the **InternalMesh** element.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_MESH -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_MESH_END -->
 
+
+Here, we create a mesh registered as ``mesh1`` (this registration name is chosen by the user),
+consisting of elements of type ``C3D8`` (this is a code from the usual finite
+element nomenclature for a general purpose linear 8-node brick element).
+Elements in the x-direction go from x=0 to x=10. The x-dimension is divided into nx=10 elements.
+The same is true for the y-dimension and the z-dimension.
+
+We therefore have a cube of 10x10x10 elements with a bounding box defined by corner coordinates (0,0,0) and (10,10,10).
+
+
+.. image:: cube_mesh_10x10x10.png
+
+
 .. _Geometry_tag_single_phase_internal_mesh:
 
 Geometry tag
 -----------------
-On the Geometry side, we will define and name our boxes for source and sink pressure terms.
+
+The **Geometry** tag is useful to point to specific parts of a mesh and assign properties to them.
+Here, for instance, we use two **Box** elements to specify where our source and sink pressure terms are located.
+We want the source to be all elements along the x=0 face of the domain, and the sink to be all the elements at x=10.
+
+Note that for an element to be considered **inside** a geometric region, it needs to have all vertices inside the region.
+This explains why we need to extend the geometry limits to 0.01 beyond the minimum and maximum coordinates, to be sure to encompass the entire elements.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_GEOMETRY -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_GEOMETRY_END -->
 
-One could also define surfaces on which to specified a Dirichlet boundary condition.
+There are several methods to achieve similar conditions (Dirichlet boundary condition on faces, etc.).
+The **Box** defined here is one of the simplest approach.
+Boxes defined here are named objects, and will be registered and used using their names (``source`` and ``sink``).
+
+
+.. image:: cube_initial.png
+
 
 .. _Events_tag_single_phase_internal_mesh:
 
