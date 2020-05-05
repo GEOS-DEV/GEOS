@@ -166,12 +166,13 @@ We therefore have a cube of 10x10x10 elements with a bounding box defined by cor
 Geometry tag
 -----------------
 
-The **Geometry** tag is useful to point to specific parts of a mesh and assign properties to them.
+The **Geometry** tag is useful to define specific parts of a mesh and assign properties to them.
 Here, for instance, we use two **Box** elements to specify where our source and sink pressure terms are located.
 We want the source to be all elements along the x=0 face of the domain, and the sink to be all the elements at x=10.
+Later in the file, we will assign a high pressure to the source box, and a low pressure to the sink box.
 
-Note that for an element to be considered **inside** a geometric region, it needs to have all vertices inside the region.
-This explains why we need to extend the geometry limits to 0.01 beyond the minimum and maximum coordinates, to be sure to encompass the entire elements.
+Note that for an element to be considered **inside** a geometric region, it needs to have all its vertices inside the region.
+This explains why we need to extend the geometry limits to 0.01 beyond the coordinates of the elements, to be sure to catch all vertices.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -188,52 +189,70 @@ Boxes defined here are named objects, and will be registered and used using thei
 
 .. _Events_tag_single_phase_internal_mesh:
 
-Events tag
----------------
-The Event tag includes the final time of our simulation under ``maxTime`` node. Under *PeriodicEvent* embededd tags, we can set:
+Specifying events
+------------------------
 
- #. which solver has to be called (among the child tag defined under the above mentinoned *Solver* tag) with its initial time step defined as the ``forceDt`` node value.
- #. under which ``timeFrequency`` will we need to output results (targeting the settings defined under some child tag of the below explained *Output* tag).
+In GEOSX, we call **Events** anything that happens at a set time, or a set frequency (**PeriodicEvents**).
+Events are very important elements in a simulation, and are reviewed in more details in a dedicated section.
+For now, we focus on three types of events: the time at which we wish the simulation to end (``maxTime``),
+times at which we want the solver to perform computations, and the times we wish to have simulation outputs reported.
+All times are specified in seconds.
+
+
+If we focus on the two periodic events, we see :
+
+ #. A periodic solver application: this event is registered here as ``solverApplications`` (this is a user-defined name), and with ``forceDt=20``, it has a forced time step of 20 seconds. We know what it does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we call the solver registered as ``SinglePhaseFlow`` (this is the name of the solver instance defined in the **Solvers** element). Note that if the solver needs to take smaller time steps than 20 seconds (for convergence, for instance) it can do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps taken.
+ #. An output event: this event is for reporting purposes and forces GEOSX to write out results at specific frequencies (here, every 100 seconds). The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this event must be always be done with a full application of solvers, even if solve frequencies are not synchronized. With this flag set to 1, an output event may thus force an application of solvers in addition to the periodic events requested directly by solvers.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_EVENTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
 
+
 .. _NumericalMethods_tag_single_phase_internal_mesh:
 
-NumericalMethods tag
-------------------------
+Defining Numerical Methods
+----------------------------------
 
-The two-point flux approximation, which was first introduced under the *Solver>SinglePhaseFlow* child tag as the value of ``discretization`` node, is defined here.
+In the Solvers elements, we have specified that we wish to use two-point flux approximation as our discretization method for this finite volume solver.
+We are going to supply more details about this numerical scheme here, in the **NumericalMethods** element.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
 
-Here the ``boundaryFieldName`` node specifies that for Dirichlet boundary conditions the face located value is considered. The ``coefficientName`` node refers to the field which has to be considered in the stencil computation.
+The ``fieldName`` attribute specifies which property will be used for flux computations.
+The ``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
+the pressure at the element face value is used.
+The ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
 .. _ElementRegions_tag_single_phase_internal_mesh:
 
-Element Regions tag
----------------------
+Defining regions in the mesh
+-----------------------------------
 
-This block defines regions.
-Here, the entire field is one region called ``Domain``,
-and contains ``water`` and ``rock`` only.
+An **ElementRegions** element is used to list all the regions used in the simulation.
+Here we use only a single region to represent the entire domain (named ``Region2``),
+with a collection of elements containing only the ``cb1`` blocks defined in the mesh section.
+We must also specify the material contained in that region (here, two materials are used: ``water`` and ``rock``; their properties will be defined next).
+
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
 
+
 .. _Constitutive_tag_single_phase_internal_mesh:
 
-Constitutive tag
----------------------
+Defining material properties with constitutive laws
+---------------------------------------------------------------------
 
-The physical properties of ``water`` and ``rock`` elements can be found and set under this tag.
+The **Constitutive** element allows to list all elements contained in the domain.
+Here, the physical properties of the elements defined as ``water`` and ``rock`` are specified under this tag,
+each with a specific type (a ``CompressibleSinglePhaseFluid`` for the water, and a ``PoreVolumeCompressibleSolid`` for the rock).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -242,12 +261,14 @@ The physical properties of ``water`` and ``rock`` elements can be found and set 
 
 .. _FieldSpecifications_tag_single_phase_internal_mesh:
 
-FieldSpecifications tag
----------------------------
-Here, fields such as porosity, permeability, source and sink terms or initial field values are specified. Our test case exhibits an anisotropic homogeneous permeability which components are so that:
-  - permeability in the x-direction: ``permx``, constant value of 1.0e-12 m\ :sup:`2` (100 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
-  - permeability in the y-direction: ``permy``, constant value of 1.0e-12 m\ :sup:`2` (100 mD),
-  - a lower permeability in the z-direction: ``permz``, constant value of 1.0e-15 m\ :sup:`2` (10 mD)
+Defining properties with the FieldSpecifications
+---------------------------------------------------------------------
+
+Here, fields such as porosity, permeability, source and sink terms or initial field values are specified.
+Our test case exhibits an anisotropic homogeneous permeability which components are so that:
+  - permeability in the x-direction: ``permx``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
+  - permeability in the y-direction: ``permy``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy),
+  - a lower permeability in the z-direction: ``permz``, constant value of 1.0e-15 m\ :sup:`2` (1 mD)
 
 The ``setNames`` node value specifies the geometric zone where the value should be applied.
 These directional permeabilities are followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
@@ -260,7 +281,7 @@ The other fields to be specified are a constant homogeneous reference porosity f
 
 .. _Functions_tag_single_phase_internal_mesh:
 
-Here we leave ``Functions`` and ``Partition`` tags unspecified as the description of their use are detailed in other tutorials.
+Here we leave ``Functions`` element empty. The description of the Functions elements is detailed in another tutorial.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -269,9 +290,10 @@ Here we leave ``Functions`` and ``Partition`` tags unspecified as the descriptio
 
 .. _Outputs_tag_single_phase_internal_mesh:
 
-Outputs tag
-----------------
-In order to get the results from simulation written to file, we specify the output path:
+Specifying the output formats
+----------------------------------
+
+In order to get the results from simulation written to visualization and post-processing file(s), we specify the output path:
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
