@@ -1,3 +1,5 @@
+.. _GettingStartedWithGEOSX:
+
 Getting and compiling the codes
 ###############################
 
@@ -80,7 +82,7 @@ They are very similar, and you may whether define the dedicated (classical) envi
 Starting with the third-party libraries, the config-build.script will run cmake for you.
 More details about compiling the thirdPartyLibs are provided in :ref:`Third party libraries build management pattern`.
 
-.. code-block:: sh
+.. code-block:: console
 
    cd thirdPartyLibs
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
@@ -90,7 +92,7 @@ More details about compiling the thirdPartyLibs are provided in :ref:`Third part
 The next step is to compile the main code.
 Again, the config-build sets up cmake for you.
 
-.. code-block:: sh
+.. code-block:: console
 
    cd ../../GEOSX
    python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release
@@ -102,7 +104,7 @@ Again, the config-build sets up cmake for you.
 Running the tests
 =================
 
-It is wise to run the unit tests. You can run them in the build folder GEOSX: `ctest -V`.
+It is wise to run the unit tests. You can run them in the build folder GEOSX: ``ctest -V``.
 Running the integrated tests shall be considered to. This task it a little more complex, so please refer to :ref:`Integrated Tests` for further information.
 
 Running GEOSX

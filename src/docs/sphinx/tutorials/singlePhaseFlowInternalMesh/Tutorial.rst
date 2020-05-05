@@ -291,8 +291,8 @@ We must also specify the material contained in that region (here, two materials 
 Defining material properties with constitutive laws
 ---------------------------------------------------------------------
 
-The **Constitutive** element allows to list all elements contained in the domain.
-Here, the physical properties of the elements defined as ``water`` and ``rock`` are specified under this tag,
+The **Constitutive** element allows to list all materials contained in the domain.
+In this tutorial, the physical properties of the elements defined as ``water`` and ``rock`` are provided under this tag,
 each with a specific type (a ``CompressibleSinglePhaseFluid`` for the water, and a ``PoreVolumeCompressibleSolid`` for the rock).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -307,6 +307,7 @@ Defining properties with the FieldSpecifications
 
 Here, fields such as porosity, permeability, source and sink terms or initial field values are specified.
 Our test case exhibits an anisotropic homogeneous permeability which components are so that:
+
   - permeability in the x-direction: ``permx``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
   - permeability in the y-direction: ``permy``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy),
   - a lower permeability in the z-direction: ``permz``, constant value of 1.0e-15 m\ :sup:`2` (1 mD)
