@@ -487,10 +487,6 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
  */
 TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 {
-#ifdef GEOSX_USE_PETSC
-  SKIP_TEST_IF( (std::is_same< TypeParam, PetscInterface >::value), "https://github.com/GEOSX/GEOSX/issues/790" );
-#endif
-
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using Matrix = typename TypeParam::ParallelMatrix;
   using Vector = typename TypeParam::ParallelVector;
@@ -503,6 +499,10 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   // Compute a 2D Laplace operator
   Matrix matrix;
   compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
+
+  // Condition number for the Laplacian matrix estimate
+  // cond_estimate = 4 * n^2 / pi^2
+  real64 matrix_condition_number = 4.0 * n * n / pow( acos( -1.0 ), 2 );
 
   // Define some vectors
   Vector x_true;
@@ -547,21 +547,6 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   LinearSolverParameters parameters;
   Solver solver( parameters );
 
-  // Set basic options
-  parameters.logLevel = 0;
-  parameters.solverType = "cg";
-  parameters.krylov.tolerance = 1e-8;
-  parameters.krylov.maxIterations = 250;
-  parameters.preconditionerType = "amg";
-  parameters.amg.smootherType = "gaussSeidel";
-  parameters.amg.coarseType = "direct";
-
-  // Solve using the iterative solver and compare norms with true solution
-  solver.solve( matrix, x_comp, b );
-  real64 norm_comp = x_comp.norm2();
-  real64 norm_true = x_true.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-6 );
-
   // We now do the same using a direct solver.
   // Again the norm should be the norm of x. We use a tougher tolerance on the test
   // compared to the iterative solution. This should be accurate to machine precision
@@ -569,8 +554,40 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   x_comp.zero();
   parameters.solverType = "direct";
   solver.solve( matrix, x_comp, b );
+  real64 norm_comp = x_comp.norm2();
+  real64 norm_true = x_true.norm2();
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+             matrix_condition_number * machinePrecision );
+
+  // We now switch to Krylov solvers
+  parameters.logLevel = 2;
+  parameters.krylov.tolerance = 1e-8;
+  parameters.krylov.maxIterations = 250;
+  // We now do the same using ILU(k) preconditioned GMRES
+  // Again the norm should be the norm of x.
+  parameters.solverType = "gmres";
+  parameters.preconditionerType = "ilu";
+  parameters.ilu.fill = 1;
+  x_comp.zero();
+  solver.solve( matrix, x_comp, b );
+
   norm_comp = x_comp.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 1e-12 );
+
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+             matrix_condition_number * parameters.krylov.tolerance );
+
+  // Set basic options
+  parameters.solverType = "cg";
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
+  norm_comp = x_comp.norm2();
+  // Solve using the iterative solver and compare norms with true solution
+  x_comp.zero();
+  solver.solve( matrix, x_comp, b );
+
+  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+             matrix_condition_number * parameters.krylov.tolerance );
 }
 
 
