@@ -110,66 +110,6 @@ void SolverBase::ExpandObjectCatalogs()
   CreateChild( NonlinearSolverParameters::CatalogName(), NonlinearSolverParameters::CatalogName() );
 }
 
-/*
-   void SolverBase::PostProcessInput()
-   {
-   SetLinearSolverParameters();
-   }
- */
-/*
-   void SolverBase::SetLinearSolverParameters()
-   {
-   m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
-
-   if( m_systemSolverParameters.scalingOption() )
-   {
-    m_linearSolverParameters.scaling.useRowScaling = true;  //TODO: this should not be the default
-   }
-
-   if( m_systemSolverParameters.useDirectSolver() )
-   {
-    m_linearSolverParameters.solverType = "direct";
-   }
-   else
-   {
-    m_linearSolverParameters.krylov.maxIterations = m_systemSolverParameters.numKrylovIter();
-    m_linearSolverParameters.krylov.tolerance = m_systemSolverParameters.krylovTol();
-
-    if( m_systemSolverParameters.kspace() > 0 )
-    {
-      m_linearSolverParameters.krylov.maxRestart = m_systemSolverParameters.kspace();
-    }
-
-    if( m_systemSolverParameters.useBicgstab() )
-    {
-      m_linearSolverParameters.solverType = "bicgstab";
-    }
-    else
-    {
-      m_linearSolverParameters.solverType = "gmres";
-    }
-
-    if( m_systemSolverParameters.useMLPrecond() )
-    {
-      m_linearSolverParameters.preconditionerType = "amg";
-
-      // TODO hardcoded to match old behavior
-      m_linearSolverParameters.amg.cycleType = "W";
-      m_linearSolverParameters.amg.smootherType = "ilu";
-    }
-    else
-    {
-      m_linearSolverParameters.preconditionerType = "ilut";
-      m_linearSolverParameters.ilu.fill = static_cast< int >( m_systemSolverParameters.ilut_fill() );
-      m_linearSolverParameters.ilu.threshold = m_systemSolverParameters.ilut_drop();
-
-      // TODO hardcoded to match old behavior
-      m_linearSolverParameters.dd.overlap = 1;
-    }
-   }
-   }
- */
-
 bool SolverBase::CheckModelNames( array1d< string > & modelNames,
                                   string const & attribute,
                                   bool const allowEmpty ) const

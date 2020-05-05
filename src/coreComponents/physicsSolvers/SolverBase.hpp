@@ -179,7 +179,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
@@ -206,7 +206,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
   LineSearch( real64 const & time_n,
@@ -236,7 +236,7 @@ public:
    * assumes that the solution is achieved in a iteration. The use of this function requires that
    * the other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 LinearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
