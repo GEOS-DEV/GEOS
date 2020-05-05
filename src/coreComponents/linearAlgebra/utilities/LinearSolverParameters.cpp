@@ -29,49 +29,60 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
   setInputFlags( InputFlags::OPTIONAL );
   enableLogLevelInput();
 
-  // note: default parameter values currently set by base class
+  // note: default parameter values preset by base class
 
   registerWrapper( viewKeysStruct::solverTypeString, &solverType )->
+    setApplyDefaultValue( solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Linear solver type" );
 
   registerWrapper( viewKeysStruct::preconditionerTypeString, &preconditionerType )->
+    setApplyDefaultValue( preconditionerType )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Preconditioner type" );
 
   registerWrapper( viewKeysStruct::krylovTolString, &krylov.tolerance )->
+    setApplyDefaultValue( krylov.tolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Relative convergence tolerance" );
 
   registerWrapper( viewKeysStruct::krylovAdaptiveTolString, &krylov.useAdaptiveTol )->
+    setApplyDefaultValue( krylov.useAdaptiveTol )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Use Eisenstat-Walker adaptive linear tolerance" );
 
   registerWrapper( viewKeysStruct::krylovMaxIterString, &krylov.maxIterations )->
+    setApplyDefaultValue( krylov.maxIterations )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum iterations allowed" );
 
   registerWrapper( viewKeysStruct::amgNumSweepsString, &amg.numSweeps )->
+    setApplyDefaultValue( amg.numSweeps )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG smoother sweeps" );
 
   registerWrapper( viewKeysStruct::amgSmootherString, &amg.smootherType )->
+    setApplyDefaultValue( amg.smootherType )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG smoother type" );
 
   registerWrapper( viewKeysStruct::amgCoarseString, &amg.coarseType )->
+    setApplyDefaultValue( amg.coarseType )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG coarsest level solver/smoother type" );
 
   registerWrapper( viewKeysStruct::amgAggregationString, &amg.aggregationThreshold )->
+    setApplyDefaultValue( amg.aggregationThreshold )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG aggregation threshold" );
 
   registerWrapper( viewKeysStruct::iluFillString, &ilu.fill )->
+    setApplyDefaultValue( ilu.fill )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "ILU(K) fill factor" );
 
   registerWrapper( viewKeysStruct::iluThresholdString, &ilu.threshold )->
+    setApplyDefaultValue( ilu.threshold )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "ILU(T) threshold factor" );
 }

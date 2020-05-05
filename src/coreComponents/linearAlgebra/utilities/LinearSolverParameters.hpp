@@ -36,7 +36,7 @@ public:
 
   integer logLevel = 0;                //!< Output level [0=none, 1=basic, 2=everything]
   string solverType = "direct";        //!< Solver type [direct, cg, gmres, bicgstab, preconditioner]
-  string preconditionerType = "ilut";  //!< Preconditioner type [none, iluk, ilut, icc, amg]
+  string preconditionerType = "ilu";   //!< Preconditioner type [none, iluk, ilut, icc, amg]
   integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
 
   struct
