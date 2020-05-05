@@ -827,7 +827,7 @@ void LagrangianContactFlowSolver::AddTransmissibilityDerivativePattern( DomainPa
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -888,7 +888,7 @@ void LagrangianContactFlowSolver::AddTransmissibilityDerivativePattern( DomainPa
             {
               for( localIndex i = 0; i < 3; ++i )
               {
-                colDOF[kf1*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
+                colDOF[kf1*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
               }
             }
           }
@@ -917,7 +917,7 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   arrayView1d< R1Tensor > const &
   fext = nodeManager->getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -975,7 +975,7 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
             {
               for( localIndex i=0; i<3; ++i )
               {
-                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + integer_conversion< globalIndex >( i );
+                rowDOF[3*a+i] = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
                 nodeRHS[3*a+i] = +globalNodalForce[i] * pow( -1, kf );
                 fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
@@ -1023,10 +1023,10 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
   string const presDofKey = dofManager.getKey( m_pressureKey );
@@ -1085,7 +1085,8 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
               {
                 for( int i=0; i<3; ++i )
                 {
-                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i]  = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] + integer_conversion< globalIndex >( i );
+                  nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )]
+                                                           + LvArray::integerConversion< globalIndex >( i );
                   real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
                   dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
                 }
@@ -1121,7 +1122,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
                 for( int i=0; i<3; ++i )
                 {
                   nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe2][kf], a )]
-                                                            + integer_conversion< globalIndex >( i );
+                                                            + LvArray::integerConversion< globalIndex >( i );
                   real64 const dAper_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
                   dRdU( kf*3*numNodesPerFace + 3*a+i ) = dR_dAper * dAper_dU;
                 }
