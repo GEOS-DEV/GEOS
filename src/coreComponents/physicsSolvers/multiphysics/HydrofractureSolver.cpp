@@ -306,7 +306,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
   // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   ConstitutiveManager const * const
   constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
@@ -761,7 +761,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
         localSet.insert( a );
       }
     }
-    bc->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet,
+    bc->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet.toViewConst(),
                                                            dispDofNumber,
                                                            m_matrix01 );
   } );
@@ -800,7 +800,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       }
     }
 
-    fs->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet,
+    fs->ZeroSystemRowsForBoundaryCondition< LAInterface >( localSet.toViewConst(),
                                                            dofNumber,
                                                            m_matrix10 );
   } );
@@ -957,7 +957,7 @@ HydrofractureSolver::
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   arrayView1d< R1Tensor > const &
   fext = nodeManager->getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -1075,7 +1075,7 @@ HydrofractureSolver::
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
   CRSMatrixView< real64 const, localIndex const > const &
-  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture();
+  dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
   ContactRelationBase const * const
   contactRelation = constitutiveManager->GetGroup< ContactRelationBase >( m_contactRelationName );
@@ -1105,7 +1105,7 @@ HydrofractureSolver::
     arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
 
@@ -1223,6 +1223,8 @@ HydrofractureSolver::
 
 }
 
+#include "Epetra_FEVector.h"
+#include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"

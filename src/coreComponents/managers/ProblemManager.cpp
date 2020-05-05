@@ -136,8 +136,13 @@ ProblemManager::ProblemManager( const std::string & name,
     setApplyDefaultValue( 0 )->
     setRestartFlags( RestartFlags::WRITE )->
     setDescription( "Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering)." );
-}
 
+  commandLine->registerWrapper< integer >( viewKeys.suppressPinned.Key( ) )->
+    setApplyDefaultValue( 0 )->
+    setRestartFlags( RestartFlags::WRITE )->
+    setDescription( "Whether to disallow using pinned memory allocations for MPI communication buffers." );
+
+}
 
 ProblemManager::~ProblemManager()
 {}
@@ -179,6 +184,7 @@ void ProblemManager::ParseCommandLineInput()
   commandLine->getReference< integer >( viewKeys.zPartitionsOverride ) = opts.zPartitionsOverride;
   commandLine->getReference< integer >( viewKeys.overridePartitionNumbers ) = opts.overridePartitionNumbers;
   commandLine->getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
+  commandLine->getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
   std::string & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
   inputFileName = opts.inputFileName;
@@ -487,6 +493,9 @@ void ProblemManager::PostProcessInput()
   integer const & xparCL = commandLine->getReference< integer >( viewKeys.xPartitionsOverride );
   integer const & yparCL = commandLine->getReference< integer >( viewKeys.yPartitionsOverride );
   integer const & zparCL = commandLine->getReference< integer >( viewKeys.zPartitionsOverride );
+
+  integer const & suppressPinned = commandLine->getReference< integer >( viewKeys.suppressPinned );
+  setPreferPinned((suppressPinned == 0));
 
   PartitionBase & partition = domain->getReference< PartitionBase >( keys::partitionManager );
   bool repartition = false;

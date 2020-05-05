@@ -519,7 +519,7 @@ public:
    * @copydoc referenceAsView()
    */
   template< class U=T >
-  std::enable_if_t< !traits::HasMemberFunction_toView< U >, traits::ViewType< U > >
+  std::enable_if_t< !traits::HasMemberFunction_toView< U >, traits::ViewTypeConst< U > >
   referenceAsView() const
   { return *m_data; }
 
