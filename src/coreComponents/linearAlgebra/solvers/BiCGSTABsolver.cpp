@@ -19,10 +19,9 @@
 
 #include "BiCGSTABsolver.hpp"
 
+#include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/utilities/BlockOperatorView.hpp"
-#include "linearAlgebra/utilities/BlockVectorView.hpp"
 
 namespace geosx
 {
@@ -61,111 +60,101 @@ template< typename VECTOR >
 void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
-  // Shortcuts for operators
-  LinearOperator< VECTOR > const & A = m_operator;
-  LinearOperator< VECTOR > const & M = m_precond;
-
-  // Get the global size and resize residual norm vector
-  localIndex const N = m_maxIterations;
-  m_residualNormVector.resize( N + 1 );
+  Stopwatch watch;
 
   // Get the norm of the right hand side
-  real64 const normb = b.norm2();
+  real64 const bnorm = b.norm2();
 
   // Define vectors
-  VectorTemp rk( x );
+  VectorTemp r( x );
 
   // Compute initial rk
-  A.residual( x, b, rk );
-  m_residualNormVector[0]= rk.norm2();
+  m_operator.residual( x, b, r );
 
   // Define vectors
-  VectorTemp r0_hat( rk );
+  VectorTemp r0( r );
 
-  // Define scalars and initialize some
-  real64 rhok_1 = rk.dot( r0_hat );
+  // Define scalars and reinitialize some
+  real64 rho_old = r.dot( r0 );
   real64 alpha = 1.0;
-  real64 omegak = 1.0;
+  real64 omega = 1.0;
 
-  // Define vectors and set them to 0
-  VectorTemp vk( rk ); vk.zero();
-  VectorTemp pk( rk ); pk.zero();
-  VectorTemp y( rk );
-  VectorTemp z( rk );
-  VectorTemp t( rk );
-  VectorTemp s( rk );
-  VectorTemp h( x );
-  VectorTemp q( x );
+  // Define temporary vectors
+  VectorTemp v = createTempVector( r );
+  VectorTemp p = createTempVector( r );
+  VectorTemp y = createTempVector( r );
+  VectorTemp z = createTempVector( r );
+  VectorTemp t = createTempVector( r );
+  VectorTemp s = createTempVector( r );
+  VectorTemp q = createTempVector( x );
 
-  localIndex k;
-  for( k = 0; k < N; k++ )
+  v.zero();
+  p.zero();
+  m_result.status = LinearSolverResult::Status::NotConverged;
+  m_residualNorms.resize( m_maxIterations + 1 );
+
+  for( localIndex k = 0; k <= m_maxIterations; ++k, ++m_result.numIterations )
   {
-    // Compute r0_hat.rk
-    real64 const rhok = rk.dot( r0_hat );
-
-    // Compute beta
-    real64 const beta = rhok / rhok_1 * alpha / omegak;
-
-    // Keep the old value of rho
-    rhok_1 = rhok;
-
-    // Update pk = rk + beta*(pk - omega*vk)
-    pk.axpy( -omegak, vk );
-    pk.axpby( 1., rk, beta );
-
-    // Uptate vk = MApk
-    M.apply( pk, y );
-    A.apply( y, vk );
-
-    // Compute alpha
-    alpha = rhok / vk.dot( r0_hat );
-
-    // compute h = x + alpha*y
-    h.copy( x );
-    h.axpy( alpha, y );
-
-    // Compute s = rk - alpha*vk
-    s.copy( rk );
-    s.axpy( -alpha, vk );
-
-    // Compute z = Ms
-    M.apply( s, z );
-
-    // Compute t = Az
-    A.apply( z, t );
-
-    // Compute t = Mt
-    M.apply( t, q );
-
-    // Update omega
-    omegak = q.dot( z ) / q.dot( q );
-
-    // Update x = h + omega*z
-    h.axpy( omegak, z );
-    x.copy( h );
-
-    // Update rk = s - omega*t
-    s.axpy( -omegak, t );
-    rk.copy( s );
-    m_residualNormVector[ k+1 ] = rk.norm2();
+    real64 const rnorm = r.norm2();
+    logProgress( k, rnorm );
 
     // Convergence check on ||rk||/||b||
-    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
+    if( ( m_result.residualReduction = rnorm / bnorm ) < m_tolerance )
     {
+      m_result.status = LinearSolverResult::Status::Success;
       break;
     }
 
+    // Compute r0.rk
+    real64 const rho = r.dot( r0 );
+
+    // Compute beta
+    real64 const beta = rho / rho_old * alpha / omega;
+
+    // Update p = r + beta*(p - omega*v)
+    p.axpy( -omega, v );
+    p.axpby( 1., r, beta );
+
+    // Update vk = MApk
+    m_precond.apply( p, y );
+    m_operator.apply( y, v );
+
+    // Compute alpha
+    alpha = rho / v.dot( r0 );
+
+    // compute x = x + alpha*y
+    x.axpy( alpha, y );
+
+    // Compute s = rk - alpha*vk
+    s.copy( r );
+    s.axpy( -alpha, v );
+
+    // Compute z = Ms
+    m_precond.apply( s, z );
+
+    // Compute t = Az
+    m_operator.apply( z, t );
+
+    // Compute t = Mt
+    m_precond.apply( t, q );
+
+    // Update omega
+    omega = q.dot( z ) / q.dot( q );
+
+    // Update x = x + omega*z
+    x.axpy( omega, z );
+
+    // Update rk = s - omega*t
+    s.axpy( -omega, t );
+    r.copy( s );
+
+    // Keep the old value of rho
+    rho_old = rho;
   }
 
-  // Convergence statistics
-  m_numIterations = k;
-  m_convergenceFlag = k < N;
-  m_residualNormVector.resize( m_numIterations + 1 );
-
-  if( m_verbosity >= 1 )
-  {
-    GEOSX_LOG_RANK_0( "BiCGSTAB " << (k < N ? "converged" : "did not converge") << " in " << k << " iterations." );
-  }
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.solveTime = watch.elapsedTime();
 }
 
 // END_RST_NARRATIVE

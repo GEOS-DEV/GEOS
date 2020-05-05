@@ -17,8 +17,10 @@
  *
  */
 
+
 #include "CGsolver.hpp"
 
+#include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
@@ -59,83 +61,75 @@ CGsolver< VECTOR >::~CGsolver() = default;
 // Monolithic CG solver
 // ----------------------------
 template< typename VECTOR >
-void CGsolver< VECTOR >::solve( Vector const & b,
-                                Vector & x ) const
+void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
 {
-  // Shortcuts for operators
-  LinearOperator< VECTOR > const & A = m_operator;
-  LinearOperator< VECTOR > const & M = m_precond;
-
-  // Get the global size and resize residual norm vector
-  localIndex const N = m_maxIterations;
-  m_residualNormVector.resize( N + 1 );
+  Stopwatch watch;
 
   // Get the norm of the right hand side
-  real64 const normb = b.norm2();
+  real64 const bnorm = b.norm2();
 
   // Define residual vector
-  VectorTemp rk( x );
+  VectorTemp r = createTempVector( b );
 
   // Compute initial rk =  b - Ax
-  A.residual( x, b, rk );
-  m_residualNormVector[0]= rk.norm2();
+  m_operator.residual( x, b, r );
 
   // Preconditioning
-  VectorTemp zk( x );
-  M.apply( rk, zk );
+  VectorTemp z = createTempVector( x );
 
-  // pk = zk
-  VectorTemp pk( zk );
-  VectorTemp Apk( zk );
+  // Search direction
+  VectorTemp p = createTempVector( z );
+  VectorTemp Ap = createTempVector( z );
 
-  // Declare older vectors
-  VectorTemp rkold( rk );
-  VectorTemp zkold( zk );
+  // Keep old value of preconditioned residual norm
+  real64 tau_old = 0.0;
 
-  localIndex k;
-  for( k = 0; k < N; k++ )
+  p.zero();
+  m_result.status = LinearSolverResult::Status::NotConverged;
+  m_residualNorms.resize( m_maxIterations + 1 );
+
+  for( localIndex k = 0; k <= m_maxIterations; ++k, ++m_result.numIterations )
   {
-    // Compute Apk
-    A.apply( pk, Apk );
-
-    // compute alpha
-    real64 const alpha = rk.dot( zk ) / pk.dot( Apk );
-
-    // Update x = x + alpha*ph
-    x.axpby( alpha, pk, 1.0 );
-
-    // Update rk = rk - alpha*Apk
-    rkold.copy( rk );
-    zkold.copy( zk );
-    rk.axpby( -alpha, Apk, 1.0 );
-    m_residualNormVector[ k+1 ] = rk.norm2();
+    real64 const rnorm = r.norm2();
+    logProgress( k, rnorm );
 
     // Convergence check on ||rk||/||b||
-    if( m_residualNormVector[ k+1 ] / normb < 1e-8 )
+    if( ( m_result.residualReduction = rnorm / bnorm ) < m_tolerance )
     {
+      m_result.status = LinearSolverResult::Status::Success;
       break;
     }
 
-    // Update zk = Mrk
-    M.apply( rk, zk );
+    // Update z = Mr
+    m_precond.apply( r, z );
 
     // Compute beta
-    real64 const beta = zk.dot( rk ) / zkold.dot( rkold );
+    real64 const tau = z.dot( r );
+    real64 const beta = k > 0 ? tau / tau_old : 0.0;
 
-    // Update pk = pk + beta*zk
-    pk.axpby( 1.0, zk, beta );
+    // Update p = z + beta*p
+    p.axpby( 1.0, z, beta );
+
+    // Compute Ap
+    m_operator.apply( p, Ap );
+
+    // compute alpha
+    real64 const alpha = tau / p.dot( Ap );
+
+    // Update x = x + alpha*p
+    x.axpby( alpha, p, 1.0 );
+
+    // Update rk = rk - alpha*Ap
+    r.axpby( -alpha, Ap, 1.0 );
+
+    // Keep the old tau value
+    tau_old = tau;
   }
 
-  // Convergence statistics
-  m_numIterations = k;
-  m_convergenceFlag = k < N;
-  m_residualNormVector.resize( m_numIterations + 1 );
-
-  if( m_verbosity >= 1 )
-  {
-    GEOSX_LOG_RANK_0( "CG " << (k < N ? "converged" : "did not converge") << " in " << k << " iterations." );
-  }
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.solveTime = watch.elapsedTime();
 }
 
 // END_RST_NARRATIVE

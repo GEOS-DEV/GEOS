@@ -507,6 +507,26 @@ protected:
   virtual void applyTranspose( Vector const & src, Vector & dst ) const = 0;
 
   /**
+   * @brief Compute residual <tt>r = Ax - b</tt>.
+   *
+   * Overrides LinearOperator::residual().
+   *
+   * @param x Input solution.
+   * @param b Input right hand side.
+   * @param r Output residual.
+   *
+   * @note @p x and @p r cannot alias the same vector.
+   */
+  virtual void residual( Vector const & x, Vector const & b, Vector & r ) const override
+  {
+    if( &b != &r )
+    {
+      r.copy( b );
+    }
+    gemv( -1.0, x, 1.0, r );
+  }
+
+  /**
    * @brief Matrix/Matrix multiplication.
    *
    * Compute <tt>this * B = C</tt>.
@@ -604,6 +624,7 @@ protected:
    * @param y Output vector.
    * @param useTranspose Boolean, set to true to use <tt>A^T</tt>.
    *
+   * @warning @p x and @p y cannot alias the same vector.
    */
   virtual void gemv( real64 const alpha,
                      Vector const & x,
@@ -661,6 +682,25 @@ protected:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) = 0;
 
+  /**
+   * @brief Add entries of another matrix to this.
+   * @param src   the source matrix
+   * @param scale factor to scale entries of @p src by
+   *
+   * @note Sparsity pattern of @p this must be a superset of sparsity of @p src.
+   *       @p this and @p src must have the same parallel row distribution.
+   */
+  virtual void addEntries( Matrix const & src, real64 const scale = 1.0 ) = 0;
+
+  /**
+   * @brief Add entries of a vector to the diagonal of this matrix.
+   * @param src the source vector
+   *
+   * @note @p this must be square and have a (possibly zero) diagonal entry in every row.
+   *       @p this and @p src must have the same parallel row distribution.
+   */
+  virtual void addDiagonal( Vector const & src ) = 0;
+
   ///@}
 
   /**
@@ -707,6 +747,12 @@ protected:
   virtual real64 getDiagValue( globalIndex globalRow ) const = 0;
 
   /**
+   * @brief Extract diagonal values into a vector.
+   * @param dst the target vector, must have the same row partitioning as @p this
+   */
+  virtual void extractDiagonal( Vector & dst ) const = 0;
+
+  /**
    * @brief Returns the number of global rows.
    */
   virtual globalIndex numGlobalRows() const override = 0;
@@ -733,12 +779,30 @@ protected:
   virtual globalIndex ilower() const = 0;
 
   /**
-   * @brief Returns the next index after last global row owned by that processor.
+   * @brief Returns index one past the last global row owned by that processor.
    * @return the next index after last global row owned by that processor
    *
    * @note The intention is for [ilower; iupper) to be used as a half-open index range
    */
   virtual globalIndex iupper() const = 0;
+
+  /**
+   * @brief Returns the index of the first global col owned by that processor.
+   *
+   * @note Matrix implementations don't physically "own" column ranges the same way
+   * they do row ranges. Instead, the column range refers to the "diagonal" block of
+   * columns which would correspond to the local range of entries of a vector created
+   * with the same local/global size as the number of matrix columns.
+   */
+  virtual globalIndex jlower() const = 0;
+
+  /**
+   * @brief Returns index one past the last global col owned by that processor.
+   *
+   * @note The intention is for [jlower; jupper) to be used as a half-open index range.
+   * @note Also see note for @p jlower() about the meaning of "owned" columns.
+   */
+  virtual globalIndex jupper() const = 0;
 
   /**
    * @brief Returns the number of nonzeros in the local portion of the matrix

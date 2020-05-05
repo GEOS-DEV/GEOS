@@ -25,35 +25,32 @@
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
 /**
- * @struct hypre_IJMatrix_struct
- * @brief Just a placeholder to avoid to include "_hypre_IJ_mv.h"
+ * @name Hypre forward declarations.
+ *
+ * Forward declare hypre's matrix structs and pointer aliases in order
+ * to avoid including hypre headers and leaking into the rest of GEOSX.
  */
-struct hypre_IJMatrix_struct;
+///@{
 
-/**
- * @var typedef struct hypre_IJMatrix_struct * HYPRE_IJMatrix
- * @brief The type definition for hypre IJ matrix
- */
-typedef struct hypre_IJMatrix_struct * HYPRE_IJMatrix;
+/// IJMatrix struct forward declaration
+extern "C" struct hypre_IJMatrix_struct;
 
-/**
- * @struct hypre_ParCSRMatrix_struct
- * @brief Just a placeholder to avoid to include "_hypre_parcsr_mv.h"
- */
-struct hypre_ParCSRMatrix_struct;
+/// IJMatrix pointer alias
+using HYPRE_IJMatrix = hypre_IJMatrix_struct *;
 
-/**
- * @var typedef struct hypre_ParCSRMatrix_struct * HYPRE_ParCSRMatrix
- * @brief The type definition for hypre ParCSR matrix
- */
-typedef struct hypre_ParCSRMatrix_struct * HYPRE_ParCSRMatrix;
+/// ParCSRMatrix struct forward declaration
+extern "C" struct hypre_ParCSRMatrix_struct;
+
+/// ParCSRMatrix pointer alias
+using HYPRE_ParCSRMatrix = hypre_ParCSRMatrix_struct *;
+
+///@}
 
 namespace geosx
 {
 
 /**
- * \class HypreMatrix
- * \brief This class ...
+ * @brief Wrapper class for hypre's ParCSRMatrix.
  */
 class HypreMatrix final : public virtual LinearOperator< HypreVector >,
   private MatrixBase< HypreMatrix, HypreVector >
@@ -101,6 +98,7 @@ public:
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
+  using MatrixBase::residual;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -248,6 +246,10 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
+  virtual void addEntries( HypreMatrix const & src, real64 const scale = 1.0 ) override;
+
+  virtual void addDiagonal( HypreVector const & src ) override;
+
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -260,6 +262,8 @@ public:
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
+  virtual void extractDiagonal( HypreVector & dst ) const override;
+
   virtual globalIndex numGlobalRows() const override;
 
   virtual globalIndex numGlobalCols() const override;
@@ -271,6 +275,10 @@ public:
   virtual globalIndex ilower() const override;
 
   virtual globalIndex iupper() const override;
+
+  virtual globalIndex jlower() const override;
+
+  virtual globalIndex jupper() const override;
 
   virtual localIndex numLocalNonzeros() const override;
 
@@ -296,42 +304,18 @@ public:
   ///@}
 
   /**
-   * @brief Returns a const pointer to the underlying HYPRE_IJMatrix object.
-   * @return the const pointer to the underlying HYPRE_IJMatrix object
+   * @brief Returns a pointer to implementation.
+   * @return the underlying HYPRE_ParCSRMatrix object.
    */
-  HYPRE_IJMatrix const & unwrapped() const;
+  HYPRE_ParCSRMatrix const & unwrapped() const;
 
   /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_IJMatrix object.
-   * @return the non-const pointer to the underlying HYPRE_IJMatrix object
+   * @brief Returns a pointer to implementation.
+   * @return the underlying HYPRE_IJMatrix object.
    */
-  HYPRE_IJMatrix & unwrapped();
-
-  /**
-   * @brief Returns a const pointer to the underlying HYPRE_ParCSRMatrix object.
-   * @return the const pointer to the underlying HYPRE_ParCSRMatrix object
-   */
-  HYPRE_ParCSRMatrix const & unwrappedParCSR() const;
-
-  /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_ParCSRMatrix object.
-   * @return the non-const pointer to the underlying HYPRE_ParCSRMatrix object
-   */
-  HYPRE_ParCSRMatrix & unwrappedParCSR();
+  HYPRE_IJMatrix const & unwrappedIJ() const;
 
 private:
-
-  /**
-   * @brief Returns the index of the first global col owned by that processor.
-   */
-  globalIndex jlower() const;
-
-  /**
-   * @brief Returns the next index after last global col owned by that processor.
-   *
-   * @note The intention is for [jlower; jupper) to be used as a half-open index range
-   */
-  globalIndex jupper() const;
 
   /**
    * @brief Perform a matrix matrix product with Parallel Matrix
