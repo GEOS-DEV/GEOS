@@ -99,7 +99,7 @@ localIndex Pack( buffer_unit_type * & buffer, const std::string & var )
 template< bool DO_PACKING, typename T >
 localIndex Pack( buffer_unit_type * & buffer, SortedArray< T > const & var )
 {
-  const localIndex length = integer_conversion< localIndex >( var.size() );
+  const localIndex length = LvArray::integerConversion< localIndex >( var.size() );
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
   for( typename SortedArray< T >::const_iterator i=var.begin(); i!=var.end(); ++i )
   {
@@ -736,7 +736,7 @@ localIndex Pack( buffer_unit_type * & buffer,
                  SortedArray< globalIndex > const & unmappedGlobalIndices,
                  arraySlice1d< globalIndex const, USD > const & localToGlobal )
 {
-  const localIndex length = integer_conversion< localIndex >( var.size()+unmappedGlobalIndices.size());
+  const localIndex length = LvArray::integerConversion< localIndex >( var.size()+unmappedGlobalIndices.size());
   localIndex sizeOfPackedChars = Pack< DO_PACKING >( buffer, length );
 
   for( typename SortedArray< localIndex >::const_iterator i=var.begin(); i!=var.end(); ++i )
@@ -1133,7 +1133,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< bool DO_PACKING, typename SORTED >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView1d< localIndex_array const > const & var,
+      arrayView1d< arrayView1d< localIndex const > const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,

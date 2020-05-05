@@ -66,7 +66,7 @@
 #define GEOSX_USE_PETSC
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Hypre
+#define GEOSX_LA_INTERFACE Trilinos
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #define FORTRAN_MANGLE_NO_UNDERSCORE
@@ -75,7 +75,7 @@
 #define GEOSX_USE_SEPARATION_COEFFICIENT
 
 /// CMake option CMAKE_BUILD_TYPE
-#define GEOSX_CMAKE_BUILD_TYPE "Debug"
+#define GEOSX_CMAKE_BUILD_TYPE "Release"
 
 #endif  /* GEOSX_CONFIG_HPP */
 
