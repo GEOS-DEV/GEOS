@@ -28,12 +28,11 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_dofManager( name ),
-  alt_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
+  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -90,9 +89,9 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
 Group * SolverBase::CreateChild( string const & childKey, string const & childName )
 {
   Group * rval = nullptr;
-  if( childKey == SystemSolverParameters::CatalogName() )
+  if( childKey == LinearSolverParametersGroup::CatalogName() )
   {
-    rval = RegisterGroup( childName, &m_systemSolverParameters );
+    rval = RegisterGroup( childName, &m_linearSolverParameters );
   }
   else if( childKey == NonlinearSolverParameters::CatalogName() )
   {
@@ -107,15 +106,17 @@ Group * SolverBase::CreateChild( string const & childKey, string const & childNa
 
 void SolverBase::ExpandObjectCatalogs()
 {
-  CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
+  CreateChild( LinearSolverParametersGroup::CatalogName(), LinearSolverParametersGroup::CatalogName() );
   CreateChild( NonlinearSolverParameters::CatalogName(), NonlinearSolverParameters::CatalogName() );
 }
 
+/*
 void SolverBase::PostProcessInput()
 {
   SetLinearSolverParameters();
 }
-
+*/
+/*
 void SolverBase::SetLinearSolverParameters()
 {
   m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
@@ -167,6 +168,7 @@ void SolverBase::SetLinearSolverParameters()
     }
   }
 }
+*/
 
 bool SolverBase::CheckModelNames( array1d< string > & modelNames,
                                   string const & attribute,
@@ -469,8 +471,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           char output[200] = {0};
           sprintf( output,
                    "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                   m_systemSolverParameters.m_numKrylovIter,
-                   m_systemSolverParameters.m_krylovTol );
+                   m_linearSolverParameters.krylov.maxIterations,
+                   m_linearSolverParameters.krylov.tolerance );
           std::cout<<output;
         }
         std::cout<<std::endl;
@@ -513,10 +515,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
-      // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-      if( m_systemSolverParameters.useAdaptiveKrylovTol())
+      if( m_linearSolverParameters.krylov.useAdaptiveTol)
       {
-        m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker( residualNorm, lastResidual );
+        m_linearSolverParameters.krylov.tolerance = LinearSolverParameters::eisenstatWalker( residualNorm, lastResidual );
       }
 
       // call the default linear solver on the system
@@ -651,9 +652,7 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
 {
   GEOSX_MARK_FUNCTION;
   // Create a solver from the parameter list
-  LinearSolver solver( alt_linearSolverParameters );
-
-  alt_linearSolverParameters.solverType = "direct";
+  LinearSolver solver( m_linearSolverParameters );
   
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );

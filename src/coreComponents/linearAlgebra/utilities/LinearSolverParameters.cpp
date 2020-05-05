@@ -29,7 +29,7 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
   setInputFlags( InputFlags::OPTIONAL );
   enableLogLevelInput();
 
-  // note: default values currently set by base class
+  // note: default parameter values currently set by base class
 
   registerWrapper( viewKeysStruct::solverTypeString, &solverType )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -77,7 +77,9 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
 }
 
 void LinearSolverParametersGroup::PostProcessInput()
-{}
+{
+  logLevel = getLogLevel();
+}
 
 REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersGroup, std::string const &, Group * const )
 
