@@ -15,15 +15,16 @@ a sink term will be set on the opposite face of the cube.
 
 At the end of this tutorial you will know:
 
-  - the structure of the XML input files used by GEOSX,
+  - the basic structure of XML input files used by GEOSX,
   - how to run GEOSX on a simple case requiring no external input files,
   - the basic syntax of a solver block for single-phase problems,
-  - how to export and visualize results.
+  - how to control output and visualize results.
 
 
 **Input file**
 
-This tutorial uses no external input files and everything required is contained within the GEOSX input file.
+This tutorial uses no external input files and everything required is
+contained within a single GEOSX input file.
 The xml input file for this test case is located at:
 
 .. code-block:: console
@@ -35,19 +36,19 @@ The xml input file for this test case is located at:
 GEOSX input files
 ------------------------------------
 
-GEOSX runs by reading user input information from one or multiple XML files.
+GEOSX runs by reading user input information from one or several XML files.
 For instance, if everything we need to run is contained in a file called ``my_input.xml``,
 GEOSX runs this file by executing:
 
 .. code-block:: console
 
-  /your/path/to/GEOSX -i my_input.xml
+  /your/path/to/GEOSX -i /your/path/to/my_input.xml
   
 The ``-i`` flag indicates the path to the XML input file.
 
 
 XML files store information in a tree-like structure using nested blocks of information called *elements*.
-In GEOSX, the root of the tree structure is an element called *Problem* (it defines the problem we wish to solve).
+In GEOSX, the root of this tree structure is an element called *Problem*. It defines the problem we wish to solve.
 All elements in an XML file have names (commonly called *tags*) and properties (commonly called *attributes*).
 A typical GEOSX input file contains the following XML tags:
 
@@ -60,13 +61,13 @@ A typical GEOSX input file contains the following XML tags:
  #. :ref:`ElementRegions <ElementRegions_tag_single_phase_internal_mesh>`
  #. :ref:`Constitutive <Constitutive_tag_single_phase_internal_mesh>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_single_phase_internal_mesh>`
- #. :ref:`Functions and Partition <Functions_tag_single_phase_internal_mesh>`
+ #. :ref:`Functions<Functions_tag_single_phase_internal_mesh>`
  #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
 
 
-In addition to the data required to solve the problem we wish to address,
-it is a best practice to start an XML files with a convention (called a *schema*)
-to specify the types of writing conventions used in the XML file.
+In addition to the data required to solve the problem,
+it is a best practice to start an XML files with an optional file (called a *schema*)
+that specifies the writing conventions used in the XML file.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -82,16 +83,16 @@ While optional, they may be used to configure various xml validation tools.
 Defining a solver
 -----------------
 
-GEOSX is a multi-physics tool. The solution to each physical problem
-(diffusion, convection, deformation, etc.) is found using one or many numerical solvers and
-the **Solvers** tag is used to list and parameterize them.
-Several solvers can be defined in the input file,
-and different combinations of solvers can be applied
+GEOSX is a multi-physics tool. To find solution to different categories of physical problem
+(diffusion, convection, deformation, etc.), GEOSX uses combinations of numerical solvers.
+The XML **Solvers** tag is used to list and parameterize these solvers.
+In GEOSX, different combinations of solvers can be applied
 in different regions of the mesh at different moments of the simulation.
 
 
 Here, to keep things simple, we use one type of solver in the entire domain and
-for the entire duration of the simulation. This solver is going to perform a single-phase flow solve.
+for the entire duration of the simulation.
+The solver we are specifying here is a single-phase flow solver.
 In GEOSX, such a solver is identified by a **SinglePhaseFVM** element (part of a family of cell-centered single-phase finite volume methods).
 
 
@@ -102,11 +103,22 @@ The XML block used to define this single-phase finite volume solver is shown her
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
+
 Each type of solver has a specific set of parameters that are required and
-some that are optional (usually with sensible default values).
-Here, for instance, we see that our solver is registered with a user-chosen name (``SinglePhaseFlow``).
-From now on, this unique name will be used in the parameter file and in the code to point to this instance of a SinglePhaseFVM solver.
-We also set a solver-specific level of on-console logging (set to 1 here).
+some parameters that are optional. Optional values are usually set with sensible default values.
+
+To start, we see that our solver is registered with a user-chosen name
+(here ``SinglePhaseFlow``, but it could be anything).
+This is a common practice in GEOSX: users need to give names to objects they define.
+This is analogous to instantiating a class in C++ code.
+From now on, this unique name will be used as the *handle* to this specific flow solver instance.
+This handle will also be used inside the code
+to point to this specific instance of a SinglePhaseFVM solver.
+
+
+Then, we set a solver-specific level of on-console logging (``logLevel`` set to 1 here).
+Higher values will lead to more console output and/or intermediate results saved to files.
+
 
 For solvers of the ``SinglePhaseFVM`` family, we must specify a discretization scheme.
 Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme, a typical discretization scheme
@@ -114,10 +126,11 @@ used in cartesian cell-centered finite volume methods.
 
 We have also specified a collection of fluids, rocks, and
 target regions of the mesh on which this solver will be applied (``Region2``).
+Curly brackets are used in GEOSX inputs to indicate collections of values (sets or lists).
 The curly brackets used here are necessary, even if the collection contains a single value.
 
 Finally, note that other XML elements can be nested inside the ``Solvers`` element.
-Here, for instance, we specify values for numerical tolerances
+Here, we use specific XML elements to set values for numerical tolerances
 (the solver has converged when numerical residuals are smaller than these tolerances)
 and for the maximum number of iterations allowed to reach convergence.
 
@@ -126,22 +139,26 @@ and for the maximum number of iterations allowed to reach convergence.
 
 .. _Mesh_tag_single_phase_internal_mesh:
 
-Specifying a computational Mesh
+Specifying a computational mesh
 ----------------------------------
 
 The single-phase flow solver in GEOSX uses cell-centered finite volume computations.
-We must thus a define a mesh (or grid) as a numerical support to work on.
+We must thus a define a mesh (or grid) to perform numerical calculations on.
 The **Mesh** element allows users to specify this support.
 
 There are two approaches to specifying meshes in GEOSX: internal or external.
 The external approach consists of importing mesh files created outside of GEOSX, such as a
 corner-point grids or generic unstructured grids.
-The internal approach consists of using a tool in GEOSX called the internal mesh generator.
-The internal mesh generator is useful to create grids on-the-fly
-from a small number of geometric parameters, without external file imports.
+This external approach is generally used when using real data and
+geological models with complex shapes and structures.
+
+
+The internal approach uses a convenient tool in GEOSX called the internal mesh generator.
+The internal mesh generator creates simple geometric grids directly inside GEOSX
+from a small number of parameters. It does not require any external file information.
 
 In this tutorial, to keep things as simple and self-contained as possible,
-we use GEOSX's internal mesh generator, parameterized in the **InternalMesh** element.
+we use the internal mesh generator. We parameterize it with the **InternalMesh** element.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -149,12 +166,21 @@ we use GEOSX's internal mesh generator, parameterized in the **InternalMesh** el
   :end-before: <!-- SPHINX_TUT_INT_HEX_MESH_END -->
 
 
-Here, we create a mesh registered as ``mesh1`` (this registration name is chosen by the user),
-consisting of elements of type ``C3D8`` (this is a code from the usual finite
-element nomenclature for a general purpose linear 8-node brick element).
-Elements in the x-direction go from x=0 to x=10. The x-dimension is divided into nx=10 elements.
-The same is true for the y-dimension and the z-dimension.
+We create a mesh registered as ``mesh1``.
+Just like for solvers, this registration name is chosen by the user.
 
+Then, we specify the collection of elements *types* that this mesh contains.
+Tetrahedra, hexahedra, wedges, prisms are examples of element types.
+If a mesh contains different types of elements (a hybrid mesh),
+we should indicate this here by listing all unique types of elements in curly brackets.
+Keeping things simple, our element collection has only one type of element: a ``C3D8`` type.
+This value is a code taken from the usual finite
+element nomenclature. It represents a general purpose linear 8-node brick element (linear hexahedron).
+
+
+Last, we specify the spatial arrangement of the mesh elements.
+The mesh defined here goes from coordinate x=0 to x=10 in the x-direction, with ``nx=10`` subdivisions along this segment.
+The same is true for the y-dimension and the z-dimension.
 We therefore have a cube of 10x10x10 elements with a bounding box defined by corner coordinates (0,0,0) and (10,10,10).
 
 
@@ -181,7 +207,8 @@ This explains why we need to extend the geometry limits to 0.01 beyond the coord
 
 There are several methods to achieve similar conditions (Dirichlet boundary condition on faces, etc.).
 The **Box** defined here is one of the simplest approach.
-Boxes defined here are named objects, and will be registered and used using their names (``source`` and ``sink``).
+Just like meshes and solvers, boxes are named objects and will be registered and used using their handle (``source`` and ``sink``).
+We can refer to their handle later in the input file when assigning property values to them.
 
 
 .. image:: cube_initial.png
@@ -193,16 +220,22 @@ Specifying events
 ------------------------
 
 In GEOSX, we call **Events** anything that happens at a set time, or a set frequency (**PeriodicEvents**).
-Events are very important elements in a simulation, and are reviewed in more details in a dedicated section.
-For now, we focus on three types of events: the time at which we wish the simulation to end (``maxTime``),
-times at which we want the solver to perform computations, and the times we wish to have simulation outputs reported.
-All times are specified in seconds.
+Events are very important and useful elements in GEOSX,
+and a dedicated section just for events is necessary to gives them the treatment they deserve.
+
+
+But for now, we focus on three simple types of events: the time at which we wish the simulation to end (``maxTime``),
+the times at which we want the solver to perform computations,
+and the times we wish to have simulation output values reported.
+
+
+In GEOSX, all times are specified in **seconds**, so here ``maxTime=5000.0`` means that the simulation will run from time 0 to time 5,000 seconds.
 
 
 If we focus on the two periodic events, we see :
 
- #. A periodic solver application: this event is registered here as ``solverApplications`` (this is a user-defined name), and with ``forceDt=20``, it has a forced time step of 20 seconds. We know what it does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we call the solver registered as ``SinglePhaseFlow`` (this is the name of the solver instance defined in the **Solvers** element). Note that if the solver needs to take smaller time steps than 20 seconds (for convergence, for instance) it can do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps taken.
- #. An output event: this event is for reporting purposes and forces GEOSX to write out results at specific frequencies (here, every 100 seconds). The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this event must be always be done with a full application of solvers, even if solve frequencies are not synchronized. With this flag set to 1, an output event may thus force an application of solvers in addition to the periodic events requested directly by solvers.
+ #. A periodic solver application: this event is registered here as ``solverApplications`` (user-defined name). With the attribute ``forceDt=20``, it forces the solver to compute results at every 20 second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). Also note that if the solver needs to take smaller time steps than 20 seconds (for numerical convergence, for instance) it is allowed to do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps required.
+ #. An output event: this event is used for reporting purposes and forces GEOSX to write out results at specific frequencies. Here, we need to see results at every 100 seconds increments. The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this output event must be always be done jointly with a full application of solvers at the output time, even if the solvers were not synchronized with the outputs. In other words, with this flag set to 1, an output event will force an application of solvers, possibly in addition to the periodic events requested directly by solvers.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -215,25 +248,33 @@ If we focus on the two periodic events, we see :
 Defining Numerical Methods
 ----------------------------------
 
-In the Solvers elements, we have specified that we wish to use two-point flux approximation as our discretization method for this finite volume solver.
-We are going to supply more details about this numerical scheme here, in the **NumericalMethods** element.
+GEOSX comes with a number of useful numerical methods.
+Here, for instance, in the Solvers elements, we have specified that we use a two-point flux approximation
+as discretization scheme for the finite volume single-phase solver.
+To use this scheme, we need to supply more details in the **NumericalMethods** element.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_NUM_METHODS_END -->
 
-The ``fieldName`` attribute specifies which property will be used for flux computations.
-The ``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
+Briefly, the ``fieldName`` attribute specifies which property will be used for flux computations,
+the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditions,
 the pressure at the element face value is used.
-The ``coefficientName`` attribute is used for the stencil transmissibility computations.
+Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
+
+Note that in GEOSX, we are distinguishing solvers from numerical methods
+and their parameterization are independent. We can thus solve have
+multiple solvers using the same numerical scheme but with different tolerances, for instance.
+
 
 .. _ElementRegions_tag_single_phase_internal_mesh:
 
 Defining regions in the mesh
 -----------------------------------
 
-An **ElementRegions** element is used to list all the regions used in the simulation.
+Regions are important in GEOSX to specify the material properties of elements.
+The **ElementRegions** element is used here to list all the regions used in the simulation.
 Here we use only a single region to represent the entire domain (named ``Region2``),
 with a collection of elements containing only the ``cb1`` blocks defined in the mesh section.
 We must also specify the material contained in that region (here, two materials are used: ``water`` and ``rock``; their properties will be defined next).
