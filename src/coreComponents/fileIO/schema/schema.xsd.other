@@ -389,20 +389,15 @@
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
+	<xsd:complexType name="LinearSolverParametersType" />
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="SystemSolverParametersType">
-		<!--krylovResidualFinal => Final Krylov solver residual.-->
-		<xsd:attribute name="krylovResidualFinal" type="real64" />
-		<!--krylovResidualInit => Initial Krylov solver residual.-->
-		<xsd:attribute name="krylovResidualInit" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -468,16 +463,16 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
@@ -492,80 +487,80 @@
 	<xsd:complexType name="WellControlsType" />
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FlowProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
@@ -579,8 +574,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
@@ -589,8 +584,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--maxForce => The maximum force contribution in the problem domain.-->
 		<xsd:attribute name="maxForce" type="real64" />
@@ -599,8 +594,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
