@@ -52,7 +52,7 @@
                    beginTime="0"
                    endTime="1e7"
                    target="/Solvers/compflow"/>
-<!--
+
     <PeriodicEvent name="solverApplications2"
                    forceDt="1e7"
                    beginTime="1e7"
@@ -68,7 +68,6 @@
                    timeFrequency="1e9"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
--->
 
   </Events>
 <!-- END_SPHINX_INCLUDE_EVENTS_BLOCK -->
