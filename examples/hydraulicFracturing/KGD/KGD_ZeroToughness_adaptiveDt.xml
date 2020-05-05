@@ -43,7 +43,7 @@
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <LinearolverParameters
+      <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-10"
         logLevel="0"
