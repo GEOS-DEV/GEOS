@@ -1555,7 +1555,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 
     list->set( "Linear Solver Type", "AztecOO" );
     list->set( "Preconditioner Type", "None" ); // will use user-defined P
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations", m_linearSolverParameters.krylov.maxIterations );
+    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations",
+                                                                                                m_linearSolverParameters.krylov.maxIterations );
     list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", m_linearSolverParameters.krylov.tolerance );
 
     if( use_bicgstab )
@@ -1585,9 +1586,9 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 
     GEOSX_MARK_END( SOLVER );
     double solveTime = clock.stop();
-    
+
     /* TODO: replace with SolverBase status output */
-    
+
     integer numKrylovIter = status.extraParameters->get< int >( "Iteration Count" );
     if( getLogLevel()>=2 )
     {
@@ -1597,8 +1598,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
                         " | SetupTime " << setupTime <<
                         " | SolveTime " << solveTime );
     }
-    
-    
+
+
     p_solution[1]->Scale( m_pressureScaling );
     p_rhs[1]->Scale( 1/(m_pressureScaling*m_densityScaling));
   }
