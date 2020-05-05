@@ -80,7 +80,7 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   // Time setup and solve
   Stopwatch watch;
   watch.zero();
-  
+
   // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( &mat.unwrapped(),
                                 &sol.unwrapped(),
@@ -96,19 +96,19 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( solver->SymbolicFactorization() );
   GEOSX_LAI_CHECK_ERROR( solver->NumericFactorization() );
   m_setupTime = watch.elapsedTime();
-  
+
   // Solve the system
   watch.zero();
   GEOSX_LAI_CHECK_ERROR( solver->Solve() );
   m_solveTime = watch.elapsedTime();
-  
+
   // Basic output
   if( m_parameters.logLevel > 0 )
   {
     solver->PrintStatus();
     solver->PrintTiming();
   }
-  
+
 }
 
 void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
@@ -118,7 +118,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   // Time setup and solve
   Stopwatch watch;
   watch.zero();
-  
+
   // Create Epetra linear problem.
   Epetra_LinearProblem problem( &mat.unwrapped(),
                                 &sol.unwrapped(),
@@ -263,41 +263,41 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     }
   }
   m_setupTime = watch.elapsedTime();
-  
+
   // Actually solve
   watch.zero();
   int const result = solver.Iterate( m_parameters.krylov.maxIterations,
                                      m_parameters.krylov.tolerance );
   m_solveTime = watch.elapsedTime();
-  
+
   GEOSX_WARNING_IF( result, "TrilinosSolver: Krylov convergence not achieved" );
 
   // Basic performance info
   m_iterations = solver.NumIters();
   m_reduction = solver.ScaledResidual();
 }
-  
+
 integer TrilinosSolver::iterations()
 {
-  if(m_parameters.solverType == "direct")
+  if( m_parameters.solverType == "direct" )
     return 1;
   else
     return m_iterations;
 }
-  
+
 real64 TrilinosSolver::reduction()
 {
-  if(m_parameters.solverType == "direct")
-    return std::numeric_limits<real64>::epsilon();
+  if( m_parameters.solverType == "direct" )
+    return std::numeric_limits< real64 >::epsilon();
   else
     return m_reduction;
 }
- 
+
 real64 TrilinosSolver::setupTime()
 {
   return m_setupTime;
 }
-  
+
 real64 TrilinosSolver::solveTime()
 {
   return m_solveTime;

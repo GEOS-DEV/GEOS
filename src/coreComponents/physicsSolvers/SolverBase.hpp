@@ -659,7 +659,7 @@ protected:
   template< typename MODEL_TYPE = constitutive::ConstitutiveBase >
   void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
-  
+
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -678,7 +678,7 @@ protected:
   /// Linear solver parameters
   //LinearSolverParameters m_linearSolverParameters;
   LinearSolverParametersGroup m_linearSolverParameters;
-  
+
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
 

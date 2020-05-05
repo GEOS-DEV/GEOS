@@ -65,7 +65,7 @@ public:
    * @note Value is meaningless if a direct solver is called and will return 1
    */
   integer iterations();
-  
+
   /**
    * @brief Relative residual reduction.
    *
@@ -75,22 +75,22 @@ public:
    * @note Value is meaningless if a direct solver is called and will return machine precision;
    */
   real64  reduction();
-  
+
   /**
    * @brief Setup time (in seconds) for preconditioners and/or direct factorizations
    */
   real64  setupTime();
-  
+
   /**
    * @brief Solve time (in seconds) exclusive of setup costs
    */
   real64  solveTime();
-  
+
   /**
    * @brief Total time (in seconds), the sum of setupTime() and solveTime()
    */
   real64  totalTime();
-  
+
 private:
 
   LinearSolverParameters const & m_parameters;
@@ -104,9 +104,9 @@ private:
                      EpetraVector & rhs );
 
   integer m_iterations;
-  real64  m_reduction;
-  real64  m_setupTime;
-  real64  m_solveTime;
+  real64 m_reduction;
+  real64 m_setupTime;
+  real64 m_solveTime;
 };
 
 } // end geosx namespace

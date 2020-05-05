@@ -111,27 +111,27 @@ void SolverBase::ExpandObjectCatalogs()
 }
 
 /*
-void SolverBase::PostProcessInput()
-{
-  SetLinearSolverParameters();
-}
-*/
+   void SolverBase::PostProcessInput()
+   {
+   SetLinearSolverParameters();
+   }
+ */
 /*
-void SolverBase::SetLinearSolverParameters()
-{
-  m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
+   void SolverBase::SetLinearSolverParameters()
+   {
+   m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
 
-  if( m_systemSolverParameters.scalingOption() )
-  {
+   if( m_systemSolverParameters.scalingOption() )
+   {
     m_linearSolverParameters.scaling.useRowScaling = true;  //TODO: this should not be the default
-  }
+   }
 
-  if( m_systemSolverParameters.useDirectSolver() )
-  {
+   if( m_systemSolverParameters.useDirectSolver() )
+   {
     m_linearSolverParameters.solverType = "direct";
-  }
-  else
-  {
+   }
+   else
+   {
     m_linearSolverParameters.krylov.maxIterations = m_systemSolverParameters.numKrylovIter();
     m_linearSolverParameters.krylov.tolerance = m_systemSolverParameters.krylovTol();
 
@@ -166,9 +166,9 @@ void SolverBase::SetLinearSolverParameters()
       // TODO hardcoded to match old behavior
       m_linearSolverParameters.dd.overlap = 1;
     }
-  }
-}
-*/
+   }
+   }
+ */
 
 bool SolverBase::CheckModelNames( array1d< string > & modelNames,
                                   string const & attribute,
@@ -515,7 +515,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
-      if( m_linearSolverParameters.krylov.useAdaptiveTol)
+      if( m_linearSolverParameters.krylov.useAdaptiveTol )
       {
         m_linearSolverParameters.krylov.tolerance = LinearSolverParameters::eisenstatWalker( residualNorm, lastResidual );
       }
@@ -653,7 +653,7 @@ void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager 
   GEOSX_MARK_FUNCTION;
   // Create a solver from the parameter list
   LinearSolver solver( m_linearSolverParameters );
-  
+
   // Solve using the iterative solver and compare norms with true solution
   solver.solve( matrix, solution, rhs );
 
