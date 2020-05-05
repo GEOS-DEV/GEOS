@@ -269,7 +269,7 @@ struct Arg : public option::Arg
 void parseCommandLineOptions( int argc, char * * argv )
 {
   // Set the options structs and parse
-  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR, TIMERS };
+  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR, TIMERS };
   const option::Descriptor usage[] =
   {
     { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
@@ -282,6 +282,7 @@ void parseCommandLineOptions( int argc, char * * argv )
     { SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
+    { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned \t Suppress usage of pinned memory for MPI communication buffers" },
     { OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::NonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
@@ -359,6 +360,11 @@ void parseCommandLineOptions( int argc, char * * argv )
       case NONBLOCKING_MPI:
       {
         s_commandLineOptions.useNonblockingMPI = true;
+      }
+      break;
+      case SUPPRESS_PINNED:
+      {
+        s_commandLineOptions.suppressPinned = true;
       }
       break;
       case SCHEMA:
@@ -460,7 +466,7 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
+  cxx_utilities::setSignalHandling( []( int const signal ) { cxx_utilities::stackTraceHandler( signal, true ); } );
   cxx_utilities::SetFPE();
 }
 
