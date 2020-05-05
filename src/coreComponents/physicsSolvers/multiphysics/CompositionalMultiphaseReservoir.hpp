@@ -71,6 +71,12 @@ public:
    */
   /**@{*/
 
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
   /**@}*/
 
   virtual void AddCouplingSparsityPattern( DomainPartition * const domain,
@@ -83,6 +89,10 @@ public:
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) override;
+
+private:
+
+  void CreatePreconditioner( DofManager const & dofManager );
 
 };
 

@@ -23,6 +23,7 @@
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "linearAlgebra/solvers/MultistagePreconditioner.hpp"
 
 namespace geosx
 {
@@ -117,6 +118,13 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
+
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -396,6 +404,7 @@ private:
                           ParallelMatrix * const matrix,
                           ParallelVector * const rhs );
 
+  void CreatePreconditioner( DofManager const & dofManager );
 
   /// the max number of fluid phases
   localIndex m_numPhases;
@@ -417,7 +426,6 @@ private:
 
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
-
 
   /// views into primary variable fields
 

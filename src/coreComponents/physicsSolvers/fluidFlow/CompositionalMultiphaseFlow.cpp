@@ -16,6 +16,7 @@
  * @file CompositionalMultiphaseFlow.cpp
  */
 
+#include <linearAlgebra/utilities/LinearSolverParameters.hpp>
 #include "CompositionalMultiphaseFlow.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -33,6 +34,8 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
+#include "linearAlgebra/solvers/MultiphasePreconditioner.hpp"
+#include "linearAlgebra/solvers/KrylovSolver.hpp"
 
 namespace geosx
 {
@@ -49,11 +52,6 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_numComponents( 0 ),
   m_capPressureFlag( 0 )
 {
-  // set the blockID for the block system interface
-  // To generate the schema, multiple solvers of that use this command are constructed
-  // Doing this can cause an error in the block setup, so move it to InitializePreSubGroups
-  // getLinearSystemRepository()->SetBlockID(BlockIDs::compositionalBlock, this->getName());
-
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -653,6 +651,55 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domai
   FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
+}
+
+void CompositionalMultiphaseFlow::CreatePreconditioner( DofManager const & dofManager )
+{
+  LinearSolverParameters const & params = m_linearSolverParameters.get();
+  if( params.preconditionerType == "cpr" )
+  {
+    auto precond = std::make_unique< MultistagePreconditioner< LAInterface > >();
+
+    LinearSolverParameters pressure_params;
+    pressure_params.preconditionerType = "amg";
+    pressure_params.logLevel = params.logLevel - 1;
+
+    auto pressureSolver =
+      std::make_unique< MultiphasePreconditioner< LAInterface > >( SchurApproximationType::COLSUM_BLOCK_DIAGONAL, pressure_params );
+    pressureSolver->setPrimaryDofComponents( dofManager, { { viewKeyStruct::dofFieldString, 0, 1 } } );
+
+    precond->addStage( std::move( pressureSolver ), 1 );
+
+    LinearSolverParameters smoother_params;
+    smoother_params.preconditionerType = "ilu";
+    smoother_params.dd.overlap = 1; // or maybe not
+    precond->addStage( LAInterface::createPreconditioner( smoother_params ), 1 );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    m_precond = LAInterface::createPreconditioner( params );
+  }
+}
+
+void CompositionalMultiphaseFlow::SetupSystem( DomainPartition * const domain,
+                                               DofManager & dofManager,
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution )
+{
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
+  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+
+  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  {
+    CreatePreconditioner( dofManager );
+  }
 }
 
 void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,

@@ -15,7 +15,9 @@
                                  newtonMaxIter="15"
                                  maxTimeStepCuts="2"
                                  lineSearchMaxCuts="2"/>
-      <LinearSolverParameters solverType="direct"/>
+      <LinearSolverParameters solverType="gmres"
+                              preconditionerType="cpr"
+                              logLevel="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->

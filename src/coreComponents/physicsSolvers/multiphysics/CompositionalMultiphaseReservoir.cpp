@@ -28,6 +28,8 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
+#include "linearAlgebra/solvers/MultiphasePreconditioner.hpp"
+#include "linearAlgebra/solvers/KrylovSolver.hpp"
 
 namespace geosx
 {
@@ -42,6 +44,61 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::s
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
+
+void CompositionalMultiphaseReservoir::SetupSystem( DomainPartition * const domain,
+                                                    DofManager & dofManager,
+                                                    ParallelMatrix & matrix,
+                                                    ParallelVector & rhs,
+                                                    ParallelVector & solution )
+{
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
+  ReservoirSolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution );
+
+  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  {
+    CreatePreconditioner( dofManager );
+  }
+}
+
+
+void CompositionalMultiphaseReservoir::CreatePreconditioner( DofManager const & dofManager )
+{
+  LinearSolverParameters const & params = m_linearSolverParameters.get();
+  if( params.preconditionerType == "cpr" )
+  {
+    auto precond = std::make_unique< MultistagePreconditioner< LAInterface > >();
+
+    LinearSolverParameters pressure_params;
+    pressure_params.preconditionerType = "amg";
+    pressure_params.logLevel = params.logLevel - 1;
+
+    auto pressureSolver =
+      std::make_unique< MultiphasePreconditioner< LAInterface > >( SchurApproximationType::COLSUM_BLOCK_DIAGONAL, pressure_params );
+
+    localIndex constexpr wellPresIndex = CompositionalMultiphaseWell::ColOffset::DPRES;
+    pressureSolver->setPrimaryDofComponents( dofManager, {
+        { CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString, 0, 1 },
+        { CompositionalMultiphaseWell::viewKeyStruct::dofFieldString, wellPresIndex, wellPresIndex + 1 }
+      } );
+
+    precond->addStage( std::move( pressureSolver ), 1 );
+
+    LinearSolverParameters smoother_params;
+    smoother_params.preconditionerType = "ilu";
+    smoother_params.dd.overlap = 1; // or maybe not
+    precond->addStage( LAInterface::createPreconditioner( smoother_params ), 1 );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    m_precond = LAInterface::createPreconditioner( params );
+  }
+}
 
 void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
                                                                    DofManager & dofManager,
@@ -262,7 +319,6 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
   } );
 
 }
-
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseReservoir, std::string const &, Group * const )
