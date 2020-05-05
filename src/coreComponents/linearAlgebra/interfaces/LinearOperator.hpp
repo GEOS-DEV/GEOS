@@ -23,6 +23,8 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATOR_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_LINEAROPERATOR_HPP_
 
+#include "common/DataTypes.hpp"
+
 namespace geosx
 {
 
@@ -50,10 +52,11 @@ public:
   virtual ~LinearOperator() = default;
 
   /**
-   * @brief Apply operator to a vector.
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
    *
-   * @param src Input vector (src).
-   * @param dst Output vector (dst).
+   * @warning @p src and @p dst cannot alias the same vector (some implementations may allow this).
    */
   virtual void apply( Vector const & src, Vector & dst ) const = 0;
 
@@ -63,6 +66,9 @@ public:
    * @param x Input solution.
    * @param b Input right hand side.
    * @param r Output residual.
+   *
+   * @warning @p b and @p x may alias the same vector.
+   *          @p r cannot alias any of the other two vectors (some implementations may allow this).
    */
   virtual void residual( Vector const & x, Vector const & b, Vector & r ) const
   {

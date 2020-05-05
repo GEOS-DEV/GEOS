@@ -17,23 +17,30 @@
  */
 
 #include "PetscInterface.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscPreconditioner.hpp"
 
 #include <petscsys.h>
 
 namespace geosx
 {
 
-void PetscInterface::initialize( int & argc, char * * & argv )
+void PetscInterface::initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) )
 {
   PetscOptionsSetValue( nullptr, "-no_signal_handler", "" );
   PetscOptionsSetValue( nullptr, "-on_error_abort", "" );
   PETSC_COMM_WORLD = MPI_COMM_GEOSX;
-  PetscInitialize( &argc, &argv, nullptr, nullptr );
+  PetscInitializeNoArguments();
 }
 
 void PetscInterface::finalize()
 {
   PetscFinalize();
+}
+
+std::unique_ptr< PreconditionerBase< PetscInterface > >
+PetscInterface::createPreconditioner( LinearSolverParameters params )
+{
+  return std::make_unique< PetscPreconditioner >( params );
 }
 
 } //namespace geosx

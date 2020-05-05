@@ -33,7 +33,7 @@
 
 using namespace geosx;
 
-static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
+static real64 constexpr machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 
 // BEGIN_RST_NARRATIVE testLAOperations.rst
 
@@ -479,6 +479,52 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 // preconditioner) and make sure the sparse storage is behaving properly. We then test the
 // iterative and direct solvers available.
 
+LinearSolverParameters params_Direct()
+{
+  LinearSolverParameters parameters;
+  parameters.solverType = "direct";
+  return parameters;
+}
+
+LinearSolverParameters params_GMRES_ILU()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.solverType = "gmres";
+  parameters.preconditionerType = "iluk";
+  parameters.ilu.fill = 1;
+  return parameters;
+}
+
+LinearSolverParameters params_CG_AMG()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.solverType = "cg";
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
+  return parameters;
+}
+
+template< typename LAI >
+void solveAndCompare( LinearSolverParameters const & params,
+                      typename LAI::ParallelMatrix & mat,
+                      typename LAI::ParallelVector & rhs,
+                      typename LAI::ParallelVector const & sol_true,
+                      real64 const relTol )
+{
+  typename LAI::ParallelVector sol_comp( sol_true );
+  sol_comp.zero();
+
+  typename LAI::LinearSolver solver( params );
+  solver.solve( mat, sol_comp, rhs );
+
+  EXPECT_LT( std::fabs( sol_comp.norm2() / sol_true.norm2() - 1. ), relTol );
+}
+
 /**
  * @function testInterfaceSolvers
  *
@@ -490,7 +536,6 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   // Define aliases templated on the Linear Algebra Interface (LAI).
   using Matrix = typename TypeParam::ParallelMatrix;
   using Vector = typename TypeParam::ParallelVector;
-  using Solver = typename TypeParam::LinearSolver;
 
   // Use an nxn cartesian mesh to generate the Laplace 2D operator.
   globalIndex n = 100;
@@ -502,7 +547,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Condition number for the Laplacian matrix estimate
   // cond_estimate = 4 * n^2 / pi^2
-  real64 matrix_condition_number = static_cast< real64 >( 4.0 * n * n / pow( M_PI, 2 ) );
+  real64 const matrix_condition_number = 4.0 * n * n / std::pow( M_PI, 2 );
 
   // Define some vectors
   Vector x_true;
@@ -526,9 +571,9 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   EXPECT_DOUBLE_EQ( dotTest, N );
 
   // Test various norms
-  real64 norm1 = b.norm1();
-  real64 norm2 = b.norm2();
-  real64 normInf = b.normInf();
+  real64 const norm1 = b.norm1();
+  real64 const norm2 = b.norm2();
+  real64 const normInf = b.normInf();
 
   EXPECT_NEAR( norm1, N, N * machinePrecision );
   EXPECT_NEAR( norm2, n, n * machinePrecision );
@@ -543,51 +588,14 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   real64 normRes = r.normInf();
   EXPECT_NEAR( normRes, 0., machinePrecision );
 
-  // Now create a solver parameter list and solver
-  LinearSolverParameters parameters;
-  Solver solver( parameters );
+  // Test direct solver
+  solveAndCompare< TypeParam >( params_Direct(), matrix, b, x_true, matrix_condition_number * machinePrecision );
 
-  // We now do the same using a direct solver.
-  // Again the norm should be the norm of x. We use a tougher tolerance on the test
-  // compared to the iterative solution. This should be accurate to machine precision
-  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-  x_comp.zero();
-  parameters.solverType = "direct";
-  solver.solve( matrix, x_comp, b );
-  real64 norm_comp = x_comp.norm2();
-  real64 norm_true = x_true.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * machinePrecision );
+  // Test ILU(k) preconditioned GMRES
+  solveAndCompare< TypeParam >( params_GMRES_ILU(), matrix, b, x_true, matrix_condition_number * params_GMRES_ILU().krylov.relTolerance );
 
-  // We now switch to Krylov solvers
-  parameters.logLevel = 0;
-  parameters.krylov.relTolerance = 1e-8;
-  parameters.krylov.maxIterations = 300;
-  // We now do the same using ILU(k) preconditioned GMRES
-  // Again the norm should be the norm of x.
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "iluk";
-  parameters.ilu.fill = 1;
-  x_comp.zero();
-  solver.solve( matrix, x_comp, b );
-
-  norm_comp = x_comp.norm2();
-
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.relTolerance );
-
-  // Set basic options
-  parameters.solverType = "cg";
-  parameters.preconditionerType = "amg"; // for PETSc default options only
-  parameters.amg.smootherType = "gaussSeidel";
-  parameters.amg.coarseType = "direct";
-  norm_comp = x_comp.norm2();
-  // Solve using the iterative solver and compare norms with true solution
-  x_comp.zero();
-  solver.solve( matrix, x_comp, b );
-
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.relTolerance );
+  // Test AMG preconditioned CG
+  solveAndCompare< TypeParam >( params_CG_AMG(), matrix, b, x_true, matrix_condition_number * params_CG_AMG().krylov.relTolerance );
 }
 
 
