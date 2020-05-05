@@ -84,6 +84,7 @@ public:
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
+  using MatrixBase::residual;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -191,8 +192,8 @@ public:
   virtual void apply( EpetraVector const & src,
                       EpetraVector & dst ) const override;
 
-  virtual void applyTranspose( Vector const & src,
-                               Vector & dst ) const override;
+  virtual void applyTranspose( EpetraVector const & src,
+                               EpetraVector & dst ) const override;
 
   virtual void multiply( EpetraMatrix const & src,
                          EpetraMatrix & dst ) const override;
@@ -231,6 +232,10 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
+  virtual void addEntries( EpetraMatrix const & src, real64 const scale = 1.0 ) override;
+
+  virtual void addDiagonal( EpetraVector const & src ) override;
+
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -243,6 +248,8 @@ public:
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
+  virtual void extractDiagonal( EpetraVector & dst ) const override;
+
   virtual globalIndex numGlobalRows() const override;
 
   virtual globalIndex numGlobalCols() const override;
@@ -254,6 +261,10 @@ public:
   virtual globalIndex ilower() const override;
 
   virtual globalIndex iupper() const override;
+
+  virtual globalIndex jlower() const override;
+
+  virtual globalIndex jupper() const override;
 
   virtual localIndex numLocalNonzeros() const override;
 

@@ -162,12 +162,36 @@ public:
    * @param blockIndex index of the block to return
    * @return a reference to the sub-block
    */
-  VECTOR const & block( localIndex const blockIndex ) const;
+  VECTOR const & block( localIndex const blockIndex ) const
+  {
+    GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
+    return *m_vectors[blockIndex];
+  }
 
   /**
    * @copydoc block(localIndex const) const
    */
-  VECTOR & block( localIndex const blockIndex );
+  VECTOR & block( localIndex const blockIndex )
+  {
+    GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
+    return *m_vectors[blockIndex];
+  }
+
+  /**
+   * @copydoc block(localIndex const) const
+   */
+  VECTOR const & operator()( localIndex const blockIndex ) const
+  {
+    return block( blockIndex );
+  }
+
+  /**
+   * @copydoc block(localIndex const) const
+   */
+  VECTOR & operator()( localIndex const blockIndex )
+  {
+    return block( blockIndex );
+  }
 
   ///@}
 
@@ -185,7 +209,9 @@ protected:
    * @brief Create a vector of @p nBlocks blocks.
    * @param nBlocks number of blocks
    */
-  explicit BlockVectorView( localIndex const nBlocks );
+  explicit BlockVectorView( localIndex const nBlocks )
+    : m_vectors( nBlocks )
+  { }
 
   /**
    * @brief Copy constructor.
@@ -198,6 +224,15 @@ protected:
   BlockVectorView( BlockVectorView && x ) = default;
 
   ///@}
+
+  /**
+   * @brief Resize to a new number of blocks.
+   * @param size the new size
+   */
+  void resize( localIndex const size )
+  {
+    m_vectors.resize( size );
+  }
 
   /**
    * @brief Set pointer to a vector.
@@ -214,11 +249,6 @@ private:
   /// Resizable array of pointers to GEOSX vectors.
   array1d< VECTOR * > m_vectors;
 };
-
-template< typename VECTOR >
-BlockVectorView< VECTOR >::BlockVectorView( localIndex const nBlocks )
-  : m_vectors( nBlocks )
-{ }
 
 template< typename VECTOR >
 void BlockVectorView< VECTOR >::copy( BlockVectorView const & src )
@@ -341,20 +371,6 @@ localIndex BlockVectorView< VECTOR >::localSize() const
     size += block( i ).localSize();
   }
   return size;
-}
-
-template< typename VECTOR >
-VECTOR const & BlockVectorView< VECTOR >::block( localIndex blockIndex ) const
-{
-  GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
-  return *m_vectors[blockIndex];
-}
-
-template< typename VECTOR >
-VECTOR & BlockVectorView< VECTOR >::block( localIndex blockIndex )
-{
-  GEOSX_LAI_ASSERT( m_vectors[blockIndex] != nullptr );
-  return *m_vectors[blockIndex];
 }
 
 template< typename VECTOR >

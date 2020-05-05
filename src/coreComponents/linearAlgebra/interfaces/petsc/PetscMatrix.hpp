@@ -29,12 +29,6 @@
  */
 struct _p_Mat;
 
-/**
- * @var typedef struct _p_Mat * Mat;
- * @brief The type definition for PETSc Mat
- */
-typedef struct _p_Mat * Mat;
-
 namespace geosx
 {
 
@@ -47,6 +41,9 @@ class PetscMatrix final : public virtual LinearOperator< PetscVector >,
   private MatrixBase< PetscMatrix, PetscVector >
 {
 public:
+
+  /// Alias for PETSc matrix struct pointer
+  using Mat = struct _p_Mat *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -88,6 +85,7 @@ public:
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
+  using MatrixBase::residual;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -235,6 +233,10 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
+  virtual void addEntries( PetscMatrix const & src, real64 const scale = 1.0 ) override;
+
+  virtual void addDiagonal( PetscVector const & src ) override;
+
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -242,6 +244,8 @@ public:
   virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
+
+  virtual void extractDiagonal( PetscVector & dst ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
@@ -258,6 +262,10 @@ public:
   virtual globalIndex ilower() const override;
 
   virtual globalIndex iupper() const override;
+
+  virtual globalIndex jlower() const override;
+
+  virtual globalIndex jupper() const override;
 
   virtual localIndex numLocalNonzeros() const override;
 

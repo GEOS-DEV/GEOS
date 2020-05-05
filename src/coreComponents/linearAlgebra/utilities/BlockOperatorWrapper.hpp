@@ -35,7 +35,7 @@ namespace geosx
  * The sub-blocks themselves must be stored elsewhere.
  * Therefore, it's an easy way to assemble a block operator representation from pre-existing blocks.
  */
-template< typename VECTOR, typename OPERATOR >
+template< typename VECTOR, typename OPERATOR = LinearOperator< VECTOR > >
 class BlockOperatorWrapper : public BlockOperatorView< VECTOR, OPERATOR >
 {
 public:

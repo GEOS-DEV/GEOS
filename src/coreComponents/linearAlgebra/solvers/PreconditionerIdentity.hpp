@@ -30,6 +30,15 @@ class PreconditionerIdentity : public PreconditionerBase< LAI >
 {
 public:
 
+  /// Alias for base type
+  using Base = PreconditionerBase< LAI >;
+
+  /// Alias for vector type
+  using Vector = typename Base::Vector;
+
+  /// Alias for matrix type
+  using Matrix = typename Base::Matrix;
+
   virtual ~PreconditionerIdentity() = default;
 
   /// Alias for vector type
@@ -50,7 +59,7 @@ public:
   {
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst = src;
+    dst.copy( src );
   }
 };
 

@@ -756,13 +756,13 @@ protected:
   using Base::addFields;
 
   void test( std::vector< FieldDesc > fields,
-             localIndex block, localIndex loComp, localIndex hiComp,
+             std::vector< DofManager::SubComponent > selection,
              std::map< std::pair< string, string >, CouplingDesc > couplings = {} );
 };
 
 template< typename LAI >
 void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
-                                            localIndex block, localIndex loComp, localIndex hiComp,
+                                            std::vector< DofManager::SubComponent > selection,
                                             std::map< std::pair< string, string >, CouplingDesc > couplings )
 {
   addFields( fields, couplings );
@@ -774,24 +774,45 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   A.set( 1 );
 
   // Create prolongation and restriction to 2 out of 3 components
-  Matrix P;
-  dofManager.makeRestrictor( fields[block].name, P, MPI_COMM_GEOSX, true, loComp, hiComp );
+  Matrix R, P;
+  dofManager.makeRestrictor( selection, A.getComm(), false, R );
+  dofManager.makeRestrictor( selection, A.getComm(), true, P );
 
   // Compute the sub-matrix via PtAP
   Matrix Asub_PtAP;
   A.multiplyPtAP( P, Asub_PtAP );
 
   // Compute the sub-matrix via RAP
-  Matrix R;
   Matrix Asub_RAP;
-  P.transpose( R );
   A.multiplyRAP( R, P, Asub_RAP );
+
+  // Filter the selected fields
+  std::vector< FieldDesc > selectedFields( selection.size() );
+  for( std::size_t k = 0; k < selection.size(); ++k )
+  {
+    selectedFields[k] = *std::find_if( fields.begin(), fields.end(),
+                                       [&]( FieldDesc const & f ) { return f.name == selection[k].fieldName; } );
+    selectedFields[k].components = selection[k].hiComp - selection[k].loComp;
+  }
+
+  // Filter the couplings of selected fields
+  std::map< std::pair< string, string >, CouplingDesc > couplingsSelected;
+  for( auto it = couplings.begin(); it != couplings.end(); ++it )
+  {
+    std::pair< string, string > const & fieldNames = it->first;
+    bool const f1 = std::count_if( selectedFields.begin(), selectedFields.end(),
+                                   [&]( FieldDesc const & f ) { return f.name == fieldNames.first; } ) > 0;
+    bool const f2 = std::count_if( selectedFields.begin(), selectedFields.end(),
+                                   [&]( FieldDesc const & f ) { return f.name == fieldNames.second; } ) > 0;
+    if( f1 && f2 )
+    {
+      couplingsSelected.emplace( *it );
+    }
+  }
 
   // Now reset the DofManager and make a field with sub-components only
   dofManager.clear();
-  FieldDesc subField = fields[block];
-  subField.components = hiComp - loComp;
-  addFields( { subField } );
+  addFields( selectedFields, couplingsSelected );
 
   // Compute the expected matrix
   Matrix B;
@@ -800,87 +821,139 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
   B.set( 1 );
 
   // Check if the matrices match
-  compareMatrices( Asub_PtAP, B );
-  compareMatrices( Asub_RAP, B );
+  {
+    SCOPED_TRACE( "PtAP" );
+    compareMatrices( Asub_PtAP, B );
+  }
+  {
+    SCOPED_TRACE( "RAP" );
+    compareMatrices( Asub_RAP, B );
+  }
 }
 
 TYPED_TEST_SUITE_P( DofManagerRestrictorTest );
 
 TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      3, makeSparsityTPFA< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     }
   },
-                     0, 1, 3 );
+  {
+    { "pressure", 1, 3 }
+  }
+    );
 }
 
-TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock1 )
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, nullptr,
       { "region1", "region2", "region4" }
     }
   },
-                     0, 1, 3,
+  {
+    { "displacement", 1, 3 }
+  },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        nullptr,
         true,
         { "region4" }
       }
     }
-  } );
+  }
+    );
 }
 
-TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock2 )
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
 {
-  TestFixture::test( {
+  TestFixture::test(
+  {
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, nullptr,
       { "region1", "region3", "region4" }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, nullptr,
       { "region1", "region2", "region4" }
     }
   },
-                     1, 1, 2,
+  {
+    { "pressure", 1, 2 }
+  },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        nullptr,
         true,
         { "region4" }
       }
     }
-  } );
+  }
+    );
+}
+
+TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
+{
+  TestFixture::test(
+  {
+    { "displacement",
+      DofManager::Location::Node,
+      DofManager::Connector::Elem,
+      3, nullptr,
+      { "region1", "region3", "region4" }
+    },
+    { "pressure",
+      DofManager::Location::Elem,
+      DofManager::Connector::Face,
+      2, nullptr,
+      { "region1", "region2", "region4" }
+    }
+  },
+  {
+    { "displacement", 1, 3 }, { "pressure", 1, 2 }
+  },
+  {
+    {
+      { "displacement", "pressure" },
+      { DofManager::Connector::Elem,
+        nullptr,
+        true,
+        { "region4" }
+      }
+    }
+  }
+    );
 }
 
 REGISTER_TYPED_TEST_SUITE_P( DofManagerRestrictorTest,
                              SingleBlock,
-                             MultiBlock1,
-                             MultiBlock2 );
+                             MultiBlock_First,
+                             MultiBlock_Second,
+                             MultiBlock_Both );
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, DofManagerRestrictorTest, TrilinosInterface, );

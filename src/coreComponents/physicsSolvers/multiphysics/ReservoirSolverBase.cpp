@@ -270,9 +270,10 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
                                        ParallelVector & rhs,
                                        ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
+
   rhs.scale( -1.0 );
   solution.zero();
-
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 

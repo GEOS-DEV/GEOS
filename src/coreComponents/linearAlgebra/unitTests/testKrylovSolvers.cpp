@@ -29,6 +29,7 @@
 #include "linearAlgebra/solvers/PreconditionerIdentity.hpp"
 #include "linearAlgebra/solvers/CGsolver.hpp"
 #include "linearAlgebra/solvers/BiCGSTABsolver.hpp"
+#include "linearAlgebra/solvers/GMRESsolver.hpp"
 
 /**
  * \file testKrylovSolvers.cpp
@@ -82,37 +83,24 @@ void testGEOSXSolvers()
   matrix.apply( x_true, b );
 
   // Solve
-  SOLVER< Vector > solver( matrix, identity, 1e-8, 300 );
+  SOLVER< Vector > solver( matrix, identity, 1e-8, 500 );
   solver.solve( b, x_comp );
-  /////////////////////////////////////////
-//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
-//  {
-//    GEOSX_LOG_RANK_VAR( solver.relativeResidual() );
-//  }
-  /////////////////////////////////////////
 
   real64 const norm_true = x_true.norm2();
   real64 const norm_comp = x_comp.norm2();
+  EXPECT_TRUE( solver.result().success() );
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ), 5e-6 );
 
   PreconditionerIdentity< LAI > preconIdentity;
   preconIdentity.compute( matrix );
-  SOLVER< Vector > solver2( matrix, preconIdentity, 1e-8, 300 );
+  SOLVER< Vector > solver2( matrix, preconIdentity, 1e-8, 500 );
   x_comp.zero();
 
   solver2.solve( b, x_comp );
-  /////////////////////////////////////////
-//  GEOSX_LOG_RANK_0("Iterations: " + std::to_string(solver.numIterations()));
-//  if ( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == 0)
-//  {
-//    GEOSX_LOG_RANK_VAR( solver.residualNormVector() );
-//  }
-  /////////////////////////////////////////
-
 
   real64 const norm_true2 = x_true.norm2();
   real64 const norm_comp2 = x_comp.norm2();
+  EXPECT_TRUE( solver.result().success() );
   EXPECT_LT( std::fabs( norm_comp2 / norm_true2 - 1. ), 5e-6 );
 }
 
@@ -179,7 +167,7 @@ void testGEOSXBlockSolvers()
   block_matrix.apply( x_true, b );
 
   // Create block CG solver object and solve
-  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 300 );
+  SOLVER< BlockVectorView< Vector > > solver( block_matrix, block_precon, 1e-8, 500 );
   solver.solve( b, x_comp );
 
   // The true solution is the vector x, so we check if the norm are equal.
@@ -188,6 +176,7 @@ void testGEOSXBlockSolvers()
   // bounds of Krylov methods wrt the condition number.
   real64 const norm_x_true = x_true.norm2();
   real64 const norm_x = x_comp.norm2();
+  EXPECT_TRUE( solver.result().success() );
   EXPECT_LT( std::fabs( norm_x / norm_x_true - 1. ), 5e-6 );
 }
 
@@ -209,6 +198,11 @@ TYPED_TEST_P( KrylovSolverTest, BiCGSTAB )
   testGEOSXSolvers< BiCGSTABsolver, TypeParam >();
 }
 
+TYPED_TEST_P( KrylovSolverTest, GMRES )
+{
+  testGEOSXSolvers< GMRESsolver, TypeParam >();
+}
+
 TYPED_TEST_P( KrylovSolverTest, CG_block )
 {
   testGEOSXBlockSolvers< CGsolver, TypeParam >();
@@ -219,11 +213,18 @@ TYPED_TEST_P( KrylovSolverTest, BiCGSTAB_block )
   testGEOSXBlockSolvers< BiCGSTABsolver, TypeParam >();
 }
 
+TYPED_TEST_P( KrylovSolverTest, GMRES_block )
+{
+  testGEOSXBlockSolvers< GMRESsolver, TypeParam >();
+}
+
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
                              CG,
                              BiCGSTAB,
+                             GMRES,
                              CG_block,
-                             BiCGSTAB_block );
+                             BiCGSTAB_block,
+                             GMRES_block );
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverTest, TrilinosInterface, );

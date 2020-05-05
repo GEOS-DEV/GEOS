@@ -43,12 +43,6 @@
  */
 struct _p_Vec;
 
-/**
- * @var typedef struct _p_Vec * Vec;
- * @brief The type definition for PETSc Vec
- */
-typedef struct _p_Vec * Vec;
-
 namespace geosx
 {
 
@@ -59,6 +53,9 @@ namespace geosx
 class PetscVector final : private VectorBase< PetscVector >
 {
 public:
+
+  /// Alias for PETSc vector struct pointer
+  using Vec = struct _p_Vec *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -157,6 +154,8 @@ public:
   virtual void rand( unsigned const seed = 1984 ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
+
+  virtual void reciprocal() override;
 
   virtual real64 dot( PetscVector const & vec ) const override;
 
