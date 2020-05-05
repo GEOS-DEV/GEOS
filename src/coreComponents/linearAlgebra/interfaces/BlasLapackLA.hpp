@@ -312,7 +312,7 @@ struct BlasLapackLA
    *
    * @param [in]     A     GEOSX array2d.
    * @param [in]     B     GEOSX array2d.
-   * @param [in,out] C     GEOSX array1d.
+   * @param [in,out] C     GEOSX array2d.
    * @param [in]     alpha Optional scalar to multiply with
    *                       \p transpose(A)*\p B.
    * @param [in]     beta  Optional parameter to control the accumulation.

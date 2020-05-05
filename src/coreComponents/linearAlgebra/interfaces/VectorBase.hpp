@@ -259,6 +259,12 @@ protected:
   virtual void scale( real64 const scalingFactor ) = 0;
 
   /**
+   * @brief Replace vector elements by their reciprocals
+   * @note No guarding is done against division by zero.
+   */
+  virtual void reciprocal() = 0;
+
+  /**
    * @brief Dot product with the vector vec.
    * @param vec vector to dot-product with
    * @return dot product

@@ -46,6 +46,12 @@ public:
   explicit BlockVector( localIndex const nBlocks );
 
   /**
+   * @brief Create a vector of @p nBlocks blocks.
+   * @param nBlocks Number of blocks.
+   */
+  explicit BlockVector();
+
+  /**
    * @brief Copy constructor that performs a deep copy of each sub-vector.
    * @param rhs the block vector to copy
    */
@@ -63,6 +69,20 @@ public:
    * @note declared explicit to avoid unintended deep copying
    */
   explicit BlockVector( BlockVectorView< VECTOR > const & rhs );
+
+  /**
+   * @brief Copy assignment
+   * @param x the vector to copy
+   * @return reference to @p this
+   */
+  BlockVector & operator=( BlockVector const & x );
+
+  /**
+   * @brief Move assignment
+   * @param x the vector to move from
+   * @return reference to @p this
+   */
+  BlockVector & operator=( BlockVector && x ) noexcept;
 
   /**
    * @brief Destructor.
@@ -84,6 +104,11 @@ BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
 {
   setPointers();
 }
+
+template< typename VECTOR >
+BlockVector< VECTOR >::BlockVector()
+  : BlockVector( 0 )
+{}
 
 template< typename VECTOR >
 BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
@@ -115,11 +140,27 @@ BlockVector< VECTOR >::BlockVector( BlockVectorView< VECTOR > const & rhs )
 template< typename VECTOR >
 void BlockVector< VECTOR >::setPointers()
 {
-  GEOSX_LAI_ASSERT_EQ( this->blockSize(), m_vectorStorage.size() );
+  this->resize( m_vectorStorage.size() );
   for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
   {
     this->setPointer( i, &m_vectorStorage[i] );
   }
+}
+
+template< typename VECTOR >
+BlockVector< VECTOR > & BlockVector< VECTOR >::operator=( BlockVector const & x )
+{
+  m_vectorStorage = x.m_vectorStorage;
+  setPointers();
+  return *this;
+}
+
+template< typename VECTOR >
+BlockVector< VECTOR > & BlockVector< VECTOR >::operator=( BlockVector && x ) noexcept
+{
+  m_vectorStorage = std::move( x.m_vectorStorage );
+  setPointers();
+  return *this;
 }
 
 } //namespace geosx

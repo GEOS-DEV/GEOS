@@ -134,6 +134,8 @@ public:
 
   virtual void scale( real64 const scalingFactor ) override;
 
+  virtual void reciprocal() override;
+
   virtual real64 dot( EpetraVector const & vec ) const override;
 
   virtual void copy( EpetraVector const & x ) override;

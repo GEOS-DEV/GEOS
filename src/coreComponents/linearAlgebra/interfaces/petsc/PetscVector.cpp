@@ -17,7 +17,10 @@
  */
 
 #include "PetscVector.hpp"
-#include "PetscUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscUtils.hpp"
+
 #include <petscvec.h>
 
 namespace geosx
@@ -55,6 +58,7 @@ PetscVector & PetscVector::operator=( PetscVector const & src )
 {
   GEOSX_LAI_ASSERT( &src != this );
   GEOSX_LAI_ASSERT( src.ready() );
+  reset();
   GEOSX_LAI_CHECK_ERROR( VecDuplicate( src.m_vec, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecCopy( src.m_vec, m_vec ) );
   return *this;
@@ -199,6 +203,7 @@ void PetscVector::rand( unsigned const seed )
   // create random context
   PetscRandom ran;
   GEOSX_LAI_CHECK_ERROR( PetscRandomCreate( PETSC_COMM_WORLD, &ran ) );
+  GEOSX_LAI_CHECK_ERROR( PetscRandomSetInterval( ran, -1.0, 1.0 ) );
 
   // set random seed
   GEOSX_LAI_CHECK_ERROR( PetscRandomSetSeed( ran, seed ) );
@@ -227,7 +232,19 @@ void PetscVector::close()
 void PetscVector::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( VecScale( m_vec, scalingFactor ) );
+}
+
+void PetscVector::reciprocal()
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_CHECK_ERROR( VecReciprocal( m_vec ) );
 }
 
 real64 PetscVector::dot( PetscVector const & vec ) const

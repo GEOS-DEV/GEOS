@@ -675,15 +675,15 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
           residualNorm = lastResidual;
         }
 
-        if( m_linearSolverParameters.solverType != "direct" && getLogLevel() >= 1 && logger::internal::rank==0 )
+        if( getLogLevel() >= 1 && logger::internal::rank==0 )
         {
           if( newtonIter!=0 )
           {
             char output[46] = {0};
             sprintf( output,
                      "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                     m_linearSolverParameters.krylov.maxIterations,  //TODO: replace with real Status info
-                     m_linearSolverParameters.krylov.relTolerance );
+                     m_linearSolverResult.numIterations,
+                     m_linearSolverResult.residualReduction );
             std::cout<<output;
           }
           std::cout<<std::endl;
@@ -698,13 +698,10 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         }
 
         // if using adaptive Krylov tolerance scheme, update tolerance.
-        // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-        if( m_linearSolverParameters.krylov.useAdaptiveTol )
+        LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
+        if( krylovParams.useAdaptiveTol )
         {
-          m_linearSolverParameters.krylov.relTolerance =
-            LinearSolverParameters::eisenstatWalker( residualNorm,
-                                                     lastResidual,
-                                                     m_linearSolverParameters.krylov.weakestTol );
+          krylovParams.relTolerance = EisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
         }
 
         // call the default linear solver on the system
