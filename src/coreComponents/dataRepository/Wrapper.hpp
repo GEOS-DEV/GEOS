@@ -22,17 +22,17 @@
 // Source inclues
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/SFINAE_Macros.hpp"
-#include "cxx-utilities/src/Macros.hpp"
+#include "LvArray/src/Macros.hpp"
 #include "BufferOps.hpp"
 #include "BufferOpsDevice.hpp"
 #include "RestartFlags.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
-#include "cxx-utilities/src/StringUtilities.hpp"
+#include "LvArray/src/StringUtilities.hpp"
 #include "WrapperBase.hpp"
 
 // System includes

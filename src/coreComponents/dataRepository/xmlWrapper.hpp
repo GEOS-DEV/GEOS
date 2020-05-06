@@ -22,7 +22,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "cxx-utilities/src/ArrayUtilities.hpp"
+#include "LvArray/src/ArrayUtilities.hpp"
 
 // TPL includes
 #include <pugixml.hpp>

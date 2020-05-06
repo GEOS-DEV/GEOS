@@ -26,7 +26,7 @@
  */
 
 #include "common/Logger.hpp"
-#include "cxx-utilities/src/StringUtilities.hpp"
+#include "LvArray/src/StringUtilities.hpp"
 
 #include <unordered_map>
 #include <string>

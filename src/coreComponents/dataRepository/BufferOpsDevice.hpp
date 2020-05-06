@@ -19,7 +19,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 #include "BufferOps.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"

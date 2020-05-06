@@ -19,7 +19,7 @@
 
 #include "DataTypes.hpp"
 #include "common/Logger.hpp"
-#include "cxx-utilities/src/StringUtilities.hpp"
+#include "LvArray/src/StringUtilities.hpp"
 
 namespace geosx
 {

@@ -17,9 +17,9 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "cxx-utilities/src/SetFPE.hpp"
-#include "cxx-utilities/src/SetSignalHandling.hpp"
-#include "cxx-utilities/src/stackTrace.hpp"
+#include "LvArray/src/SetFPE.hpp"
+#include "LvArray/src/SetSignalHandling.hpp"
+#include "LvArray/src/stackTrace.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 

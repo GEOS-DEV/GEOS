@@ -16,7 +16,7 @@
 
 #include "managers/initialization.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
