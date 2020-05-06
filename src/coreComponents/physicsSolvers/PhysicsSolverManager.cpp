@@ -24,7 +24,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace LvArray;
 
 PhysicsSolverManager::PhysicsSolverManager( std::string const & name,
                                             Group * const parent ):

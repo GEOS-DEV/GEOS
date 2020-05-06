@@ -19,7 +19,6 @@
 #include "common/Logger.hpp"
 #include "Base.hpp"
 #include "Derived1.hpp"
-using namespace LvArray;
 
 int main( int argc, char *argv[] )
 {

@@ -24,7 +24,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace LvArray;
 
 OutputBase::OutputBase( std::string const & name,
                         Group * const parent ):

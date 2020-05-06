@@ -26,7 +26,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace LvArray;
 
 
 EventManager::EventManager( std::string const & name,
