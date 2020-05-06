@@ -50,6 +50,7 @@ public:
 
   /**
    * @brief Return elapsed time in seconds since zero() was last called.
+   * @return elapsed time
    */
   real64 elapsedTime()
   {
