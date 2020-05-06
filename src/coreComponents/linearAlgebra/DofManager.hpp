@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
