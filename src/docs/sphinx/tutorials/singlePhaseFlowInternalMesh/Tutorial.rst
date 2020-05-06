@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowWithInternalMesh:
 
 #####################################################
-First steps with GEOSX: the single-phase flow solver
+First steps with GEOSX: single-phase flow solver
 #####################################################
 
 **Context**
@@ -393,12 +393,22 @@ All units again are S.I. units; a permeability set to 1.0e-12 m\ :sup:`2` corres
 Specifying the output formats
 ----------------------------------
 
-In order to get the results from simulation written to visualization and post-processing file(s), we specify the output path:
+In order to get the results from simulation written to visualization and all post-processing files,
+we need to instantiate an output object that will serve as our container for output information.
+We have actually referred to this object before in the Events section as the target of a periodic output event called ``outputs``.
+We are now registering this output object as an instance of the **Outputs** class called ``siloOutput`` (user-defined name).
+You can verify that the Events section is using this object as a target, and it does so by pointing to ``/Outputs/siloOutput``.
+
+The output formats proposed by GEOSX are subject to change in future versions of the code
+but as baseline, GEOSX currently supports outputs that are readable by `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ and Kitware's Paraview.
+In this example, we only request the VisIt compatible output files (the Silo format).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_OUTPUTS_END -->
+
 
 All elements are now in place to run GEOSX.
 
@@ -411,7 +421,11 @@ The command to run GEOSX is
 
 ``path/to/geosx -i path/to/this/xml_file.xml``
 
-Note that all paths for files included in the XML file are relative to this XML file. While running GEOSX, it will log status info in the console output.
+Note that all paths for files included in the XML file are relative to this XML file.
+
+While running GEOSX, it logs status information on the console output with a verbosity
+that is controlled at the object level, and
+that can be changed using the ``logLevel`` flag.
 
 The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
 
@@ -425,12 +439,11 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Event: PeriodicEvent, outputs
   Adding Event: PeriodicEvent, outputs
   Adding Output: Silo, siloOutput
-  Adding Output: VTK, vtkOutput
   Adding Object CellElementRegion named Region2 from ObjectManager::Catalog.
   Running simulation
 
 
-Then, time iteration are logged to console until the end of the simulation:
+When ``Running simulation`` is shown, we are done with the case set up and go into the execution of the simulation itself:
 
 .. code-block:: sh
 
@@ -439,9 +452,12 @@ Then, time iteration are logged to console until the end of the simulation:
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.68e+00) ;
       Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.08e-04) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
       Attempt:  0, NewtonIter:  2 ; ( Rfluid ) = (9.91e-11) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
-  .
-  .
-  .
+
+
+Each time iteration at every 20s interval is logged to console, until the end of the simulation at ``maxTime=5000``:
+
+.. code-block:: sh
+
   Time: 4940s, dt:20s, Cycle: 247
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.06e-09) ;
       Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.33e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
@@ -473,8 +489,9 @@ Visualization of results
 ------------------------------------
 
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+Here, we have requested results to be written in SIlo, a format compatible with `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_. To visualize results, you can open VisIt
+and load the database of simulation output files. For more help on how to use VisIt, please check their website directly.
 
 For instance, here are reported diagonal pressure profile from sink to source blocks with the time being increased (on the left) and the 3D plot of the transient pressure gradient to the linear solution (on the right)
 
@@ -485,8 +502,21 @@ For instance, here are reported diagonal pressure profile from sink to source bl
    :width: 500px
 
 
+------------------------------------
+To go further
+------------------------------------
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+**Feedback on this tutorial**
 
-For more details on the single-phase flow solvers, please see :ref:`SinglePhaseFlow`.
+This concludes the single-phase internal mesh tutorial.
+For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+
+**Next tutorial**
+
+In the next tutorial :ref:`TutorialSinglePhaseFlowExternalMesh`, we learn how to run exactly the same single-phase case, but on **externally imported** meshes.
+
+**For more details**
+
+  - More on single-phase flow solvers, please see :ref:`SinglePhaseFlow`.
+  - More on meshes, please see :ref:`Meshes`.
+  - More on events, please see :ref:`EventManager`.
