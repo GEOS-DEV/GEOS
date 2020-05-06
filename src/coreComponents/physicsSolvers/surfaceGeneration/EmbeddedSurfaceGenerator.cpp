@@ -66,25 +66,10 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
-
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
+    nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
+    nodeManager->RegisterChildIndices( this->getName(), "Child index of node."  );
+    edgeManager->RegisterParentIndices( this->getName(), "Parent index of the edge." );
+    edgeManager->RegisterChildIndices( this->getName(), "Child index of the edge." );
   }
 }
 

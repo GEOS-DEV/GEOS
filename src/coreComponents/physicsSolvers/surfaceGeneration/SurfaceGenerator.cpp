@@ -274,15 +274,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
-
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
+    nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
+    nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
 
     nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
       setApplyDefaultValue( -1 )->
@@ -304,16 +297,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
       setDescription( "Time that the node was ruptured." );
 
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
+    edgeManager->RegisterParentIndices( this->getName(), "Parent index of the edge." );
+    edgeManager->RegisterChildIndices( this->getName(), "Child index of the edge." );
 
     edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IString )->
       setApplyDefaultValue( -1 )->
@@ -330,15 +315,8 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
       setDescription( "SIF_III of the edge." );
 
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the face." );
-
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "child index of the face." );
+    faceManager->RegisterParentIndices( this->getName(), "Parent index of the face." );
+    faceManager->RegisterChildIndices( this->getName(), "Child index of the face." );
 
     faceManager->registerWrapper< integer_array >( viewKeyStruct::ruptureStateString )->
       setApplyDefaultValue( 0 )->
@@ -386,14 +364,9 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    arrayView1d< localIndex > & parentNodeIndex =
-      nodeManager->getReference< localIndex_array >( nodeManager->viewKeys.parentIndex );
-
-    arrayView1d< localIndex > & parentFaceIndex =
-      faceManager->getReference< localIndex_array >( faceManager->viewKeys.parentIndex );
-
-    arrayView1d< localIndex > & childFaceIndex =
-      faceManager->getReference< localIndex_array >( faceManager->viewKeys.childIndex );
+    arrayView1d< localIndex > & parentNodeIndex = nodeManager->GetParentIndices();
+    arrayView1d< localIndex > & parentFaceIndex = faceManager->GetParentIndices();
+    arrayView1d< localIndex > & childFaceIndex = faceManager->GetParentIndices();
 
     parentNodeIndex = -1;
     parentFaceIndex = -1;
@@ -771,8 +744,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
                                             NodeManager & nodeManager,
                                             ModifiedObjectLists & receivedObjects )
 {
-  arrayView1d< localIndex const > const &
-  parentNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.GetParentIndices();
 
   for( localIndex const nodeIndex : receivedObjects.newNodes )
   {
@@ -787,11 +759,8 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
   arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   arrayView1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  arrayView1d< localIndex const > const &
-  parentEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-  arrayView1d< localIndex const > const &
-  childEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & parentEdgeIndices = edgeManager.GetParentIndices();
+  arrayView1d< localIndex const > const & childEdgeIndices = edgeManager.GetChildIndices() ;
 
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
@@ -828,11 +797,8 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
   integer_array & isFaceSeparable = faceManager.getReference< integer_array >( "isFaceSeparable" );
   arrayView2d< localIndex > & faceToElementMap = faceManager.elementList();
 
-  arrayView1d< localIndex const > const &
-  childNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
-
-  arrayView1d< localIndex > const &
-  parentFaceIndices = faceManager.getReference< localIndex_array >( faceManager.viewKeys.parentIndex );
+  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.GetChildIndices();
+  arrayView1d< localIndex > const & parentFaceIndices = faceManager.GetParentIndices();
 
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
@@ -984,17 +950,12 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
                                            map< localIndex, int > & faceLocations,
                                            map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations )
 {
-
-  arrayView1d< localIndex const > const &
-  parentNodeIndices = nodeManager.getReference< array1d< localIndex > >( nodeManager.viewKeys.parentIndex );
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.GetParentIndices();
 
   localIndex const parentNodeIndex = ObjectManagerBase::GetParentRecusive( parentNodeIndices, nodeID );
 
-  arrayView1d< localIndex const > const &
-  parentFaceIndices = faceManager.getReference< array1d< localIndex > >( faceManager.viewKeys.parentIndex );
-
-  arrayView1d< localIndex const > const &
-  childFaceIndices = faceManager.getReference< array1d< localIndex > >( faceManager.viewKeys.childIndex );
+  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.GetParentIndices();
+  arrayView1d< localIndex const > const & childFaceIndices = faceManager.GetChildIndices();
 
   std::set< localIndex > const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
 
@@ -1556,9 +1517,7 @@ bool SurfaceGenerator::SetElemLocations( const int location,
                                          map< localIndex, int > & faceLocations,
                                          map< std::pair< CellElementSubRegion *, localIndex >, int > & elemLocations )
 {
-
-  arrayView1d< localIndex const > const & parentFaceIndices =
-    faceManager.getReference< localIndex_array >( faceManager.viewKeys.parentIndex );
+  arrayView1d< localIndex const > const & parentFaceIndices = faceManager.GetParentIndices();
 
   const int otherlocation = (location==0) ? 1 : 0;
 
@@ -1700,23 +1659,16 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   arrayView1d< R1Tensor > const & faceNormals = faceManager.faceNormal();
 
-  arrayView1d< localIndex const > const &
-  parentEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-  arrayView1d< localIndex const > const &
-  childEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
-
-  arrayView1d< localIndex const > const &
-  parentNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
-  arrayView1d< localIndex const > const &
-  childNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & parentEdgeIndices = edgeManager.GetParentIndices();
+  arrayView1d< localIndex const > const & childEdgeIndices = edgeManager.GetChildIndices();
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.GetParentIndices();
+  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.GetChildIndices();
 
   arrayView1d< integer > &
-  degreeFromCrack = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackString );
+    degreeFromCrack = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackString );
 
   arrayView1d< integer > &
-  nodeDegreeFromCrackTip = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackTipString );
+    nodeDegreeFromCrackTip = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackTipString );
 
   arrayView1d< integer > &
   faceDegreeFromCrackTip = faceManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackTipString );
@@ -1983,13 +1935,8 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
    *  - location 1 gets the new node,edge,face.
    */
 
-  arrayView1d< localIndex > const & parentFaceIndex =
-    faceManager.getReference< localIndex_array >( faceManager.viewKeys.parentIndex );
-
-  arrayView1d< localIndex > const & childFaceIndex =
-    faceManager.getReference< localIndex_array >( faceManager.viewKeys.childIndex );
-
-
+  arrayView1d< localIndex > const & parentFaceIndex = faceManager.GetParentIndices();
+  arrayView1d< localIndex > const & childFaceIndex = faceManager.GetParentIndices();
 
   // 1) loop over all elements attached to the nodeID
   for( map< std::pair< CellElementSubRegion *, localIndex >, int >::const_iterator iter_elem =
@@ -2920,14 +2867,10 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   array1d< real64 > const & faceArea = faceManager.faceArea();
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
 
-  arrayView1d< localIndex const > const &
-  childFaceIndices = faceManager.getReference< localIndex_array >( faceManager.viewKeys.childIndex );
+  arrayView1d< localIndex const > const & childFaceIndices = faceManager.GetChildIndices();
 
-  arrayView1d< localIndex const > const &
-  childNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
-
-  arrayView1d< localIndex > const &
-  parentNodeIndices = nodeManager.getReference< array1d< localIndex > >( nodeManager.viewKeys.parentIndex );
+  arrayView1d< localIndex const > const & childNodeIndices = nodeManager.GetChildIndices();
+  arrayView1d< localIndex > const & parentNodeIndices = nodeManager.GetParentIndices();
 
   ConstitutiveManager const * const cm = domain->getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
@@ -3332,7 +3275,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
-  localIndex_array const & faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  localIndex_array const & faceParentIndex = faceManager.GetParentIndices();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
@@ -4337,9 +4280,7 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
   edgesToRupturedFaces.resize( edgeManager.size() );
 
   arrayView1d< integer > & faceRuptureState = faceManager.getReference< integer_array >( "ruptureState" );
-  arrayView1d< localIndex const > const &
-  faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
-
+  arrayView1d< localIndex const > const & faceParentIndex = faceManager.GetParentIndices();
 
   // assign the values of the nodeToRupturedFaces and edgeToRupturedFaces arrays.
   for( localIndex kf=0; kf<faceManager.size(); ++kf )
@@ -4382,7 +4323,7 @@ int SurfaceGenerator::CheckEdgeSplitability( localIndex const edgeID,
   //                  = 3, this is an eligible kink, we need to process it as a kink
 
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
-  localIndex_array const & faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  localIndex_array const & faceParentIndex = faceManager.GetParentIndices();
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
   arrayView1d< integer const > const & edgeIsExternal = edgeManager.isExternal();

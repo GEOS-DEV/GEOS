@@ -329,14 +329,89 @@ public:
     dataRepository::GroupKey sets = { setsString };
   } m_ObjectManagerBaseGroupKeys;
 
+   /**
+    * @brief Register the parent indices vector.
+    * @param registeredBy The name of the registerer.
+    * @param description The documentation description.
+    * @param plotLevel The desired plot level for the field.
+    *
+    * @note Only (edge|face|node)Managers actually use this function.
+    *       Reducing it's visibility could be considered as a future task.
+    */
+  void RegisterParentIndices( std::string const & registeredBy,
+                              std::string const & description,
+                              dataRepository::PlotLevel const & plotLevel = dataRepository::PlotLevel::LEVEL_1 );
+
+  /**
+   * @brief Get the parent indices.
+   * @return The parent indices or a `undefined behavior` if the data was not previously registered.
+   *
+   * Index of the parent of the edges, faces or nodes. Or -1 if undefined.
+   *
+   * @note You have to allocate this array using #RegisterParentIndices first.
+   */
+  localIndex_array & GetParentIndices()
+  {
+    return this->getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  }
+
+  /**
+   * @brief Get the parent indices, const version.
+   * @return The parent indices or a `undefined behavior` if the data was not previously registered.
+   *
+   * Index of the parent of the edges, faces or nodes. Or -1 if undefined.
+   *
+   * @note You have to allocate this array using #RegisterParentIndices first.
+   */
+  arrayView1d< localIndex const > const & GetParentIndices() const
+  {
+    return this->getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  }
+
+  /**
+   * @brief Register the child indices vector.
+   * @param registeredBy The name of the registerer.
+   * @param description The documentation description.
+   * @param plotLevel The desired plot level for the field.
+   *
+   * @note Only (edge|face|node)Managers actually use this function.
+   *       Reducing it's visibility could be considered as a future task.
+   */
+  void RegisterChildIndices( std::string const & registeredBy,
+                             std::string const & description,
+                             dataRepository::PlotLevel const & plotLevel = dataRepository::PlotLevel::LEVEL_1 );
+
+  /**
+   * @brief Get the child indices.
+   * @return The child indices or a `undefined behavior` if the data was not previously registered.
+   *
+   * Index of the child of the edges, faces or nodes. Or -1 if undefined.
+   *
+   * @note You have to allocate this array using #RegisterChildIndices first.
+   */
+  localIndex_array & GetChildIndices()
+  {
+    return this->getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  }
+
+  /**
+   * @brief Get the child indices, const version.
+   * @return The child indices or a `undefined behavior` if the data was not previously registered.
+   *
+   * Index of the child of the edges, faces or nodes. Or -1 if undefined.
+   *
+   * @note You have to allocate this array using #RegisterChildIndices first.
+   */
+  arrayView1d< localIndex const > const & GetChildIndices() const
+  {
+    return this->getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  }
 
   virtual viewKeyStruct & viewKeys() { return m_ObjectManagerBaseViewKeys; }
   virtual viewKeyStruct const & viewKeys() const { return m_ObjectManagerBaseViewKeys; }
 
   virtual groupKeyStruct & groupKeys() { return m_ObjectManagerBaseGroupKeys; }
   virtual groupKeyStruct const & groupKeys() const { return m_ObjectManagerBaseGroupKeys; }
-
-
 
   Group & sets()
   { return m_sets; }
@@ -436,6 +511,22 @@ protected:
 
   /// The maximum global index of any object of all objects on this rank.
   globalIndex m_localMaxGlobalIndex = -1;
+
+private:
+  /**
+   * @brief Registers either child or parent the indices vector, depending on @p key.
+   * @param key The key that determines whether we register child or parent indices.
+   * @param registeredBy The name of the registerer.
+   * @param description The documentation description.
+   * @param plotLevel The desired plot level for the field.
+   *
+   * Mainly a code factorisation function.
+   */
+  void RegisterChildOrParentIndices( std::string const & key,
+                                     std::string const & registeredBy,
+                                     std::string const & description,
+                                     dataRepository::PlotLevel const & plotLevel );
+
 };
 
 

@@ -1032,4 +1032,32 @@ void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set
   }
 }
 
+void ObjectManagerBase::RegisterChildOrParentIndices( std::string const & key,
+                                                      std::string const & registeredBy,
+                                                      std::string const & description,
+                                                      dataRepository::PlotLevel const & plotLevel )
+{
+  this->registerWrapper< localIndex_array >( key )->
+        setApplyDefaultValue( -1 )->
+        setPlotLevel( plotLevel )->
+        setDescription( description )->
+        setRegisteringObjects( registeredBy );
+}
+
+void ObjectManagerBase::RegisterParentIndices( std::string const & registeredBy,
+                                               std::string const & description,
+                                               dataRepository::PlotLevel const & plotLevel )
+{
+  this->RegisterChildOrParentIndices( ObjectManagerBase::viewKeyStruct::parentIndexString,
+                                      registeredBy, description, plotLevel );
+}
+
+void ObjectManagerBase::RegisterChildIndices( std::string const & registeredBy,
+                                              std::string const & description,
+                                              dataRepository::PlotLevel const & plotLevel )
+{
+  this->RegisterChildOrParentIndices( ObjectManagerBase::viewKeyStruct::childIndexString,
+                                      registeredBy, description, plotLevel );
+}
+
 } /* namespace geosx */
