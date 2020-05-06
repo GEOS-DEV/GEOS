@@ -21,7 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
-#include "cxx-utilities/src/Macros.hpp"
+#include "LvArray/src/Macros.hpp"
 
 // System includes
 #if defined(GEOSX_USE_MPI)
