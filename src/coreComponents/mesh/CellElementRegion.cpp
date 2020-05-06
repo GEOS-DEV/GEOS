@@ -19,7 +19,7 @@
 #include "CellElementRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "metis.h"
 
 namespace geosx

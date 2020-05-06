@@ -21,7 +21,7 @@
 #define R1_TENSOR_T_H_
 
 #include "TensorBaseT.h"
-#include "cxx-utilities/src/ArraySlice.hpp"
+#include "LvArray/src/ArraySlice.hpp"
 
 #include <cstdlib>
 

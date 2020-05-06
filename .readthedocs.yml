@@ -25,6 +25,6 @@ python:
     
 submodules:
   include: 
-    - src/coreComponents/cxx-utilities
+    - src/coreComponents/LvArray
     - integratedTests
   recursive: true

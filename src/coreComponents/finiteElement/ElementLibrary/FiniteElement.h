@@ -23,7 +23,7 @@
 #include "finiteElement/quadrature/QuadratureBase.hpp"
 #include "FiniteElementBase.h"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/tensorOps.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 /**
  * Class representing a generic finite element.  Its constructor

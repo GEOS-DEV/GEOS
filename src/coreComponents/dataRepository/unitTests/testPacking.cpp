@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 #include "math/TensorT/TensorT.h"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
