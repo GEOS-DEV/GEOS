@@ -61,7 +61,6 @@ A typical GEOSX input file contains the following XML tags:
  #. :ref:`ElementRegions <ElementRegions_tag_single_phase_internal_mesh>`
  #. :ref:`Constitutive <Constitutive_tag_single_phase_internal_mesh>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_single_phase_internal_mesh>`
- #. :ref:`Functions<Functions_tag_single_phase_internal_mesh>`
  #. :ref:`Outputs <Outputs_tag_single_phase_internal_mesh>`
 
 
@@ -187,6 +186,7 @@ We therefore have a cube of 10x10x10 elements with a bounding box defined by cor
 .. image:: cube_mesh_10x10x10.png
 
 
+
 .. _Geometry_tag_single_phase_internal_mesh:
 
 Geometry tag
@@ -212,6 +212,7 @@ We can refer to their handle later in the input file when assigning property val
 
 
 .. image:: cube_initial.png
+
 
 
 .. _Events_tag_single_phase_internal_mesh:
@@ -243,6 +244,8 @@ If we focus on the two periodic events, we see :
   :end-before: <!-- SPHINX_TUT_INT_HEX_EVENTS_END -->
 
 
+
+
 .. _NumericalMethods_tag_single_phase_internal_mesh:
 
 Defining Numerical Methods
@@ -263,9 +266,11 @@ the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditi
 the pressure at the element face value is used.
 Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOSX, we are distinguishing solvers from numerical methods
+Note that in GEOSX, we are distinguishing solvers from numerical methods,
 and their parameterization are independent. We can thus solve have
 multiple solvers using the same numerical scheme but with different tolerances, for instance.
+
+
 
 
 .. _ElementRegions_tag_single_phase_internal_mesh:
@@ -286,49 +291,102 @@ We must also specify the material contained in that region (here, two materials 
   :end-before: <!-- SPHINX_TUT_INT_HEX_ELEM_REGIONS_END -->
 
 
+
 .. _Constitutive_tag_single_phase_internal_mesh:
 
 Defining material properties with constitutive laws
 ---------------------------------------------------------------------
 
-The **Constitutive** element allows to list all materials contained in the domain.
-In this tutorial, the physical properties of the elements defined as ``water`` and ``rock`` are provided under this tag,
-each with a specific type (a ``CompressibleSinglePhaseFluid`` for the water, and a ``PoreVolumeCompressibleSolid`` for the rock).
+The **Constitutive** element allows to list all materials
+contained in the simulated domain
+and assign physical properties to them: density, viscosity, compressibility...
+
+
+In this tutorial, the physical properties of the elements
+defined as ``water`` and ``rock`` are provided here,
+each material being derived from a different material type:
+a ``CompressibleSinglePhaseFluid``
+for the water, and a ``PoreVolumeCompressibleSolid`` for the rock.
+The list of attributes differs between these constitutive materials.
+
+
+The names ``water`` and ``rock`` are defined by the user
+as handles to specific instances of physical materials.
+GEOSX uses S.I. units throughout, not field units.
+Pressures, for instance, are in Pascal, not psia.
+
+
+Note that we had used the handles ``water`` and ``rock`` in the input file
+in the ElementRegions section of the XML file,
+before the registration of these materials took place here, in Constitutive element. This highlights an important aspect of using XML in GEOSX:
+the order in which objects are registered and used
+in the XML file is not important.
+
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_CONSTITUTIVE_END -->
 
+
+
+
+
 .. _FieldSpecifications_tag_single_phase_internal_mesh:
 
 Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
 
-Here, fields such as porosity, permeability, source and sink terms or initial field values are specified.
-Our test case exhibits an anisotropic homogeneous permeability which components are so that:
+In the **FieldSpecifications** section, properties such as porosity,
+permeability, source and sink pressures are set. GEOSX offers
+a lot of flexibility to specify field values through space and time.
 
-  - permeability in the x-direction: ``permx``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
-  - permeability in the y-direction: ``permy``, constant value of 1.0e-12 m\ :sup:`2` (1 Darcy),
-  - a lower permeability in the z-direction: ``permz``, constant value of 1.0e-15 m\ :sup:`2` (1 mD)
 
-The ``setNames`` node value specifies the geometric zone where the value should be applied.
-These directional permeabilities are followed by all the other field initializations. Please note the change in ``component`` node value as we are dealing with a permeability diagonal tensor.
-The other fields to be specified are a constant homogeneous reference porosity for the whole domain, initial pressure, and source and sink term pressures.
+Spatially, in GEOSX, all field specifications are associated
+to a target object on which the field values are mounted.
+This allows for a lot of freedom in defining fields:
+for instance, one can have volume property values attached to
+a subset of volume elements of the mesh,
+or surface properties attached to faces of a subset of elements.
+
+
+In time, GEOSX makes no distinction between
+initial properties and time-varying properties.
+The notions of static fields or recurrent fields
+are thus irrelevant. Every field can change at any time,
+either because it is modified internally by a solver
+or because it is specified externally by the user.
+This makes it possible, for instance, to externally assign pressure values
+on a set of elements at a specific time and
+override pressure values computed internally.
+In another use case, this allows for fields usually considered
+static to be modified by physical solvers, such as porosity with poroelastic solvers.
+
+
+By default, if fields are specified without begin and end times, GEOSX assumes
+that these field values are to be imposed at all simulated times, effectively making this property static.
+To avoid this issue, and make it simple to define initial values for properties
+that evolve with time, the ``initialCondition`` flag was created. If this flag is set to 1,
+the values of this field are set at time 0, and are left free to change during the simulation.
+
+
+Here, to keep things simple, we specify porosity values,
+x-, y- and z-permeability values (defined as three components of a permeability vector),
+and pressure on all cell elements of our domain.
+We also specify a constant pressure boundary condition
+on the regions identified as ``source`` and ``sink`` (notice the absence of ``initialCondition``
+flag for this constant boundary condition).
+
+All units again are S.I. units; a permeability set to 1.0e-12 m\ :sup:`2` corresponds approximately to 1 Darcy.
+
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_INT_HEX_FIELDS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_FIELDS_END -->
 
-.. _Functions_tag_single_phase_internal_mesh:
 
-Here we leave ``Functions`` element empty. The description of the Functions elements is detailed in another tutorial.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_BLANKS -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_BLANKS_END -->
 
 .. _Outputs_tag_single_phase_internal_mesh:
 
@@ -342,12 +400,8 @@ In order to get the results from simulation written to visualization and post-pr
   :start-after: <!-- SPHINX_TUT_INT_HEX_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_OUTPUTS_END -->
 
-And this concludes our XML file:
+All elements are now in place to run GEOSX.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_INT_HEX_PROBLEM_CLOSE -->
-  :end-before: <!-- SPHINX_TUT_INT_HEX_PROBLEM_CLOSE_END -->
 
 ------------------------------------
 Runnning GEOSX
@@ -359,41 +413,60 @@ The command to run GEOSX is
 
 Note that all paths for files included in the XML file are relative to this XML file. While running GEOSX, it will log status info in the console output.
 
-For internal mesh generation,
+The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
 
 .. code-block:: sh
 
-  GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
-  Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
+  Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
   Adding Mesh: InternalMesh, mesh1
   Adding Geometric Object: Box, source
   Adding Geometric Object: Box, sink
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, outputs
+  Adding Event: PeriodicEvent, outputs
   Adding Output: Silo, siloOutput
+  Adding Output: VTK, vtkOutput
   Adding Object CellElementRegion named Region2 from ObjectManager::Catalog.
+  Running simulation
 
 
-The time iteration are then logged until the end of the simulation
+Then, time iteration are logged to console until the end of the simulation:
 
 .. code-block:: sh
 
   Running simulation
   Time: 0s, dt:20s, Cycle: 0
-  Attempt: 0, Newton: 0, R = 5.6703
-  Attempt: 0, Newton: 1, R = 0.000207606
-  Attempt: 0, Newton: 2, R = 9.87966e-11
-  Time: 20s, dt:20s, Cycle: 1
-  Attempt: 0, Newton: 0, R = 0.0680544
-  Attempt: 0, Newton: 1, R = 5.30163e-05
-  Attempt: 0, Newton: 2, R = 5.0784e-12
+      Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.68e+00) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.08e-04) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+      Attempt:  0, NewtonIter:  2 ; ( Rfluid ) = (9.91e-11) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+  .
+  .
+  .
+  Time: 4940s, dt:20s, Cycle: 247
+      Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.06e-09) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.33e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+  SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Time: 4960s, dt:20s, Cycle: 248
-  Attempt: 0, Newton: 0, R = 9.33817e-07
+      Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (4.91e-09) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.16e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+  SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Time: 4980s, dt:20s, Cycle: 249
-  Attempt: 0, Newton: 0, R = 9.33817e-07
+      Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (4.77e-09) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.13e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+  SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Cleaning up events
 
-  init time = 0.043643s, run time = 4.0304s
+  init time = 0.031966s, run time = 3.2274s
+  Umpire            HOST high water mark:    8.7 MB
+
+
+Information on run times, initialization times, and maximum amounts of
+memory (high water mark) are given at the end of the simulation, if successful.
+
+
+Congratulations on completing this first run!
+
+
 
 ------------------------------------
 Visualization of results
