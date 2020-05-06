@@ -21,8 +21,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "cxx-utilities/src/templateHelpers.hpp"
-#include "cxx-utilities/src/bufferManipulation.hpp"
+#include "LvArray/src/templateHelpers.hpp"
+#include "LvArray/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
 // System includes
