@@ -23,7 +23,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 MeshManager::MeshManager( std::string const & name,
                           Group * const parent ):
