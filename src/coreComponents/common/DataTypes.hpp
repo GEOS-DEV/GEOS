@@ -95,8 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
-                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -509,7 +509,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 

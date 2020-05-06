@@ -28,7 +28,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
+using namespace LvArray;
 
 ChomboIO::ChomboIO( std::string const & name, Group * const parent ):
   OutputBase( name, parent ),

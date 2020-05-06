@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/cxx-utilities/host-configs/lassen-clang@upstream.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/cxx-utilities/host-configs/LLNL/lassen-clang@upstream.cmake)
 
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")

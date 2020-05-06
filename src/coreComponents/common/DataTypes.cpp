@@ -29,9 +29,9 @@ MPI_Comm MPI_COMM_GEOSX;
 
 void printTypeSummary()
 {
-  GEOSX_LOG_RANK_0( "real64 is alias of " <<cxx_utilities::demangle( typeid(real64).name() ) );
-  GEOSX_LOG_RANK_0( "localIndex is alias of " <<cxx_utilities::demangle( typeid(localIndex).name() ) );
-  GEOSX_LOG_RANK_0( "globalIndex is alias of "<<cxx_utilities::demangle( typeid(globalIndex).name()) );
+  GEOSX_LOG_RANK_0( "real64 is alias of " <<LvArray::demangle( typeid(real64).name() ) );
+  GEOSX_LOG_RANK_0( "localIndex is alias of " <<LvArray::demangle( typeid(localIndex).name() ) );
+  GEOSX_LOG_RANK_0( "globalIndex is alias of "<<LvArray::demangle( typeid(globalIndex).name()) );
 }
 
 

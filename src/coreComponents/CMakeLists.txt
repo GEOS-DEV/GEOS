@@ -48,9 +48,11 @@ if ( BUILD_OBJ_LIBS)
   set(buildAsObj TRUE)
 endif()
 
+list( APPEND coreLibs lvarray)
+
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python"  OR ${lib} STREQUAL "cxx-utilities") )
       list( APPEND coreLibs ${lib})
     endif()
 endforeach()

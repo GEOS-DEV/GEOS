@@ -24,7 +24,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
+using namespace LvArray;
 
 GeometricObjectManager::GeometricObjectManager( std::string const & name,
                                                 Group * const parent ):

@@ -27,7 +27,7 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
+using namespace LvArray;
 
 SiloOutput::SiloOutput( std::string const & name,
                         Group * const parent ):

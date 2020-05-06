@@ -248,7 +248,7 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << cxx_utilities::demangleType< T >() );
+    GEOSX_ERROR( "Cannot parse the given type " << LvArray::demangleType< T >() );
     return false;
   }
 

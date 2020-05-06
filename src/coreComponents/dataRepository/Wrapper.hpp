@@ -811,7 +811,7 @@ public:
 #if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override final
   {
-    return cxx_utilities::demangle( typeid( Wrapper< T > ).name() );
+    return LvArray::demangle( typeid( Wrapper< T > ).name() );
   }
 
   virtual int setTotalviewDisplay() const override final
@@ -819,8 +819,8 @@ public:
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
-    TV_ttf_add_row( "m_data", cxx_utilities::demangle< T >().c_str(), m_data );
-    TV_ttf_add_row( "m_default", cxx_utilities::demangle< DefaultValue< T > >().c_str(), &m_default );
+    TV_ttf_add_row( "m_data", LvArray::demangle< T >().c_str(), m_data );
+    TV_ttf_add_row( "m_default", LvArray::demangle< DefaultValue< T > >().c_str(), &m_default );
     return 0;
   }
 //  void tvTemplateInstantiation();
