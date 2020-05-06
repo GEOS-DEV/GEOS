@@ -110,8 +110,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "jacobi" )
   {
-    precondSetupFunction = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentitySetup;
-    precondApplyFunction = (HYPRE_PtrToParSolverFcn) hypre_ParKrylovIdentity;
+    precondSetupFunction = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
+    precondApplyFunction = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {

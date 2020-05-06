@@ -562,7 +562,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   // We now switch to Krylov solvers
   parameters.logLevel = 0;
   parameters.krylov.tolerance = 1e-8;
-  parameters.krylov.maxIterations = 250;
+  parameters.krylov.maxIterations = 300;
   // We now do the same using ILU(k) preconditioned GMRES
   // Again the norm should be the norm of x.
   parameters.solverType = "gmres";
@@ -578,7 +578,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Set basic options
   parameters.solverType = "cg";
-  parameters.preconditionerType = "amg";
+  parameters.preconditionerType = "none";//"amg";
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   norm_comp = x_comp.norm2();
