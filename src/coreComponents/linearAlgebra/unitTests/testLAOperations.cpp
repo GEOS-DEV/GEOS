@@ -502,7 +502,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Condition number for the Laplacian matrix estimate
   // cond_estimate = 4 * n^2 / pi^2
-  real64 matrix_condition_number = 4.0 * n * n / pow( acos( -1.0 ), 2 );
+  real64 matrix_condition_number = static_cast<real64>( 4.0 * n * n / pow( M_PI, 2 ) );
 
   // Define some vectors
   Vector x_true;
@@ -560,7 +560,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
              matrix_condition_number * machinePrecision );
 
   // We now switch to Krylov solvers
-  parameters.logLevel = 2;
+  parameters.logLevel = 0;
   parameters.krylov.tolerance = 1e-8;
   parameters.krylov.maxIterations = 250;
   // We now do the same using ILU(k) preconditioned GMRES
