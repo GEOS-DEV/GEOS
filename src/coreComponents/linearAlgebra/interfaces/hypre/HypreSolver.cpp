@@ -221,9 +221,9 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Set the preconditioner
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrecond( solver,
-                                                     precondApplyFunction,
-                                                     precondSetupFunction,
-                                                     precond ) );
+                                                           precondApplyFunction,
+                                                           precondSetupFunction,
+                                                           precond ) );
 
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetup( solver,
