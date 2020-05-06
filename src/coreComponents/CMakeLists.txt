@@ -1,6 +1,5 @@
 set( subdirs
      math
-     cxx-utilities
      common
      linearAlgebra
      codingUtilities
@@ -35,7 +34,6 @@ set( subdirs
 #     wells
 #     python
 #     linearAlgebra
-#     cxx-utilities
 #     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
@@ -48,9 +46,12 @@ if ( BUILD_OBJ_LIBS)
   set(buildAsObj TRUE)
 endif()
 
+list( APPEND coreLibs lvarray)
+add_subdirectory(LvArray)
+
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
       list( APPEND coreLibs ${lib})
     endif()
 endforeach()

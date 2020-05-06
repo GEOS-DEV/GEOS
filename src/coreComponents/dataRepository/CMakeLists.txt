@@ -40,7 +40,7 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+  set (dependencyList common lvarray codingUtilities pugixml fileIO)
 else()
   set( dependencyList common codingUtilities)
 endif()

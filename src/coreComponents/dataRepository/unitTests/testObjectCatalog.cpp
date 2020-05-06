@@ -22,7 +22,7 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-using namespace cxx_utilities;
+using namespace LvArray;
 using namespace geosx;
 
 //START_SPHINX_BASE

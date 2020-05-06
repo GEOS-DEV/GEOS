@@ -109,7 +109,7 @@ void setupLogger();
 void finalizeLogger();
 
 /**
- * @brief Setup the cxx-utilities library. This initializes signal handling
+ * @brief Setup the LvArray library. This initializes signal handling
  *        and the floating point environment.
  */
 void setupCXXUtils();

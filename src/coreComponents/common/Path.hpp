@@ -52,6 +52,17 @@ public:
   ~Path()
   {}
 
+  /**
+   * @brief Copy Constructor
+   * @param rhs Reference to the Path that will be copied.
+   * @return *this
+   */
+  Path & operator=( Path const & rhs )
+  {
+    std::string::operator=( rhs );
+    return *this;
+  }
+
   using std::string::string;
 
   /*!
