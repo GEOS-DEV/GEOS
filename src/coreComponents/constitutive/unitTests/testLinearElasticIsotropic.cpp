@@ -31,155 +31,156 @@ TEST( LinearElasticIsotropicTests, testAllocation )
   localIndex constexpr numQuadraturePoints = 3;
 
   dataRepository::Group disc( "discretization", nullptr );
-  disc.resize(numElems);
+  disc.resize( numElems );
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
 
-  arrayView1d<real64 const> const & bulkModulus = cm.bulkModulus() ;
-  arrayView1d<real64 const> const & shearModulus = cm.shearModulus() ;
-  arrayView2d<R2SymTensor const> const & stress = cm.getStress();
+  arrayView1d< real64 const > const & bulkModulus = cm.bulkModulus();
+  arrayView1d< real64 const > const & shearModulus = cm.shearModulus();
+  arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress();
 
   EXPECT_EQ( bulkModulus.size(), numElems );
   EXPECT_EQ( shearModulus.size(), numElems );
-  EXPECT_EQ( stress.size(0), numElems );
-  EXPECT_EQ( stress.size(1), numQuadraturePoints );
-
+  EXPECT_EQ( stress.size( 0 ), numElems );
+  EXPECT_EQ( stress.size( 1 ), numQuadraturePoints );
+  EXPECT_EQ( stress.size( 2 ), 6 );
 }
 
 TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 {
   LinearElasticIsotropic cm( "model", nullptr );
-
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
-  cm.setDefaultBulkModulus(K);
-  cm.setDefaultShearModulus(G);
+  cm.setDefaultBulkModulus( K );
+  cm.setDefaultShearModulus( G );
 
   dataRepository::Group disc( "discretization", nullptr );
-  disc.resize(2);
+  disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
+  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelWrapper();
 
-//  cm.bulkModulus() = cm.setDefaultBulkModulus();
-//  cm.shearModulus() = cm.setDefaultShearModulus();
-
-  arrayView2d<R2SymTensor> const & stress = cm.getStress();
+  arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 
   real64 const strain = 0.1;
   R2SymTensor Ddt;
   R2Tensor Rot;
-  R2SymTensor zero;
 
   {
-    Ddt(0,0) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 0 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
-    Ddt(1,1) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 1, 1 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) ,  (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
-    Ddt(2,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 2, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) ,  (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (2.0/3.0*strain)*2*G + strain*K );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
-    Ddt(0,1) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 1 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , strain*2*G );
+
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), strain*2*G );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
-    Ddt(0,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 0, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 
   {
-    stress = zero;
+    stress = 0;
     Ddt = 0;
 
-    Ddt(1,2) = strain;
-    Rot(0,0) = 1;
-    Rot(1,1) = 1;
-    Rot(2,2) = 1;
+    Ddt( 1, 2 ) = strain;
+    Rot( 0, 0 ) = 1;
+    Rot( 1, 1 ) = 1;
+    Rot( 2, 2 ) = 1;
 
-    cm.StateUpdatePoint( 0, 0, Ddt, Rot, 0 );
+    cmw.HypoElastic( 0, 0, Ddt.Data(), Rot );
 
-    ASSERT_DOUBLE_EQ( stress[0][0](0,0) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,1) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](2,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](1,2) , strain*2*G );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,2) , 0.0 );
-    ASSERT_DOUBLE_EQ( stress[0][0](0,1) , 0.0 );
+
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), strain*2*G );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
+    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
   }
 }
 
@@ -187,27 +188,27 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 TEST( LinearElasticIsotropicTests, testXML )
 {
-  ConstitutiveManager constitutiveManager("constitutive",nullptr);
+  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
   LinearElasticIsotropic cm( "model", &constitutiveManager );
 
   string const inputStream =
-  "<Constitutive>"
-  "  <LinearElasticIsotropic name=\"granite\" "
-  "  defaultDensity=\"2700\" "
-  "  defaultBulkModulus=\"5.5556e9\" "
-  "  defaultShearModulus=\"4.16667e9\"/>"
-  "</Constitutive>";
+    "<Constitutive>"
+    "  <LinearElasticIsotropic name=\"granite\" "
+    "  defaultDensity=\"2700\" "
+    "  defaultBulkModulus=\"5.5556e9\" "
+    "  defaultShearModulus=\"4.16667e9\"/>"
+    "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-  if (!xmlResult)
+  if( !xmlResult )
   {
-    GEOS_LOG_RANK_0("XML parsed with errors!");
-    GEOS_LOG_RANK_0("Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0("Error offset: " << xmlResult.offset);
+    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child("Constitutive");
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.PostProcessInputRecursive();
 

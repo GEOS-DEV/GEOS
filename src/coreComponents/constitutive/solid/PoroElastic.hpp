@@ -37,7 +37,7 @@ public:
   virtual ~PoroElastic() override;
 
 
-  static std::string CatalogName() { return string("Poro") + BASE::m_catalogNameString; }
+  static std::string CatalogName() { return string( "Poro" ) + BASE::m_catalogNameString; }
   virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void PostProcessInput() override;
@@ -45,7 +45,7 @@ public:
   virtual void
   DeliverClone( string const & name,
                 dataRepository::Group * const parent,
-                std::unique_ptr<ConstitutiveBase> & clone ) const override;
+                std::unique_ptr< ConstitutiveBase > & clone ) const override;
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -61,9 +61,9 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
 
-    static constexpr auto compressibilityString =  "compressibility" ;
-    static constexpr auto referencePressureString =  "referencePressure" ;
-    static constexpr auto biotCoefficientString =  "BiotCoefficient" ;
+    static constexpr auto compressibilityString =  "compressibility";
+    static constexpr auto referencePressureString =  "referencePressure";
+    static constexpr auto biotCoefficientString =  "BiotCoefficient";
   };
 
 
@@ -77,10 +77,10 @@ protected:
   /// scalar Biot's coefficient
   real64 m_biotCoefficient;
 
-  array2d<real64> m_poreVolumeMultiplier;
-  array2d<real64> m_dPVMult_dPressure;
+  array2d< real64 > m_poreVolumeMultiplier;
+  array2d< real64 > m_dPVMult_dPressure;
 
-  ExponentialRelation<real64, ExponentApproximationType::Linear> m_poreVolumeRelation;
+  ExponentialRelation< real64, ExponentApproximationType::Linear > m_poreVolumeRelation;
 
 };
 

@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file BrooksCoreyRelativePermeability.cpp
-  */
+ * @file BrooksCoreyRelativePermeability.cpp
+ */
 
 #include "BrooksCoreyRelativePermeability.hpp"
 
@@ -24,7 +24,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -35,35 +34,33 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Minimum volume fraction value for each phase");
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
+    setApplyDefaultValue( 0.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseRelPermExponentString,   &m_phaseRelPermExponent,   false )->
-    setApplyDefaultValue(1.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("MinimumRel perm power law exponent for each phase");
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent )->
+    setApplyDefaultValue( 1.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "MinimumRel perm power law exponent for each phase" );
 
 
-  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString,   &m_phaseRelPermMaxValue,   false )->
-    setApplyDefaultValue(0.0)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Maximum rel perm value for each phase");
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue )->
+    setApplyDefaultValue( 0.0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Maximum rel perm value for each phase" );
 
 }
 
 BrooksCoreyRelativePermeability::~BrooksCoreyRelativePermeability()
-{
-
-}
+{}
 
 void
 BrooksCoreyRelativePermeability::DeliverClone( string const & name,
                                                Group * const parent,
-                                               std::unique_ptr<ConstitutiveBase> & clone ) const
+                                               std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< BrooksCoreyRelativePermeability > newModel = std::make_unique<BrooksCoreyRelativePermeability>( name, parent );
+  std::unique_ptr< BrooksCoreyRelativePermeability > newModel = std::make_unique< BrooksCoreyRelativePermeability >( name, parent );
 
   newModel->m_phaseNames = this->m_phaseNames;
   newModel->m_phaseTypes = this->m_phaseTypes;
@@ -86,12 +83,12 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
-    GEOS_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
-                << (attr) << " attribute (" \
-                << (data).size() << "given, " \
-                << (expected) << " expected)"); \
+    GEOSX_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
+                 << (attr) << " attribute (" \
+                 << (data).size() << "given, " \
+                 << (expected) << " expected)" ); \
   }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
@@ -101,45 +98,45 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
 #undef COREY_CHECK_INPUT_LENGTH
 
   m_satScale = 1.0;
-  for (localIndex ip = 0; ip < NP; ++ip)
+  for( localIndex ip = 0; ip < NP; ++ip )
   {
-    GEOS_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
-                   "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
+    GEOSX_ERROR_IF( m_phaseMinVolumeFraction[ip] < 0.0 || m_phaseMinVolumeFraction[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid min volume fraction value: " << m_phaseMinVolumeFraction[ip] );
     m_satScale -= m_phaseMinVolumeFraction[ip];
 
-    GEOS_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
-                   "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
+    GEOSX_ERROR_IF( m_phaseRelPermExponent[ip] < 0.0,
+                    "BrooksCoreyRelativePermeability: invalid exponent value: " << m_phaseRelPermExponent[ip] );
 
-    GEOS_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
-                   "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
+    GEOSX_ERROR_IF( m_phaseRelPermMaxValue[ip] < 0.0 || m_phaseRelPermMaxValue[ip] > 1.0,
+                    "BrooksCoreyRelativePermeability: invalid maximum value: " << m_phaseRelPermMaxValue[ip] );
   }
 
-  GEOS_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
+  GEOSX_ERROR_IF( m_satScale < 0.0, "BrooksCoreyRelativePermeability: sum of min volume fractions exceeds 1.0" );
 }
 
 
-void BrooksCoreyRelativePermeability::BatchUpdate( arrayView2d<real64 const> const & phaseVolumeFraction )
+void BrooksCoreyRelativePermeability::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
 {
 
-  arrayView1d<real64 const> const &  phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-  arrayView1d<real64 const> const & phaseRelPermExponent = m_phaseRelPermExponent;
-  arrayView1d<real64 const> const & phaseRelPermMaxValue = m_phaseRelPermMaxValue;
+  arrayView1d< real64 const > const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
+  arrayView1d< real64 const > const & phaseRelPermExponent = m_phaseRelPermExponent;
+  arrayView1d< real64 const > const & phaseRelPermMaxValue = m_phaseRelPermMaxValue;
 
 
-  RelativePermeabilityBase::BatchUpdateKernel<BrooksCoreyRelativePermeability>( phaseVolumeFraction,
-                                                                                phaseMinVolumeFraction,
-                                                                                phaseRelPermExponent,
-                                                                                phaseRelPermMaxValue,
-                                                                                m_satScale );
+  RelativePermeabilityBase::BatchUpdateKernel< BrooksCoreyRelativePermeability >( phaseVolumeFraction,
+                                                                                  phaseMinVolumeFraction,
+                                                                                  phaseRelPermExponent,
+                                                                                  phaseRelPermMaxValue,
+                                                                                  m_satScale );
 }
 
 
-void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d<real64 const> const & phaseVolFraction,
+void BrooksCoreyRelativePermeability::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
                                                    localIndex const k,
                                                    localIndex const q )
 {
-  arraySlice1d<real64> const relPerm           = m_phaseRelPerm[k][q];
-  arraySlice2d<real64> const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
+  arraySlice1d< real64 > const relPerm           = m_phaseRelPerm[k][q];
+  arraySlice2d< real64 > const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
 
   localIndex const NP = numFluidPhases();
 

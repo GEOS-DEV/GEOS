@@ -21,7 +21,9 @@
 #include <memory>
 #include "common/DataTypes.hpp"
 #include "InputFlags.hpp"
+#include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace conduit
 {
@@ -87,6 +89,17 @@ public:
   virtual localIndex size() const = 0;
 
   /**
+   * @brief @return a const void pointer to the data.
+   */
+  virtual void const * voidPointer() const = 0;
+
+  /**
+   * @brief @return the number of bytes in an object of unit size.
+   *        Ie elementByteSize() * size() gives the size of memory pointed to by voidPointer().
+   */
+  virtual localIndex elementByteSize() const = 0;
+
+  /**
    * @brief Calls T::resize( num_dims, dims )
    * @param[in] num_dims number of dimensions in T
    * @param[in] dims pointer to the new dims
@@ -94,21 +107,19 @@ public:
   virtual void resize( int num_dims, localIndex const * const dims ) = 0;
 
   /**
-   * @brief Calls T::resize( new_cap )
-   * @param[in] new_cap the new capacity of the T
+   * @brief Calls T::reserve( newCapacity ) if it exists, otherwise a no-op.
+   * @param[in] newCapacity the new capacity of the T.
    */
-  virtual void reserve( std::size_t new_cap ) = 0;
+  virtual void reserve( localIndex const newCapacity ) = 0;
 
   /**
-   * @brief Calls T::capacity()
-   * @return result of T::capacity()
+   * @brief @return T::capacity() if it exists, other wise calls size().
    */
-  virtual std::size_t capacity() const = 0;
+  virtual localIndex capacity() const = 0;
 
   /**
-   * @brief Calls T::resize(newsize)
+   * @brief Calls T::resize(newsize) if it exists.
    * @param[in] newsize parameter to pass to T::resize(newsize)
-   * @return result of T::resize(newsize)
    */
   virtual void resize( localIndex newsize ) = 0;
 
@@ -129,9 +140,59 @@ public:
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( chai::ExecutionSpace space, bool touch ) = 0;
+  virtual void move( chai::ExecutionSpace const space, bool const touch ) const = 0;
 
   ///@}
+
+  /**
+   * @brief Return true iff this wrapper has a valid default value.
+   * @return True iff this wrapper has a valid default value.
+   */
+  virtual bool hasDefaultValue() const = 0;
+
+  /**
+   * @brief Return a string representing the default value.
+   * @return A string representing the default value.
+   */
+  virtual std::string getDefaultValueString() const = 0;
+
+  /**
+   * @brief Initialize the wrapper from the input xml node.
+   * @param targetNode the xml node to initialize from.
+   * @return True iff the wrapper initialized itself from the file.
+   */
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
+
+  /**
+   * @brief Push the data in the wrapper into a Conduit blueprint field.
+   * @param fields The Conduit Node containg the blueprint fields.
+   * @param name The name of the field.
+   * @param topology The topology associated with the field.
+   * @param componentNames The name of the components, if not specified they are auto generated.
+   * @note This wrapper must hold an LvArray::Array.
+   */
+  virtual void addBlueprintField( conduit::Node & fields,
+                                  std::string const & name,
+                                  std::string const & topology,
+                                  std::vector< std::string > const & componentNames = {} ) const = 0;
+
+  /**
+   * @brief Push the data in the wrapper into a Conduit Blueprint mcarray.
+   * @param node The Conduit Node to put the data into.
+   * @param componentNames The names of the components, if not specified they are auto generated.
+   * @note This wrapper must hold an LvArray::Array.
+   */
+  virtual void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const = 0;
+
+  /**
+   * @brief Create a new Wrapper with values averaged over the second dimension.
+   * @param name The name to give the new wrapper.
+   * @param group The group to hang the new Wrapper from.
+   * @return The newly created wrapper.
+   * @note This Wrapper must hold an LvArray::Array of dimension 2 or greater.
+   * @note The new Wrapper is not registered with @p group.
+   */
+  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const = 0;
 
   /**
    * @name Restart output methods
@@ -141,17 +202,18 @@ public:
   /**
    * @brief Register the wrapper's data for writing with Conduit.
    */
-  virtual void registerToWrite() = 0;
+  virtual void registerToWrite() const = 0;
 
   /**
    * @brief Write the wrapped data into Conduit.
    */
-  virtual void finishWriting() = 0;
+  virtual void finishWriting() const = 0;
 
   /**
    * @brief Read the wrapped data from Conduit.
+   * @return True iff the Wrapper read in data.
    */
-  virtual void loadFromConduit() = 0;
+  virtual bool loadFromConduit() = 0;
 
   ///@}
 
@@ -163,53 +225,74 @@ public:
   ///@{
 
   /**
-   * @brief Check whether wrapped type is can be packed into a buffer.
+   * @brief Check whether wrapped type is can be packed into a buffer on host or device.
+   * @param[in] on_device    determine whether the wrapper is packable on host vs device
    * @return @p true if @p T is packable, @p false otherwise
    */
-  virtual bool isPackable() const = 0;
+  virtual
+  bool isPackable( bool on_device = false ) const = 0;
 
   /**
    * @brief Pack the entire wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units packed
    */
-  virtual localIndex Pack( buffer_unit_type * & buffer ) const = 0;
+  virtual
+  localIndex Pack( buffer_unit_type * & buffer, bool on_device = false ) const = 0;
 
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
    * @param[in] packList   the list of indices to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units packed
    */
-  virtual localIndex Pack( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList ) const = 0;
+  virtual
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool on_device = false ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         this matters as the size on device differs from the size on host
+   *                         as we pack less metadata on device
    * @return the number of @p buffer_unit_type units needed to pack
    */
-  virtual localIndex PackSize( ) const = 0;
+  virtual
+  localIndex PackSize( bool on_device = false ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
    * @param[in] packList the list of indices to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return             the number of @p buffer_unit_type units needed to pack
    */
-  virtual localIndex PackSize( arrayView1d< localIndex const > const & packList ) const = 0;
+  virtual
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool on_device = false ) const = 0;
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return               the number of @p buffer_unit_type units unpacked
    */
-  virtual localIndex Unpack( buffer_unit_type const * & buffer ) = 0;
+  virtual
+  localIndex Unpack( buffer_unit_type const * & buffer, bool on_device = false ) = 0;
 
   /**
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
    * @param[in,out] buffer    the binary buffer pointer, advanced upon completion
    * @param[in] unpackIndices the list of indices to pack
+   * @param[in] on_device    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
    * @return                  the number of @p buffer_unit_type units unpacked
    */
-  virtual localIndex Unpack( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices ) = 0;
+  virtual
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool on_device = false ) = 0;
 
   ///@}
 
@@ -273,17 +356,6 @@ public:
   }
 
   /**
-   * @brief Set the plotLevel of the wrapper.
-   * @param flag an integer that specifies the new plotLevel value
-   * @return a pointer to this wrapper
-   */
-  WrapperBase * setPlotLevel( int const flag )
-  {
-    m_plotLevel = IntToPlotLevel( flag );
-    return this;
-  }
-
-  /**
    * @brief Get name of the wrapper.
    * @return name of the wrapper
    */
@@ -335,6 +407,14 @@ public:
   {
     return m_description;
   }
+
+  /**
+   * @brief @return a table formatted string containing the input options.
+   * @param outputHeader If true outputs the table header, otherwise just
+   *                     outputs a row.
+   */
+  string dumpInputOptions( bool const outputHeader ) const;
+
 
   /**
    * @brief Get the list of names of groups that registered this wrapper.
@@ -417,36 +497,37 @@ protected:
 
   /// @endcond
 
-private:
+protected:
 
-  /// name of the object that is being wrapped
+  /// Name of the object that is being wrapped
   string m_name;
 
-  /// pointer to Group that holds this WrapperBase
+  /// Pointer to Group that holds this WrapperBase
   Group * m_parent;
 
-  /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized
+  /// Integer to indicate whether or not this wrapped object should be resized when m_parent is resized
   int m_sizedFromParent;
 
-  /// flag to determine the restart behavior for this wrapped object
+  /// Flag to determine the restart behavior for this wrapped object
   RestartFlags m_restart_flags;
 
-  /// flag to store the plotLevel
+  /// Flag to store the plotLevel
   PlotLevel m_plotLevel;
 
-  /// flag to store if this wrapped object should be read from input
+  /// Flag to store if this wrapped object should be read from input
   InputFlags m_inputFlag;
 
-  /// a string description of the wrapped object
+  /// A string description of the wrapped object
   string m_description;
 
+  /// A vector of the names of the objects that created this Wrapper.
   std::vector< string > m_registeringObjects;
 
-  /// a reference to the corresponding conduit::Node
+  /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
 };
 
-}
-} /* namespace geosx */
+} /// namespace dataRepository
+} /// namespace geosx
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */

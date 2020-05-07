@@ -1,6 +1,5 @@
 set( subdirs
      math
-     cxx-utilities
      common
      linearAlgebra
      codingUtilities
@@ -35,7 +34,6 @@ set( subdirs
 #     wells
 #     python
 #     linearAlgebra
-#     cxx-utilities
 #     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
@@ -48,9 +46,12 @@ if ( BUILD_OBJ_LIBS)
   set(buildAsObj TRUE)
 endif()
 
+list( APPEND coreLibs lvarray)
+add_subdirectory(LvArray)
+
 foreach( lib ${subdirs} )
     add_subdirectory(${lib})
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python") )
+    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
       list( APPEND coreLibs ${lib})
     endif()
 endforeach()
@@ -84,7 +85,7 @@ if( BUILD_OBJ_LIBS )
                     DEPENDS_ON  ${coreLibs}
                     SHARED TRUE
                   )
-else()                  
+else()
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
                                 LIB_TYPE SHARED
@@ -93,24 +94,24 @@ else()
                               )
 endif()
 
+# To install the library with the runtime path used during the building
+set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+# To install the shared library
+install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+
 #set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 
-geosx_add_code_checks( PREFIX core )
+geosx_add_code_checks( PREFIX coreComponents 
+                       EXCLUDES cmake )
 
-set( enforceUncrustifyLibs
-     common
-     dataRepository )
 
-if( ENABLE_UNCRUSTIFY )
-  foreach( lib ${enforceUncrustifyLibs} )
-    add_test( NAME testUncrustifyCheck_${lib}
-              COMMAND ${CMAKE_MAKE_PROGRAM} ${lib}_uncrustify_check
-              WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            )
-  endforeach()
-endif()
+add_test( NAME testUncrustifyCheck
+          COMMAND ${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check
+          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
 add_subdirectory( unitTests )

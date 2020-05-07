@@ -1,19 +1,18 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, 0.0">
 
 <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
-                 couplingTypeOption="FixedStress"
+                 couplingTypeOption="SIM_FixedStress"
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region2}">
-      <SystemSolverParameters maxIterNewton="40"
-                              logLevel="2"/>
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters logLevel="0"/>
     </Poroelastic>
 
   
@@ -22,25 +21,24 @@
                                   logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="shale"
+                                  solidMaterialNames="{shale}"
                                   >
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="5"/>
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
-                              logLevel="2"/>
+                              logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM name="SinglePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
-                     fluidName="water"
-                     solidName="shale">
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="8"/>
-    </SinglePhaseFlow>
+                     fluidNames="{water}"
+                     solidNames="{shale}">
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="8"/>
+      <SystemSolverParameters krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
   </Solvers>
 <!-- SPHINX_POROELASTIC_SOLVER_END -->  
 
@@ -217,13 +215,7 @@
 
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
-    <!--SymbolicFunction  name="spaceFunction"        inputVarNames="ReferencePosition"  variableNames="x y z" expression="sqrt(pow(x,2)+pow(y,2)+pow(z,2))"/>
-    <CompositeFunction name="timeSpaceFunction" variableNames="timeTable1 spaceFunction" expression="timeTable1*spaceFunction"/-->
   </Functions>
-
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
 
   <Outputs>
       <Silo name="siloOutput"/>

@@ -1,45 +1,40 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <SinglePhaseReservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <SystemSolverParameters maxIterNewton="40"
-                              useDirectSolver="1"
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
+    <SinglePhaseFVM name="singlePhaseFlow"
                      logLevel="1"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
+                     fluidNames="{water}"
+                     solidNames="{rock}"
                      targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
-                     wellFluidName="water"
+                     fluidNames="{water}"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e8"
-                      targetRate="1e-3" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-3"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -68,14 +63,14 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="2">
         <Perforation name="producer1_perf1"
                      distanceFromHead="19.4"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
         <Perforation name="producer1_perf2"
                      distanceFromHead="20.3"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -91,30 +86,30 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
                      distanceFromHead="19.52"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
         <Perforation name="injector1_perf2"
                      distanceFromHead="20.45"
-                     transmissibility="1e-12"/> 
+                     transmissibility="1.2e-14"/> 
     </InternalWell> 
   </Mesh>
 
 
-  <Events maxTime="1e6">
+  <Events maxTime="1e5">
     <PeriodicEvent name="solverApplications"
-                   forceDt="1e5"
+                   forceDt="1e4"
                    target="/Solvers/reservoirSystem" />
 
     <PeriodicEvent name="outputs"
-                   timeFrequency="1e5"
+                   timeFrequency="1e4"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="5e5"
+                   timeFrequency="5e4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 
@@ -136,7 +131,7 @@
     <WellElementRegion name="wellRegion1"
                        materialList="{water}"/> 
    <WellElementRegion name="wellRegion2"
-                       materialList="{water}"/> 
+                      materialList="{water}"/> 
 
   </ElementRegions>
 
@@ -199,10 +194,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>

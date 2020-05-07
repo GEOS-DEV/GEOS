@@ -40,10 +40,10 @@ public:
   template< typename LAMBDA >
   void forFineCellsInAggregate( localIndex aggregateIndex, LAMBDA lambda )
   {
-    for(localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex]; 
-        fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++)
+    for( localIndex fineCell = m_nbFineCellsPerCoarseCell[aggregateIndex];
+         fineCell < m_nbFineCellsPerCoarseCell[aggregateIndex+1]; fineCell++ )
     {
-      lambda(m_fineToCoarse[fineCell]);
+      lambda( m_fineToCoarse[fineCell] );
     }
   }
 
@@ -56,30 +56,23 @@ public:
                              dataRepository::Group * const parent );
 
   virtual ~AggregateElementSubRegion() override;
- 
+
   void CreateFromFineToCoarseMap( localIndex nbAggregates,
                                   array1d< localIndex > const & fineToCoarse,
-                                  array1d< R1Tensor > const & barycenters);
+                                  array1d< R1Tensor > const & barycenters );
 
-  const array1d< localIndex >& GetFineToCoarseMap()
+  const array1d< localIndex > & GetFineToCoarseMap()
   {
     return m_fineToCoarse;
   }
-  
-  virtual R1Tensor const & calculateElementCenter( localIndex k,
-                                                   NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                   const bool GEOSX_UNUSED_ARG( useReferencePos ) = true) const override
+
+  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override
   {
-    return m_elementCenter[k];
+    //TODO ?
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_ARG( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_ARG( faceManager ) ) override
-  {
-      //TODO ?
-  }
-
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_ARG( mesh ) ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ) ) override
   {
     //TODO ?
   }
@@ -92,7 +85,7 @@ public:
 
 private:
   /// The elements to nodes relation is one to one relation.
-  NodeMapType  m_toNodesRelation;
+  NodeMapType m_toNodesRelation;
 
   /// Relation between fine and coarse elements ordered by aggregates
   array1d< localIndex > m_fineToCoarse;

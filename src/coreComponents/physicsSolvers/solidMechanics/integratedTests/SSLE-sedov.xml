@@ -5,7 +5,7 @@
                                   cflFactor="0.25"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="shale"/>
+                                  solidMaterialNames="{shale}"/>
   </Solvers>
 
   <Included>

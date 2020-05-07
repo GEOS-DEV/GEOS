@@ -32,6 +32,7 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           TRILINOS
                           MKL
                           GEOSX_PTP
+                          SEPARATION_COEFFICIENT
                           ${externalComponentsList} )
 
 foreach( DEP in ${PREPROCESSOR_DEFINES})
@@ -41,6 +42,7 @@ foreach( DEP in ${PREPROCESSOR_DEFINES})
     endif()
 endforeach()
 
+set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
 configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                 ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp )

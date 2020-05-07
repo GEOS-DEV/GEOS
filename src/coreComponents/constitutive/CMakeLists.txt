@@ -9,18 +9,36 @@ set( constitutive_headers
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
+     fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.hpp
+     fluid/PVTFunctions/BrineViscosityFunction.hpp
+     fluid/PVTFunctions/CO2SolubilityFunction.hpp     
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp
+     fluid/PVTFunctions/FlashModelBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
+     fluid/PVTFunctions/UtilityFunctions.hpp     
      fluid/SingleFluidBase.hpp
      fluid/MultiFluidBase.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
+     fluid/SlurryFluidBase.hpp
+     fluid/ProppantSlurryFluid.hpp
+     fluid/ParticleFluidBase.hpp
+     fluid/ParticleFluid.hpp          
+     solid/LinearElasticAnisotropic.hpp
+     solid/LinearElasticIsotropic.hpp
+     solid/LinearElasticTransverseIsotropic.hpp
+     solid/PoroElastic.hpp
+     solid/PoreVolumeCompressibleSolid.hpp
+     solid/SolidBase.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
-     solid/LinearElasticAnisotropic.hpp
-     solid/LinearElasticIsotropic.hpp
-     solid/PoroElastic.hpp
-     solid/PoreVolumeCompressibleSolid.hpp
-     solid/SolidBase.hpp
+     capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.hpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.hpp
+     contact/ContactRelationBase.hpp
    )
 #
 # Specify all sources
@@ -32,18 +50,35 @@ set( constitutive_sources
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactRelationBase.cpp
+     fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/MultiPhaseMultiComponentFluid.cpp     
+     fluid/PVTFunctions/BrineCO2DensityFunction.cpp
+     fluid/PVTFunctions/BrineViscosityFunction.cpp 
+     fluid/PVTFunctions/CO2SolubilityFunction.cpp
+     fluid/PVTFunctions/FenghourCO2ViscosityFunction.cpp
+     fluid/PVTFunctions/SpanWagnerCO2DensityFunction.cpp    
+     fluid/PVTFunctions/UtilityFunctions.cpp
      fluid/SingleFluidBase.cpp
      fluid/MultiFluidBase.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/SlurryFluidBase.cpp
+     fluid/ProppantSlurryFluid.cpp
+     fluid/ParticleFluidBase.cpp
+     fluid/ParticleFluid.cpp               
+     solid/LinearElasticAnisotropic.cpp
+     solid/LinearElasticIsotropic.cpp
+     solid/LinearElasticTransverseIsotropic.cpp
+     solid/PoroElastic.cpp
+     solid/PoreVolumeCompressibleSolid.cpp
+     solid/SolidBase.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
-     solid/LinearElasticAnisotropic.cpp
-     solid/LinearElasticIsotropic.cpp
-     solid/PoroElastic.cpp
-     solid/PoreVolumeCompressibleSolid.cpp
-     solid/SolidBase.cpp
+     capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/BrooksCoreyCapillaryPressure.cpp
+     capillaryPressure/VanGenuchtenCapillaryPressure.cpp
+     contact/ContactRelationBase.cpp
    )
 
 if( BUILD_OBJ_LIBS)

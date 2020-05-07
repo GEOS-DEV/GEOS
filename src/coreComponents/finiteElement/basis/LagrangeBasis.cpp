@@ -23,28 +23,28 @@ namespace geosx
 
 using namespace dataRepository;
 
-template <int dim>
-LagrangeBasis<dim>::LagrangeBasis(std::string const & name, Group * const parent)
+template< int dim >
+LagrangeBasis< dim >::LagrangeBasis( std::string const & name, Group * const parent )
   :
-  BasisBase(name, parent),
-  m_degree(0),
-  n_shape_functions(0)
+  BasisBase( name, parent ),
+  m_degree( 0 ),
+  n_shape_functions( 0 )
 {
-  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Basis degree");
+  registerWrapper( viewKeyStruct::degreeString, &m_degree )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Basis degree" );
 }
 
-template <int dim>
-LagrangeBasis<dim>::~LagrangeBasis()
+template< int dim >
+LagrangeBasis< dim >::~LagrangeBasis()
 {}
 
 /*
  * Number of degrees of freedom in basis
  */
 
-template <int dim>
-int LagrangeBasis<dim>::size() const
+template< int dim >
+int LagrangeBasis< dim >::size() const
 {
   return n_shape_functions;
 }
@@ -53,16 +53,16 @@ int LagrangeBasis<dim>::size() const
 /*
  * Evaluate the basis at a particular point in parent coordinates
  */
-template <int dim>
-double LagrangeBasis<dim>::value(const int       index,
-                                   const R1Tensor &point) const
+template< int dim >
+double LagrangeBasis< dim >::value( const int index,
+                                    const R1Tensor & point ) const
 {
-  std::vector<int> indices(dim);
-  StructuredGrid::map_index<dim>(index,m_degree+1,indices);
+  std::vector< int > indices( dim );
+  StructuredGrid::map_index< dim >( index, m_degree+1, indices );
 
   double val = 1;
-  for(int d=0 ; d<dim ; ++d)
-    val *= m_polynomials[indices[d]].Value(point[d]);
+  for( int d=0; d<dim; ++d )
+    val *= m_polynomials[indices[d]].Value( point[d] );
 
   return val;
 }
@@ -71,25 +71,25 @@ double LagrangeBasis<dim>::value(const int       index,
 /*
  * Evaluate the gradient at a particular point in parent coordinates.
  */
-template <int dim>
-R1Tensor LagrangeBasis<dim>::gradient(const int index,
-                                        const R1Tensor &point) const
+template< int dim >
+R1Tensor LagrangeBasis< dim >::gradient( const int index,
+                                         const R1Tensor & point ) const
 {
-  std::vector<int> indices(dim);
-  StructuredGrid::map_index<dim>(index,m_degree+1,indices);
+  std::vector< int > indices( dim );
+  StructuredGrid::map_index< dim >( index, m_degree+1, indices );
 
   R1Tensor grad;
 
-  for(int r=0 ; r<dim ; ++r)
+  for( int r=0; r<dim; ++r )
     grad[r] = 1.0;
 
-  double pvalue,pderiv;
+  double pvalue, pderiv;
 
-  for(int c=0 ; c<dim ; ++c)
+  for( int c=0; c<dim; ++c )
   {
-    pvalue = m_polynomials[indices[c]].Value(point[c]);
-    pderiv = m_polynomials[indices[c]].Deriv(point[c]);
-    for(int r=0 ; r<dim ; ++r)
+    pvalue = m_polynomials[indices[c]].Value( point[c] );
+    pderiv = m_polynomials[indices[c]].Deriv( point[c] );
+    for( int r=0; r<dim; ++r )
     {
       grad[r] *= ( r==c ? pderiv : pvalue );
     }
@@ -105,128 +105,138 @@ R1Tensor LagrangeBasis<dim>::gradient(const int index,
  * element.
  */
 
-template <int dim>
-R1Tensor LagrangeBasis<dim>::support_point(const int index)
+template< int dim >
+R1Tensor LagrangeBasis< dim >::support_point( const int index )
 {
   R1Tensor pt;
 
-  if(m_degree == 0)
+  if( m_degree == 0 )
   {
-    for(int i=0 ; i<dim ; ++i)
-      pt(i) = 0.5;
+    for( int i=0; i<dim; ++i )
+      pt( i ) = 0.5;
   }
   else
   {
-    std::vector<int> indices(dim);
-    StructuredGrid::map_index<dim>(index,m_degree+1,indices);
+    std::vector< int > indices( dim );
+    StructuredGrid::map_index< dim >( index, m_degree+1, indices );
 
     const double h = 1.0/m_degree;
 
-    for(int i=0 ; i<dim ; ++i)
-      pt(i) = h*indices[i];
+    for( int i=0; i<dim; ++i )
+      pt( i ) = h*indices[i];
   }
 
   return pt;
 }
 
-template <int dim>
-void LagrangeBasis<dim>::PostProcessInput()
+template< int dim >
+void LagrangeBasis< dim >::PostProcessInput()
 {
-  n_shape_functions = StructuredGrid::dimpower<dim>(m_degree+1);
+  n_shape_functions = StructuredGrid::dimpower< dim >( m_degree+1 );
 
-  std::vector<std::vector<double> > coeff( m_degree+1, std::vector<double>(m_degree+1) );
+  std::vector< std::vector< double > > coeff( m_degree+1, std::vector< double >( m_degree+1 ) );
 
-  switch(m_degree)
+  switch( m_degree )
   {
-  case 0:
-    coeff[0][0] =  1.0;
+    case 0:
+    {
+      coeff[0][0] =  1.0;
+    }
     break;
 
-  case 1:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -1.0;
+    case 1:
+    {
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -1.0;
 
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  1.0;
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  1.0;
+    }
     break;
 
-  case 2:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -3.0;
-    coeff[0][2] =  2.0;
+    case 2:
+    {
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -3.0;
+      coeff[0][2] =  2.0;
 
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  4.0;
-    coeff[1][2] = -4.0;
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  4.0;
+      coeff[1][2] = -4.0;
 
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -1.0;
-    coeff[2][2] =  2.0;
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -1.0;
+      coeff[2][2] =  2.0;
+    }
     break;
 
-  case 3:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -11.0/2.0;
-    coeff[0][2] =  9.0;
-    coeff[0][3] = -9.0/2.0;
+    case 3:
+    {
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -11.0/2.0;
+      coeff[0][2] =  9.0;
+      coeff[0][3] = -9.0/2.0;
 
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  9.0;
-    coeff[1][2] = -45.0/2.0;
-    coeff[1][3] =  27.0/2.0;
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  9.0;
+      coeff[1][2] = -45.0/2.0;
+      coeff[1][3] =  27.0/2.0;
 
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -9.0/2.0;
-    coeff[2][2] =  18.0;
-    coeff[2][3] = -27.0/2.0;
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -9.0/2.0;
+      coeff[2][2] =  18.0;
+      coeff[2][3] = -27.0/2.0;
 
-    coeff[3][0] =  0.0;
-    coeff[3][1] =  1.0;
-    coeff[3][2] = -9.0/2.0;
-    coeff[3][3] =  9.0/2.0;
+      coeff[3][0] =  0.0;
+      coeff[3][1] =  1.0;
+      coeff[3][2] = -9.0/2.0;
+      coeff[3][3] =  9.0/2.0;
+    }
     break;
 
-  case 4:
-    coeff[0][0] =  1.0;
-    coeff[0][1] = -25.0/3.0;
-    coeff[0][2] =  70.0/3.0;
-    coeff[0][3] = -80.0/3.0;
-    coeff[0][4] =  32.0/3.0;
+    case 4:
+    {
+      coeff[0][0] =  1.0;
+      coeff[0][1] = -25.0/3.0;
+      coeff[0][2] =  70.0/3.0;
+      coeff[0][3] = -80.0/3.0;
+      coeff[0][4] =  32.0/3.0;
 
-    coeff[1][0] =  0.0;
-    coeff[1][1] =  16.0;
-    coeff[1][2] = -208.0/3.0;
-    coeff[1][3] =  96.0;
-    coeff[1][4] = -128.0/3.0;
+      coeff[1][0] =  0.0;
+      coeff[1][1] =  16.0;
+      coeff[1][2] = -208.0/3.0;
+      coeff[1][3] =  96.0;
+      coeff[1][4] = -128.0/3.0;
 
-    coeff[2][0] =  0.0;
-    coeff[2][1] = -12.0;
-    coeff[2][2] =  76.0;
-    coeff[2][3] = -128.0;
-    coeff[2][4] =  64.0;
+      coeff[2][0] =  0.0;
+      coeff[2][1] = -12.0;
+      coeff[2][2] =  76.0;
+      coeff[2][3] = -128.0;
+      coeff[2][4] =  64.0;
 
-    coeff[3][0] =  0.0;
-    coeff[3][1] =  16.0/3.0;
-    coeff[3][2] = -112.0/3.0;
-    coeff[3][3] =  224.0/3.0;
-    coeff[3][4] = -128.0/3.0;
+      coeff[3][0] =  0.0;
+      coeff[3][1] =  16.0/3.0;
+      coeff[3][2] = -112.0/3.0;
+      coeff[3][3] =  224.0/3.0;
+      coeff[3][4] = -128.0/3.0;
 
-    coeff[4][0] =  0.0;
-    coeff[4][1] = -1.0;
-    coeff[4][2] =  22.0/3.0;
-    coeff[4][3] = -16.0;
-    coeff[4][4] =  32.0/3.0;
+      coeff[4][0] =  0.0;
+      coeff[4][1] = -1.0;
+      coeff[4][2] =  22.0/3.0;
+      coeff[4][3] = -16.0;
+      coeff[4][4] =  32.0/3.0;
+    }
     break;
 
-  default:
-    assert(m_degree<5);
+    default:
+      GEOSX_ERROR( "Not implemented for degree" << m_degree );
   }
 
-  for(int n=0 ; n<m_degree+1 ; ++n)
-    m_polynomials.push_back(Polynomial(coeff[n]));
+  for( int n=0; n<m_degree+1; ++n )
+    m_polynomials.push_back( Polynomial( coeff[n] ));
 }
 
-namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<1>, std::string const &, Group * const > catEntry_LagrangeBasis1; }
-namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<2>, std::string const &, Group * const > catEntry_LagrangeBasis2; }
-namespace { dataRepository::CatalogEntryConstructor<BasisBase, LagrangeBasis<3>, std::string const &, Group * const > catEntry_LagrangeBasis3; }
+namespace { dataRepository::CatalogEntryConstructor< BasisBase, LagrangeBasis< 1 >, std::string const &, Group * const > catEntry_LagrangeBasis1; }
+namespace { dataRepository::CatalogEntryConstructor< BasisBase, LagrangeBasis< 2 >, std::string const &, Group * const > catEntry_LagrangeBasis2; }
+namespace { dataRepository::CatalogEntryConstructor< BasisBase, LagrangeBasis< 3 >, std::string const &, Group * const > catEntry_LagrangeBasis3; }
 }

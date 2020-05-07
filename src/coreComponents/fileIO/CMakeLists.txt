@@ -7,8 +7,7 @@ set( fileIO_headers
      silo/SiloFile.hpp
      vtk/VTKFile.hpp
      vtm/VtmFile.hpp
-     schema/SchemaUtilities.hpp
-     utils/utils.hpp )
+     schema/schemaUtilities.hpp )
 
 #
 # Specify all sources
@@ -17,7 +16,7 @@ set( fileIO_sources
      silo/SiloFile.cpp
      vtk/VTKFile.cpp
      vtm/VtmFile.cpp
-     schema/SchemaUtilities.cpp )
+     schema/schemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
   set( dependencyList common silo hdf5 pugixml RAJA  )
@@ -30,11 +29,7 @@ if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi hdf5_interface)
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp )
-endif()
-
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
-endif()
+endif() 
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

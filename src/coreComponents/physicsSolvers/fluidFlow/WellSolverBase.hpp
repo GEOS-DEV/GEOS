@@ -33,7 +33,7 @@ class Group;
 class DomainPartition;
 class WellControls;
 class WellElementSubRegion;
- 
+
 /**
  * @class WellSolverBase
  *
@@ -51,7 +51,7 @@ public:
     static constexpr integer WELL = 1;
   };
 
-  // tag to access the next and current well elements of a connection 
+  // tag to access the next and current well elements of a connection
   struct ElemTag
   {
     static constexpr integer CURRENT = 0;
@@ -63,7 +63,7 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  WellSolverBase( const std::string& name,
+  WellSolverBase( const std::string & name,
                   Group * const parent );
 
   /// default destructor
@@ -86,28 +86,32 @@ public:
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
+  /// Expand catalog for schema generation
+  virtual void ExpandObjectCatalogs() override;
+
+
   /**
    * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
    * @param name the name of the flow solver
-   */  
+   */
   void SetFlowSolverName( string const & name ) { m_flowSolverName = name; }
 
   /**
    * @brief getter for the name of the flow solver (used in UpdateState)
    * @return a string containing the name of the flow solver
-   */  
+   */
   string const & GetFlowSolverName() const { return m_flowSolverName; }
 
   /**
    * @brief getter for the number of degrees of freedom per well element
-   * @return the number of dofs 
-   */  
+   * @return the number of dofs
+   */
   localIndex NumDofPerWellElement() const { return m_numDofPerWellElement; }
 
   /**
    * @brief getter for the number of degrees of freedom per mesh element
-   * @return the number of dofs 
-   */  
+   * @return the number of dofs
+   */
   localIndex NumDofPerResElement() const { return m_numDofPerResElement; }
 
   /**
@@ -125,22 +129,28 @@ public:
   /**
    * @brief const getter for the number of fluid components
    * @return the number of fluid components
-   */  
+   */
   virtual localIndex NumFluidComponents() const = 0;
+
+  /**
+   * @brief Get the number of fluid phases
+   * @return the number of phases
+   */
+  virtual localIndex NumFluidPhases() const = 0;
 
   /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a pointer to the controls
-   */  
-  WellControls * GetWellControls( WellElementSubRegion const * const subRegion );
+   */
+  WellControls & GetWellControls( WellElementSubRegion const & subRegion );
 
   /**
    * @brief const getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a pointer to the const controls
-   */  
-  WellControls const * GetWellControls( WellElementSubRegion const * const subRegion ) const;
+   */
+  WellControls const & GetWellControls( WellElementSubRegion const & subRegion ) const;
 
   /**
    * @defgroup Solver Interface Functions
@@ -149,7 +159,10 @@ public:
    */
   /**@{*/
 
-  virtual void RegisterDataOnMesh(Group * const meshBodies) override;
+  virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
+
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -159,9 +172,9 @@ public:
                                   ParallelVector & rhs,
                                   ParallelVector & solution ) override;
 
-  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_ARG( time ),
-                                     real64 const & GEOSX_UNUSED_ARG( dt ),
-                                     DomainPartition * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
 
   /**@}*/
@@ -199,21 +212,6 @@ public:
                                   ParallelVector * const rhs ) = 0;
 
   /**
-   * @brief assembles the perforation rate terms 
-   * @param domain the physical domain object
-   * @param jacobian the entire jacobian matrix of the system
-   * @param residual the entire residual of the system
-   * @param time_n previous time value
-   * @param dt time step
-   */
-  virtual void AssemblePerforationTerms( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const matrix,
-                                         ParallelVector * const rhs ) = 0;
-
-  /**
    * @brief assembles the volume balance terms for all well elements
    * @param time_n previous time value
    * @param dt time step
@@ -240,7 +238,7 @@ public:
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) = 0;
-  
+
   /**
    * @brief assembles the control equation for the first connection
    * @param domain the physical domain object
@@ -257,53 +255,43 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual void UpdateStateAll( DomainPartition * const domain );
-  
+  virtual void UpdateStateAll( DomainPartition & domain );
+
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  virtual void UpdateState( WellElementSubRegion * const subRegion ) = 0;
+  virtual void UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+
+  arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr auto gravityFlagString  = FlowSolverBase::viewKeyStruct::gravityFlagString;
-    static constexpr auto gravityDepthString = FlowSolverBase::viewKeyStruct::gravityDepthString;
+    static constexpr auto gravityCoefString = FlowSolverBase::viewKeyStruct::gravityCoefString;
 
     // misc inputs
-    static constexpr auto fluidNameString      = "wellFluidName";
-    static constexpr auto resFluidIndexString  = "resFluidIndex";
+    static constexpr auto fluidNamesString  = "fluidNames";
 
-    using ViewKey = dataRepository::ViewKey;
-
-    // gravity term precomputed values
-    ViewKey gravityFlag  = { gravityFlagString };
-    ViewKey gravityDepth = { gravityDepthString };
-
-    // misc inputs
-    ViewKey fluidName  = { fluidNameString };
-    ViewKey resFluidIndex  = { resFluidIndexString };
-  
   } viewKeysWellSolverBase;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
-  {
-  } groupKeysWellSolverBase;
+  {} groupKeysWellSolverBase;
 
 private:
-  
+
   /**
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
-  void PrecomputeData(DomainPartition *const domain);
-  
+  void PrecomputeData( DomainPartition * const domain );
+
 protected:
+  virtual void PostProcessInput() override;
 
-  virtual void InitializePreSubGroups(Group * const rootGroup) override;
+  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(Group * const rootGroup) override;
+  virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -315,7 +303,7 @@ protected:
    * @param domain the domain containing the well manager to access individual wells
    */
   virtual void InitializeWells( DomainPartition * const domain ) = 0;
-  
+
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
@@ -324,16 +312,10 @@ protected:
 
   /// name of the flow solver
   string m_flowSolverName;
-  
-  /// flag to determine whether or not to apply gravity
-  integer m_gravityFlag;
 
-  /// name of the fluid constitutive model
-  string m_fluidName;
+  /// names of the fluid constitutive models
+  array1d< string > m_fluidModelNames;
 
-  /// index of the fluid constitutive model in the flow solver class
-  localIndex m_resFluidIndex;
-  
   /// the number of Degrees of Freedom per well element
   localIndex m_numDofPerWellElement;
 
@@ -341,7 +323,7 @@ protected:
   localIndex m_numDofPerResElement;
 
   /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor<arrayView1d<real64>>  m_resGravDepth;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_resGravCoef;
 };
 
 }

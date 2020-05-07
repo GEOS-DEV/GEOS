@@ -13,6 +13,7 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -34,7 +35,7 @@ set(managers_headers
 # Specify all sources
 #
 set(managers_sources
-  	DomainPartition.cpp
+    DomainPartition.cpp
     EventManager.cpp
     Events/EventBase.cpp
     Events/PeriodicEvent.cpp
@@ -45,6 +46,7 @@ set(managers_sources
     Outputs/SiloOutput.cpp
     Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -66,11 +68,10 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
 endif()
-
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -82,6 +83,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
 endif()
 
 blt_add_library( NAME                  managers

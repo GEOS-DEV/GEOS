@@ -21,33 +21,37 @@
 #include <vector>
 
 /// returns the amount of cpu time use for this process
-realT getcputime(void);
+realT getcputime( void );
 
 
 
-void function1( realT* __restrict__ a, realT* __restrict__ b, realT* __restrict__  c, realT* __restrict__  d, realT* __restrict__  e, const int n );
+void function1( realT * __restrict__ a, realT * __restrict__ b, realT * __restrict__ c, realT * __restrict__ d, realT * __restrict__ e, const int n );
 
-void function2( R2TensorT<3>& A, R2TensorT<3>& B, R2TensorT<3>& C, R2TensorT<3>& D, R2TensorT<3>& E, const int n );
+void function2( R2TensorT< 3 > & A, R2TensorT< 3 > & B, R2TensorT< 3 > & C, R2TensorT< 3 > & D, R2TensorT< 3 > & E, const int n );
 
-int main(int argc, char* argv[] )
+int main( int argc, char * argv[] )
 {
   realT iRANDMAX = 1.0 / RAND_MAX;
 
-  std::srand(1234);
+  std::srand( 1234 );
 
 //   int num_iter = 1000000;
-  int num_iter = atoi(argv[1]);
+  int num_iter = atoi( argv[1] );
 
 
-  realT a[9] = { realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand())  };
-  realT b[9] = { realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand())  };
-  realT c[9] = { realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand())  };
-  realT d[9] = { realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand()), realT(rand())  };
+  realT a[9] =
+  { realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand())  };
+  realT b[9] =
+  { realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand())  };
+  realT c[9] =
+  { realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand())  };
+  realT d[9] =
+  { realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand()), realT( rand())  };
 
   realT e[9] = {0.0};
 
 
-  for( int i=0 ; i<9 ; ++i )
+  for( int i=0; i<9; ++i )
   {
     a[i] *= iRANDMAX;
     b[i] *= iRANDMAX;
@@ -55,17 +59,17 @@ int main(int argc, char* argv[] )
     d[i] *= iRANDMAX;
   }
 
-  R2TensorT<3> A,B,C,D,E;
+  R2TensorT< 3 > A, B, C, D, E;
 
   int count = 0;
-  for( int i=0 ; i<3 ; ++i )
+  for( int i=0; i<3; ++i )
   {
-    for( int j=0 ; j<3 ; ++j )
+    for( int j=0; j<3; ++j )
     {
-      A(i,j) = a[count];
-      B(i,j) = b[count];
-      C(i,j) = c[count];
-      D(i,j) = d[count++];
+      A( i, j ) = a[count];
+      B( i, j ) = b[count];
+      C( i, j ) = c[count];
+      D( i, j ) = d[count++];
 
     }
   }
@@ -73,29 +77,29 @@ int main(int argc, char* argv[] )
 
   realT t1 = getcputime();
 
-  function1( a,b,c,d,e,num_iter );
+  function1( a, b, c, d, e, num_iter );
 
   realT t2 = getcputime();
 
-  function2( A,B,C,D,E,num_iter);
+  function2( A, B, C, D, E, num_iter );
 
   realT t3 = getcputime();
 
 
-  for( int i=0 ; i<9 ; ++i )
-    GEOS_LOG(e[i]);
-  GEOS_LOG("");
+  for( int i=0; i<9; ++i )
+    GEOSX_LOG( e[i] );
+  GEOSX_LOG( "" );
 
 
-  for( int i=0 ; i<3 ; ++i )
-    for( int j=0 ; j<3 ; ++j )
+  for( int i=0; i<3; ++i )
+    for( int j=0; j<3; ++j )
     {
-      GEOS_LOG(E(i,j));
+      GEOSX_LOG( E( i, j ));
     }
-  GEOS_LOG("");
+  GEOSX_LOG( "" );
 
-  GEOS_LOG("baseline CPU time    = "<<t2-t1);
-  GEOS_LOG("TensorClass CPU time = "<<t3-t2);
+  GEOSX_LOG( "baseline CPU time    = "<<t2-t1 );
+  GEOSX_LOG( "TensorClass CPU time = "<<t3-t2 );
 
 
   return 0;
@@ -104,13 +108,13 @@ int main(int argc, char* argv[] )
 }
 
 
-void function1( realT* __restrict__ a, realT* __restrict__ b, realT* __restrict__  c, realT* __restrict__  d, realT* __restrict__  e, const int n )
+void function1( realT * __restrict__ a, realT * __restrict__ b, realT * __restrict__ c, realT * __restrict__ d, realT * __restrict__ e, const int n )
 {
 
-  for( int k = 0 ; k < n ; ++k )
+  for( int k = 0; k < n; ++k )
   {
 
-    for( int i=0 ; i<9 ; ++i )
+    for( int i=0; i<9; ++i )
     {
       e[i] += a[i] * b[i] + c[i] * d[i];
       a[i] *= a[i];
@@ -123,10 +127,10 @@ void function1( realT* __restrict__ a, realT* __restrict__ b, realT* __restrict_
 
 }
 
-void function2( R2TensorT<3>& A, R2TensorT<3>& B, R2TensorT<3>& C, R2TensorT<3>& D, R2TensorT<3>& E, const int n )
+void function2( R2TensorT< 3 > & A, R2TensorT< 3 > & B, R2TensorT< 3 > & C, R2TensorT< 3 > & D, R2TensorT< 3 > & E, const int n )
 {
-  R2TensorT<3> TEMP, TEMP2;
-  for( int k = 0 ; k < n ; ++k )
+  R2TensorT< 3 > TEMP, TEMP2;
+  for( int k = 0; k < n; ++k )
   {
 /*
     TEMP = A;
@@ -138,7 +142,7 @@ void function2( R2TensorT<3>& A, R2TensorT<3>& B, R2TensorT<3>& C, R2TensorT<3>&
     E += TEMP;
     E += TEMP2;
  */
-    E.AB_plus_CD(A,B,C,D);
+    E.AB_plus_CD( A, B, C, D );
 
     A *= A;
     D *= C;
@@ -158,11 +162,11 @@ void function2( R2TensorT<3>& A, R2TensorT<3>& B, R2TensorT<3>& C, R2TensorT<3>&
  * time, and returns
  * the result.
  */
-realT getcputime(void)
+realT getcputime( void )
 {
   struct timeval tim;
   struct rusage ru;
-  getrusage(RUSAGE_SELF, &ru);
+  getrusage( RUSAGE_SELF, &ru );
 
   tim=ru.ru_utime;
   realT t=(realT)tim.tv_sec + (realT)tim.tv_usec / 1.0e6;

@@ -1,24 +1,22 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
   
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="0"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Region2}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
-                                 capPressureName="cappressure"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
+                                 capPressureNames="{cappressure}"
                                  temperature="297.15"
                                  useMass="1">
                                  
+      <NonlinearSolverParameters newtonTol="1.0e-6"
+                                 newtonMaxIter="2"/>
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="2"
                               useDirectSolver="0"
                               solverType="Klu"
                               ilut_fill="0"
@@ -114,7 +112,7 @@
                                   phaseMinVolumeFraction="{0.2, 0.05}"
                                   phaseCapPressureExponentInv="{4.25, 3.5}"
                                   phaseEntryPressure="{0., 1e8}"
-                                  capPressureEpsilon="{0., 0}"/> 
+                                  capPressureEpsilon="0.0"/> 
 
   </Constitutive>
 
@@ -274,15 +272,26 @@
   </FieldSpecifications>
 
   <Functions>
-    <SymbolicFunction name="initialPressureFunc"
+    <!-- Note: symbolic functions are not available on all systems, so use a table function instead. -->
+    <!-- <SymbolicFunction name="initialPressureFunc"
                       inputVarNames="{elementCenter}"
                       variableNames="{x, y, z}"
-                      expression="(6-x)/6"/>
-  </Functions>
+                      expression="(6-x)/6"/> -->
 
-  <!-- <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> -->
+    <!-- Note: because the expression "(6-x)/6" uses only the first component of elementCenter
+          we can use a 1D table instead of a proper ND table.  The inputs with dims larger
+          than the function are simply ignored. -->
+    <TableFunction name="initialPressureFunc"
+                   inputVarNames="{elementCenter}"
+                   coordinates="{0.0, 3.0}"
+                   values="{1.0, 0.5}"/>
+
+    <!-- This is what the equivalent 3D table function would look like -->
+    <!-- <TableFunction name="initialPressureFunc"
+                   inputVarNames="{elementCenter}"
+                   coordinateFiles="{x.geos, y.geos, z.geos}"
+                   voxelFile="{pressure.geos}"/> -->
+  </Functions>
 
   <Outputs>
       <Silo name="siloOutput"/>

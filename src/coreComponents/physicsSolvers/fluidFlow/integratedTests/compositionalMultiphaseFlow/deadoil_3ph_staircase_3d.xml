@@ -1,24 +1,22 @@
 
 <Problem>
 <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
-                                 gravityFlag="1"
                                  discretization="fluidTPFA"
                                  targetRegions="{Channel}"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="300"
                                  useMass="0">
-      <SystemSolverParameters newtonTol="1.0e-10"
-                              maxIterNewton="15"
-                              useDirectSolver="1"
-                              maxTimeStepCuts="2"
-                              maxLineSearchCuts="2"/>
+      <NonlinearSolverParameters newtonTol="1.0e-10"
+                                 newtonMaxIter="15"
+                                 maxTimeStepCuts="2"
+                                 lineSearchMaxCuts="2"/>
+      <SystemSolverParameters useDirectSolver="1"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->

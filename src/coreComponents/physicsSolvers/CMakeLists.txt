@@ -6,6 +6,7 @@ add_subdirectory (GEOSX_PTP)
 # Specify solver headers
 #
 set( physicsSolvers_headers
+     NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
@@ -13,14 +14,25 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
      fluidFlow/FlowSolverBase.hpp
-     fluidFlow/SinglePhaseFlow.hpp
-     fluidFlow/SinglePhaseFlowKernels.hpp
+     fluidFlow/ProppantTransport.hpp
+     fluidFlow/ProppantTransportKernels.hpp
+     fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseFVM.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseFVMKernels.hpp          
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/WellSolverBase.hpp
+     fluidFlow/WellSolverBase.hpp
+     multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
      multiphysics/PoroelasticSolver.hpp
-     multiphysics/ReservoirSolver.hpp
+     multiphysics/ReservoirSolverBase.hpp
+     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoir.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/ReactionDiffusionFEM.hpp
@@ -28,7 +40,9 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/TimeIntegrationOption.hpp
      surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
 
 #
@@ -37,25 +51,37 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     NonlinearSolverParameters.cpp
      SystemSolverParameters.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
-     fluidFlow/SinglePhaseFlow.cpp
-     fluidFlow/SinglePhaseFlowKernels.cpp
+     fluidFlow/ProppantTransport.cpp
+     fluidFlow/ProppantTransportKernels.cpp
+     fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseBaseKernels.cpp
+     fluidFlow/SinglePhaseFVM.cpp
+     fluidFlow/SinglePhaseFVMKernels.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp     
+     fluidFlow/SinglePhaseHybridFVMKernels.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp     
      fluidFlow/SinglePhaseWell.cpp
      fluidFlow/WellSolverBase.cpp
+     multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/PoroelasticSolver.cpp
-     multiphysics/ReservoirSolver.cpp
+     multiphysics/ReservoirSolverBase.cpp
+     multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      simplePDE/ReactionDiffusionFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
 if( BUILD_OBJ_LIBS)
