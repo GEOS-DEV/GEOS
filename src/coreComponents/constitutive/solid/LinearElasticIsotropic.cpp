@@ -179,21 +179,21 @@ void LinearElasticIsotropic::PostProcessInput()
 
 void LinearElasticIsotropic::calculateStrainEnergyDensity()
 {
-  for( localIndex k=0 ; k<m_stress.size(0) ; ++k )
+  for( localIndex k=0; k<m_stress.size( 0 ); ++k )
   {
     real64 const invE = ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] ) / ( 9.0 * m_bulkModulus[k] * m_shearModulus[k] );
     real64 const nu = ( 1.5 * m_bulkModulus[k] - m_shearModulus[k] ) / ( 3.0 * m_bulkModulus[k] + m_shearModulus[k] );
-    for( localIndex q=0 ; q<m_stress.size(1) ; ++q )
+    for( localIndex q=0; q<m_stress.size( 1 ); ++q )
     {
-      real64 const * const stress = m_stress(k,q).Data();
-      real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[2]*stress[2] + stress[5]*stress[5] -
-                                              2 * ( nu * (stress[2] * stress[5] + stress[0] * (stress[2] + stress[5]) ) +
-                                                    (1 + nu) * (stress[4]*stress[4] + stress[3]*stress[3] + stress[1]*stress[1])
-                                                  )
-                                            ) * invE * 0.5;
-      if( newStrainEnergyDensity > m_strainEnergyDensity(k,q) )
+      real64 const * const stress = m_stress[k][q];
+      real64 const newStrainEnergyDensity = ( stress[0]*stress[0] + stress[1]*stress[1] + stress[2]*stress[2] -
+                                              2 * ( nu * (stress[1] * stress[2] + stress[0] * (stress[1] + stress[2]) ) +
+                                                    (1 + nu) * (stress[1]*stress[1] + stress[2]*stress[2] + stress[3]*stress[3])
+                                                    )
+                                              ) * invE * 0.5;
+      if( newStrainEnergyDensity > m_strainEnergyDensity( k, q ) )
       {
-        m_strainEnergyDensity(k,q) = newStrainEnergyDensity;
+        m_strainEnergyDensity( k, q ) = newStrainEnergyDensity;
       }
     }
   }

@@ -42,22 +42,22 @@ SolidBase::SolidBase( string const & name,
     setDescription( "Default Material Density" );
 
   registerWrapper( viewKeyStruct::densityString, &m_density )->
-    setApplyDefaultValue(-1)->
-    setDescription("Material Density");
+    setApplyDefaultValue( -1 )->
+    setDescription( "Material Density" );
 
   registerWrapper( viewKeyStruct::stressString, &m_stress )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Material Stress" );
 
-registerWrapper( viewKeyStruct::damageString, &m_damage )->
-  setApplyDefaultValue(0.0)->
-  setPlotLevel(PlotLevel::LEVEL_0)->
-  setDescription("Material Damage Variable");
+  registerWrapper( viewKeyStruct::damageString, &m_damage )->
+    setApplyDefaultValue( 0.0 )->
+    setPlotLevel( PlotLevel::LEVEL_0 )->
+    setDescription( "Material Damage Variable" );
 
-registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
-  setApplyDefaultValue(0.0)->
-  setPlotLevel(PlotLevel::LEVEL_0)->
-  setDescription("Stress Deviator");
+  registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
+    setApplyDefaultValue( 0.0 )->
+    setPlotLevel( PlotLevel::LEVEL_0 )->
+    setDescription( "Stress Deviator" );
 
 }
 
@@ -94,7 +94,7 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
 
 void SolidBase::calculateStrainEnergyDensity()
 {
-  GEOS_ERROR("SolidBase::calculateStrainEnergyDensity() called. Should be overridden.");
+  GEOSX_ERROR( "SolidBase::calculateStrainEnergyDensity() called. Should be overridden." );
 }
 
 }

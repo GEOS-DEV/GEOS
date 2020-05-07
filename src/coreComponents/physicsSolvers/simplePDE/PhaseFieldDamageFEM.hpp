@@ -24,27 +24,34 @@
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-struct stabledt {
+struct stabledt
+{
   double m_maxdt;
 };
 
-namespace geosx {
-namespace dataRepository {
+namespace geosx
+{
+namespace dataRepository
+{
 class Group;
 }
 class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
-class PhaseFieldDamageFEM : public SolverBase {
+class PhaseFieldDamageFEM : public SolverBase
+{
 public:
-  PhaseFieldDamageFEM(const std::string &name, Group *const parent);
+  PhaseFieldDamageFEM( const std::string & name, Group * const parent );
 
   virtual ~PhaseFieldDamageFEM() override;
 
-  static string CatalogName() { return "PhaseFieldDamageFEM"; }
+  static string CatalogName()
+  {
+    return "PhaseFieldDamageFEM";
+  }
 
-  virtual void RegisterDataOnMesh(Group *const MeshBodies) override final;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override final;
 
   /**
    * @defgroup Solver Interface Functions
@@ -54,61 +61,64 @@ public:
    */
   /**@{*/
 
-  virtual real64 SolverStep(real64 const &time_n, real64 const &dt,
-                            integer const cycleNumber,
-                            DomainPartition *domain) override;
+  virtual real64 SolverStep( real64 const & time_n, real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition *domain ) override;
 
-  virtual real64 ExplicitStep(real64 const &time_n, real64 const &dt,
-                              integer const cycleNumber,
-                              DomainPartition *const domain) override;
+  virtual real64 ExplicitStep( real64 const & time_n, real64 const & dt,
+                               integer const cycleNumber,
+                               DomainPartition * const domain ) override;
 
-  virtual void ImplicitStepSetup(real64 const &time_n, real64 const &dt,
-                                 DomainPartition *const domain,
-                                 DofManager &dofManager, ParallelMatrix &matrix,
-                                 ParallelVector &rhs,
-                                 ParallelVector &solution) override;
+  virtual void ImplicitStepSetup( real64 const & time_n, real64 const & dt,
+                                  DomainPartition * const domain,
+                                  DofManager & dofManager, ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
-  virtual void SetupDofs(DomainPartition const *const domain,
-                         DofManager &dofManager) const override;
+  virtual void SetupDofs( DomainPartition const * const domain,
+                          DofManager & dofManager ) const override;
 
-  virtual void AssembleSystem(real64 const time, real64 const dt,
-                              DomainPartition *const domain,
-                              DofManager const &dofManager,
-                              ParallelMatrix &matrix,
-                              ParallelVector &rhs) override;
+  virtual void AssembleSystem( real64 const time, real64 const dt,
+                               DomainPartition * const domain,
+                               DofManager const & dofManager,
+                               ParallelMatrix & matrix,
+                               ParallelVector & rhs ) override;
 
-  virtual void ApplyBoundaryConditions(real64 const time, real64 const dt,
-                                       DomainPartition *const domain,
-                                       DofManager const &dofManager,
-                                       ParallelMatrix &matrix,
-                                       ParallelVector &rhs) override;
+  virtual void ApplyBoundaryConditions( real64 const time, real64 const dt,
+                                        DomainPartition * const domain,
+                                        DofManager const & dofManager,
+                                        ParallelMatrix & matrix,
+                                        ParallelVector & rhs ) override;
 
   virtual real64 CalculateResidualNorm( DomainPartition const * const domain,
                                         DofManager const & dofManager,
                                         ParallelVector const & rhs ) override;
 
-  virtual void SolveSystem(DofManager const &dofManager, ParallelMatrix &matrix,
-                           ParallelVector &rhs,
-                           ParallelVector &solution) override;
+  virtual void SolveSystem( DofManager const & dofManager, ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
 
-  virtual void ApplySystemSolution(DofManager const &dofManager,
-                                   ParallelVector const &solution,
-                                   real64 const scalingFactor,
-                                   DomainPartition *const domain) override;
+  virtual void ApplySystemSolution( DofManager const & dofManager,
+                                    ParallelVector const & solution,
+                                    real64 const scalingFactor,
+                                    DomainPartition * const domain ) override;
 
   virtual void ResetStateToBeginningOfStep(
-      DomainPartition *const GEOSX_UNUSED_ARG(domain)) override {}
+    DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override
+  {}
 
-  virtual void ImplicitStepComplete(real64 const &time, real64 const &dt,
-                                    DomainPartition *const domain) override;
+  virtual void ImplicitStepComplete( real64 const & time, real64 const & dt,
+                                     DomainPartition * const domain ) override;
   /**@}*/
 
-  void ApplyDirichletBC_implicit(real64 const time,
-                                 DofManager const &dofManager,
-                                 DomainPartition &domain,
-                                 ParallelMatrix &matrix, ParallelVector &rhs);
+  void ApplyDirichletBC_implicit( real64 const time,
+                                  DofManager const & dofManager,
+                                  DomainPartition & domain,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs );
 
-  enum class timeIntegrationOption {
+  enum class timeIntegrationOption
+  {
     SteadyState,
     ImplicitTransient,
     ExplicitTransient
@@ -121,22 +131,32 @@ public:
     static constexpr auto localDissipationOption = "localDissipation";
     static constexpr auto solidModelNameString = "solidMaterialName";
 
-
-    dataRepository::ViewKey timeIntegrationOption = {"timeIntegrationOption"};
-    dataRepository::ViewKey fieldVarName = {"fieldName"};
+    dataRepository::ViewKey timeIntegrationOption =
+    { "timeIntegrationOption" };
+    dataRepository::ViewKey fieldVarName =
+    { "fieldName" };
 
   } PhaseFieldDamageFEMViewKeys;
 
-  inline ParallelVector const *getSolution() const { return &m_solution; }
+  inline ParallelVector const * getSolution() const
+  {
+    return &m_solution;
+  }
 
-  inline globalIndex getSize() const { return m_matrix.globalRows(); }
+  inline globalIndex getSize() const
+  {
+    return m_matrix.numGlobalRows();
+  }
 
   void setSolidModelName( string const & name )
   {
     m_solidModelName = name;
   }
 
-  string const & getFieldName() const { return m_fieldName; }
+  string const & getFieldName() const
+  {
+    return m_fieldName;
+  }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -148,8 +168,8 @@ private:
   string m_localDissipationOption;
   string m_solidModelName;
 
-  array1d<real64> m_coeff;
-//  string m_coeffFieldName;
+  array1d< real64 > m_coeff;
+  //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();
 };

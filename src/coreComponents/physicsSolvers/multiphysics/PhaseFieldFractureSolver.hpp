@@ -28,15 +28,18 @@ namespace geosx
 class PhaseFieldFractureSolver : public SolverBase
 {
 public:
-  PhaseFieldFractureSolver( const std::string& name,
-                     Group * const parent );
+  PhaseFieldFractureSolver( const std::string & name,
+                            Group * const parent );
   ~PhaseFieldFractureSolver() override;
 
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
-  static string CatalogName() { return "PhaseFieldFracture"; }
+  static string CatalogName()
+  {
+    return "PhaseFieldFracture";
+  }
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
@@ -63,22 +66,18 @@ public:
               int const cycleNumber,
               DomainPartition * const domain ) override;
 
-
-  real64 SplitOperatorStep( real64 const& time_n,
-                            real64 const& dt,
+  real64 SplitOperatorStep( real64 const & time_n,
+                            real64 const & dt,
                             integer const cycleNumber,
-                            DomainPartition * const domain);
+                            DomainPartition * const domain );
 
   void mapDamageToQuadrature( DomainPartition * const domain );
-
 
   enum class couplingTypeOption : int
   {
     FixedStress,
     TightlyCoupled
   };
-
-
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -92,12 +91,10 @@ public:
     constexpr static auto damageSolverNameString = "damageSolverName";
   } PhaseFieldFractureSolverViewKeys;
 
-
 protected:
   virtual void PostProcessInput() override final;
 
-  virtual void InitializePostInitialConditions_PreSubGroups(dataRepository::Group * const problemManager) override final;
-
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
 private:
 

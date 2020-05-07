@@ -1142,7 +1142,7 @@ HydrofractureSolver::
         // Accumulation derivative
         if( elemGhostRank[ei] < 0 )
         {
-          //GEOS_LOG_RANK( "dAccumulationResidualdAperture("<<ei<<") = "<<dAccumulationResidualdAperture );
+          //GEOSX_LOG_RANK( "dAccumulationResidualdAperture("<<ei<<") = "<<dAccumulationResidualdAperture );
           for( localIndex kf = 0; kf < 2; ++kf )
           {
             for( localIndex a = 0; a < numNodesPerFace; ++a )
@@ -1173,7 +1173,7 @@ HydrofractureSolver::
         {
           real64 dRdAper = values[kfe2];
           localIndex const ei2 = columns[kfe2];
-//          GEOS_LOG_RANK( "dRdAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
+//          GEOSX_LOG_RANK( "dRdAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
 
           for( localIndex kf = 0; kf < 2; ++kf )
           {

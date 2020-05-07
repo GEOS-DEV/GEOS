@@ -80,24 +80,24 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
 
     SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( elementSubRegion, m_solidMaterialNames[targetIndex] );
 
-      // space for element matrix and rhs
+    // space for element matrix and rhs
 
     using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
     real64 rval = SolidMechanicsLagrangianFEMKernels::
-                  ElementKernelLaunchSelector<Kernels>( numNodesPerElement,
-                                                        fe->n_quadrature_points(),
-                                                        constitutiveRelations[er][esr][m_solidMaterialFullIndex],
-                                                        elementSubRegion->size(),
-                                                        elemsToNodes,
-                                                        dNdX,
-                                                        detJ,
-                                                        incDisp );
+                    ElementKernelLaunchSelector< Kernels >( numNodesPerElement,
+                                                            fe->n_quadrature_points(),
+                                                            &constitutiveRelation,
+                                                            elementSubRegion.size(),
+                                                            elemsToNodes,
+                                                            dNdX,
+                                                            detJ,
+                                                            incDisp );
 
-    constitutiveRelation->calculateStrainEnergyDensity();
+    constitutiveRelation.calculateStrainEnergyDensity();
 
     return rval;
 
-  });
+  } );
 }
 
 

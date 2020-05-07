@@ -457,17 +457,12 @@
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
-<<<<<<< HEAD
-			<xsd:element name="ReactionDiffusionFEM" type="ReactionDiffusionFEMType" />
-			<xsd:element name="Reservoir" type="ReservoirType" />
-			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
-=======
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
+			<xsd:element name="ReactionDiffusionFEM" type="ReactionDiffusionFEMType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
->>>>>>> develop
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
@@ -532,19 +527,17 @@
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldFractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
@@ -556,20 +549,15 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
-<<<<<<< HEAD
-	<xsd:complexType name="ReactionDiffusionFEMType">
+	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
-	<xsd:complexType name="ReservoirType">
-=======
-	<xsd:complexType name="ProppantTransportType">
->>>>>>> develop
+	<xsd:complexType name="ReactionDiffusionFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
@@ -840,97 +828,16 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticAnisotropicType">
-<<<<<<< HEAD
-		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c12 => The 12 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c12" type="real64_array" />
-		<!--c13 => The 13 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c14 => The 14 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c14" type="real64_array" />
-		<!--c15 => The 15 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c15" type="real64_array" />
-		<!--c16 => The 16 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c16" type="real64_array" />
-		<!--c21 => The 21 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c21" type="real64_array" />
-		<!--c22 => The 22 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c22" type="real64_array" />
-		<!--c23 => The 23 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c23" type="real64_array" />
-		<!--c24 => The 24 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c24" type="real64_array" />
-		<!--c25 => The 25 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c25" type="real64_array" />
-		<!--c26 => The 26 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c26" type="real64_array" />
-		<!--c31 => The 31 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c31" type="real64_array" />
-		<!--c32 => The 32 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c32" type="real64_array" />
-		<!--c33 => The 33 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c34 => The 34 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c34" type="real64_array" />
-		<!--c35 => The 35 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c35" type="real64_array" />
-		<!--c36 => The 36 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c36" type="real64_array" />
-		<!--c41 => The 41 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c41" type="real64_array" />
-		<!--c42 => The 42 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c42" type="real64_array" />
-		<!--c43 => The 43 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c43" type="real64_array" />
-		<!--c44 => The 44 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c45 => The 45 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c45" type="real64_array" />
-		<!--c46 => The 46 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c46" type="real64_array" />
-		<!--c51 => The 51 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c51" type="real64_array" />
-		<!--c52 => The 52 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c52" type="real64_array" />
-		<!--c53 => The 53 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c53" type="real64_array" />
-		<!--c54 => The 54 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c54" type="real64_array" />
-		<!--c55 => The 55 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c55" type="real64_array" />
-		<!--c56 => The 56 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c56" type="real64_array" />
-		<!--c61 => The 61 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c61" type="real64_array" />
-		<!--c62 => The 62 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c62" type="real64_array" />
-		<!--c63 => The 63 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c63" type="real64_array" />
-		<!--c64 => The 64 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c64" type="real64_array" />
-		<!--c65 => The 65 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c65" type="real64_array" />
-		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c66" type="real64_array" />
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
-		<!--density => Material Density-->
-		<xsd:attribute name="density" type="real64_array2d" />
-		<!--strainEnergyDensity => Stress Deviator-->
-		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
-=======
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
 		<xsd:attribute name="stiffness" type="real64_array3d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticIsotropicType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
@@ -941,12 +848,8 @@
 		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-<<<<<<< HEAD
 		<!--strainEnergyDensity => Stress Deviator-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
-=======
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -961,8 +864,12 @@
 		<xsd:attribute name="c44" type="real64_array" />
 		<!--c66 => Elastic Bulk Modulus Field-->
 		<xsd:attribute name="c66" type="real64_array" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -1023,7 +930,6 @@
 		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
 		<!--settlingFactor => (no description available)-->
 		<xsd:attribute name="settlingFactor" type="real64_array" />
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->
@@ -1034,28 +940,18 @@
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-<<<<<<< HEAD
 		<!--damage => Material Damage Variable-->
 		<xsd:attribute name="damage" type="real64_array2d" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
-=======
->>>>>>> develop
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-<<<<<<< HEAD
-		<!--strainEnergyDensity => Stress Deviator-->
-		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
-=======
 		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
 		<xsd:attribute name="stiffness" type="real64_array3d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
@@ -1070,12 +966,8 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-<<<<<<< HEAD
 		<!--strainEnergyDensity => Stress Deviator-->
 		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
-=======
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -1092,10 +984,14 @@
 		<xsd:attribute name="c66" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--damage => Material Damage Variable-->
+		<xsd:attribute name="damage" type="real64_array2d" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--strainEnergyDensity => Stress Deviator-->
+		<xsd:attribute name="strainEnergyDensity" type="real64_array2d" />
 		<!--stress => Material Stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
@@ -1134,7 +1030,6 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
@@ -1305,15 +1200,9 @@
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-<<<<<<< HEAD
-		<xsd:attribute name="Acceleration" type="r1_array" />
-		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="IncrementalDisplacement" type="r1_array" />
-=======
 		<xsd:attribute name="Acceleration" type="real64_array2d" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="IncrementalDisplacement" type="real64_array2d" />
->>>>>>> develop
 		<!--Mass => An array that holds the mass on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
@@ -1321,15 +1210,9 @@
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-<<<<<<< HEAD
-		<xsd:attribute name="TotalDisplacement" type="r1_array" />
-		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="Velocity" type="r1_array" />
-=======
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
->>>>>>> develop
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
@@ -1347,11 +1230,7 @@
 		<!--elemRegionList => (no description available)-->
 		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemSubRegionList => (no description available)-->
-<<<<<<< HEAD
-		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
-=======
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
->>>>>>> develop
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
@@ -1368,11 +1247,8 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-<<<<<<< HEAD
-=======
 		<!--ruptureTime => Time that the node was ruptured.-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
->>>>>>> develop
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->

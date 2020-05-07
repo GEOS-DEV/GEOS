@@ -201,8 +201,8 @@ public:
    */
   ///@{
 
-  arrayView2d<real64>       const & getDamage()       { return m_damage; }
-  arrayView2d<real64 const> const & getDamage() const { return m_damage; }
+  arrayView2d< real64 >       const & getDamage()       { return m_damage; }
+  arrayView2d< real64 const > const & getDamage() const { return m_damage; }
 
   /**
    * Getter for default density
@@ -228,8 +228,8 @@ public:
   /// Const/non-mutable accessor for density
   arrayView2d< real64 const > const & getDensity() const { return m_density; }
 
-  arrayView2d<real64>       const & getStrainEnergyDensity()       { return m_strainEnergyDensity; }
-  arrayView2d<real64 const> const & getStrainEnergyDensity() const { return m_strainEnergyDensity; }
+  arrayView2d< real64 >       const & getStrainEnergyDensity()       { return m_strainEnergyDensity; }
+  arrayView2d< real64 const > const & getStrainEnergyDensity() const { return m_strainEnergyDensity; }
 
   /// Non-const/mutable accessor for stress
   arrayView3d< real64, solid::STRESS_USD >       const & getStress()       { return m_stress; }
@@ -240,8 +240,8 @@ public:
   ///@}
 
 protected:
-  array2d<real64> m_damage;
-  array2d<real64> m_strainEnergyDensity;
+  array2d< real64 > m_damage;
+  array2d< real64 > m_strainEnergyDensity;
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;

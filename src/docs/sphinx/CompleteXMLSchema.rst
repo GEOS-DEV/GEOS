@@ -520,7 +520,6 @@ Element: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
 
 
-<<<<<<< HEAD
 .. _XML_ReactionDiffusionFEM:
 
 Element: ReactionDiffusionFEM
@@ -528,15 +527,6 @@ Element: ReactionDiffusionFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM.rst
 
 
-.. _XML_Reservoir:
-
-Element: Reservoir
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir.rst
-
-
-=======
->>>>>>> develop
 .. _XML_Restart:
 
 Element: Restart
@@ -1262,7 +1252,6 @@ Datastructure: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
 
 
-<<<<<<< HEAD
 .. _DATASTRUCTURE_ReactionDiffusionFEM:
 
 Datastructure: ReactionDiffusionFEM
@@ -1270,15 +1259,6 @@ Datastructure: ReactionDiffusionFEM
 .. include:: ../../coreComponents/fileIO/schema/docs/ReactionDiffusionFEM_other.rst
 
 
-.. _DATASTRUCTURE_Reservoir:
-
-Datastructure: Reservoir
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir_other.rst
-
-
-=======
->>>>>>> develop
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart

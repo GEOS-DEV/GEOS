@@ -313,7 +313,7 @@ struct ImplicitKernel
 //          real64 const massDamping,
 //          real64 const newmarkBeta,
 //          real64 const newmarkGamma,
-//          DofManager const * const GEOSX_UNUSED_ARG( dofManager ),
+//          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
 //          ParallelMatrix * const matrix,
 //          ParallelVector * const rhs )
 //  {
@@ -373,7 +373,7 @@ struct ImplicitKernel
 //
 //        if( tiOption == timeIntegrationOption::ImplicitDynamic )
 //        {
-//          GEOS_ERROR("Option not supported");
+//          GEOSX_ERROR("Option not supported");
 //          CopyGlobalToLocal< NUM_NODES_PER_ELEM, R1Tensor>( elemsToNodes[k],
 //                                      disp, uhat, vtilde, uhattilde,
 //                                      u_local, uhat_local, vtilde_local, uhattilde_local );
@@ -405,28 +405,33 @@ struct ImplicitKernel
 //      //        realT const * const dNdXb = dNdX(q,b).Data();
 //              dNdXb = dNdX[k][q][b];
 //
-//              dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] + c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
+//              dRdU(a*dim+0,b*dim+0) -= ( c[0][0]*dNdXa[0]*dNdXb[0] + c[5][5]*dNdXa[1]*dNdXb[1] +
+// c[4][4]*dNdXa[2]*dNdXb[2] ) * detJq;
 //              dRdU(a*dim+0,b*dim+1) -= ( c[5][5]*dNdXa[1]*dNdXb[0] + c[0][1]*dNdXa[0]*dNdXb[1] ) * detJq;
 //              dRdU(a*dim+0,b*dim+2) -= ( c[4][4]*dNdXa[2]*dNdXb[0] + c[0][2]*dNdXa[0]*dNdXb[2] ) * detJq;
 //
 //              dRdU(a*dim+1,b*dim+0) -= ( c[0][1]*dNdXa[1]*dNdXb[0] + c[5][5]*dNdXa[0]*dNdXb[1] ) * detJq;
-//              dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] + c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
+//              dRdU(a*dim+1,b*dim+1) -= ( c[5][5]*dNdXa[0]*dNdXb[0] + c[1][1]*dNdXa[1]*dNdXb[1] +
+// c[3][3]*dNdXa[2]*dNdXb[2] ) * detJq;
 //              dRdU(a*dim+1,b*dim+2) -= ( c[3][3]*dNdXa[2]*dNdXb[1] + c[1][2]*dNdXa[1]*dNdXb[2] ) * detJq;
 //
 //              dRdU(a*dim+2,b*dim+0) -= ( c[0][2]*dNdXa[2]*dNdXb[0] + c[4][4]*dNdXa[0]*dNdXb[2] ) * detJq;
 //              dRdU(a*dim+2,b*dim+1) -= ( c[1][2]*dNdXa[2]*dNdXb[1] + c[3][3]*dNdXa[1]*dNdXb[2] ) * detJq;
-//              dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] + c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
+//              dRdU(a*dim+2,b*dim+2) -= ( c[4][4]*dNdXa[0]*dNdXb[0] + c[3][3]*dNdXa[1]*dNdXb[1] +
+// c[2][2]*dNdXa[2]*dNdXb[2] ) * detJq;
 //
 //              if( tiOption == timeIntegrationOption::ImplicitDynamic )
 //              {
 //
 //                real64 integrationFactor = density[k] * N[a] * N[b] * detJq;
-//                real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )* integrationFactor;
+//                real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )*
+// integrationFactor;
 //
 //                for( int i=0 ; i<dim ; ++i )
 //                {
 //                  realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( uhat_local[b][i] - uhattilde_local[b][i] );
-//                  realT const vel = vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat_local[b][i] - uhattilde_local[b][i] );
+//                  realT const vel = vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( uhat_local[b][i] -
+// uhattilde_local[b][i] );
 //
 //                  dRdU_InertiaMassDamping(a*dim+i,b*dim+i) -= temp1;
 //                  R_InertiaMassDamping(a*dim+i) -= ( massDamping * vel + acc ) * integrationFactor;
@@ -486,7 +491,8 @@ struct ImplicitKernel
 //              {
 //                for( int j=0 ; j<dim ; ++j )
 //                {
-//                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
+//                  R_StiffnessDamping(a*dim+i) += stiffnessDamping * dRdU(a*dim+i,b*dim+j) * ( vtilde_local[b][j] +
+// newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
 //                }
 //              }
 //            }
@@ -556,7 +562,7 @@ struct ImplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
 
-    arrayView2d<real64 const> const & damage = constitutiveRelation->getDamage();
+    arrayView2d< real64 const > const & damage = constitutiveRelation->getDamage();
 //    std::cout << "Arbitrary Gauss point damage value = " << damage(100,0) << "\n";
 //    arrayView2d<real64> const & strainEnergyDensity = constitutiveRelation->getStrainEnergyDensity();
     arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
@@ -635,7 +641,7 @@ struct ImplicitKernel
 
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          real64 damageFactor = ( 1.0 - damage(k,q) )*( 1.0 - damage(k,q) );
+          real64 damageFactor = ( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
 //          if( damageFactor > 0.00000000001 )
 //          {
 //            damageFactor = 1.0;
@@ -645,9 +651,9 @@ struct ImplicitKernel
 //            damageFactor = 0.0;
 //          }
           const realT detJq = detJ[k][q] * damageFactor;
-          std::vector<double> const & N = fe->values(q);
+          std::vector< double > const & N = fe->values( q );
 //          std::cout<<"damageFactor("<<k<<","<<q<<") = "<<damageFactor<<std::endl;
-            //std::cout<<"in mechanical : damage("<<k<<","<<q<<") = "<<damage(k,q)<<std::endl;
+          //std::cout<<"in mechanical : damage("<<k<<","<<q<<") = "<<damage(k,q)<<std::endl;
 
           for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
           {
@@ -691,24 +697,24 @@ struct ImplicitKernel
         }
 
         R1Tensor temp;
-        for( integer q=0 ; q<NUM_QUADRATURE_POINTS ; ++q )
+        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
           real64 strainInc[6] = {0};
           real64 stressInc[ 6 ] = { 0.0 };
 
-          for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+          for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
           {
-            strainInc[0] += dNdX(k,q,a)[0] * uhat_local[a][0];
-            strainInc[1] += dNdX(k,q,a)[1] * uhat_local[a][1];
-            strainInc[2] += dNdX(k,q,a)[2] * uhat_local[a][2];
-            strainInc[3] += dNdX(k,q,a)[2] * uhat_local[a][1] + dNdX(k,q,a)[1] * uhat_local[a][2];
-            strainInc[4] += dNdX(k,q,a)[2] * uhat_local[a][0] + dNdX(k,q,a)[0] * uhat_local[a][2];
-            strainInc[5] += dNdX(k,q,a)[1] * uhat_local[a][0] + dNdX(k,q,a)[0] * uhat_local[a][1];
+            strainInc[0] += dNdX( k, q, a )[0] * uhat_local[a][0];
+            strainInc[1] += dNdX( k, q, a )[1] * uhat_local[a][1];
+            strainInc[2] += dNdX( k, q, a )[2] * uhat_local[a][2];
+            strainInc[3] += dNdX( k, q, a )[2] * uhat_local[a][1] + dNdX( k, q, a )[1] * uhat_local[a][2];
+            strainInc[4] += dNdX( k, q, a )[2] * uhat_local[a][0] + dNdX( k, q, a )[0] * uhat_local[a][2];
+            strainInc[5] += dNdX( k, q, a )[1] * uhat_local[a][0] + dNdX( k, q, a )[0] * uhat_local[a][1];
           }
 
-          for( int a=0 ; a<6 ; ++a )
+          for( int a=0; a<6; ++a )
           {
-            for( int b=0 ; b<6 ; ++b )
+            for( int b=0; b<6; ++b )
             {
               stressInc[a] += c[a][b] * strainInc[b];
             }
@@ -722,7 +728,7 @@ struct ImplicitKernel
 
           const realT detJq = detJ[k][q];
           R2SymTensor stress0 = referenceStress;
-          real64 damageFactor = ( 1.0 - damage(k,q) )*( 1.0 - damage(k,q) );
+          real64 damageFactor = ( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
 //          if( damageFactor > 0.00000000001 )
 //          {
 //            damageFactor = 1.0;
@@ -732,19 +738,18 @@ struct ImplicitKernel
 //            damageFactor = 0.0;
 //          }
           stress0 *= detJq * damageFactor;
-          for( integer a=0 ; a<NUM_NODES_PER_ELEM ; ++a )
+          for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
           {
             dNdXa = dNdX[k][q][a];
 
-            temp.AijBj(stress0,dNdXa);
+            temp.AijBj( stress0, dNdXa );
             realT maxF = temp.MaxVal();
             maxForce.max( maxF );
 
-            R(a*dim+0) -= temp[0];
-            R(a*dim+1) -= temp[1];
-            R(a*dim+2) -= temp[2];
+            R( a*dim+0 ) -= temp[0];
+            R( a*dim+1 ) -= temp[1];
+            R( a*dim+2 ) -= temp[2];
           }
-        }
 
           R1Tensor gravityForce = gravityVector;
           gravityForce *= detJq * density( k, q );
@@ -752,47 +757,48 @@ struct ImplicitKernel
           R( q*dim+1 ) += gravityForce[1];
           R( q*dim+2 ) += gravityForce[2];
         }
+      }
 
 
-        // TODO It is simpler to do this...try it.
-        //  dRdU.Multiply(dof_np1,R);
-        for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
+      // TODO It is simpler to do this...try it.
+      //  dRdU.Multiply(dof_np1,R);
+      for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
+      {
+        realT nodeForce = 0;
+        for( integer b=0; b<NUM_NODES_PER_ELEM; ++b )
         {
-          realT nodeForce = 0;
-          for( integer b=0; b<NUM_NODES_PER_ELEM; ++b )
+          for( int i=0; i<dim; ++i )
+          {
+            for( int j=0; j<dim; ++j )
+            {
+              R( a*dim+i ) += dRdU( a*dim+i, b*dim+j ) * uhat_local[b][j];
+            }
+          }
+
+          if( tiOption == TimeIntegrationOption::ImplicitDynamic )
           {
             for( int i=0; i<dim; ++i )
             {
               for( int j=0; j<dim; ++j )
               {
-                R( a*dim+i ) += dRdU( a*dim+i, b*dim+j ) * uhat_local[b][j];
+                R_StiffnessDamping( a*dim+i ) += stiffnessDamping *
+                                                 dRdU( a*dim+i,
+                                                       b*dim+j ) *
+                                                 ( vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
               }
             }
-
-            if( tiOption == TimeIntegrationOption::ImplicitDynamic )
-            {
-              for( int i=0; i<dim; ++i )
-              {
-                for( int j=0; j<dim; ++j )
-                {
-                  R_StiffnessDamping( a*dim+i ) += stiffnessDamping *
-                                                   dRdU( a*dim+i,
-                                                         b*dim+j ) *
-                                                   ( vtilde_local[b][j] + newmarkGamma/(newmarkBeta * dt)*(uhat_local[b][j]-uhattilde_local[b][j]) );
-                }
-              }
-            }
-
           }
 
-          nodeForce = std::max( std::max( R( a*dim+0 ), R( a*dim+1 ) ), R( a*dim+2 ) );
-          maxForce.max( fabs( nodeForce ) );
         }
 
+        nodeForce = std::max( std::max( R( a*dim+0 ), R( a*dim+1 ) ), R( a*dim+2 ) );
+        maxForce.max( fabs( nodeForce ) );
+      }
 
-        if( tiOption == TimeIntegrationOption::ImplicitDynamic )
-        {
-          GEOSX_ERROR( "NOT IMPLEMENTED" );
+
+      if( tiOption == TimeIntegrationOption::ImplicitDynamic )
+      {
+        GEOSX_ERROR( "NOT IMPLEMENTED" );
 //          dRdU_StiffnessDamping = dRdU;
 //          dRdU_StiffnessDamping.Scale( stiffnessDamping * newmarkGamma / ( newmarkBeta * dt ) );
 //
@@ -800,11 +806,11 @@ struct ImplicitKernel
 //          dRdU += dRdU_StiffnessDamping;
 //          R    += R_InertiaMassDamping;
 //          R    += R_StiffnessDamping;
-        }
+      }
 
-        // TODO remove local epetra objects, remove use of unwrapped()
-        matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
-        rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
+      // TODO remove local epetra objects, remove use of unwrapped()
+      matrix->add( elementLocalDofIndex.data(), elementLocalDofIndex.data(), dRdU.data(), ndof, ndof );
+      rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
 
     } );
 
