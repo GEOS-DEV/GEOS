@@ -229,7 +229,7 @@ void LagrangeBasis< dim >::PostProcessInput()
     break;
 
     default:
-      assert( m_degree<5 );
+      GEOSX_ERROR( "Not implemented for degree" << m_degree );
   }
 
   for( int n=0; n<m_degree+1; ++n )

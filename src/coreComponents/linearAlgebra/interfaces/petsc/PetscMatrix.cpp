@@ -725,7 +725,7 @@ globalIndex PetscMatrix::numGlobalRows() const
   PetscInt num_rows;
   PetscInt num_cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, &num_rows, &num_cols ) );
-  return integer_conversion< globalIndex >( num_rows );
+  return LvArray::integerConversion< globalIndex >( num_rows );
 }
 
 globalIndex PetscMatrix::numGlobalCols() const
@@ -734,7 +734,7 @@ globalIndex PetscMatrix::numGlobalCols() const
   PetscInt num_rows;
   PetscInt num_cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, &num_rows, &num_cols ) );
-  return integer_conversion< globalIndex >( num_cols );
+  return LvArray::integerConversion< globalIndex >( num_cols );
 }
 
 globalIndex PetscMatrix::ilower() const
@@ -743,7 +743,7 @@ globalIndex PetscMatrix::ilower() const
   PetscInt firstrow;
   PetscInt lastrow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstrow, &lastrow ) );
-  return integer_conversion< globalIndex >( firstrow );
+  return LvArray::integerConversion< globalIndex >( firstrow );
 }
 
 globalIndex PetscMatrix::iupper() const
@@ -752,7 +752,7 @@ globalIndex PetscMatrix::iupper() const
   PetscInt firstrow;
   PetscInt lastrow;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &firstrow, &lastrow ) );
-  return integer_conversion< globalIndex >( lastrow );
+  return LvArray::integerConversion< globalIndex >( lastrow );
 }
 
 localIndex PetscMatrix::numLocalNonzeros() const
@@ -777,7 +777,7 @@ localIndex PetscMatrix::numLocalNonzeros() const
 
 globalIndex PetscMatrix::numGlobalNonzeros() const
 {
-  return MpiWrapper::Sum( integer_conversion< globalIndex >( numLocalNonzeros() ), getComm() );
+  return MpiWrapper::Sum( LvArray::integerConversion< globalIndex >( numLocalNonzeros() ), getComm() );
 }
 
 real64 PetscMatrix::normInf() const
@@ -809,7 +809,7 @@ localIndex PetscMatrix::getLocalRowID( globalIndex const index ) const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &low, &high ) );
-  return (index >= low && index < high) ? integer_conversion< localIndex >( index - low ) : -1;
+  return (index >= low && index < high) ? LvArray::integerConversion< localIndex >( index - low ) : -1;
 }
 
 globalIndex PetscMatrix::getGlobalRowID( localIndex const index ) const
@@ -819,7 +819,7 @@ globalIndex PetscMatrix::getGlobalRowID( localIndex const index ) const
   GEOSX_LAI_ASSERT_GT( numLocalRows(), index );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &low, &high ) );
-  return integer_conversion< globalIndex >( index + low );
+  return LvArray::integerConversion< globalIndex >( index + low );
 }
 
 localIndex PetscMatrix::numLocalCols() const
@@ -827,7 +827,7 @@ localIndex PetscMatrix::numLocalCols() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt cols;
   GEOSX_LAI_CHECK_ERROR( MatGetSize( m_mat, nullptr, &cols ) );
-  return integer_conversion< localIndex >( cols );
+  return LvArray::integerConversion< localIndex >( cols );
 }
 
 localIndex PetscMatrix::numLocalRows() const
@@ -835,7 +835,7 @@ localIndex PetscMatrix::numLocalRows() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( MatGetOwnershipRange( m_mat, &low, &high ) );
-  return integer_conversion< localIndex >( high - low );
+  return LvArray::integerConversion< localIndex >( high - low );
 }
 
 MPI_Comm PetscMatrix::getComm() const

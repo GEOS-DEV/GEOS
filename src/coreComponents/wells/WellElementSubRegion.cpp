@@ -20,7 +20,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
-#include "cxx-utilities/src/ArrayUtilities.hpp"
+#include "LvArray/src/ArrayUtilities.hpp"
 
 namespace geosx
 {
@@ -97,7 +97,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
     localNodes.insert( inodeBottomGlobal );
 
     localIndex const nextGlobal =
-      integer_conversion< localIndex >( nextElemIdGlobal[ integer_conversion< localIndex >( currGlobal ) ] );
+      LvArray::integerConversion< localIndex >( nextElemIdGlobal[ LvArray::integerConversion< localIndex >( currGlobal ) ] );
 
     // if the next well elem is not local, add the node in between curr and next to boundaryNodes
     if( nextGlobal >= 0 && !localElems.contains( nextGlobal ))
@@ -591,7 +591,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
           // remove the duplicate elements
           if( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == iownerRank )
           {
-            localElems.erase( iwelemGlobal );
+            localElems.remove( iwelemGlobal );
           }
         }
         rankCount++;

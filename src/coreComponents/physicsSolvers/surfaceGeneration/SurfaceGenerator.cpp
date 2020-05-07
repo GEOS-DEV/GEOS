@@ -603,8 +603,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   std::vector< std::set< localIndex > > nodesToRupturedFaces;
   std::vector< std::set< localIndex > > edgesToRupturedFaces;
 
-  ArrayOfArraysView< localIndex > const & nodeToElementMap = nodeManager.elementList();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
+  ArrayOfArraysView< localIndex > const & nodeToElementMap = nodeManager.elementList().toView();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   map< string, string_array > fieldNames;
   fieldNames["face"].push_back( viewKeyStruct::ruptureStateString );
@@ -780,7 +780,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
     GEOSX_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1" );
 
-    m_tipNodes.erase( parentNodeIndex );
+    m_tipNodes.remove( parentNodeIndex );
   }
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
@@ -793,9 +793,9 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
   arrayView1d< localIndex const > const &
   childEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
 
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
   for( localIndex const edgeIndex : receivedObjects.newEdges )
   {
@@ -803,7 +803,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
     GEOSX_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1" );
 
-    m_tipEdges.erase( parentEdgeIndex );
+    m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap.getIterableSet( parentEdgeIndex ) )
     {
       bool trailingFace = false;
@@ -819,7 +819,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
 
         if( trailingFace == false )
         {
-          m_trailingFaces.erase( faceIndex );
+          m_trailingFaces.remove( faceIndex );
         }
       }
     }
@@ -840,7 +840,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
     GEOSX_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1" );
 
     m_trailingFaces.insert( parentFaceIndex );
-    m_tipFaces.erase( parentFaceIndex );
+    m_tipFaces.remove( parentFaceIndex );
 
     for( localIndex const edgeIndex : faceManager.edgeList().getIterableArray( parentFaceIndex ) )
     {
@@ -998,10 +998,10 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
   std::set< localIndex > const & vNodeToRupturedFaces = nodesToRupturedFaces[parentNodeIndex];
 
-  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
-  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
 //  array1d< ReferenceWrapper<localIndex_array> > nodeToElements
 //  const std::set< std::pair<CellBlockSubRegion*,localIndex> >&
@@ -1758,7 +1758,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   degreeFromCrack[nodeID] = 0;
   degreeFromCrack[newNodeIndex] = 0;
-  m_tipNodes.erase( nodeID );
+  m_tipNodes.remove( nodeID );
   nodeDegreeFromCrackTip( nodeID ) = 1;
   nodeRuptureTime( nodeID ) = time_np1;
   nodeRuptureTime( newNodeIndex ) = time_np1;
@@ -1798,7 +1798,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
       edgeManager.SplitObject( parentEdgeIndex, rank, newEdgeIndex );
 
-      m_tipEdges.erase( parentEdgeIndex );
+      m_tipEdges.remove( parentEdgeIndex );
 
       edgeToFaceMap.clearSet( newEdgeIndex );
 
@@ -1827,7 +1827,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
           if( trailingFace == false )
           {
-            m_trailingFaces.erase( faceIndex );
+            m_trailingFaces.remove( faceIndex );
           }
         }
       }
@@ -1881,7 +1881,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
 
         m_trailingFaces.insert( faceIndex );
-        m_tipFaces.erase( faceIndex );
+        m_tipFaces.remove( faceIndex );
         faceDegreeFromCrackTip( faceIndex ) = 0;
         faceDegreeFromCrackTip( newFaceIndex ) = 0;
 
@@ -1950,7 +1950,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
           newFaceElement = fractureElementRegion->AddToFractureMesh( time_np1,
                                                                      &edgeManager,
                                                                      &faceManager,
-                                                                     this->m_originalFaceToEdges,
+                                                                     this->m_originalFaceToEdges.toViewConst(),
                                                                      "default",
                                                                      faceIndices );
           m_faceElemsRupturedThisSolve.insert( newFaceElement );
@@ -2338,8 +2338,8 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_PARAM(
   //**************************************************************************
 
 
-  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
-  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
   ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList();
@@ -2347,8 +2347,8 @@ void SurfaceGenerator::MapConsistencyCheck( localIndex const GEOSX_UNUSED_PARAM(
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
   arrayView2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
   arrayView2d< localIndex > const & faceToElementMap = faceManager.elementList();
@@ -2904,18 +2904,18 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   arrayView1d< R1Tensor > const &
   fext = nodeManager.getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
-  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
-  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
-  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList();
+  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
   const arrayView1d< integer > & isNodeGhost = nodeManager.ghostRank();
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView1d< R1Tensor > const & faceNormal = faceManager.faceNormal();
   array1d< real64 > const & faceArea = faceManager.faceArea();
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
@@ -3325,16 +3325,16 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
   real64_array & SIF_II = edgeManager.getReference< real64_array >( "SIF_II" );
   real64_array & SIF_III = edgeManager.getReference< real64_array >( "SIF_III" );
 
-  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList();
+  ArrayOfSetsView< localIndex const > const & nodeToEdgeMap = nodeManager.edgeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
   localIndex_array const & faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
   arrayView1d< R1Tensor > const & faceNormal = faceManager.faceNormal();
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
@@ -3749,9 +3749,9 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                     bool threeNodesPinched,
                                                     bool calculatef_u )
 {
-  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList();
-  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList();
-  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList();
+  ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodeToElementMap = nodeManager.elementList().toViewConst();
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
 
@@ -3990,10 +3990,10 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
   arrayView1d< integer > & ruptureState = faceManager.getReference< integer_array >( "ruptureState" );
   real64_array & SIFonFace = faceManager.getReference< real64_array >( "SIFonFace" );
   array1d< R1Tensor > & KIC = faceManager.getReference< array1d< R1Tensor > >( "K_IC" );
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
 
-  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
   localIndex_array eligibleFaces;
@@ -4116,7 +4116,7 @@ void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
 
 
   arrayView2d< localIndex > const & edgeToNodeMap = edgeManager.nodeList();
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
@@ -4331,8 +4331,8 @@ void SurfaceGenerator::PostUpdateRuptureStates( NodeManager & nodeManager,
                                                 std::vector< std::set< localIndex > > & nodesToRupturedFaces,
                                                 std::vector< std::set< localIndex > > & edgesToRupturedFaces )
 {
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList();
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   nodesToRupturedFaces.resize( nodeManager.size() );
   edgesToRupturedFaces.resize( edgeManager.size() );
 
@@ -4381,7 +4381,7 @@ int SurfaceGenerator::CheckEdgeSplitability( localIndex const edgeID,
   //                  = 2, this is a singular edge, we need split it.
   //                  = 3, this is an eligible kink, we need to process it as a kink
 
-  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
   localIndex_array const & faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
@@ -4467,7 +4467,7 @@ realT SurfaceGenerator::MinimumToughnessOnEdge( const localIndex edgeID,
   edgeCenter *= 0.5;
 
   arrayView1d< R1Tensor > & KIC = faceManager.getReference< r1_array >( "K_IC" );
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
   for( localIndex const iface : edgeManager.faceList().getIterableSet( edgeID ) )
   {
     localIndex const numFaceNodes = faceToNodes.sizeOfArray( iface );
@@ -4493,10 +4493,10 @@ realT SurfaceGenerator::MinimumToughnessOnNode( const localIndex nodeID,
                                                 FaceManager & faceManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList();
+  ArrayOfSetsView< localIndex const > const & nodeToFaceMap = nodeManager.faceList().toViewConst();
 
   array1d< R1Tensor > & KIC = faceManager.getReference< array1d< R1Tensor > >( "K_IC" );
-  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
   arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
 
   realT val = std::numeric_limits< realT >::max();
@@ -4581,7 +4581,7 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
   FaceElementSubRegion * const subRegion = faceElementRegion.GetSubRegion< FaceElementSubRegion >( 0 );
 
   ArrayOfArraysView< localIndex const > const &
-  fractureConnectorEdgesToFaceElements = edgeManager.m_fractureConnectorEdgesToFaceElements;
+  fractureConnectorEdgesToFaceElements = edgeManager.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
   arrayView1d< real64 const > const &
   ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );

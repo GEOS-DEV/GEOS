@@ -113,7 +113,14 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-    GEOSX_ERROR( "precond ilu: Not implemented yet" );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
+    if( m_parameters.ilu.fill >= 0 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond, LvArray::integerConversion< HYPRE_Int >( m_parameters.ilu.fill ) ) );
+    }
+    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
+    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
+    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
@@ -121,10 +128,21 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_EuclidCreate( comm, &precond ) );
-    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSolve;
-    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_EuclidSetup;
-    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_EuclidDestroy;
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
+    if( m_parameters.ilu.fill >= 0 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxNnzPerRow( precond,
+                                                       LvArray::integerConversion< HYPRE_Int >(
+                                                         m_parameters.ilu.fill ) ) );
+    }
+    if( m_parameters.ilu.threshold >= 0 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetDropThreshold( precond,
+                                                        m_parameters.ilu.threshold ) );
+    }
+    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
+    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
+    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
   }
   else if( m_parameters.preconditionerType == "amg" )
   {
@@ -137,8 +155,8 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond, 0.0 ) );       /* conv. tolerance zero */
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond, 1 ) );     /* do only one iteration! */
 
-    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
     precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSetup;
+    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_BoomerAMGSolve;
     precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_BoomerAMGDestroy;
   }
   else

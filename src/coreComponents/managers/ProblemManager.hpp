@@ -122,6 +122,7 @@ public:
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};
   } viewKeys;
 
   struct groupKeysStruct
@@ -152,8 +153,6 @@ public:
 
 protected:
   virtual void PostProcessInput() override final;
-
-  virtual void InitializePostSubGroups( Group * const group ) override final;
 
 private:
 
