@@ -42,8 +42,8 @@
 
 
 #if !defined(GEOSX_USE_MPI)
-int MPI_Comm_size( MPI_Comm, int * ) {return 1;}
-int MPI_Comm_rank( MPI_Comm, int * ) {return 1;}
+int MPI_Comm_size( MPI_Comm, int * size ) { *size=1; return 0; }
+int MPI_Comm_rank( MPI_Comm, int * rank ) { *rank=1; return 0; }
 
 int MPI_Ssend( const void *, int, MPI_Datatype, int, int,
                MPI_Comm )
@@ -1297,110 +1297,6 @@ void SiloFile::ClearEmptiesFromMultiObjects( int const cycleNum )
 
 }
 
-
-
-integer_array SiloFile::SiloNodeOrdering( const string & elementType )
-{
-
-  integer_array nodeOrdering;
-  if( !elementType.compare( 0, 4, "C3D4" ))
-  {
-    nodeOrdering.resize( 4 );
-    nodeOrdering[0] = 1;
-    nodeOrdering[1] = 0;
-    nodeOrdering[2] = 2;
-    nodeOrdering[3] = 3;
-  }
-  else if( !elementType.compare( 0, 4, "C3D8" ))
-  {
-    nodeOrdering.resize( 8 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 1;
-    nodeOrdering[2] = 3;
-    nodeOrdering[3] = 2;
-    nodeOrdering[4] = 4;
-    nodeOrdering[5] = 5;
-    nodeOrdering[6] = 7;
-    nodeOrdering[7] = 6;
-  }
-  else if( !elementType.compare( 0, 4, "C3D6" ))
-  {
-    nodeOrdering.resize( 8 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 3;
-    nodeOrdering[2] = 4;
-    nodeOrdering[3] = 1;
-    nodeOrdering[4] = 2;
-    nodeOrdering[5] = 5;
-  }
-  else if( !elementType.compare( 0, 4, "C3D5" ))
-  {
-    nodeOrdering.resize( 8 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 3;
-    nodeOrdering[2] = 2;
-    nodeOrdering[3] = 1;
-    nodeOrdering[4] = 4;
-  }
-  else if( !elementType.compare( 0, 4, "BEAM" ))
-  {
-    nodeOrdering.resize( 2 );
-    nodeOrdering[0] = 0;
-    nodeOrdering[1] = 1;
-  }
-
-//  if( !m_elementGeometryID.compare(0, 4, "CPE2") )
-//  {
-//    nodeOrdering.resize(2);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//  }
-//  else if( !m_elementGeometryID.compare(0, 4, "CPE3") )
-//  {
-//    nodeOrdering.resize(3);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//    nodeOrdering[2] = 2;
-//    //    throw GPException("ElementRegionT::AllocateElementLibrary(): CPE3
-// unimplemented");
-//  }
-//  else if (!m_elementGeometryID.compare(0, 4, "CPE4"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//    nodeOrdering[2] = 3;
-//    nodeOrdering[3] = 2;
-//  }
-/*//  else */
-
-//  else if (!m_elementGeometryID.compare(0, 4, "STRI"))
-//  {
-//    nodeOrdering.resize(3);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//    nodeOrdering[2] = 2;
-//  }
-//  else if (!m_elementGeometryID.compare(0, 3, "S4R"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//    nodeOrdering[2] = 2;
-//    nodeOrdering[3] = 3;
-//  }
-//  else if (!m_elementGeometryID.compare(0, 4, "TRSH"))
-//  {
-//    nodeOrdering.resize(4);
-//    nodeOrdering[0] = 0;
-//    nodeOrdering[1] = 1;
-//    nodeOrdering[2] = 2;
-//  }
-  return nodeOrdering;
-}
-
-
-
 void SiloFile::WriteGroupSilo( Group const * group,
                                string const & siloDirName,
                                string const & meshname,
@@ -1452,7 +1348,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
   localIndex numElems = 0;
   dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
-  array1d< std::map< string, WrapperBase const * > > viewPointers;
+  std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
@@ -1484,7 +1380,7 @@ void SiloFile::WriteElementRegionSilo( ElementRegionBase const & elemRegion,
 
           Wrapper< arrayType > * const
           newWrapper = fakeGroup.registerWrapper< arrayType >( fieldName );
-          newWrapper->setPlotLevel( 0 );
+          newWrapper->setPlotLevel( PlotLevel::LEVEL_0 );
           arrayType & newarray = newWrapper->reference();
           newarray.resize( arrayType::ndim, sourceArray.dims() );
         } );
@@ -1594,7 +1490,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
 
     elementRegion.forElementSubRegions( [&]( auto const & elementSubRegion )
     {
-      TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
+      typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
 
       // TODO HACK. this isn't correct for variable relations.
       elementToNodeMap[count].resize( elemsToNodes.size( 0 ), elementSubRegion.numNodesPerElement( 0 ) );
@@ -1602,8 +1498,8 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
 
 
-      string elementType = elementSubRegion.GetElementTypeString();
-      integer_array const & nodeOrdering = SiloNodeOrdering( elementType );
+      string const & elementType = elementSubRegion.GetElementTypeString();
+      std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer numNodesPerElement = integer_conversion< int >( elementSubRegion.numNodesPerElement( k ));

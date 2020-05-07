@@ -393,8 +393,62 @@ void HypreVector::write( string const & filename,
     case LAIOutputFormat::NATIVE_ASCII:
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorPrint( m_ij_vector, filename.c_str() ) );
+      break;
     }
-    break;
+    case LAIOutputFormat::MATRIX_MARKET:
+    {
+      if( globalSize() == 0 )
+      {
+        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
+          hypre_fprintf( fp, "%d %d\n", 0, 1 );
+          std::fclose( fp );
+        }
+      }
+      else
+      {
+        // Copy distributed parVector in a local vector on every process
+        // with at least one component
+        // Warning: works for a parVector that is smaller than 2^31-1
+        hypre_Vector *vector;
+        vector = hypre_ParVectorToVectorAll( m_par_vector );
+
+        // Identify the smallest process where vector exists
+        int myID = MpiWrapper::Comm_rank( getComm() );
+        if( vector == 0 )
+        {
+          myID = MpiWrapper::Comm_size( getComm() );
+        }
+        int printID = MpiWrapper::Min( myID, getComm() );
+
+        // Write to file vector
+        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          HYPRE_Real * data = hypre_VectorData( vector );
+          HYPRE_Int size    = hypre_VectorSize( vector );
+
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
+          hypre_fprintf( fp, "%d %d\n", size, 1 );
+
+          for( HYPRE_Int i = 0; i < size; i++ )
+          {
+            hypre_fprintf( fp, "%.16e\n", data[i] );
+          }
+
+          std::fclose( fp );
+        }
+
+        // Destroy vector
+        if( vector )
+        {
+          GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( vector ) );
+        }
+      }
+      break;
+    }
     default:
       GEOSX_ERROR( "Unsupported vector output format" );
   }

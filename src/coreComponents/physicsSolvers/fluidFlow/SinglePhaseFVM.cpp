@@ -25,7 +25,8 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseFVMKernels.hpp"
 
 /**
  * @namespace the geosx namespace that encapsulates the majority of the code
@@ -35,7 +36,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseKernels;
+using namespace SinglePhaseBaseKernels;
+using namespace SinglePhaseFVMKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const std::string & name,
@@ -52,7 +54,7 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const * const domain,
 {
   dofManager.addField( viewKeyStruct::pressureString,
                        DofManager::Location::Elem,
-                       m_targetRegions );
+                       targetRegionNames() );
 
   NumericalMethodsManager const * const numericalMethodManager =
     domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
@@ -65,13 +67,86 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const * const domain,
   dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
 }
 
+template< typename BASE >
+void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
+                                          DofManager & dofManager,
+                                          ParallelMatrix & matrix,
+                                          ParallelVector & rhs,
+                                          ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+  BASE::SetupSystem( domain,
+                     dofManager,
+                     matrix,
+                     rhs,
+                     solution );
+
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+  std::unique_ptr< CRSMatrix< real64, localIndex > > &
+  derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();
+  {
+
+    localIndex numRows = 0;
+    forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & elementSubRegion )
+    {
+      numRows += elementSubRegion.size();
+    } );
+
+    derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( numRows, numRows );
+
+    derivativeFluxResidual_dAperture->reserveNonZeros( matrix.numLocalNonzeros() );
+    localIndex maxRowSize = -1;
+    for( localIndex row=0; row<matrix.numLocalRows(); ++row )
+    {
+      localIndex const rowSize = matrix.localRowLength( row );
+      maxRowSize = maxRowSize > rowSize ? maxRowSize : rowSize;
+    }
+    for( localIndex row=matrix.numLocalRows(); row<numRows; ++row )
+    {
+      derivativeFluxResidual_dAperture->reserveNonZeros( row,
+                                                         maxRowSize );
+    }
+
+  }
+
+
+  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
+
+  NumericalMethodsManager const *
+    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+
+  FiniteVolumeManager const *
+    fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+
+  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( this->getDiscretization() );
+
+
+  fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  {
+    for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
+    {
+      localIndex const numFluxElems = stencil.stencilSize( iconn );
+      typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+
+      for( localIndex k0=0; k0<numFluxElems; ++k0 )
+      {
+        for( localIndex k1=0; k1<numFluxElems; ++k1 )
+        {
+          derivativeFluxResidual_dAperture->insertNonZero( sei[iconn][k0], sei[iconn][k1], 0.0 );
+        }
+      }
+    }
+  } );
+}
+
 
 template< typename BASE >
 real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * const domain,
                                                       DofManager const & dofManager,
                                                       ParallelVector const & rhs )
 {
-  MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   // get a view into local residual vector
   real64 const * localResidual = rhs.extractLocalVector();
@@ -80,8 +155,12 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
 
   // compute the norm of local residual scaled by cell pore volume
   real64 localResidualNorm[3] = { 0.0, 0.0, 0.0 };
-  this->applyToSubRegionsComplete( mesh,
-                                   [&] ( localIndex const er, localIndex const esr, ElementRegionBase const &, ElementSubRegionBase const & subRegion )
+  forTargetSubRegionsComplete( mesh,
+                               [&]( localIndex const,
+                                    localIndex const er,
+                                    localIndex const esr,
+                                    ElementRegionBase const &,
+                                    ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
@@ -135,7 +214,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   dofManager.addVectorToField( solution,
                                viewKeyStruct::pressureString,
@@ -145,12 +224,13 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
-  this->applyToSubRegions( mesh, [&] ( ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&] ( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
-    this->UpdateState( &subRegion );
+    this->UpdateState( subRegion, targetIndex );
   } );
+
 }
 
 template< typename BASE >
@@ -162,6 +242,13 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                                                 ParallelVector * const rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  if( m_derivativeFluxResidual_dAperture==nullptr )
+  {
+    m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( matrix->numLocalRows(),
+                                                                                              matrix->numLocalCols() );
+  }
+  m_derivativeFluxResidual_dAperture->setValues( 0.0 );
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();
@@ -184,9 +271,9 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
   FluxKernel::ElementView< arrayView1d< real64 const > > const & dPres       = m_deltaPressure.toViewConst();
   FluxKernel::ElementView< arrayView1d< real64 const > > const & pres        = m_pressure.toViewConst();
-  FluxKernel::ElementView< arrayView1d< real64 const > > const & gravCoef   = m_gravCoef.toViewConst();
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dens        = m_density.toViewConst();
-  FluxKernel::MaterialView< arrayView2d< real64 const > > const & dDens_dPres = m_dDens_dPres.toViewConst();
+  FluxKernel::ElementView< arrayView1d< real64 const > > const & gravCoef    = m_gravCoef.toViewConst();
+  FluxKernel::ElementView< arrayView2d< real64 const > > const & dens        = m_density.toViewConst();
+  FluxKernel::ElementView< arrayView2d< real64 const > > const & dDens_dPres = m_dDens_dPres.toViewConst();
   FluxKernel::ElementView< arrayView1d< real64 const > > const & mob         = m_mobility.toViewConst();
   FluxKernel::ElementView< arrayView1d< real64 const > > const & dMob_dPres  = m_dMobility_dPres.toViewConst();
 
@@ -198,10 +285,8 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
   FluxKernel::ElementView< arrayView1d< real64 const > > const & dseparationCoeff_dAper  = m_element_dSeparationCoefficient_dAperture.toViewConst();
 #endif
-  localIndex fluidIndex = m_fluidIndex;
 
   FluxKernel::ElementView< arrayView1d< R1Tensor const > > const & transTMultiplier  = m_transTMultiplier.toViewConst();
-
 
   fluxApprox->forAllStencils( [&]( auto const & stencil )
   {
@@ -210,7 +295,6 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
     FluxKernel::Launch( stencil,
                         dt,
-                        fluidIndex,
                         dofNumber,
                         pres,
                         dPres,
@@ -363,12 +447,12 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
                                                             ParallelVector * const rhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  FaceManager * const faceManager = mesh->getFaceManager();
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager & elemManager = *mesh.getElemManager();
+  FaceManager & faceManager = *mesh.getFaceManager();
 
-  arrayView2d< localIndex > const & elemRegionList     = faceManager->elementRegionList();
-  arrayView2d< localIndex > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d< localIndex > const & elemRegionList     = faceManager.elementRegionList();
+  arrayView2d< localIndex > const & elemSubRegionList  = faceManager.elementSubRegionList();
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
@@ -381,38 +465,39 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
 
   // make a list of region indices to be included
-  SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  map< localIndex, localIndex > regionFluidMap;
+  forTargetRegionsComplete( mesh, [&]( localIndex const targetIndex, localIndex const er, ElementRegionBase & )
   {
-    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
-  }
+    localIndex const modelIndex = constitutiveManager->GetSubGroups().getIndex( m_fluidModelNames[targetIndex] );
+    regionFluidMap.emplace( er, modelIndex );
+  } );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex > > dofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex > >( dofKey );
+    elemManager.ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex > >( dofKey );
 
   FluxKernel::ElementView< arrayView1d< globalIndex const > > const & dofNumber = dofNumberAccessor.toViewConst();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  const & pres        = m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  const & dPres       = m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  const & gravCoef    = m_gravCoef;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > const & dens        = m_density;
-  ElementRegionManager::MaterialViewAccessor< arrayView2d< real64 > > const & dDens_dPres = m_dDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  const & mob         = m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  const & dMob_dPres  = m_dMobility_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & pres        = m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dPres       = m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & gravCoef    = m_gravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & dens        = m_density;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & dDens_dPres = m_dDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & mob         = m_mobility;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & dMob_dPres  = m_dMobility_dPres;
 
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase > constitutiveRelations =
-    elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  ElementRegionManager::ConstitutiveRelationAccessor< SingleFluidBase > fluidModels =
+    elemManager.ConstructFullConstitutiveAccessor< SingleFluidBase >( constitutiveManager );
 
   // use ArrayView to make capture by value easy in lambdas
-  arrayView1d< real64 const > const & presFace      = faceManager->getReference< array1d< real64 > >( viewKeyStruct::boundaryFacePressureString );
-  arrayView2d< real64 >       const & densFace      = faceManager->getReference< array2d< real64 > >( viewKeyStruct::boundaryFaceDensityString );
-  arrayView2d< real64 >       const & viscFace      = faceManager->getReference< array2d< real64 > >( viewKeyStruct::boundaryFaceViscosityString );
-  arrayView1d< real64 >       const & mobFace       = faceManager->getReference< array1d< real64 > >( viewKeyStruct::boundaryFaceMobilityString );
-  arrayView1d< real64 const > const & gravCoefFace  = faceManager->getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
+  arrayView1d< real64 const > const & presFace      = faceManager.getReference< array1d< real64 > >( viewKeyStruct::boundaryFacePressureString );
+  arrayView2d< real64 >       const & densFace      = faceManager.getReference< array2d< real64 > >( viewKeyStruct::boundaryFaceDensityString );
+  arrayView2d< real64 >       const & viscFace      = faceManager.getReference< array2d< real64 > >( viewKeyStruct::boundaryFaceViscosityString );
+  arrayView1d< real64 >       const & mobFace       = faceManager.getReference< array1d< real64 > >( viewKeyStruct::boundaryFaceMobilityString );
+  arrayView1d< real64 const > const & gravCoefFace  = faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-  dataRepository::Group const & sets = faceManager->sets();
+  dataRepository::Group const & sets = faceManager.sets();
 
   // first, evaluate BC to get primary field values (pressure)
 //  fsManager->ApplyField(faceManager, viewKeyStruct::boundaryFacePressure, time + dt);
@@ -447,7 +532,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
       integer ke;
       for( ke = 0; ke < 2; ++ke )
       {
-        if( elemRegionList[kf][ke] >= 0 && regionFilter.contains( elemRegionList[kf][ke] ))
+        if( elemRegionList[kf][ke] >= 0 && regionFluidMap.count( elemRegionList[kf][ke] ) > 0 )
         {
           break;
         }
@@ -458,7 +543,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
       real64 dummy; // don't need derivatives on faces
 
-      SingleFluidBase * fluid = constitutiveRelations[er][esr][m_fluidIndex]->template group_cast< SingleFluidBase * >();
+      SingleFluidBase * const fluid = fluidModels[er][esr][regionFluidMap[er]];
       fluid->Compute( presFace[kf], densFace[kf][0], dummy, viscFace[kf][0], dummy );
     }
 
@@ -523,8 +608,8 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
 
               eqnRowIndex = dofNumber[er][esr][ei];
 
-              density  = dens[er][esr][m_fluidIndex][ei][0];
-              dDens_dP = dDens_dPres[er][esr][m_fluidIndex][ei][0];
+              density  = dens[er][esr][ei][0];
+              dDens_dP = dDens_dPres[er][esr][ei][0];
 
               mobility[i]     = mob[er][esr][ei];
               dMobility_dP[i] = dMob_dPres[er][esr][ei];

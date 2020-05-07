@@ -6,7 +6,8 @@
     <Poroelastic name="poroSolve" 
                  solidSolverName="lagsolve"
                  fluidSolverName="SinglePhaseFlow"
-                 couplingTypeOption="FixedStress"
+                 couplingTypeOption="SIM_FixedStress"
+
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region2}">
@@ -20,7 +21,7 @@
                                   logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
-                                  solidMaterialName="shale"
+                                  solidMaterialNames="{shale}"
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
@@ -32,8 +33,8 @@
                      logLevel="1"
                      discretization="singlePhaseTPFA"
                      targetRegions="{Region2}"
-                     fluidName="water"
-                     solidName="shale">
+                     fluidNames="{water}"
+                     solidNames="{shale}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
       <SystemSolverParameters krylovTol="1.0e-10"/>

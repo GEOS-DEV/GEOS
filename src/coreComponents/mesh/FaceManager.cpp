@@ -36,28 +36,22 @@ using namespace dataRepository;
 FaceManager::FaceManager( string const &, Group * const parent ):
   ObjectManagerBase( "FaceManager", parent )
 {
-  this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList, false );
-  this->registerWrapper( viewKeyStruct::edgeListString, &m_edgeList, false );
+  this->registerWrapper( viewKeyStruct::nodeListString, &m_nodeList );
+  this->registerWrapper( viewKeyStruct::edgeListString, &m_edgeList );
 //  m_nodeList.SetRelatedObject( parent->getGroup<NodeManager>(MeshLevel::groupStructKeys::nodeManagerString));
 
-  this->registerWrapper( viewKeyStruct::elementRegionListString,
-                         &(m_toElements.m_toElementRegion),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementRegionListString, &m_toElements.m_toElementRegion )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString,
-                         &(m_toElements.m_toElementSubRegion),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementSubRegionListString, &m_toElements.m_toElementSubRegion )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::elementListString,
-                         &(m_toElements.m_toElementIndex),
-                         false )->
+  this->registerWrapper( viewKeyStruct::elementListString, &m_toElements.m_toElementIndex )->
     setApplyDefaultValue( -1 );
 
-  this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea, false );
-  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter, false );
-  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal, false );
+  this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea );
+  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter );
+  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal );
 
   m_toElements.resize( 0, 2 );
 
@@ -74,6 +68,13 @@ FaceManager::FaceManager( string const &, Group * const parent ):
  */
 FaceManager::~FaceManager()
 {}
+
+void FaceManager::resize( localIndex const newSize )
+{
+  m_nodeList.resize( newSize, 2 * nodeMapExtraSpacePerFace() );
+  m_edgeList.resize( newSize, 2 * edgeMapExtraSpacePerFace() );
+  ObjectManagerBase::resize( newSize );
+}
 
 /**
  * @class FaceBuilder
@@ -294,6 +295,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
   localIndex const numNodes = facesByLowestNode.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
   array1d< localIndex > numNodesPerFace( numUniqueFaces );
+  RAJA::ReduceSum< parallelHostReduce, localIndex > totalFaceNodes( 0.0 );
 
   // loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
@@ -317,6 +319,7 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       // Get the number of face nodes from the subregion.
       CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
       numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+      totalFaceNodes += numNodesPerFace[ curFaceID ];
 
       j += facesByLowestNode( nodeID, j ) == facesByLowestNode( nodeID, j + 1 );
       ++curFaceID;
@@ -332,25 +335,29 @@ void resizeFaceToNodeMap( ElementRegionManager const & elementManager,
       // Get the number of face nodes from the subregion.
       CellElementSubRegion const & subRegion = *elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
       numNodesPerFace[ curFaceID ] = subRegion.GetNumFaceNodes( k, elementLocalFaceIndex );
+      totalFaceNodes += numNodesPerFace[ curFaceID ];
     }
   } );
 
-  // Calculate the total number of nodes in the face to node map.
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalFaceNodes( 0.0 );
-  forAll< parallelHostPolicy >( numUniqueFaces, [&]( localIndex const faceID )
-  {
-    totalFaceNodes += numNodesPerFace[ faceID ];
-  } );
-
-  // Resize the face to node map
+  // Resize the face to node map.
   faceToNodeMap.resize( 0 );
-  faceToNodeMap.reserve( numUniqueFaces );
-  faceToNodeMap.reserve( totalFaceNodes.get() );
+
+  // Reserve space for the number of current faces plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numUniqueFaces;
+  faceToNodeMap.reserve( entriesToReserve );
+
+  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
+  localIndex const valuesToReserve = totalFaceNodes.get() + numUniqueFaces * FaceManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
+  faceToNodeMap.reserveValues( valuesToReserve );
+
+  // Append the individual arrays.
   for( localIndex faceID = 0; faceID < numUniqueFaces; ++faceID )
   {
     faceToNodeMap.appendArray( numNodesPerFace[ faceID ] );
+    faceToNodeMap.setCapacityOfArray( faceToNodeMap.size() - 1,
+                                      numNodesPerFace[ faceID ] + FaceManager::nodeMapExtraSpacePerFace() );
   }
-
 }
 
 /**
@@ -873,6 +880,8 @@ localIndex FaceManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                           bool const overwriteUpMaps,
                                           bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
+  // GEOSX_MARK_FUNCTION;
+
   localIndex unPackedSize = 0;
 
   string nodeListString;
@@ -924,6 +933,12 @@ void FaceManager::FixUpDownMaps( bool const clearIfUnmapped )
                                     m_unmappedGlobalIndicesInToEdges,
                                     clearIfUnmapped );
 
+}
+
+void FaceManager::compressRelationMaps()
+{
+  m_nodeList.compress();
+  m_edgeList.compress();
 }
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )

@@ -120,7 +120,7 @@ Wrapper< SortedArray< T > > * createSetView( Group * parent, const string & name
   view->setSizedFromParent( int(sfp) );
 
   /* Insert the data */
-  view->reference().insert( data.data(), data.size() );
+  view->reference().insert( data.begin(), data.end() );
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), data.size() );

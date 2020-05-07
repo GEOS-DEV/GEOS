@@ -5,9 +5,9 @@
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
-                                 fluidName="fluid1"
-                                 solidName="rock"
-                                 relPermName="relperm"
+                                 fluidNames="{fluid1}"
+                                 solidNames="{rock}"
+                                 relPermNames="{relperm}"
                                  temperature="368.15"
                                  useMass="1"
                                  targetRegions="{Region1}">

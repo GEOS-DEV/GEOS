@@ -51,29 +51,29 @@ HydrofractureSolver::HydrofractureSolver( const std::string & name,
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_couplingTypeOptionString( "FixedStress" ),
+  m_couplingTypeOptionString( "FIM" ),
   m_couplingTypeOption(),
   m_solidSolver( nullptr ),
   m_flowSolver( nullptr ),
   m_maxNumResolves( 10 )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
+    setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0 )->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
-  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves, 0 )->
+  registerWrapper( viewKeyStruct::maxNumResolvesString, &m_maxNumResolves )->
     setApplyDefaultValue( 10 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. " );
@@ -161,17 +161,17 @@ void HydrofractureSolver::PostProcessInput()
 {
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
 
-  if( ctOption == "FixedStress" )
+  if( ctOption == "SIM_FixedStress" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::FixedStress;
+    this->m_couplingTypeOption = couplingTypeOption::SIM_FixedStress;
   }
-  else if( ctOption == "TightlyCoupled" )
+  else if( ctOption == "FIM" )
   {
-    this->m_couplingTypeOption = couplingTypeOption::TightlyCoupled;
+    this->m_couplingTypeOption = couplingTypeOption::FIM;
   }
   else
   {
-    GEOSX_ERROR( "invalid coupling type option" );
+    GEOSX_ERROR( "invalid coupling type option: " + ctOption );
   }
 
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
@@ -204,11 +204,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
-  if( m_couplingTypeOption == couplingTypeOption::FixedStress )
+  if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
     dtReturn = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
   }
-  else if( m_couplingTypeOption == couplingTypeOption::TightlyCoupled )
+  else if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
 
     ImplicitStepSetup( time_n,
@@ -1068,13 +1068,11 @@ HydrofractureSolver::
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FaceManager const * const faceManager = mesh.getFaceManager();
+  NodeManager const * const nodeManager = mesh.getNodeManager();
   ConstitutiveManager const * const constitutiveManager = domain->getConstitutiveManager();
 
-  string const constitutiveName = constitutiveManager->GetGroup( m_flowSolver->fluidIndex())->getName();
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
 
@@ -1086,20 +1084,27 @@ HydrofractureSolver::
 
   matrix10->open();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( this->m_targetRegions, [&] ( FaceElementSubRegion const & subRegion )
+  forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
+                                                       [&]( localIndex const,
+                                                            localIndex const,
+                                                            localIndex const,
+                                                            ElementRegionBase const & region,
+                                                            FaceElementSubRegion const & subRegion )
   {
-    dataRepository::Group const * const constitutiveGroup = subRegion.GetConstitutiveModels();
-    dataRepository::Group const * const constitutiveRelation = constitutiveGroup->GetGroup( constitutiveName );
+    string const
+    & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
+    SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
-    arrayView1d< integer const >     const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< globalIndex const > const & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
-    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+    arrayView1d< globalIndex const > const
+    & presDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
+    arrayView1d< globalIndex const > const
+    & dispDofNumber = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
 
-    arrayView2d< real64 const > const &
-    dens = constitutiveRelation->getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
+    arrayView2d< real64 const > const & dens = fluid.density();
 
-    arrayView1d< real64 const > const & aperture  = subRegion.getElementAperture();
-    arrayView1d< real64 const > const & area      = subRegion.getElementArea();
+    arrayView1d< real64 const > const & aperture = subRegion.getElementAperture();
+    arrayView1d< real64 const > const & area = subRegion.getElementArea();
 
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
@@ -1112,46 +1117,51 @@ HydrofractureSolver::
 // subRegion.getReference<array1d<real64>>(FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString);
 
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex ei )
     {
       //if (elemGhostRank[ei] < 0)
       {
         globalIndex const elemDOF = presDofNumber[ei];
         localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[ei][0] );
         real64 const
-        dAccumulationResidualdAperture = dens[ei][0] * area[ei]; //* ( separationCoeff[ei] +
-                                                                 //   aperture[ei] * dseparationCoeff_dAper[ei] );
+        dAccumulationResidualdAperture = dens[ei][0] * area[ei];                                                        //*
+                                                                                                                        // (
+                                                                                                                        // separationCoeff[ei]
+                                                                                                                        // +
+        //   aperture[ei] * dseparationCoeff_dAper[ei] );
 
 
-        globalIndex nodeDOF[8*3];
+        globalIndex nodeDOF[8 * 3];
 
         R1Tensor Nbar = faceNormal[elemsToFaces[ei][0]];
         Nbar -= faceNormal[elemsToFaces[ei][1]];
         Nbar.Normalize();
 
-        stackArray1d< real64, 24 > dRdU( 2*numNodesPerFace*3 );
+        stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
 
         // Accumulation derivative
         if( elemGhostRank[ei] < 0 )
         {
           //GEOS_LOG_RANK( "dAccumulationResidualdAperture("<<ei<<") = "<<dAccumulationResidualdAperture );
-          for( localIndex kf=0; kf<2; ++kf )
+          for( localIndex kf = 0; kf < 2; ++kf )
           {
-            for( localIndex a=0; a<numNodesPerFace; ++a )
+            for( localIndex a = 0; a < numNodesPerFace; ++a )
             {
-              for( int i=0; i<3; ++i )
+              for( int i = 0; i < 3; ++i )
               {
-                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] +i;
+                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+                  dispDofNumber[faceToNodeMap( elemsToFaces[ei][kf], a )] + i;
                 real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
-                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
-                dRdU( kf*3*numNodesPerFace + 3*a+i ) = dAccumulationResidualdAperture * dAper_dU;
+                real64 const
+                dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU;
+                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dAper_dU;
               }
             }
           }
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),
-                         2*numNodesPerFace*3 );
+                         2 * numNodesPerFace * 3 );
         }
 
         // flux derivative
@@ -1159,29 +1169,31 @@ HydrofractureSolver::
         arraySlice1d< localIndex const > const & columns = dFluxResidual_dAperture.getColumns( ei );
         arraySlice1d< real64 const > const & values = dFluxResidual_dAperture.getEntries( ei );
 
-        for( localIndex kfe2=0; kfe2<numColumns; ++kfe2 )
+        for( localIndex kfe2 = 0; kfe2 < numColumns; ++kfe2 )
         {
           real64 dRdAper = values[kfe2];
           localIndex const ei2 = columns[kfe2];
 //          GEOS_LOG_RANK( "dRdAper("<<ei<<", "<<ei2<<") = "<<dRdAper );
 
-          for( localIndex kf=0; kf<2; ++kf )
+          for( localIndex kf = 0; kf < 2; ++kf )
           {
-            for( localIndex a=0; a<numNodesPerFace; ++a )
+            for( localIndex a = 0; a < numNodesPerFace; ++a )
             {
-              for( int i=0; i<3; ++i )
+              for( int i = 0; i < 3; ++i )
               {
-                nodeDOF[ kf*3*numNodesPerFace + 3*a+i] = dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] +i;
+                nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] =
+                  dispDofNumber[faceToNodeMap( elemsToFaces[ei2][kf], a )] + i;
                 real64 const dGap_dU = -pow( -1, kf ) * Nbar[i] / numNodesPerFace;
-                real64 const dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
-                dRdU( kf*3*numNodesPerFace + 3*a+i ) = dRdAper * dAper_dU;
+                real64 const
+                dAper_dU = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU;
+                dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dAper_dU;
               }
             }
           }
           matrix10->add( elemDOF,
                          nodeDOF,
                          dRdU.data(),
-                         2*numNodesPerFace*3 );
+                         2 * numNodesPerFace * 3 );
 
         }
       }
@@ -1213,6 +1225,8 @@ HydrofractureSolver::
 
 }
 
+#include "Epetra_FEVector.h"
+#include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
 #include "Thyra_OperatorVectorClientSupport.hpp"
 #include "Thyra_AztecOOLinearOpWithSolveFactory.hpp"

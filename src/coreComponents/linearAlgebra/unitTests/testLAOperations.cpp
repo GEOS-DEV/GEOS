@@ -45,7 +45,7 @@ template< typename LAI >
 class LAOperationsTest : public ::testing::Test
 {};
 
-TYPED_TEST_CASE_P( LAOperationsTest );
+TYPED_TEST_SUITE_P( LAOperationsTest );
 
 /*! @name Test functions.
  * @brief Templated functions to test the linear solvers.
@@ -593,7 +593,8 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
   real64 const a = A.normInf();
   real64 const b = A_squared.normInf();
 
-  EXPECT_DOUBLE_EQ( a * a, b );
+  EXPECT_DOUBLE_EQ( a, 8.0 );
+  EXPECT_DOUBLE_EQ( b, 64.0 );
 }
 
 //-----------------------------------
@@ -640,23 +641,23 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 
 //@}
 
-REGISTER_TYPED_TEST_CASE_P( LAOperationsTest,
-                            VectorFunctions,
-                            //MatrixFunctions,
-                            InterfaceSolvers,
-                            MatrixMatrixOperations,
-                            RectangularMatrixOperations );
+REGISTER_TYPED_TEST_SUITE_P( LAOperationsTest,
+                             VectorFunctions,
+                             //MatrixFunctions,
+                             InterfaceSolvers,
+                             MatrixMatrixOperations,
+                             RectangularMatrixOperations );
 
 #ifdef GEOSX_USE_TRILINOS
-INSTANTIATE_TYPED_TEST_CASE_P( Trilinos, LAOperationsTest, TrilinosInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, LAOperationsTest, TrilinosInterface, );
 #endif
 
 #ifdef GEOSX_USE_HYPRE
-INSTANTIATE_TYPED_TEST_CASE_P( Hypre, LAOperationsTest, HypreInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, LAOperationsTest, HypreInterface, );
 #endif
 
 #ifdef GEOSX_USE_PETSC
-INSTANTIATE_TYPED_TEST_CASE_P( Petsc, LAOperationsTest, PetscInterface );
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
 #endif
 
 int main( int argc, char * * argv )

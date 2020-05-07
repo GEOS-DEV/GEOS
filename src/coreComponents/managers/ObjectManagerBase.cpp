@@ -35,18 +35,18 @@ ObjectManagerBase::ObjectManagerBase( std::string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  RegisterGroup( groupKeyStruct::setsString, &m_sets, false );
-  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup, false );
+  RegisterGroup( groupKeyStruct::setsString, &m_sets );
+  RegisterGroup( groupKeyStruct::neighborDataString, &m_neighborGroup );
 
-  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap, false )->
+  registerWrapper( viewKeyStruct::localToGlobalMapString, &m_localToGlobalMap )->
     setApplyDefaultValue( -1 )->
     setDescription( "Array that contains a map from localIndex to globalIndex." );
 
-  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap, false );
+  registerWrapper( viewKeyStruct::globalToLocalMapString, &m_globalToLocalMap );
 
-  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal, false );
+  registerWrapper( viewKeyStruct::isExternalString, &m_isExternal );
 
-  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank, false )->
+  registerWrapper( viewKeyStruct::ghostRankString, &m_ghostRank )->
     setApplyDefaultValue( -2 )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
@@ -198,6 +198,7 @@ void ObjectManagerBase::ConstructGlobalToLocalMap()
 
   m_globalToLocalMap.clear();
   localIndex const N = size();
+  m_globalToLocalMap.reserve( N );
   for( localIndex k = 0; k < N; ++k )
   {
     updateGlobalToLocalMap( k );
@@ -590,6 +591,8 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
                                                 localIndex_array & packList,
                                                 integer const recursive )
 {
+  GEOSX_MARK_FUNCTION;
+
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
@@ -880,7 +883,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase( val );
+      upmap[targetIndex].remove( val );
     }
   }
 }
@@ -889,11 +892,10 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView2d< localIndex const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    // We sort from largest to smallest so when we erase from the upmap subsequent
-    // indices are valid.
-    SortedArray< localIndex > eraseList;
+    eraseList.clear();
     localIndex pos = 0;
     for( auto const & compositeIndex : upmap.getIterableSet( targetIndex ) )
     {
@@ -909,13 +911,14 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( pos );
+        eraseList.push_back( pos );
       }
 
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.begin(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 
@@ -944,7 +947,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
     }
     for( auto const & val : eraseList )
     {
-      upmap[targetIndex].erase( val );
+      upmap[targetIndex].remove( val );
     }
   }
 }
@@ -953,9 +956,10 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     arrayView1d< arrayView1d< localIndex const > const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    SortedArray< localIndex > eraseList;
+    eraseList.clear();
     localIndex pos = 0;
     for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
     {
@@ -971,13 +975,14 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( pos );
+        eraseList.push_back( pos );
       }
 
       ++pos;
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 
@@ -985,9 +990,10 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
                                     ArrayOfSetsView< localIndex > const & upmap,
                                     ArrayOfArraysView< localIndex const > const & downmap )
 {
+  std::vector< localIndex > eraseList;
   for( localIndex const targetIndex : targetIndices )
   {
-    SortedArray< localIndex > eraseList;
+    eraseList.clear();
     for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
     {
       bool hasTargetIndex = false;
@@ -1001,11 +1007,12 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.insert( compositeIndex );
+        eraseList.push_back( compositeIndex );
       }
     }
 
-    upmap.removeSortedFromSet( targetIndex, eraseList.data(), eraseList.size() );
+    localIndex const numUniqueIndices = LvArray::sortedArrayManipulation::makeSortedUnique( eraseList.begin(), eraseList.end() );
+    upmap.removeFromSet( targetIndex, eraseList.begin(), eraseList.begin() + numUniqueIndices );
   }
 }
 

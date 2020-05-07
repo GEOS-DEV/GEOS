@@ -162,25 +162,6 @@ public:
 
   using dataRepository::Group::resize;
 
-  void WriteSilo( SiloFile & siloFile,
-                  const std::string & meshname,
-                  const int centering,
-                  const int cycleNum,
-                  const realT problemTime,
-                  const bool isRestart,
-                  const std::string & multiRoot,
-                  const std::string & regionName = "none",
-                  const localIndex_array & mask = localIndex_array() ) const;
-
-
-  void ReadSilo( const SiloFile & siloFile,
-                 const std::string & meshname,
-                 const int centering,
-                 const int cycleNum,
-                 const realT problemTime,
-                 const bool isRestart,
-                 const std::string & regionName = "none",
-                 const localIndex_array & mask = localIndex_array() );
 
   void CreateSet( const std::string & newSetName );
 
@@ -213,6 +194,7 @@ public:
   {
     arrayView1d< localIndex const > const & ghostsToSend = getNeighborData( neighborRank ).ghostsToSend();
     array1d< std::pair< globalIndex, int > > & nonLocalGhosts = getNeighborData( neighborRank ).nonLocalGhosts();
+    nonLocalGhosts.clear();
 
     for( localIndex const index : ghostsToSend )
     {
@@ -409,7 +391,7 @@ public:
   {
     std::string const & rankString = std::to_string( rank );
     m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
-    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ), false );
+    m_neighborGroup.RegisterGroup( rankString, &getNeighborData( rank ) );
   }
 
   void removeNeighbor( int const rank )

@@ -60,7 +60,7 @@ LaplaceFEM::LaplaceFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false )->
+  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of field variable" );
 }
@@ -348,10 +348,6 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 2, "After LaplaceFEM::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 2, "\nSolution:\n" << solution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,

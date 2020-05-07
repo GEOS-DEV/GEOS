@@ -16,11 +16,25 @@ Element: BasisFunctions
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions.rst
 
 
+.. _XML_Benchmarks:
+
+Element: Benchmarks
+===================
+.. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks.rst
+
+
 .. _XML_BlackOilFluid:
 
 Element: BlackOilFluid
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
+
+
+.. _XML_Blueprint:
+
+Element: Blueprint
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
 
 
 .. _XML_BoundedPlane:
@@ -91,6 +105,13 @@ Element: CompositionalMultiphaseFlow
 Element: CompositionalMultiphaseFluid
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid.rst
+
+
+.. _XML_CompositionalMultiphaseReservoir:
+
+Element: CompositionalMultiphaseReservoir
+=========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
 .. _XML_CompositionalMultiphaseWell:
@@ -485,18 +506,18 @@ Element: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules.rst
 
 
-.. _XML_Reservoir:
-
-Element: Reservoir
-==================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir.rst
-
-
 .. _XML_Restart:
 
 Element: Restart
 ================
 .. include:: ../../coreComponents/fileIO/schema/docs/Restart.rst
+
+
+.. _XML_Run:
+
+Element: Run
+============
+.. include:: ../../coreComponents/fileIO/schema/docs/Run.rst
 
 
 .. _XML_Silo:
@@ -525,6 +546,13 @@ Element: SinglePhaseHybridFVM
 Element: SinglePhaseProppantFVM
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM.rst
+
+
+.. _XML_SinglePhaseReservoir:
+
+Element: SinglePhaseReservoir
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseReservoir.rst
 
 
 .. _XML_SinglePhaseWell:
@@ -645,6 +673,20 @@ Element: WellElementRegion
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/WellElementRegion.rst
 
+
+.. _XML_lassen:
+
+Element: lassen
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/lassen.rst
+
+
+.. _XML_quartz:
+
+Element: quartz
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/quartz.rst
+
 ********************************
 Datastructure Definitions
 ********************************
@@ -657,11 +699,25 @@ Datastructure: BasisFunctions
 .. include:: ../../coreComponents/fileIO/schema/docs/BasisFunctions_other.rst
 
 
+.. _DATASTRUCTURE_Benchmarks:
+
+Datastructure: Benchmarks
+=========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Benchmarks_other.rst
+
+
 .. _DATASTRUCTURE_BlackOilFluid:
 
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_Blueprint:
+
+Datastructure: Blueprint
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_BoundedPlane:
@@ -732,6 +788,13 @@ Datastructure: CompositionalMultiphaseFlow
 Datastructure: CompositionalMultiphaseFluid
 ===========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseFluid_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
+
+Datastructure: CompositionalMultiphaseReservoir
+===============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
@@ -1154,18 +1217,18 @@ Datastructure: QuadratureRules
 .. include:: ../../coreComponents/fileIO/schema/docs/QuadratureRules_other.rst
 
 
-.. _DATASTRUCTURE_Reservoir:
-
-Datastructure: Reservoir
-========================
-.. include:: ../../coreComponents/fileIO/schema/docs/Reservoir_other.rst
-
-
 .. _DATASTRUCTURE_Restart:
 
 Datastructure: Restart
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Restart_other.rst
+
+
+.. _DATASTRUCTURE_Run:
+
+Datastructure: Run
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Run_other.rst
 
 
 .. _DATASTRUCTURE_Silo:
@@ -1194,6 +1257,13 @@ Datastructure: SinglePhaseHybridFVM
 Datastructure: SinglePhaseProppantFVM
 =====================================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseProppantFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoir:
+
+Datastructure: SinglePhaseReservoir
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:
@@ -1378,6 +1448,13 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
+.. _DATASTRUCTURE_lassen:
+
+Datastructure: lassen
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/lassen_other.rst
+
+
 .. _DATASTRUCTURE_neighborData:
 
 Datastructure: neighborData
@@ -1390,6 +1467,13 @@ Datastructure: neighborData
 Datastructure: nodeManager
 ==========================
 .. include:: ../../coreComponents/fileIO/schema/docs/nodeManager_other.rst
+
+
+.. _DATASTRUCTURE_quartz:
+
+Datastructure: quartz
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/quartz_other.rst
 
 
 .. _DATASTRUCTURE_sets:

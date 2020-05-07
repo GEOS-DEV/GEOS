@@ -149,7 +149,7 @@ struct forLocalObjectsImpl
     array1d< bool > visited( ghostRank.size() );
     visited = false;
 
-    mesh->getElemManager()->forElementSubRegions( regions, [&]( auto const & subRegion )
+    mesh->getElemManager()->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
 
@@ -183,7 +183,10 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
     ElementRegionManager const * const elemManager = mesh->getElemManager();
 
     elemManager->forElementSubRegionsComplete< ElementSubRegionBase >( regions,
-                                                                       [&]( localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                                       [&]( localIndex const,
+                                                                            localIndex const er,
+                                                                            localIndex const esr,
+                                                                            ElementRegionBase const &,
                                                                             ElementSubRegionBase const & subRegion )
     {
       arrayView1d< integer const > ghostRank =
@@ -240,7 +243,7 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
 
   // Make a set of target region indices to check face fluxes.
   SortedArray< localIndex > regionSet;
-  elemManager->forElementRegions( regions, [&]( ElementRegionBase const & region )
+  elemManager->forElementRegions( regions, [&]( localIndex const, ElementRegionBase const & region )
   {
     regionSet.insert( region.getIndexInParent() );
   } );
@@ -299,9 +302,9 @@ void makeSparsityFEM( MeshLevel const * const mesh,
     nodeManager->getReference< array1d< globalIndex > >( dofIndexKey );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( auto const & subRegion )
+  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using NodeMapType = TYPEOFREF( subRegion ) ::NodeMapType;
+    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     typename NodeMapType::ViewTypeConst const &
     nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
@@ -349,9 +352,9 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
     nodeManager->getReference< array1d< globalIndex > >( dofIndexKeyNode );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( auto const & subRegion )
+  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using NodeMapType = TYPEOFREF( subRegion ) ::NodeMapType;
+    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
     typename NodeMapType::ViewTypeConst const &
     nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString );
 
@@ -443,9 +446,9 @@ void makeSparsityFlux( MeshLevel const * const mesh,
     faceManager->getReference< array1d< globalIndex > >( dofIndexKey );
 
   // perform assembly loop over elements
-  elemManager->forElementSubRegions( regions, [&]( auto const & subRegion )
+  elemManager->forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
   {
-    using FaceMapType = TYPEOFREF( subRegion ) ::FaceMapType;
+    using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
     typename FaceMapType::ViewTypeConst const &
     faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString );
 

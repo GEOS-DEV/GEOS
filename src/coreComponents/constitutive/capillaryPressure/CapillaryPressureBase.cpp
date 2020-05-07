@@ -47,21 +47,21 @@ CapillaryPressureBase::CapillaryPressureBase( std::string const & name,
                                               Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false )->
+  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false )->
+  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure, false )->
+  registerWrapper( viewKeyStruct::phaseCapPressureString, &m_phaseCapPressure )->
     setPlotLevel( PlotLevel::LEVEL_0 );
 
-  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac, false );
+  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString, &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 CapillaryPressureBase::~CapillaryPressureBase()
@@ -116,17 +116,6 @@ void CapillaryPressureBase::AllocateConstitutiveData( dataRepository::Group * co
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
-}
-
-localIndex CapillaryPressureBase::numFluidPhases() const
-{
-  return integer_conversion< localIndex >( m_phaseNames.size());
-}
-
-string const & CapillaryPressureBase::phaseName( localIndex ip ) const
-{
-  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
-  return m_phaseNames[ip];
 }
 
 } // namespace constitutive
