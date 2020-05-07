@@ -109,6 +109,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
+  Group & nodeSets = nodeManager->sets();
   R1Tensor xMax( std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min());
@@ -162,6 +163,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       auto cellBlockType = cellBlockPAMELA->ElementType;
       auto cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
+      std::cout << cellBlockName << std::endl;
       if( cellBlockName == "HEX" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
@@ -316,6 +318,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
+      
       /// Import ppt
       if( cellBlock != nullptr )
       {
@@ -351,6 +354,38 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else
           {
             GEOSX_ERROR( "Dimension of " <<  m_fieldNamesInGEOSX[fieldIndex] << " is not supported for import in GEOSX" );
+          }
+        }
+      }
+    }
+  }
+  
+  /// Import surfaces
+  std::cout << "begin surface " << std::endl;
+  auto polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
+  for( auto surfaceItr = polygonPartMap.begin(); surfaceItr != polygonPartMap.end(); ++surfaceItr )
+  {
+    auto surfacePtr = surfaceItr->second;
+    auto splitLabel = stringutilities::Tokenize( surfacePtr->Label, "_" );
+    string surfaceName = splitLabel[splitLabel.size() -2 ];
+
+    SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
+    for( auto cellBlockIterator = surfacePtr->SubParts.begin();
+         cellBlockIterator != surfacePtr->SubParts.end(); cellBlockIterator++ )
+    {
+      auto cellBlockPAMELA = cellBlockIterator->second;
+      auto cellBlockType = cellBlockPAMELA->ElementType;
+      auto cellBlockName = ElementToLabel.at( cellBlockType );
+      if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD")
+      {
+        for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
+             cellItr != cellBlockPAMELA->SubCollection.end_owned();
+             cellItr++ )
+        {
+          auto cornerList = (*cellItr)->get_vertexList();
+          for( auto corner :cornerList )
+          {
+            curNodeSet.insert( corner->get_localIndex() );
           }
         }
       }
