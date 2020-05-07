@@ -8,8 +8,8 @@
                  logLevel="1"
                  discretization="FE1"
                  targetRegions="{Region1}">
-      <SystemSolverParameters maxIterNewton="40"
-                              logLevel="2"/>
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters logLevel="2"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
@@ -17,11 +17,11 @@
                                   logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region1}"
-                                  solidMaterialName="shale"
+                                  solidMaterialNames="{shale}"
                                   >
+      <NonlinearSolverParameters newtonMaxIter="5"
+                                 newtonTol="1.0e-6"/>
       <SystemSolverParameters krylovTol="1.0e-10"
-                              newtonTol="1.0e-6"
-                              maxIterNewton="5"
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
 
