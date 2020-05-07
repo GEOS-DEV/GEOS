@@ -166,9 +166,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond, 0.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond,
-                                                         LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.logLevel ) ) );
-
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond, 6 ) );
+                                                         LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.logLevel ) ) );;
 
     // Set maximum number of multigrid levels (default 25)
     if( m_parameters.amg.maxLevels > 0 )
