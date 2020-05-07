@@ -18,9 +18,10 @@
 
 #include "HypreSolver.hpp"
 
-#include "HypreMatrix.hpp"
-#include "HypreVector.hpp"
+#include "interfaces/hypre/HypreMatrix.hpp"
+#include "interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include "_hypre_utilities.h"
 #include "_hypre_parcsr_ls.h"
@@ -87,6 +88,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Solver precond = nullptr;
   HYPRE_Solver solver;
 
+  // Extra scratch matrix, needed if the separate displacement component is requested
+  HypreMatrix scratch; // default constructed, does nothing
+  HYPRE_ParCSRMatrix precondParCSRMat = mat.unwrappedParCSR();
+
   // Get MPI communicator
   MPI_Comm comm = mat.getComm();
 
@@ -117,6 +122,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
 
+    // Hypre's parameters to use ParCSR ILU as a preconditioner
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( precond, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( precond, 0.0 ) );
 
@@ -133,6 +139,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
 
+    // Hypre's parameters to use ParCSR ILU as a preconditioner
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( precond, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( precond, 0.0 ) );
 
@@ -153,13 +160,126 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   else if( m_parameters.preconditionerType == "amg" )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &precond ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond, -1 ) ); /* print amg solution info */
+
+
+    // Hypre's parameters to use BoomerAMG as a preconditioner
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond,
+                                                         LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.logLevel ) ) );
+
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond, 6 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetOldDefault( precond ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 6 ) );   /* Sym G.S./Jacobi hybrid */
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( precond, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond, 0.0 ) );       /* conv. tolerance zero */
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond, 1 ) );     /* do only one iteration! */
+
+    // Set maximum number of multigrid levels (default 25)
+    if( m_parameters.amg.maxLevels > 0 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( precond,
+                                                          LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.maxLevels ) ) );
+    }
+
+    // Set type of cycle (1: V-cycle (default); 2: W-cycle)
+    if( m_parameters.amg.cycleType == "V" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( precond, 1 ) );
+    }
+    else if( m_parameters.amg.cycleType == "W" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( precond, 2 ) );
+    }
+
+    // Set smoother to be used (other options available, see hypre's documentation)
+    // (default "gaussSeidel", i.e. local symmetric Gauss-Seidel)
+    if( m_parameters.amg.smootherType == "jacobi" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 0 ) );
+    }
+    else if( m_parameters.amg.smootherType == "hybridForwardGaussSeidel" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 3 ) );
+    }
+    else if( m_parameters.amg.smootherType == "hybridBackwardGaussSeidel" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 4 ) );
+    }
+    else if( m_parameters.amg.smootherType == "hybridSymmetricGaussSeidel" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 6 ) );
+    }
+    else if( m_parameters.amg.smootherType == "gaussSeidel" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 6 ) );
+    }
+    else if( m_parameters.amg.smootherType == "L1hybridSymmetricGaussSeidel" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 8 ) );
+    }
+    else if( m_parameters.amg.smootherType.substr( 0, 9 ) == "chebyshev" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 16 ) );
+      // Set order for Chebyshev smoother valid options 1, 2 (default), 3, 4)
+      if( m_parameters.amg.smootherType == "chebyshev1" )
+      {
+        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 1 ) );
+      }
+      else if( m_parameters.amg.smootherType == "chebyshev3" )
+      {
+        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 3 ) );
+      }
+      else if( m_parameters.amg.smootherType == "chebyshev4" )
+      {
+        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 4 ) );
+      }
+    }
+    else if( m_parameters.amg.smootherType == "L1jacobi" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 18 ) );
+    }
+    else if( m_parameters.amg.smootherType.substr( 0, 3 ) == "ILU" )
+    {
+      // - block Jacobi ILU0 (default)
+      // - block Jacobi ILU1
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( precond, 5 ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond, 0 ) );
+      if( m_parameters.amg.smootherType == "ILU1" )
+      {
+        GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond, 1 ) );
+      }
+    }
+
+    // Set coarsest level solver
+    // (by default for coarsest grid size above 5,000 superlu_dist is used)
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( precond, 5000 ) );
+    if( m_parameters.amg.coarseType == "direct" )
+    {
+      GEOSX_LAI_CHECK_ERROR( hypre_BoomerAMGSetCycleRelaxType( precond, 9, 3 ) );
+    }
+
+    // Set the number of sweeps
+    if( m_parameters.amg.numSweeps > 1 )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( precond,
+                                                          LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ) ) );
+    }
+
+    // Set strength of connection
+    if( ( 0.0 < m_parameters.amg.strenghtOfConnection ) && ( m_parameters.amg.strenghtOfConnection < 1.0 ) )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( precond, m_parameters.amg.strenghtOfConnection ) );
+    }
+
+    //TODO: add user-defined null space / rigid body mode support
+//    if ( m_parameters.amg.nullSpaceType )
+//    {
+//      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors ( precond ,
+//                                                               HYPRE_Int num_vectors ,
+//                                                               HYPRE_ParVector *interp_vectors ) );
+
+    // apply separate displacement component filter
+    if( m_parameters.amg.separateComponents )
+    {
+      LAIHelperFunctions::SeparateComponentFilter< HypreInterface >( mat, scratch, m_parameters.dofsPerNode );
+      precondParCSRMat = scratch.unwrappedParCSR();
+    }
 
     precondSetupFunction = (HYPRE_PtrToParSolverFcn) HYPRE_BoomerAMGSetup;
     precondApplyFunction = (HYPRE_PtrToParSolverFcn) HYPRE_BoomerAMGSolve;
@@ -193,7 +313,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetup( solver,
-                                                   mat.unwrappedParCSR(),
+                                                   precondParCSRMat,
                                                    rhs.unwrapped(),
                                                    sol.unwrapped() ) );
 
@@ -227,7 +347,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetup( solver,
-                                                      mat.unwrappedParCSR(),
+                                                      precondParCSRMat,
                                                       rhs.unwrapped(),
                                                       sol.unwrapped() ) );
 
@@ -262,7 +382,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
 
     // Setup
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGSetup( solver,
-                                                 mat.unwrappedParCSR(),
+                                                 precondParCSRMat,
                                                  rhs.unwrapped(),
                                                  sol.unwrapped() ) );
 

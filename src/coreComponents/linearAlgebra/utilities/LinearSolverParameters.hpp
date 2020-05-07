@@ -62,9 +62,12 @@ public:
     string smootherType = "gaussSeidel";
     string coarseType = "direct";
     integer numSweeps = 2;
+    real64 aggregationThreshold = 0.0; // for Trilinos
+    real64 strenghtOfConnection = 0.25;    // for Hypre
     bool isSymmetric = true;
     bool separateComponents = false;
     string nullSpaceType = "constantModes";
+    integer logLevel = 0;
   }
   amg;
 
