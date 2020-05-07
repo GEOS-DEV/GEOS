@@ -34,11 +34,13 @@ namespace HybridFVMInnerProduct
 struct HybridFVMInnerProductHelper
 {
 
+  GEOSX_HOST_DEVICE
   static
   void MakeFullTensor( R1Tensor const & values,
                        arraySlice2d< real64 > const & result );
 
   template< localIndex NF >
+  GEOSX_HOST_DEVICE
   static
   void Orthonormalize( arraySlice1d< real64 > const & q0,
                        arraySlice1d< real64 > const & q1,

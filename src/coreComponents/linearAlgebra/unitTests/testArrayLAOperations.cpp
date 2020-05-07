@@ -32,15 +32,14 @@ using INDEX_TYPE = std::ptrdiff_t;
 static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 static real64 const pi = std::atan( 1.0 )*4.0;
 
-template< typename LAI >
 void vector_norm1_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   real64 norm1 = 0.0;
@@ -51,19 +50,19 @@ void vector_norm1_test()
 
   // Check
   EXPECT_NEAR( norm1,
-               LAI::vectorNorm1( vec ),
+               DenseLA::vectorNorm1( vec ),
                norm1 * machinePrecision );
 }
 
-template< typename LAI >
+
 void vector_norm2_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm2
   real64 norm2 = 0.0;
@@ -75,19 +74,19 @@ void vector_norm2_test()
 
   // Check
   EXPECT_NEAR( norm2,
-               LAI::vectorNorm2( vec ),
+               DenseLA::vectorNorm2( vec ),
                norm2 * machinePrecision );
 }
 
-template< typename LAI >
+
 void vector_normInf_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = std::abs( vec( 0 ));
@@ -102,11 +101,11 @@ void vector_normInf_test()
 
   // Check
   EXPECT_NEAR( normInf,
-               LAI::vectorNormInf( vec ),
+               DenseLA::vectorNormInf( vec ),
                normInf * machinePrecision );
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void determinant_test()
 {
   array2d< real64, PERM > Laplacian1d;
@@ -147,12 +146,12 @@ void determinant_test()
 
     determinant = N_real + 1.0; // Exact determinant
     EXPECT_NEAR( determinant,
-                 LAI::determinant( Laplacian1d ),
+                 DenseLA::determinant( Laplacian1d ),
                  (lambda_max/lambda_min) * machinePrecision );
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_normInf_test()
 {
   INDEX_TYPE M = 6;
@@ -160,8 +159,8 @@ void matrix_normInf_test()
   array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = 0.0;
@@ -177,11 +176,11 @@ void matrix_normInf_test()
 
   // Check
   EXPECT_NEAR( normInf,
-               LAI::matrixNormInf( mat ),
+               DenseLA::matrixNormInf( mat ),
                normInf * machinePrecision );
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_norm1_test()
 {
   INDEX_TYPE M = 6;
@@ -189,8 +188,8 @@ void matrix_norm1_test()
   array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   array1d< real64 > tmp( N );
@@ -207,11 +206,11 @@ void matrix_norm1_test()
 
   // Check
   EXPECT_NEAR( *norm1,
-               LAI::matrixNorm1( mat ),
+               DenseLA::matrixNorm1( mat ),
                *norm1 * machinePrecision );
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_normFrobenius_test()
 {
   INDEX_TYPE M = 6;
@@ -219,8 +218,8 @@ void matrix_normFrobenius_test()
   array2d< real64, PERM > mat( M, N );
 
   // Populate matrix with random coefficients
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normFrobeniusm
   real64 normFrobenius = 0.0;
@@ -235,11 +234,11 @@ void matrix_normFrobenius_test()
 
   // Check
   EXPECT_NEAR( normFrobenius,
-               LAI::matrixNormFrobenius( mat ),
+               DenseLA::matrixNormFrobenius( mat ),
                normFrobenius * machinePrecision );
 }
 
-template< typename LAI >
+
 void vector_vector_add_test()
 {
   INDEX_TYPE N = 24;
@@ -248,10 +247,10 @@ void vector_vector_add_test()
   array1d< real64 > vecSum( N );
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( vec1,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
-  LAI::vectorRand( vec2,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec1,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::vectorRand( vec2,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum vecSum = alpha*vec1 + vec2
   real64 alpha = 3.0;
@@ -261,7 +260,7 @@ void vector_vector_add_test()
   }
 
   // Compute v2 = alpha*vec1 + vec2
-  LAI::vectorVectorAdd( vec1,
+  DenseLA::vectorVectorAdd( vec1,
                         vec2,
                         alpha );
 
@@ -274,7 +273,7 @@ void vector_vector_add_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_matrix_add_test()
 {
   INDEX_TYPE M = 6;
@@ -285,11 +284,11 @@ void matrix_matrix_add_test()
 
   // Populate vectors with random coefficients
   // Populate matrix with random coefficients
-  LAI::matrixRand( mat1,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::matrixRand( mat1,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
   // Populate matrix with random coefficients
-  LAI::matrixRand( mat2,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat2,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum matSum = alpha*mat1 + mat2
   real64 alpha = 3.0;
@@ -302,7 +301,7 @@ void matrix_matrix_add_test()
   }
 
   // Compute mat2 = alpha*mat1 + mat2
-  LAI::matrixMatrixAdd( mat1,
+  DenseLA::matrixMatrixAdd( mat1,
                         mat2,
                         alpha );
 
@@ -318,7 +317,6 @@ void matrix_matrix_add_test()
   }
 }
 
-template< typename LAI >
 void vector_scale_test()
 {
   INDEX_TYPE N = 24;
@@ -326,8 +324,8 @@ void vector_scale_test()
   array1d< real64 > vecScaled( N );
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vecScaled = alpha*vec
   real64 alpha = 3.0;
@@ -337,7 +335,7 @@ void vector_scale_test()
   }
 
   // Compute vec = alpha*vec
-  LAI::vectorScale( alpha,
+  DenseLA::vectorScale( alpha,
                     vec );
 
   // Check
@@ -349,7 +347,7 @@ void vector_scale_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_scale_test()
 {
   INDEX_TYPE M = 6;
@@ -358,8 +356,8 @@ void matrix_scale_test()
   array2d< real64, PERM > matScaled( M, N );
 
   // Populate vectors with random coefficients
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector matScaled = alpha*mat
   real64 alpha = 3.0;
@@ -372,7 +370,7 @@ void matrix_scale_test()
   }
 
   // Compute mat = alpha*mat
-  LAI::matrixScale( alpha,
+  DenseLA::matrixScale( alpha,
                     mat );
 
   // Check
@@ -387,7 +385,7 @@ void matrix_scale_test()
   }
 }
 
-template< typename LAI >
+
 void vector_dot_test()
 {
   INDEX_TYPE N = 6;
@@ -395,10 +393,10 @@ void vector_dot_test()
   array1d< real64 > vec2( N );
 
   // Populate vectors with random coefficients
-  LAI::vectorRand( vec1,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
-  LAI::vectorRand( vec2,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec1,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::vectorRand( vec2,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vec1_dot_v2 = vec1^t*vec2
   real64 vec1DotVec2 = 0.0;
@@ -409,12 +407,12 @@ void vector_dot_test()
 
   // Check
   EXPECT_NEAR( vec1DotVec2,
-               LAI::vectorDot( vec1,
+               DenseLA::vectorDot( vec1,
                                vec2 ),
                static_cast< real64 >(N)*machinePrecision );
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
@@ -425,12 +423,12 @@ void matrix_vector_multiply_test()
   array1d< real64 > vecResult( M );
 
   // Populate matrix and vectors with random coefficients
-  LAI::matrixRand( A,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
-  LAI::vectorRand( X,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-  LAI::vectorRand( Y,
-                   LAI::RandomNumberDistribution::NORMAL_01 );
+  DenseLA::matrixRand( A,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::vectorRand( X,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( Y,
+                   DenseLA::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*A*X + beta*Y
   real64 alpha = 3.0;
@@ -445,7 +443,7 @@ void matrix_vector_multiply_test()
   }
 
   // Compute Y = alpha*A*X + beta*Y
-  LAI::matrixVectorMultiply( A,
+  DenseLA::matrixVectorMultiply( A,
                              X,
                              Y,
                              alpha,
@@ -460,7 +458,7 @@ void matrix_vector_multiply_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrixT_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
@@ -471,12 +469,12 @@ void matrixT_vector_multiply_test()
   array1d< real64 > vecResult( N );
 
   // Populate matrix and vectors with random coefficients
-  LAI::matrixRand( A,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
-  LAI::vectorRand( X,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-  LAI::vectorRand( Y,
-                   LAI::RandomNumberDistribution::NORMAL_01 );
+  DenseLA::matrixRand( A,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::vectorRand( X,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( Y,
+                   DenseLA::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*transpose(A)*X + beta*Y
   real64 alpha = 3.0;
@@ -491,7 +489,7 @@ void matrixT_vector_multiply_test()
   }
 
   // Compute Y = alpha*A*X + beta*Y
-  LAI::matrixTVectorMultiply( A,
+  DenseLA::matrixTVectorMultiply( A,
                               X,
                               Y,
                               alpha,
@@ -506,7 +504,7 @@ void matrixT_vector_multiply_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -537,12 +535,12 @@ void matrix_matrix_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( A,
-                         LAI::RandomNumberDistribution::UNIFORM_01 );
-        LAI::matrixRand( B,
-                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-        LAI::matrixRand( C,
-                         LAI::RandomNumberDistribution::NORMAL_01 );
+        DenseLA::matrixRand( A,
+                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+        DenseLA::matrixRand( B,
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+        DenseLA::matrixRand( C,
+                         DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -558,7 +556,7 @@ void matrix_matrix_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        LAI::matrixMatrixMultiply( A,
+        DenseLA::matrixMatrixMultiply( A,
                                    B,
                                    C,
                                    alpha,
@@ -580,7 +578,7 @@ void matrix_matrix_multiply_test()
 
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrixT_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -611,12 +609,12 @@ void matrixT_matrix_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( A,
-                         LAI::RandomNumberDistribution::UNIFORM_01 );
-        LAI::matrixRand( B,
-                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-        LAI::matrixRand( C,
-                         LAI::RandomNumberDistribution::NORMAL_01 );
+        DenseLA::matrixRand( A,
+                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+        DenseLA::matrixRand( B,
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+        DenseLA::matrixRand( C,
+                         DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -632,7 +630,7 @@ void matrixT_matrix_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        LAI::matrixTMatrixMultiply( A,
+        DenseLA::matrixTMatrixMultiply( A,
                                     B,
                                     C,
                                     alpha,
@@ -654,7 +652,7 @@ void matrixT_matrix_multiply_test()
 
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -685,12 +683,12 @@ void matrix_matrixT_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( A,
-                         LAI::RandomNumberDistribution::UNIFORM_01 );
-        LAI::matrixRand( B,
-                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-        LAI::matrixRand( C,
-                         LAI::RandomNumberDistribution::NORMAL_01 );
+        DenseLA::matrixRand( A,
+                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+        DenseLA::matrixRand( B,
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+        DenseLA::matrixRand( C,
+                         DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -706,7 +704,7 @@ void matrix_matrixT_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        LAI::matrixMatrixTMultiply( A,
+        DenseLA::matrixMatrixTMultiply( A,
                                     B,
                                     C,
                                     alpha,
@@ -728,7 +726,7 @@ void matrix_matrixT_multiply_test()
 
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrixT_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -759,12 +757,12 @@ void matrixT_matrixT_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        LAI::matrixRand( A,
-                         LAI::RandomNumberDistribution::UNIFORM_01 );
-        LAI::matrixRand( B,
-                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-        LAI::matrixRand( C,
-                         LAI::RandomNumberDistribution::NORMAL_01 );
+        DenseLA::matrixRand( A,
+                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+        DenseLA::matrixRand( B,
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+        DenseLA::matrixRand( C,
+                         DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -780,7 +778,7 @@ void matrixT_matrixT_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        LAI::matrixTMatrixTMultiply( A,
+        DenseLA::matrixTMatrixTMultiply( A,
                                      B,
                                      C,
                                      alpha,
@@ -801,7 +799,7 @@ void matrixT_matrixT_multiply_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_inverse_test()
 {
   array2d< real64, PERM > Laplacian1d;
@@ -835,7 +833,7 @@ void matrix_inverse_test()
 
     // Compute inverse of Laplacian1d
     Laplacian1dInv.resize( N, N );
-    LAI::matrixInverse( Laplacian1d,
+    DenseLA::matrixInverse( Laplacian1d,
                         Laplacian1dInv );
 
     // Check
@@ -860,7 +858,7 @@ void matrix_inverse_test()
   }
 }
 
-template< typename LAI >
+
 void vector_copy_test()
 {
   array1d< INDEX_TYPE > N_indeces;
@@ -878,11 +876,11 @@ void vector_copy_test()
     dst.resize( N );
 
     // Populate src vector with random coefficients
-    LAI::vectorRand( src,
-                     LAI::RandomNumberDistribution::NORMAL_01 );
+    DenseLA::vectorRand( src,
+                     DenseLA::RandomNumberDistribution::NORMAL_01 );
 
     // Copy vector, dst = src
-    LAI::vectorCopy( src,
+    DenseLA::vectorCopy( src,
                      dst );
 
     // Check
@@ -895,7 +893,7 @@ void vector_copy_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_copy_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -916,11 +914,11 @@ void matrix_copy_test()
       dst.resize( M, N );
 
       // Populate src matrix with random coefficients
-      LAI::matrixRand( src,
-                       LAI::RandomNumberDistribution::NORMAL_01 );
+      DenseLA::matrixRand( src,
+                       DenseLA::RandomNumberDistribution::NORMAL_01 );
 
       // Copy matrix, dst = src
-      LAI::matrixCopy( src,
+      DenseLA::matrixCopy( src,
                        dst );
 
       // Check
@@ -937,7 +935,6 @@ void matrix_copy_test()
   }
 }
 
-template< typename LAI >
 void vector_rand_test()
 {
   INDEX_TYPE N = 10000;
@@ -946,15 +943,15 @@ void vector_rand_test()
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
   real64 *v_max = std::max_element( vec.begin(), vec.end());
   real64 *v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( 0.0 <= *v_min && *v_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
-  LAI::vectorRand( vec,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::vectorRand( vec,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   v_max = std::max_element( vec.begin(), vec.end());
   v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( -1.0 <= *v_min && *v_max <= 1.0 );
@@ -964,7 +961,7 @@ void vector_rand_test()
 
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_rand_test()
 {
   INDEX_TYPE M =  99;
@@ -974,15 +971,15 @@ void matrix_rand_test()
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
   real64 *A_max = std::max_element( mat.begin(), mat.end());
   real64 *A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( 0.0 <= *A_min && *A_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
-  LAI::matrixRand( mat,
-                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  DenseLA::matrixRand( mat,
+                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   A_max = std::max_element( mat.begin(), mat.end());
   A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( -1.0 <= *A_min && *A_max <= 1.0 );
@@ -992,7 +989,6 @@ void matrix_rand_test()
 
 }
 
-template< typename LAI >
 void set_get_random_number_generator_seed_test()
 {
   array1d< int > seedSet( 4 );
@@ -1000,10 +996,10 @@ void set_get_random_number_generator_seed_test()
   seedSet( 1 ) = 2;
   seedSet( 2 ) = 3;
   seedSet( 3 ) = 7; // must be odd
-  LAI::setRandomNumberGeneratorSeed( seedSet );
+  DenseLA::setRandomNumberGeneratorSeed( seedSet );
 
   array1d< int > seedGet( 4 );
-  LAI::getRandomNumberGeneratorSeed( seedGet );
+  DenseLA::getRandomNumberGeneratorSeed( seedGet );
 
   // Check
   for( INDEX_TYPE i = 0; i< seedSet.size(); ++i )
@@ -1012,7 +1008,7 @@ void set_get_random_number_generator_seed_test()
   }
 }
 
-template< typename LAI >
+
 void performance_test()
 {
   constexpr localIndex MAX_SIZE = 1024 * 8 * 4;
@@ -1027,17 +1023,17 @@ void performance_test()
     b.resize( size, size );
     c.resize( size, size );
 
-    LAI::matrixRand( a,
-                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
-    LAI::matrixRand( b,
-                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+    DenseLA::matrixRand( a,
+                     DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+    DenseLA::matrixRand( b,
+                     DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
     std::chrono::duration< double > multiplicationTime {};
     localIndex const nIter = MAX_SIZE / (size + 1) + 1;
     for( localIndex iter = 0; iter < nIter; ++iter )
     {
       auto start = std::chrono::high_resolution_clock::now();
-      LAI::matrixMatrixMultiply( a, b, c, 1.0, 1.0 );
+      DenseLA::matrixMatrixMultiply( a, b, c, 1.0, 1.0 );
       auto end = std::chrono::high_resolution_clock::now();
       multiplicationTime += end - start;
     }
@@ -1048,7 +1044,7 @@ void performance_test()
   }
 }
 
-template< typename LAI, typename PERM >
+template< typename PERM >
 void matrix_svd_test()
 {
   array1d< INDEX_TYPE > M_indices;
@@ -1095,11 +1091,11 @@ void matrix_svd_test()
       work0.resize( M, N );
 
       // Populate matrix A with random coefficients
-      LAI::matrixRand( A,
-                       LAI::RandomNumberDistribution::UNIFORM_01 );
+      DenseLA::matrixRand( A,
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
 
       // Compute the SVD of A
-      LAI::matrixSVD( A, U, S_vec, VT );
+      DenseLA::matrixSVD( A, U, S_vec, VT );
 
       // 1) Check that we recover the matrix with the decomposition
 
@@ -1148,8 +1144,8 @@ void matrix_svd_test()
         S_extended( i, i ) = S_vec( i );
       }
 
-      LAI::matrixMatrixMultiply( S_extended, VT_extended, work0 );
-      LAI::matrixMatrixMultiply( U_extended, work0, A_svd );
+      DenseLA::matrixMatrixMultiply( S_extended, VT_extended, work0 );
+      DenseLA::matrixMatrixMultiply( U_extended, work0, A_svd );
 
       for( INDEX_TYPE i = 0; i < M; ++i )
       {
@@ -1162,14 +1158,14 @@ void matrix_svd_test()
       }
 
       // 2) Check that U is orthonormal
-      LAI::matrixTMatrixMultiply( U, U, UTU );
+      DenseLA::matrixTMatrixMultiply( U, U, UTU );
       for( INDEX_TYPE i = 0; i < UTU.size( 0 ); ++i )
       {
         UTU( i, i ) = 1 - UTU( i, i );
       }
 
       EXPECT_NEAR( 0.0,
-                   LAI::matrixNormFrobenius( UTU ),
+                   DenseLA::matrixNormFrobenius( UTU ),
                    machinePrecision );
     }
   }
@@ -1177,169 +1173,169 @@ void matrix_svd_test()
 
 TEST( Array1D, vectorNorm1 )
 {
-  vector_norm1_test< DenseLA >();
+  vector_norm1_test();
 }
 
 TEST( Array1D, vectorNorm2 )
 {
-  vector_norm2_test< DenseLA >();
+  vector_norm2_test();
 }
 
 TEST( Array1D, vectorNormInf )
 {
-  vector_normInf_test< DenseLA >();
+  vector_normInf_test();
 }
 
 
 TEST( Array2D, determinantRowMajor )
 {
-  determinant_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  determinant_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, determinantColMajor )
 {
-  determinant_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  determinant_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 
 TEST( Array2D, matrixNormInfRowMajor )
 {
-  matrix_normInf_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_normInf_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixNormInfColMajor )
 {
-  matrix_normInf_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_normInf_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixNorm1RowMajor )
 {
-  matrix_norm1_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_norm1_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixNorm1ColMajor )
 {
-  matrix_norm1_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_norm1_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixNormFrobeniusRowMajor )
 {
-  matrix_normFrobenius_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_normFrobenius_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixNormFrobeniusColMajor )
 {
-  matrix_normFrobenius_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_normFrobenius_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorVectorAdd )
 {
-  vector_vector_add_test< DenseLA >();
+  vector_vector_add_test();
 }
 
 TEST( Array2D, matrixMatrixAddRowMajor )
 {
-  matrix_matrix_add_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_matrix_add_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixMatrixAddColMajor )
 {
-  matrix_matrix_add_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_matrix_add_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorScale )
 {
-  vector_scale_test< DenseLA >();
+  vector_scale_test();
 }
 
 TEST( Array2D, matrixScaleRowMajor )
 {
-  matrix_scale_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_scale_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixScaleColMajor )
 {
-  matrix_scale_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_scale_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorDot )
 {
-  vector_dot_test< DenseLA >();
+  vector_dot_test();
 }
 
 TEST( Array2D, matrixVectorMultiplyRowMajor )
 {
-  matrix_vector_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_vector_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixTVectorMultiplyRowMajor )
 {
-  matrixT_vector_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_vector_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixMatrixMultiplyRowMajor )
 {
-  matrix_matrix_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_matrix_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixTMatrixMultiplyRowMajor )
 {
-  matrixT_matrix_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_matrix_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixMatrixTMultiplyRowMajor )
 {
-  matrix_matrixT_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_matrixT_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixTMatrixTMultiplyRowMajor )
 {
-  matrixT_matrixT_multiply_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_matrixT_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixInverseRowMajor )
 {
-  matrix_inverse_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_inverse_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixInverseColMajor )
 {
-  matrix_inverse_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_inverse_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorCopy )
 {
-  vector_copy_test< DenseLA >();
+  vector_copy_test();
 }
 
 TEST( Array2D, matrixCopyRowMajor )
 {
-  matrix_copy_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_copy_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixCopyColMajor )
 {
-  matrix_copy_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_copy_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( Array1D, vectorRand )
 {
-  vector_rand_test< DenseLA >();
+  vector_rand_test();
 }
 
 TEST( Array2D, matrixRandRowMajor )
 {
-  matrix_rand_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_rand_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 TEST( Array2D, matrixRandColMajor )
 {
-  matrix_rand_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+  matrix_rand_test< MatrixLayout::COL_MAJOR_PERM >();
 }
 
 TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed )
 {
-  set_get_random_number_generator_seed_test< DenseLA >();
+  set_get_random_number_generator_seed_test();
 }
 
 TEST( DenseLAInterface, performanceTest )
@@ -1350,13 +1346,13 @@ TEST( DenseLAInterface, performanceTest )
 
 TEST( DenseLAInterface, matrixSVDRowMajor )
 {
-  matrix_svd_test< DenseLA, MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_svd_test< MatrixLayout::ROW_MAJOR_PERM >();
 }
 
 /*
    TEST( DenseLAInterface, matrixSVDColMajor )
    {
-   matrix_svd_test< DenseLA, MatrixLayout::COL_MAJOR_PERM >();
+   matrix_svd_test< MatrixLayout::COL_MAJOR_PERM >();
    }
  */
 

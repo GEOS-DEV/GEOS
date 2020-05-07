@@ -43,7 +43,6 @@ HybridFVMInnerProductHelper::MakeFullTensor( R1Tensor const & values,
     axis = 0.0;
     axis( icoord ) = 1.0;
 
-    // XXX: is there a more elegant way to do this?
     temp.dyadic_aa( axis );
     temp *= values( icoord );
     for( localIndex i = 0; i < dim; ++i )
@@ -178,16 +177,16 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                       real64 const & lengthTolerance,
                                       arraySlice2d< real64 > const & transMatrix )
 {
-  localIndex constexpr dim = 3;
+  //  localIndex constexpr dim = 3;
 
   R1Tensor faceCenter, faceNormal;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
-  stackArray2d< real64, NF *dim > cellToFaceMat( NF, dim );
-  stackArray2d< real64, NF *dim > normalsMat( NF, dim );
-  stackArray2d< real64, dim *dim > permMat( dim, dim );
+  stackArray2d< real64, NF *3 > cellToFaceMat( NF, 3 );
+  stackArray2d< real64, NF *3 > normalsMat( NF, 3 );
+  stackArray2d< real64, 3 *3 > permMat( 3, 3 );
 
-  stackArray2d< real64, dim *NF > work_dimByNumFaces( dim, NF );
+  stackArray2d< real64, 3 *NF > work_dimByNumFaces( 3, NF );
   stackArray2d< real64, NF *NF > worka_numFacesByNumFaces( NF, NF );
   stackArray2d< real64, NF *NF > workb_numFacesByNumFaces( NF, NF );
   stackArray2d< real64, NF *NF > workc_numFacesByNumFaces( NF, NF );

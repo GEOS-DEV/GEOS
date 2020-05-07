@@ -185,6 +185,7 @@ public:
   realT operator()( const int i, const int j ) const;
 
   /// non-const access to data
+  GEOSX_HOST_DEVICE
   realT & operator()( const int i, const int j );
 
   //***** MULTIPLICATION OPERATIONS *******************************************
@@ -201,6 +202,7 @@ public:
   GEOSX_HOST_DEVICE
   void QijAjkQlk( const R2SymTensorT & A, const R2TensorT< T_dim > & Q );
 
+  GEOSX_HOST_DEVICE
   void dyadic_aa( const R1TensorT< T_dim > & a );
   void dyadic_ab_plus_ba( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
 

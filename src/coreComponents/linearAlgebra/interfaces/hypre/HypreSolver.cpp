@@ -113,16 +113,17 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilu" )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
     if( m_parameters.ilu.fill >= 0 )
     {
+      /*
       GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond,
                                                       integer_conversion< HYPRE_Int >(
-                                                        m_parameters.ilu.fill ) ) );
+						      m_parameters.ilu.fill ) ) );*/
     }
-    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
-    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
-    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
+    //precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
+    //precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
+    //precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
   }
   else if( m_parameters.preconditionerType == "icc" )
   {
@@ -130,21 +131,24 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else if( m_parameters.preconditionerType == "ilut" )
   {
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
+    //GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
     if( m_parameters.ilu.fill >= 0 )
     {
+      /*
       GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxNnzPerRow( precond,
                                                        integer_conversion< HYPRE_Int >(
-                                                         m_parameters.ilu.fill ) ) );
+						       m_parameters.ilu.fill ) ) );*/
     }
     if( m_parameters.ilu.threshold >= 0 )
     {
+      /*
       GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetDropThreshold( precond,
                                                         m_parameters.ilu.threshold ) );
+      */
     }
-    precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
-    precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
-    precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
+    //precondSetupFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSetup;
+    //precondApplyFunction = (HYPRE_PtrToSolverFcn) HYPRE_ILUSolve;
+    //precondDestroyFunction = (HYPRE_PtrToDestroyFcn) HYPRE_ILUDestroy;
   }
   else if( m_parameters.preconditionerType == "amg" )
   {

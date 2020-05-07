@@ -19,7 +19,9 @@
 // Include the corresponding header file.
 #include "DenseLA.hpp"
 
-//#define USE_LAPACK
+#if !defined(__CUDA_ARCH__)
+  #define USE_LAPACK
+#endif
 
 #include "DenseLAHelpers.hpp"
 #include "BlasLapackFunctions.h"
@@ -28,7 +30,10 @@
 namespace geosx
 {
 
-real64 DenseLA::vectorNorm1( arraySlice1d< real64 const > const & X )
+namespace DenseLA
+{
+
+real64 vectorNorm1( arraySlice1d< real64 const > const & X )
 {
 #ifdef USE_LAPACK
 
@@ -41,7 +46,7 @@ real64 DenseLA::vectorNorm1( arraySlice1d< real64 const > const & X )
   real64 norm = 0;
   for( localIndex i = 0; i < X.size(); ++i )
   {
-    norm += std::fabs( X( i ) );
+    norm += fabs( X( i ) );
   }
   return norm;
 
@@ -49,7 +54,7 @@ real64 DenseLA::vectorNorm1( arraySlice1d< real64 const > const & X )
 
 }
 
-real64 DenseLA::vectorNorm2( arraySlice1d< real64 const > const & X )
+real64 vectorNorm2( arraySlice1d< real64 const > const & X )
 {
 #ifdef USE_LAPACK
 
@@ -69,7 +74,7 @@ real64 DenseLA::vectorNorm2( arraySlice1d< real64 const > const & X )
 #endif
 }
 
-real64 DenseLA::vectorNormInf( arraySlice1d< real64 const > const & X )
+real64 vectorNormInf( arraySlice1d< real64 const > const & X )
 {
 #ifdef USE_LAPACK
 
@@ -83,7 +88,7 @@ real64 DenseLA::vectorNormInf( arraySlice1d< real64 const > const & X )
   real64 absEntry = 0;
   for( localIndex i = 0; i < X.size(); ++i )
   {
-    absEntry = std::fabs( X( i ) );
+    absEntry = fabs( X( i ) );
     if( norm < absEntry )
     {
       norm = absEntry;
@@ -95,7 +100,7 @@ real64 DenseLA::vectorNormInf( arraySlice1d< real64 const > const & X )
 }
 
 
-real64 DenseLA::determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
   // --- check that matrix is square
   GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
@@ -173,7 +178,7 @@ real64 DenseLA::determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
   return det;
 }
 
-real64 DenseLA::determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
   // --- check that matrix is square
   GEOSX_ASSERT_MSG( A.size( 0 ) == A.size( 1 ) &&
@@ -249,7 +254,7 @@ real64 DenseLA::determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR
   return det;
 }
 
-real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -268,7 +273,7 @@ real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJ
     rowSum = 0;
     for( localIndex j = 0; j < A.size( 1 ); ++j )
     {
-      rowSum += std::fabs( A( i, j ) );
+      rowSum += fabs( A( i, j ) );
     }
 
     if( norm < rowSum )
@@ -281,7 +286,7 @@ real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJ
 #endif
 }
 
-real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -291,25 +296,39 @@ real64 DenseLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJ
 
 #else
 
-  // TODO: is that really a good idea? This is what we do with Lapack
-  array1d< real64 > rowSum;
-  rowSum.resize( A.size( 0 ) );
-  rowSum = 0;
+  // Here, I allocate an array to store the row sums so I
+  // can do an j-i loop. I could avoid allocating this array,
+  // but that would force a i-j loop. Not sure what is best,
+  // and not sure there is any impact for small matrices.
+  GEOSX_ASSERT_MSG( A.size( 0 ) <= MAX_NUM_ROWS,
+                    "The number of rows of A should smaller than " << MAX_NUM_ROWS );
+
+  real64 rowSum[MAX_NUM_ROWS] = { 0 }; 
 
   for( localIndex j = 0; j < A.size( 1 ); ++j )
   {
     for( localIndex i = 0; i < A.size( 0 ); ++i )
     {
-      rowSum( i ) += std::fabs( A( i, j ) );
+      rowSum[ i ] += fabs( A( i, j ) );
     }
   }
-  return *std::max_element( rowSum.begin(), rowSum.end());
+
+  real64 norm = 0;
+  for( localIndex i = 0; i < A.size( 0 ); ++i )
+  { 
+    if( norm < rowSum[ i ] )
+    {
+      norm = rowSum[ i ];
+    }
+  }
+  return norm;
 
 #endif
 }
 
-real64 DenseLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
+
 #ifdef USE_LAPACK
 
   // For row-major, computed as infinity-norm of the transpose matrix
@@ -319,23 +338,37 @@ real64 DenseLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
 
 #else
 
-  array1d< real64 > columnSum;
-  columnSum.resize( A.size( 1 ) );
-  columnSum = 0;
+  // Here, I allocate an array to store the column sums so I
+  // can do an i-j loop. I could avoid allocating this array,
+  // but that would force a j-i loop. Not sure what is best,
+  // and not sure there is any impact for small matrices.
+  GEOSX_ASSERT_MSG( A.size( 1 ) <= MAX_NUM_COLS,
+                    "The number of rows of A should smaller than " << MAX_NUM_COLS );
+
+  real64 columnSum[MAX_NUM_COLS] = { 0 };  
 
   for( localIndex i = 0; i < A.size( 0 ); ++i )
   {
     for( localIndex j = 0; j < A.size( 1 ); ++j )
     {
-      columnSum( j ) += std::fabs( A( i, j ) );
+      columnSum[ j ] += fabs( A( i, j ) );
     }
   }
-  return *std::max_element( columnSum.begin(), columnSum.end());
+
+  real64 norm = 0;
+  for( localIndex j = 0; j < A.size( 1 ); ++j )
+  { 
+    if( norm < columnSum[ j ] )
+    {
+      norm = columnSum[ j ];
+    }
+  }
+  return norm;
 
 #endif
 }
 
-real64 DenseLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -353,7 +386,7 @@ real64 DenseLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR
     columnSum = 0;
     for( localIndex i = 0; i < A.size( 0 ); ++i )
     {
-      columnSum += std::fabs( A( i, j ) );
+      columnSum += fabs( A( i, j ) );
     }
 
     if( norm < columnSum )
@@ -367,7 +400,7 @@ real64 DenseLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR
 }
 
 
-real64 DenseLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -392,7 +425,7 @@ real64 DenseLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::R
 #endif
 }
 
-real64 DenseLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -416,7 +449,7 @@ real64 DenseLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::C
 #endif
 }
 
-void DenseLA::vectorVectorAdd( arraySlice1d< real64 const > const & X,
+void vectorVectorAdd( arraySlice1d< real64 const > const & X,
                                arraySlice1d< real64 > const & Y,
                                real64 const alpha )
 {
@@ -437,7 +470,7 @@ void DenseLA::vectorVectorAdd( arraySlice1d< real64 const > const & X,
 #endif
 }
 
-void DenseLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
                                real64 const alpha )
 {
@@ -462,7 +495,7 @@ void DenseLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJ
 #endif
 }
 
-void DenseLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
                                real64 const alpha )
 {
@@ -487,7 +520,7 @@ void DenseLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJ
 #endif
 }
 
-void DenseLA::vectorScale( real64 const & alpha,
+void vectorScale( real64 const & alpha,
                            arraySlice1d< real64 > const & X )
 {
 #ifdef USE_LAPACK
@@ -504,7 +537,7 @@ void DenseLA::vectorScale( real64 const & alpha,
 #endif
 }
 
-void DenseLA::matrixScale( real64 const & alpha,
+void matrixScale( real64 const & alpha,
                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
@@ -524,7 +557,7 @@ void DenseLA::matrixScale( real64 const & alpha,
 #endif
 }
 
-void DenseLA::matrixScale( real64 const & alpha,
+void matrixScale( real64 const & alpha,
                            arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
@@ -544,7 +577,7 @@ void DenseLA::matrixScale( real64 const & alpha,
 #endif
 }
 
-real64 DenseLA::vectorDot( arraySlice1d< real64 const > const & X,
+real64 vectorDot( arraySlice1d< real64 const > const & X,
                            arraySlice1d< real64 const > const & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
@@ -569,7 +602,7 @@ real64 DenseLA::vectorDot( arraySlice1d< real64 const > const & X,
 #endif
 }
 
-void DenseLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                     arraySlice1d< real64 const > const & X,
                                     arraySlice1d< real64 > const & Y,
                                     real64 const alpha,
@@ -610,7 +643,7 @@ void DenseLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::RO
 #endif
 }
 
-void DenseLA::matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                      arraySlice1d< real64 const > const & X,
                                      arraySlice1d< real64 > const & Y,
                                      real64 const alpha,
@@ -652,7 +685,7 @@ void DenseLA::matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::R
 #endif
 }
 
-void DenseLA::matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                                     arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                     real64 const alpha,
@@ -704,7 +737,7 @@ void DenseLA::matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::RO
 #endif
 }
 
-void DenseLA::matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                      arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                      real64 const alpha,
@@ -756,7 +789,7 @@ void DenseLA::matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::R
 #endif
 }
 
-void DenseLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                      arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                      real64 const alpha,
@@ -807,7 +840,7 @@ void DenseLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::R
 #endif
 }
 
-void DenseLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                                       arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                                       arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
                                       real64 const alpha,
@@ -855,7 +888,7 @@ void DenseLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::
 #endif
 }
 
-void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
                              real64 & detA )
 {
@@ -933,7 +966,7 @@ void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::fabs( detA ) >
+  GEOSX_ASSERT_MSG( fabs( detA ) >
                     std::numeric_limits< real64 >::epsilon() *
                     matrixNormFrobenius( A ),
                     "Matrix is singular" );
@@ -983,7 +1016,7 @@ void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
   }
 }
 
-void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
                              real64 & detA )
 {
@@ -1059,7 +1092,7 @@ void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::fabs( detA ) >
+  GEOSX_ASSERT_MSG( fabs( detA ) >
                     std::numeric_limits< real64 >::epsilon() *
                     matrixNormFrobenius( A ),
                     "Matrix is singular" );
@@ -1108,21 +1141,21 @@ void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR
   }
 }
 
-void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv )
 {
   real64 detA = 0;
   matrixInverse( A, Ainv, detA );
 }
 
-void DenseLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv )
 {
   real64 detA = 0;
   matrixInverse( A, Ainv, detA );
 }
 
-void DenseLA::vectorCopy( array1d< real64 > const & X,
+void vectorCopy( array1d< real64 > const & X,
                           array1d< real64 > & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
@@ -1142,7 +1175,7 @@ void DenseLA::vectorCopy( array1d< real64 > const & X,
 #endif
 }
 
-void DenseLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
@@ -1166,7 +1199,7 @@ void DenseLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > 
 #endif
 }
 
-void DenseLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                           arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
@@ -1193,7 +1226,7 @@ void DenseLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > 
 
 // below, this is work in progress
 
-void DenseLA::setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
+void setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
 {
   // Error checking
   GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
@@ -1212,7 +1245,7 @@ void DenseLA::setRandomNumberGeneratorSeed( arraySlice1d< int const > const & se
   }
 }
 
-void DenseLA::getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
+void getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
 {
   // Error checking
   GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
@@ -1222,7 +1255,7 @@ void DenseLA::getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
   }
 }
 
-void DenseLA::vectorRand( arraySlice1d< real64 > const & X,
+void vectorRand( arraySlice1d< real64 > const & X,
                           RandomNumberDistribution const & idist )
 {
 
@@ -1232,7 +1265,7 @@ void DenseLA::vectorRand( arraySlice1d< real64 > const & X,
   GEOSX_dlarnv( &IDIST, ISEED, &N, X.dataIfContiguous());
 }
 
-void DenseLA::matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
+void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
                           RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
@@ -1241,7 +1274,7 @@ void DenseLA::matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const 
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
 
-void DenseLA::matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
+void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
                           RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
@@ -1250,7 +1283,7 @@ void DenseLA::matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const 
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
 
-void DenseLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
                          arraySlice1d< real64 > const & S,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
@@ -1301,7 +1334,7 @@ void DenseLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > c
   GEOSX_ASSERT_MSG( info == 0, "The algorithm computing SVD failed to converge." );
 }
 
-void DenseLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+void matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & U,
                          arraySlice1d< real64 > const & S,
                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT )
@@ -1337,5 +1370,7 @@ void DenseLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > c
     }
   }
 }
+
+} // namespace DenseLA
 
 } // end geosx namespace

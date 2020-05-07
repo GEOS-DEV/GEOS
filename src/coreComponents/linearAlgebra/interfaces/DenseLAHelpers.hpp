@@ -160,10 +160,10 @@ static void matrixFactorize( arraySlice2d< real64, MatrixLayout::COL_MAJOR > con
 
     // if needed, use pivoting
     localIndex piv = i;
-    real64 a = std::fabs( LUFactor( i, i ) );
+    real64 a = fabs( LUFactor( i, i ) );
     for( localIndex j = i+1; j < LUFactor.size( 0 ); j++ )
     {
-      real64 const b = std::fabs( LUFactor( j, i ) );
+      real64 const b = fabs( LUFactor( j, i ) );
       if( b > a )
       {
         a = b;
@@ -183,7 +183,7 @@ static void matrixFactorize( arraySlice2d< real64, MatrixLayout::COL_MAJOR > con
       }
     }
 
-    GEOSX_ASSERT_MSG( std::fabs( LUFactor( i, i ) )  > std::numeric_limits< real64 >::epsilon(),
+    GEOSX_ASSERT_MSG( fabs( LUFactor( i, i ) )  > std::numeric_limits< real64 >::epsilon(),
                       "Found a zero pivot!" );
 
     // compute the entries of L and U
@@ -212,10 +212,10 @@ static void matrixTFactorize( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > co
 
     // if needed, use pivoting
     localIndex piv = i;
-    real64 a = std::fabs( LUFactor( i, i ) );
+    real64 a = fabs( LUFactor( i, i ) );
     for( localIndex j = i+1; j < LUFactor.size( 1 ); j++ )
     {
-      real64 const b = std::fabs( LUFactor( i, j ) );
+      real64 const b = fabs( LUFactor( i, j ) );
       if( b > a )
       {
         a = b;
@@ -235,7 +235,7 @@ static void matrixTFactorize( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > co
       }
     }
 
-    GEOSX_ASSERT_MSG( std::fabs( LUFactor( i, i ) )  > std::numeric_limits< real64 >::epsilon(),
+    GEOSX_ASSERT_MSG( fabs( LUFactor( i, i ) )  > std::numeric_limits< real64 >::epsilon(),
                       "Found a zero pivot!" );
 
     // compute the entries of L and U
