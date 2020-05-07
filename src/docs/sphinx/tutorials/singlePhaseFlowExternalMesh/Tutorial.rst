@@ -37,25 +37,24 @@ The xml input file for this test case is located at:
 .. _ExternalHexahedral:
 .. _2_ImportingExternalMesh:
 
-******************************************************************
+---------------------------------------------
 Externally Generated - hexahedral elements
-******************************************************************
+---------------------------------------------
 
 GEOSX comes with a suite of simple data sets to get you started.
 We will explore simple data sets with different geometrical objects.
-All meshes will be imported from external files using PAMELA as the importer.
+All meshes will be imported from external files using a tool called **PAMELA** (Parallel Meshing Library) as the importer.
 The first flow simulations will be single-phase displacements:
 
   #. Cube made with externally-specified :ref:`**hexahedral** <ExternalHexahedral>` elements,
   #. Cube made with externally-specified :ref:`**tetrahedral** <ExternalTetrahedral>` elements.
 
 
-
 This example consists of a simple sugar-cube stack of size 10x10x10.
 
 
 Problem description
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 We propagate fluid from one vertical face of a cube to the opposite side.
 The displacement is single phase, compressible, subject to gravity forces.
@@ -63,7 +62,7 @@ We use GEOSX to compute the pressure inside each grid block.
 
 
 Looking at the XML file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 We are going to inspect blocks in the following XML file:
 ``src\coreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
@@ -71,19 +70,6 @@ We are going to inspect blocks in the following XML file:
 The file contains a number of XML blocks.
 We will describe the most important of them.
 
-
-Solver specification
------------------------------
-
-Here, we specify the type of solver ``singlePhaseTPFA``,
-the ``gravityVector``,
-the tolerances of the Newton and Krylov iterations,
-and the maximum number of iterations.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_SOLVER -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_SOLVER_END -->
 
 
 External mesh specification
@@ -107,33 +93,6 @@ The mesh looks like this:
    :width: 250px
 
 
-Events specification
------------------------------
-
-In this code block, we control the time stepping mechanisms used by the different
-elements of the solver.
-Three controls are in place:
-
-  - a solver time step of 1 second, even if the solver could converge with longer time-steps,
-  - an output time step of 1 second: a new pressure field is written out every second,
-  - a restart file with an infinite frequency (ie. no restart is requested)
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_EVENTS -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_EVENTS_END -->
-
-
-Numerical methods
------------------------------
-
-We are using a two-point flux approximation scheme for our grid.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_NUM_METHODS_END -->
-
 
 Element Regions
 -----------------------------
@@ -148,33 +107,6 @@ and contains ``water`` and ``rock`` only.
   :end-before: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
 
 
-Constitutive model
------------------------------
-
-The physical properties of the two elements that exist in our field
-(water and rock) are specified here.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_CONSTITUTIVE -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_CONSTITUTIVE_END -->
-
-
-
-Field Specifications
------------------------------
-
-We specify the following properties all throughout the model (homogeneous):
-  - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
-  - permeability in the y-direction: ``permy``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
-  - permeability in the z-direction: ``permz``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
-  - porosity: ``referencePorosity``, constant value of 0.05,
-
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_FIELDS -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_FIELDS_END -->
 
 
 
@@ -269,9 +201,9 @@ All results are written in a format compatible with `VisIt
 
 .. _ExternalTetrahedral:
 
-*********************************************************
+------------------------------------------------
 Externally Generated - tetrahedral elements
-*********************************************************
+------------------------------------------------
 
 This example consists of a simple stack of tetrahedral elements.
 
@@ -293,19 +225,6 @@ We are going to inspect blocks in the following XML file:
 The file contains a number of XML blocks.
 We will describe the most important of them.
 
-
-Solver specification
------------------------------
-
-Here, we specify the type of solver ``singlePhaseTPFA``,
-the ``gravityVector``,
-the tolerances of the Newton and Krylov iterations,
-and the maximum number of iterations.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_TETRA_SOLVERS -->
-  :end-before: <!-- SPHINX_TUT_EXT_TETRA_SOLVERS_END -->
 
 
 External mesh specification
@@ -329,33 +248,6 @@ The mesh looks like this:
   :width: 250px
 
 
-Events specification
------------------------------
-
-In this code block, we control the time stepping mechanisms used by the different
-elements of the solver.
-Three controls are in place:
-
-  - a solver time step of 1 second, even if the solver could converge with longer time-steps,
-  - an output time step of 1 second: a new pressure field is written out every second,
-  - a restart file with an infinite frequency (ie. no restart is requested)
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_TETRA_EVENTS -->
-  :end-before: <!-- SPHINX_TUT_EXT_TETRA_EVENTS_END -->
-
-
-Numerical methods
------------------------------
-
-We are using a two-point flux approximation scheme for our grid.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS -->
-  :end-before: <!-- SPHINX_TUT_EXT_TETRA_NUM_METHODS_END -->
-
 
 Element Regions
 -----------------------------
@@ -368,36 +260,6 @@ and contains ``water`` and ``rock`` only.
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
-
-
-Constitutive model
------------------------------
-
-The physical properties of the two elements that exist in our field
-(water and rock) are specified here.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE -->
-  :end-before: <!-- SPHINX_TUT_EXT_TETRA_CONSTITUTIVE_END -->
-
-
-Field Specifications
------------------------------
-
-We specify the following properties all throughout the model (homogeneous):
-  - permeability in the x-direction: ``permx``, constant value of 2.0e-14 m\ :sup:`2` (20 mD), and is considered the 0\ :sup:`th` component of the ``permeability`` vector,
-  - permeability in the y-direction: ``permy``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
-  - permeability in the z-direction: ``permz``, constant value of 2.0e-14 m\ :sup:`2` (20 mD),
-  - porosity: ``referencePorosity``, constant value of 0.05,
-  - notice that the pressure is applied on all faces parts of the "Left" set (1,100 Pa)
-
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_TETRA_FIELDS -->
-  :end-before: <!-- SPHINX_TUT_EXT_TETRA_FIELDS_END -->
-
 
 
 Running GEOSX
