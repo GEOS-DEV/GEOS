@@ -858,8 +858,8 @@ void PetscMatrix::write( string const & filename,
 {
   GEOSX_LAI_ASSERT( ready() );
 
+  bool ASCIIfile = true;
   PetscViewer viewer;
-  GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
   PetscViewerFormat petscFormat = PETSC_VIEWER_DEFAULT;
 
   switch( format )
@@ -871,6 +871,7 @@ void PetscMatrix::write( string const & filename,
     break;
     case LAIOutputFormat::NATIVE_BINARY:
     {
+      ASCIIfile = false;
       petscFormat = PETSC_VIEWER_NATIVE;
     }
     break;
@@ -881,6 +882,7 @@ void PetscMatrix::write( string const & filename,
     break;
     case LAIOutputFormat::MATLAB_BINARY:
     {
+      ASCIIfile = false;
       petscFormat = PETSC_VIEWER_BINARY_MATLAB;
     }
     break;
@@ -893,6 +895,14 @@ void PetscMatrix::write( string const & filename,
       GEOSX_ERROR( "Unsupported matrix output format" );
   }
 
+  if( ASCIIfile )
+  {
+    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
+  }
+  else
+  {
+    GEOSX_LAI_CHECK_ERROR( PetscViewerBinaryOpen( getComm(), filename.c_str(), FILE_MODE_WRITE, &viewer ) );
+  }
   GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
   GEOSX_LAI_CHECK_ERROR( MatView( m_mat, viewer ) );
   GEOSX_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
