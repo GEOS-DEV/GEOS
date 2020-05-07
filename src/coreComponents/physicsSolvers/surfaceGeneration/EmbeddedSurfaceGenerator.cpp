@@ -43,14 +43,13 @@ using namespace constitutive;
 
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
                                                     Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidMaterialName( "" )
+  SolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialName, 0 )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
+  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
 }

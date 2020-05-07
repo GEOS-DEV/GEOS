@@ -21,7 +21,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 
 #include <type_traits>
 
@@ -474,7 +474,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< bool DO_PACKING, typename SORTED >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView1d< localIndex_array const > const & var,
+      arrayView1d< arrayView1d< localIndex const > const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,

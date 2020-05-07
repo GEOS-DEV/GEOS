@@ -20,7 +20,7 @@
 #define GEOSX_MANAGERS_OUTPUTS_VTKOUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "fileIO/vtk/VTKFile.hpp"
+#include "fileIO/vtk/VTKPolyDataWriterInterface.hpp"
 
 
 namespace geosx
@@ -78,7 +78,7 @@ private:
 
   integer m_writeBinaryData;
 
-  VTKFile m_vtkFile;
+  vtk::VTKPolyDataWriterInterface m_writer;
 
 };
 

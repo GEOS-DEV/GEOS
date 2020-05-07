@@ -473,7 +473,7 @@ public:
 
   void setPlotLevel( int const plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel( plotLevel );
+    m_plotLevel = dataRepository::toPlotLevel( plotLevel );
   }
 
   void setWriteEdgeMesh( int const val )
@@ -540,15 +540,6 @@ private:
   dataRepository::PlotLevel m_plotLevel;
 
   bool m_ghostFlags;
-
-  /**
-   *
-   * @return returns the ordering of nodes for a silo zone type.
-   */
-  integer_array SiloNodeOrdering( const string & elementType );
-
-
-
 };
 
 /**
@@ -632,7 +623,7 @@ template<> inline long int CastField< long int, long int >( const long int & fie
 
 template<> inline int CastField< int, long int >( const long int & field, int const )
 {
-  return integer_conversion< int >( field );
+  return LvArray::integerConversion< int >( field );
 }
 
 template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const )
@@ -642,7 +633,7 @@ template<> inline long long int CastField< long long int, long long int >( const
 
 template<> inline int CastField< int, long long int >( const long long int & field, int const )
 {
-  return integer_conversion< int >( field );
+  return LvArray::integerConversion< int >( field );
 }
 
 template<> inline real64 CastField< real64, real64 >( const real64 & field, int const )

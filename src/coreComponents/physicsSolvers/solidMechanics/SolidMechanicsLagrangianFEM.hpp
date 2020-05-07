@@ -177,10 +177,11 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               SortedArray< localIndex > const & elementList,
+                               SortedArrayView< localIndex const > const & elementList,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                arrayView3d< R1Tensor const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
                                arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
                                arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
@@ -195,6 +196,7 @@ public:
                                                             elemsToNodes,
                                                             dNdX,
                                                             detJ,
+                                                            X,
                                                             u,
                                                             vel,
                                                             acc,
@@ -253,7 +255,7 @@ public:
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                real64 const biotCoefficient,
-                               timeIntegrationOption const tiOption,
+                               TimeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
                                real64 const newmarkBeta,
@@ -333,26 +335,6 @@ public:
                             ParallelVector const & solution ) override;
 
 
-  void SetTimeIntegrationOption( string const & stringVal )
-  {
-    if( stringVal == "ExplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
-    }
-    else if( stringVal == "ImplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
-    }
-    else if( stringVal == "QuasiStatic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
-    }
-    else
-    {
-      GEOSX_ERROR( "Invalid time integration option: " << stringVal );
-    }
-  }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
@@ -363,12 +345,10 @@ public:
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
-    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
-    static constexpr auto solidMaterialNameString = "solidMaterialName";
-    static constexpr auto solidMaterialFullIndexString = "solidMaterialFullIndex";
+    static constexpr auto solidMaterialNamesString = "solidMaterialNames";
     static constexpr auto stress_n = "beginningOfStepStress";
     static constexpr auto forceExternal = "externalForce";
     static constexpr auto contactRelationNameString = "contactRelationName";
@@ -391,7 +371,7 @@ public:
     dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
   } solidMechanicsGroupKeys;
 
-  string const & getSolidMaterialName() const { return m_solidMaterialName; }
+  arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
 
 protected:
   virtual void PostProcessInput() override final;
@@ -402,14 +382,12 @@ protected:
   real64 m_newmarkBeta;
   real64 m_massDamping;
   real64 m_stiffnessDamping;
-  string m_timeIntegrationOptionString;
-  timeIntegrationOption m_timeIntegrationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  string m_solidMaterialName;
-  localIndex m_solidMaterialFullIndex;
+  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
 
 

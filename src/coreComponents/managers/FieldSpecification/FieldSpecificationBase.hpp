@@ -378,10 +378,10 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
   if( functionName.empty() )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const a = targetSet[ i ];
-        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
-      } );
+    {
+      localIndex const a = targetSet[ i ];
+      FIELD_OP::SpecifyFieldValue( field, a, component, m_scale );
+    } );
   }
   else
   {
@@ -393,10 +393,10 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
     {
       real64 value = m_scale * function->Evaluate( &time );
       forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          FIELD_OP::SpecifyFieldValue( field, a, component, value );
-        } );
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, value );
+      } );
     }
     else
     {
@@ -404,10 +404,10 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
       function->Evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result;
       forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
-        } );
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, m_scale*resultView[i] );
+      } );
     }
   }
 }
@@ -548,7 +548,7 @@ FieldSpecificationBase::
     else
     {
       real64_array result;
-      result.resize( integer_conversion< localIndex >( targetSet.size()));
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )
@@ -648,7 +648,7 @@ FieldSpecificationBase::
     else
     {
       real64_array result;
-      result.resize( integer_conversion< localIndex >( targetSet.size()));
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )

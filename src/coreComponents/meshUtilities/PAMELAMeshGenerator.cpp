@@ -39,20 +39,20 @@ PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const par
   MeshGeneratorBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::filePathString, &m_filePath, false )->
+  registerWrapper( viewKeyStruct::filePathString, &m_filePath )->
     setInputFlag( InputFlags::REQUIRED )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "path to the mesh file" );
-  registerWrapper( viewKeyStruct::fieldsToImportString, &m_fieldsToImport, false )->
+  registerWrapper( viewKeyStruct::fieldsToImportString, &m_fieldsToImport )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Fields to be imported from the external mesh file" );
-  registerWrapper( viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX, false )->
+  registerWrapper( viewKeyStruct::fieldNamesInGEOSXString, &m_fieldNamesInGEOSX )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the fields within GEOSX" );
-  registerWrapper( viewKeyStruct::scaleString, &m_scale, false )->
+  registerWrapper( viewKeyStruct::scaleString, &m_scale )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDefaultValue( 1. )->setDescription( "Scale the coordinates of the vertices" );
-  registerWrapper( viewKeyStruct::reverseZString, &m_isZReverse, false )->
+  registerWrapper( viewKeyStruct::reverseZString, &m_isZReverse )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDefaultValue( 0 )->setDescription( "0 : Z coordinate is upward, 1 : Z coordinate is downward" );
 }
@@ -326,7 +326,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
             real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF( property.size() != integer_conversion< localIndex >( meshProperty->size() ),
+            GEOSX_ERROR_IF( property.size() != LvArray::integerConversion< localIndex >( meshProperty->size() ),
                             "Viewer size (" << property.size() << ") mismatch with property size in PAMELA ("
                                             << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < property.size(); cellIndex++ )
@@ -337,7 +337,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           else if( dimension == PAMELA::VARIABLE_DIMENSION::VECTOR )
           {
             array1d< R1Tensor > & property = cellBlock->AddProperty< array1d< R1Tensor > >( m_fieldNamesInGEOSX[fieldIndex] );
-            GEOSX_ERROR_IF( property.size() * 3 != integer_conversion< localIndex >( meshProperty->size() ),
+            GEOSX_ERROR_IF( property.size() * 3 != LvArray::integerConversion< localIndex >( meshProperty->size() ),
                             "Viewer size (" << property.size() * 3<< ") mismatch with property size in PAMELA ("
                                             << meshProperty->size() << ") on " <<cellBlock->getName() );
             for( int cellIndex = 0; cellIndex < cellBlock->size(); cellIndex++ )

@@ -127,8 +127,8 @@ void HypreVector::createWithLocalSize( localIndex const localSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( localSize, 0 );
 
-  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( integer_conversion< HYPRE_BigInt >( localSize ) );
-  HYPRE_BigInt const jupper = jlower + integer_conversion< HYPRE_BigInt >( localSize ) - 1;
+  HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( LvArray::integerConversion< HYPRE_BigInt >( localSize ) );
+  HYPRE_BigInt const jupper = jlower + LvArray::integerConversion< HYPRE_BigInt >( localSize ) - 1;
 
   initialize( comm, jlower, jupper, m_ij_vector );
   GEOSX_LAI_CHECK_ERROR( hypre_IJVectorZeroValues( m_ij_vector ) );
@@ -141,14 +141,14 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   GEOSX_LAI_ASSERT( closed() );
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
 
-  HYPRE_Int const rank  = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
-  HYPRE_Int const nproc = integer_conversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
+  HYPRE_Int const rank  = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_rank( comm ) );
+  HYPRE_Int const nproc = LvArray::integerConversion< HYPRE_Int >( MpiWrapper::Comm_size( comm ) );
 
-  HYPRE_Int const localSize = integer_conversion< HYPRE_Int >( globalSize / nproc );
-  HYPRE_Int const residual  = integer_conversion< HYPRE_Int >( globalSize % nproc );
+  HYPRE_Int const localSize = LvArray::integerConversion< HYPRE_Int >( globalSize / nproc );
+  HYPRE_Int const residual  = LvArray::integerConversion< HYPRE_Int >( globalSize % nproc );
 
-  HYPRE_BigInt const ilower = integer_conversion< HYPRE_BigInt >( rank * localSize + ( rank == 0 ? 0 : residual ) );
-  HYPRE_BigInt const iupper = integer_conversion< HYPRE_BigInt >( ilower + localSize + ( rank == 0 ? residual : 0 ) - 1 );
+  HYPRE_BigInt const ilower = LvArray::integerConversion< HYPRE_BigInt >( rank * localSize + ( rank == 0 ? 0 : residual ) );
+  HYPRE_BigInt const iupper = LvArray::integerConversion< HYPRE_BigInt >( ilower + localSize + ( rank == 0 ? residual : 0 ) - 1 );
 
   initialize( comm, ilower, iupper, m_ij_vector );
   GEOSX_LAI_CHECK_ERROR( hypre_IJVectorZeroValues( m_ij_vector ) );
@@ -159,7 +159,7 @@ void HypreVector::create( arraySlice1d< real64 const > const & localValues,
                           MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
-  HYPRE_BigInt const localSize = integer_conversion< HYPRE_BigInt >( localValues.size() );
+  HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
 
   HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
   HYPRE_BigInt const jupper = jlower + localSize - 1;
@@ -203,7 +203,7 @@ void HypreVector::set( globalIndex const * globalIndices,
   GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices, globalIndices + size ), ilower() );
   GEOSX_LAI_ASSERT_GE( iupper(), getLocalRowID( *std::max_element( globalIndices, globalIndices + size ) ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
-                                                  integer_conversion< HYPRE_Int >( size ),
+                                                  LvArray::integerConversion< HYPRE_Int >( size ),
                                                   toHYPRE_BigInt( globalIndices ),
                                                   values ) );
 }
@@ -214,7 +214,7 @@ void HypreVector::add( globalIndex const * globalIndices,
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector,
-                                                    integer_conversion< HYPRE_Int >( size ),
+                                                    LvArray::integerConversion< HYPRE_Int >( size ),
                                                     toHYPRE_BigInt( globalIndices ),
                                                     values ) );
 }
@@ -228,7 +228,7 @@ void HypreVector::set( arraySlice1d< globalIndex const > const & globalIndices,
                                                     globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector,
-                                                  integer_conversion< HYPRE_Int >( values.size() ),
+                                                  LvArray::integerConversion< HYPRE_Int >( values.size() ),
                                                   toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
                                                   values.dataIfContiguous() ) );
 }
@@ -238,7 +238,7 @@ void HypreVector::add( arraySlice1d< globalIndex const > const & globalIndices,
 {
   GEOSX_LAI_ASSERT( !closed() );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorAddToValues( m_ij_vector,
-                                                    integer_conversion< HYPRE_Int >( values.size() ),
+                                                    LvArray::integerConversion< HYPRE_Int >( values.size() ),
                                                     toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
                                                     values.dataIfContiguous() ) );
 }
@@ -376,7 +376,7 @@ void HypreVector::print( std::ostream & os ) const
         sprintf( str,
                  "%11i%20lli%24.10e\n",
                  iRank,
-                 firstRowID + integer_conversion< globalIndex >( i ),
+                 firstRowID + LvArray::integerConversion< globalIndex >( i ),
                  local_data[i] );
         os << str;
       }
@@ -393,8 +393,62 @@ void HypreVector::write( string const & filename,
     case LAIOutputFormat::NATIVE_ASCII:
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorPrint( m_ij_vector, filename.c_str() ) );
+      break;
     }
-    break;
+    case LAIOutputFormat::MATRIX_MARKET:
+    {
+      if( globalSize() == 0 )
+      {
+        if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
+          hypre_fprintf( fp, "%d %d\n", 0, 1 );
+          std::fclose( fp );
+        }
+      }
+      else
+      {
+        // Copy distributed parVector in a local vector on every process
+        // with at least one component
+        // Warning: works for a parVector that is smaller than 2^31-1
+        hypre_Vector *vector;
+        vector = hypre_ParVectorToVectorAll( m_par_vector );
+
+        // Identify the smallest process where vector exists
+        int myID = MpiWrapper::Comm_rank( getComm() );
+        if( vector == 0 )
+        {
+          myID = MpiWrapper::Comm_size( getComm() );
+        }
+        int printID = MpiWrapper::Min( myID, getComm() );
+
+        // Write to file vector
+        if( MpiWrapper::Comm_rank( getComm() ) == printID )
+        {
+          FILE * fp = std::fopen( filename.c_str(), "w" );
+          HYPRE_Real * data = hypre_VectorData( vector );
+          HYPRE_Int size    = hypre_VectorSize( vector );
+
+          hypre_fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
+          hypre_fprintf( fp, "%d %d\n", size, 1 );
+
+          for( HYPRE_Int i = 0; i < size; i++ )
+          {
+            hypre_fprintf( fp, "%.16e\n", data[i] );
+          }
+
+          std::fclose( fp );
+        }
+
+        // Destroy vector
+        if( vector )
+        {
+          GEOSX_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( vector ) );
+        }
+      }
+      break;
+    }
     default:
       GEOSX_ERROR( "Unsupported vector output format" );
   }
@@ -424,7 +478,7 @@ void HypreVector::get( arraySlice1d< globalIndex const > const & globalIndices,
                                                     globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorGetValues( m_ij_vector,
-                                                  integer_conversion< HYPRE_Int >( globalIndices.size() ),
+                                                  LvArray::integerConversion< HYPRE_Int >( globalIndices.size() ),
                                                   toHYPRE_BigInt( globalIndices.dataIfContiguous() ),
                                                   values.dataIfContiguous() ) );
 }
@@ -454,7 +508,7 @@ localIndex HypreVector::localSize() const
 localIndex HypreVector::getLocalRowID( globalIndex const index ) const
 {
   GEOSX_LAI_ASSERT( created() );
-  return (index >= ilower() && index < iupper()) ? integer_conversion< localIndex >( index - ilower() ) : -1;
+  return (index >= ilower() && index < iupper()) ? LvArray::integerConversion< localIndex >( index - ilower() ) : -1;
 }
 
 globalIndex HypreVector::getGlobalRowID( localIndex const index ) const
@@ -478,13 +532,13 @@ real64 * HypreVector::extractLocalVector()
 globalIndex HypreVector::ilower() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return integer_conversion< globalIndex >( hypre_ParVectorFirstIndex( m_par_vector ) );
+  return LvArray::integerConversion< globalIndex >( hypre_ParVectorFirstIndex( m_par_vector ) );
 }
 
 globalIndex HypreVector::iupper() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return integer_conversion< globalIndex >( hypre_ParVectorLastIndex( m_par_vector ) ) + 1;
+  return LvArray::integerConversion< globalIndex >( hypre_ParVectorLastIndex( m_par_vector ) ) + 1;
 }
 
 MPI_Comm HypreVector::getComm() const

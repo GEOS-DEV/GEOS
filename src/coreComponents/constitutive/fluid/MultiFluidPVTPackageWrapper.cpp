@@ -51,6 +51,16 @@ MultiFluidPVTPackageWrapper::MultiFluidPVTPackageWrapper( std::string const & na
 MultiFluidPVTPackageWrapper::~MultiFluidPVTPackageWrapper()
 {}
 
+void MultiFluidPVTPackageWrapper::DeliverClone( string const & name,
+                                                Group * const parent,
+                                                std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  MultiFluidBase::DeliverClone( name, parent, clone );
+  MultiFluidPVTPackageWrapper & fluid = dynamicCast< MultiFluidPVTPackageWrapper & >( *clone );
+
+  fluid.m_pvtPackagePhaseTypes = m_pvtPackagePhaseTypes;
+}
+
 void MultiFluidPVTPackageWrapper::PostProcessInput()
 {
   MultiFluidBase::PostProcessInput();

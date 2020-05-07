@@ -39,7 +39,7 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{Region2}"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       contactRelationName="fractureContact"
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
@@ -55,8 +55,8 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidName="water"
-      solidName="rock"
+      fluidNames="{water}"
+      solidNames="{rock}"
       inputFluxEstimate="1.0"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
@@ -74,7 +74,7 @@
       fractureRegion="Fracture"
       targetRegions="{Region2}"
       nodeBasedSIF="1"
-      solidMaterialName="rock"
+      solidMaterialNames="{rock}"
       rockToughness="0.1e6"
       >
     </SurfaceGenerator>

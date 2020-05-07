@@ -30,7 +30,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -53,27 +52,27 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & 
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState, false )->
+  registerWrapper( viewKeyStruct::equationsOfStateString, &m_equationsOfState )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of equation of state types for each phase" );
 
-  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure, false )->
+  registerWrapper( viewKeyStruct::componentCriticalPressureString, &m_componentCriticalPressure )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component critical pressures" );
 
-  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature, false )->
+  registerWrapper( viewKeyStruct::componentCriticalTemperatureString, &m_componentCriticalTemperature )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component critical temperatures" );
 
-  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor, false )->
+  registerWrapper( viewKeyStruct::componentAcentricFactorString, &m_componentAcentricFactor )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Component acentric factors" );
 
-  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift, false )->
+  registerWrapper( viewKeyStruct::componentVolumeShiftString, &m_componentVolumeShift )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Component volume shifts" );
 
-  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff, false )->
+  registerWrapper( viewKeyStruct::componentBinaryCoeffString, &m_componentBinaryCoeff )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Table of binary interaction coefficients" );
 }
@@ -86,26 +85,22 @@ CompositionalMultiphaseFluid::DeliverClone( string const & name,
                                             Group * const parent,
                                             std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< CompositionalMultiphaseFluid > newModel = std::make_unique< CompositionalMultiphaseFluid >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< CompositionalMultiphaseFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
 
-  newModel->m_componentNames   = this->m_componentNames;
-  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
+  fluid.m_equationsOfState             = m_equationsOfState;
+  fluid.m_componentCriticalPressure    = m_componentCriticalPressure;
+  fluid.m_componentCriticalTemperature = m_componentCriticalTemperature;
+  fluid.m_componentAcentricFactor      = m_componentAcentricFactor;
+  fluid.m_componentVolumeShift         = m_componentVolumeShift;
+  fluid.m_componentBinaryCoeff         = m_componentBinaryCoeff;
 
-  newModel->m_phaseNames           = this->m_phaseNames;
-  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-  newModel->m_equationsOfState     = this->m_equationsOfState;
-
-  newModel->m_componentCriticalPressure    = this->m_componentCriticalPressure;
-  newModel->m_componentCriticalTemperature = this->m_componentCriticalTemperature;
-  newModel->m_componentAcentricFactor      = this->m_componentAcentricFactor;
-  newModel->m_componentVolumeShift         = this->m_componentVolumeShift;
-  newModel->m_componentBinaryCoeff         = this->m_componentBinaryCoeff;
-
-  newModel->createFluid();
-
-  clone = std::move( newModel );
+  fluid.createFluid();
 }
 
 void CompositionalMultiphaseFluid::PostProcessInput()
@@ -116,7 +111,7 @@ void CompositionalMultiphaseFluid::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( integer_conversion< localIndex >((data).size()) != integer_conversion< localIndex >( expected )) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
     GEOSX_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
                  << (attr) << " attribute (" \

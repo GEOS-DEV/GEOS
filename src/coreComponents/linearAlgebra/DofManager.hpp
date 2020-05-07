@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -155,11 +155,11 @@ public:
    *
    * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
-   * @param [in] regions string_array where this field is defined.
+   * @param [in] regions names of regions where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
-                 string_array const & regions );
+                 arrayView1d< string const > const & regions );
 
   /**
    * @brief The user can add a field with a support location, connectivity type, string key, number of scalar
@@ -184,12 +184,12 @@ public:
    * @param [in] field string the name of the field.
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
-   * @param [in] regions string_array where this field is defined.
+   * @param [in] regions names of regions where this field is defined.
    */
   void addField( string const & fieldName,
                  Location const location,
                  localIndex const components,
-                 string_array const & regions );
+                 arrayView1d< string const > const & regions );
 
   /**
    * @brief Just an interface to allow only three parameters.
@@ -208,12 +208,12 @@ public:
    * @param [in] rowFieldName string the name of the row field.
    * @param [in] colFieldName string the name of the col field.
    * @param [in] connectivity Connectivity through what they are connected.
-   * @param [in] regions string_array where this coupling is defined.
+   * @param [in] regions names of regions where this coupling is defined.
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector const connectivity,
-                    string_array const & regions );
+                    arrayView1d< string const > const & regions );
 
   /**
    * @brief Just another interface to allow four parameters (no regions, default is everywhere).
@@ -243,13 +243,13 @@ public:
    * @param [in] rowFieldName string the name of the row field.
    * @param [in] colFieldName string the name of the col field.
    * @param [in] connectivity Connectivity through what they are connected.
-   * @param [in] regions string_array where this coupling is defined.
+   * @param [in] regions names of regions where this coupling is defined.
    * @param [in] symmetric bool is it symmetric, i.e., both row-col and col-row?
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector const connectivity,
-                    string_array const & regions,
+                    arrayView1d< string const > const & regions,
                     bool const symmetric );
 
   /**

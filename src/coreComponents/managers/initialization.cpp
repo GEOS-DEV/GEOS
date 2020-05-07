@@ -16,9 +16,10 @@
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/SetFPE.hpp"
-#include "cxx-utilities/src/SetSignalHandling.hpp"
-#include "cxx-utilities/src/stackTrace.hpp"
+#include "common/Path.hpp"
+#include "LvArray/src/SetFPE.hpp"
+#include "LvArray/src/SetSignalHandling.hpp"
+#include "LvArray/src/stackTrace.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -64,8 +65,6 @@ cali::ConfigManager s_caliperManager;
  */
 void addUmpireHighWaterMarks()
 {
-  GEOSX_MARK_FUNCTION;
-
   umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
 
   // Get a list of all the allocators and sort it so that it's in the same order on each rank.
@@ -111,7 +110,7 @@ void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::Sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << cxx_utilities::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << LvArray::calculateSize( totalMark ) );
 
     pushStatsIntoAdiak( allocatorName + " high water mark", mark );
   }
@@ -140,6 +139,11 @@ void setupCaliper()
   GEOSX_WARNING_IF( !adiak::walltime(), "Error getting the walltime." );
   GEOSX_WARNING_IF( !adiak::systime(), "Error getting the systime." );
   GEOSX_WARNING_IF( !adiak::cputime(), "Error getting the cputime." );
+
+  std::string xmlDir, xmlName;
+  splitPath( s_commandLineOptions.inputFileName, xmlDir, xmlName );
+  adiak::value( "XML File", xmlName );
+  adiak::value( "Problem name", s_commandLineOptions.problemName );
 
   // MPI info
 #if defined( GEOSX_USE_MPI )
@@ -265,7 +269,7 @@ struct Arg : public option::Arg
 void parseCommandLineOptions( int argc, char * * argv )
 {
   // Set the options structs and parse
-  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, PROBLEMNAME, OUTPUTDIR, TIMERS };
+  enum optionIndex { UNKNOWN, HELP, INPUT, RESTART, XPAR, YPAR, ZPAR, SCHEMA, NONBLOCKING_MPI, SUPPRESS_PINNED, PROBLEMNAME, OUTPUTDIR, TIMERS };
   const option::Descriptor usage[] =
   {
     { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
@@ -278,6 +282,7 @@ void parseCommandLineOptions( int argc, char * * argv )
     { SCHEMA, 0, "s", "schema", Arg::NonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::NonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
+    { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned \t Suppress usage of pinned memory for MPI communication buffers" },
     { OUTPUTDIR, 0, "o", "output", Arg::NonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::NonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
@@ -357,6 +362,11 @@ void parseCommandLineOptions( int argc, char * * argv )
         s_commandLineOptions.useNonblockingMPI = true;
       }
       break;
+      case SUPPRESS_PINNED:
+      {
+        s_commandLineOptions.suppressPinned = true;
+      }
+      break;
       case SCHEMA:
       {
         s_commandLineOptions.schemaName = opt.arg;
@@ -377,6 +387,24 @@ void parseCommandLineOptions( int argc, char * * argv )
         s_commandLineOptions.timerOutput = opt.arg;
       }
       break;
+    }
+  }
+
+  if( s_commandLineOptions.problemName == "" )
+  {
+    std::string & inputFileName = s_commandLineOptions.inputFileName;
+    if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
+    {
+      string::size_type start = inputFileName.find_last_of( '/' ) + 1;
+      if( start >= inputFileName.length())
+      {
+        start = 0;
+      }
+      s_commandLineOptions.problemName.assign( inputFileName, start, inputFileName.length() - 4 - start );
+    }
+    else
+    {
+      s_commandLineOptions.problemName.assign( inputFileName );
     }
   }
 }
@@ -438,8 +466,8 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
-  cxx_utilities::SetFPE();
+  LvArray::setSignalHandling( []( int const signal ) { LvArray::stackTraceHandler( signal, true ); } );
+  LvArray::SetFPE();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

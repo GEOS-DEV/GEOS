@@ -1,8 +1,14 @@
 #!/bin/bash
 
 # Submodules not checking for
-declare -ar exclusion_list=( "blt" "PVTPackage")
+declare -ar exclusion_list=( "blt" )
 echo "Submodules that are excluded from sync test : ${exclusion_list[@]}"
+
+# Do not pull large files
+git lfs uninstall &> /dev/null
+
+# Pull submodule to get .git files.
+git submodule update --quiet --init
 
 # Initialize PR submodule hashes
 declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
@@ -10,16 +16,18 @@ declare -ar pr_hashes_array=( $(git submodule status | awk '{print $1}') )
 # Initialize submodule paths
 declare -ar paths_array=( $(git submodule status | awk '{print $2}') )
 
+# Initialize differences between PR and origin/develop branches
+declare -ar diff_array=( $(git diff --name-only origin/develop) )
+
 # Initialize main branches for submodules
 declare -Ar main_branches=(
   ["blt"]="origin/develop"
-  ["cxx-utilities"]="origin/develop"
+  ["LvArray"]="origin/develop"
   ["integratedTests"]="origin/develop"
   ["GEOSX_PTP"]="origin/master"
   ["hdf5_interface"]="origin/master"
   ["PAMELA"]="origin/master"
-  # FIX: PVTPackage main is intermediate branch (diverged from master)
-  ["PVTPackage"]="origin/feature/han12/shareBLT"
+  ["PVTPackage"]="origin/master"
 )
 
 length=${#paths_array[@]}
@@ -29,9 +37,6 @@ length=${#paths_array[@]}
 # Note: See "exclusion_list" for submodules that are exempted.
 exit_code=0
 unsync_submodules=()
-
-# Do not pull large files
-git lfs uninstall &> /dev/null
 
 for (( i=0; i<$length; i++))
 do
@@ -48,11 +53,27 @@ do
     fi
   done
 
-  # Check hashes
-  if [ $excluded -eq 0 ]
+  if [ $excluded -eq 1 ]
   then
-    # Pull submodule to get .git files.
-    git submodule update --quiet --init ${paths_array[$i]}
+    continue
+  fi
+
+  # Check if PR has modified the submodule
+  submodule_modified=0
+  for modification in "${diff_array[@]}"
+  do
+    if [ "${paths_array[$i]}" = "$modification" ]
+    then
+      submodule_modified=1
+      break
+    fi
+  done
+
+  if [ $submodule_modified -eq 0 ]
+  then
+    echo "PR branch does not change module $module_name"
+  else 
+    # Check hashes if not excluded and differs from develop's hash
 
     # Submodule's main branch
     main_branch="${main_branches[$module_name]}"
@@ -90,5 +111,8 @@ then
 else
   echo "SUCCESS : PR submodules are up to date!"
 fi
+
+# Renable git lfs
+git lfs install &> /dev/null
 
 exit $exit_code

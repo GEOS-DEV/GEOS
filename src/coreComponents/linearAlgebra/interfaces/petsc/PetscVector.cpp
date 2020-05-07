@@ -317,10 +317,9 @@ void PetscVector::write( string const & filename,
                          LAIOutputFormat const format ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  PetscViewer viewer;
-  GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
   PetscViewerFormat petscFormat = PETSC_VIEWER_DEFAULT;
 
+  bool useMatrixMarket = false;
   switch( format )
   {
     case LAIOutputFormat::NATIVE_ASCII:
@@ -335,16 +334,47 @@ void PetscVector::write( string const & filename,
     break;
     case LAIOutputFormat::MATRIX_MARKET:
     {
-      petscFormat = PETSC_VIEWER_ASCII_MATRIXMARKET;
+      useMatrixMarket = true;
     }
     break;
     default:
       GEOSX_ERROR( "Unsupported vector output format" );
   }
 
-  GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
-  GEOSX_LAI_CHECK_ERROR( VecView( m_vec, viewer ) );
-  GEOSX_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
+  if( !useMatrixMarket )
+  {
+    PetscViewer viewer;
+    GEOSX_LAI_CHECK_ERROR( PetscViewerASCIIOpen( getComm(), filename.c_str(), &viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerPushFormat( viewer, petscFormat ) );
+    GEOSX_LAI_CHECK_ERROR( VecView( m_vec, viewer ) );
+    GEOSX_LAI_CHECK_ERROR( PetscViewerDestroy( &viewer ) );
+  }
+  else
+  {
+    VecScatter scatter;
+    Vec globalVec;
+    GEOSX_LAI_CHECK_ERROR( VecScatterCreateToAll( m_vec, &scatter, &globalVec ) );
+    GEOSX_LAI_CHECK_ERROR( VecScatterBegin( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
+    GEOSX_LAI_CHECK_ERROR( VecScatterEnd( scatter, m_vec, globalVec, INSERT_VALUES, SCATTER_FORWARD ) );
+    if( MpiWrapper::Comm_rank( getComm() ) == 0 )
+    {
+      PetscScalar *v;
+      GEOSX_LAI_CHECK_ERROR( VecGetArray( globalVec, &v ) );
+
+      FILE * fp = std::fopen( filename.c_str(), "w" );
+      fprintf( fp, "%s", "%%MatrixMarket matrix array real general\n" );
+      fprintf( fp, "%lld %d\n", globalSize(), 1 );
+      for( globalIndex i = 0; i < globalSize(); i++ )
+      {
+        fprintf( fp, "%.16e\n", v[i] );
+      }
+      std::fclose( fp );
+
+      GEOSX_LAI_CHECK_ERROR( VecRestoreArray( globalVec, &v ) );
+    }
+    GEOSX_LAI_CHECK_ERROR( VecScatterDestroy( &scatter ) );
+    GEOSX_LAI_CHECK_ERROR( VecDestroy( &globalVec ) );
+  }
 }
 
 real64 PetscVector::get( globalIndex globalRow ) const
@@ -414,7 +444,7 @@ localIndex PetscVector::getLocalRowID( globalIndex const globalRow ) const
   GEOSX_LAI_ASSERT( created() );
   PetscInt low, high;
   GEOSX_LAI_CHECK_ERROR( VecGetOwnershipRange( m_vec, &low, &high ) );
-  return ( globalRow >= low && globalRow < high) ? integer_conversion< localIndex >( globalRow - low ) : -1;
+  return ( globalRow >= low && globalRow < high) ? LvArray::integerConversion< localIndex >( globalRow - low ) : -1;
 }
 
 globalIndex PetscVector::getGlobalRowID( localIndex const localRow ) const
