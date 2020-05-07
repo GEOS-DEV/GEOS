@@ -977,8 +977,9 @@ public:
    * @brief Group key associated with elementRegionsGroup
      struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
    */
+  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    static constexpr auto elementRegionsGroup = "elementRegcionsGroup";
+    static constexpr auto elementRegionsGroup = "elementRegionsGroup";
   } m_ElementRegionManagerKeys; ///< Element region manager keys
 
 

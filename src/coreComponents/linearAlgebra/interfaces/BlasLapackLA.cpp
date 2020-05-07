@@ -631,7 +631,7 @@ void BlasLapackLA::vectorCopy( arraySlice1d< real64 const > const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
-  GEOSX_dcopy( &N, X.data(), &INCX, Y.data(), &INCY );
+  GEOSX_dcopy( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
 void BlasLapackLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
