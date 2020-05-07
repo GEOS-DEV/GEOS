@@ -110,7 +110,7 @@ public:
     static constexpr int numRows = NUM_ROWS;
     static constexpr int numCols = NUM_COLS;
 
-    //    GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     StackVariables():
       localRowDofIndex{ 0 },
       localColDofIndex{ 0 },
@@ -135,7 +135,7 @@ public:
     static constexpr int numRows = NUM_ROWS;
     static constexpr int numCols = NUM_COLS;
 
-    //    GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     StackVariables():
       localRowDofIndex{ 0 },
       localColDofIndex( localRowDofIndex ),
@@ -190,15 +190,8 @@ public:
                typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
 
-//    Kernels() = delete;
-////    Kernels( Kernels const & ) = delete;
-//    Kernels & operator=( Kernels const & ) = delete;
-//    Kernels( Kernels && ) = delete;
-//    Kernels & operator=( Kernels && ) = delete;
-
-
     template< typename STACK_VARIABLE_TYPE >
-    //  GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void preKernel( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
@@ -225,7 +218,7 @@ public:
     }
 
     template< typename STACK_VARIABLE_TYPE >
-    //  GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                        localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -233,7 +226,7 @@ public:
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-    //  GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -242,7 +235,7 @@ public:
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-    //  GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                             localIndex const GEOSX_UNUSED_PARAM( q ),
@@ -251,9 +244,10 @@ public:
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-    //  GEOSX_HOST_DEVICE
+//    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
       m_matrix.insert( stack.localRowDofIndex,
@@ -263,6 +257,81 @@ public:
                        stack.numCols );
       return 0;
     }
+
+    template< typename POLICY,
+              int NUM_QUADRATURE_POINTS,
+              typename STACK_VARIABLES,
+              typename PARAMETERS_TYPE,
+              typename KERNEL_CLASS >
+    static
+    typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
+                             std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
+    Launch( localIndex const numElems,
+                          PARAMETERS_TYPE const & parameters,
+                          KERNEL_CLASS const & kernelClass )
+    {
+      GEOSX_MARK_FUNCTION;
+      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+
+      forAll< POLICY >( numElems,
+                        [=] ( localIndex const k )
+      {
+        STACK_VARIABLES stack;
+
+        kernelClass.preKernel( k, stack );
+        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+        {
+          kernelClass.updateKernel( k, q, stack );
+
+          kernelClass.stiffnessKernel( k, q, parameters, stack );
+
+          kernelClass.integrationKernel( k, q, parameters, stack );
+        }
+        if( kernelClass.elemGhostRank[k] < 0 )
+        {
+          maxResidual.max( kernelClass.postKernel( k, parameters, stack ) );
+        }
+      } );
+      return maxResidual.get();
+    }
+
+    template< typename POLICY,
+              int NUM_QUADRATURE_POINTS,
+              typename STACK_VARIABLES,
+              typename PARAMETERS_TYPE,
+              typename KERNEL_CLASS >
+    static
+    typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
+                                std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
+    Launch( localIndex const numElems,
+                          PARAMETERS_TYPE const & parameters,
+                          KERNEL_CLASS const & kernelClass )
+    {
+      GEOSX_MARK_FUNCTION;
+      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+
+      forAll< POLICY >( numElems,
+                        [=] GEOSX_DEVICE ( localIndex const k )
+      {
+        STACK_VARIABLES stack;
+
+        kernelClass.preKernel( k, stack );
+        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+        {
+          kernelClass.updateKernel( k, q, stack );
+
+          kernelClass.stiffnessKernel( k, q, parameters, stack );
+
+          kernelClass.integrationKernel( k, q, parameters, stack );
+        }
+        if( kernelClass.elemGhostRank[k] < 0 )
+        {
+          maxResidual.max( kernelClass.postKernel( k, parameters, stack ) );
+        }
+      } );
+      return maxResidual.get();
+    }
+
 
     arrayView1d< globalIndex const > const m_dofNumber;
     ParallelMatrix & m_matrix;
@@ -294,42 +363,6 @@ protected:
 
   //***************************************************************************
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
-            typename STACK_VARIABLES,
-            typename PARAMETERS_TYPE,
-            typename KERNEL_CLASS >
-  static
-  real64 Launch( localIndex const numElems,
-                 PARAMETERS_TYPE const & parameters,
-                 KERNEL_CLASS const & kernelClass )
-  {
-    RAJA::ReduceMax< serialReduce, real64 > maxResidual( 0 );
-
-    forAll< POLICY >( numElems,
-                      [=] ( localIndex const k )
-    {
-      STACK_VARIABLES stack;
-
-      kernelClass.preKernel( k, stack );
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-      {
-        kernelClass.updateKernel( k, q, stack );
-
-        kernelClass.stiffnessKernel( k, q, parameters, stack );
-
-        kernelClass.integrationKernel( k, q, parameters, stack );
-      }
-      if( kernelClass.elemGhostRank[k] < 0 )
-      {
-        maxResidual.max( kernelClass.postKernel( parameters, stack ) );
-      }
-    } );
-    return maxResidual.get();
-  }
-
-
-  //***************************************************************************
-  template< typename POLICY,
             typename UPDATE_CLASS,
             typename CONSTITUTIVE_BASE,
             typename REGION_TYPE,
@@ -351,7 +384,7 @@ protected:
 
     real64 maxResidual = 0;
 
-    NodeManager const & nodeManager = *(mesh.getNodeManager());
+    NodeManager & nodeManager = *(mesh.getNodeManager());
     ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
@@ -391,24 +424,25 @@ protected:
         {
           using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
-          KERNEL_CLASS< SUBREGIONTYPE,
-                        CONSTITUTIVE_TYPE,
-                        NUM_NODES_PER_ELEM,
-                        NUM_NODES_PER_ELEM > kernelClass( inputDofNumber,
-                                                          inputMatrix,
-                                                          inputRhs,
-                                                          nodeManager,
-                                                          elementSubRegion,
-                                                          finiteElementSpace,
-                                                          castedConstitutiveRelation,
-                                                          parameters );
+          using KERNEL_TYPE = KERNEL_CLASS< SUBREGIONTYPE,
+                                            CONSTITUTIVE_TYPE,
+                                            NUM_NODES_PER_ELEM,
+                                            NUM_NODES_PER_ELEM >;
+          KERNEL_TYPE kernelClass( inputDofNumber,
+                                   inputMatrix,
+                                   inputRhs,
+                                   nodeManager,
+                                   elementSubRegion,
+                                   finiteElementSpace,
+                                   castedConstitutiveRelation,
+                                   parameters );
 
           maxResidual = std::max( maxResidual,
-                                  Launch< POLICY,
-                                          NUM_QUADRATURE_POINTS,
-                                          typename decltype(kernelClass)::StackVars >( numElems,
-                                                                                       parameters,
-                                                                                       kernelClass ) );
+                                  KERNEL_TYPE::template Launch< POLICY,
+                                                       NUM_QUADRATURE_POINTS,
+                                                       typename decltype(kernelClass)::StackVars >( numElems,
+                                                                                                    parameters,
+                                                                                                    kernelClass ) );
         } );
       } );
     } );

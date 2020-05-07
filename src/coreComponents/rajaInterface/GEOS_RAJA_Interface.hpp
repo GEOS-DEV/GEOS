@@ -58,6 +58,39 @@ using parallelDeviceAtomic = parallelHostAtomic;
 
 #endif
 
+template< typename LAUNCH_POLICY >
+struct ReducePolicy
+{
+  using type = parallelDeviceReduce;
+};
+
+template <> struct ReducePolicy<serialPolicy>
+{
+  using type = serialReduce;
+};
+
+template <> struct ReducePolicy<parallelHostPolicy>
+{
+  using type = parallelHostReduce;
+};
+
+template< typename LAUNCH_POLICY >
+struct AtomicPolicy
+{
+  using type = parallelDeviceAtomic;
+};
+
+template <> struct AtomicPolicy<serialPolicy>
+{
+  using type = serialAtomic;
+};
+
+template <> struct AtomicPolicy<parallelHostPolicy>
+{
+  using type = parallelHostAtomic;
+};
+
+
 template< typename POLICY, typename LAMBDA >
 RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
 {

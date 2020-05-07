@@ -102,7 +102,7 @@ struct ExplicitKernel
 #endif
   // If UPDATE_STRESS is undef, then stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
-  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
+#define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.

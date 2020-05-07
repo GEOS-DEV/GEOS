@@ -39,10 +39,12 @@ public:
   {
     Parameters( string const & fieldName ):
       Base::Parameters(),
-                                   m_fieldName( fieldName )
-    {}
+      m_fieldName{'\0'}
+    {
+      fieldName.copy( m_fieldName, fieldName.size() );
+    }
 
-    string m_fieldName;
+    char m_fieldName[100];
   };
 
 
@@ -61,7 +63,7 @@ public:
     static constexpr int numNodes = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
 
 
-//      GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     StackVariables():
       StackVariablesBase(),
       primaryField_local{ 0.0 }
@@ -142,7 +144,7 @@ public:
 
 
     template< typename STACK_VARIABLE_TYPE >
-    //    GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void preKernel( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
@@ -159,7 +161,7 @@ public:
     template< typename PARAMETERS_TYPE,
               typename STACK_VARIABLE_TYPE,
               typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
-    //    GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void stiffnessKernel( localIndex const k,
                           localIndex const q,
@@ -176,9 +178,10 @@ public:
     }
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-    //    GEOSX_HOST_DEVICE
+    //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM(k),
+                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )

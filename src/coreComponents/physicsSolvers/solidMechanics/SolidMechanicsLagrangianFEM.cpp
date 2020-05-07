@@ -478,6 +478,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
+#define USE_PHYSICS_LOOP
+
   // updateIntrinsicNodalData(domain);
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
@@ -495,7 +497,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
   arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
   arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
   arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
@@ -545,6 +546,24 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
+#if defined(USE_PHYSICS_LOOP)
+  m_maxForce = physicsLoopInterface::
+                 FiniteElementRegionLoop::Execute< parallelDevicePolicy< 32 >,
+                                                   SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain,
+                                                   constitutive::SolidBase,
+                                                   CellElementSubRegion >( mesh,
+                                                                           targetRegionNames(),
+                                                                           m_solidMaterialNames,
+                                                                           &feDiscretization,
+                                                                           array1d< globalIndex >(),
+                                                                           m_matrix,
+                                                                           m_rhs,
+                                                                           SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain::
+                                                                                                               Parameters( dt,
+                                                                                                                           gravityVector().Data()));
+#else
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
+
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                   localIndex const er,
                                                                   localIndex const esr,
@@ -575,13 +594,15 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                  acc,
                                  dt );
   } ); //Element Region
-
+#endif
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   CommunicationTools::SynchronizePackSendRecv( fieldNames, &mesh, domain->getNeighbors(), m_iComm, true );
+
+#if !defined(USE_PHYSICS_LOOP)
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                   localIndex const er,
@@ -614,7 +635,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                  acc,
                                  dt );
   } ); //Element Region
-
+#endif
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
 
