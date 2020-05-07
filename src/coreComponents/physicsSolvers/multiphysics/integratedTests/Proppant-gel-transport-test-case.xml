@@ -283,7 +283,8 @@
   </Functions>
 
   <Outputs>
-      <Silo name="siloOutput"/>
+    <Silo name="siloOutput"
+          plotFileRoot="proppantGelTransport"/>    
       <Restart name="sidreRestart"/>
   </Outputs>
 
