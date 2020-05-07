@@ -21,8 +21,8 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "cxx-utilities/src/templateHelpers.hpp"
-#include "cxx-utilities/src/bufferManipulation.hpp"
+#include "LvArray/src/templateHelpers.hpp"
+#include "LvArray/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
 // System includes
@@ -84,7 +84,13 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( resize, 0 );
  */
 HAS_MEMBER_FUNCTION_NO_RTYPE( reserve, localIndex( 55 ) );
 
-HAS_MEMBER_FUNCTION_NO_RTYPE( toView, );
+/**
+ * @brief Defines a static constexpr bool HasMemberFunction_toView< @p CLASS >
+ *        that is true iff the method @p CLASS ::toView() exists.
+ * @tparam CLASS The type to test.
+ */
+template< typename CLASS >
+static constexpr bool HasMemberFunction_toView = LvArray::HasMemberFunction_toView< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool with two template parameter CanStreamInto
@@ -118,20 +124,6 @@ struct GetPointerType< T, true >
   using ConstPointer = std::remove_pointer_t< Pointer > const *;
 };
 
-template< typename T,
-          bool HAS_VIEW_TYPE = HasMemberFunction_toView< T > >
-struct GetViewType
-{
-  using ViewType = T &;
-  using ViewTypeConst = T const &;
-};
-
-template< class T >
-struct GetViewType< T, true >
-{
-  using ViewType = decltype( std::declval< T >().toView() );
-  using ViewTypeConst = decltype( std::declval< T >().toViewConst() );
-};
 } // namespace internal
 
 /// Type aliased to whatever T::data() returns or T * if that method doesn't exist.
@@ -144,11 +136,11 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = typename internal::GetViewType< T >::ViewType;
+using ViewType = typename LvArray::GetViewType< T >::type &;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = typename internal::GetViewType< T >::ViewTypeConst;
+using ViewTypeConst = typename LvArray::GetViewTypeConst< T >::type &;
 
 /// True if T is or inherits from std::string.
 template< typename T >

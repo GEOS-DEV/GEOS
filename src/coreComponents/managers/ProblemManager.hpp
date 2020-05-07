@@ -122,6 +122,7 @@ public:
     dataRepository::ViewKey problemName              = {"problemName"};
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};
   } viewKeys;
 
   struct groupKeysStruct

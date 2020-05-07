@@ -28,14 +28,14 @@
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
 #include "Logger.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/ArrayOfArrays.hpp"
-#include "cxx-utilities/src/ArrayOfSets.hpp"
-#include "cxx-utilities/src/CRSMatrix.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -95,8 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
-                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -143,9 +143,9 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef USE_CHAI
+#ifdef GEOSX_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
@@ -545,7 +545,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 

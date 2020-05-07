@@ -1502,7 +1502,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
       std::vector< int > const & nodeOrdering = elementSubRegion.getVTKNodeOrdering();
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
-        integer numNodesPerElement = integer_conversion< int >( elementSubRegion.numNodesPerElement( k ));
+        integer numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ));
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
           elementToNodeMap[count]( k, a ) = elemsToNodes[k][nodeOrdering[a]];
@@ -1546,7 +1546,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
       {
         shapetype[count] = DB_ZONETYPE_BEAM;
       }
-      shapesize[count] = integer_conversion< int >( elementSubRegion.numNodesPerElement( 0 ) );
+      shapesize[count] = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( 0 ) );
       ++count;
     } );
 
@@ -1578,7 +1578,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
                        globalNodeNum,
                        ghostNodeFlag,
                        ghostZoneFlag.data(),
-                       integer_conversion< int >( numElementShapes ),
+                       LvArray::integerConversion< int >( numElementShapes ),
                        shapecnt.data(),
                        meshConnectivity.data(),
                        nullptr /*globalElementNumbers.data()*/,
@@ -1613,7 +1613,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
                        globalNodeNum,
                        ghostNodeFlag,
                        ghostZoneFlag.data(),
-                       integer_conversion< int >( numElementShapes ),
+                       LvArray::integerConversion< int >( numElementShapes ),
                        shapecnt.data(),
                        meshConnectivity.data(),
                        nullptr /*globalElementNumbers.data()*/,
@@ -1638,7 +1638,7 @@ void SiloFile::WriteElementMesh( ElementRegionBase const & elementRegion,
                        globalNodeNum,
                        ghostNodeFlag,
                        ghostZoneFlag.data(),
-                       integer_conversion< int >( numElementShapes ),
+                       LvArray::integerConversion< int >( numElementShapes ),
                        shapecnt.data(),
                        meshConnectivity.data(),
                        nullptr /*globalElementNumbers.data()*/,
@@ -1738,7 +1738,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
 
     FaceManager const * const faceManager = meshLevel->getFaceManager();
     localIndex const numFaces = faceManager->size();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     // face mesh
     const std::string facemeshName( "face_mesh" );
@@ -1862,7 +1862,7 @@ void SiloFile::WriteMeshLevel( MeshLevel const * const meshLevel,
   {
     // write edges
     FaceManager const * const faceManager = meshLevel->getFaceManager();
-    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
     EdgeManager const * const edgeManager = meshLevel->getEdgeManager();
     localIndex const numEdges = edgeManager->size();
@@ -2254,7 +2254,7 @@ void SiloFile::WriteDataField( string const & meshName,
                                string const & multiRoot )
 {
   int const nvars = SiloFileUtilities::GetNumberOfVariablesInField< TYPE >();
-  int nels = integer_conversion< int >( field.size());
+  int nels = LvArray::integerConversion< int >( field.size());
 
   int const meshType = GetMeshType( meshName );
 
@@ -2529,7 +2529,7 @@ void SiloFile::WriteDataField( string const & meshName,
   {
     nvars *= field.size( i );
   }
-  int const nels = integer_conversion< int >( field.size( 0 ));
+  int const nels = LvArray::integerConversion< int >( field.size( 0 ));
 
   int const meshType = GetMeshType( meshName );
 

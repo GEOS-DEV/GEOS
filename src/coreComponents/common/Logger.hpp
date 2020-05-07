@@ -21,7 +21,7 @@
 
 // Source incldes
 #include "common/GeosxConfig.hpp"
-#include "cxx-utilities/src/Macros.hpp"
+#include "LvArray/src/Macros.hpp"
 
 // System includes
 #if defined(GEOSX_USE_MPI)
@@ -30,15 +30,15 @@
 
 /**
  * @brief Log a message on screen.
- * @param msg a message to log (any expression that can be stream inserted)
+ * @details The expression to log must evaluate something that can be stream inserted.
  */
-#define GEOSX_LOG( msg ) LVARRAY_LOG( msg )
+#define GEOSX_LOG( ... ) LVARRAY_LOG( __VA_ARGS__ )
 
 /**
- * @brief Log a variable/expression name and value on screen.
- * @param var a variable or expression accessible from current scope that can be stream inserted
+ * @brief Log an expression and its value on screen.
+ * @details The expression to log must evaluate something that can be stream inserted.
  */
-#define GEOSX_LOG_VAR( var ) GEOSX_LOG( #var << " = " << var )
+#define GEOSX_LOG_VAR( ... ) LVARRAY_LOG_VAR( __VA_ARGS__ )
 
 /**
  * @brief Conditionally log a message on screen on rank 0.
@@ -289,7 +289,6 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOSX_ASSERT_GE( lhs, rhs ) GEOSX_ASSERT_GE_MSG( lhs, rhs, "" )
-
 
 /**
  * @brief Macro used to turn on/off a function based on the log level.

@@ -22,7 +22,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -91,7 +90,7 @@ void CapillaryPressureBase::PostProcessInput()
     GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "CapillaryPressureBase: invalid phase index " << phaseIndex );
 
     m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = integer_conversion< integer >( ip );
+    m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
 
   }
 
