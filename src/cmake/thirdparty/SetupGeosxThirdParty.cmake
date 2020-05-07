@@ -619,4 +619,20 @@ if( ENABLE_PETSC )
 
 endif()
 
+################################
+# VTK
+################################
+if( ENABLE_VTK )
+  find_package(VTK REQUIRED PATHS ${GEOSX_TPL_DIR}/vtk NO_DEFAULT_PATH
+  )
+
+  message( STATUS "VTK_INCLUDE_DIRS = ${VTK_INCLUDE_DIRS}" )
+  message( STATUS "VTK_LIBRARIES = ${VTK_LIBRARIES}" )
+
+  blt_register_library( NAME vtk
+                        LIBRARIES ${VTK_LIBRARIES}
+                        TREAT_INCLUDES_AS_SYSTEM ON )
+  set( thirdPartyLibs ${thirdPartyLibs} vtk )  
+endif()
+
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

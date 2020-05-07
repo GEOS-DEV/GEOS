@@ -69,6 +69,11 @@
                    targetExactTimestep="0"
                    target="/Outputs/silo" />
 
+    <PeriodicEvent name="vtk"
+                   timeFrequency="1.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/vtk" />
+
     <PeriodicEvent name="restart"
                    timeFrequency="5.0e-3"
                    targetExactTimestep="0"
@@ -157,6 +162,8 @@
     <Blueprint name="blueprint" plotLevel="3"/>
 
     <Silo name="silo" plotLevel="3"/>
+
+    <VTK name="vtk" plotLevel="3"/>
 
     <Restart name="restart"/>
   </Outputs>
