@@ -116,6 +116,7 @@ struct QTPFACellInnerProductKernel
    *
    */
   template< localIndex NF >
+  GEOSX_HOST_DEVICE
   static void
   Compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
            ArrayOfArraysView< localIndex const > const & faceToNodes,
@@ -131,6 +132,7 @@ struct QTPFACellInnerProductKernel
 
 #define INST_QTPFACellInnerProduct( NF ) \
   extern template \
+  GEOSX_HOST_DEVICE \
   void QTPFACellInnerProductKernel::Compute< NF >( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
                                                    ArrayOfArraysView< localIndex const > const & faceToNodes, \
                                                    arraySlice1d< localIndex const > const elemToFaces, \

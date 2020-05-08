@@ -4,15 +4,10 @@
 
 set( gtest_geosx_tests
      testStencilCollection.cpp
+     testHybridFVMInnerProducts.cpp
    )
 
-if( BUILD_OBJ_LIBS )
-  message(FATAL_ERROR "BUILDING OBJECT_LIBS")
-  set( dependencyList geosx_core gtest )
-else()
-  set( dependencyList finiteVolume gtest managers )
-endif()
-
+set( dependencyList geosx_core gtest )
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

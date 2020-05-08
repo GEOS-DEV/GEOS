@@ -51,7 +51,7 @@ struct AssemblerKernelHelper
    * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
    * @param[in] dFacePres the accumulated pressure updates at the mesh face
-   * @param[in] faceGravCoef the depth at the mesh faces
+   * @param[in] faceGravCoef the depth at the mesh facesb
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
@@ -64,6 +64,7 @@ struct AssemblerKernelHelper
    * @param[out] dOneSidedVolFlux_dfp the derivatives of the vol fluxes wrt to this element's face pressures
    */
   template< localIndex NF >
+  GEOSX_HOST_DEVICE
   static void
   ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
                             arrayView1d< real64 const > const & dFacePres,
@@ -101,11 +102,12 @@ struct AssemblerKernelHelper
    * Note: because of the upwinding, this function requires non-local information
    */
   template< localIndex NF >
+  GEOSX_HOST_DEVICE
   static void
-  UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
-                              array2d< localIndex > const & elemSubRegionList,
-                              array2d< localIndex > const & elemList,
-                              SortedArray< localIndex > const & regionFilter,
+  UpdateUpwindedCoefficients( arrayView2d< localIndex const > const & elemRegionList,
+                              arrayView2d< localIndex const > const & elemSubRegionList,
+                              arrayView2d< localIndex const > const & elemList,
+                              SortedArrayView< localIndex const > const & regionFilter,
                               arraySlice1d< localIndex const > const elemToFaces,
                               ElementView< arrayView1d< real64 const > > const & mobility,
                               ElementView< arrayView1d< real64 const > > const & dMobility_dp,
@@ -135,6 +137,7 @@ struct AssemblerKernelHelper
    * @param[inout] rhs the residual
    */
   template< localIndex NF >
+  //GEOSX_HOST_DEVICE
   static void
   AssembleOneSidedMassFluxes( real64 const & dt,
                               arrayView1d< globalIndex const > const & faceDofNumber,
@@ -162,6 +165,7 @@ struct AssemblerKernelHelper
    * @param[inout] rhs the residual
    */
   template< localIndex NF >
+  //GEOSX_HOST_DEVICE
   static void
   AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                        arraySlice1d< localIndex const > const elemToFaces,
@@ -254,7 +258,7 @@ struct AssemblerKernel
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
    * @param[in] dElemPres the accumulated pressure updates at this element's center
-   * @param[in] elemGravCoef the depth at this element's center
+   * @param[in] eleomGravCoef the depth at this element's center
    * @param[in] elemDens the density at this elenent's center
    * @param[in] dElemDens_dp the derivative of the density at this element's center
    * @param[in] mobility the mobilities in the domain (non-local)
@@ -266,14 +270,15 @@ struct AssemblerKernel
    * @param[inout] rhs the system right-hand side vector
    */
   template< localIndex NF >
+  //GEOSX_HOST_DEVICE
   static void
   Compute( localIndex const er,
            localIndex const esr,
            localIndex const ei,
-           SortedArray< localIndex > const & regionFilter,
-           array2d< localIndex > const & elemRegionList,
-           array2d< localIndex > const & elemSubRegionList,
-           array2d< localIndex > const & elemList,
+           SortedArrayView< localIndex const > const & regionFilter,
+           arrayView2d< localIndex const > const & elemRegionList,
+           arrayView2d< localIndex const > const & elemSubRegionList,
+           arrayView2d< localIndex const > const & elemList,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & dFacePres,
@@ -340,12 +345,12 @@ struct FluxKernel
   Launch( localIndex er,
           localIndex esr,
           CellElementSubRegion const & subRegion,
-          SortedArray< localIndex > regionFilter,
+          SortedArrayView< localIndex const > const & regionFilter,
           MeshLevel const & mesh,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-          array2d< localIndex > const & elemRegionList,
-          array2d< localIndex > const & elemSubRegionList,
-          array2d< localIndex > const & elemList,
+          arrayView2d< localIndex const > const & elemRegionList,
+          arrayView2d< localIndex const > const & elemSubRegionList,
+          arrayView2d< localIndex const > const & elemList,
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< real64 const > const & facePres,
@@ -369,12 +374,12 @@ struct FluxKernel
   void FluxKernel::Launch< NF >( localIndex er, \
                                  localIndex esr, \
                                  CellElementSubRegion const & subRegion, \
-                                 SortedArray< localIndex > regionFilter, \
+                                 SortedArrayView< localIndex const > const & regionFilter, \
                                  MeshLevel const & mesh, \
                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
-                                 array2d< localIndex > const & elemRegionList, \
-                                 array2d< localIndex > const & elemSubRegionList, \
-                                 array2d< localIndex > const & elemList, \
+                                 arrayView2d< localIndex const > const & elemRegionList, \
+                                 arrayView2d< localIndex const > const & elemSubRegionList, \
+                                 arrayView2d< localIndex const > const & elemList, \
                                  ArrayOfArraysView< localIndex const > const & faceToNodes, \
                                  arrayView1d< globalIndex const > const & faceDofNumber, \
                                  arrayView1d< real64 const > const & facePres, \

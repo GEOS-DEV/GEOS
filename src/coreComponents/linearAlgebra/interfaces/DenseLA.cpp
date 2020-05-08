@@ -138,7 +138,7 @@ real64 determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const 
 
       // TODO: put this in this helpers
 
-      int const NN = integer_conversion< int >( A.size( 1 ) );
+      int const NN = LvArray::integerConversion< int >( A.size( 1 ) );
       int info;
 
       array1d< int > ipiv( NN );
@@ -216,7 +216,7 @@ real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
 
       // TODO: put this is in the helpers
 
-      int const NN = integer_conversion< int >( A.size( 0 ) );
+      int const NN = LvArray::integerConversion< int >( A.size( 0 ) );
       int info;
 
       array1d< int > ipiv( NN );
@@ -303,7 +303,8 @@ real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > cons
   GEOSX_ASSERT_MSG( A.size( 0 ) <= MAX_NUM_ROWS,
                     "The number of rows of A should smaller than " << MAX_NUM_ROWS );
 
-  real64 rowSum[MAX_NUM_ROWS] = { 0 }; 
+  stackArray1d< real64, MAX_NUM_ROWS > rowSum;
+  rowSum.resize( A.size( 0 ) );
 
   for( localIndex j = 0; j < A.size( 1 ); ++j )
   {
@@ -345,7 +346,8 @@ real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const 
   GEOSX_ASSERT_MSG( A.size( 1 ) <= MAX_NUM_COLS,
                     "The number of rows of A should smaller than " << MAX_NUM_COLS );
 
-  real64 columnSum[MAX_NUM_COLS] = { 0 };  
+  stackArray1d< real64, MAX_NUM_COLS > columnSum;
+  columnSum.resize( A.size( 1 ) );
 
   for( localIndex i = 0; i < A.size( 0 ); ++i )
   {
@@ -616,9 +618,9 @@ void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
 
   // TODO: move to the helper file
 
-  int const M = integer_conversion< int >( A.size( 0 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
   int const N = 1;
-  int const K = integer_conversion< int >( A.size( 1 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
 
   // A*X = Y is computed as X^T * A^T = Y^T, i.e. accessing the transpose
   // matrix using a column-major layout
@@ -657,9 +659,9 @@ void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 
   // TODO: move to the helper file
 
-  int const M = integer_conversion< int >( A.size( 1 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 1 ) );
   int const N = 1;
-  int const K = integer_conversion< int >( A.size( 0 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 0 ) );
 
   // A^T*X = Y is computed as X^T * A = Y^T, i.e. accessing the transpose
   // matrix using a column-major layout
@@ -700,9 +702,9 @@ void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
 
   // TODO: move to the helper file
 
-  int const M = integer_conversion< int >( A.size( 0 ) );
-  int const N = integer_conversion< int >( B.size( 1 ) );
-  int const K = integer_conversion< int >( A.size( 1 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 1 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
 
   // A*B = C is computed as B^T * A^T = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
@@ -753,9 +755,9 @@ void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 
   // TODO: move to the helper file
 
-  int const M = integer_conversion< int >( A.size( 1 ) );
-  int const N = integer_conversion< int >( B.size( 1 ) );
-  int const K = integer_conversion< int >( A.size( 0 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 1 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 1 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 0 ) );
 
   // A^T*B = C is computed as B^T * A = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
@@ -805,9 +807,9 @@ void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 
   // TODO: move to the helper file
 
-  int const M = integer_conversion< int >( A.size( 0 ) );
-  int const N = integer_conversion< int >( B.size( 0 ) );
-  int const K = integer_conversion< int >( A.size( 1 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 0 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
 
   // A*B^T = C is computed as B * A^T = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
@@ -854,9 +856,9 @@ void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
 
 #ifdef USE_LAPACK
 
-  int const M = integer_conversion< int >( A.size( 1 ) );
-  int const N = integer_conversion< int >( B.size( 0 ) );
-  int const K = integer_conversion< int >( A.size( 0 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 1 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 0 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 0 ) );
 
   // A^T*B^T = C is computed as B * A = C^T, i.e. accessing the transpose
   // matrices using a column-major layout
@@ -904,7 +906,7 @@ void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const 
 
 #ifdef USE_LAPACK
 
-  int const NN = integer_conversion< int >( A.size( 0 ) );
+  int const NN = LvArray::integerConversion< int >( A.size( 0 ) );
   int info;
 
   array1d< int > ipiv;
@@ -1032,7 +1034,7 @@ void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
 
 #ifdef USE_LAPACK
 
-  int const NN = integer_conversion< int >( A.size( 0 ) );
+  int const NN = LvArray::integerConversion< int >( A.size( 0 ) );
   int info;
 
   array1d< int > ipiv;
@@ -1260,7 +1262,7 @@ void vectorRand( arraySlice1d< real64 > const & X,
 {
 
   int IDIST = static_cast< int >(idist);
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   GEOSX_ASSERT_MSG( N > 0, "The vector cannot be empty" );
   GEOSX_dlarnv( &IDIST, ISEED, &N, X.dataIfContiguous());
 }
@@ -1269,7 +1271,7 @@ void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
                           RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
-  int const NN = integer_conversion< int >( A.size() );
+  int const NN = LvArray::integerConversion< int >( A.size() );
   GEOSX_ASSERT_MSG( NN > 0, "The matrix cannot be empty" );
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
@@ -1278,7 +1280,7 @@ void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
                           RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
-  int const NN = integer_conversion< int >( A.size() );
+  int const NN = LvArray::integerConversion< int >( A.size() );
   GEOSX_ASSERT_MSG( NN > 0, "The matrix cannot be empty" );
   GEOSX_dlarnv( &IDIST, ISEED, &NN, A.dataIfContiguous() );
 }
@@ -1289,8 +1291,8 @@ void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
 {
   int const minDim = (A.size( 0 ) < A.size( 1 ))
-                   ? integer_conversion< int >( A.size( 0 ) )
-                   : integer_conversion< int >( A.size( 1 ) );
+                   ? LvArray::integerConversion< int >( A.size( 0 ) )
+                   : LvArray::integerConversion< int >( A.size( 1 ) );
 
   GEOSX_ASSERT_MSG( A.size( 0 ) == U.size( 0 ) && minDim == U.size( 1 ),
                     "The matrices A and U have an incompatible size" );
@@ -1306,8 +1308,8 @@ void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
   matrixCopy( A, Acopy );
 
   // define the arguments of dgesvd
-  int const M     = integer_conversion< int >( A.size( 0 ) );
-  int const N     = integer_conversion< int >( A.size( 1 ) );
+  int const M     = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N     = LvArray::integerConversion< int >( A.size( 1 ) );
   int const LDA   = M;
   int const LDU   = M;
   int const LDVT  = minDim;

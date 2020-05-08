@@ -73,6 +73,7 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
  * @param[out] normal Normal to the face
  * @return area of the convex 3D polygon
  */
+GEOSX_HOST_DEVICE
 real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            localIndex const numPoints,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,

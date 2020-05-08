@@ -198,6 +198,7 @@ public:
 
   //****** TENSOR OPERATIONS **************************************************
   /// take the L2 norm of the tensor
+  GEOSX_HOST_DEVICE
   realT L2_Norm( void ) const;
 
   /// get the unit vector
@@ -205,6 +206,7 @@ public:
   { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
 
   /// Normalize the vector
+  GEOSX_HOST_DEVICE
   realT Normalize( void )
   { realT n = this->L2_Norm(); if( n>0.0 ) *this /= n; return n; }
 

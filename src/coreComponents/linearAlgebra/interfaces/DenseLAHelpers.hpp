@@ -402,21 +402,21 @@ static void matrixTInverseFromLUFactors( arraySlice2d< real64 const, MatrixLayou
 static void vectorNorm1Lapack( arraySlice1d< real64 const > const & X, real64 & norm )
 {
   int const INCX = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   norm = GEOSX_dasum( &N, X.dataIfContiguous(), &INCX );
 }
 
 static void vectorNorm2Lapack( arraySlice1d< real64 const > const & X, real64 & norm )
 {
   int const INCX = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   norm = GEOSX_dnrm2( &N, X.dataIfContiguous(), &INCX );
 }
 
 static void vectorNormInfLapack( arraySlice1d< real64 const > const & X, real64 & norm )
 {
   int const INCX = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   int ind = GEOSX_idamax( &N, X.dataIfContiguous(), &INCX );
   ind -= 1; // Fortran convention, subtract 1
   norm = std::abs( X( ind ) );
@@ -429,11 +429,11 @@ static void matrixNormLapack( arraySlice2d< real64 const, USD > const & A,
                               real64 & norm )
 {
   int const M = transpose
-              ? integer_conversion< int >( A.size( 0 ) )
-              : integer_conversion< int >( A.size( 1 ) );
+              ? LvArray::integerConversion< int >( A.size( 0 ) )
+              : LvArray::integerConversion< int >( A.size( 1 ) );
   int const N = transpose
-              ? integer_conversion< int >( A.size( 1 ) )
-              : integer_conversion< int >( A.size( 0 ) );
+              ? LvArray::integerConversion< int >( A.size( 1 ) )
+              : LvArray::integerConversion< int >( A.size( 0 ) );
 
   array1d< double > temp;
   double * work = nullptr;
@@ -452,7 +452,7 @@ static void vectorVectorAddLapack( arraySlice1d< real64 const > const & X,
 {
   int const INCX = 1;
   int const INCY = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   GEOSX_daxpy( &N, &alpha, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
@@ -463,7 +463,7 @@ static void matrixMatrixAddLapack( arraySlice2d< real64 const, USD > const & A,
 {
   int const INCX = 1;
   int const INCY = 1;
-  int const N = integer_conversion< int >( A.size() );
+  int const N = LvArray::integerConversion< int >( A.size() );
   GEOSX_daxpy( &N, &alpha, A.dataIfContiguous(), &INCX, B.dataIfContiguous(), &INCY );
 }
 
@@ -472,7 +472,7 @@ static void matrixScaleLapack( real64 const & alpha,
                                arraySlice2d< real64, USD > const & A )
 {
   int const INCX = 1;
-  int const N = integer_conversion< int >( A.size() );
+  int const N = LvArray::integerConversion< int >( A.size() );
   GEOSX_dscal( &N, &alpha, A.dataIfContiguous(), &INCX );
 }
 
@@ -480,7 +480,7 @@ static void vectorScaleLapack( real64 const & alpha,
                                arraySlice1d< real64 > const & X )
 {
   int const INCX = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   GEOSX_dscal( &N, &alpha, X.dataIfContiguous(), &INCX );
 }
 
@@ -490,7 +490,7 @@ static void vectorDotLapack( arraySlice1d< real64 const > const & X,
 {
   int const INCX = 1;
   int const INCY = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   dotProduct = GEOSX_ddot( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
@@ -499,7 +499,7 @@ static void vectorCopyLapack( array1d< real64 > const & X,
 {
   int const INCX = 1;
   int const INCY = 1;
-  int const N = integer_conversion< int >( X.size() );
+  int const N = LvArray::integerConversion< int >( X.size() );
   GEOSX_dcopy( &N, X.data(), &INCX, Y.data(), &INCY );
 }
 
@@ -509,7 +509,7 @@ static void matrixCopyLapack( arraySlice2d< real64 const, USD > const & A,
 {
   int const INCX = 1;
   int const INCY = 1;
-  int const N = integer_conversion< int >( A.size() );
+  int const N = LvArray::integerConversion< int >( A.size() );
   GEOSX_dcopy( &N, A.dataIfContiguous(), &INCX, B.dataIfContiguous(), &INCY );
 }
 
