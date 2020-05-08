@@ -214,6 +214,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           continue;
         cellBlock =
           cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
         cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
