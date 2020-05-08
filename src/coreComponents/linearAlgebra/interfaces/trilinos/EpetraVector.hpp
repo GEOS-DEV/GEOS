@@ -96,8 +96,8 @@ public:
   virtual void createWithGlobalSize( globalIndex const globalSize,
                                      MPI_Comm const & comm ) override;
 
-  virtual void create( arrayView1d< real64 const > const & localValues,
-                       MPI_Comm const & comm ) override;
+  virtual void createWithLocalValues( arrayView1d< real64 > const & localValues,
+                                      MPI_Comm const & comm ) override;
 
   virtual void open() override;
 

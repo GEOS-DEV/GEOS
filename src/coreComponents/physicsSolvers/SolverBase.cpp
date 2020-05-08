@@ -241,8 +241,8 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
 
   // Compose parallel LA matrix/rhs out of local LA matrix/rhs
   m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-  m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
+  m_rhs.createWithLocalValues( m_localRhs, MPI_COMM_GEOSX );
+  m_solution.createWithLocalValues( m_localSolution, MPI_COMM_GEOSX );
 
   // Output the linear system matrix/rhs for debugging purposes
   DebugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
@@ -536,8 +536,8 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
 
       // Compose parallel LA matrix/rhs out of local LA matrix/rhs
       m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-      m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-      m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
+      m_rhs.createWithLocalValues( m_localRhs, MPI_COMM_GEOSX );
+      m_solution.createWithLocalValues( m_localSolution, MPI_COMM_GEOSX );
 
       // Output the linear system matrix/rhs for debugging purposes
       DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
@@ -641,12 +641,14 @@ void SolverBase::SetupSystem( DomainPartition & domain,
     dofManager.setSparsityPattern( pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
-
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
-
   localMatrix.setName( this->getName() + "/localMatrix" );
+
+  localRhs.move( LvArray::MemorySpace::CPU, false );
+  localRhs.resize( numLocalRows );
   localRhs.setName( this->getName() + "/localRhs" );
+
+  localSolution.move( LvArray::MemorySpace::CPU, false );
+  localSolution.resize( numLocalRows );
   localSolution.setName( this->getName() + "/localSolution" );
 }
 

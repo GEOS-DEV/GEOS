@@ -30,13 +30,6 @@
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
 
-#ifdef GEOSX_USE_MPI
-#include <Epetra_MpiComm.h>
-#else
-#include <Epetra_SerialComm.h>
-using Epetra_MpiComm = Epetra_SerialComm;
-#endif
-
 namespace geosx
 {
 
@@ -71,10 +64,10 @@ void EpetraMatrix::createWithGlobalSize( globalIndex const globalRows,
 
   m_dst_map = std::make_unique< Epetra_Map >( globalRows,
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                                              EpetraComm( MPI_PARAM( comm ) ) );
   m_src_map = std::make_unique< Epetra_Map >( globalCols,
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                                              EpetraComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      LvArray::integerConversion< int >( maxEntriesPerRow ),
@@ -96,11 +89,11 @@ void EpetraMatrix::createWithLocalSize( localIndex const localRows,
   m_dst_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
                                               LvArray::integerConversion< int >( localRows ),
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                                              EpetraComm( MPI_PARAM( comm ) ) );
   m_src_map = std::make_unique< Epetra_Map >( LvArray::integerConversion< globalIndex >( -1 ),
                                               LvArray::integerConversion< int >( localCols ),
                                               0,
-                                              Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                                              EpetraComm( MPI_PARAM( comm ) ) );
   m_matrix = std::make_unique< Epetra_FECrsMatrix >( Copy,
                                                      *m_dst_map,
                                                      LvArray::integerConversion< int >( maxEntriesPerRow ),
@@ -275,45 +268,6 @@ void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                                                             toEpetraLongLong( colIndices ),
                                                             values.dataIfContiguous(),
                                                             Epetra_FECrsMatrix::ROW_MAJOR ) );
-}
-
-void EpetraMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
-                        arraySlice1d< globalIndex const > const & colIndices,
-                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->SumIntoGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                        toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        toEpetraLongLong( colIndices ),
-                                                        values.dataIfContiguous(),
-                                                        Epetra_FECrsMatrix::COLUMN_MAJOR ) );
-}
-
-void EpetraMatrix::set( arraySlice1d< globalIndex const > const & rowIndices,
-                        arraySlice1d< globalIndex const > const & colIndices,
-                        arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  GEOSX_LAI_ASSERT( modifiable() );
-  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                        toEpetraLongLong( rowIndices ),
-                                                        LvArray::integerConversion< int >( colIndices.size() ),
-                                                        toEpetraLongLong( colIndices ),
-                                                        values.dataIfContiguous(),
-                                                        Epetra_FECrsMatrix::COLUMN_MAJOR ) );
-}
-
-void EpetraMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
-                           arraySlice1d< globalIndex const > const & colIndices,
-                           arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values )
-{
-  GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_CHECK_ERROR_NNEG( m_matrix->InsertGlobalValues( LvArray::integerConversion< int >( rowIndices.size() ),
-                                                            toEpetraLongLong( rowIndices ),
-                                                            LvArray::integerConversion< int >( colIndices.size() ),
-                                                            toEpetraLongLong( colIndices ),
-                                                            values.dataIfContiguous(),
-                                                            Epetra_FECrsMatrix::COLUMN_MAJOR ) );
 }
 
 void EpetraMatrix::add( globalIndex const * rowIndices,
@@ -594,7 +548,7 @@ void EpetraMatrix::addDiagonal( EpetraVector const & src )
 localIndex EpetraMatrix::maxRowLength() const
 {
   GEOSX_LAI_ASSERT( assembled() );
-  return m_matrix->MaxNumEntries();
+  return m_matrix->GlobalMaxNumEntries();
 }
 
 localIndex EpetraMatrix::localRowLength( localIndex localRowIndex ) const
@@ -782,13 +736,13 @@ globalIndex EpetraMatrix::getGlobalRowID( localIndex const index ) const
 localIndex EpetraMatrix::numLocalCols() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_src_map->NumMyElements();
+  return LvArray::integerConversion< localIndex >( m_src_map->NumMyElements() );
 }
 
 localIndex EpetraMatrix::numLocalRows() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->RowMap().NumMyElements();
+  return LvArray::integerConversion< localIndex >( m_dst_map->NumMyElements() );
 }
 
 MPI_Comm EpetraMatrix::getComm() const

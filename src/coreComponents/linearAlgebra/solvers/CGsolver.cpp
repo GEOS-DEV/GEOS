@@ -150,6 +150,8 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 #ifdef GEOSX_USE_TRILINOS
 template class CGsolver< TrilinosInterface::ParallelVector >;
 template class CGsolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class CGsolver< TrilinosTpetraInterface::ParallelVector >;
+template class CGsolver< BlockVectorView< TrilinosTpetraInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

@@ -107,7 +107,7 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
   GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize ) );
 }
 
-void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm )
+void PetscVector::createWithLocalValues( arrayView1d< real64 > const & localValues, MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
   reset();
@@ -447,7 +447,7 @@ globalIndex PetscVector::globalSize() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt size;
   GEOSX_LAI_CHECK_ERROR( VecGetSize( m_vec, &size ) );
-  return size;
+  return LvArray::integerConversion< globalIndex >( size );
 }
 
 localIndex PetscVector::localSize() const
@@ -455,7 +455,7 @@ localIndex PetscVector::localSize() const
   GEOSX_LAI_ASSERT( created() );
   PetscInt size;
   GEOSX_LAI_CHECK_ERROR( VecGetLocalSize( m_vec, &size ) );
-  return size;
+  return LvArray::integerConversion< localIndex >( size );
 }
 
 localIndex PetscVector::getLocalRowID( globalIndex const globalRow ) const

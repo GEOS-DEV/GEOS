@@ -2,57 +2,36 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All rights reserved
+ * All right reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file HypreVector.hpp
+ * @file TpetraVector.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TPETRAVECTOR_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_TPETRAVECTOR_HPP_
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
-/**
- * @name Hypre forward declarations.
- *
- * Forward declare hypre's vector structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
- */
-///@{
-
-/// IJVector struct forward declaration
-extern "C" struct hypre_IJVector_struct;
-
-/// IJVector pointer alias
-using HYPRE_IJVector = hypre_IJVector_struct *;
-
-/// ParVector struct forward definition
-extern "C" struct hypre_ParVector_struct;
-
-/// ParVector pointer alias
-using HYPRE_ParVector = hypre_ParVector_struct *;
-
-///@}
+#include <Tpetra_MultiVector_fwd.hpp>
+#include <Tpetra_Vector_fwd.hpp>
+#include <Tpetra_Map_fwd.hpp>
 
 namespace geosx
 {
 
 /**
- * @brief Wrapper class for hypre's ParVector.
- *
- * This class creates and provides basic support for the HYPRE_ParVector object
- * type used in Hypre using the linear-algebraic system interface (IJ interface).
+ * @brief Wrapper class for Trilinos/Tpetra's Vector class.
  */
-class HypreVector final : private VectorBase< HypreVector >
+class TpetraVector final : private VectorBase< TpetraVector >
 {
 public:
 
@@ -65,38 +44,38 @@ public:
    * @brief Empty vector constructor.
    * Create an empty (distributed) vector.
    */
-  HypreVector();
+  TpetraVector();
 
   /**
    * @brief Copy constructor.
    * @param src vector to be copied
    */
-  HypreVector( HypreVector const & src );
+  TpetraVector( TpetraVector const & src );
 
   /**
-   * @brief Move constructor.
-   * @param src vector to be moved
+   * @brief Move constructor
+   * @param src vector to move from
    */
-  HypreVector( HypreVector && src ) noexcept;
+  TpetraVector( TpetraVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
-   * @param src HypreVector to be copied.
-   * @return the new vector.
+   * @param src vector to be copied
+   * @return reference to this object
    */
-  HypreVector & operator=( HypreVector const & src );
+  TpetraVector & operator=( TpetraVector const & src );
 
   /**
    * @brief Move assignment.
-   * @param src HypreVector to be moved.
-   * @return the new vector.
+   * @param src vector to move from
+   * @return reference to this object
    */
-  HypreVector & operator=( HypreVector && src ) noexcept;
+  TpetraVector & operator=( TpetraVector && src ) noexcept;
 
   /**
    * @brief Destructor.
    */
-  ~HypreVector();
+  ~TpetraVector();
 
   ///@}
 
@@ -107,7 +86,6 @@ public:
 
   using VectorBase::closed;
   using VectorBase::ready;
-  using VectorBase::extract;
 
   virtual bool created() const override;
 
@@ -156,15 +134,15 @@ public:
 
   virtual void reciprocal() override;
 
-  virtual real64 dot( HypreVector const & vec ) const override;
+  virtual real64 dot( TpetraVector const & vec ) const override;
 
-  virtual void copy( HypreVector const & x ) override;
+  virtual void copy( TpetraVector const & x ) override;
 
   virtual void axpy( real64 const alpha,
-                     HypreVector const & x ) override;
+                     TpetraVector const & x ) override;
 
   virtual void axpby( real64 const alpha,
-                      HypreVector const & x,
+                      TpetraVector const & x,
                       real64 const beta ) override;
 
   virtual real64 norm1() const override;
@@ -183,16 +161,18 @@ public:
 
   virtual real64 get( globalIndex globalRow ) const override;
 
-  virtual void get( arraySlice1d< globalIndex const > const & globalRowIndices,
+  virtual void get( arraySlice1d< globalIndex const > const & globalIndices,
                     arraySlice1d< real64 > const & values ) const override;
 
-  virtual localIndex getLocalRowID( globalIndex const globalRowIndex ) const override;
+  virtual localIndex getLocalRowID( globalIndex const globalRow ) const override;
 
-  virtual globalIndex getGlobalRowID( localIndex const localRowIndex ) const override;
+  virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
 
   virtual real64 const * extractLocalVector() const override;
 
   virtual real64 * extractLocalVector() override;
+
+  virtual void extract( arrayView1d< real64 > const & localVector ) const override;
 
   virtual MPI_Comm getComm() const override;
 
@@ -204,31 +184,45 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the implementation.
-   * @return the underlying HYPRE_ParVector object.
+   * @brief Alias for Tpetra map template instantiation used by this class.
    */
-  HYPRE_ParVector const & unwrapped() const;
+  using Tpetra_Map = Tpetra::Map< int, globalIndex >;
 
   /**
-   * @brief Returns a pointer to the implementation.
-   * @return the underlying HYPRE_IJVector object.
+   * @brief Alias for specific Tpetra vector template instantiation wrapped by this class.
+   *
+   * @note This uses Tpetra's default execution/memory space. When built with CUDA support,
+   * this will be equal to Kokkos::Cuda, so we won't be able to create a host-only vector.
+   * If we want both in the same executable, we'll have to make adjustments to our LAI approach.
    */
-  HYPRE_IJVector const & unwrappedIJ() const;
+  using Tpetra_Vector = Tpetra::Vector< real64, int, globalIndex >;
+
+  /**
+   * @brief Alias for specific Tpetra::MultiVector vector template instantiation wrapped by this class.
+   *
+   * This is needed for correct specification of template arguments for solver classes (e.g. Belos)
+   * which must be templated on MultiVector and not Vector to invoke the right explicit instantiations.
+   */
+  using Tpetra_MultiVector = Tpetra::MultiVector< real64, int, globalIndex >;
+
+  /**
+   * @brief Get the underlying Tpetra object.
+   * @return reference to wrapped vector
+   */
+  Tpetra_Vector const & unwrapped() const;
+
+  /**
+   * @copydoc unwrapped() const
+   */
+  Tpetra_Vector & unwrapped();
 
 private:
 
-  /**
-   * Pointer to underlying HYPRE_IJVector type.
-   */
-  HYPRE_IJVector m_ij_vector;
-
-  /**
-   * Pointer to underlying HYPRE_ParVector type.
-   */
-  HYPRE_ParVector m_par_vector;
+  /// Pointer to wrapped Tpetra object.
+  std::unique_ptr< Tpetra_Vector > m_vector;
 
 };
 
-}// end namespace geosx
+} // namespace geosx
 
-#endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREVECTOR_HPP_*/
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_TPETRAVECTOR_HPP_

@@ -21,7 +21,6 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-//#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
@@ -437,36 +436,6 @@ protected:
   virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
                        arraySlice1d< globalIndex const > const & colIndices,
                        arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Add a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void add( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Set a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void set( arraySlice1d< globalIndex const > const & rowIndices,
-                    arraySlice1d< globalIndex const > const & colIndices,
-                    arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
-
-  /**
-   * @brief Insert a dense block of values.
-   * @param rowIndices Global row indices
-   * @param colIndices Global col indices
-   * @param values Dense local matrix of values
-   */
-  virtual void insert( arraySlice1d< globalIndex const > const & rowIndices,
-                       arraySlice1d< globalIndex const > const & colIndices,
-                       arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & values ) = 0;
 
   /**
    * @brief Add a dense block of values.

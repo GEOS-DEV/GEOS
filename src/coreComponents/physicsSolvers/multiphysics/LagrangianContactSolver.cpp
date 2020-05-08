@@ -630,8 +630,8 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-        m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-        m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
+        m_rhs.createWithLocalValues( m_localRhs, MPI_COMM_GEOSX );
+        m_solution.createWithLocalValues( m_localSolution, MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
         DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );

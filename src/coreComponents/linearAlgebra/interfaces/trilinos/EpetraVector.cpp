@@ -25,13 +25,6 @@
 #include <Epetra_Map.h>
 #include <EpetraExt_MultiVectorOut.h>
 
-#ifdef GEOSX_USE_MPI
-#include <Epetra_MpiComm.h>
-#else
-#include <Epetra_SerialComm.h>
-typedef Epetra_SerialComm Epetra_MpiComm;
-#endif
-
 namespace geosx
 {
 
@@ -101,7 +94,7 @@ void EpetraVector::createWithLocalSize( localIndex const localSize,
   Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),
                         LvArray::integerConversion< int >( localSize ),
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                        EpetraComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
 
@@ -112,12 +105,12 @@ void EpetraVector::createWithGlobalSize( globalIndex const globalSize,
   GEOSX_LAI_ASSERT_GE( globalSize, 0 );
   Epetra_Map const map( LvArray::integerConversion< long long >( globalSize ),
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
+                        EpetraComm( MPI_PARAM( comm ) ) );
   m_vector = std::make_unique< Epetra_FEVector >( map );
 }
 
-void EpetraVector::create( arrayView1d< real64 const > const & localValues,
-                           MPI_Comm const & MPI_PARAM( comm ) )
+void EpetraVector::createWithLocalValues( arrayView1d< real64 > const & localValues,
+                                          MPI_Comm const & MPI_PARAM( comm ) )
 {
   GEOSX_LAI_ASSERT( closed() );
 
@@ -127,10 +120,10 @@ void EpetraVector::create( arrayView1d< real64 const > const & localValues,
   Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),
                         localSize,
                         0,
-                        Epetra_MpiComm( MPI_PARAM( comm ) ) );
-  m_vector = std::make_unique< Epetra_FEVector >( Copy,
+                        EpetraComm( MPI_PARAM( comm ) ) );
+  m_vector = std::make_unique< Epetra_FEVector >( View,
                                                   map,
-                                                  const_cast< real64 * >( localValues.data() ),
+                                                  localValues.data(),
                                                   localSize,
                                                   1 );
 }

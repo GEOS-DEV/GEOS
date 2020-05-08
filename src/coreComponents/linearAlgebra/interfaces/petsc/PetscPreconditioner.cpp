@@ -18,8 +18,6 @@
 
 #include "PetscPreconditioner.hpp"
 
-#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
-
 #include <petscksp.h>
 
 namespace geosx
@@ -37,7 +35,7 @@ PetscPreconditioner::~PetscPreconditioner()
   clear();
 }
 
-void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
+void CreatePetscAMG( LinearSolverParameters const & params, PC const precond )
 {
   // Default options only for the moment
   GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
@@ -45,32 +43,32 @@ void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
-  GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHMG ) );
-  GEOSX_LAI_CHECK_ERROR( PCHMGSetInnerPCType( prec, PCGAMG ) );
+  GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCHMG ) );
+  GEOSX_LAI_CHECK_ERROR( PCHMGSetInnerPCType( precond, PCGAMG ) );
 
   // Set maximum number of multigrid levels
-  if( m_parameters.amg.maxLevels > 0 )
+  if( params.amg.maxLevels > 0 )
   {
-    GEOSX_LAI_CHECK_ERROR( PCMGSetLevels( prec,
-                                          LvArray::integerConversion< PetscInt >( m_parameters.amg.maxLevels ),
+    GEOSX_LAI_CHECK_ERROR( PCMGSetLevels( precond,
+                                          LvArray::integerConversion< PetscInt >( params.amg.maxLevels ),
                                           nullptr ) );
   }
 
   // Set the number of sweeps
-  if( m_parameters.amg.numSweeps > 1 )
+  if( params.amg.numSweeps > 1 )
   {
-    GEOSX_LAI_CHECK_ERROR( PCMGSetNumberSmooth( prec,
-                                                LvArray::integerConversion< PetscInt >( m_parameters.amg.numSweeps ) ) );
+    GEOSX_LAI_CHECK_ERROR( PCMGSetNumberSmooth( precond,
+                                                LvArray::integerConversion< PetscInt >( params.amg.numSweeps ) ) );
   }
 
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
-  if( m_parameters.amg.cycleType == "V" )
+  if( params.amg.cycleType == "V" )
   {
-    GEOSX_LAI_CHECK_ERROR( PCMGSetCycleType( prec, PC_MG_CYCLE_V ) );
+    GEOSX_LAI_CHECK_ERROR( PCMGSetCycleType( precond, PC_MG_CYCLE_V ) );
   }
-  else if( m_parameters.amg.cycleType == "W" )
+  else if( params.amg.cycleType == "W" )
   {
-    GEOSX_LAI_CHECK_ERROR( PCMGSetCycleType( prec, PC_MG_CYCLE_W ) );
+    GEOSX_LAI_CHECK_ERROR( PCMGSetCycleType( precond, PC_MG_CYCLE_W ) );
   }
 
   // Set smoother to be used (for all levels)
@@ -78,55 +76,67 @@ void CreatePetscAMG( LinearSolverParameters const & params, PC precond )
   PetscInt l;
   KSP smoother;
   PC smootherPC;
-  GEOSX_LAI_CHECK_ERROR( PCMGGetLevels( prec, &numLevels ) );
+  GEOSX_LAI_CHECK_ERROR( PCMGGetLevels( precond, &numLevels ) );
 
   GEOSX_LOG_RANK_VAR( numLevels );
 
   for( l = 0; l < numLevels; ++l )
   {
-    GEOSX_LAI_CHECK_ERROR( PCMGGetSmoother( prec, l, &smoother ) );
+    GEOSX_LAI_CHECK_ERROR( PCMGGetSmoother( precond, l, &smoother ) );
     GEOSX_LAI_CHECK_ERROR( KSPSetType( smoother, KSPRICHARDSON ) );
     GEOSX_LAI_CHECK_ERROR( KSPGetPC( smoother, &smootherPC ) );
 
-    if( m_parameters.amg.smootherType == "jacobi" )
+    switch( params.amg.smootherType )
     {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCJACOBI ) );
-    }
-    else if( m_parameters.amg.smootherType == "gaussSeidel" )
-    {
-      GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCSOR ) );
-    }
-    else if( m_parameters.amg.smootherType.substr( 0, 3 ) == "ilu" )
-    {
-      // Set up additive Schwartz preconditioner
-      GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCASM ) );
-      GEOSX_LAI_CHECK_ERROR( PCASMSetOverlap( smootherPC, 0 ) );
-      GEOSX_LAI_CHECK_ERROR( PCASMSetType( smootherPC, PC_ASM_RESTRICT ) );
-      // GEOSX_LAI_CHECK_ERROR( PCSetUp( smootherPC ) );
-
-      // Get local preconditioning context
-      KSP * ksp_local;
-      PetscInt n_local, first_local;
-      GEOSX_LAI_CHECK_ERROR( PCASMGetSubKSP( smootherPC, &n_local, &first_local, &ksp_local ) );
-
-      // Sanity checks
-      GEOSX_LAI_ASSERT_EQ( n_local, 1 );
-      GEOSX_LAI_ASSERT_EQ( first_local, MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) );
-
-      // Set up local block ILU preconditioner
-      PC prec_local;
-      GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp_local[0], KSPPREONLY ) );
-      GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp_local[0], &prec_local ) );
-      GEOSX_LAI_CHECK_ERROR( PCSetType( prec_local, PCILU ) );
-      if( m_parameters.amg.smootherType == "ilu1" )
+      case LinearSolverParameters::PreconditionerType::jacobi:
       {
-        GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 1 ) );
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCJACOBI ) );
+        break;
       }
-      else
+      case LinearSolverParameters::PreconditionerType::gs:
       {
-        GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 0 ) );
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCSOR ) );
+        break;
       }
-      // GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( smootherPC ) );
+      case LinearSolverParameters::PreconditionerType::iluk:
+      {
+        // Set up additive Schwartz preconditioner
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCASM ) );
+        GEOSX_LAI_CHECK_ERROR( PCASMSetOverlap( smootherPC, 0 ) );
+        GEOSX_LAI_CHECK_ERROR( PCASMSetType( smootherPC, PC_ASM_RESTRICT ) );
+        // GEOSX_LAI_CHECK_ERROR( PCSetUp( smootherPC ) );
+
+        // Get local preconditioning context
+        KSP * ksp_local;
+        PetscInt n_local, first_local;
+        GEOSX_LAI_CHECK_ERROR( PCASMGetSubKSP( smootherPC, &n_local, &first_local, &ksp_local ) );
+
+        // Sanity checks
+        GEOSX_LAI_ASSERT_EQ( n_local, 1 );
+        GEOSX_LAI_ASSERT_EQ( first_local, MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) );
+
+        // Set up local block ILU preconditioner
+        PC prec_local;
+        GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp_local[0], KSPPREONLY ) );
+        GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp_local[0], &prec_local ) );
+        GEOSX_LAI_CHECK_ERROR( PCSetType( prec_local, PCILU ) );
+
+        // TODO: re-enable when we can properly pass level-of-fill in smoother
+#if 0
+        if( params.amg.smootherType == "ilu1" )
+        {
+          GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 1 ) );
+        }
+        else
+#endif
+        {
+          GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 0 ) );
+        }
+        // GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( smootherPC ) );
+        break;
+      }
+      default:
+        GEOSX_ERROR( "Smoother type not supported in PETSc/AMG: " << params.amg.smootherType );
     }
   }
 
@@ -161,7 +171,7 @@ PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & 
   return typeMap.at( type );
 }
 
-void CreatePetscSmoother( LinearSolverParameters const & params, PC precond )
+void CreatePetscSmoother( LinearSolverParameters const & params, PC const precond )
 {
   // Set up additive Schwartz outer preconditioner
   GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCASM ) );
@@ -181,6 +191,13 @@ void CreatePetscSmoother( LinearSolverParameters const & params, PC precond )
   GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp_local[0], &prec_local ) );
   GEOSX_LAI_CHECK_ERROR( PCSetType( prec_local, getPetscSmootherType( params.preconditionerType ) ) );
   GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, params.ilu.fill ) );
+}
+
+void CreatePetscDirect( LinearSolverParameters const & GEOSX_UNUSED_PARAM( params ), PC const precond )
+{
+  GEOSX_LAI_CHECK_ERROR( PCSetType( precond, PCLU ) );
+  GEOSX_LAI_CHECK_ERROR( PCFactorSetMatSolverType( precond, MATSOLVERSUPERLU_DIST ) );
+  GEOSX_LAI_CHECK_ERROR( PCSetUp( precond ) );
 }
 
 void PetscPreconditioner::compute( PetscMatrix const & mat )
@@ -220,6 +237,11 @@ void PetscPreconditioner::compute( PetscMatrix const & mat )
       case LinearSolverParameters::PreconditionerType::icc:
       {
         CreatePetscSmoother( m_parameters, m_precond );
+        break;
+      }
+      case LinearSolverParameters::PreconditionerType::direct:
+      {
+        CreatePetscDirect( m_parameters, m_precond );
         break;
       }
       default:

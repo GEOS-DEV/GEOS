@@ -86,7 +86,7 @@ void BlockPreconditioner< LAI >::applyBlockScaling()
   {
     if( m_scalingOption == BlockScalingOption::FrobeniusNorm )
     {
-      real64 norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
+      real64 const norms[2] = { m_matBlocks( 0, 0 ).normFrobenius(), m_matBlocks( 1, 1 ).normFrobenius() };
       m_scaling[0] = std::min( norms[1] / norms[0], 1.0 );
       m_scaling[1] = std::min( norms[0] / norms[1], 1.0 );
     }
@@ -241,6 +241,7 @@ void BlockPreconditioner< LAI >::clear()
 // -----------------------
 #ifdef GEOSX_USE_TRILINOS
 template class BlockPreconditioner< TrilinosInterface >;
+template class BlockPreconditioner< TrilinosTpetraInterface >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

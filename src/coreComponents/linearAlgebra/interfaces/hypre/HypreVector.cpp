@@ -157,8 +157,8 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   finalize( m_ij_vector, m_par_vector );
 }
 
-void HypreVector::create( arrayView1d< real64 const > const & localValues,
-                          MPI_Comm const & comm )
+void HypreVector::createWithLocalValues( arrayView1d< real64 > const & localValues,
+                                         MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
 

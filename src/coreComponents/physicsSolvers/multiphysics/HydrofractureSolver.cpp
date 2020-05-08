@@ -846,9 +846,9 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
 
     m_solidSolver->getSystemMatrix().create( m_solidSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-    m_solidSolver->getSystemRhs().create( m_solidSolver->getLocalRhs().toViewConst(), MPI_COMM_GEOSX );
+    m_solidSolver->getSystemRhs().createWithLocalValues( m_solidSolver->getLocalRhs(), MPI_COMM_GEOSX );
     m_flowSolver->getSystemMatrix().create( m_flowSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
-    m_flowSolver->getSystemRhs().create( m_flowSolver->getLocalRhs().toViewConst(), MPI_COMM_GEOSX );
+    m_flowSolver->getSystemRhs().createWithLocalValues( m_flowSolver->getLocalRhs(), MPI_COMM_GEOSX );
 
 //    GEOSX_LOG_RANK_0("***********************************************************");
 //    GEOSX_LOG_RANK_0("matrix00");
@@ -1290,14 +1290,14 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   Epetra_FEVector * p_rhs[2];
   Epetra_FEVector * p_solution[2];
 
-  m_solidSolver->getSystemRhs().create( m_solidSolver->getLocalRhs(), MPI_COMM_GEOSX );
-  m_flowSolver->getSystemRhs().create( m_flowSolver->getLocalRhs(), MPI_COMM_GEOSX );
+  m_solidSolver->getSystemRhs().createWithLocalValues( m_solidSolver->getLocalRhs(), MPI_COMM_GEOSX );
+  m_flowSolver->getSystemRhs().createWithLocalValues( m_flowSolver->getLocalRhs(), MPI_COMM_GEOSX );
 
   p_rhs[0] = &m_solidSolver->getSystemRhs().unwrapped();
   p_rhs[1] = &m_flowSolver->getSystemRhs().unwrapped();
 
-  m_solidSolver->getSystemSolution().create( m_solidSolver->getLocalSolution(), MPI_COMM_GEOSX );
-  m_flowSolver->getSystemSolution().create( m_flowSolver->getLocalSolution(), MPI_COMM_GEOSX );
+  m_solidSolver->getSystemSolution().createWithLocalValues( m_solidSolver->getLocalSolution(), MPI_COMM_GEOSX );
+  m_flowSolver->getSystemSolution().createWithLocalValues( m_flowSolver->getLocalSolution(), MPI_COMM_GEOSX );
 
   p_solution[0] = &m_solidSolver->getSystemSolution().unwrapped();
   p_solution[1] = &m_flowSolver->getSystemSolution().unwrapped();

@@ -23,6 +23,7 @@
 
 #ifdef GEOSX_USE_TRILINOS
 #include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosTpetraInterface.hpp"
 #endif
 
 #ifdef GEOSX_USE_HYPRE
@@ -62,6 +63,7 @@ inline void setupLAI( int & argc, char * * & argv )
 {
 #ifdef GEOSX_USE_TRILINOS
   TrilinosInterface::initialize( argc, argv );
+  TrilinosTpetraInterface::initialize( argc, argv );
 #endif
 #ifdef GEOSX_USE_HYPRE
   HypreInterface::initialize( argc, argv );
@@ -78,6 +80,7 @@ inline void finalizeLAI()
 {
 #ifdef GEOSX_USE_TRILINOS
   TrilinosInterface::finalize();
+  TrilinosTpetraInterface::finalize();
 #endif
 #ifdef GEOSX_USE_HYPRE
   HypreInterface::finalize();

@@ -90,10 +90,12 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                 &rhs.unwrapped() );
 
   // Instantiate the Amesos solver.
-  Amesos Factory;
+  Amesos factory;
 
-  // Select KLU solver (only one available as of 9/20/2018)
-  std::unique_ptr< Amesos_BaseSolver > solver( Factory.Create( "Klu", problem ) );
+  // Select KLU solver.
+  // Current Trilinos release (13.0) is not compatible with our SuperLU_Dist version (6.3)
+  // Amesos' Umfpack interface does not work correctly with 64-bit global indices.
+  std::unique_ptr< Amesos_BaseSolver > solver( factory.Create( "Klu", problem ) );
 
   // Factorize the matrix
   GEOSX_LAI_CHECK_ERROR( solver->SymbolicFactorization() );

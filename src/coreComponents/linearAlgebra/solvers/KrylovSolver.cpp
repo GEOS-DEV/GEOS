@@ -91,6 +91,8 @@ KrylovSolver< VECTOR >::Create( LinearSolverParameters const & parameters,
 #ifdef GEOSX_USE_TRILINOS
 template class KrylovSolver< TrilinosInterface::ParallelVector >;
 template class KrylovSolver< BlockVectorView< TrilinosInterface::ParallelVector > >;
+template class KrylovSolver< TrilinosTpetraInterface::ParallelVector >;
+template class KrylovSolver< BlockVectorView< TrilinosTpetraInterface::ParallelVector > >;
 #endif
 
 #ifdef GEOSX_USE_HYPRE

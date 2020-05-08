@@ -63,16 +63,27 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/EpetraMatrix.hpp
           interfaces/trilinos/EpetraVector.hpp
           interfaces/trilinos/EpetraUtils.hpp
+          interfaces/trilinos/TpetraMatrix.hpp
+          interfaces/trilinos/TpetraVector.hpp
+          interfaces/trilinos/TpetraUtils.hpp
           interfaces/trilinos/TrilinosPreconditioner.hpp
+          interfaces/trilinos/TrilinosTpetraPreconditioner.hpp
           interfaces/trilinos/TrilinosSolver.hpp
-          interfaces/trilinos/TrilinosInterface.hpp )
+          interfaces/trilinos/TrilinosTpetraSolver.hpp
+          interfaces/trilinos/TrilinosInterface.hpp
+          interfaces/trilinos/TrilinosTpetraInterface.hpp )
 
     list( APPEND linearAlgebra_sources
           interfaces/trilinos/EpetraMatrix.cpp
           interfaces/trilinos/EpetraVector.cpp
+          interfaces/trilinos/TpetraMatrix.cpp
+          interfaces/trilinos/TpetraVector.cpp
           interfaces/trilinos/TrilinosPreconditioner.cpp
+          interfaces/trilinos/TrilinosTpetraPreconditioner.cpp
           interfaces/trilinos/TrilinosSolver.cpp
-          interfaces/trilinos/TrilinosInterface.cpp )
+          interfaces/trilinos/TrilinosTpetraSolver.cpp
+          interfaces/trilinos/TrilinosInterface.cpp
+          interfaces/trilinos/TrilinosTpetraInterface.cpp )
 
     list( APPEND dependencyList trilinos )
 

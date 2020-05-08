@@ -2,48 +2,44 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All rights reserved
+ * All right reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
- * @file TrilinosPreconditioner.hpp
+ * @file TrilinosTpetraPreconditioner.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
-#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSTPETRAPRECONDITIONER_HPP_
+#define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSTPETRAPRECONDITIONER_HPP_
 
 #include "linearAlgebra/solvers/PreconditionerBase.hpp"
-#include "linearAlgebra/interfaces/trilinos/TrilinosInterface.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosTpetraInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+#include <Tpetra_Operator_fwd.hpp>
+#include <Tpetra_RowMatrix_fwd.hpp>
+
 #include <memory>
-
-class Epetra_Operator;
-
-namespace Teuchos
-{
-class ParameterList;
-}
 
 namespace geosx
 {
 
 /**
- * @brief Wrapper around Trilinos-based preconditioners.
+ * @brief Wrapper around Trilinos Tpetra-based preconditioners.
  */
-class TrilinosPreconditioner final : public PreconditionerBase< TrilinosInterface >
+class TrilinosTpetraPreconditioner final : public PreconditionerBase< TrilinosTpetraInterface >
 {
 public:
 
   /// Alias for base type
-  using Base = PreconditionerBase< TrilinosInterface >;
+  using Base = PreconditionerBase< TrilinosTpetraInterface >;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
@@ -58,12 +54,12 @@ public:
    * @brief Constructor.
    * @param params preconditioner parameters
    */
-  explicit TrilinosPreconditioner( LinearSolverParameters params );
+  explicit TrilinosTpetraPreconditioner( LinearSolverParameters params );
 
   /**
    * @brief Destructor.
    */
-  virtual ~TrilinosPreconditioner() override;
+  virtual ~TrilinosTpetraPreconditioner() override;
 
   /**
    * @brief Compute the preconditioner from a matrix.
@@ -82,16 +78,22 @@ public:
 
   virtual void clear() override;
 
+  /// Instantiation of Tpetra::Operator template held by this class
+  using Tpetra_Operator = Tpetra::Operator< real64, int, globalIndex >;
+
+  /// Instantiation of Tpetra::RowMatrix template used by this class
+  using Tpetra_RowMatrix = Tpetra::RowMatrix< real64, int, globalIndex >;
+
   /**
    * @brief Access the underlying Epetra preconditioning operator.
    * @return reference to the Epetra operator
    */
-  Epetra_Operator const & unwrapped() const;
+  Tpetra_Operator const & unwrapped() const;
 
   /**
    * @copydoc unwrapped() const
    */
-  Epetra_Operator & unwrapped();
+  Tpetra_Operator & unwrapped();
 
 private:
 
@@ -99,9 +101,9 @@ private:
   LinearSolverParameters m_parameters;
 
   /// Pointer to the Trilinos implementation
-  std::unique_ptr< Epetra_Operator > m_precond;
+  std::unique_ptr< Tpetra_Operator > m_precond;
 };
 
-}
+} // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSPRECONDITIONER_HPP_
+#endif //GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSTPETRAPRECONDITIONER_HPP_

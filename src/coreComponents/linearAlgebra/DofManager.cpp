@@ -1983,6 +1983,7 @@ void DofManager::printFieldInfo( std::ostream & os ) const
 
 #ifdef GEOSX_USE_TRILINOS
 MAKE_DOFMANAGER_METHOD_INST( TrilinosInterface )
+MAKE_DOFMANAGER_METHOD_INST( TrilinosTpetraInterface )
 #endif
 
 #ifdef GEOSX_USE_HYPRE
