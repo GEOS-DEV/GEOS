@@ -81,7 +81,7 @@ void CompositeFunction::InitializeFunction()
 
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::Instance();
-  m_numSubFunctions = integer_conversion< localIndex >( m_functionNames.size());
+  m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
     m_subFunctions.push_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));

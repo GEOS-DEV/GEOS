@@ -5,8 +5,6 @@
 #
 set( fileIO_headers
      silo/SiloFile.hpp
-     vtk/VTKFile.hpp
-     vtm/VtmFile.hpp
      schema/schemaUtilities.hpp )
 
 #
@@ -14,8 +12,6 @@ set( fileIO_headers
 #
 set( fileIO_sources
      silo/SiloFile.cpp
-     vtk/VTKFile.cpp
-     vtm/VtmFile.cpp
      schema/schemaUtilities.cpp )
 
 if( BUILD_OBJ_LIBS)
@@ -30,6 +26,23 @@ if( ENABLE_MPI )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp )
 endif() 
+
+if( ENABLE_VTK )
+  list( APPEND fileIO_headers
+               vtk/VTKPVDWriter.hpp
+               vtk/VTKVTMWriter.hpp
+               vtk/VTKGEOSXData.hpp
+               vtk/VTKPolyDataWriterInterface.hpp )
+
+  list( APPEND fileIO_sources
+               vtk/VTKGEOSXData.cpp
+               vtk/VTKPVDWriter.cpp
+               vtk/VTKVTMWriter.cpp
+               vtk/VTKPolyDataWriterInterface.cpp )
+
+
+  list( APPEND dependencyList vtk )
+endif()
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

@@ -623,7 +623,7 @@ template<> inline long int CastField< long int, long int >( const long int & fie
 
 template<> inline int CastField< int, long int >( const long int & field, int const )
 {
-  return integer_conversion< int >( field );
+  return LvArray::integerConversion< int >( field );
 }
 
 template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const )
@@ -633,7 +633,7 @@ template<> inline long long int CastField< long long int, long long int >( const
 
 template<> inline int CastField< int, long long int >( const long long int & field, int const )
 {
-  return integer_conversion< int >( field );
+  return LvArray::integerConversion< int >( field );
 }
 
 template<> inline real64 CastField< real64, real64 >( const real64 & field, int const )

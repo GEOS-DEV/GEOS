@@ -23,12 +23,13 @@
 #include <cstring>
 #include <memory>
 #include <sstream>
+ #include <iomanip>
 #include <algorithm>
 #include <map>
 
 
 #include "common/DataTypes.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -52,9 +53,18 @@ inline bool streq( char const * const strA, char const * const strB )
 /// Subdivide string by delimiters
 string_array Tokenize( std::string const & str, std::string const & delimiters );
 
-string EncodeBase64( unsigned char const * const bytes,
-                     integer dataSize );
-
+/**
+ * @brief Retuns a string containing a padded value
+ * @param[in] value to be padded
+ * @param[in] size size of the padding
+ */
+template< typename T >
+string PadValue( T value, int size )
+{
+  std::stringstream paddedStringStream;
+  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
+  return paddedStringStream.str();
+}
 }
 }
 

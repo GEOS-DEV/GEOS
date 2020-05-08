@@ -47,7 +47,7 @@ integer FunctionBase::isFunctionOfTime() const
 {
   integer rval=0;
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex numVars = integer_conversion< localIndex >( inputVarNames.size());
+  localIndex numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
 
   if( numVars==1 )
   {
@@ -77,7 +77,7 @@ real64_array FunctionBase::EvaluateStats( dataRepository::Group const * const gr
 {
   localIndex N = set.size();
   real64_array sub( N );
-  Evaluate( group, time, set, sub );
+  Evaluate( group, time, set.toViewConst(), sub );
 
   real64_array result( 3 );
   result[0] = 1e10;   // min

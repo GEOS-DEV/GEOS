@@ -17,9 +17,9 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "cxx-utilities/src/SetFPE.hpp"
-#include "cxx-utilities/src/SetSignalHandling.hpp"
-#include "cxx-utilities/src/stackTrace.hpp"
+#include "LvArray/src/SetFPE.hpp"
+#include "LvArray/src/SetSignalHandling.hpp"
+#include "LvArray/src/stackTrace.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -110,7 +110,7 @@ void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::Sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << cxx_utilities::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << LvArray::calculateSize( totalMark ) );
 
     pushStatsIntoAdiak( allocatorName + " high water mark", mark );
   }
@@ -466,8 +466,8 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  cxx_utilities::setSignalHandling( cxx_utilities::handler1 );
-  cxx_utilities::SetFPE();
+  LvArray::setSignalHandling( []( int const signal ) { LvArray::stackTraceHandler( signal, true ); } );
+  LvArray::SetFPE();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
