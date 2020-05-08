@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -274,7 +275,12 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
+#if defined(USE_EXTRINSIC_MESH_DATA)
+    extrinsicMeshData::ParentIndex::registerField ( *nodeManager, this->getName() );
+#else
     nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
+#endif
+
     nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
 
     nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
@@ -364,7 +370,12 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
+#if defined(USE_EXTRINSIC_MESH_DATA)
+    arrayView1d< localIndex > const & parentNodeIndex = extrinsicMeshData::ParentIndex::get( *nodeManager );
+
+#else
     arrayView1d< localIndex > & parentNodeIndex = nodeManager->GetParentIndices();
+#endif
     arrayView1d< localIndex > & parentFaceIndex = faceManager->GetParentIndices();
     arrayView1d< localIndex > & childFaceIndex = faceManager->GetParentIndices();
 
