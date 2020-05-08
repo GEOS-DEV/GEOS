@@ -149,8 +149,11 @@ public:
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & GEOSX_UNUSED_PARAM( packList ) ) const
-  { return 0; }
+  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+  {
+    GEOSX_UNUSED_VAR( packList );
+    return 0;
+  }
 
   /**
    * @brief Packs the specific elements in the @ packList.
@@ -158,9 +161,13 @@ public:
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  virtual localIndex PackUpDownMaps( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
-                                     arrayView1d< localIndex const > const & GEOSX_UNUSED_PARAM( packList ) ) const
-  { return 0; }
+  virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const
+  {
+    GEOSX_UNUSED_VAR( buffer );
+    GEOSX_UNUSED_VAR( packList );
+    return 0;
+  }
 
   /**
    * @brief Unpacks the specific elements in the @ packList.
@@ -170,11 +177,17 @@ public:
    * @param overwriteDownMaps Clear the down maps provided.
    * @return The packed size.
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
-                                       array1d< localIndex > & GEOSX_UNUSED_PARAM( packList ),
-                                       bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
-                                       bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
-  { return 0; }
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const *& buffer,
+                                       array1d< localIndex > & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps )
+  {
+    GEOSX_UNUSED_VAR( buffer );
+    GEOSX_UNUSED_VAR( packList );
+    GEOSX_UNUSED_VAR( overwriteUpMaps );
+    GEOSX_UNUSED_VAR( overwriteDownMaps );
+    return 0;
+  }
 
   /**
    * @brief Unpacks the global maps from @p buffer.
@@ -270,7 +283,6 @@ public:
 
   /**
    * @copydoc geosx::dataRepository::Group::resize(indexType const)
-   * @param newSize The new size of the group.
    * @return Always 0, whatever the new size is.
    */
   localIndex resize( localIndex const newSize,
@@ -344,9 +356,12 @@ public:
    *
    * Dummy version, needs to be specialised by derived classes.
    */
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const GEOSX_UNUSED_PARAM( obj ),
-                                                                std::vector< std::vector< globalIndex > > & GEOSX_UNUSED_PARAM( map ) )
-  {}
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const obj,
+                                                                std::vector< std::vector< globalIndex > > & map )
+  {
+    GEOSX_UNUSED_VAR( obj );
+    GEOSX_UNUSED_VAR( map );
+  }
 
   /**
    * @brief Defines @p neighborRank ownership for ghost objects.
@@ -442,9 +457,8 @@ public:
 
   /**
    * @brief Fixing the up/down maps by mapping the unmapped indices.
-   * @tparam TYPE_RELATION Some InterObjectRelation template class instance.
-   * @tparam globalToLocal This map is used instead of the map provided by @p relation.
    * @param relation Global to local indices relations.
+   * @param globalToLocal This map is used instead of the map provided by @p relation.
    * @param unmappedIndices Unmapped indices we will map during this function call.
    * @param clearIfUnmapped Shall we clear the unmapped indices. Here unused.
    */
