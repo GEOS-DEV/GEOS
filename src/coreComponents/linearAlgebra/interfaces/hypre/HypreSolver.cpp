@@ -118,7 +118,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     precondSetupFunction = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
     precondApplyFunction = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
 
@@ -265,11 +265,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond,
                                                                LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ),
                                                                1 ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond, 0, 2 ) );
     }
 
     // Set the number of post-smoothing sweeps
     if( m_parameters.amg.preOrPostSmoothing == "post" )
     {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond, 0, 1 ) );
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond,
                                                                LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ),
                                                                2 ) );

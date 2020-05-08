@@ -132,7 +132,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   {
     PCSetType( prec, PCICC );
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     // Set up additive Schwartz outer preconditioner
     GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCASM ) );
