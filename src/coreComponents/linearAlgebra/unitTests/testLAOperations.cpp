@@ -566,7 +566,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   // We now do the same using ILU(k) preconditioned GMRES
   // Again the norm should be the norm of x.
   parameters.solverType = "gmres";
-  parameters.preconditionerType = "ilu";
+  parameters.preconditionerType = "iluk";
   parameters.ilu.fill = 1;
   x_comp.zero();
   solver.solve( matrix, x_comp, b );
@@ -578,7 +578,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // Set basic options
   parameters.solverType = "cg";
-  parameters.preconditionerType = "none";//"amg";
+  parameters.preconditionerType = "amg"; // for PETSc default options only
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
   norm_comp = x_comp.norm2();

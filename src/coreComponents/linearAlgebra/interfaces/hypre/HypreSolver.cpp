@@ -232,13 +232,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 18 ) );
     }
-    else if( m_parameters.amg.smootherType.substr( 0, 3 ) == "ILU" )
+    else if( m_parameters.amg.smootherType.substr( 0, 3 ) == "ilu" )
     {
       // - block Jacobi ILU0 (default)
       // - block Jacobi ILU1
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( precond, 5 ) );
       GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond, 0 ) );
-      if( m_parameters.amg.smootherType == "ILU1" )
+      if( m_parameters.amg.smootherType == "ilu1" )
       {
         GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond, 1 ) );
       }
@@ -253,10 +253,26 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     }
 
     // Set the number of sweeps
-    if( m_parameters.amg.numSweeps > 1 )
+    if( m_parameters.amg.preOrPostSmoothing == "both" )
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( precond,
                                                           LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ) ) );
+    }
+
+    // Set the number of pre-smoothing sweeps
+    if( m_parameters.amg.preOrPostSmoothing == "pre" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond,
+                                                               LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ),
+                                                               1 ) );
+    }
+
+    // Set the number of post-smoothing sweeps
+    if( m_parameters.amg.preOrPostSmoothing == "post" )
+    {
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleNumSweeps( precond,
+                                                               LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ),
+                                                               2 ) );
     }
 
     // Set strength of connection
@@ -265,7 +281,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( precond, m_parameters.amg.strenghtOfConnection ) );
     }
 
-    //TODO: add user-defined null space / rigid body mode support
+//    //TODO: add user-defined null space / rigid body mode support
 //    if ( m_parameters.amg.nullSpaceType )
 //    {
 //      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpVectors ( precond ,

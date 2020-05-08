@@ -128,6 +128,10 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   {
     PCSetType( prec, PCJACOBI );
   }
+  else if( m_parameters.preconditionerType == "icc" )
+  {
+    PCSetType( prec, PCICC );
+  }
   else if( m_parameters.preconditionerType == "ilu" )
   {
     // Set up additive Schwartz outer preconditioner
@@ -168,13 +172,26 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), scratch.unwrapped() ) );
     }
 
+    //  Default options only for the moment
     GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCGAMG ) );
+
+#if 0
+    GEOSX_LAI_CHECK_ERROR( PCSetType( prec, PCHMG ) );
+    GEOSX_LAI_CHECK_ERROR( PCHMGSetInnerPCType( prec, PCGAMG ) );
 
     // Set maximum number of multigrid levels
     if( m_parameters.amg.maxLevels > 0 )
     {
-      GEOSX_LAI_CHECK_ERROR( PCGAMGSetNlevels( prec,
-                                               LvArray::integerConversion< PetscInt >( m_parameters.amg.maxLevels ) ) );
+      GEOSX_LAI_CHECK_ERROR( PCMGSetLevels( prec,
+                                            LvArray::integerConversion< PetscInt >( m_parameters.amg.maxLevels ),
+                                            nullptr ) );
+    }
+
+    // Set the number of sweeps
+    if( m_parameters.amg.numSweeps > 1 )
+    {
+      GEOSX_LAI_CHECK_ERROR( PCMGSetNumberSmooth( prec,
+                                                  LvArray::integerConversion< PetscInt >( m_parameters.amg.numSweeps ) ) );
     }
 
     // Set type of cycle (1: V-cycle (default); 2: W-cycle)
@@ -187,25 +204,79 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( PCMGSetCycleType( prec, PC_MG_CYCLE_W ) );
     }
 
-    // Set smoother to be used
-    // TODO: find a way to set the smoother for all level
-    // m_parameters.amg.smootherType
+    // Set smoother to be used (for all levels)
+    PetscInt numLevels;
+    PetscInt l;
+    KSP smoother;
+    PC smootherPC;
+    GEOSX_LAI_CHECK_ERROR( PCMGGetLevels( prec, &numLevels ) );
+
+    GEOSX_LOG_RANK_VAR( numLevels );
+
+    for( l = 0; l < numLevels; ++l )
+    {
+      GEOSX_LAI_CHECK_ERROR( PCMGGetSmoother( prec, l, &smoother ) );
+      GEOSX_LAI_CHECK_ERROR( KSPSetType( smoother, KSPRICHARDSON ) );
+      GEOSX_LAI_CHECK_ERROR( KSPGetPC( smoother, &smootherPC ) );
+
+      if( m_parameters.amg.smootherType == "jacobi" )
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCJACOBI ) );
+      }
+      else if( m_parameters.amg.smootherType == "gaussSeidel" )
+      {
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCSOR ) );
+      }
+      else if( m_parameters.amg.smootherType.substr( 0, 3 ) == "ilu" )
+      {
+        // Set up additive Schwartz preconditioner
+        GEOSX_LAI_CHECK_ERROR( PCSetType( smootherPC, PCASM ) );
+        GEOSX_LAI_CHECK_ERROR( PCASMSetOverlap( smootherPC, 0 ) );
+        GEOSX_LAI_CHECK_ERROR( PCASMSetType( smootherPC, PC_ASM_RESTRICT ) );
+        // GEOSX_LAI_CHECK_ERROR( PCSetUp( smootherPC ) );
+
+        // Get local preconditioning context
+        KSP * ksp_local;
+        PetscInt n_local, first_local;
+        GEOSX_LAI_CHECK_ERROR( PCASMGetSubKSP( smootherPC, &n_local, &first_local, &ksp_local ) );
+
+        // Sanity checks
+        GEOSX_LAI_ASSERT_EQ( n_local, 1 );
+        GEOSX_LAI_ASSERT_EQ( first_local, MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) );
+
+        // Set up local block ILU preconditioner
+        PC prec_local;
+        GEOSX_LAI_CHECK_ERROR( KSPSetType( ksp_local[0], KSPPREONLY ) );
+        GEOSX_LAI_CHECK_ERROR( KSPGetPC( ksp_local[0], &prec_local ) );
+        GEOSX_LAI_CHECK_ERROR( PCSetType( prec_local, PCILU ) );
+        if( m_parameters.amg.smootherType == "ilu1" )
+        {
+          GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 1 ) );
+        }
+        else
+        {
+          GEOSX_LAI_CHECK_ERROR( PCFactorSetLevels( prec_local, 0 ) );
+        }
+        // GEOSX_LAI_CHECK_ERROR( PCSetUpOnBlocks( smootherPC ) );
+      }
+    }
 
     // Set coarsest level solver
-    // TODO: to be addressed together with the smoother definition
+    // TODO
     // m_parameters.amg.coarseType
 
-    // Set the number of sweeps
-    if( m_parameters.amg.numSweeps > 1 )
-    {
-      GEOSX_LAI_CHECK_ERROR( PCGAMGSetNSmooths( prec,
-                                                LvArray::integerConversion< PetscInt >( m_parameters.amg.numSweeps ) ) );
-    }
+
 
     // Set aggretation threshold
     // TODO
     // m_parameters.amg.aggregationThreshold
 
+    // TODO: add user-defined null space / rigid body mode support
+    // if ( m_parameters.amg.nullSpaceType )
+    // {
+    //   ...
+    // }
+#endif
   }
   else
   {
