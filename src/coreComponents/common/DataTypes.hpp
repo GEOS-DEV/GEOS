@@ -28,14 +28,14 @@
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
 #include "Logger.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/ArrayOfArrays.hpp"
-#include "cxx-utilities/src/ArrayOfSets.hpp"
-#include "cxx-utilities/src/CRSMatrix.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -95,8 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
-                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -139,9 +139,9 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef USE_CHAI
+#ifdef GEOSX_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
@@ -232,32 +232,32 @@ template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 /// Alias for 4D array.
-template< typename T >
-using array4d = Array< T, 4 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T >
-using arrayView4d = ArrayView< T, 4 >;
+template< typename T, int USD=3 >
+using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T >
-using arraySlice4d = ArraySlice< T, 4 >;
+template< typename T, int USD=4 >
+using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
 /// Alias for 5D array.
-template< typename T >
-using array5d = Array< T, 5 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T >
-using arrayView5d = ArrayView< T, 5 >;
+template< typename T, int USD=4 >
+using arrayView5d = ArrayView< T, 5, USD >;
 
 /// Alias for 5D array slice.
-template< typename T >
-using arraySlice5d = ArraySlice< T, 5 >;
+template< typename T, int USD=4 >
+using arraySlice5d = ArraySlice< T, 5, 4 >;
 
 /// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
@@ -509,7 +509,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 
@@ -722,7 +722,9 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )}
+      {"mapPair_array", constructArrayRegex( rs, 1 )},
+      {"geosx_TimeIntegrationOption", rs},
+      {"geosx_dataRepository_PlotLevel", ri}
     };
 
 public:

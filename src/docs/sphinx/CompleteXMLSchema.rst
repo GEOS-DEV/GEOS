@@ -30,6 +30,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_Blueprint:
+
+Element: Blueprint
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
+
+
 .. _XML_BoundedPlane:
 
 Element: BoundedPlane
@@ -357,13 +364,6 @@ Element: LinearElasticTransverseIsotropic
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
-
-
-.. _XML_MeshFile:
-
-Element: MeshFile
-=================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -704,6 +704,13 @@ Datastructure: Benchmarks
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_Blueprint:
+
+Datastructure: Blueprint
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_BoundedPlane:
@@ -1061,13 +1068,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MeshFile:
-
-Datastructure: MeshFile
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:

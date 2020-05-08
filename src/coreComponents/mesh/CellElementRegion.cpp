@@ -19,7 +19,7 @@
 #include "CellElementRegion.hpp"
 #include "AggregateElementSubRegion.hpp"
 #include "common/TimingMacros.hpp"
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "metis.h"
 
 namespace geosx
@@ -29,10 +29,10 @@ using namespace dataRepository;
 CellElementRegion::CellElementRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames, false )->
+  registerWrapper( viewKeyStruct::sourceCellBlockNames, &m_cellBlockNames )->
     setInputFlag( InputFlags::OPTIONAL );
 
-  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio, false )->
+  registerWrapper( viewKeyStruct::coarseningRatioString, &m_coarseningRatio )->
     setInputFlag( InputFlags::OPTIONAL );
 }
 
@@ -79,23 +79,23 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   } );
 
   // Number of aggregate computation
-  localIndex nbAggregates = integer_conversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
+  localIndex nbAggregates = LvArray::integerConversion< localIndex >( int(nbCellElements * m_coarseningRatio) );
   GEOSX_LOG_RANK_0( "Generating " << nbAggregates  << " aggregates on region " << this->getName());
 
   // METIS variable declarations
   using idx_t = ::idx_t;
   idx_t options[METIS_NOPTIONS];                                    // Contains the METIS options
   METIS_SetDefaultOptions( options );                                 // ... That are set by default
-  idx_t nnodes = integer_conversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
+  idx_t nnodes = LvArray::integerConversion< idx_t >( nbCellElements );     // Number of connectivity graph nodes
   idx_t nconst = 1;                                                 // Number of balancy constraints
   idx_t objval;                                                     // Total communication volume
   array1d< idx_t > parts( nnodes );                                   // Map element index -> aggregate index
-  idx_t nparts = integer_conversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
+  idx_t nparts = LvArray::integerConversion< idx_t >( nbAggregates );       // Number of aggregates to be generated
 
 
   // Compute the connectivity graph
-  LvArray::SparsityPattern< idx_t, idx_t > graph( integer_conversion< idx_t >( nbCellElements ),
-                                                  integer_conversion< idx_t >( nbCellElements ) );
+  LvArray::SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
+                                                  LvArray::integerConversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
@@ -107,9 +107,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
     if( elemRegionList[kf][0] == regionIndex && elemRegionList[kf][1] == regionIndex && elemRegionList[kf][0] )
     {
       localIndex const esr0 = elemSubRegionList[kf][0];
-      idx_t const ei0  = integer_conversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
+      idx_t const ei0  = LvArray::integerConversion< idx_t >( elemList[kf][0] + offsetSubRegions[esr0] );
       localIndex const esr1 = elemSubRegionList[kf][1];
-      idx_t const ei1  = integer_conversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
+      idx_t const ei1  = LvArray::integerConversion< idx_t >( elemList[kf][1] + offsetSubRegions[esr1] );
       graph.insertNonZero( ei0, ei1 );
       graph.insertNonZero( ei1, ei0 );
       nbConnections++;
@@ -173,7 +173,7 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   array1d< localIndex > partsGEOS( parts.size() );
   for( localIndex fineCellIndex = 0; fineCellIndex < partsGEOS.size(); fineCellIndex++ )
   {
-    partsGEOS[fineCellIndex] = integer_conversion< localIndex >( parts[fineCellIndex] );
+    partsGEOS[fineCellIndex] = LvArray::integerConversion< localIndex >( parts[fineCellIndex] );
   }
   aggregateSubRegion->CreateFromFineToCoarseMap( nbAggregates, partsGEOS, aggregateBarycenters );
 }

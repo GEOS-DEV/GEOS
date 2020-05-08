@@ -16,7 +16,7 @@
 
 #include "managers/initialization.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -87,7 +87,7 @@ TEST( TestNeighborComms, testBuffers )
 #if defined(UMPIRE_ENABLE_CUDA) && defined(USE_CHAI)
 void pack( buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localIndex size )
 {
-  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE( localIndex ii )
+  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE ( localIndex ii )
   {
     reinterpret_cast< int * >(buf)[ii] = veloc_view.data()[ii];
   } );
@@ -95,7 +95,7 @@ void pack( buffer_unit_type * buf, arrayView1d< const int > & veloc_view, localI
 
 void unpack( buffer_unit_type * buf, arrayView1d< int > & veloc_view, localIndex size )
 {
-  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE( localIndex ii )
+  forAll< parallelDevicePolicy< > >( size, [=] GEOSX_HOST_DEVICE ( localIndex ii )
   {
     veloc_view.data()[ii] = reinterpret_cast< int * >(buf)[ii];
   } );

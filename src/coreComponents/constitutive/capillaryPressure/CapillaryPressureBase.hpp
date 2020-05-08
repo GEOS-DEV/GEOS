@@ -73,9 +73,12 @@ public:
                             localIndex const GEOSX_UNUSED_PARAM( k ),
                             localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
-  localIndex numFluidPhases() const;
+  localIndex numFluidPhases() const { return m_phaseNames.size(); }
 
-  string const & phaseName( localIndex ip ) const;
+  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+
+  arrayView3d< real64 const > phaseCapPressure() const { return m_phaseCapPressure; }
+  arrayView4d< real64 const > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -85,16 +88,6 @@ public:
 
     static constexpr auto phaseCapPressureString                    = "phaseCapPressure";                    // Pc_p
     static constexpr auto dPhaseCapPressure_dPhaseVolFractionString = "dPhaseCapPressure_dPhaseVolFraction"; // dPc_p/dS_p
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey phaseNames = { phaseNamesString };
-    ViewKey phaseTypes = { phaseTypesString };
-    ViewKey phaseOrder = { phaseOrderString };
-
-    ViewKey phaseCapPressure                    = { phaseCapPressureString };                    // Pc_p
-    ViewKey dPhaseCapPressure_dPhaseVolFraction = { dPhaseCapPressure_dPhaseVolFractionString }; // dPc_p/dS_p
-
   } viewKeysCapillaryPressureBase;
 
 protected:

@@ -22,7 +22,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -30,32 +29,32 @@ namespace constitutive
 ProppantSlurryFluid::ProppantSlurryFluid( std::string const & name, Group * const parent ):
   SlurryFluidBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility, false )->
+  registerWrapper( viewKeyStruct::compressibilityString, &m_compressibility )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Fluid compressibility" );
 
-  registerWrapper( viewKeyStruct::referenceProppantDensityString, &m_referenceProppantDensity, false )->
+  registerWrapper( viewKeyStruct::referenceProppantDensityString, &m_referenceProppantDensity )->
     setApplyDefaultValue( 1400.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference proppant density" );
 
-  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure, false )->
+  registerWrapper( viewKeyStruct::referencePressureString, &m_referencePressure )->
     setApplyDefaultValue( 1e5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference pressure" );
 
-  registerWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity, false )->
+  registerWrapper( viewKeyStruct::referenceDensityString, &m_referenceDensity )->
     setApplyDefaultValue( 1000.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference fluid density" );
 
-  registerWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity, false )->
+  registerWrapper( viewKeyStruct::referenceViscosityString, &m_referenceViscosity )->
     setApplyDefaultValue( 0.001 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Reference fluid viscosity" );
 
-  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration, false )->
+  registerWrapper( viewKeyStruct::maxProppantConcentrationString, &m_maxProppantConcentration )->
     setApplyDefaultValue( 0.6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum proppant concentration" );

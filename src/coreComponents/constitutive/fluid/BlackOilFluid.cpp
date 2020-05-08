@@ -33,7 +33,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -61,16 +60,16 @@ BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
   getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
+  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of surface densities for each phase" );
 
-  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
+  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles )->
     setInputFlag( InputFlags::REQUIRED )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
 }
@@ -83,25 +82,20 @@ BlackOilFluid::DeliverClone( string const & name,
                              Group * const parent,
                              std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< BlackOilFluid > newModel = std::make_unique< BlackOilFluid >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< BlackOilFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  newModel->m_componentNames       = this->m_componentNames;
-  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
+  fluid.m_surfaceDensities = m_surfaceDensities;
+  fluid.m_tableFiles       = m_tableFiles;
+  fluid.m_fluidTypeString  = m_fluidTypeString;
+  fluid.m_fluidType        = m_fluidType;
 
-  newModel->m_phaseNames           = this->m_phaseNames;
-  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-
-  newModel->m_surfaceDensities = this->m_surfaceDensities;
-  newModel->m_tableFiles       = this->m_tableFiles;
-
-  newModel->m_fluidTypeString = this->m_fluidTypeString;
-  newModel->m_fluidType       = this->m_fluidType;
-
-  newModel->createFluid();
-
-  clone = std::move( newModel );
+  fluid.createFluid();
 }
 
 void BlackOilFluid::PostProcessInput()
@@ -114,7 +108,7 @@ void BlackOilFluid::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( integer_conversion< localIndex >((data).size()) != integer_conversion< localIndex >( expected )) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
     GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
                  << (attr) << " attribute (" \

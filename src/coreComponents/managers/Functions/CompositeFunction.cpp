@@ -46,15 +46,15 @@ CompositeFunction::CompositeFunction( const std::string & name,
   m_numSubFunctions(),
   m_subFunctions()
 {
-  registerWrapper( keys::functionNames, &m_functionNames, false )->
+  registerWrapper( keys::functionNames, &m_functionNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of source functions. The order must match the variableNames argument." );
 
-  registerWrapper( keys::variableNames, &m_variableNames, false )->
+  registerWrapper( keys::variableNames, &m_variableNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of variables in expression" );
 
-  registerWrapper( keys::expression, &m_expression, false )->
+  registerWrapper( keys::expression, &m_expression )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Composite math expression" );
 }
@@ -81,7 +81,7 @@ void CompositeFunction::InitializeFunction()
 
   // Grab pointers to sub functions
   FunctionManager & functionManager = FunctionManager::Instance();
-  m_numSubFunctions = integer_conversion< localIndex >( m_functionNames.size());
+  m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
     m_subFunctions.push_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));

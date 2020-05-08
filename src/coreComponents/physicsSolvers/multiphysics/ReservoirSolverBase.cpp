@@ -40,11 +40,11 @@ ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0 )->
+  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
@@ -120,6 +120,14 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   ImplicitStepComplete( time_n, dt_return, domain );
 
   return dt_return;
+}
+
+void ReservoirSolverBase::SetupDofs( DomainPartition const * const domain,
+                                     DofManager & dofManager ) const
+{
+  m_flowSolver->SetupDofs( domain, dofManager );
+  m_wellSolver->SetupDofs( domain, dofManager );
+  // TODO: add coupling when dofManager can support perforation connectors
 }
 
 void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,

@@ -108,7 +108,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   arrayView1d< integer const > const & faceGhostRank =
     faceManager->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
@@ -771,7 +771,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
                                                                                                      viewKeyStruct::
                                                                                                      ghostRankString );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;

@@ -10,8 +10,8 @@
             logLevel="0"
             discretization="singlePhaseTPFA"
             targetRegions="{Region2, Fracture}"
-            fluidName="water"
-            solidName="rock">
+            fluidNames="{water}"
+            solidNames="{rock}">
             <NonlinearSolverParameters
                 newtonTol="1.0e-8"
                 newtonMaxIter="8"/>
@@ -21,7 +21,7 @@
         <EmbeddedSurfaceGenerator
             name="SurfaceGenerator"
             logLevel="1"
-            solidMaterialName="rock"
+            solidMaterialNames="{rock}"
             targetRegions="{Region2, Fracture}"
             fractureRegion="Fracture"/>
     </Solvers>

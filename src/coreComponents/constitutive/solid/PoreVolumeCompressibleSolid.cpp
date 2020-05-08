@@ -22,7 +22,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -31,17 +30,17 @@ namespace constitutive
 PoreVolumeCompressibleSolid::PoreVolumeCompressibleSolid( std::string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeys.compressibility.Key(), &m_compressibility, false )->
+  registerWrapper( viewKeys.compressibility.Key(), &m_compressibility )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Solid compressibility" );
 
-  registerWrapper( viewKeys.referencePressure.Key(), &m_referencePressure, false )->
+  registerWrapper( viewKeys.referencePressure.Key(), &m_referencePressure )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Reference pressure for fluid compressibility" );
 
-  registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier, false )->
+  registerWrapper( viewKeyStruct::poreVolumeMultiplierString, &m_poreVolumeMultiplier )->
     setDefaultValue( 1.0 );
-  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure, false );
+  registerWrapper( viewKeyStruct::dPVMult_dPresString, &m_dPVMult_dPressure );
 }
 
 PoreVolumeCompressibleSolid::~PoreVolumeCompressibleSolid() = default;

@@ -22,7 +22,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -47,18 +46,18 @@ std::unordered_map< string, integer > const phaseDict =
 RelativePermeabilityBase::RelativePermeabilityBase( std::string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames, false )->
+  registerWrapper( viewKeyStruct::phaseNamesString, &m_phaseNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes, false )->
+  registerWrapper( viewKeyStruct::phaseTypesString, &m_phaseTypes )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder, false )->
+  registerWrapper( viewKeyStruct::phaseOrderString, &m_phaseOrder )->
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm, false )->setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac, false );
+  registerWrapper( viewKeyStruct::phaseRelPermString, &m_phaseRelPerm )->setPlotLevel( PlotLevel::LEVEL_0 );
+  registerWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString, &m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 RelativePermeabilityBase::~RelativePermeabilityBase()
@@ -88,7 +87,7 @@ void RelativePermeabilityBase::PostProcessInput()
     GEOSX_ERROR_IF( phaseIndex >= PhaseType::MAX_NUM_PHASES, "RelativePermeabilityBase: invalid phase index " << phaseIndex );
 
     m_phaseTypes[ip] = phaseIndex;
-    m_phaseOrder[phaseIndex] = integer_conversion< integer >( ip );
+    m_phaseOrder[phaseIndex] = LvArray::integerConversion< integer >( ip );
   }
 
   // call to correctly set member array tertiary sizes on the 'main' material object
@@ -108,17 +107,6 @@ void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group *
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
-}
-
-localIndex RelativePermeabilityBase::numFluidPhases() const
-{
-  return integer_conversion< localIndex >( m_phaseNames.size());
-}
-
-string const & RelativePermeabilityBase::phaseName( localIndex ip ) const
-{
-  GEOSX_ERROR_IF( ip >= numFluidPhases(), "Index " << ip << " exceeds number of fluid phases" );
-  return m_phaseNames[ip];
 }
 
 } // namespace constitutive

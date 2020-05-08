@@ -71,7 +71,7 @@ public:
   /// zero out connections
   bool zero( localIndex const connectorIndex );
 
-  /// called after adding connections is done to compress the data and release unused memory
+  /// called after adding connections is done to compress the data.
   void compress();
 
   struct Entry
@@ -80,7 +80,7 @@ public:
     WEIGHT weight;
   };
 
-  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections; }
+  ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections.toViewConst(); }
 
 private:
 

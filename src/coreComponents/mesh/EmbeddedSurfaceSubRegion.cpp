@@ -41,10 +41,10 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_elementAperture(),
   m_elementArea()
 {
-  registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion, false )->
+  registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion )->
     setDescription( "Map to the region cut by each EmbeddedSurface." );
 
-  registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion, false )->
+  registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion )->
     setDescription( "Map to the subregion cut by each EmbeddedSurface." );
 
 ////  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
@@ -53,25 +53,25 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
 //  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
 //    setDescription( "Map to the edges." );
 
-  registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell, false )->
+  registerWrapper( viewKeyStruct::cellListString, &m_embeddedSurfaceToCell )->
     setDescription( "Map to the cells." );
 
-  registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector, false )->
+  registerWrapper( viewKeyStruct::normalVectorString, &m_normalVector )->
     setDescription( "Unit normal vector to the embedded surface." );
 
-  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture, false )->
+  registerWrapper( viewKeyStruct::elementApertureString, &m_elementAperture )->
     setApplyDefaultValue( 1.0e-5 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The aperture of each EmbeddedSurface." );
 
-  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea, false )->
+  registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
     setApplyDefaultValue( -1.0 )->
     setDescription( "The area of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, false )->
+  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
     setDescription( "The center of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, false )->
+  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The volume of each EmbeddedSurface element." );
