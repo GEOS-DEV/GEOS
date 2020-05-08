@@ -35,9 +35,17 @@ class ObjectManagerBase : public dataRepository::Group
 public:
   ObjectManagerBase() = delete;
 
+  /**
+   * @brief Constructor.
+   * @param[in] name Name of this object manager
+   * @param[in] parent Parent Group
+   */
   explicit ObjectManagerBase( std::string const & name,
                               dataRepository::Group * const parent );
 
+  /**
+   * @brief Destructor.
+   */
   ~ObjectManagerBase() override;
 
   /**
@@ -190,11 +198,12 @@ public:
     return PackParentChildMapsPrivate< false >( buffer, packList );
   }
 
-  /**
+   /**
    * @brief Packs the parent/child relations in @p packList.
+   * @param buffer The buffer that will receive the packed data.
    * @param packList The indices we want packed.
    * @return The packed size.
-   */
+    */
   localIndex PackParentChildMaps( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList ) const
   {
@@ -259,9 +268,9 @@ private:
 
 public:
 
-  using ObjectType = string;
   /**
-   * @copydoc Group::resize(localIndex const)
+   * @copydoc geosx::dataRepository::Group::resize(indexType const)
+   * @param newSize The new size of the group.
    * @return Always 0, whatever the new size is.
    */
   localIndex resize( localIndex const newSize,
@@ -328,8 +337,15 @@ public:
    */
   void ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const;
 
-  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const,
-                                                                std::vector< std::vector< globalIndex > > & )
+  /**
+   * @brief Extract map from object and assign global indices.
+   * @param obj The instance.
+   * @param map The map.
+   *
+   * Dummy version, needs to be specialised by derived classes.
+   */
+  virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const GEOSX_UNUSED_PARAM( obj ),
+                                                                std::vector< std::vector< globalIndex > > & GEOSX_UNUSED_PARAM( map ) )
   {}
 
   /**
@@ -441,7 +457,7 @@ public:
    * @brief Removes from the list of arrays of @p upmap all the elements
    * for which the "mirror target array" of @p downmap does not contain the proper target index.
    * @param targetIndices The indices we want to keep.
-   * @param upmap[in,out] The map to be filtered
+   * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
   static void CleanUpMap( std::set< localIndex > const & targetIndices,
@@ -452,7 +468,7 @@ public:
    * @brief Removes from the list of sets of @p upmap all the elements
    * for which the "mirror target array" of @p downmap does not contain the proper target index.
    * @param targetIndices The indices we want to keep.
-   * @param upmap[in,out] The map to be filtered
+   * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
   static void CleanUpMap( std::set< localIndex > const & targetIndices,
@@ -463,7 +479,7 @@ public:
    * @brief Removes from the list of arrays of @p upmap all the elements
    * for which the "mirror target array" of @p downmap does not contain the proper target index.
    * @param targetIndices The indices we want to keep.
-   * @param upmap[in,out] The map to be filtered
+   * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
   static void CleanUpMap( std::set< localIndex > const & targetIndices,
@@ -473,7 +489,7 @@ public:
    * @brief Removes from the list of sets of @p upmap all the elements
    * for which the "mirror target array" of @p downmap does not contain the proper target index.
    * @param targetIndices The indices we want to keep.
-   * @param upmap[in,out] The map to be filtered
+   * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
   static void CleanUpMap( std::set< localIndex > const & targetIndices,
@@ -483,7 +499,7 @@ public:
    * @brief Removes from the list of sets of @p upmap all the elements
    * for which the "mirror target array" of @p downmap does not contain the proper target index.
    * @param targetIndices The indices we want to keep.
-   * @param upmap[in,out] The map to be filtered
+   * @param[in,out] upmap The map to be filtered
    * @param downmap The map used to check for target availability.
    */
   static void CleanUpMap( std::set< localIndex > const & targetIndices,
@@ -521,40 +537,68 @@ public:
    */
   struct viewKeyStruct
   {
+    /// String key to adjacency list
     static constexpr auto adjacencyListString = "adjacencyList";
+    /// String key to child indices
     static constexpr auto childIndexString = "childIndex";
+    /// String key to domain boundary indicator
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
+    /// String key to external set
     static constexpr auto externalSetString = "externalSet";
+    /// String key to ghost ranks
     static constexpr auto ghostRankString = "ghostRank";
+    /// String key to ghosts to send
     static constexpr auto ghostsToSendString = "ghostsToSend";
+    /// String key to ghosts to receive
     static constexpr auto ghostsToReceiveString = "ghostsToReceive";
+    /// String key to global->local mao
     static constexpr auto globalToLocalMapString = "globalToLocalMap";
+    /// String key to the 'is external' vector
     static constexpr auto isExternalString = "isExternal";
+    /// String key to the local->global map
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
+    /// String key to the matched partition boundary objects
     static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
+    /// String key to parent indices
     static constexpr auto parentIndexString = "parentIndex";
 
+    /// View key to child indices
     dataRepository::ViewKey childIndex = { childIndexString };
+    /// View key to domain boundary indicator
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
+    /// View key to external set
     dataRepository::ViewKey externalSet = { externalSetString };
+    /// View key to ghost ranks
     dataRepository::ViewKey ghostRank = { ghostRankString };
+    /// View key to global->local mao
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
+    /// View key to the 'is external' vector
     dataRepository::ViewKey isExternal = { isExternalString };
+    /// View key to the local->global map
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
+    /// View key to the matched partition boundary objects
     dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
+    /// View key to parent indices
     dataRepository::ViewKey parentIndex = { parentIndexString };
-  } m_ObjectManagerBaseViewKeys;
+  }
+  /// viewKey struct for the ObjectManagerBase class
+  m_ObjectManagerBaseViewKeys;
 
   /**
    * @brief struct to serve as a container for group strings and keys
-   * @struct viewKeyStruct
+   * @struct groupKeyStruct
    */
   struct groupKeyStruct
   {
+    /// String key to the Group holding the object sets
     static constexpr auto setsString = "sets";
+    /// String key to the Groupholding all the NeighborData objects
     static constexpr auto neighborDataString = "neighborData";
+    /// View key to the Group holding the object sets
     dataRepository::GroupKey sets = { setsString };
-  } m_ObjectManagerBaseGroupKeys;
+  }
+  /// groupKey struct for the ObjectManagerBase class
+  m_ObjectManagerBaseGroupKeys;
 
   /**
    * @brief Get the view keys for Group access.
@@ -867,7 +911,9 @@ void ObjectManagerBase::FixUpDownMaps( ArrayOfSets< localIndex > & relation,
 } /* namespace geosx */
 
 
-
+/**
+ * @brief Alias to ObjectManagerBase
+ */
 typedef geosx::ObjectManagerBase ObjectDataStructureBaseT;
 
 #endif /* GEOSX_MANAGERS_OBJECTMANAGERBASE_HPP_ */
