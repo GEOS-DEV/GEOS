@@ -21,19 +21,27 @@ namespace extrinsicMeshData
 
 /**
  * @struct ExtrinisicMeshDataBase
- * @brief  A base class for use in a CRT pattern that provides the getters
- *         to all the derived types.
- * @tparam LEAF The Derived Type that uses #ExtrinisicMeshDataBase as a base.
+ * @brief  A base class for use in a CRT pattern that provides the generic
+ *         registration function and data access methods for all derived
+ *         classes.
+ * @tparam LEAF The Derived Type that uses #ExtrinisicMeshDataBase as a base,
+ *              and provides the required alias and static varaibles to execute
+ *              the methods in this class.
  *
- * More about the crt pattern
+ * More about the crt pattern..
  */
 template< typename LEAF >
 struct ExtrinisicMeshDataBase
 {
-
-
-  static void registerField( ObjectManagerBase & om,
-                             string const & nameOfRegisteringObject )
+  /**
+   * @brief Register a data object on a mesh object.
+   * @param om Reference to #ObjectManagerBase that the data object will be
+   *           registered on.
+   * @param nameOfRegisteringObject The name of the object that is calling
+   *                                for this data to be registered.
+   */
+  static void registerData( ObjectManagerBase & om,
+                            string const & nameOfRegisteringObject )
   {
     om.registerWrapper< typename LEAF::Type >( LEAF::key )->
         setApplyDefaultValue( LEAF::defaultValue )->
@@ -41,7 +49,6 @@ struct ExtrinisicMeshDataBase
         setDescription( LEAF::description )->
         setRegisteringObjects( nameOfRegisteringObject );
   }
-
 
   /**
    *
@@ -112,7 +119,6 @@ struct ChildIndex : public ExtrinisicMeshDataBase< ChildIndex >
 
   /// The description to place in the sphinx documentation for this entry.
   static constexpr auto description = "Index of child within the  mesh object it is registered on.";
-
 };
 
 

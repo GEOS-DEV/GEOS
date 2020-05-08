@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
@@ -66,10 +67,19 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
+#if defined(USE_EXTRINSIC_MESH_DATA)
+    extrinsicMeshData::ParentIndex::registerData( *nodeManager, this->getName() );
+    extrinsicMeshData::ChildIndex::registerData( *nodeManager, this->getName() );
+    extrinsicMeshData::ParentIndex::registerData( *edgeManager, this->getName() );
+    extrinsicMeshData::ChildIndex::registerData( *edgeManager, this->getName() );
+#else
     nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
     nodeManager->RegisterChildIndices( this->getName(), "Child index of node."  );
     edgeManager->RegisterParentIndices( this->getName(), "Parent index of the edge." );
     edgeManager->RegisterChildIndices( this->getName(), "Child index of the edge." );
+#endif
+
+
   }
 }
 

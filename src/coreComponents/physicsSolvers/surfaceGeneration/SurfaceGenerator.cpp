@@ -276,12 +276,13 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
 #if defined(USE_EXTRINSIC_MESH_DATA)
-    extrinsicMeshData::ParentIndex::registerField ( *nodeManager, this->getName() );
+    extrinsicMeshData::ParentIndex::registerData ( *nodeManager, this->getName() );
+    extrinsicMeshData::ChildIndex::registerData ( *nodeManager, this->getName() );
 #else
     nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
+    nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
 #endif
 
-    nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
 
     nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
       setApplyDefaultValue( -1 )->
