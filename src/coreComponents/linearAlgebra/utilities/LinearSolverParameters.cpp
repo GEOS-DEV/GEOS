@@ -41,6 +41,11 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Preconditioner type" );
 
+  registerWrapper( viewKeysStruct::krylovMaxIterString, &krylov.maxIterations )->
+    setApplyDefaultValue( krylov.maxIterations )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Maximum iterations allowed" );
+
   registerWrapper( viewKeysStruct::krylovTolString, &krylov.tolerance )->
     setApplyDefaultValue( krylov.tolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -51,10 +56,10 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Use Eisenstat-Walker adaptive linear tolerance" );
 
-  registerWrapper( viewKeysStruct::krylovMaxIterString, &krylov.maxIterations )->
-    setApplyDefaultValue( krylov.maxIterations )->
+  registerWrapper( viewKeysStruct::krylovWeakTolString, &krylov.weakestTol )->
+    setApplyDefaultValue( krylov.weakestTol )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Maximum iterations allowed" );
+    setDescription( "Weakest-allowed tolerance for adaptive method" );
 
   registerWrapper( viewKeysStruct::amgNumSweepsString, &amg.numSweeps )->
     setApplyDefaultValue( amg.numSweeps )->

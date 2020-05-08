@@ -105,7 +105,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType (" << m_parameters.solverType << ") doesn't seem to exist" );
   }
 
   // create a preconditioner and pick type
@@ -120,7 +120,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   {
     PCSetType( prec, PCJACOBI );
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     GEOSX_ERROR( "The requested linear preconditionerType isn't available in PETSc" );
   }
@@ -188,7 +188,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested preconditioner type isn't available in PETSc" );
+    GEOSX_ERROR( "The requested preconditioner type (" << m_parameters.preconditionerType << ") doesn't seem to exist" );
   }
 
   // display output

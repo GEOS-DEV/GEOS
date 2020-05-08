@@ -159,7 +159,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_precond, AZ_Jacobi ) );
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_precond, AZ_dom_decomp ) );
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap ) );
@@ -216,7 +216,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
     list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
     list.set( "aggregation: threshold", m_parameters.amg.aggregationThreshold );
-    //list.set( "smoother: pre or post", "post" );
+    list.set( "smoother: pre or post", m_parameters.amg.preOrPostSmoothing );
 
     //TODO: add user-defined null space / rigid body mode support
     //list.set("null space: type","pre-computed");

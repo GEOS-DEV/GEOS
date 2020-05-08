@@ -111,7 +111,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_ERROR( "precond Jacobi: Not implemented yet" );
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &precond ) );
     if( m_parameters.ilu.fill >= 0 )
@@ -161,7 +161,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType (" << m_parameters.preconditionerType << ") doesn't seem to exist" );
   }
 
   HYPRE_Int result = 0;
@@ -277,7 +277,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType (" << m_parameters.solverType << ")doesn't seem to exist" );
   }
 
   GEOSX_WARNING_IF( result, "HypreSolver: Krylov convergence not achieved" );
