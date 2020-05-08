@@ -192,6 +192,15 @@ private:
                                                                                         NodeManager const & nodeManager ) const;
 
   /*!
+    * @brief Writes the files containing the faces elements
+    * @details There will be one file written per FaceElementRegion and per rank
+    * @param[in] time the time-step
+    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
+    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
+    */
+   void WriteEmbeddedSurfaceElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const;
+
+  /*!
    * @brief Writes a VTM file for the time-step \p time.
    * @details a VTM file is a VTK Multiblock file. It contains reltive path to different files organized in blocks.
    * @param[in] time the time-step

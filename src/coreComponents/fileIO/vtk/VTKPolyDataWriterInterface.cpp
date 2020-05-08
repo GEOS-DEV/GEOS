@@ -338,6 +338,18 @@ void VTKPolyDataWriterInterface::WriteFaceElementRegions( real64 time, ElementRe
   } );
 }
 
+void VTKPolyDataWriterInterface::WriteEmbeddedSurfaceElementRegions( real64 time, ElementRegionManager const & elemManager, NodeManager const & nodeManager ) const
+{
+  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & er )->void
+  {
+    auto esr = er.GetSubRegion( 0 )->group_cast< EmbeddedSurfaceSubRegion const * >();
+    vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
+
+    WriteElementFields< EmbeddedSurfaceRegion >( ug->GetCellData(), er );
+    WriteUnstructuredGrid( ug, time, er.getName() );
+  } );
+}
+
 void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager const & elemManager, VTKVTMWriter const & vtmWriter ) const
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
