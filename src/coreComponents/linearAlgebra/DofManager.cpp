@@ -617,9 +617,10 @@ void DofManager::setSparsityPattern( MATRIX & matrix,
   GEOSX_ERROR_IF( !m_reordered, "Cannot set monolithic sparsity pattern before reorderByRank() has been called." );
 
   matrix.open();
-  for( localIndex blockRow = 0; blockRow < localIndex( m_fields.size() ); ++blockRow )
+  localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
+  for( localIndex blockRow = 0; blockRow < numFields; ++blockRow )
   {
-    for( localIndex blockCol = 0; blockCol < localIndex( m_fields.size() ); ++blockCol )
+    for( localIndex blockCol = 0; blockCol < numFields; ++blockCol )
     {
       setSparsityPatternOneBlock( matrix, blockRow, blockCol );
     }
