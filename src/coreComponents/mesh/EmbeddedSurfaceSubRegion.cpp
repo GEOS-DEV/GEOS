@@ -213,7 +213,7 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, -1 > const nodeCoord,
+real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, 0 > const nodeCoord,
                                                            localIndex const k )
 {
   real64 heaviside;

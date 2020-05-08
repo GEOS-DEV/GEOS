@@ -24,10 +24,10 @@
         logLevel="1"
         discretization="FE1"
         targetRegions="{Region1}"
-        solidMaterialName="rock"/>
+        solidMaterialNames="{rock}"/>
 		<EmbeddedSurfaceGenerator
         name="SurfaceGenerator"
-        solidMaterialName="rock"
+        solidMaterialNames="{rock}"
         targetRegions="{Region1, Fracture}"
         fractureRegion="Fracture"
         logLevel="2"/>
@@ -77,11 +77,11 @@
 		forceDt="1e3"
 		target="/Solvers/mechSolve" />
 
-		<PeriodicEvent 
+		<!--PeriodicEvent 
 		name="outputs" 
 		cycleFrequency="1"
 		targetExactTimestep="1" 
-		target="/Outputs/vtkOutput" />
+		target="/Outputs/vtkOutput" /-->
 		
 		<PeriodicEvent name="restarts"
                    timeFrequency="5.0"
@@ -164,9 +164,9 @@
 	</Functions>
 
 	<Outputs>
-		<VTK name="vtkOutput"
+		<!--VTK name="vtkOutput"
 		plotFileRoot="Sneddon"
-		plotLevel="4"/>
+		plotLevel="4"/-->
 		<Restart name="restartOutput"/>
 	</Outputs>
 

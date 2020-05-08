@@ -46,11 +46,11 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
   m_solidSolverName(),
   m_solidSolver( nullptr )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName)->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName, 0 )->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName)->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
