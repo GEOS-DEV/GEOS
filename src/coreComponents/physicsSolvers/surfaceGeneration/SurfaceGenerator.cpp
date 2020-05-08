@@ -274,6 +274,7 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
+<<<<<<< HEAD
     nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
       setApplyDefaultValue( -1 )->
       setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
@@ -283,6 +284,16 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
       setApplyDefaultValue( -1 )->
       setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
       setDescription( "Child index of node." );
+=======
+#if defined(USE_EXTRINSIC_MESH_DATA)
+    extrinsicMeshData::ParentIndex::registerData ( *nodeManager, this->getName() );
+    extrinsicMeshData::ChildIndex::registerData ( *nodeManager, this->getName() );
+#else
+    nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
+    nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
+#endif
+
+>>>>>>> a3dd43ce3... fixup
 
     nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
       setApplyDefaultValue( -1 )->

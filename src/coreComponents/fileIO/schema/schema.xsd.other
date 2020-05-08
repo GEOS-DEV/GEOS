@@ -1141,7 +1141,11 @@
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
+<<<<<<< HEAD
 		<!--childIndex => Child index of node.-->
+=======
+		<!--childIndex => Index of child within the  mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
+>>>>>>> a3dd43ce3... fixup
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
