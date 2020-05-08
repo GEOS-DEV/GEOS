@@ -316,7 +316,7 @@ real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > cons
 
   real64 norm = 0;
   for( localIndex i = 0; i < A.size( 0 ); ++i )
-  { 
+  {
     if( norm < rowSum[ i ] )
     {
       norm = rowSum[ i ];
@@ -359,7 +359,7 @@ real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const 
 
   real64 norm = 0;
   for( localIndex j = 0; j < A.size( 1 ); ++j )
-  { 
+  {
     if( norm < columnSum[ j ] )
     {
       norm = columnSum[ j ];
@@ -452,8 +452,8 @@ real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR 
 }
 
 void vectorVectorAdd( arraySlice1d< real64 const > const & X,
-                               arraySlice1d< real64 > const & Y,
-                               real64 const alpha )
+                      arraySlice1d< real64 > const & Y,
+                      real64 const alpha )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for sum" );
@@ -473,8 +473,8 @@ void vectorVectorAdd( arraySlice1d< real64 const > const & X,
 }
 
 void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                               arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
-                               real64 const alpha )
+                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
+                      real64 const alpha )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
@@ -498,8 +498,8 @@ void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > cons
 }
 
 void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                               arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
-                               real64 const alpha )
+                      arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
+                      real64 const alpha )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
@@ -523,7 +523,7 @@ void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > cons
 }
 
 void vectorScale( real64 const & alpha,
-                           arraySlice1d< real64 > const & X )
+                  arraySlice1d< real64 > const & X )
 {
 #ifdef USE_LAPACK
 
@@ -540,7 +540,7 @@ void vectorScale( real64 const & alpha,
 }
 
 void matrixScale( real64 const & alpha,
-                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A )
+                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -560,7 +560,7 @@ void matrixScale( real64 const & alpha,
 }
 
 void matrixScale( real64 const & alpha,
-                           arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A )
+                  arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A )
 {
 #ifdef USE_LAPACK
 
@@ -580,7 +580,7 @@ void matrixScale( real64 const & alpha,
 }
 
 real64 vectorDot( arraySlice1d< real64 const > const & X,
-                           arraySlice1d< real64 const > const & Y )
+                  arraySlice1d< real64 const > const & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for dot product" );
@@ -605,10 +605,10 @@ real64 vectorDot( arraySlice1d< real64 const > const & X,
 }
 
 void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                    arraySlice1d< real64 const > const & X,
-                                    arraySlice1d< real64 > const & Y,
-                                    real64 const alpha,
-                                    real64 const beta )
+                           arraySlice1d< real64 const > const & X,
+                           arraySlice1d< real64 > const & Y,
+                           real64 const alpha,
+                           real64 const beta )
 {
   GEOSX_ASSERT_MSG( A.size( 1 ) == X.size() &&
                     A.size( 0 ) == Y.size(),
@@ -646,10 +646,10 @@ void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
 }
 
 void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                     arraySlice1d< real64 const > const & X,
-                                     arraySlice1d< real64 > const & Y,
-                                     real64 const alpha,
-                                     real64 const beta )
+                            arraySlice1d< real64 const > const & X,
+                            arraySlice1d< real64 > const & Y,
+                            real64 const alpha,
+                            real64 const beta )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == X.size() &&
                     A.size( 1 ) == Y.size(),
@@ -688,10 +688,10 @@ void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 }
 
 void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                    arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                                    real64 const alpha,
-                                    real64 const beta )
+                           arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                           real64 const alpha,
+                           real64 const beta )
 {
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
                     C.size( 1 ) == B.size( 1 ) &&
@@ -740,10 +740,10 @@ void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
 }
 
 void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                                     arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                                     real64 const alpha,
-                                     real64 const beta )
+                            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                            real64 const alpha,
+                            real64 const beta )
 {
 
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -792,10 +792,10 @@ void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 }
 
 void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                     arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                                     arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                                     real64 const alpha,
-                                     real64 const beta )
+                            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                            real64 const alpha,
+                            real64 const beta )
 {
 
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
@@ -843,10 +843,10 @@ void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
 }
 
 void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                                      arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                                      real64 const alpha,
-                                      real64 const beta )
+                             arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                             real64 const alpha,
+                             real64 const beta )
 {
 
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -891,8 +891,8 @@ void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
 }
 
 void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
-                             real64 & detA )
+                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
+                    real64 & detA )
 {
   // --- Check that source matrix is square
   GEOSX_ASSERT_MSG( A.size( 0 ) > 0 &&
@@ -1019,8 +1019,8 @@ void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const 
 }
 
 void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                             arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
-                             real64 & detA )
+                    arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
+                    real64 & detA )
 {
   // --- Check that source matrix is square
   GEOSX_ASSERT_MSG( A.size( 0 ) > 0 &&
@@ -1144,21 +1144,21 @@ void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
 }
 
 void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv )
+                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv )
 {
   real64 detA = 0;
   matrixInverse( A, Ainv, detA );
 }
 
 void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                             arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv )
+                    arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv )
 {
   real64 detA = 0;
   matrixInverse( A, Ainv, detA );
 }
 
 void vectorCopy( array1d< real64 > const & X,
-                          array1d< real64 > & Y )
+                 array1d< real64 > & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for copying" );
@@ -1178,7 +1178,7 @@ void vectorCopy( array1d< real64 > const & X,
 }
 
 void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B )
+                 arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
@@ -1202,7 +1202,7 @@ void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A
 }
 
 void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                          arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B )
+                 arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == B.size( 0 ) &&
                     A.size( 1 ) == B.size( 1 ),
@@ -1258,7 +1258,7 @@ void getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
 }
 
 void vectorRand( arraySlice1d< real64 > const & X,
-                          RandomNumberDistribution const & idist )
+                 RandomNumberDistribution const & idist )
 {
 
   int IDIST = static_cast< int >(idist);
@@ -1268,7 +1268,7 @@ void vectorRand( arraySlice1d< real64 > const & X,
 }
 
 void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
-                          RandomNumberDistribution const & idist )
+                 RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
   int const NN = LvArray::integerConversion< int >( A.size() );
@@ -1277,7 +1277,7 @@ void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
 }
 
 void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
-                          RandomNumberDistribution const & idist )
+                 RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
   int const NN = LvArray::integerConversion< int >( A.size() );
@@ -1286,9 +1286,9 @@ void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
 }
 
 void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                         arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
-                         arraySlice1d< real64 > const & S,
-                         arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
+                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
+                arraySlice1d< real64 > const & S,
+                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
 {
   int const minDim = (A.size( 0 ) < A.size( 1 ))
                    ? LvArray::integerConversion< int >( A.size( 0 ) )
@@ -1337,9 +1337,9 @@ void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
 }
 
 void matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & U,
-                         arraySlice1d< real64 > const & S,
-                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT )
+                arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & U,
+                arraySlice1d< real64 > const & S,
+                arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT )
 {
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > UT( U.size( 0 ), U.size( 1 ) );

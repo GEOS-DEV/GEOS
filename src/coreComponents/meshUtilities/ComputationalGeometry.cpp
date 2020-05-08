@@ -221,12 +221,12 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
     {
       for( localIndex a=0; a<numPoints; ++a )
       {
-	/*
-        GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
-                                   << points[pointsIndices[a]]( 1 ) << " "
-                                   << points[pointsIndices[a]]( 2 ) << " "
-                                   << pointsIndices[a] );
-	*/
+        /*
+              GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
+                                         << points[pointsIndices[a]]( 1 ) << " "
+                                         << points[pointsIndices[a]]( 2 ) << " "
+                                         << pointsIndices[a] );
+         */
       }
 
       //GEOSX_ERROR( "Negative area found : " << area );

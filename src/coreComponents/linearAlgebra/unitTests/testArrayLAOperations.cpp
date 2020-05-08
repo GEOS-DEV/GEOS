@@ -39,7 +39,7 @@ void vector_norm1_test()
 
   // Populate vector with random coefficients
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   real64 norm1 = 0.0;
@@ -62,7 +62,7 @@ void vector_norm2_test()
 
   // Populate vector with random coefficients
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm2
   real64 norm2 = 0.0;
@@ -86,7 +86,7 @@ void vector_normInf_test()
 
   // Populate vector with random coefficients
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = std::abs( vec( 0 ));
@@ -160,7 +160,7 @@ void matrix_normInf_test()
 
   // Populate matrix with random coefficients
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = 0.0;
@@ -189,7 +189,7 @@ void matrix_norm1_test()
 
   // Populate matrix with random coefficients
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   array1d< real64 > tmp( N );
@@ -219,7 +219,7 @@ void matrix_normFrobenius_test()
 
   // Populate matrix with random coefficients
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normFrobeniusm
   real64 normFrobenius = 0.0;
@@ -248,9 +248,9 @@ void vector_vector_add_test()
 
   // Populate vectors with random coefficients
   DenseLA::vectorRand( vec1,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   DenseLA::vectorRand( vec2,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum vecSum = alpha*vec1 + vec2
   real64 alpha = 3.0;
@@ -261,8 +261,8 @@ void vector_vector_add_test()
 
   // Compute v2 = alpha*vec1 + vec2
   DenseLA::vectorVectorAdd( vec1,
-                        vec2,
-                        alpha );
+                            vec2,
+                            alpha );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -285,10 +285,10 @@ void matrix_matrix_add_test()
   // Populate vectors with random coefficients
   // Populate matrix with random coefficients
   DenseLA::matrixRand( mat1,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   // Populate matrix with random coefficients
   DenseLA::matrixRand( mat2,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum matSum = alpha*mat1 + mat2
   real64 alpha = 3.0;
@@ -302,8 +302,8 @@ void matrix_matrix_add_test()
 
   // Compute mat2 = alpha*mat1 + mat2
   DenseLA::matrixMatrixAdd( mat1,
-                        mat2,
-                        alpha );
+                            mat2,
+                            alpha );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -325,7 +325,7 @@ void vector_scale_test()
 
   // Populate vectors with random coefficients
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vecScaled = alpha*vec
   real64 alpha = 3.0;
@@ -336,7 +336,7 @@ void vector_scale_test()
 
   // Compute vec = alpha*vec
   DenseLA::vectorScale( alpha,
-                    vec );
+                        vec );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -357,7 +357,7 @@ void matrix_scale_test()
 
   // Populate vectors with random coefficients
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector matScaled = alpha*mat
   real64 alpha = 3.0;
@@ -371,7 +371,7 @@ void matrix_scale_test()
 
   // Compute mat = alpha*mat
   DenseLA::matrixScale( alpha,
-                    mat );
+                        mat );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -394,9 +394,9 @@ void vector_dot_test()
 
   // Populate vectors with random coefficients
   DenseLA::vectorRand( vec1,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   DenseLA::vectorRand( vec2,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vec1_dot_v2 = vec1^t*vec2
   real64 vec1DotVec2 = 0.0;
@@ -408,7 +408,7 @@ void vector_dot_test()
   // Check
   EXPECT_NEAR( vec1DotVec2,
                DenseLA::vectorDot( vec1,
-                               vec2 ),
+                                   vec2 ),
                static_cast< real64 >(N)*machinePrecision );
 }
 
@@ -424,11 +424,11 @@ void matrix_vector_multiply_test()
 
   // Populate matrix and vectors with random coefficients
   DenseLA::matrixRand( A,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   DenseLA::vectorRand( X,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   DenseLA::vectorRand( Y,
-                   DenseLA::RandomNumberDistribution::NORMAL_01 );
+                       DenseLA::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*A*X + beta*Y
   real64 alpha = 3.0;
@@ -444,10 +444,10 @@ void matrix_vector_multiply_test()
 
   // Compute Y = alpha*A*X + beta*Y
   DenseLA::matrixVectorMultiply( A,
-                             X,
-                             Y,
-                             alpha,
-                             beta );
+                                 X,
+                                 Y,
+                                 alpha,
+                                 beta );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -470,11 +470,11 @@ void matrixT_vector_multiply_test()
 
   // Populate matrix and vectors with random coefficients
   DenseLA::matrixRand( A,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   DenseLA::vectorRand( X,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   DenseLA::vectorRand( Y,
-                   DenseLA::RandomNumberDistribution::NORMAL_01 );
+                       DenseLA::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*transpose(A)*X + beta*Y
   real64 alpha = 3.0;
@@ -490,10 +490,10 @@ void matrixT_vector_multiply_test()
 
   // Compute Y = alpha*A*X + beta*Y
   DenseLA::matrixTVectorMultiply( A,
-                              X,
-                              Y,
-                              alpha,
-                              beta );
+                                  X,
+                                  Y,
+                                  alpha,
+                                  beta );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -536,11 +536,11 @@ void matrix_matrix_multiply_test()
 
         // Populate matrices with random coefficients
         DenseLA::matrixRand( A,
-                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_01 );
         DenseLA::matrixRand( B,
-                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
         DenseLA::matrixRand( C,
-                         DenseLA::RandomNumberDistribution::NORMAL_01 );
+                             DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -557,10 +557,10 @@ void matrix_matrix_multiply_test()
 
         // Compute C = alpha*A*B + beta*C
         DenseLA::matrixMatrixMultiply( A,
-                                   B,
-                                   C,
-                                   alpha,
-                                   beta );
+                                       B,
+                                       C,
+                                       alpha,
+                                       beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -610,11 +610,11 @@ void matrixT_matrix_multiply_test()
 
         // Populate matrices with random coefficients
         DenseLA::matrixRand( A,
-                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_01 );
         DenseLA::matrixRand( B,
-                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
         DenseLA::matrixRand( C,
-                         DenseLA::RandomNumberDistribution::NORMAL_01 );
+                             DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -631,10 +631,10 @@ void matrixT_matrix_multiply_test()
 
         // Compute C = alpha*A*B + beta*C
         DenseLA::matrixTMatrixMultiply( A,
-                                    B,
-                                    C,
-                                    alpha,
-                                    beta );
+                                        B,
+                                        C,
+                                        alpha,
+                                        beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -684,11 +684,11 @@ void matrix_matrixT_multiply_test()
 
         // Populate matrices with random coefficients
         DenseLA::matrixRand( A,
-                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_01 );
         DenseLA::matrixRand( B,
-                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
         DenseLA::matrixRand( C,
-                         DenseLA::RandomNumberDistribution::NORMAL_01 );
+                             DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -705,10 +705,10 @@ void matrix_matrixT_multiply_test()
 
         // Compute C = alpha*A*B + beta*C
         DenseLA::matrixMatrixTMultiply( A,
-                                    B,
-                                    C,
-                                    alpha,
-                                    beta );
+                                        B,
+                                        C,
+                                        alpha,
+                                        beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -758,11 +758,11 @@ void matrixT_matrixT_multiply_test()
 
         // Populate matrices with random coefficients
         DenseLA::matrixRand( A,
-                         DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_01 );
         DenseLA::matrixRand( B,
-                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                             DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
         DenseLA::matrixRand( C,
-                         DenseLA::RandomNumberDistribution::NORMAL_01 );
+                             DenseLA::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -779,10 +779,10 @@ void matrixT_matrixT_multiply_test()
 
         // Compute C = alpha*A*B + beta*C
         DenseLA::matrixTMatrixTMultiply( A,
-                                     B,
-                                     C,
-                                     alpha,
-                                     beta );
+                                         B,
+                                         C,
+                                         alpha,
+                                         beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -834,7 +834,7 @@ void matrix_inverse_test()
     // Compute inverse of Laplacian1d
     Laplacian1dInv.resize( N, N );
     DenseLA::matrixInverse( Laplacian1d,
-                        Laplacian1dInv );
+                            Laplacian1dInv );
 
     // Check
     N_real = static_cast< real64 >(N);
@@ -877,11 +877,11 @@ void vector_copy_test()
 
     // Populate src vector with random coefficients
     DenseLA::vectorRand( src,
-                     DenseLA::RandomNumberDistribution::NORMAL_01 );
+                         DenseLA::RandomNumberDistribution::NORMAL_01 );
 
     // Copy vector, dst = src
     DenseLA::vectorCopy( src,
-                     dst );
+                         dst );
 
     // Check
     for( INDEX_TYPE i = 0; i < N; ++i )
@@ -915,11 +915,11 @@ void matrix_copy_test()
 
       // Populate src matrix with random coefficients
       DenseLA::matrixRand( src,
-                       DenseLA::RandomNumberDistribution::NORMAL_01 );
+                           DenseLA::RandomNumberDistribution::NORMAL_01 );
 
       // Copy matrix, dst = src
       DenseLA::matrixCopy( src,
-                       dst );
+                           dst );
 
       // Check
       for( INDEX_TYPE i = 0; i < M; ++i )
@@ -944,14 +944,14 @@ void vector_rand_test()
 
   // --- uniform distribution (0,1);
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   real64 *v_max = std::max_element( vec.begin(), vec.end());
   real64 *v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( 0.0 <= *v_min && *v_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
   DenseLA::vectorRand( vec,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   v_max = std::max_element( vec.begin(), vec.end());
   v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( -1.0 <= *v_min && *v_max <= 1.0 );
@@ -972,14 +972,14 @@ void matrix_rand_test()
 
   // --- uniform distribution (0,1);
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
   real64 *A_max = std::max_element( mat.begin(), mat.end());
   real64 *A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( 0.0 <= *A_min && *A_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
   DenseLA::matrixRand( mat,
-                   DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                       DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
   A_max = std::max_element( mat.begin(), mat.end());
   A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( -1.0 <= *A_min && *A_max <= 1.0 );
@@ -1024,9 +1024,9 @@ void performance_test()
     c.resize( size, size );
 
     DenseLA::matrixRand( a,
-                     DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
     DenseLA::matrixRand( b,
-                     DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
+                         DenseLA::RandomNumberDistribution::UNIFORM_m1p1 );
 
     std::chrono::duration< double > multiplicationTime {};
     localIndex const nIter = MAX_SIZE / (size + 1) + 1;
@@ -1092,7 +1092,7 @@ void matrix_svd_test()
 
       // Populate matrix A with random coefficients
       DenseLA::matrixRand( A,
-                       DenseLA::RandomNumberDistribution::UNIFORM_01 );
+                           DenseLA::RandomNumberDistribution::UNIFORM_01 );
 
       // Compute the SVD of A
       DenseLA::matrixSVD( A, U, S_vec, VT );

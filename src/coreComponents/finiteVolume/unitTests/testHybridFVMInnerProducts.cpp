@@ -42,8 +42,8 @@ void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & trans
     for( localIndex jfaceLoc = 0; jfaceLoc < transMatrix.size( 1 ); ++jfaceLoc )
     {
       checkRelativeError( transMatrix( ifaceLoc, jfaceLoc ),
-   		          transMatrixRef( ifaceLoc, jfaceLoc ),
-			  1e-10 );
+                          transMatrixRef( ifaceLoc, jfaceLoc ),
+                          1e-10 );
     }
   }
 }
@@ -59,12 +59,12 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
   elemCenter( 1 ) = 0;
   elemCenter( 2 ) = 0;
   for( localIndex a = 0; a < numNodes; ++a )
-    {
-      Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
-      Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
-      Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
-      elemCenter += Xlocal[a];
-    }
+  {
+    Xlocal[a][0] = nodePosition( toNodes( a ), 0 );
+    Xlocal[a][1] = nodePosition( toNodes( a ), 1 );
+    Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
+    elemCenter += Xlocal[a];
+  }
   elemCenter /= numNodes;
 
   GEOSX_ERROR_IF( numNodes != 8 && numNodes != 4,
@@ -326,7 +326,7 @@ void makeTetra( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition
 
 TEST( testHybridFVMInnerProducts, TPFA_hexa )
 {
-  localIndex constexpr NF = 6; 
+  localIndex constexpr NF = 6;
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
@@ -335,7 +335,7 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
   R1Tensor elemPerm;
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
-  stackArray2d< real64, NF*NF > transMatrixRef( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
 
   makeHexa( nodePosition,
             faceToNodes,
@@ -347,7 +347,7 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
             InnerProductType::TPFA,
             transMatrixRef );
 
-  stackArray2d< real64, NF*NF > transMatrix( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
   TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
                                              faceToNodes.toViewConst(),
@@ -363,7 +363,7 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
 
 TEST( testHybridFVMInnerProducts, QTPFA_hexa )
 {
-  localIndex constexpr NF = 6; 
+  localIndex constexpr NF = 6;
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
@@ -372,7 +372,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
   R1Tensor elemPerm;
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
-  stackArray2d< real64, NF*NF > transMatrixRef( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
 
   real64 const tParam = 2;
 
@@ -386,7 +386,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
             InnerProductType::QUASI_TPFA,
             transMatrixRef );
 
-  stackArray2d< real64, NF*NF > transMatrix( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
   QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
                                               faceToNodes.toViewConst(),
@@ -403,7 +403,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
 
 TEST( testHybridFVMInnerProducts, TPFA_tetra )
 {
-  localIndex constexpr NF = 4; 
+  localIndex constexpr NF = 4;
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
@@ -412,7 +412,7 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
   R1Tensor elemPerm;
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
-  stackArray2d< real64, NF*NF > transMatrixRef( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
 
   makeTetra( nodePosition,
              faceToNodes,
@@ -424,7 +424,7 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
              InnerProductType::TPFA,
              transMatrixRef );
 
-  stackArray2d< real64, NF*NF > transMatrix( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
   TPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
                                              faceToNodes.toViewConst(),
@@ -436,11 +436,11 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
 
   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
 }
- 
+
 
 TEST( testHybridFVMInnerProducts, QTPFA_tetra )
 {
-  localIndex constexpr NF = 4; 
+  localIndex constexpr NF = 4;
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
   FaceManager::NodeMapType faceToNodes;
@@ -449,7 +449,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
   R1Tensor elemPerm;
   real64 elemVolume = 0;
   real64 lengthTolerance = 0;
-  stackArray2d< real64, NF*NF > transMatrixRef( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
 
   real64 const tParam = 2;
 
@@ -463,7 +463,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
              InnerProductType::QUASI_TPFA,
              transMatrixRef );
 
-  stackArray2d< real64, NF*NF > transMatrix( NF, NF );
+  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
   QTPFACellInnerProductKernel::Compute< NF >( nodePosition.toViewConst(),
                                               faceToNodes.toViewConst(),

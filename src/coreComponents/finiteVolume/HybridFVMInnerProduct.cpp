@@ -177,33 +177,24 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
                                       real64 const & lengthTolerance,
                                       arraySlice2d< real64 > const & transMatrix )
 {
-  //  localIndex constexpr dim = 3;
+  localIndex constexpr dim = 3;
 
   R1Tensor faceCenter, faceNormal;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
-  stackArray2d< real64, NF *3 > cellToFaceMat;//( NF, 3 );
-  cellToFaceMat.resize( NF, 3 );
-  stackArray2d< real64, NF *3 > normalsMat;//( NF, 3 );
-  normalsMat.resize( NF, 3 );
-  stackArray2d< real64, 3 *3 > permMat;//( 3, 3 );
-  permMat.resize( 3, 3 );
+  stackArray2d< real64, NF *dim > cellToFaceMat( NF, dim );
+  stackArray2d< real64, NF *dim > normalsMat( NF, dim );
+  stackArray2d< real64, dim *dim > permMat( dim, dim );
 
-  stackArray2d< real64, 3 *NF > work_dimByNumFaces;//( 3, NF );
-  work_dimByNumFaces.resize( 3, NF );
-  stackArray2d< real64, NF *NF > worka_numFacesByNumFaces;//( NF, NF );
-  worka_numFacesByNumFaces.resize( NF, NF );
-  stackArray2d< real64, NF *NF > workb_numFacesByNumFaces;//( NF, NF );
-  workb_numFacesByNumFaces.resize( NF, NF );
-  stackArray2d< real64, NF *NF > workc_numFacesByNumFaces;//( NF, NF );
-  workc_numFacesByNumFaces.resize( NF, NF );
+  stackArray2d< real64, dim *NF > work_dimByNumFaces( dim, NF );
+  stackArray2d< real64, NF *NF > worka_numFacesByNumFaces( NF, NF );
+  stackArray2d< real64, NF *NF > workb_numFacesByNumFaces( NF, NF );
+  stackArray2d< real64, NF *NF > workc_numFacesByNumFaces( NF, NF );
 
-  stackArray1d< real64, NF > q0;//( NF );
-  q0.resize( NF );
-  stackArray1d< real64, NF > q1;//( NF );
-  q1.resize( NF );
-  stackArray1d< real64, NF > q2;//( NF );
-  q2.resize( NF );
+  stackArray1d< real64, NF > q0( NF );
+  stackArray1d< real64, NF > q1( NF );
+  stackArray1d< real64, NF > q2( NF );
+
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
@@ -237,7 +228,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   }
 
   // 2) assemble full coefficient tensor from principal axis/components
-  //permMat = 0;
+  DenseLA::matrixScale( 0, permMat );
   HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
 
   // 3) compute N K N'
@@ -252,7 +243,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   HybridFVMInnerProductHelper::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
 
   // 5) compute P_Q = I - QQ'
-  //worka_numFacesByNumFaces = 0;
+  DenseLA::matrixScale( 0, worka_numFacesByNumFaces );
   for( localIndex i = 0; i < NF; ++i )
   {
     worka_numFacesByNumFaces( i, i ) = 1;
@@ -265,7 +256,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
   // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
   // Note that 7) is done at the last call to matrixMatrixMultiply
-  //workb_numFacesByNumFaces = 0;
+  DenseLA::matrixScale( 0, workb_numFacesByNumFaces );
   for( localIndex i = 0; i < NF; ++i )
   {
     workb_numFacesByNumFaces( i, i ) = transMatrix( i, i );

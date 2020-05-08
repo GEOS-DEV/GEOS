@@ -137,7 +137,7 @@ struct AssemblerKernelHelper
    * @param[inout] rhs the residual
    */
   template< localIndex NF >
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   AssembleOneSidedMassFluxes( real64 const & dt,
                               arrayView1d< globalIndex const > const & faceDofNumber,
@@ -165,7 +165,7 @@ struct AssemblerKernelHelper
    * @param[inout] rhs the residual
    */
   template< localIndex NF >
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                        arraySlice1d< localIndex const > const elemToFaces,
@@ -270,7 +270,7 @@ struct AssemblerKernel
    * @param[inout] rhs the system right-hand side vector
    */
   template< localIndex NF >
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   static void
   Compute( localIndex const er,
            localIndex const esr,
