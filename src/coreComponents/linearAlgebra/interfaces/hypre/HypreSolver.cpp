@@ -219,7 +219,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
       if( ( 0 < m_parameters.amg.numSweeps ) && ( m_parameters.amg.numSweeps < 5 ) )
       {
         GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond,
-                                                             LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps )) );
+                                                             LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps ) ) );
       }
     }
     else if( m_parameters.amg.smootherType == "L1jacobi" )
