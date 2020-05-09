@@ -18,8 +18,8 @@
 
 #include "PetscSolver.hpp"
 
-#include "interfaces/petsc/PetscMatrix.hpp"
-#include "interfaces/petsc/PetscVector.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
@@ -300,11 +300,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   // reset verbosity option
   GEOSX_LAI_CHECK_ERROR( PetscOptionsClearValue( nullptr, "-ksp_monitor" ) );
 
-  // Destroy preconditioner and solver
-//  if( prec != nullptr )
-//  {
-//    GEOSX_LAI_CHECK_ERROR( PCDestroy( &prec ) );
-//  }
+  // Destroy solver
   GEOSX_LAI_CHECK_ERROR( KSPDestroy( &ksp ) );
 
 }

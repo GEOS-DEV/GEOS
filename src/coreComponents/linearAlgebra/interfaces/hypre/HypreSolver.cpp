@@ -18,8 +18,8 @@
 
 #include "HypreSolver.hpp"
 
-#include "interfaces/hypre/HypreMatrix.hpp"
-#include "interfaces/hypre/HypreVector.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
@@ -242,6 +242,10 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
       {
         GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( precond, 1 ) );
       }
+    }
+    else
+    {
+      GEOSX_ERROR( "Unsupported amg smoother type: " << m_parameters.amg.smootherType );
     }
 
     // Set coarsest level solver
