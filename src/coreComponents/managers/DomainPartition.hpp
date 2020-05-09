@@ -34,6 +34,7 @@ namespace dataRepository
 {
 namespace keys
 {
+/// @return PartitionManager string key
 string const partitionManager( "partitionManager" );
 }
 }
@@ -50,9 +51,17 @@ class PartitionBase;
 class DomainPartition : public dataRepository::Group
 {
 public:
+  /**
+   * @brief Constructor.
+   * @param[in] name Name of this object manager
+   * @param[in] parent Parent Group
+   */
   DomainPartition( std::string const & name,
                    Group * const parent );
 
+  /**
+   * @brief Destructor.
+   */
   ~DomainPartition() override;
 
   /**
@@ -60,12 +69,19 @@ public:
    */
   ///@{
   DomainPartition() = delete;
+
   DomainPartition( DomainPartition const & ) = delete;
+
   DomainPartition( DomainPartition && ) = delete;
+
   DomainPartition & operator=( DomainPartition const & ) = delete;
+
   DomainPartition & operator=( DomainPartition && ) = delete;
   ///@}
 
+  /**
+   * @copydoc dataRepository::Group::RegisterDataOnMeshRecursive( Group * const MeshBodies )
+   */
   virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
 
   void InitializationOrder( string_array & order ) override final;
@@ -107,15 +123,27 @@ public:
                      int * ncoords );
   ///@}
 
+
+  /**
+   * @brief struct to serve as a container for group strings and keys
+   * @struct groupKeysStruct
+   */
   struct groupKeysStruct
   {
+    /// String key to the Group holding the MeshBodies
     static constexpr auto meshBodiesString = "MeshBodies";
+    /// String key to the Group holding the ConstitutiveManager
     static constexpr auto constitutiveManagerString = "Constitutive";
 
-    dataRepository::GroupKey meshBodies           = { meshBodiesString };
-    dataRepository::GroupKey constitutiveManager  = { constitutiveManagerString };
-    dataRepository::GroupKey communicationManager    = { "communicationManager" };
-  } groupKeys;
+    /// View key to the Group holding the MeshBodies
+    dataRepository::GroupKey meshBodies = { meshBodiesString };
+    /// View key to the Group holding the ConstitutiveManager
+    dataRepository::GroupKey constitutiveManager = { constitutiveManagerString };
+    /// View key to the Group holding the CommunicationManager
+    dataRepository::GroupKey communicationManager = { "communicationManager" };
+  }
+  /// groupKey struct for the DomainPartition class
+  groupKeys;
 
   /**
    * @brief Get the constitutive manager, const version.
@@ -132,16 +160,16 @@ public:
   { return this->GetGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager ); }
 
   /**
-   * @brief @return Return a reference to const #NumericalMethodsManager from #ProblemManager
+   * @brief @return Return a reference to const NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager const & getNumericalMethodManager() const
-  { return *(this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" )); }
+  { return *( this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" ) ); }
 
   /**
-   * @brief @return Return a reference to #NumericalMethodsManager from #ProblemManager
+   * @brief @return Return a reference to NumericalMethodsManager from ProblemManager
    */
   NumericalMethodsManager & getNumericalMethodManager()
-  { return *(this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" )); }
+  { return *( this->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" ) ); }
 
   /**
    * @brief Get the mesh bodies, const version.
@@ -190,28 +218,28 @@ public:
   { return this->GetGroup( groupKeys.meshBodies )->GetGroup< MeshBody >( index ); }
 
   /**
-   * @brief Get the metis neighbors indices.  @see #m_metisNeighborList
+   * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
    * @return Container of global indices.
    */
   std::set< int > & getMetisNeighborList()
   { return m_metisNeighborList; }
 
   /**
-  * @brief Get the metis neighbors indices, const version. @see #m_metisNeighborList
-  * @return Container of global indices.
-  */
+   * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
+   * @return Container of global indices.
+   */
   std::set< int > const & getMetisNeighborList() const
   { return m_metisNeighborList; }
 
   /**
-   * @brief Get the neighbor communicators. @see #m_neighbors.
+   * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
   std::vector< NeighborCommunicator > & getNeighbors()
   { return m_neighbors; }
 
   /**
-   * @brief Get the neighbor communicators, const version. @see #m_neighbors.
+   * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
    * @return Container of communicators.
    */
   std::vector< NeighborCommunicator > const & getNeighbors() const

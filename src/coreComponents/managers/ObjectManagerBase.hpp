@@ -128,14 +128,14 @@ public:
   virtual localIndex PackGlobalMapsSize( arrayView1d< localIndex > const & packList,
                                          integer const recursive ) const;
 
-   /**
+  /**
    * @brief Packs the global maps elements in the @ packList.
-    * @param buffer The buffer that will receive the packed data.
-    * @param packList The element we want packed.
-    * @param recursive Boolean like integer for sub-groups packing.
-    * @return The packed size.
-    */
-   virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @param recursive Boolean like integer for sub-groups packing.
+   * @return The packed size.
+   */
+  virtual localIndex PackGlobalMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex > const & packList,
                                      integer const recursive ) const;
 
@@ -177,7 +177,7 @@ public:
    * @param overwriteDownMaps Clear the down maps provided.
    * @return The packed size.
    */
-  virtual localIndex UnpackUpDownMaps( buffer_unit_type const *& buffer,
+  virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps )
@@ -211,12 +211,12 @@ public:
     return PackParentChildMapsPrivate< false >( buffer, packList );
   }
 
-   /**
+  /**
    * @brief Packs the parent/child relations in @p packList.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The indices we want packed.
    * @return The packed size.
-    */
+   */
   localIndex PackParentChildMaps( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList ) const
   {
@@ -527,10 +527,13 @@ public:
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices );
 
   /**
-   * @brief Get the upmost parent (i.e. parent of parent of parent...) of @p lookup that has no more valid parent in @p parentIndices.
+   * @brief Get the upmost parent.
    * @param parentIndices The list of parent indices.
    * @param lookup The index for which we are looking for the parent
    * @return The upmost parent index.
+   *
+   * Get the upmost parent (i.e. parent of parent of parent...) of @p lookup
+   * that has no more valid parent in @p parentIndices.
    */
   static localIndex GetParentRecusive( arraySlice1d< localIndex const > const & parentIndices,
                                        localIndex const lookup )
@@ -728,7 +731,8 @@ public:
   /**
    * @brief Get the ghost information of each object, const version.
    * @return See @see #m_ghostRank
-   */  arrayView1d< integer const > const & ghostRank() const
+   */
+  arrayView1d< integer const > const & ghostRank() const
   { return this->m_ghostRank; }
 
   /**
