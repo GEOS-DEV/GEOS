@@ -218,9 +218,7 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   }
 
   // we are ready to assemble the local flux and its derivatives
-
   /*
-
      // residual
      rhs->add( eqnRowIndex,
             sumLocalMassFluxes );
@@ -234,7 +232,6 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
      matrix->add( eqnRowIndex,
                faceDofColIndices,
                dSumLocalMassFluxes_dFaceVars );
-
    */
 }
 
@@ -257,7 +254,6 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
   stackArray1d< globalIndex, NF > dofColIndicesFacePres( NF );
   //globalIndex const dofColIndexElemPres = elemDofNumber;
 
-
   // for each element, loop over the local (one-sided) faces
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
@@ -275,7 +271,6 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
     }
 
     /*
-
        // residual
        rhs->add( eqnRowIndex,
               flux );
@@ -289,7 +284,6 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
        matrix->add( eqnRowIndex,
                  dofColIndicesFacePres,
                  dFlux_dfp );
-
      */
   }
 }
@@ -444,11 +438,15 @@ FluxKernel::Launch( localIndex er,
                     ParallelMatrix * const matrix,
                     ParallelVector * const rhs )
 {
+
   // get the cell-centered DOF numbers and ghost rank for the assembly
   string const elemDofKey = dofManager->getKey( SinglePhaseBase::viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
-  elemDofNumber = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
-                                                                arrayView1d< globalIndex const > >( elemDofKey );
+  dofNumberAccessor = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >,
+                                                                    arrayView1d< globalIndex const > >( elemDofKey );
+
+  ElementView< arrayView1d< globalIndex const > > const & elemDofNumber = dofNumberAccessor.toViewConst();
+
   arrayView1d< integer const > const & elemGhostRank =
     subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
@@ -471,11 +469,11 @@ FluxKernel::Launch( localIndex er,
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString );
+    subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces
-  using KERNEL_POLICY = parallelDevicePolicy< 2 >;
+  using KERNEL_POLICY = parallelDevicePolicy< 32 >;
   forAll< KERNEL_POLICY >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
 
@@ -566,6 +564,7 @@ FluxKernel::Launch( localIndex er,
                                                     arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp, \
                                                     ParallelMatrix * const matrix, \
                                                     ParallelVector * const rhs )
+
 
 INST_AssembleKernelHelper( 4 );
 INST_AssembleKernelHelper( 5 );

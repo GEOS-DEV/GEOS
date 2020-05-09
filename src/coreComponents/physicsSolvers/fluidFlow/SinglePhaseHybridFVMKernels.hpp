@@ -226,6 +226,7 @@ INST_AssembleKernelHelper( 6 );
 #undef INST_AssembleKernelHelper
 
 
+
 /******************************** AssemblerKernel ********************************/
 
 struct AssemblerKernel

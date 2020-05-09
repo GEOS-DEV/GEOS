@@ -22,6 +22,12 @@
 #include "common/Logger.hpp"
 #include "linearAlgebra/common.hpp"
 
+#if !defined(__CUDA_ARCH__)
+  #define USE_LAPACK
+#endif
+
+#include "DenseLAHelpers.hpp"
+
 namespace geosx
 {
 
@@ -56,15 +62,34 @@ real64 vectorNorm1( arraySlice1d< real64 const > const & X );
  *
  * @param [in] X GEOSX array1d.
  */
+
 GEOSX_HOST_DEVICE
-real64 vectorNorm2( arraySlice1d< real64 const > const & X );
+static real64 vectorNorm2( arraySlice1d< real64 const > const & X )
+{
+#ifdef USE_LAPACK
+
+  real64 norm = 0;
+  vectorNorm2Lapack( X, norm );
+  return norm;
+
+#else
+
+  real64 norm = 0;
+  for( localIndex i = 0; i < X.size(); ++i )
+  {
+    norm += X( i ) * X( i );
+  }
+  return sqrt( norm );
+
+#endif
+}
+
 
 /**
  * @brief Returns the infinity-norm of the vector.
  *
  * @param [in] X GEOSX array1d.
  */
-GEOSX_HOST_DEVICE
 real64 vectorNormInf( arraySlice1d< real64 const > const & X );
 
 /**
@@ -98,13 +123,11 @@ real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
  * norm is computed as the one norm of the transpose matrix, i.e. assuming
  * column major ordering, for best performance.
  */
-GEOSX_HOST_DEVICE
 real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
 /**
  * @copydoc matrixNormInf( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
  */
-GEOSX_HOST_DEVICE
 real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
 /**
@@ -118,13 +141,11 @@ real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > cons
  * is computed as the infinity norm of the transpose matrix, i.e. assuming
  * column major ordering, for best performance.
  */
-GEOSX_HOST_DEVICE
 real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
 /**
  * @copydoc matrixNorm1( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
  */
-GEOSX_HOST_DEVICE
 real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
 /**
@@ -138,13 +159,11 @@ real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
  * is computed for the transpose matrix, i.e. assuming column major
  * ordering, for best performance.
  */
-GEOSX_HOST_DEVICE
 real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A );
 
 /**
  * @copydoc matrixNormFrobenius( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & )
  */
-GEOSX_HOST_DEVICE
 real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A );
 
 /**
@@ -162,9 +181,27 @@ real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR 
  * Assumes that \p X and \p Y have the same size.
  */
 GEOSX_HOST_DEVICE
-void vectorVectorAdd( arraySlice1d< real64 const > const & X,
-                      arraySlice1d< real64 > const & Y,
-                      real64 const alpha = 1. );
+static void vectorVectorAdd( arraySlice1d< real64 const > const & X,
+                             arraySlice1d< real64 > const & Y,
+                             real64 const alpha = 1. )
+{
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
+                    "Vector dimensions not compatible for sum" );
+
+#ifdef USE_LAPACK
+
+  vectorVectorAddLapack( X, Y, alpha );
+
+#else
+
+  for( localIndex i = 0; i < X.size(); ++i )
+  {
+    Y( i ) += alpha * X( i );
+  }
+
+#endif
+}
+
 
 /**
  * @brief Matrix-Matrix sum;
@@ -180,7 +217,6 @@ void vectorVectorAdd( arraySlice1d< real64 const > const & X,
  * @warning
  * Assumes that \p A and \p B have the same size.
  */
-GEOSX_HOST_DEVICE
 void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                       arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
                       real64 const alpha = 1. );
@@ -190,7 +226,6 @@ void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > cons
                              arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B,
                              real64 const alpha = 1. )
  */
-GEOSX_HOST_DEVICE
 void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                       arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
                       real64 const alpha = 1. );
@@ -203,8 +238,23 @@ void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > cons
  * @param [in,out] X     GEOSX array1d.
  */
 GEOSX_HOST_DEVICE
-void vectorScale( real64 const & alpha,
-                  arraySlice1d< real64 > const & X );
+static void vectorScale( real64 const & alpha,
+                         arraySlice1d< real64 > const & X )
+{
+#ifdef USE_LAPACK
+
+  vectorScaleLapack( alpha, X );
+
+#else
+
+  for( localIndex i = 0; i < X.size(); ++i )
+  {
+    X( i ) *= alpha;
+  }
+
+#endif
+}
+
 
 /**
  * @brief In-place scalar-matrix product;
@@ -214,8 +264,26 @@ void vectorScale( real64 const & alpha,
  * @param [in,out] A     GEOSX array2d.
  */
 GEOSX_HOST_DEVICE
-void matrixScale( real64 const & alpha,
-                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A );
+static void matrixScale( real64 const & alpha,
+                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A )
+{
+#ifdef USE_LAPACK
+
+  matrixScaleLapack( alpha, A );
+
+#else
+
+  for( localIndex i = 0; i < A.size( 0 ); ++i )
+  {
+    for( localIndex j = 0; j < A.size( 1 ); ++j )
+    {
+      A( i, j ) *= alpha;
+    }
+  }
+
+#endif
+}
+
 
 /**
  * @copydoc static void matrixScale( real64 const alpha, arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & )
@@ -232,8 +300,30 @@ void matrixScale( real64 const & alpha,
  *
  */
 GEOSX_HOST_DEVICE
-real64 vectorDot( arraySlice1d< real64 const > const & X,
-                  arraySlice1d< real64 const > const & Y );
+static real64 vectorDot( arraySlice1d< real64 const > const & X,
+                         arraySlice1d< real64 const > const & Y )
+{
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
+                    "Vector dimensions not compatible for dot product" );
+
+#ifdef USE_LAPACK
+
+  real64 dotProduct = 0;
+  vectorDotLapack( X, Y, dotProduct );
+  return dotProduct;
+
+#else
+
+  real64 dotProduct = 0;
+
+  for( localIndex i = 0; i < X.size(); ++i )
+  {
+    dotProduct += X( i ) * Y( i );
+  }
+  return dotProduct;
+
+#endif
+}
 
 /**
  * @brief Matrix-Vector product;
@@ -250,7 +340,6 @@ real64 vectorDot( arraySlice1d< real64 const > const & X,
  * @warning
  * Assumes that \p X and \p Y have compatible sizes with \p A.
  */
-GEOSX_HOST_DEVICE
 void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                            arraySlice1d< real64 const > const & X,
                            arraySlice1d< real64 > const & Y,
@@ -274,7 +363,6 @@ void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
  * @warning
  * Assumes that \p X and \p Y have compatible sizes with \p transpose(A).
  */
-GEOSX_HOST_DEVICE
 void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                             arraySlice1d< real64 const > const & X,
                             arraySlice1d< real64 > const & Y,
@@ -299,11 +387,58 @@ void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
  *
  */
 GEOSX_HOST_DEVICE
-void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                           arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                           real64 const alpha = 1.0,
-                           real64 const beta = 0.0 );
+static void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                  arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                  real64 const alpha = 1.0,
+                                  real64 const beta = 0.0 )
+{
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+                    C.size( 1 ) == B.size( 1 ) &&
+                    A.size( 1 ) == B.size( 0 ),
+                    "Matrix dimensions not compatible for product" );
+
+#ifdef USE_LAPACK
+
+  // TODO: move to the helper file
+
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 1 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
+
+  // A*B = C is computed as B^T * A^T = C^T, i.e. accessing the transpose
+  // matrices using a column-major layout
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'N';
+
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &N, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N );
+
+
+#else
+
+  // TODO: double-check loop order, see if the loops need to be interchanged, see if calling matrixScale first is a good
+  // idea
+  // TODO: see if using the raw pointer instead of the accessors is more efficient
+
+  // compute beta * C
+  matrixScale( beta, C );
+
+  // add alpha * A * B
+  for( localIndex i = 0; i < A.size( 0 ); ++i )
+  {
+    for( localIndex k = 0; k < A.size( 1 ); ++k )
+    {
+      real64 const alpha_A_ik = alpha * A( i, k );
+      for( localIndex j = 0; j < B.size( 1 ); ++j )
+      {
+        C( i, j ) +=  alpha_A_ik * B( k, j );
+      }
+    }
+  }
+
+#endif
+}
+
 
 /**
  * @brief transpose(Matrix)-Matrix product;
@@ -324,7 +459,6 @@ void matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
  * \p C already has the right size.
  *
  */
-GEOSX_HOST_DEVICE
 void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                             arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
@@ -350,12 +484,58 @@ void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
  * \p C already has the right size.
  *
  */
+
 GEOSX_HOST_DEVICE
-void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                            real64 const alpha = 1.0,
-                            real64 const beta = 0.0 );
+static void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                   arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                   arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                   real64 const alpha = 1.0,
+                                   real64 const beta = 0.0 )
+{
+
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+                    C.size( 1 ) == B.size( 0 ) &&
+                    A.size( 1 ) == B.size( 1 ),
+                    "Matrix dimensions not compatible for product" );
+
+#ifdef USE_LAPACK
+
+  // TODO: move to the helper file
+
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 0 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
+
+  // A*B^T = C is computed as B * A^T = C^T, i.e. accessing the transpose
+  // matrices using a column-major layout
+
+  char const TRANS1 = 'T';
+  char const TRANS2 = 'N';
+
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &K, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N );
+
+#else
+
+  // TODO: double-check loop order, see if the loops need to be interchanged
+  // TODO: see if using the raw pointer instead of the accessors is more efficient
+
+  // add alpha * A * B
+  for( localIndex i = 0; i < A.size( 0 ); ++i )
+  {
+    for( localIndex j = 0; j < B.size( 0 ); ++j )
+    {
+      real64 sum_a_ik_b_jk = 0;
+      for( localIndex k = 0; k < A.size( 1 ); ++k )
+      {
+        sum_a_ik_b_jk += A( i, k ) * B( j, k );
+      }
+      C( i, j ) *= beta;
+      C( i, j ) += alpha * sum_a_ik_b_jk;
+    }
+  }
+
+#endif
+}
 
 /**
  * @brief transpose(Matrix)-transpose(Matrix) product;
@@ -376,7 +556,6 @@ void matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
  * and that \p C already has the right size.
  *
  */
-GEOSX_HOST_DEVICE
 void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                              arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
@@ -461,7 +640,6 @@ void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const 
  * Assumes that \p X and \p Y have the same size.
  *
  */
-GEOSX_HOST_DEVICE
 void vectorCopy( array1d< real64 > const & X,
                  array1d< real64 > & Y );
 
@@ -476,7 +654,6 @@ void vectorCopy( array1d< real64 > const & X,
  * Assumes that \p A and \p B have the same size.
  *
  */
-GEOSX_HOST_DEVICE
 void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B );
 
@@ -484,7 +661,6 @@ void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A
  * @copydoc matrixCopy( arraySlice2d<real64 const, MatrixLayout::ROW_MAJOR> const & A,
                         arraySlice2d<real64, MatrixLayout::ROW_MAJOR> const & B )
  */
-GEOSX_HOST_DEVICE
 void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
                  arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B );
 

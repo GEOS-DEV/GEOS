@@ -248,7 +248,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                         elemSubRegionList.toViewConst(),
                                         elemList.toViewConst(),
                                         faceToNodes,
-                                        faceDofNumber,
+                                        faceDofNumber.toViewConst(),
                                         facePres,
                                         dFacePres,
                                         faceGravCoef,

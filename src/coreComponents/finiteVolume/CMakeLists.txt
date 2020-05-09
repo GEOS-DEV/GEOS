@@ -20,8 +20,7 @@ set( finiteVolume_sources
      FaceElementStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     TwoPointFluxApproximation.cpp
-     HybridFVMInnerProduct.cpp     
+     TwoPointFluxApproximation.cpp 
    )
 
 if ( BUILD_OBJ_LIBS )
