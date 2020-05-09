@@ -62,14 +62,13 @@ public:
     string cycleType = "V";
     string smootherType = "gaussSeidel";
     string coarseType = "direct";
-    integer numSweeps = 2;
-    string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
+    integer numSweeps = 2;                  ///< Number of smoother sweeps (or polynomial degree if using Chebyshev)
+    string preOrPostSmoothing = "both";     ///< Pre and/or post smoothing [pre,post,both]
     real64 aggregationThreshold = 0.0;
-    real64 strenghtOfConnection = 0.25;
+    real64 threshold = 0.25;
     bool isSymmetric = true;
     bool separateComponents = false;
     string nullSpaceType = "constantModes";
-    integer logLevel = 0;
   }
   amg;
 

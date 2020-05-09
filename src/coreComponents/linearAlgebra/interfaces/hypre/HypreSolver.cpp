@@ -166,7 +166,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond, 0.0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond,
-                                                         LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.logLevel ) ) );;
+                                                         LvArray::integerConversion< HYPRE_Int >( m_parameters.logLevel ) ) );;
 
     // Set maximum number of multigrid levels (default 25)
     if( m_parameters.amg.maxLevels > 0 )
@@ -211,21 +211,15 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 8 ) );
     }
-    else if( m_parameters.amg.smootherType.substr( 0, 9 ) == "chebyshev" )
+    else if( m_parameters.amg.smootherType == "chebyshev" )
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond, 16 ) );
+
       // Set order for Chebyshev smoother valid options 1, 2 (default), 3, 4)
-      if( m_parameters.amg.smootherType == "chebyshev1" )
+      if( ( 0 < m_parameters.amg.numSweeps ) && ( m_parameters.amg.numSweeps < 5 ) )
       {
-        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 1 ) );
-      }
-      else if( m_parameters.amg.smootherType == "chebyshev3" )
-      {
-        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 3 ) );
-      }
-      else if( m_parameters.amg.smootherType == "chebyshev4" )
-      {
-        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond, 4 ) );
+        GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetChebyOrder( precond,
+                                                             LvArray::integerConversion< HYPRE_Int >( m_parameters.amg.numSweeps )) );
       }
     }
     else if( m_parameters.amg.smootherType == "L1jacobi" )
@@ -282,9 +276,9 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     }
 
     // Set strength of connection
-    if( ( 0.0 < m_parameters.amg.strenghtOfConnection ) && ( m_parameters.amg.strenghtOfConnection < 1.0 ) )
+    if( ( 0.0 < m_parameters.amg.threshold ) && ( m_parameters.amg.threshold < 1.0 ) )
     {
-      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( precond, m_parameters.amg.strenghtOfConnection ) );
+      GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( precond, m_parameters.amg.threshold ) );
     }
 
 //    //TODO: add user-defined null space / rigid body mode support
