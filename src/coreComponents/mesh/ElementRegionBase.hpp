@@ -175,9 +175,9 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const * cellBlock ) -> void
+    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & cellBlock ) -> void
     {
-      numElem += cellBlock->size();
+      numElem += cellBlock.size();
     } );
     return numElem;
   }

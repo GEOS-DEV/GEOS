@@ -81,7 +81,7 @@ public:
   {
     string name; //!< field name
     Location location; //!< support location
-    string_array regions; //!< list of support region names
+    std::vector< string > regions; //!< list of support region names
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
     string docstring; //!< documentation string
@@ -98,7 +98,7 @@ public:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    string_array regions; //!< list of region names
+    std::vector< std::string > regions; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
@@ -570,10 +570,10 @@ private:
   MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  array1d< FieldDescription > m_fields;
+  std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  array2d< CouplingDescription > m_coupling;
+  std::vector< std::vector< CouplingDescription > > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;
