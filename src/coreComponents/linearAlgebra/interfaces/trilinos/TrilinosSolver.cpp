@@ -146,7 +146,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_precond, AZ_Jacobi ) );
   }
-  else if( m_parameters.preconditionerType == "ilu" )
+  else if( m_parameters.preconditionerType == "iluk" )
   {
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_precond, AZ_dom_decomp ) );
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_overlap, m_parameters.dd.overlap ) );
