@@ -26,7 +26,6 @@
  <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
 
   <Geometry>
-    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
     <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
   </Geometry>
 
