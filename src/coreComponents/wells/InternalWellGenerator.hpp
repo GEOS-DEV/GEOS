@@ -51,7 +51,6 @@ public:
 
   /**
    * @brief Struct to define the top and bottom node of a segment.
-   * @struct Node Location struct
    */
   struct NodeLocation
   {
@@ -100,11 +99,26 @@ public:
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & ) override {}
 
+  /**
+   * @brief Creates a new sub-Group using the ObjectCatalog functionality.
+   * @param[in] childKey The name of the new object type's key in the
+   *                     ObjectCatalog.
+   * @param[in] childName The name of the new object in the collection of
+   *                      sub-Groups.
+   * @return A pointer to the new Group created by this function.
+   */
   virtual Group * CreateChild( string const & childKey,
                                string const & childName ) override;
 
+  /**
+   * @brief Expand any catalogs in the data structure.
+   */
   virtual void ExpandObjectCatalogs() override;
 
+  /**
+   * @brief Main function of the class that generates the well geometry
+   * @param[in] domain the domain object
+   */
   virtual void GenerateMesh( DomainPartition * const domain ) override;
 
   /// not implemented
@@ -214,6 +228,10 @@ public:
 
 protected:
 
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:

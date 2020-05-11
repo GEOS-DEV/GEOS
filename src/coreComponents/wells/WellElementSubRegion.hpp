@@ -273,6 +273,14 @@ public:
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
+  /**
+   * @brief Unpacks the specific elements in the @ packList.
+   * @param[in] buffer The buffer containing the packed data.
+   * @param[in] packList The (un)packed element.
+   * @param[in] overwriteUpMaps Clear the up maps provided.
+   * @param[in] overwriteDownMaps Clear the down maps provided.
+   * @return The packed size.
+   */
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,

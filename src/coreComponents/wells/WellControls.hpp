@@ -219,8 +219,17 @@ public:
 
 protected:
 
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   virtual void PostProcessInput() override;
 
+  /**
+   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @param[in] rootGroup A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
