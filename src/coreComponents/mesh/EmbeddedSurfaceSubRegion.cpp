@@ -233,7 +233,7 @@ void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeMa
                                                       array1d< int > & offSet ) const
 {
 
-  offSet.resize( size());
+  offSet.resize( size() + 1);
   offSet = 0;
   for( localIndex k =0; k < size(); k++ )
   {
@@ -330,7 +330,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
       }
     }
   }
-  offSet[k] = count;
+  offSet[k+1] = count;
 }
 
 
