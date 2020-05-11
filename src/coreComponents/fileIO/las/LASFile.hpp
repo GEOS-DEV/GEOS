@@ -17,6 +17,7 @@
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include <string>
 
 namespace geosx
 {
@@ -58,12 +59,12 @@ class LASLine
 
     localIndex GetDataAsLocalIndex() const
     {
-      return stringutilities::fromString< localIndex >( m_data );
+      return std::stoi( m_data );
     }
 
     real64 GetDataAsReal64() const
     {
-      return stringutilities::fromString< real64 >( m_data );
+      return std::stold( m_data );
     }
 
     string const & GetDescription() const

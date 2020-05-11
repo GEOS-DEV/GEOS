@@ -28,10 +28,10 @@ using namespace dataRepository;
 WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
   m_numElemsPerSegment(0),
-  m_crossSectionArea(0),
+  m_radius(0),
   m_wellRegionName(""),
   m_wellControlsName(""),
-  m_meshName(""),
+  m_meshBodyName(""),
   m_numElems(0),
   m_numNodesPerElem(2),
   m_numNodes(0),
@@ -40,30 +40,30 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   m_polylineHeadNodeId(-1)
 {
 
-registerWrapper(viewKeyStruct::crossSectionArea, &m_crossSectionArea, false )->
+  registerWrapper( keys::radius, &m_radius )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("cross section area of the well");
+    setDescription("Radius of the well");
 
-  registerWrapper(viewKeyStruct::nElems, &m_numElemsPerSegment, false )->
+  registerWrapper( keys::nElems, &m_numElemsPerSegment )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("number of well elements per polyline segment");
+    setDescription("Number of well elements per polyline segment");
 
-  registerWrapper(viewKeyStruct::wellRegionName, &m_wellRegionName, false )->
+  registerWrapper( keys::wellRegionName, &m_wellRegionName )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the well element region");
+    setDescription("Name of the well element region");
 
-  registerWrapper(viewKeyStruct::wellControlsName, &m_wellControlsName, false )->
+  registerWrapper( keys::wellControlsName, &m_wellControlsName )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the set of constraints associated with this well");
+    setDescription("Name of the set of constraints associated with this well");
 
-  registerWrapper(viewKeyStruct::meshName, &m_meshName, false )->
+  registerWrapper( keys::meshBodyName, &m_meshBodyName )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("name of the reservoir mesh associated with this well");
+    setDescription("Name of the reservoir mesh associated with this well");
 }
 
 WellGeneratorBase::~WellGeneratorBase()
@@ -91,6 +91,10 @@ Group * WellGeneratorBase::CreateChild( string const & childKey, string const & 
   }
   return nullptr;
 }
+ void WellGeneratorBase::ExpandObjectCatalogs()
+{
+  CreateChild( keys::perforation, keys::perforation );
+}
 
 void WellGeneratorBase::GenerateMesh( DomainPartition * const domain )
 {
@@ -113,7 +117,7 @@ void WellGeneratorBase::GenerateMesh( DomainPartition * const domain )
 
   m_perfCoords.resize( m_numPerforations );
   m_perfDistFromHead.resize( m_numPerforations );
-  m_perfTrans.resize( m_numPerforations );
+  m_perfTransmissibility.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
@@ -292,7 +296,7 @@ void WellGeneratorBase::DiscretizePolyline()
       m_nodeDistFromHead[iwellNodeBottom] += m_nodeDistFromHead[iwellNodeTop];
        
       // 4) set element volume
-      m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * m_crossSectionArea;
+      m_elemVolume[iwelemCurrent] = vWellElem.L2_Norm() * M_PI * m_radius * m_radius;
 
       // 4) increment the element counter
       ++iwelemCurrent;
@@ -321,7 +325,7 @@ void WellGeneratorBase::ConnectPerforationsToWellElements()
     Perforation const * const perf = 
       this->GetGroup<Perforation>( m_perforationList[iperf] );
     m_perfDistFromHead[iperf] = perf->GetDistanceFromWellHead();
-    m_perfTrans[iperf]        = perf->GetTransmissibility();    
+    m_perfTransmissibility[iperf]        = perf->GetWellTransmissibility();    
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -421,21 +425,21 @@ void WellGeneratorBase::MergePerforations()
     if ( elemToPerfMap[iwelem].size() > 1 )
     {
       // find the perforation with the largest transmissibility and keep its location
-      globalIndex iperfMaxTrans = elemToPerfMap[iwelem][0];
-      real64 maxTrans = m_perfTrans[iperfMaxTrans];
+      globalIndex iperfMaxTransmissibility = elemToPerfMap[iwelem][0];
+      real64 maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
       for (localIndex ip = 1; ip < elemToPerfMap[iwelem].size(); ++ip)
       {
-        if (m_perfTrans[elemToPerfMap[iwelem][ip]] > maxTrans)
+        if (m_perfTransmissibility[elemToPerfMap[iwelem][ip]] > maxTransmissibility)
         {
-          iperfMaxTrans = elemToPerfMap[iwelem][ip];
-          maxTrans = m_perfTrans[iperfMaxTrans];
+          iperfMaxTransmissibility = elemToPerfMap[iwelem][ip];
+          maxTransmissibility = m_perfTransmissibility[iperfMaxTransmissibility];
         }
       }
       
       // assign the coordinates of the perf with the largest trans to the other perfs on this elem
       for (localIndex ip = 0; ip < elemToPerfMap[iwelem].size(); ++ip)
       {
-        if (elemToPerfMap[iwelem][ip] == iperfMaxTrans)
+        if (elemToPerfMap[iwelem][ip] == iperfMaxTransmissibility)
         {
           continue;
         }
@@ -443,8 +447,8 @@ void WellGeneratorBase::MergePerforations()
         GEOSX_LOG_RANK_0( "Moving perforation #" << elemToPerfMap[iwelem][ip] 
                       << " of well " << getName()
                       << " from " << m_perfCoords[elemToPerfMap[iwelem][ip]] 
-                      << " to " << m_perfCoords[iperfMaxTrans] << " to make sure that no well element is shared between two MPI ranks" );
-        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxTrans];
+                      << " to " << m_perfCoords[iperfMaxTransmissibility] << " to make sure that no well element is shared between two MPI ranks" );
+        m_perfCoords[elemToPerfMap[iwelem][ip]] = m_perfCoords[iperfMaxTransmissibility];
       }
     }
 
@@ -502,7 +506,7 @@ void WellGeneratorBase::DebugWellGeometry() const
   {
     std::cout << "m_perfCoords[" << iperf << "] = " << m_perfCoords[iperf] 
               << std::endl;
-    std::cout << "m_perfTrans[" << iperf << "] = " << m_perfTrans[iperf] 
+    std::cout << "m_perfTransmissibility[" << iperf << "] = " << m_perfTransmissibility[iperf] 
               << std::endl;
     std::cout << "m_perfElemId[" << iperf << "] = " << m_perfElemId[iperf] 
               << std::endl;

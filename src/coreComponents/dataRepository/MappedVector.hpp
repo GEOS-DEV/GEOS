@@ -23,7 +23,7 @@
 #include "KeyIndexT.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Logger.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -361,14 +361,14 @@ public:
     // rebuild parts of const key vectors after deleted entry
     m_constKeyValues.resize( index );
     m_constValues.resize( index );
-    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
       m_constKeyValues.emplace_back( m_values[i].first, rawPtr( index ) );
       m_constValues.emplace_back( m_values[i].first, rawPtr( index ) );
     }
 
     // adjust lookup map indices
-    for( typename valueContainer::size_type i = index ; i < m_values.size() ; ++i )
+    for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
       m_keyLookup[m_values[i].first] = i;
     }
@@ -414,9 +414,9 @@ public:
    */
   void clear()
   {
-    for( typename valueContainer::size_type a = 0 ; a < m_values.size() ; ++a )
+    for( typename valueContainer::size_type a = 0; a < m_values.size(); ++a )
     {
-      deleteValue( integer_conversion< INDEX_TYPE >( a ) );
+      deleteValue( LvArray::integerConversion< INDEX_TYPE >( a ) );
     }
     m_constKeyValues.clear();
     m_constValues.clear();
@@ -434,7 +434,7 @@ public:
    */
   inline INDEX_TYPE size() const
   {
-    return integer_conversion< INDEX_TYPE >( m_values.size() );
+    return LvArray::integerConversion< INDEX_TYPE >( m_values.size() );
   }
 
   /**
@@ -478,7 +478,7 @@ private:
 
   template< typename U = T_PTR >
   typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOSX_UNUSED_ARG( index ) )
+  deleteValue( INDEX_TYPE GEOSX_UNUSED_PARAM( index ) )
   {}
 
   /// random access container that holds the values

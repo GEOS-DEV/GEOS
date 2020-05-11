@@ -5,6 +5,7 @@ message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
 
+
 # OPTIONS
 option( ENABLE_CALIPER "" OFF )
 
@@ -20,11 +21,13 @@ option( RAJA_ENABLE_OPENMP "" OFF )
 option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
-option( ENABLE_GEOSX_PTP "" OFF)
+option( ENABLE_GEOSX_PTP "" ON)
 option( ENABLE_PAMELA "" ON )
 option( ENABLE_PVTPackage "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
+
+option( ENABLE_XML_UPDATES "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
@@ -33,8 +36,9 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_VTK "Enables VTK" ON )
 
-if ( ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR "${CMAKE_HOST_APPLE}" )
+if ( "${CMAKE_HOST_APPLE}" )
   option( ENABLE_PETSC "Enables PETSC" OFF )
 else()
   option( ENABLE_PETSC "Enables PETSC" ON )
@@ -123,13 +127,14 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 if( CMAKE_HOST_APPLE )
-    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "" FORCE)
-    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "" FORCE)
-else()
-    set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "" FORCE)
-    set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "" FORCE)
+    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "")
+    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "")
+else( )
+    set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "")
+    set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "")
 endif()
 
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+message( "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
 
 message("Leaving geosxOptions.cmake\n")

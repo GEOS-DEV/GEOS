@@ -1,47 +1,40 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers gravityVector="0.0, 0.0, -9.81">
 
-    <Reservoir name="reservoirSystem"
+    <SinglePhaseReservoir name="reservoirSystem"
                flowSolverName="singlePhaseFlow"
                wellSolverName="singlePhaseWell"
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="2"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
-    <SinglePhaseFlow name="singlePhaseFlow"
-                     logLevel="1"
-                     gravityFlag="1"
-                     discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
-                     targetRegions="{Region1}">
-    </SinglePhaseFlow>
+    <SinglePhaseFVM name="singlePhaseFlow"
+                             logLevel="1"
+                             discretization="singlePhaseTPFA"
+                             fluidNames="{water}"
+                             solidNames="{rock}"
+                             targetRegions="{Region1}">
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="singlePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
-                     wellFluidName="water"
+                     fluidNames="{water}"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-3"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-3"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate" 
                       targetBHP="1e7"
-                      targetRate="1e-4" 
-                      referenceDepth="0.5"/>
+                      targetRate="1e-4"/>
     </SinglePhaseWell>
 
   </Solvers>
@@ -70,14 +63,12 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.35"
+                  radius="0.1"
                   numElementsPerSegment="1">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="19.4"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.4"/> 
         <Perforation name="producer1_perf2"
-                     distanceFromHead="20.3"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.3"/> 
     </InternalWell> 
 
     <InternalWell name="well_injector1"
@@ -93,14 +84,12 @@
                                          {1, 2},
                                          {2, 3},
                                          {3, 4} }"
-                  crossSectionArea="0.25"
+                  radius="0.1"
                   numElementsPerSegment="3">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="19.52"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="19.52"/> 
         <Perforation name="injector1_perf2"
-                     distanceFromHead="20.45"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="20.45"/> 
     </InternalWell> 
 
   </Mesh>
@@ -196,10 +185,6 @@
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}" coordinates="{1.0, 2.0, 6e4}" values="{1.0, 2.0, 2.0}" />
   </Functions>
-
-  <Partition>
-    <SpatialPartition xPar="1" yPar="1" zPar="1"/>
-  </Partition> 
 
   <Outputs>
       <Silo name="siloOutput"/>

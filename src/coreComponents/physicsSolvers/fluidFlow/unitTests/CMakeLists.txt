@@ -4,7 +4,9 @@
 #
 
 set( gtest_geosx_tests
-     testSinglePhaseFlowKernels.cpp
+     testSinglePhaseBaseKernels.cpp
+     testSinglePhaseFVMKernels.cpp     
+     testSinglePhaseHybridFVMKernels.cpp     
    )
 
 if(ENABLE_PVTPackage)
@@ -12,12 +14,16 @@ if(ENABLE_PVTPackage)
          ${gtest_geosx_tests}
          testCompMultiphaseFlow.cpp
          testCompMultiphaseFlowCapPressure.cpp
-         testReservoirSinglePhaseMSWells.cpp
          testReservoirCompositionalMultiphaseMSWells.cpp
+         testReservoirSinglePhaseMSWells.cpp
        )
 endif()
 
 set( dependencyList geosx_core gtest )
+
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
+endif()
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )

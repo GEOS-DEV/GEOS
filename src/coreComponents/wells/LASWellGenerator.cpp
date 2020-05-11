@@ -23,12 +23,12 @@ using namespace dataRepository;
 LASWellGenerator::LASWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
-  registerWrapper(viewKeyStruct::fileName, &m_fileName, false )->
+  registerWrapper( keys::fileName, &m_fileName  )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
     setDescription("Path to the las file");
 
-  registerWrapper(viewKeyStruct::geometryLogIndexInFile, &m_logIndexToTakeForGeometry, false  )->
+  registerWrapper( keys::geometryLogIndexInFile, &m_logIndexToTakeForGeometry )->
     setInputFlag(InputFlags::OPTIONAL)->
     setApplyDefaultValue( -1 )->
     setDescription("Position of the log to take if there are several log sections defined in the LAS file ");
@@ -104,7 +104,7 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
     GEOSX_ERROR_IF( Xs.size() > 1 && m_logIndexToTakeForGeometry == -1,
         "Warning : " << this->getName() << " corresponding LAS file has more than 1 log section defined "
                     << "please specify the index of the log section you want to take into account to write the well "
-                    << "into the GEOSX data structure. You have to use the keyword " << viewKeyStruct::geometryLogIndexInFile
+                    << "into the GEOSX data structure. You have to use the keyword " << keys::geometryLogIndexInFile
                     << ". Taking the first one by default.");
   }
   else if( Xs.size() > 1 && m_logIndexToTakeForGeometry != -1 )
@@ -140,18 +140,18 @@ void LASWellGenerator::GeneratePolyLineFromDepth( LASFile const & lasFile )
 real64 LASWellGenerator::GetFactor( LASLine const & lasLine )
 {
   real64 factor = 0.;
-  if( stringutilities::ieq( lasLine.GetUnit() , "F" ) ||
-      stringutilities::ieq( lasLine.GetUnit() , "ft" ) ||
-      stringutilities::ieq( lasLine.GetUnit() , "feets" ) ||
-      stringutilities::ieq( lasLine.GetUnit() , "feet" ) )
+  if( lasLine.GetUnit() == "F" ||
+      lasLine.GetUnit() == "ft" ||
+      lasLine.GetUnit() == "feets" ||
+      lasLine.GetUnit() == "feet" )
   {
     factor = 0.3048;
   }
-  else if( stringutilities::ieq( lasLine.GetUnit() , "M" ) ||
-           stringutilities::ieq( lasLine.GetUnit() , "meters" ) ||
-           stringutilities::ieq( lasLine.GetUnit() , "meter" )  ||
-           stringutilities::ieq( lasLine.GetUnit() , "metre" ) ||
-           stringutilities::ieq( lasLine.GetUnit() , "metres" ) ) 
+  else if( lasLine.GetUnit() == "M" ||
+           lasLine.GetUnit() == "meters" ||
+           lasLine.GetUnit() == "meter"  ||
+           lasLine.GetUnit() == "metre" ||
+           lasLine.GetUnit() == "metres" ) 
   {
     factor = 1.;
   }

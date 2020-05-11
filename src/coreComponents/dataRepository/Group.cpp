@@ -39,6 +39,7 @@ conduit::Node & conduitNodeFromParent( string const & name, Group * const parent
 Group::Group( std::string const & name,
               Group * const parent ):
   m_parent( parent ),
+  m_sizedFromParent( 0 ),
   m_wrappers(),
   m_subGroups(),
   m_size( 0 ),
@@ -60,10 +61,10 @@ Group::CatalogInterface::CatalogType & Group::GetCatalog()
 }
 
 WrapperBase * Group::registerWrapper( string const & name,
-                                      WrapperBase * const wrapper )
+                                      std::unique_ptr< WrapperBase > wrapper )
 {
   return m_wrappers.insert( name,
-                            wrapper,
+                            wrapper.release(),
                             true );
 }
 
@@ -75,32 +76,50 @@ void Group::deregisterWrapper( string const & name )
 }
 
 
-void Group::resize( indexType const newsize )
+void Group::resize( indexType const newSize )
 {
-  for( auto && i : this->wrappers() )
+  forWrappers( [newSize] ( WrapperBase & wrapper )
   {
-    if( i.second->sizedFromParent() == 1 )
+    if( wrapper.sizedFromParent() == 1 )
     {
-      i.second->resize( newsize );
+      wrapper.resize( newSize );
     }
-  }
-  m_size = newsize;
+  } );
+
+  forSubGroups( [newSize] ( Group & subGroup )
+  {
+    if( subGroup.sizedFromParent() == 1 )
+    {
+      subGroup.resize( newSize );
+    }
+  } );
+
+  m_size = newSize;
   if( m_size > m_capacity )
   {
     m_capacity = m_size;
   }
 }
 
-void Group::reserve( indexType const newsize )
+void Group::reserve( indexType const newSize )
 {
-  for( auto && i : this->wrappers() )
+  forWrappers( [newSize] ( WrapperBase & wrapper )
   {
-    if( i.second->sizedFromParent() == 1 )
+    if( wrapper.sizedFromParent() == 1 )
     {
-      i.second->reserve( newsize );
+      wrapper.reserve( newSize );
     }
-  }
-  m_capacity = newsize;
+  } );
+
+  forSubGroups( [newSize] ( Group & subGroup )
+  {
+    if( subGroup.sizedFromParent() == 1 )
+    {
+      subGroup.resize( newSize );
+    }
+  } );
+
+  m_capacity = newSize;
 }
 
 void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
@@ -108,7 +127,7 @@ void Group::ProcessInputFileRecursive( xmlWrapper::xmlNode & targetNode )
   xmlWrapper::addIncludedXML( targetNode );
 
   // loop over the child nodes of the targetNode
-  for( xmlWrapper::xmlNode childNode=targetNode.first_child() ; childNode ; childNode=childNode.next_sibling())
+  for( xmlWrapper::xmlNode childNode=targetNode.first_child(); childNode; childNode=childNode.next_sibling())
   {
     // Get the child tag and name
     std::string childName = childNode.attribute( "name" ).value();
@@ -137,47 +156,15 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
 {
 
   std::set< string > processedXmlNodes;
-  for( auto wrapperPair : m_wrappers )
+  for( std::pair< std::string const, WrapperBase * > & pair : m_wrappers )
   {
-    WrapperBase * const wrapper = wrapperPair.second;
-    InputFlags const inputFlag = wrapper->getInputFlag();
-    if( inputFlag >= InputFlags::OPTIONAL )
+    if( pair.second->processInputFile( targetNode ) )
     {
-      string const & wrapperName = wrapperPair.first;
-      rtTypes::TypeIDs const wrapperTypeID = rtTypes::typeID( wrapper->get_typeid());
-
-      rtTypes::ApplyIntrinsicTypeLambda2( wrapperTypeID,
-                                          [&]( auto a, auto GEOSX_UNUSED_ARG( b ) )
-          {
-            using COMPOSITE_TYPE = decltype( a );
-
-            Wrapper< COMPOSITE_TYPE > & typedWrapper = Wrapper< COMPOSITE_TYPE >::cast( *wrapper );
-            COMPOSITE_TYPE & objectReference = typedWrapper.reference();
-            processedXmlNodes.insert( wrapperName );
-
-            if( inputFlag == InputFlags::REQUIRED || !(typedWrapper.getDefaultValueStruct().has_default_value) )
-            {
-              bool const readSuccess = xmlWrapper::ReadAttributeAsType( objectReference,
-                                                                        wrapperName,
-                                                                        targetNode,
-                                                                        inputFlag == InputFlags::REQUIRED );
-              GEOSX_ERROR_IF( !readSuccess,
-                              "Input variable " + wrapperName + " is required in " + targetNode.path()
-                              + ". Available options are: \n"+ dumpInputOptions()
-                              + "\nFor more details, please refer to documentation at: \n"
-                              + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
-
-
-            }
-            else
-            {
-              xmlWrapper::ReadAttributeAsType( objectReference, wrapperName, targetNode, typedWrapper.getDefaultValueStruct() );
-            }
-          } );
+      processedXmlNodes.insert( pair.first );
     }
   }
 
-  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute() ; attribute ; attribute = attribute.next_attribute() )
+  for( xmlWrapper::xmlAttribute attribute=targetNode.first_attribute(); attribute; attribute = attribute.next_attribute() )
   {
     string const childName = attribute.name();
     if( childName != "name" && childName != "xmlns:xsi" && childName != "xsi:noNamespaceSchemaLocation" )
@@ -190,7 +177,6 @@ void Group::ProcessInputFile( xmlWrapper::xmlNode const & targetNode )
                       + "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n" );
     }
   }
-
 }
 
 void Group::PostProcessInputRecursive()
@@ -238,31 +224,26 @@ void Group::PrintDataHierarchy( integer indent )
   }
 }
 
-string Group::dumpInputOptions()
+string Group::dumpInputOptions() const
 {
   string rval;
-  char temp[1000] = {0};
-  sprintf( temp, "  |         name         |  opt/req  | Description \n" );
-  rval.append( temp );
-  sprintf( temp, "  |----------------------|-----------|-----------------------------------------\n" );
-  rval.append( temp );
 
+  bool writeHeader = true;
   for( auto const & wrapper : m_wrappers )
   {
-    WrapperBase const * const wb = wrapper.second;
-    if( wb->getInputFlag() == InputFlags::OPTIONAL ||
-        wb->getInputFlag() == InputFlags::REQUIRED )
-    {
-      sprintf( temp, "  | %20s | %9s | %s \n",
-               wb->getName().c_str(),
-               InputFlagToString( wb->getInputFlag()).c_str(),
-               wb->getDescription().c_str() );
-      rval.append( temp );
-    }
+    rval.append( wrapper.second->dumpInputOptions( writeHeader ) );
+    writeHeader = false;
   }
+
   return rval;
 }
 
+void Group::deregisterGroup( std::string const & name )
+{
+  GEOSX_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
+  m_subGroups.erase( name );
+  m_conduitNode.remove( name );
+}
 
 void Group::InitializationOrder( string_array & order )
 {
@@ -458,7 +439,7 @@ localIndex Group::Unpack( buffer_unit_type const * & buffer,
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
-  for( localIndex a=0 ; a<numWrappers ; ++a )
+  for( localIndex a=0; a<numWrappers; ++a )
   {
     string wrapperName;
     unpackedSize += bufferOps::Unpack( buffer, wrapperName );
@@ -497,17 +478,17 @@ void Group::prepareToWrite()
     return;
   }
 
-  for( auto & pair : m_wrappers )
+  forWrappers( [] ( WrapperBase & wrapper )
   {
-    pair.second->registerToWrite();
-  }
+    wrapper.registerToWrite();
+  } );
 
   m_conduitNode[ "__size__" ].set( m_size );
 
-  forSubGroups( []( Group * subGroup )
-      {
-        subGroup->prepareToWrite();
-      } );
+  forSubGroups( []( Group & subGroup )
+  {
+    subGroup.prepareToWrite();
+  } );
 }
 
 
@@ -518,15 +499,15 @@ void Group::finishWriting()
     return;
   }
 
-  for( auto & pair : m_wrappers )
+  forWrappers( [] ( WrapperBase & wrapper )
   {
-    pair.second->finishWriting();
-  }
+    wrapper.finishWriting();
+  } );
 
-  forSubGroups( []( Group * subGroup )
-      {
-        subGroup->finishWriting();
-      } );
+  forSubGroups( []( Group & subGroup )
+  {
+    subGroup.finishWriting();
+  } );
 }
 
 
@@ -538,34 +519,41 @@ void Group::loadFromConduit()
   }
 
   m_size = m_conduitNode.fetch_child( "__size__" ).value();
+  localIndex const groupSize = m_size;
 
-  for( auto & pair : m_wrappers )
+  forWrappers( [&]( WrapperBase & wrapper )
   {
-    pair.second->loadFromConduit();
-  }
-
-  forSubGroups( []( Group * subGroup )
+    if( !( wrapper.loadFromConduit()) )
+    {
+      if( wrapper.sizedFromParent() == 1 )
       {
-        subGroup->loadFromConduit();
-      } );
+        wrapper.resize( groupSize );
+      }
+    }
+  } );
+
+  forSubGroups( []( Group & subGroup )
+  {
+    subGroup.loadFromConduit();
+  } );
 }
 
 void Group::postRestartInitializationRecursive( Group * const domain )
 {
-  forSubGroups( [&]( Group * const subGroup )
-      {
-        subGroup->postRestartInitializationRecursive( domain );
-      } );
+  forSubGroups( [&]( Group & subGroup )
+  {
+    subGroup.postRestartInitializationRecursive( domain );
+  } );
 
   this->postRestartInitialization( domain );
 }
 
-void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaRoot ),
-                                 xmlWrapper::xmlNode GEOSX_UNUSED_ARG( schemaParent ),
-                                 integer GEOSX_UNUSED_ARG( documentationType ) )
+void Group::SetSchemaDeviations( xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaRoot ),
+                                 xmlWrapper::xmlNode GEOSX_UNUSED_PARAM( schemaParent ),
+                                 integer GEOSX_UNUSED_PARAM( documentationType ) )
 {}
 
-void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_ARG( MeshBody ) )
+void Group::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBody ) )
 {}
 
 
@@ -573,7 +561,7 @@ void Group::enableLogLevelInput()
 {
   string const logLevelString = "logLevel";
 
-  registerWrapper( logLevelString, &m_logLevel, false )->
+  registerWrapper( logLevelString, &m_logLevel )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Log level" );

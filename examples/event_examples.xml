@@ -1,15 +1,7 @@
 
 <Problem>
 
-  <Solvers>
-    <!-- This solver will request a random dt > 1 -->
-    <DummySolver name="solver_a"
-                 targetRegions="{Region2}"
-                 seed="1"/>
-  </Solvers>
-
-
-  <Events maxTime="10" verbosity="1">
+  <Events maxTime="10" logLevel="1">
     <!-- This event will execute every cycle, and will always request dt = 1 -->
     <PeriodicEvent name="periodic_a"
                    forceDt="1" />
@@ -25,11 +17,11 @@
                    timeFrequency="5"
                    target="/Outputs/restartOutput"/>
 
-    <!-- This event will execute every 3 cycles.  When it does, it will attempt to 
+    <!-- This event will execute every 3 cycles.  When it does, it will attempt to
     execute each of its two sub-events -->
     <PeriodicEvent name="periodic_d"
                    cycleFrequency="3"
-                   verbosity="0">
+                   logLevel="0">
       <PeriodicEvent name="subevent_a" />
       <PeriodicEvent name="subevent_b" />
     </PeriodicEvent>
@@ -46,7 +38,7 @@
     <PeriodicEvent name="periodic_f"
                    beginTime="6.1"
                    endTime="8.3"
-                   verbosity="0">
+                   logLevel="0">
       <PeriodicEvent name="subevent_c" />
       <PeriodicEvent name="subevent_d" />
     </PeriodicEvent>
@@ -62,11 +54,11 @@
                targetTime="4"/>
 
     <!-- This event will execute once time >= targetTime.  It will not limit
-    its dt request to exactly match targetTime -->           
+    its dt request to exactly match targetTime -->
     <SoloEvent name="solo_c"
                targetTime="5.123"
                targetExactTimestep="0"/>
-    
+
 
     <!-- This event will execute when the wall time = maxRunTime.
     It will then set the exitFlag on the EventManager loop and
@@ -74,50 +66,5 @@
     <!-- <HaltEvent name="halt_a"
                maxRuntime="10.0"/> -->
   </Events>
-
-
-  <Outputs>
-    <Restart name="restartOutput"/>
-  </Outputs>
-
-
-
-  <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
-                  xCoords="{0, 1}"
-                  yCoords="{0, 1}"
-                  zCoords="{0, 1}"
-                  nx="{1}"
-                  ny="{1}"
-                  nz="{1}"
-                  cellBlockNames="{cb1}"/>
-  </Mesh>
-
-  <NumericalMethods>
-    <BasisFunctions>
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
-    </BasisFunctions>
-    
-    <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />
-    </QuadratureRules>
-    
-    <FiniteElements>
-        <FiniteElementSpace name="FE1" basis="linearBasis" quadrature="gaussian" />
-    </FiniteElements>
-  </NumericalMethods>
-
-  <ElementRegions>
-    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
-  </ElementRegions>
-
-  <Constitutive>
-      <LinearElasticIsotropic name="shale"
-                              defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
-  </Constitutive>
-
 
 </Problem>

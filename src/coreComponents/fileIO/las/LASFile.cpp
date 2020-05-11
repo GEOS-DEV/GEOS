@@ -24,17 +24,17 @@ namespace geosx
 void LASLine::ParseLine( string const & line )
 {
   // First get the keyword and the rest of the line
-  string_array keywordAndRest = stringutilities::Split( line, "." );
+  string_array keywordAndRest = stringutilities::Tokenize( line, "." );
   stringutilities::RemoveSpaces( keywordAndRest[0] );
   m_keywordname = keywordAndRest[0];
 
   // Second get the unit and the rest of the line
-  string_array unitsAndRest = stringutilities::Split( keywordAndRest[1], " ");
+  string_array unitsAndRest = stringutilities::Tokenize( keywordAndRest[1], " ");
   stringutilities::RemoveSpaces( unitsAndRest[0] );
   m_unit = unitsAndRest[0];
 
   // Third get the value and the rest of te line
-  string_array valueAndRest = stringutilities::Split( unitsAndRest[1], ":" );
+  string_array valueAndRest = stringutilities::Tokenize( unitsAndRest[1], ":" );
   stringutilities::Trim( valueAndRest[0] );
   m_data = valueAndRest[0];
 
@@ -143,7 +143,7 @@ void LASASCIILogDataSection::ParseLine( string const & line )
   string_array splitLine = stringutilities::Tokenize( line, " \t\n\r" );
   for( integer i = 0; i < m_nbCurves; i++ )
   {
-    m_logs[i][m_count] = stringutilities::fromString< real64 >( splitLine[i] );
+    m_logs[i][m_count] = std::stold( splitLine[i] );
   }
   m_count++;
 }

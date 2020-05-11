@@ -10,17 +10,19 @@ set(common_headers
     GeosxMacros.hpp
     TimingMacros.hpp
     Logger.hpp
+    DataLayouts.hpp
    )
 
 #
 # Specify all sources
 #
 set(common_sources
+    BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
    )
 
-set( dependencyList cxx-utilities pugixml )
+set( dependencyList lvarray pugixml )
 
 if( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

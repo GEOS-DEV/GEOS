@@ -11,9 +11,10 @@ set( dataRepository_tests
      testXmlWrapper.cpp
      testBufferOps.cpp
      testPacking.cpp
+     testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest cxx-utilities managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
+set( dependencyList gtest lvarray managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -21,6 +22,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
 endif()
 
 #

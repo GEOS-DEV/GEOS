@@ -22,6 +22,18 @@
 namespace geosx
 {
 
+namespace dataRepository 
+{
+namespace keys
+{
+string const nElems           = "numElementsPerSegment";
+string const radius           = "radius";
+string const wellRegionName   = "wellRegionName";
+string const wellControlsName = "wellControlsName";
+string const meshBodyName     = "meshName";
+}
+}
+
 class WellGeneratorBase : public MeshGeneratorBase
 {
   public:
@@ -45,21 +57,14 @@ class WellGeneratorBase : public MeshGeneratorBase
    */  
   static string CatalogName() { return "WellGeneratorBase"; }
 
+  /// Expand object catalogs for schema generation
+  virtual void ExpandObjectCatalogs() override;
+
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   virtual Group * CreateChild( string const & childKey, 
                                string const & childName ) override;
-
-  struct viewKeyStruct
-  {
-    constexpr static auto nElems = "numElementsPerSegment";
-    constexpr static auto crossSectionArea = "crossSectionArea";
-    constexpr static auto wellRegionName = "wellRegionName";
-    constexpr static auto wellControlsName = "wellControlsName";
-    constexpr static auto meshName = "meshName";
-  };
-
 
   /**
    * @brief main function of this class: processes the well input and creates the globla well topology
@@ -68,15 +73,15 @@ class WellGeneratorBase : public MeshGeneratorBase
   virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
   /// not implemented 
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
-                                           int const * GEOSX_UNUSED_ARG( index ),
-                                           int const & GEOSX_UNUSED_ARG( iEle ),
-                                           int * GEOSX_UNUSED_ARG( nodeIDInBox ),
-                                           int const GEOSX_UNUSED_ARG( size )) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
+                                           int const * GEOSX_UNUSED_PARAM( index ),
+                                           int const & GEOSX_UNUSED_PARAM( iEle ),
+                                           int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
+                                           int const GEOSX_UNUSED_PARAM( size )) override {}
 
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
      
   // getters for element data
 
@@ -125,10 +130,10 @@ class WellGeneratorBase : public MeshGeneratorBase
   // getters for perforation data
 
   /**
-   * @brief Getter for the transmissibility at the perforations
-   * @return list of transmissibilities at all the perforations on the well
+   * @brief Getter for the well Peaceman index at the perforations
+   * @return list of well peaceman index at all the perforations on the well
    */
-  arrayView1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTrans; }
+  arrayView1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTransmissibility; }
   
   /**
    * @brief Getter for the locations of the perforations
@@ -141,6 +146,12 @@ class WellGeneratorBase : public MeshGeneratorBase
    * @return list providing the global index of the connected well element for each perforation
    */
   arrayView1d<globalIndex const> const & GetPerfElemIndex() const { return m_perfElemId; }
+
+  /**
+   * @brief Getter for the radius in the well
+   * @return the radius in the well
+   */
+  real64 GetElementRadius() const { return m_radius; }
 
   /**
    * @brief Getter for the global number of perforations on this well
@@ -205,8 +216,8 @@ class WellGeneratorBase : public MeshGeneratorBase
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
 
-  /// Cross section area of the well (assumed to be valid for the entire well)
-  real64 m_crossSectionArea;
+  /// Radius of the well (assumed to be valid for the entire well)
+  real64 m_radius;
 
   /// Name of the corresponding well region
   string m_wellRegionName;
@@ -215,7 +226,7 @@ class WellGeneratorBase : public MeshGeneratorBase
   string m_wellControlsName;
 
   /// Name of the mesh body associated with this well
-  string m_meshName;
+  string m_meshBodyName;
   
   // Geometry of the well (later passed to the WellElementSubRegion)
 
@@ -255,8 +266,8 @@ class WellGeneratorBase : public MeshGeneratorBase
   /// Absolute physical location of the perforation 
   array1d<R1Tensor>    m_perfCoords;
 
-  /// Transmissibility at the perforation
-  array1d<real64>      m_perfTrans;
+  /// Well Peaceman index at the perforation
+  array1d<real64>      m_perfTransmissibility;
 
   /// Global index of the well element
   array1d<globalIndex> m_perfElemId;
@@ -271,7 +282,7 @@ class WellGeneratorBase : public MeshGeneratorBase
   array1d<R1Tensor>           m_polyNodeCoords;
   
   /// Map from the polyline nodes to the polyline nodes
-  array1d< set<globalIndex> > m_polyNodeToSegmentMap;
+  array1d< SortedArray<globalIndex> > m_polyNodeToSegmentMap;
 
   /// Index of the node at the well head
   globalIndex     m_polylineHeadNodeId;

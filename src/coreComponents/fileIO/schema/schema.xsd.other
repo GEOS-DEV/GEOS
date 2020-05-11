@@ -3,184 +3,195 @@
 	<xsd:annotation>
 		<xsd:documentation xml:lang="en">GEOSX Input Schema</xsd:documentation>
 	</xsd:annotation>
-	<xsd:simpleType name="Path">
+	<xsd:simpleType name="integer">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="string">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real64_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\},\s*)*\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="mapPair_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r1_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="string_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array3d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\},\s*)*\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real64_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="mapPair">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[^,\{\}]*" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2Sym_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\},\s*)*\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer_array2d">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(\{([+-]?[\d]+,\s*)*[+-]?[\d]+\},\s*)*\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2Sym_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r1_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real32_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="r2_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real64_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="localIndex_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="integer_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([+-]?[\d]+,\s*)*[+-]?[\d]+\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="R2SymTensor">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="R2Tensor">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="real64">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="R1Tensor">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="globalIndex">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]+" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="path_array">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="\{([^,\{\}]*,\s*)*[^,\{\}]*\}" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="localIndex">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:simpleType name="integer">
+	<xsd:simpleType name="localIndex">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value="[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="path_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R2SymTensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2Sym_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r1_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2Sym_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="localIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="R1Tensor">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r1_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_dataRepository_PlotLevel">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="mapPair_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([^,\{\}]*,\s*)*[^,\{\}]*)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array2d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real64_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="globalIndex_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\},\s*)*\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="r2_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="real32_array3d">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\},\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="integer_array">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|\{\s*(([+-]?[\d]+,\s*)*[+-]?[\d]+)?\s*\}" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="path">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="string">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}]*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
 	<xsd:complexType name="ProblemType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Benchmarks" type="BenchmarksType" maxOccurs="1" />
 			<xsd:element name="Events" type="EventsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="FieldSpecifications" type="FieldSpecificationsType" maxOccurs="1" />
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1" />
@@ -193,21 +204,26 @@
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="commandLine" type="commandLineType" />
 			<xsd:element name="domain" type="domainType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
+	<xsd:complexType name="BenchmarksType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="lassen" type="lassenType" maxOccurs="1" />
+			<xsd:element name="quartz" type="quartzType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="lassenType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Run" type="RunType" maxOccurs="1" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="RunType" />
+	<xsd:complexType name="quartzType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Run" type="RunType" maxOccurs="1" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="EventsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -291,11 +307,13 @@
 	<xsd:complexType name="TableFunctionType" />
 	<xsd:complexType name="GeometryType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="BoundedPlane" type="BoundedPlaneType" />
 			<xsd:element name="Box" type="BoxType" />
 			<xsd:element name="Cylinder" type="CylinderType" />
 			<xsd:element name="ThickPlane" type="ThickPlaneType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BoundedPlaneType" />
 	<xsd:complexType name="BoxType">
 		<!--center => (no description available)-->
 		<xsd:attribute name="center" type="R1Tensor" />
@@ -316,8 +334,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
-			<xsd:element name="LASWell" type="LASWellType" />
-			<xsd:element name="MeshFile" type="MeshFileType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -330,25 +346,13 @@
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Perforation" type="PerforationType" />
 			<xsd:element name="Level0" type="Level0Type" />
 		</xsd:choice>
 		<!--meshLevels => (no description available)-->
 		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="LASWellType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
-		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
-	</xsd:complexType>
-	<xsd:complexType name="MeshFileType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
-		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
-	</xsd:complexType>
+	<xsd:complexType name="PerforationType" />
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Level0" type="Level0Type" />
@@ -387,10 +391,10 @@
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SystemSolverParametersType">
-		<!--KrylovResidualFinal => Final Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualFinal" type="real64" />
-		<!--KrylovResidualInit => Initial Krylov solver residual.-->
-		<xsd:attribute name="KrylovResidualInit" type="real64" />
+		<!--krylovResidualFinal => Final Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualFinal" type="real64" />
+		<!--krylovResidualInit => Initial Krylov solver residual.-->
+		<xsd:attribute name="krylovResidualInit" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -399,9 +403,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
-		<xsd:attribute name="cellStencil" type="geosx::CellElementStencilTPFA" />
+		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
 		<!--fractureStencil => (no description available)-->
-		<xsd:attribute name="fractureStencil" type="geosx::FaceElementStencil" />
+		<xsd:attribute name="fractureStencil" type="geosx_FaceElementStencil" />
 	</xsd:complexType>
 	<xsd:complexType name="QuadratureRulesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -415,12 +419,14 @@
 	<xsd:complexType name="GaussQuadrature3Type" />
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
@@ -434,12 +440,18 @@
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositionalMultiphaseFlow" type="CompositionalMultiphaseFlowType" />
+			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
+			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="Poroelastic" type="PoroelasticType" />
-			<xsd:element name="Reservoir" type="ReservoirType" />
-			<xsd:element name="SinglePhaseFlow" type="SinglePhaseFlowType" />
+			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
+			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
+			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
+			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
+			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
@@ -448,134 +460,152 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFlowType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--capPressureIndex => (no description available)-->
-		<xsd:attribute name="capPressureIndex" type="localIndex" />
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--relPermIndex => (no description available)-->
-		<xsd:attribute name="relPermIndex" type="localIndex" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
-		<!--elementRelPermIndex => (no description available)-->
-		<xsd:attribute name="elementRelPermIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--resFluidIndex => (no description available)-->
-		<xsd:attribute name="resFluidIndex" type="localIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="WellControlsType" />
+	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="FlowProppantTransportType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrofractureType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroelasticType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
-	<xsd:complexType name="ReservoirType">
+	<xsd:complexType name="ProppantTransportType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
-	<xsd:complexType name="SinglePhaseFlowType">
+	<xsd:complexType name="SinglePhaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--fluidIndex => (no description available)-->
-		<xsd:attribute name="fluidIndex" type="localIndex" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--solidIndex => (no description available)-->
-		<xsd:attribute name="solidIndex" type="localIndex" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseHybridFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseProppantFVMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReservoirType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
+			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--resFluidIndex => (no description available)-->
-		<xsd:attribute name="resFluidIndex" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
-		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::timeIntegrationOption" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidMechanics_LagrangianFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
+		<!--maxForce => The maximum force contribution in the problem domain.-->
+		<xsd:attribute name="maxForce" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--timeIntegrationOptionEnum => Time integration enum class value.-->
-		<xsd:attribute name="timeIntegrationOptionEnum" type="geosx::timeIntegrationOption" />
 	</xsd:complexType>
 	<xsd:complexType name="SurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SystemSolverParameters" type="SystemSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--failCriterion => (no description available)-->
 		<xsd:attribute name="failCriterion" type="integer" />
-		<!--gravityVector => (no description available)-->
-		<xsd:attribute name="gravityVector" type="R1Tensor" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
-		<xsd:attribute name="tipEdges" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
-		<xsd:attribute name="tipFaces" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
 		<!--tipNodes => Set containing all the nodes at the fracture tip-->
-		<xsd:attribute name="tipNodes" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long&gt;" />
 		<!--trailingFaces => Set containing all the trailing faces-->
-		<xsd:attribute name="trailingFaces" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -586,12 +616,16 @@
 		<xsd:attribute name="outputDirectory" type="string" />
 		<!--overridePartitionNumbers => Flag to indicate partition number override-->
 		<xsd:attribute name="overridePartitionNumbers" type="integer" />
-		<!--problemName => Used in writing the output files, if not specified defaults to the name of the input file..-->
+		<!--problemName => Used in writing the output files, if not specified defaults to the name of the input file.-->
 		<xsd:attribute name="problemName" type="string" />
 		<!--restartFileName => Name of the restart file.-->
 		<xsd:attribute name="restartFileName" type="string" />
 		<!--schemaFileName => Name of the output schema-->
 		<xsd:attribute name="schemaFileName" type="string" />
+		<!--suppressPinned => Whether to disallow using pinned memory allocations for MPI communication buffers.-->
+		<xsd:attribute name="suppressPinned" type="integer" />
+		<!--useNonblockingMPI => Whether to prefer using non-blocking MPI communication where implemented (results in non-deterministic DOF numbering).-->
+		<xsd:attribute name="useNonblockingMPI" type="integer" />
 		<!--xPartitionsOverride => Number of partitions in the x-direction-->
 		<xsd:attribute name="xPartitionsOverride" type="integer" />
 		<!--yPartitionsOverride => Number of partitions in the y-direction-->
@@ -606,9 +640,9 @@
 			<xsd:element name="cellManager" type="cellManagerType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="LvArray::Array&lt;geosx::NeighborCommunicator, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="Neighbors" type="std_vector&lt;geosx_NeighborCommunicator, std_allocator&lt;geosx_NeighborCommunicator&gt; &gt;" />
 		<!--partitionManager => (no description available)-->
-		<xsd:attribute name="partitionManager" type="geosx::PartitionBase" />
+		<xsd:attribute name="partitionManager" type="geosx_PartitionBase" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -621,35 +655,39 @@
 			<xsd:element name="Contact" type="ContactType" />
 			<xsd:element name="LinearElasticAnisotropic" type="LinearElasticAnisotropicType" />
 			<xsd:element name="LinearElasticIsotropic" type="LinearElasticIsotropicType" />
+			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
+			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
 			<xsd:element name="PoroLinearElasticIsotropic" type="PoroLinearElasticIsotropicType" />
+			<xsd:element name="PoroLinearElasticTransverseIsotropic" type="PoroLinearElasticTransverseIsotropicType" />
+			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlackOilFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 5, camp::int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -661,7 +699,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -673,7 +711,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -681,7 +719,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseCapPressure => (no description available)-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -691,7 +729,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -699,25 +737,25 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 5, camp::int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -729,7 +767,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -749,86 +787,18 @@
 		<!--viscosity => (no description available)-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
-	<xsd:complexType name="ContactType" />
+	<xsd:complexType name="ContactType">
+		<xsd:choice minOccurs="0" maxOccurs="1">
+			<xsd:element name="TableFunction" type="TableFunctionType" />
+		</xsd:choice>
+	</xsd:complexType>
 	<xsd:complexType name="LinearElasticAnisotropicType">
-		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c12 => The 12 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c12" type="real64_array" />
-		<!--c13 => The 13 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c14 => The 14 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c14" type="real64_array" />
-		<!--c15 => The 15 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c15" type="real64_array" />
-		<!--c16 => The 16 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c16" type="real64_array" />
-		<!--c21 => The 21 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c21" type="real64_array" />
-		<!--c22 => The 22 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c22" type="real64_array" />
-		<!--c23 => The 23 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c23" type="real64_array" />
-		<!--c24 => The 24 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c24" type="real64_array" />
-		<!--c25 => The 25 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c25" type="real64_array" />
-		<!--c26 => The 26 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c26" type="real64_array" />
-		<!--c31 => The 31 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c31" type="real64_array" />
-		<!--c32 => The 32 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c32" type="real64_array" />
-		<!--c33 => The 33 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c34 => The 34 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c34" type="real64_array" />
-		<!--c35 => The 35 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c35" type="real64_array" />
-		<!--c36 => The 36 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c36" type="real64_array" />
-		<!--c41 => The 41 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c41" type="real64_array" />
-		<!--c42 => The 42 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c42" type="real64_array" />
-		<!--c43 => The 43 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c43" type="real64_array" />
-		<!--c44 => The 44 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c45 => The 45 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c45" type="real64_array" />
-		<!--c46 => The 46 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c46" type="real64_array" />
-		<!--c51 => The 51 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c51" type="real64_array" />
-		<!--c52 => The 52 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c52" type="real64_array" />
-		<!--c53 => The 53 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c53" type="real64_array" />
-		<!--c54 => The 54 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c54" type="real64_array" />
-		<!--c55 => The 55 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c55" type="real64_array" />
-		<!--c56 => The 56 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c56" type="real64_array" />
-		<!--c61 => The 61 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c61" type="real64_array" />
-		<!--c62 => The 62 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c62" type="real64_array" />
-		<!--c63 => The 63 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c63" type="real64_array" />
-		<!--c64 => The 64 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c64" type="real64_array" />
-		<!--c65 => The 65 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c65" type="real64_array" />
-		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c66" type="real64_array" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="stiffness" type="real64_array3d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="LinearElasticIsotropicType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
@@ -837,30 +807,46 @@
 		<xsd:attribute name="ShearModulus" type="real64_array" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="LinearElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiPhaseMultiComponentFluidType">
 		<!--dPhaseCompFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 5, camp::int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 5, camp_int_seq&lt;long, 0l, 1l, 2l, 3l, 4l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dPressure => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dPressure" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseCompFraction_dTemperature => (no description available)-->
-		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCompFraction_dTemperature" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseDensity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseDensity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dPressure" type="real64_array3d" />
 		<!--dPhaseDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseDensity_dTemperature" type="real64_array3d" />
 		<!--dPhaseFraction_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseFraction_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseFraction_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dPressure" type="real64_array3d" />
 		<!--dPhaseFraction_dTemperature => (no description available)-->
 		<xsd:attribute name="dPhaseFraction_dTemperature" type="real64_array3d" />
 		<!--dPhaseViscosity_dGlobalCompFraction => (no description available)-->
-		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseViscosity_dGlobalCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--dPhaseViscosity_dPressure => (no description available)-->
 		<xsd:attribute name="dPhaseViscosity_dPressure" type="real64_array3d" />
 		<!--dPhaseViscosity_dTemperature => (no description available)-->
@@ -872,7 +858,7 @@
 		<!--dTotalDensity_dTemperature => (no description available)-->
 		<xsd:attribute name="dTotalDensity_dTemperature" type="real64_array2d" />
 		<!--phaseCompFraction => (no description available)-->
-		<xsd:attribute name="phaseCompFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="phaseCompFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseDensity => (no description available)-->
 		<xsd:attribute name="phaseDensity" type="real64_array3d" />
 		<!--phaseFraction => (no description available)-->
@@ -882,6 +868,22 @@
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="ParticleFluidType">
+		<!--collisionFactor => (no description available)-->
+		<xsd:attribute name="collisionFactor" type="real64_array" />
+		<!--dCollisionFactor_dProppantConcentration => (no description available)-->
+		<xsd:attribute name="dCollisionFactor_dProppantConcentration" type="real64_array" />
+		<!--dSettlingFactor_dComponentConcentration => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dComponentConcentration" type="real64_array2d" />
+		<!--dSettlingFactor_dPressure => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dPressure" type="real64_array" />
+		<!--dSettlingFactor_dProppantConcentration => (no description available)-->
+		<xsd:attribute name="dSettlingFactor_dProppantConcentration" type="real64_array" />
+		<!--proppantPackPermeability => (no description available)-->
+		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
+		<!--settlingFactor => (no description available)-->
+		<xsd:attribute name="settlingFactor" type="real64_array" />
+	</xsd:complexType>
 	<xsd:complexType name="PoreVolumeCompressibleSolidType">
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
@@ -889,88 +891,16 @@
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticAnisotropicType">
-		<!--c11 => The 11 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c11" type="real64_array" />
-		<!--c12 => The 12 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c12" type="real64_array" />
-		<!--c13 => The 13 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c13" type="real64_array" />
-		<!--c14 => The 14 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c14" type="real64_array" />
-		<!--c15 => The 15 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c15" type="real64_array" />
-		<!--c16 => The 16 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c16" type="real64_array" />
-		<!--c21 => The 21 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c21" type="real64_array" />
-		<!--c22 => The 22 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c22" type="real64_array" />
-		<!--c23 => The 23 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c23" type="real64_array" />
-		<!--c24 => The 24 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c24" type="real64_array" />
-		<!--c25 => The 25 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c25" type="real64_array" />
-		<!--c26 => The 26 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c26" type="real64_array" />
-		<!--c31 => The 31 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c31" type="real64_array" />
-		<!--c32 => The 32 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c32" type="real64_array" />
-		<!--c33 => The 33 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c33" type="real64_array" />
-		<!--c34 => The 34 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c34" type="real64_array" />
-		<!--c35 => The 35 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c35" type="real64_array" />
-		<!--c36 => The 36 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c36" type="real64_array" />
-		<!--c41 => The 41 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c41" type="real64_array" />
-		<!--c42 => The 42 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c42" type="real64_array" />
-		<!--c43 => The 43 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c43" type="real64_array" />
-		<!--c44 => The 44 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c44" type="real64_array" />
-		<!--c45 => The 45 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c45" type="real64_array" />
-		<!--c46 => The 46 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c46" type="real64_array" />
-		<!--c51 => The 51 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c51" type="real64_array" />
-		<!--c52 => The 52 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c52" type="real64_array" />
-		<!--c53 => The 53 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c53" type="real64_array" />
-		<!--c54 => The 54 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c54" type="real64_array" />
-		<!--c55 => The 55 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c55" type="real64_array" />
-		<!--c56 => The 56 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c56" type="real64_array" />
-		<!--c61 => The 61 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c61" type="real64_array" />
-		<!--c62 => The 62 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c62" type="real64_array" />
-		<!--c63 => The 63 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c63" type="real64_array" />
-		<!--c64 => The 64 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c64" type="real64_array" />
-		<!--c65 => The 65 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c65" type="real64_array" />
-		<!--c66 => The 66 component of the Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="c66" type="real64_array" />
 		<!--dPVMult_dDensity => (no description available)-->
 		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
-		<!--defaultStiffness => Default Elastic Stiffness Tensor in Voigt notation-->
-		<xsd:attribute name="defaultStiffness" type="geosx::constitutive::LinearElasticAnisotropic::StiffnessTensor" />
 		<!--density => Material Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--stiffness => Fully Anisotropic Elastic Stiffness Field in Voigt notation (6x6 matrix)-->
+		<xsd:attribute name="stiffness" type="real64_array3d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="PoroLinearElasticIsotropicType">
 		<!--BulkModulus => Elastic Bulk Modulus Field-->
@@ -983,12 +913,68 @@
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--poreVolumeMultiplier => (no description available)-->
 		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
-		<!--stress => Stress Deviator-->
-		<xsd:attribute name="stress" type="r2Sym_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="PoroLinearElasticTransverseIsotropicType">
+		<!--c11 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c11" type="real64_array" />
+		<!--c13 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c13" type="real64_array" />
+		<!--c33 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c33" type="real64_array" />
+		<!--c44 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c44" type="real64_array" />
+		<!--c66 => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="c66" type="real64_array" />
+		<!--dPVMult_dDensity => (no description available)-->
+		<xsd:attribute name="dPVMult_dDensity" type="real64_array2d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--poreVolumeMultiplier => (no description available)-->
+		<xsd:attribute name="poreVolumeMultiplier" type="real64_array2d" />
+		<!--stress => Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="ProppantSlurryFluidType">
+		<!--FluidDensity => (no description available)-->
+		<xsd:attribute name="FluidDensity" type="real64_array2d" />
+		<!--FluidViscosity => (no description available)-->
+		<xsd:attribute name="FluidViscosity" type="real64_array2d" />
+		<!--componentDensity => (no description available)-->
+		<xsd:attribute name="componentDensity" type="real64_array3d" />
+		<!--dCompDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dCompDens_dCompConc" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
+		<!--dCompDens_dPres => (no description available)-->
+		<xsd:attribute name="dCompDens_dPres" type="real64_array3d" />
+		<!--dDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dDens_dCompConc" type="real64_array3d" />
+		<!--dDens_dPres => (no description available)-->
+		<xsd:attribute name="dDens_dPres" type="real64_array2d" />
+		<!--dDens_dProppantConc => (no description available)-->
+		<xsd:attribute name="dDens_dProppantConc" type="real64_array2d" />
+		<!--dFluidDens_dCompConc => (no description available)-->
+		<xsd:attribute name="dFluidDens_dCompConc" type="real64_array3d" />
+		<!--dFluidDens_dPres => (no description available)-->
+		<xsd:attribute name="dFluidDens_dPres" type="real64_array2d" />
+		<!--dFluidVisc_dCompConc => (no description available)-->
+		<xsd:attribute name="dFluidVisc_dCompConc" type="real64_array3d" />
+		<!--dFluidVisc_dPres => (no description available)-->
+		<xsd:attribute name="dFluidVisc_dPres" type="real64_array2d" />
+		<!--dVisc_dCompConc => (no description available)-->
+		<xsd:attribute name="dVisc_dCompConc" type="real64_array3d" />
+		<!--dVisc_dPres => (no description available)-->
+		<xsd:attribute name="dVisc_dPres" type="real64_array2d" />
+		<!--dVisc_dProppantConc => (no description available)-->
+		<xsd:attribute name="dVisc_dProppantConc" type="real64_array2d" />
+		<!--density => (no description available)-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--viscosity => (no description available)-->
+		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseRelPerm => (no description available)-->
 		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
 		<!--phaseTypes => (no description available)-->
@@ -996,7 +982,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenCapillaryPressureType">
 		<!--dPhaseCapPressure_dPhaseVolFraction => (no description available)-->
-		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray::Array&lt;double, 4, camp::int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray::NewChaiBuffer&gt;" />
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="LvArray_Array&lt;double, 4, camp_int_seq&lt;long, 0l, 1l, 2l, 3l&gt;, long, LvArray_NewChaiBuffer&gt;" />
 		<!--phaseCapPressure => (no description available)-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -1008,8 +994,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
-			<xsd:element name="LASWell" type="LASWellType" />
-			<xsd:element name="MeshFile" type="MeshFileType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1029,6 +1013,7 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
+			<xsd:element name="EmbeddedSurfaceElementRegion" type="EmbeddedSurfaceElementRegionType" />
 			<xsd:element name="FaceElementRegion" type="FaceElementRegionType" />
 			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
 		</xsd:choice>
@@ -1037,7 +1022,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1047,7 +1032,7 @@
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray::SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1065,23 +1050,23 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
-		<xsd:attribute name="edgesToFractureConnectors" type="geosx::mapBase&lt;long, long, std::integral_constant&lt;bool, true&gt; &gt;" />
+		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;long, long, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
 		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Parent index of the edge.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 	</xsd:complexType>
@@ -1094,12 +1079,24 @@
 		<xsd:attribute name="K_IC" type="r1_array" />
 		<!--SIFonFace => SIF on the face-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
+		<!--boundaryFaceDensity => (no description available)-->
+		<xsd:attribute name="boundaryFaceDensity" type="real64_array2d" />
+		<!--boundaryFaceMobility => (no description available)-->
+		<xsd:attribute name="boundaryFaceMobility" type="real64_array" />
+		<!--boundaryFacePressure => (no description available)-->
+		<xsd:attribute name="boundaryFacePressure" type="real64_array" />
+		<!--boundaryFaceViscosity => (no description available)-->
+		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
 		<!--childIndex => child index of the face.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
+		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
+		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
+		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="localIndex_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -1110,22 +1107,16 @@
 		<xsd:attribute name="faceArea" type="real64_array" />
 		<!--faceCenter => (no description available)-->
 		<xsd:attribute name="faceCenter" type="r1_array" />
-		<!--faceDensity => (no description available)-->
-		<xsd:attribute name="faceDensity" type="real64_array2d" />
-		<!--faceMobility => (no description available)-->
-		<xsd:attribute name="faceMobility" type="real64_array" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="r1_array" />
-		<!--facePressure => (no description available)-->
+		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
-		<!--faceViscosity => (no description available)-->
-		<xsd:attribute name="faceViscosity" type="real64_array2d" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
-		<!--gravityDepth => (no description available)-->
-		<xsd:attribute name="gravityDepth" type="real64_array" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--gravityCoefficient => (no description available)-->
+		<xsd:attribute name="gravityCoefficient" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--isFaceSeparable => A flag to mark if the face is separable-->
@@ -1133,13 +1124,15 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--parentIndex => Parent index of the face.-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryCandidateFace => The face that has the highest score for splitability-->
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
 		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
+		<!--ruptureTime => Time that the face was ruptured.-->
+		<xsd:attribute name="ruptureTime" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1147,43 +1140,45 @@
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
 		<!--Acceleration => An array that holds the current acceleration on the nodes. This array also is used to hold the summation of nodal forces resulting from the governing equations. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="Acceleration" type="r1_array" />
+		<xsd:attribute name="Acceleration" type="real64_array2d" />
 		<!--IncrementalDisplacement => An array that holds the incremental displacements for the current time step on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="IncrementalDisplacement" type="r1_array" />
+		<xsd:attribute name="IncrementalDisplacement" type="real64_array2d" />
 		<!--Mass => An array that holds the mass on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
-		<xsd:attribute name="ReferencePosition" type="r1_array" />
+		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
 		<!--SIFNode => SIF on the node-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="TotalDisplacement" type="r1_array" />
+		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
-		<xsd:attribute name="Velocity" type="r1_array" />
+		<xsd:attribute name="Velocity" type="real64_array2d" />
 		<!--childIndex => Child index of node.-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="contactForce" type="r1_array" />
 		<!--degreeFromCrack => connectivity distance from crack.-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
+		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray::ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1192,6 +1187,8 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
+		<!--ruptureTime => Time that the node was ruptured.-->
+		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
 		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanics_LagrangianFEM, SolidMechanicsLagrangianSSLE-->
@@ -1208,7 +1205,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1226,7 +1223,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1238,7 +1235,7 @@
 			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="FaceElementRegionType">
+	<xsd:complexType name="EmbeddedSurfaceElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
 			<xsd:element name="neighborData" type="neighborDataType" />
@@ -1249,7 +1246,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1263,36 +1260,53 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--edgeList => Map to the edges attached to each FaceElement.-->
-		<xsd:attribute name="edgeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
-		<!--elementAperture => The aperture of each FaceElement.-->
+		<!--edgeList => Map to the edges.-->
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
-		<!--elementArea => The area of each FaceElement.-->
+		<!--elementArea => The area of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementArea" type="real64_array" />
-		<!--elementCenter => The center of each FaceElement.-->
+		<!--elementCenter => The center of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementCenter" type="r1_array" />
-		<!--elementVolume => The volume of each FaceElement.-->
+		<!--elementVolume => The volume of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
-		<!--faceList => Map to the faces attached to each FaceElement.-->
-		<xsd:attribute name="faceList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 0l, 1l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
-		<!--fractureElementsToCellIndices => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array2d" />
-		<!--fractureElementsToCellRegions => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellRegions" type="localIndex_array2d" />
-		<!--fractureElementsToCellSubRegions => A map of face element local indices to the cell local indices-->
-		<xsd:attribute name="fractureElementsToCellSubRegions" type="localIndex_array2d" />
+		<!--fractureElementsToCellIndices => Map to the cells.-->
+		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />
+		<!--fractureElementsToRegionIndex => Map to the region cut by each EmbeddedSurface.-->
+		<xsd:attribute name="fractureElementsToRegionIndex" type="localIndex_array" />
+		<!--fractureElementsToSubRegionIndex => Map to the subregion cut by each EmbeddedSurface.-->
+		<xsd:attribute name="fractureElementsToSubRegionIndex" type="localIndex_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nodeList => Map to the nodes attached to each FaceElement.-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;LvArray::Array&lt;long, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt;, 1, camp::int_seq&lt;long, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<!--nodeList => Map to the nodes attached to each EmbeddedSurface.-->
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_NewChaiBuffer&gt; &gt;" />
+		<!--normalVector => Unit normal vector to the embedded surface.-->
+		<xsd:attribute name="normalVector" type="r1_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
+	<xsd:complexType name="FaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
 	<xsd:complexType name="WellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
@@ -1304,7 +1318,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1330,7 +1344,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1340,7 +1354,9 @@
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx::InterObjectRelation&lt;LvArray::Array&lt;long, 2, camp::int_seq&lt;long, 1l, 0l&gt;, long, LvArray::NewChaiBuffer&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_NewChaiBuffer&gt; &gt;" />
+		<!--radius => (no description available)-->
+		<xsd:attribute name="radius" type="real64_array" />
 		<!--topRank => (no description available)-->
 		<xsd:attribute name="topRank" type="integer" />
 		<!--topWellElementIndex => (no description available)-->
@@ -1358,7 +1374,7 @@
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx::mapBase&lt;long long, long, std::integral_constant&lt;bool, false&gt; &gt;" />
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
@@ -1373,9 +1389,9 @@
 		<xsd:attribute name="reservoirElementRegion" type="localIndex_array" />
 		<!--reservoirElementSubregion => (no description available)-->
 		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
-		<!--transmissibility => (no description available)-->
-		<xsd:attribute name="transmissibility" type="real64_array" />
 		<!--wellElementIndex => (no description available)-->
 		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
+		<!--wellTransmissibility => (no description available)-->
+		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>

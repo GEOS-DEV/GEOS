@@ -29,6 +29,8 @@ namespace dataRepository
 {
 namespace keys
 {
+string const nodeCoords       = "polylineNodeCoords";
+string const segmentConn      = "polylineSegmentConn";
 }
 }
 
@@ -52,31 +54,24 @@ public:
 
   /**
    * @return the name of this type in the catalog
-   */  
+   */
   static string CatalogName() { return "InternalWell"; }
 
-  struct viewKeyStruct : WellGeneratorBase::viewKeyStruct
-  {
-    constexpr static auto nodeCoords       = "polylineNodeCoords";
-    constexpr static auto segmentConn      = "polylineSegmentConn";
-  };
-
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   /// not implemented 
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
-                                             int const * GEOSX_UNUSED_ARG( index ),
-                                             int const & GEOSX_UNUSED_ARG( iEle ),
-                                             int * GEOSX_UNUSED_ARG( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_ARG( size )) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
+                                             int const * GEOSX_UNUSED_PARAM( index ),
+                                             int const & GEOSX_UNUSED_PARAM( iEle ),
+                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
+                                             int const GEOSX_UNUSED_PARAM( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
 protected:
   void PostProcessInput() override final;
-
 
 private:
   void GeneratePolyLine() override final;

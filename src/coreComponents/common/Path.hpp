@@ -35,8 +35,33 @@ class Path : public std::string
 {
 public:
 
+  /// Default constructor.
+  Path():
+    std::string()
+  {}
+
+  /**
+   * @brief Copy constructor, creates a copy of @p src.
+   * @param src the Path to copy.
+   */
+  Path( Path const & src ):
+    std::string( src )
+  {}
+
+  /// Destructor.
   ~Path()
   {}
+
+  /**
+   * @brief Copy Constructor
+   * @param rhs Reference to the Path that will be copied.
+   * @return *this
+   */
+  Path & operator=( Path const & rhs )
+  {
+    std::string::operator=( rhs );
+    return *this;
+  }
 
   using std::string::string;
 

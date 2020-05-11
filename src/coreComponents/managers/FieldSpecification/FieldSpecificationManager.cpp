@@ -33,7 +33,7 @@ using namespace constitutive;
 FieldSpecificationManager::FieldSpecificationManager( string const & name, Group * const parent ):
   Group( name, parent )
 {
-  setInputFlags(InputFlags::OPTIONAL);
+  setInputFlags( InputFlags::OPTIONAL );
 }
 
 
@@ -50,7 +50,7 @@ FieldSpecificationManager::~FieldSpecificationManager()
 
 Group * FieldSpecificationManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<FieldSpecificationBase> bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr< FieldSpecificationBase > bc = FieldSpecificationBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move( bc ) );
 }
 
@@ -58,7 +58,7 @@ Group * FieldSpecificationManager::CreateChild( string const & childKey, string 
 void FieldSpecificationManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for (auto& catalogIter: FieldSpecificationBase::GetCatalog())
+  for( auto & catalogIter: FieldSpecificationBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }
@@ -70,13 +70,13 @@ void FieldSpecificationManager::ApplyInitialConditions( Group * domain ) const
 
   Apply( 0.0, domain, "", "",
          [&]( FieldSpecificationBase const * const bc,
-         string const &,
-         set<localIndex> const & targetSet,
-         Group * const targetGroup,
-         string const fieldName )
-    {
-      bc->ApplyFieldValue<FieldSpecificationEqual>( targetSet, 0.0, targetGroup, fieldName );
-    } );
+              string const &,
+              SortedArrayView< localIndex const > const & targetSet,
+              Group * const targetGroup,
+              string const fieldName )
+  {
+    bc->ApplyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+  } );
 }
 
 } /* namespace geosx */

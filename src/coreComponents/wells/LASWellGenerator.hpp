@@ -23,6 +23,15 @@
 namespace geosx
 {
 
+namespace dataRepository
+{
+namespace keys
+{
+string const fileName                = "fileName";
+string const geometryLogIndexInFile  = "geometryLogIndexInFile";
+}
+}
+
 class LASFile;
 class LASLine;
 
@@ -43,26 +52,21 @@ class LASWellGenerator : public WellGeneratorBase
    */  
   static string CatalogName() { return "LASWell"; }
 
-  struct viewKeyStruct : WellGeneratorBase::viewKeyStruct
-  {
-    constexpr static auto fileName               = "fileName";
-    constexpr static auto geometryLogIndexInFile = "geometryLogIndexInFile";
-  };
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   virtual void GeneratePolyLine() override final;
 
   /// not implemented 
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_ARG( elementType ),
-                                             int const * GEOSX_UNUSED_ARG( index ),
-                                             int const & GEOSX_UNUSED_ARG( iEle ),
-                                             int * GEOSX_UNUSED_ARG( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_ARG( size )) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
+                                             int const * GEOSX_UNUSED_PARAM( index ),
+                                             int const & GEOSX_UNUSED_PARAM( iEle ),
+                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
+                                             int const GEOSX_UNUSED_PARAM( size )) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_ARG( domain ) ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   protected:
   void PostProcessInput() override final;

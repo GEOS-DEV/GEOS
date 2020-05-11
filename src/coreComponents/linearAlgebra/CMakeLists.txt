@@ -4,16 +4,28 @@ message( "Entering /src/coreComponents/linearAlgebra/CMakeLists.txt")
 # Specify all headers
 #
 set( linearAlgebra_headers
+     common.hpp
      interfaces/BlasLapackFunctions.h
      interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
+     interfaces/LinearOperator.hpp
+     interfaces/MatrixBase.hpp
+     interfaces/VectorBase.hpp
+     solvers/KrylovSolver.hpp
      solvers/CGsolver.hpp
      solvers/BiCGSTABsolver.hpp
-     utilities/BlockMatrixView.hpp
+     solvers/PreconditionerBase.hpp
+     solvers/PreconditionerIdentity.hpp
      utilities/BlockVectorView.hpp
+     utilities/BlockVectorWrapper.hpp
+     utilities/BlockVector.hpp
+     utilities/BlockOperatorView.hpp
+     utilities/BlockOperatorWrapper.hpp
+     utilities/BlockOperator.hpp
      utilities/LinearSolverParameters.hpp
-     DofManager.hpp 
-     utilities/LAIHelperFunctions.hpp)
+     utilities/LAIHelperFunctions.hpp
+     DofManager.hpp
+     DofManagerHelpers.hpp )
 
 #
 # Specify all sources
@@ -22,10 +34,8 @@ set( linearAlgebra_sources
      interfaces/BlasLapackLA.cpp
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
-     utilities/BlockVectorView.cpp
-     utilities/BlockMatrixView.cpp
-     DofManager.cpp 
-     utilities/LAIHelperFunctions.cpp)
+     utilities/LAIHelperFunctions.cpp
+     DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )
   set( dependencyList common blas lapack raja managers)
@@ -41,15 +51,16 @@ endif()
 if( ENABLE_TRILINOS )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/EpetraMatrix.hpp
-                 interfaces/EpetraVector.hpp
-                 interfaces/TrilinosSolver.hpp
-                 interfaces/TrilinosInterface.hpp )
+          interfaces/trilinos/EpetraMatrix.hpp
+          interfaces/trilinos/EpetraVector.hpp
+          interfaces/trilinos/EpetraUtils.hpp
+          interfaces/trilinos/TrilinosSolver.hpp
+          interfaces/trilinos/TrilinosInterface.hpp )
 
     list( APPEND linearAlgebra_sources
-                 interfaces/EpetraMatrix.cpp
-                 interfaces/EpetraVector.cpp
-                 interfaces/TrilinosSolver.cpp )
+          interfaces/trilinos/EpetraMatrix.cpp
+          interfaces/trilinos/EpetraVector.cpp
+          interfaces/trilinos/TrilinosSolver.cpp )
 
     list( APPEND dependencyList trilinos )
 
@@ -58,7 +69,16 @@ endif()
 if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/HypreInterface.hpp )
+          interfaces/hypre/HypreMatrix.hpp
+          interfaces/hypre/HypreVector.hpp
+          interfaces/hypre/HypreSolver.hpp
+          interfaces/hypre/HypreInterface.hpp
+          interfaces/hypre/HypreUtils.hpp )
+
+    list( APPEND linearAlgebra_sources
+          interfaces/hypre/HypreMatrix.cpp
+          interfaces/hypre/HypreVector.cpp
+          interfaces/hypre/HypreSolver.cpp )
 
     list( APPEND dependencyList hypre )
 
@@ -67,16 +87,17 @@ endif()
 if( ENABLE_PETSC )
 
     list( APPEND linearAlgebra_headers
-                 interfaces/PetscVector.hpp
-                 interfaces/PetscSparseMatrix.hpp
-                 interfaces/PetscSolver.hpp
-                 interfaces/PetscInterface.hpp )
+          interfaces/petsc/PetscVector.hpp
+          interfaces/petsc/PetscMatrix.hpp
+          interfaces/petsc/PetscSolver.hpp
+          interfaces/petsc/PetscInterface.hpp
+          interfaces/petsc/PetscUtils.hpp )
 
     list( APPEND linearAlgebra_sources
-                 interfaces/PetscVector.cpp
-                 interfaces/PetscSparseMatrix.cpp
-                 interfaces/PetscSolver.cpp
-                 interfaces/PetscInterface.cpp)
+          interfaces/petsc/PetscVector.cpp
+          interfaces/petsc/PetscMatrix.cpp
+          interfaces/petsc/PetscSolver.cpp
+          interfaces/petsc/PetscInterface.cpp )
 
     list( APPEND dependencyList petsc )
 

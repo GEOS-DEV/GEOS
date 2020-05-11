@@ -1,47 +1,41 @@
 
 <Problem>
 
-  <Solvers
-    gravityVector="0.0, 0.0, -9.81">
+  <Solvers>
 
-    <Reservoir name="reservoirSystem"
+    <SinglePhaseReservoir name="reservoirSystem"
                flowSolverName="SinglePhaseFlow"
                wellSolverName="SinglePhaseWell"
                logLevel="1"
                targetRegions="{Channel,wellRegion1,wellRegion2}">
-      <NonlinearSolverParameters name="nlsp"
-                                 newtonMaxIter="40"/>
-      <SystemSolverParameters name="ssp"
-                              useDirectSolver="1"
+      <NonlinearSolverParameters newtonMaxIter="40"/>
+      <SystemSolverParameters useDirectSolver="1"
                               logLevel="0"/>
-    </Reservoir>
+    </SinglePhaseReservoir>
   
-    <SinglePhaseFlow name="SinglePhaseFlow"
+    <SinglePhaseFVM
+	             name="SinglePhaseFlow"
                      logLevel="0"
-                     gravityFlag="1"
                      discretization="singlePhaseTPFA"
-                     fluidName="water"
-                     solidName="rock"
+                     fluidNames="{water}"
+                     solidNames="{rock}"
                      targetRegions="{Channel}">
-    </SinglePhaseFlow>
+    </SinglePhaseFVM>
 
     <SinglePhaseWell name="SinglePhaseWell"
                      logLevel="1"
-                     gravityFlag="1"
-                     wellFluidName="water"
+                     fluidNames="{water}"
                      targetRegions="{wellRegion1,wellRegion2}">
         <WellControls name="wellControls1"
                       type="producer"
                       control="BHP"
                       targetBHP="5e5"
-                      targetRate="1e-1"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-1"/>
         <WellControls name="wellControls2"
                       type="injector"
                       control="liquidRate"
                       targetBHP="1e7"
-                      targetRate="1e-3"
-                      referenceDepth="0.5"/>
+                      targetRate="1e-3"/>
     </SinglePhaseWell>
 
   </Solvers>

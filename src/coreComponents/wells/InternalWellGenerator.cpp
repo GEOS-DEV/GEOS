@@ -34,16 +34,15 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
-  registerWrapper(viewKeyStruct::nodeCoords, &m_inputPolyNodeCoords, false )->
+  registerWrapper( keys::nodeCoords, &m_inputPolyNodeCoords )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("physical coordinates of the well polyline nodes");
+    setDescription("Physical coordinates of the well polyline nodes");
 
-  registerWrapper(viewKeyStruct::segmentConn, &m_segmentToPolyNodeMap, false )->
+  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap  )->
     setInputFlag(InputFlags::REQUIRED)->
     setSizedFromParent(0)->
-    setDescription("connectivity of the polyline segments");
-
+    setDescription("Connectivity of the polyline segments");
 }
 
 InternalWellGenerator::~InternalWellGenerator()
@@ -53,30 +52,29 @@ InternalWellGenerator::~InternalWellGenerator()
 
 void InternalWellGenerator::PostProcessInput()
 {
-  GEOSX_ERROR_IF( getName().find("well") == std::string::npos,
-                 "Currently, the well generator must contain the word well in its name ");
+  GEOSX_ERROR_IF( getName().find( "well" ) == std::string::npos,
+                  "Currently, the well generator must contain the word well in its name " );
 
-  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size(1) != m_nDims,
-                 "Invalid number of physical coordinates in " << viewKeyStruct::nodeCoords << " for well " << getName() ); 
+  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size( 1 ) != m_nDims,
+                  "Invalid number of physical coordinates in " << keys::nodeCoords << " for well " << getName() );
 
-  GEOSX_ERROR_IF( m_segmentToPolyNodeMap.size(1) != 2,
-                 "Invalid size in " << viewKeyStruct::segmentConn << " for well " << getName() ); 
+  GEOSX_ERROR_IF( m_segmentToPolyNodeMap.size( 1 ) != 2,
+                  "Invalid size in " << keys::segmentConn << " for well " << getName() );
 
-  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size(0)-1 != m_segmentToPolyNodeMap.size(0),
-                 "Incompatible sizes of " << viewKeyStruct::nodeCoords << " and " << viewKeyStruct::segmentConn << " in well " << getName() ); 
- 
-  GEOSX_ERROR_IF( m_crossSectionArea <= 0,
-                 "Invalid " << viewKeyStruct::crossSectionArea << " in well " << getName() );
+  GEOSX_ERROR_IF( m_inputPolyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
+                  "Incompatible sizes of " << keys::nodeCoords << " and " << keys::segmentConn << " in well " << getName() );
 
-  GEOSX_ERROR_IF( m_wellRegionName.empty(), 
-                 "Invalid well region name in well " << getName() );
+  GEOSX_ERROR_IF( m_radius <= 0,
+                  "Invalid " << keys::radius << " in well " << getName() );
 
-  GEOSX_ERROR_IF( m_meshName.empty(), 
-                 "Invalid mesh name in well " << getName() );
+  GEOSX_ERROR_IF( m_wellRegionName.empty(),
+                  "Invalid well region name in well " << getName() );
 
-  GEOSX_ERROR_IF( m_wellControlsName.empty(), 
-                 "Invalid well constraint name in well " << getName() );
+  GEOSX_ERROR_IF( m_meshBodyName.empty(),
+                  "Invalid mesh name in well " << getName() );
 
+  GEOSX_ERROR_IF( m_wellControlsName.empty(),
+                  "Invalid well constraint name in well " << getName() );
 
   // TODO: add more checks here
   // TODO: check that the connectivity of the well is valid
