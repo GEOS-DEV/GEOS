@@ -89,7 +89,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Solver solver;
 
   // Extra scratch matrix, needed if the separate displacement component is requested
-  HypreMatrix scratch; // default constructed, does nothing
+  std::unique_ptr< HypreMatrix > scratch;
   HYPRE_ParCSRMatrix precondParCSRMat = mat.unwrappedParCSR();
 
   // Get MPI communicator
@@ -291,8 +291,9 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     // apply separate displacement component filter
     if( m_parameters.amg.separateComponents )
     {
-      LAIHelperFunctions::SeparateComponentFilter< HypreInterface >( mat, scratch, m_parameters.dofsPerNode );
-      precondParCSRMat = scratch.unwrappedParCSR();
+      scratch = std::make_unique< HypreMatrix >(); // default constructed, does nothing
+      LAIHelperFunctions::SeparateComponentFilter( mat, *scratch, m_parameters.dofsPerNode );
+      precondParCSRMat = scratch->unwrappedParCSR();
     }
 
     precondSetupFunction = (HYPRE_PtrToParSolverFcn) HYPRE_BoomerAMGSetup;
