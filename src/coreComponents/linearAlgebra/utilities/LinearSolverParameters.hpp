@@ -67,7 +67,7 @@ public:
     string coarseType = "direct";            ///< Coarse-level solver/smoother
     integer numSweeps = 2;                   ///< Number of smoother sweeps
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
-    real64 aggregationThreshold = 0.0;       ///< Aggregation threshold parameters
+    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
     integer isSymmetric = true;              ///< Identify if matrix is symmetric
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
@@ -187,10 +187,10 @@ public:
     static constexpr auto krylovAdaptiveTolString = "krylovAdaptiveTol"; ///< Krylov adaptive tolerance key
     static constexpr auto krylovWeakTolString     = "krylovWeakestTol";  ///< Krylov weakest tolerance key
 
-    static constexpr auto amgNumSweepsString   = "amgNumSweeps";             ///< AMG number of sweeps key
-    static constexpr auto amgSmootherString    = "amgSmootherType";          ///< AMG smoother type key
-    static constexpr auto amgCoarseString      = "amgCoarseSolver";          ///< AMG coarse solver key
-    static constexpr auto amgAggregationString = "amgAggregationThreshold";  ///< AMG aggregation threshold key
+    static constexpr auto amgNumSweepsString = "amgNumSweeps";             ///< AMG number of sweeps key
+    static constexpr auto amgSmootherString  = "amgSmootherType";          ///< AMG smoother type key
+    static constexpr auto amgCoarseString    = "amgCoarseSolver";          ///< AMG coarse solver key
+    static constexpr auto amgThresholdString = "amgThreshold";             ///< AMG threshold key
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key

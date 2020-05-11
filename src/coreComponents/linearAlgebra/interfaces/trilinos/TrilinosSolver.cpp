@@ -215,7 +215,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     list.set( "prec type", translate[m_parameters.amg.cycleType] );
     list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
     list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
-    list.set( "aggregation: threshold", m_parameters.amg.aggregationThreshold );
+    list.set( "aggregation: threshold", m_parameters.amg.threshold );
     list.set( "smoother: pre or post", m_parameters.amg.preOrPostSmoothing );
 
     //TODO: add user-defined null space / rigid body mode support

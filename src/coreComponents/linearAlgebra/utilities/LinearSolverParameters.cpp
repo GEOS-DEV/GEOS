@@ -76,10 +76,10 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "AMG coarsest level solver/smoother type" );
 
-  registerWrapper( viewKeysStruct::amgAggregationString, &amg.aggregationThreshold )->
-    setApplyDefaultValue( amg.aggregationThreshold )->
+  registerWrapper( viewKeysStruct::amgThresholdString, &amg.threshold )->
+    setApplyDefaultValue( amg.threshold )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "AMG aggregation threshold" );
+    setDescription( "AMG strength-of-connection threshold" );
 
   registerWrapper( viewKeysStruct::iluFillString, &ilu.fill )->
     setApplyDefaultValue( ilu.fill )->
