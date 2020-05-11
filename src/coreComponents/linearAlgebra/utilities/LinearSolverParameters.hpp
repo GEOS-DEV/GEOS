@@ -34,17 +34,18 @@ class LinearSolverParameters
 {
 public:
 
-  integer logLevel = 0;                //!< Output level [0=none, 1=basic, 2=everything]
-  string solverType = "cg";            //!< Solver type [direct, cg, gmres, bicgstab]
-  string preconditionerType = "ilut";  //!< Preconditioner type [none, ilu, ilut, icc, amg]
-  integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
+  integer logLevel = 0;                ///< Output level [0=none, 1=basic, 2=everything]
+  string solverType = "direct";        ///< Solver type [direct, cg, gmres, bicgstab, preconditioner]
+  string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
+  integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
 
   struct
   {
-    real64 tolerance = 1e-6;      //!< Iterative solver relative residual tolerance
-    integer maxIterations = 200;  //!< Maximum overall number of iterations
-    integer maxRestart = 200;     //!< Maximum number of restarts (for GMRES)
-    bool useAdaptiveTol = false;  //!< Whether to use an adaptive linear tolerance scheme
+    real64 tolerance = 1e-6;          ///< Relative convergence tolerance for iterative solvers
+    integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
+    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
+    integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
+    real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
   }
   krylov;                         //!< Iterative (Krylov subspace) solver parameters
 
@@ -61,7 +62,10 @@ public:
     string cycleType = "V";                 //!< Multigrid cycle type
     string smootherType = "gaussSeidel";    //!< Type of smoother
     string coarseType = "direct";           //!< Type of coarse solver
-    integer numSweeps = 2;                  //!< Number of smoother sweeps at each level
+    integer numSweeps = 2;                  //!< Number of smoother sweeps (or polynomial degree if using Chebyshev)
+    string preOrPostSmoothing = "both";     //!< Pre and/or post smoothing [pre,post,both]
+    real64 aggregationThreshold = 0.0;      //!< AMG aggregation threshold 
+    real64 threshold = 0.25;                //!< AMG threshold 
     bool isSymmetric = true;                //!< Whether the system matrix is symmetric
     bool separateComponents = false;        //!< Whether to use separate component matrix approximation
     string nullSpaceType = "constantModes"; //!< Type of nullspace information for AMG
