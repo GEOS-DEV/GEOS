@@ -280,6 +280,7 @@ struct AssemblerKernel
            arrayView2d< localIndex const > const & elemRegionList,
            arrayView2d< localIndex const > const & elemSubRegionList,
            arrayView2d< localIndex const > const & elemList,
+           globalIndex const rankOffset,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & dFacePres,
@@ -295,8 +296,8 @@ struct AssemblerKernel
            ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
            arraySlice2d< real64 const > const & transMatrix,
            real64 const & dt,
-           ParallelMatrix * const matrix,
-           ParallelVector * const rhs );
+           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           arrayView1d< real64 > const & localRhs );
 
 };
 

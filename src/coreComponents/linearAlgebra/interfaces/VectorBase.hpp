@@ -148,7 +148,7 @@ protected:
    * @param localValues local data to put into vector
    * @param comm MPI communicator to use
    */
-  virtual void create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
+  virtual void create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm ) = 0;
 
   ///@}
 

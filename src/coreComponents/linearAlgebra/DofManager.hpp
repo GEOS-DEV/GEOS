@@ -475,7 +475,7 @@ public:
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
    *
-   * @param [out] matrix the target matrix
+   * @param [out] matrix the target parallel matrix
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
   template< typename MATRIX >
@@ -485,7 +485,7 @@ public:
   /**
    * @brief Populate sparsity pattern for one block of the system matrix.
    *
-   * @param [out] matrix the the target matrix
+   * @param [out] matrix the target parallel matrix
    * @param [in]  rowFieldName the name of the row field.
    * @param [in]  colFieldName the name of the col field.
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
@@ -495,6 +495,22 @@ public:
                            string const & rowFieldName,
                            string const & colFieldName,
                            bool closePattern = true ) const;
+
+  /**
+   * @brief Populate sparsity pattern of the entire system matrix.
+   * @param [out] matrix the target local matrix
+   */
+  void setSparsityPattern( SparsityPattern< globalIndex > & pattern ) const;
+
+  /**
+   * @brief Populate sparsity pattern for one block of the system matrix.
+   * @param [out] matrix the target local matrix
+   * @param [in]  rowFieldName name of the row field.
+   * @param [in]  colFieldName name of the col field.
+   */
+  void setSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                           string const & rowFieldName,
+                           string const & colFieldName ) const;
 
   /**
    * @brief Copy values from DOFs to nodes.
@@ -513,6 +529,13 @@ public:
    */
   template< typename VECTOR >
   void copyVectorToField( VECTOR const & vector,
+                          string const & srcFieldName,
+                          string const & dstFieldName,
+                          real64 const scalingFactor,
+                          localIndex const loCompIndex = 0,
+                          localIndex const hiCompIndex = -1 ) const;
+
+  void copyVectorToField( arrayView1d< real64 const > const & localVector,
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 const scalingFactor,
@@ -542,6 +565,13 @@ public:
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
+  void addVectorToField( arrayView1d< real64 const > const & localVector,
+                         string const & srcFieldName,
+                         string const & dstFieldName,
+                         real64 const scalingFactor,
+                         localIndex const loCompIndex = 0,
+                         localIndex const hiCompIndex = -1 ) const;
+
   /**
    * @brief Copy values from nodes to DOFs.
    *
@@ -559,6 +589,13 @@ public:
    */
   template< typename VECTOR >
   void copyFieldToVector( VECTOR & vector,
+                          string const & srcFieldName,
+                          string const & dstFieldName,
+                          real64 const scalingFactor,
+                          localIndex const loCompIndex = 0,
+                          localIndex const hiCompIndex = -1 ) const;
+
+  void copyFieldToVector( arrayView1d< real64 > const & localVector,
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 const scalingFactor,
@@ -588,6 +625,12 @@ public:
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
+  void addFieldToVector( arrayView1d< real64 > const & localVector,
+                         string const & srcFieldName,
+                         string const & dstFieldName,
+                         real64 const scalingFactor,
+                         localIndex const loCompIndex = 0,
+                         localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -674,7 +717,36 @@ private:
                                    localIndex const colFieldIndex ) const;
 
   template< typename MATRIX >
-  void setSparsityPatternFromStencil( MATRIX & pattern, localIndex const fieldIndex ) const;
+  void setSparsityPatternFromStencil( MATRIX & pattern,
+                                      localIndex const fieldIndex ) const;
+
+  /**
+   * @brief Calculate or estimate the number of nonzero entries in each local row
+   * @param rowLengths array of row lengths (values are be incremented, not overwritten)
+   * @param rowFieldIndex index of row field (must be non-negative)
+   * @param colFieldIndex index of col field (must be non-negative)
+   */
+  void countRowLengthsOneBlock( arrayView1d< localIndex > const & rowLengths,
+                                localIndex const rowFieldIndex,
+                                localIndex const colFieldIndex ) const;
+
+  void countRowLengthsFromStencil( arrayView1d< localIndex > const & rowLengths,
+                                   localIndex const fieldIndex ) const;
+
+  /**
+   * @brief Populate the sparsity pattern for a coupling block between given fields.
+   * @param pattern the sparsity to be filled
+   * @param rowFieldIndex index of row field (must be non-negative)
+   * @param colFieldIndex index of col field (must be non-negative)
+   *
+   * This private function is used as a building block by higher-level SetSparsityPattern()
+   */
+  void setSparsityPatternOneBlock( SparsityPattern< globalIndex > & pattern,
+                                   localIndex const rowFieldIndex,
+                                   localIndex const colFieldIndex ) const;
+
+  void setSparsityPatternFromStencil( SparsityPattern< globalIndex > & pattern,
+                                      localIndex const fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -691,8 +763,8 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY, typename VECTOR >
-  void vectorToField( VECTOR const & vector,
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void vectorToField( LOCAL_VECTOR const localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 const scalingFactor,
@@ -706,7 +778,7 @@ private:
    * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
-   * @param vector target LA vector
+   * @param vector ponter to target vector local data (host or device)
    * @param dstFieldName name of the destination field (as defined in DofManager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -714,8 +786,8 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY, typename VECTOR >
-  void fieldToVector( VECTOR & vector,
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void fieldToVector( LOCAL_VECTOR localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 const scalingFactor,

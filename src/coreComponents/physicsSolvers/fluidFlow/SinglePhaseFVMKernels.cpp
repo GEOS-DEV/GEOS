@@ -48,30 +48,58 @@ inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
 
 }
 
+template< typename AtomicPolicy >
+GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
+void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
+                                          localIndex const stencilSize,
+                                          globalIndex const * const eqnRowIndices,
+                                          globalIndex const * const dofColIndices,
+                                          globalIndex const rankOffset,
+                                          real64 const * const localFluxJacobian,
+                                          real64 const * const localFlux,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
+{
+
+  for( localIndex i = 0; i < numFluxElems; ++i )
+  {
+    localIndex const localRow = eqnRowIndices[i] - rankOffset;
+    if( localRow >= 0 && localRow < localMatrix.numRows() )
+    {
+      localMatrix.addToRowBinarySearchUnsorted< AtomicPolicy >( localRow,
+                                                                dofColIndices,
+                                                                localFluxJacobian + i * stencilSize,
+                                                                stencilSize );
+      atomicAdd( AtomicPolicy{}, &localRhs[localRow], localFlux[i] );
+    }
+  }
+}
+
 template<>
 void FluxKernel::
   Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & stencil,
                                     real64 const dt,
-                                    FluxKernel::ElementView< arrayView1d< globalIndex > > const & dofNumber,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const & pres,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const & dPres,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const & gravCoef,
-                                    FluxKernel::ElementView< arrayView2d< real64 const > > const & dens,
-                                    FluxKernel::ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const & mob,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const &,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const &,
-                                    FluxKernel::ElementView< arrayView1d< R1Tensor const > > const &,
+                                    globalIndex const rankOffset,
+                                    ElementView< arrayView1d< globalIndex > > const & dofNumber,
+                                    ElementView< arrayView1d< real64 const > > const & pres,
+                                    ElementView< arrayView1d< real64 const > > const & dPres,
+                                    ElementView< arrayView1d< real64 const > > const & gravCoef,
+                                    ElementView< arrayView2d< real64 const > > const & dens,
+                                    ElementView< arrayView2d< real64 const > > const & dDens_dPres,
+                                    ElementView< arrayView1d< real64 const > > const & mob,
+                                    ElementView< arrayView1d< real64 const > > const & dMob_dPres,
+                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
+                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                    ElementView< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                     R1Tensor const,
                                     real64 const,
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const &,
-                                    FluxKernel::ElementView< arrayView1d< real64 const > > const &,
+                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( s ),
+                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSdAper ),
 #endif
-                                    ParallelMatrix * const jacobian,
-                                    ParallelVector * const residual,
-                                    CRSMatrixView< real64, localIndex > const & )
+                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    arrayView1d< real64 > const & localRhs,
+                                    CRSMatrixView< real64, localIndex const > const & GEOSX_UNUSED_PARAM( dR_dAper ) )
 {
   constexpr localIndex maxNumFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
   constexpr localIndex numFluxElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
@@ -83,58 +111,59 @@ void FluxKernel::
   typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
-  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
-  {
-    // working arrays
-    stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
-    stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
+  forAll< parallelDevicePolicy< 128 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+      {
+        // working arrays
+        stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
+        stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
 
-    stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-    stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+        stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
+        stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
-    FluxKernel::Compute( stencilSize,
-                         seri[iconn],
-                         sesri[iconn],
-                         sei[iconn],
-                         weights[iconn],
-                         pres,
-                         dPres,
-                         gravCoef,
-                         dens,
-                         dDens_dPres,
-                         mob,
-                         dMob_dPres,
-                         dt,
-                         localFlux,
-                         localFluxJacobian );
+        FluxKernel::Compute( stencilSize,
+                             seri[iconn],
+                             sesri[iconn],
+                             sei[iconn],
+                             weights[iconn],
+                             pres,
+                             dPres,
+                             gravCoef,
+                             dens,
+                             dDens_dPres,
+                             mob,
+                             dMob_dPres,
+                             dt,
+                             localFlux,
+                             localFluxJacobian );
 
-    // extract DOF numbers
-    eqnRowIndices = -1;
-    for( localIndex i = 0; i < numFluxElems; ++i )
-    {
-      eqnRowIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-    }
+        // extract DOF numbers
+        for( localIndex i = 0; i < numFluxElems; ++i )
+        {
+          eqnRowIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+        }
 
-    for( localIndex i = 0; i < stencilSize; ++i )
-    {
-      dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-    }
+        for( localIndex i = 0; i < stencilSize; ++i )
+        {
+          dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+        }
 
-    addLocalContributionsToGlobalSystem( numFluxElems,
-                                         stencilSize,
-                                         eqnRowIndices.data(),
-                                         dofColIndices.data(),
-                                         localFluxJacobian.data(),
-                                         localFlux.data(),
-                                         jacobian,
-                                         residual );
-  } );
+        addLocalContributionsToGlobalSystem< parallelDeviceAtomic >( numFluxElems,
+                                                                     stencilSize,
+                                                                     eqnRowIndices.data(),
+                                                                     dofColIndices.data(),
+                                                                     rankOffset,
+                                                                     localFluxJacobian.data(),
+                                                                     localFlux.data(),
+                                                                     localMatrix,
+                                                                     localRhs );
+      } );
 }
 
 template<>
 void FluxKernel::
   Launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 real64 const dt,
+                                globalIndex const rankOffset,
                                 FluxKernel::ElementView< arrayView1d< globalIndex const > > const & dofNumber,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & pres,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & dPres,
@@ -152,9 +181,9 @@ void FluxKernel::
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & s,
                                 FluxKernel::ElementView< arrayView1d< real64 const > > const & dSdAper,
 #endif
-                                ParallelMatrix * const jacobian,
-                                ParallelVector * const residual,
-                                CRSMatrixView< real64, localIndex > const & dR_dAper )
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs,
+                                CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -171,14 +200,13 @@ void FluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
-  forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
+  forAll< parallelDevicePolicy< 256 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
-    localIndex const numFluxElems = stencil.stencilSize( iconn );
+    localIndex const numFluxElems = seri.sizeOfArray( iconn );
     localIndex const stencilSize  = numFluxElems;
 
     if( numFluxElems > 1 && isGhostConnectors[iconn][0] < 0 )
     {
-
       // working arrays
       stackArray1d< globalIndex, maxNumFluxElems > eqnRowIndices( numFluxElems );
       stackArray1d< globalIndex, maxStencilSize > dofColIndices( stencilSize );
@@ -207,9 +235,13 @@ void FluxKernel::
         localIndex const ei = sei[iconn][k];
 
         if( fabs( Dot( cellCenterToEdgeCenters[iconn][k], gravityVector )) > TINY )
+        {
           effectiveWeights[k] *= transTMultiplier[er][esr][ei][1];
+        }
         else
+        {
           effectiveWeights[k] *= transTMultiplier[er][esr][ei][0];
+        }
 
       }
 
@@ -236,7 +268,6 @@ void FluxKernel::
                                    dFlux_dAper );
 
       // extract DOF numbers
-      eqnRowIndices = -1;
       for( localIndex i = 0; i < numFluxElems; ++i )
       {
         eqnRowIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
@@ -249,21 +280,22 @@ void FluxKernel::
         localColIndices[i] = sei( iconn, i );
       }
 
-      addLocalContributionsToGlobalSystem( numFluxElems,
-                                           stencilSize,
-                                           eqnRowIndices.data(),
-                                           dofColIndices.data(),
-                                           localFluxJacobian.data(),
-                                           localFlux.data(),
-                                           jacobian,
-                                           residual );
+      addLocalContributionsToGlobalSystem< parallelDeviceAtomic >( numFluxElems,
+                                                                   stencilSize,
+                                                                   eqnRowIndices.data(),
+                                                                   dofColIndices.data(),
+                                                                   rankOffset,
+                                                                   localFluxJacobian.data(),
+                                                                   localFlux.data(),
+                                                                   localMatrix,
+                                                                   localRhs );
 
       for( localIndex row=0; row<numFluxElems; ++row )
       {
-        dR_dAper.addToRowBinarySearch< serialAtomic >( localRowIndices[row],
-                                                       localColIndices.data(),
-                                                       dFlux_dAper.data() + (stencilSize * row),
-                                                       stencilSize );
+        dR_dAper.addToRowBinarySearch< parallelDeviceAtomic >( localRowIndices[row],
+                                                               localColIndices.data(),
+                                                               dFlux_dAper.data() + ( stencilSize * row ),
+                                                               stencilSize );
       }
 
     }

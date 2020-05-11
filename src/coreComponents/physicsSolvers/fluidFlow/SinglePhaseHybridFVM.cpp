@@ -175,12 +175,12 @@ void SinglePhaseHybridFVM::SetupDofs( DomainPartition const * const GEOSX_UNUSED
 
 void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const dt,
-                                              DomainPartition const * const domain,
-                                              DofManager const * const dofManager,
-                                              ParallelMatrix * const matrix,
-                                              ParallelVector * const rhs )
+                                              DomainPartition const & domain,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel const & mesh                   = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
   NodeManager const & nodeManager          = *mesh.getNodeManager();
   FaceManager const & faceManager          = *mesh.getFaceManager();
@@ -200,7 +200,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // face data
 
   // get the face-based DOF numbers for the assembly
-  string const faceDofKey = dofManager->getKey( viewKeyStruct::facePressureString );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::facePressureString );
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
@@ -228,7 +228,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   array2d< localIndex > const & elemList          = faceManager.elementList();
 
   // tolerance for transmissibility calculation
-  real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
+  real64 const lengthTolerance = domain.getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
 
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
                                                        [&]( localIndex const,

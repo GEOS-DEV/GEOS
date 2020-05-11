@@ -167,6 +167,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( arrayView2d< localIndex const
 template< localIndex NF >
 void
 AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
+                                                   globalIndex const rankOffset,
                                                    arrayView1d< globalIndex const > const & faceDofNumber,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    globalIndex const elemDofNumber,
@@ -176,8 +177,8 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
                                                    arraySlice1d< real64 const > const & upwMobility,
                                                    arraySlice1d< real64 const > const & dUpwMobility_dp,
                                                    arraySlice1d< globalIndex const > const & upwDofNumber,
-                                                   ParallelMatrix * const matrix,
-                                                   ParallelVector * const rhs )
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
 {
   // fluxes
   real64 sumLocalMassFluxes = 0;
@@ -193,7 +194,7 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   }
 
   // dof numbers
-  //globalIndex const eqnRowIndex = elemDofNumber;
+  globalIndex const eqnRowIndex = elemDofNumber - rankOffset;
   stackArray1d< globalIndex, 1+NF > elemDofColIndices( 1+NF );
   stackArray1d< globalIndex, NF >   faceDofColIndices( NF );
   elemDofColIndices[0] = elemDofNumber;
@@ -218,34 +219,36 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( real64 const & dt,
   }
 
   // we are ready to assemble the local flux and its derivatives
-  /*
-     // residual
-     rhs->add( eqnRowIndex,
-            sumLocalMassFluxes );
+  // no need for atomic adds - each row is assembled by a single thread
 
-     // jacobian -- derivative wrt elem centered vars
-     matrix->add( eqnRowIndex,
-               elemDofColIndices,
-               dSumLocalMassFluxes_dElemVars );
+  // residual
+  localRhs[eqnRowLocalIndex] += sumLocalMassFluxes;
 
-     // jacobian -- derivatives wrt face centered vars
-     matrix->add( eqnRowIndex,
-               faceDofColIndices,
-               dSumLocalMassFluxes_dFaceVars );
-   */
+  // jacobian -- derivative wrt elem centered vars
+  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+                                                            elemDofColIndices.data(),
+                                                            dSumLocalMassFluxes_dElemVars,
+                                                            elemDofColIndices.size() );
+
+  // jacobian -- derivatives wrt face centered vars
+  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+                                                            faceDofColIndices.data(),
+                                                            dSumLocalMassFluxes_dFaceVars,
+                                                            faceDofColIndices.size() );
 }
 
 
 template< localIndex NF >
 void
-AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+AssemblerKernelHelper::AssembleConstraints( globalIndex const rankOffset,
+                                            arrayView1d< globalIndex const > const & faceDofNumber,
                                             arraySlice1d< localIndex const > const elemToFaces,
                                             globalIndex const elemDofNumber,
                                             arraySlice1d< real64 const > const & oneSidedVolFlux,
                                             arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
                                             arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
-                                            ParallelMatrix * const matrix,
-                                            ParallelVector * const rhs )
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
 {
   // fluxes
   stackArray1d< real64, NF > dFlux_dfp( NF );
@@ -262,7 +265,7 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
     real64 const dFlux_dp  = dOneSidedVolFlux_dp[ifaceLoc];
 
     // dof number of this face constraint
-    globalIndex const eqnRowIndex = faceDofNumber[elemToFaces[ifaceLoc]];
+    localIndex const eqnLocalRowIndex = faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset;
 
     for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
@@ -270,21 +273,17 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
       dofColIndicesFacePres[jfaceLoc] = faceDofNumber[elemToFaces[jfaceLoc]];
     }
 
-    /*
-       // residual
-       rhs->add( eqnRowIndex,
-              flux );
+    // residual
+    atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
 
-       // jacobian -- derivative wrt local cell centered pressure term
-       matrix->add( eqnRowIndex,
-                 dofColIndexElemPres,
-                 dFlux_dp );
+    // jacobian -- derivative wrt local cell centered pressure term
+    localMatrix.addToRow< parallelDeviceAtomic >( eqnLocalRowIndex, &dofColIndexElemPres, &dFlux_dp, 1 );
 
-       // jacobian -- derivatives wrt face pressure terms
-       matrix->add( eqnRowIndex,
-                 dofColIndicesFacePres,
-                 dFlux_dfp );
-     */
+    // jacobian -- derivatives wrt face pressure terms
+    localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
+                                                                      dofColIndicesFacePres.data(),
+                                                                      dFlux_dfp.data(),
+                                                                      numFacesInElem );
   }
 }
 

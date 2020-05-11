@@ -83,7 +83,7 @@ public:
    *
    * These functions provide the primary interface that is required for derived classes
    */
-  /**@{*/
+  ///@{
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -102,6 +102,13 @@ public:
                   ParallelMatrix & matrix,
                   ParallelVector & rhs ) override;
 
+  virtual void
+  ApplyBoundaryConditions( real64 const time_n,
+                           real64 const dt,
+                           DomainPartition * const domain,
+                           DofManager const & dofManager,
+                           ParallelMatrix & matrix,
+                           ParallelVector & rhs ) override;
 
   virtual void
   SolveSystem( DofManager const & dofManager,
@@ -117,22 +124,21 @@ public:
                         real64 const & dt,
                         DomainPartition * const domain ) override;
 
-  template< bool ISPORO >
-  void AccumulationLaunch( localIndex const er,
-                           localIndex const esr,
-                           CellElementSubRegion const & subRegion,
+  template< bool ISPORO, typename POLICY >
+  void AccumulationLaunch( localIndex const targetIndex,
+                           CellElementSubRegion & subRegion,
                            DofManager const & dofManager,
-                           ParallelMatrix * const matrix,
-                           ParallelVector * const rhs );
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
-  template< bool ISPORO >
-  void AccumulationLaunch( localIndex const er,
-                           localIndex const esr,
+  template< bool ISPORO, typename POLICY >
+  void AccumulationLaunch( localIndex const targetIndex,
                            FaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
-                           ParallelMatrix * const matrix,
-                           ParallelVector * const rhs );
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
+  ///@}
 
   /**
    * @brief assembles the accumulation terms for all cells
@@ -140,14 +146,14 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
-  template< bool ISPORO >
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
+  template< bool ISPORO, typename POLICY >
+  void AssembleAccumulationTerms( DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -155,20 +161,32 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
   virtual void
   AssembleFluxTerms( real64 const time_n,
                      real64 const dt,
-                     DomainPartition const * const domain,
-                     DofManager const * const dofManager,
-                     ParallelMatrix * const matrix,
-                     ParallelVector * const rhs ) = 0;
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) = 0;
 
+  void
+  ApplyDiricletBC( real64 const time_n,
+                   real64 const dt,
+                   DomainPartition & domain,
+                   DofManager const & dofManager,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs ) const;
 
-
-  /**@}*/
+  void
+  ApplySourceFluxBC( real64 const time_n,
+                     real64 const dt,
+                     DomainPartition & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
@@ -184,6 +202,7 @@ public:
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
+    // used for face-based BC
     static constexpr auto boundaryFacePressureString = "boundaryFacePressure";
 
     // intermediate fields
@@ -191,12 +210,7 @@ public:
     static constexpr auto dMobility_dPressureString = "dMobility_dPressure";
     static constexpr auto porosityString = "porosity";
 
-    // face fields
-    static constexpr auto boundaryFaceDensityString = "boundaryFaceDensity";
-    static constexpr auto boundaryFaceViscosityString = "boundaryFaceViscosity";
-    static constexpr auto boundaryFaceMobilityString = "boundaryFaceMobility";
-
-    //backup fields
+    // backup fields
     static constexpr auto porosityOldString = "porosityOld";
     static constexpr auto densityOldString = "densityOld";
     static constexpr auto transTMultString = "transTMult";
@@ -224,13 +238,13 @@ public:
    */
   virtual void ResetViews( DomainPartition * const domain ) override;
 
-protected:
-
-  virtual void ValidateFluidModels( DomainPartition const & domain ) const;
-
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+
+protected:
+
+  virtual void ValidateFluidModels( DomainPartition const & domain ) const;
 
   /**
    * @brief Function to update all constitutive models
@@ -245,50 +259,33 @@ protected:
   template< class FLUIDBASE >
   void UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const;
 
+  /// view into dof index arrays
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > m_pressureDofIndex;
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaVolume;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
 
   /// views into intermediate fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosity;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_dMobility_dPres;
-
-  /// views into backup fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosityOld;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_densityOld;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
 
   /// views into material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dVisc_dPres;
-
-  /// coupling with mechanics
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_totalMeanStressOld;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_totalMeanStress;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_bulkModulus;
-  ElementRegionManager::ElementViewAccessor< real64 > m_biotCoefficient;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
   // coupling with proppant transport
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_poroMultiplier;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_transTMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_poroMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
 
 private:
 
@@ -327,13 +324,13 @@ void SinglePhaseBase::UpdateMobility( Group & dataGroup, localIndex const target
   arrayView2d< real64 const > const & dVisc_dPres =
     fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
-  SinglePhaseBaseKernels::MobilityKernel::Launch( dataGroup.size(),
-                                                  dens,
-                                                  dDens_dPres,
-                                                  visc,
-                                                  dVisc_dPres,
-                                                  mob,
-                                                  dMob_dPres );
+  SinglePhaseBaseKernels::MobilityKernel::Launch< parallelDevicePolicy< 128 > >( dataGroup.size(),
+                                                                                  dens,
+                                                                                  dDens_dPres,
+                                                                                  visc,
+                                                                                  dVisc_dPres,
+                                                                                  mob,
+                                                                                  dMob_dPres );
 
 }
 

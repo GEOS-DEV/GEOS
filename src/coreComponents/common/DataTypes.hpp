@@ -32,6 +32,7 @@
 #include "LvArray/src/Array.hpp"
 #include "LvArray/src/ArrayOfArrays.hpp"
 #include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "LvArray/src/CRSMatrix.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/SortedArray.hpp"
@@ -267,15 +268,6 @@ using arraySlice5d = ArraySlice< T, 5, 4 >;
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
-
-/// Alias for CRS Matrix class.
-template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex >;
-
-/// Alias for CRS Matrix View.
-template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const >;
-
 ///@}
 
 /**
@@ -317,6 +309,22 @@ using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
 template< typename T >
 using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+
+/// Alias for CRS Matrix class.
+template< typename COL_INDEX=localIndex >
+using SparsityPattern = LvArray::SparsityPattern< COL_INDEX, localIndex >;
+
+/// Alias for CRS Matrix View.
+template< typename COL_INDEX=localIndex >
+using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, localIndex const >;
+
+/// Alias for CRS Matrix class.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex >;
+
+/// Alias for CRS Matrix View.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const >;
 
 ///@}
 

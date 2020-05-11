@@ -26,26 +26,6 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-static ExponentApproximationType stringToExponentType( string const & model )
-{
-  if( model == "linear" )
-  {
-    return ExponentApproximationType::Linear;
-  }
-  else if( model == "quadratic" )
-  {
-    return ExponentApproximationType::Quadratic;
-  }
-  else if( model == "exponential" )
-  {
-    return ExponentApproximationType::Full;
-  }
-  GEOSX_ERROR( "Model type not supported: " << model );
-
-  // otherwise compilers complain about reaching the end of non-void function
-  return ExponentApproximationType::Full;
-}
-
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & name, Group * const parent ):
   SingleFluidBase( name, parent )
 {
@@ -142,39 +122,40 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
 
   real64 dRho_dP;
   real64 dVisc_dP;
-  Compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
+  Compute( m_referencePressure, 0.0, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::dDens_dPresString )->setDefaultValue( dRho_dP );
   this->getWrapper< array2d< real64 > >( viewKeyStruct::dVisc_dPresString )->setDefaultValue( dVisc_dP );
 }
 
-void CompressibleSinglePhaseFluid::PointUpdate( real64 const & pressure, localIndex const k, localIndex const q )
+void CompressibleSinglePhaseFluid::PointUpdate( real64 const pressure, localIndex const k, localIndex const q )
 {
-  Compute( pressure, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
+  Compute( pressure, 0.0, m_density[k][q], m_dDensity_dPressure[k][q], m_viscosity[k][q], m_dViscosity_dPressure[k][q] );
 }
 
-void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d< double const > const & pressure )
+void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d< real64 const > const & pressure,
+                                                arrayView1d< real64 const > const & deltaPressure )
 {
   makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
   {
-    SingleFluidBase::BatchDensityUpdateKernel< CompressibleSinglePhaseFluid >( pressure, relation );
+    SingleFluidBase::BatchDensityUpdateKernel< CompressibleSinglePhaseFluid, parallelDevicePolicy< 128 > >( pressure, deltaPressure, relation );
   } );
   makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {
-    SingleFluidBase::BatchViscosityUpdateKernel< CompressibleSinglePhaseFluid >( pressure, relation );
+    SingleFluidBase::BatchViscosityUpdateKernel< CompressibleSinglePhaseFluid, parallelDevicePolicy< 128 > >( pressure, deltaPressure, relation );
   } );
 }
 
-void CompressibleSinglePhaseFluid::Compute( real64 const & pressure,
+void CompressibleSinglePhaseFluid::Compute( real64 const pressure, real64 const deltaPressure,
                                             real64 & density, real64 & dDensity_dPressure,
                                             real64 & viscosity, real64 & dViscosity_dPressure ) const
 {
   makeExponentialRelation( m_densityModelType, m_referencePressure, m_referenceDensity, m_compressibility, [&] ( auto relation )
   {
-    Compute( pressure, density, dDensity_dPressure, relation );
+    Compute( pressure, deltaPressure, density, dDensity_dPressure, relation );
   } );
   makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {
-    Compute( pressure, viscosity, dViscosity_dPressure, relation );
+    Compute( pressure, deltaPressure, viscosity, dViscosity_dPressure, relation );
   } );
 }
 

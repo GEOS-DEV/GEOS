@@ -216,23 +216,22 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   m_elemGhostRank =
-    elemManager->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    elemManager->ConstructViewAccessor< array1d< integer >, arrayView1d< integer const > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
   m_volume =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
   m_gravCoef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::gravityCoefString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::gravityCoefString );
   m_porosityRef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::referencePorosityString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::referencePorosityString );
 
   m_elementArea =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
   m_elementAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
   m_elementAperture0 =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::aperture0String );
-
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::aperture0String );
   m_effectiveAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::effectiveApertureString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::effectiveApertureString );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   m_elementSeparationCoefficient =

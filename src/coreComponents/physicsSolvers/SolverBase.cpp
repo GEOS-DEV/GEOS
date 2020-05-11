@@ -77,6 +77,9 @@ SolverBase::SolverBase( std::string const & name,
 
   RegisterGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
   RegisterGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
+
+  m_localMatrix.setName( this->getName() + "/localMatrix" );
+  m_localRhs.setName( this->getName() + "/localRhs" );
 }
 
 SolverBase::~SolverBase() = default;
@@ -586,6 +589,26 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   dofManager.setSparsityPattern( matrix );
 }
 
+void
+SolverBase::SetupLocalSystem( DomainPartition * const domain,
+                              DofManager & dofManager,
+                              CRSMatrix< real64, globalIndex > & localMatrix,
+                              array1d< real64 > & localRhs,
+                              array1d< real64 > & localSolution )
+{
+  dofManager.setMesh( domain, 0, 0 );
+
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  SparsityPattern< globalIndex > pattern;
+  dofManager.setSparsityPattern( pattern );
+  localMatrix.stealFrom< parallelDevicePolicy< 128 > >( std::move( pattern ) );
+
+  localRhs.resize( localMatrix.numRows() );
+  localSolution.resize( localMatrix.numRows() );
+}
+
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  DomainPartition * const GEOSX_UNUSED_PARAM( domain ),
@@ -603,7 +626,7 @@ void SolverBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time 
                                           ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                           ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
-  GEOSX_ERROR( "SolverBase::SolveSystem called!. Should be overridden." );
+  GEOSX_ERROR( "SolverBase::ApplyBoundaryConditions called!. Should be overridden." );
 }
 
 real64

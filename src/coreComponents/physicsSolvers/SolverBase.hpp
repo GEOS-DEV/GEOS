@@ -289,6 +289,13 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution );
 
+  virtual void
+  SetupLocalSystem( DomainPartition * const domain,
+                    DofManager & dofManager,
+                    CRSMatrix< real64, globalIndex > & localMatrix,
+                    array1d< real64 > & localRhs,
+                    array1d< real64 > & localSolution );
+
   /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
@@ -671,6 +678,11 @@ protected:
   ParallelMatrix m_matrix;
   ParallelVector m_rhs;
   ParallelVector m_solution;
+
+  /// Local system matrix and rhs
+  CRSMatrix< real64, globalIndex > m_localMatrix;
+  array1d< real64 > m_localRhs;
+  array1d< real64 > m_localSolution;
 
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;

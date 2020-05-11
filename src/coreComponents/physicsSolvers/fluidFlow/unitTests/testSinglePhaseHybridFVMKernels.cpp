@@ -132,11 +132,11 @@ void setupProblemForTetra( array1d< localIndex > & elemToFaces,
 
 void setupMatrixAndRhsForTetra( globalIndex & elemDofNumber,
                                 array1d< globalIndex > & faceDofNumber,
-                                ParallelMatrix & matrix,
-                                ParallelMatrix & matrixPerturb,
-                                ParallelMatrix & matrixFD,
-                                ParallelVector & rhs,
-                                ParallelVector & rhsPerturb )
+                                CRSMatrix< real64, globalIndex > & matrix,
+                                CRSMatrix< real64, globalIndex > & matrixPerturb,
+                                CRSMatrix< real64, globalIndex > & matrixFD,
+                                array1d< real64 > & rhs,
+                                array1d< real64 > & rhsPerturb )
 {
   elemDofNumber = 0;
   faceDofNumber.resize( NF );
@@ -145,31 +145,23 @@ void setupMatrixAndRhsForTetra( globalIndex & elemDofNumber,
   faceDofNumber( 2 ) = 3;
   faceDofNumber( 3 ) = 4;
 
-  matrix.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
-  matrixPerturb.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
-  matrixFD.createWithGlobalSize( NF+1, NF+1, MPI_COMM_GEOSX );
-  rhs.createWithGlobalSize( NF+1, MPI_COMM_GEOSX );
-  rhsPerturb.createWithGlobalSize( NF+1, MPI_COMM_GEOSX );
+  matrix.resize( NF+1, NF+1, NF+1 );
+  matrixPerturb.resize( NF+1, NF+1, NF+1 );
+  matrixFD.resize( NF+1, NF+1, NF+1 );
 
-  matrix.open();
-  matrixPerturb.open();
-  matrixFD.open();
+  rhs.resize( numFacesInElem+1 );
+  rhsPerturb.resize( numFacesInElem+1 );
 
   // the matrices are full for the one-cell problem
   for( globalIndex i = 0; i < NF+1; ++i )
   {
     for( globalIndex j = 0; j < NF+1; ++j )
     {
-      matrix.insert( i, j, 1 );
-      matrixPerturb.insert( i, j, 1 );
-      matrixFD.insert( i, j, 1 );
+      matrix.insertNonZero( i, j, 1 );
+      matrixPerturb.insertNonZero( i, j, 1 );
+      matrixFD.insertNonZero( i, j, 1 );
     }
   }
-
-  matrix.close();
-  matrixPerturb.close();
-  matrixFD.close();
-
 }
 
 TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
@@ -206,11 +198,11 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   globalIndex elemDofNumber;
   array1d< globalIndex > faceDofNumber;
-  ParallelMatrix jacobian;
-  ParallelMatrix jacobianPerturb;
-  ParallelMatrix jacobianFD;
-  ParallelVector rhs;
-  ParallelVector rhsPerturb;
+  CRSMatrix< real64, globalIndex > jacobian;
+  CRSMatrix< real64, globalIndex > jacobianPerturb;
+  CRSMatrix< real64, globalIndex > jacobianFD;
+  array1d< real64 > rhs;
+  array1d< real64 > rhsPerturb;
 
   setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
@@ -219,9 +211,6 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                              jacobianFD,
                              rhs,
                              rhsPerturb );
-
-  real64 const * localRhs = rhs.extractLocalVector();
-  real64 const * localRhsPerturb = rhsPerturb.extractLocalVector();
 
   stackArray1d< real64, NF > oneSidedVolFlux( NF );
   stackArray1d< real64, NF > dOneSidedVolFlux_dp( NF );
@@ -245,24 +234,19 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                                          dOneSidedVolFlux_dp,
                                                          dOneSidedVolFlux_dfp );
 
-  jacobianFD.zero();
-  jacobianFD.open();
-  jacobian.zero();
-  jacobian.open();
-  rhs.zero();
-  rhs.open();
+  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
+  jacobian.setValues< parallelHostPolicy >( 0.0 );
+  rhs = 0;
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
-                                                    elemToFaces,
-                                                    elemDofNumber,
-                                                    oneSidedVolFlux,
-                                                    dOneSidedVolFlux_dp,
-                                                    dOneSidedVolFlux_dfp,
-                                                    &jacobian,
-                                                    &rhs );
-
-  jacobian.close();
-  rhs.close();
+  FluxKernelHelper::AssembleConstraints< NF >( 0,
+                                               faceDofNumber,
+                                               elemToFaces,
+                                               elemDofNumber,
+                                               oneSidedVolFlux,
+                                               dOneSidedVolFlux_dp,
+                                               dOneSidedVolFlux_dfp,
+                                               jacobian.toViewConstSizes(),
+                                               rhs.toView() );
 
   ///////////////////////////////////////////////////////////////////////////////////
   // 3) Compute finite-difference derivatives with respect to the element pressure //
@@ -290,30 +274,25 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                                          dOneSidedVolFlux_dp,
                                                          dOneSidedVolFlux_dfp );
 
-  jacobianPerturb.zero();
-  jacobianPerturb.open();
-  rhsPerturb.zero();
-  rhsPerturb.open();
+  jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
+  rhsPerturb = 0.0;
 
-  AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
-                                                    elemToFaces,
-                                                    elemDofNumber,
-                                                    oneSidedVolFlux,
-                                                    dOneSidedVolFlux_dp,
-                                                    dOneSidedVolFlux_dfp,
-                                                    &jacobianPerturb,
-                                                    &rhsPerturb );
+  FluxKernelHelper::AssembleConstraints< NF >( 0,
+                                               faceDofNumber,
+                                               elemToFaces,
+                                               elemDofNumber,
+                                               oneSidedVolFlux,
+                                               dOneSidedVolFlux_dp,
+                                               dOneSidedVolFlux_dfp,
+                                               jacobianPerturb.toViewConstSizes(),
+                                               rhsPerturb.toView() );
 
-  jacobianPerturb.close();
-  rhsPerturb.close();
-
-  for( localIndex lid = 0; lid < rhs.localSize(); ++lid )
+  for( localIndex row = 0; row < rhs.size(); ++row )
   {
-    real64 const dR_dp  = ( localRhsPerturb[lid] - localRhs[lid] ) / dElemPresPerturb;
+    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / dElemPresPerturb;
     if( std::fabs( dR_dp ) > 0.0 )
     {
-      globalIndex gid = rhs.getGlobalRowID( lid );
-      jacobianFD.set( gid, elemDofNumber, dR_dp );
+      jacobianFD.addToRow< serialAtomic >( row, &elemDofNumber, &dR_dp, 1 );
     }
   }
 
@@ -346,37 +325,30 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
                                                            dOneSidedVolFlux_dp,
                                                            dOneSidedVolFlux_dfp );
 
-    jacobianPerturb.zero();
-    jacobianPerturb.open();
-    rhsPerturb.zero();
-    rhsPerturb.open();
+    jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
+    rhsPerturb = 0.0;
 
-    AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
-                                                      elemToFaces,
-                                                      elemDofNumber,
-                                                      oneSidedVolFlux,
-                                                      dOneSidedVolFlux_dp,
-                                                      dOneSidedVolFlux_dfp,
-                                                      &jacobianPerturb,
-                                                      &rhsPerturb );
+    FluxKernelHelper::AssembleConstraints< NF >( 0,
+                                                 faceDofNumber,
+                                                 elemToFaces,
+                                                 elemDofNumber,
+                                                 oneSidedVolFlux,
+                                                 dOneSidedVolFlux_dp,
+                                                 dOneSidedVolFlux_dfp,
+                                                 jacobianPerturb.toViewConstSizes(),
+                                                 rhsPerturb.toView() );
 
-    jacobianPerturb.close();
-    rhsPerturb.close();
-
-    for( localIndex lid = 0; lid < rhs.localSize(); ++lid )
+    for( localIndex row = 0; row < rhs.size(); ++row )
     {
-      real64 const dR_dfp  = ( localRhsPerturb[lid] - localRhs[lid] ) / dFacePres[ifaceLoc];
+      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / dFacePres[ifaceLoc];
       if( std::fabs( dR_dfp ) > 0.0 )
       {
-        globalIndex gid = rhs.getGlobalRowID( lid );
-        jacobianFD.set( gid, faceDofNumber[ifaceLoc], dR_dfp );
+        jacobianFD.addToRow< serialAtomic >( row, &faceDofNumber[ifaceLoc], &dR_dfp, 1 );
       }
     }
   }
 
-  jacobianFD.close();
-
-  compareMatrices( jacobian, jacobianFD, relTol );
+  compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
 
@@ -415,11 +387,11 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   globalIndex elemDofNumber;
   array1d< globalIndex > faceDofNumber;
-  ParallelMatrix jacobian;
-  ParallelMatrix jacobianPerturb;
-  ParallelMatrix jacobianFD;
-  ParallelVector rhs;
-  ParallelVector rhsPerturb;
+  CRSMatrix< real64, globalIndex > jacobian;
+  CRSMatrix< real64, globalIndex > jacobianPerturb;
+  CRSMatrix< real64, globalIndex > jacobianFD;
+  array1d< real64 > rhs;
+  array1d< real64 > rhsPerturb;
 
   setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
@@ -428,9 +400,6 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                              jacobianFD,
                              rhs,
                              rhsPerturb );
-
-  real64 const * localRhs = rhs.extractLocalVector();
-  real64 const * localRhsPerturb = rhsPerturb.extractLocalVector();
 
   stackArray1d< real64, NF > upwMobility( NF );
   stackArray1d< real64, NF > dUpwMobility_dp( NF );
@@ -466,29 +435,23 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                                          dOneSidedVolFlux_dp,
                                                          dOneSidedVolFlux_dfp );
 
-  jacobianFD.zero();
-  jacobianFD.open();
-  jacobian.zero();
-  jacobian.open();
-  rhs.zero();
-  rhs.open();
+  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
+  jacobian.setValues< parallelHostPolicy >( 0.0 );
+  rhs = 0;
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
-                                                           faceDofNumber,
-                                                           elemToFaces,
-                                                           elemDofNumber,
-                                                           oneSidedVolFlux,
-                                                           dOneSidedVolFlux_dp,
-                                                           dOneSidedVolFlux_dfp,
-                                                           upwMobility,
-                                                           dUpwMobility_dp,
-                                                           upwDofNumber,
-                                                           &jacobian,
-                                                           &rhs );
-
-
-  jacobian.close();
-  rhs.close();
+  FluxKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                      0,
+                                                      faceDofNumber,
+                                                      elemToFaces,
+                                                      elemDofNumber,
+                                                      oneSidedVolFlux,
+                                                      dOneSidedVolFlux_dp,
+                                                      dOneSidedVolFlux_dfp,
+                                                      upwMobility,
+                                                      dUpwMobility_dp,
+                                                      upwDofNumber,
+                                                      jacobian.toViewConstSizes(),
+                                                      rhs.toView() );
 
   ///////////////////////////////////////////////////////////////////////////////////
   // 3) Compute finite-difference derivatives with respect to the element pressure //
@@ -517,35 +480,29 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                                          dOneSidedVolFlux_dp,
                                                          dOneSidedVolFlux_dfp );
 
-  jacobianPerturb.zero();
-  jacobianPerturb.open();
-  rhsPerturb.zero();
-  rhsPerturb.open();
+  jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
+  rhsPerturb = 0.0;
 
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
-                                                           faceDofNumber,
-                                                           elemToFaces,
-                                                           elemDofNumber,
-                                                           oneSidedVolFlux,
-                                                           dOneSidedVolFlux_dp,
-                                                           dOneSidedVolFlux_dfp,
-                                                           upwMobility,
-                                                           dUpwMobility_dp,
-                                                           upwDofNumber,
-                                                           &jacobianPerturb,
-                                                           &rhsPerturb );
+  FluxKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                      0,
+                                                      faceDofNumber,
+                                                      elemToFaces,
+                                                      elemDofNumber,
+                                                      oneSidedVolFlux,
+                                                      dOneSidedVolFlux_dp,
+                                                      dOneSidedVolFlux_dfp,
+                                                      upwMobility,
+                                                      dUpwMobility_dp,
+                                                      upwDofNumber,
+                                                      jacobianPerturb.toViewConstSizes(),
+                                                      rhsPerturb.toView() );
 
-
-  jacobianPerturb.close();
-  rhsPerturb.close();
-
-  for( localIndex lid = 0; lid < rhs.localSize(); ++lid )
+  for( localIndex row = 0; row < rhs.size(); ++row )
   {
-    real64 const dR_dp  = ( localRhsPerturb[lid] - localRhs[lid] ) / dElemPresPerturb;
+    real64 const dR_dp  = ( rhsPerturb[row] - rhs[row] ) / dElemPresPerturb;
     if( std::fabs( dR_dp ) > 0.0 )
     {
-      globalIndex gid = rhs.getGlobalRowID( lid );
-      jacobianFD.set( gid, elemDofNumber, dR_dp );
+      jacobianFD.addToRow< serialAtomic >( row, &elemDofNumber, &dR_dp, 1 );
     }
   }
 
@@ -578,42 +535,35 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
                                                            dOneSidedVolFlux_dp,
                                                            dOneSidedVolFlux_dfp );
 
-    jacobianPerturb.zero();
-    jacobianPerturb.open();
-    rhsPerturb.zero();
-    rhsPerturb.open();
+    jacobianPerturb.setValues< parallelHostPolicy >( 0.0 );
+    rhsPerturb = 0.0;
 
-    AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
-                                                             faceDofNumber,
-                                                             elemToFaces,
-                                                             elemDofNumber,
-                                                             oneSidedVolFlux,
-                                                             dOneSidedVolFlux_dp,
-                                                             dOneSidedVolFlux_dfp,
-                                                             upwMobility,
-                                                             dUpwMobility_dp,
-                                                             upwDofNumber,
-                                                             &jacobianPerturb,
-                                                             &rhsPerturb );
+    FluxKernelHelper::AssembleOneSidedMassFluxes< NF >( dt,
+                                                        0,
+                                                        faceDofNumber,
+                                                        elemToFaces,
+                                                        elemDofNumber,
+                                                        oneSidedVolFlux,
+                                                        dOneSidedVolFlux_dp,
+                                                        dOneSidedVolFlux_dfp,
+                                                        upwMobility,
+                                                        dUpwMobility_dp,
+                                                        upwDofNumber,
+                                                        jacobianPerturb.toViewConstSizes(),
+                                                        rhsPerturb.toView() );
 
 
-    jacobianPerturb.close();
-    rhsPerturb.close();
-
-    for( localIndex lid = 0; lid < rhs.localSize(); ++lid )
+    for( localIndex row = 0; row < rhs.size(); ++row )
     {
-      real64 const dR_dfp  = ( localRhsPerturb[lid] - localRhs[lid] ) / dFacePres[ifaceLoc];
+      real64 const dR_dfp  = ( rhsPerturb[row] - rhs[row] ) / dFacePres[ifaceLoc];
       if( std::fabs( dR_dfp ) > 0.0 )
       {
-        globalIndex gid = rhs.getGlobalRowID( lid );
-        jacobianFD.set( gid, faceDofNumber[ifaceLoc], dR_dfp );
+        jacobianFD.addToRow< serialAtomic >( row, &faceDofNumber[ifaceLoc], &dR_dfp, 1 );
       }
     }
   }
 
-  jacobianFD.close();
-
-  compareMatrices( jacobian, jacobianFD, relTol );
+  compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 
 }
 

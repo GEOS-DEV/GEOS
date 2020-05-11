@@ -94,27 +94,27 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
 void SinglePhaseProppantBase::ResetViewsPrivate( ElementRegionManager * const elemManager )
 {
   m_density =
-    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString,
-                                                                                            targetRegionNames(),
-                                                                                            fluidModelNames() );
+    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SlurryFluidBase::viewKeyStruct::densityString,
+                                                                                                  targetRegionNames(),
+                                                                                                  fluidModelNames() );
   m_dDens_dPres =
-    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                            targetRegionNames(),
-                                                                                            fluidModelNames() );
+    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SlurryFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                                                  targetRegionNames(),
+                                                                                                  fluidModelNames() );
   m_viscosity =
-    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString,
-                                                                                            targetRegionNames(),
-                                                                                            fluidModelNames() );
+    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SlurryFluidBase::viewKeyStruct::viscosityString,
+                                                                                                  targetRegionNames(),
+                                                                                                  fluidModelNames() );
   m_dVisc_dPres =
-    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 > >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                            targetRegionNames(),
-                                                                                            fluidModelNames() );
+    elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SlurryFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                                                  targetRegionNames(),
+                                                                                                  fluidModelNames() );
 
   m_poroMultiplier =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( ProppantTransport::viewKeyStruct::poroMultiplierString );
+    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ProppantTransport::viewKeyStruct::poroMultiplierString );
 
   m_transTMultiplier =
-    elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( ProppantTransport::viewKeyStruct::transTMultiplierString );
+    elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ProppantTransport::viewKeyStruct::transTMultiplierString );
 }
 
 }

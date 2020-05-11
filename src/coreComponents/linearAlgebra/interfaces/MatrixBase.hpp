@@ -213,6 +213,39 @@ protected:
                         localIndex const maxEntriesPerRow,
                         MPI_Comm const & comm ) = 0;
 
+  /**
+   * @brief Create parallel matrix from a local CRS matrix.
+   * @param localMatrix the input local matrix
+   * @param comm the MPI communicator to use
+   *
+   * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
+   *
+   * @todo Replace generic implementation with more efficient ones in each package.
+   */
+  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       MPI_Comm const & comm )
+  {
+    localMatrix.move( chai::CPU, false );
+
+    localIndex maxEntriesPerRow = 0;
+    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    {
+      maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+    }
+
+    createWithLocalSize( localMatrix.numRows(),
+                         localMatrix.numColumns(),
+                         maxEntriesPerRow,
+                         comm );
+
+    open();
+    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    {
+      insert( i, localMatrix.getColumns( i ), localMatrix.getEntries( i ) );
+    }
+    close();
+  }
+
   ///@}
 
   /**

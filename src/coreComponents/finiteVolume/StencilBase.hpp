@@ -94,6 +94,11 @@ public:
    */
   virtual localIndex size() const = 0;
 
+  /**
+   * @brief Set the name used in data movement logging callbacks.
+   * @param name the name prefix for the stencil's data arrays
+   */
+  void setName( string const & name );
 
   /**
    * @brief Const access to the element regions indices.
@@ -161,6 +166,16 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
     }
   } );
 }
+
+template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
+{
+  m_elementRegionIndices.setName( name + "/elementRegionIndices" );
+  m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );
+  m_elementIndices.setName( name + "/elementIndices" );
+  m_weights.setName( name + "/weights" );
+}
+
 } /* namespace geosx */
 
 #endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */
