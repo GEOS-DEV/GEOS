@@ -373,13 +373,6 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
-.. _XML_MeshFile:
-
-Element: MeshFile
-=================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
-
-
 .. _XML_MultiPhaseMultiComponentFluid:
 
 Element: MultiPhaseMultiComponentFluid
@@ -1082,13 +1075,6 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
-
-
-.. _DATASTRUCTURE_MeshFile:
-
-Datastructure: MeshFile
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:examples">
+   </FileRef>
+   <FileRef
+      location = "group:src">
+   </FileRef>
+   <FileRef
+      location = "group:integratedTests">
+   </FileRef>
+   <FileRef
+      location = "group:benchmarks">
+   </FileRef>
+   <FileRef
+      location = "group:scripts">
+   </FileRef>
+   <FileRef
+      location = "container:build-joshua-debug/geosx.xcodeproj">
+   </FileRef>
+</Workspace>
