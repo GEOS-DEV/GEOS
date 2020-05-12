@@ -372,7 +372,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   static inline void SpecifyFieldValue( globalIndex const dof,
                                         typename LAI::ParallelMatrix & matrix,
                                         real64 & rhs,
-                                        real64 const & bcValue,
+                                        real64 const bcValue,
                                         real64 const fieldValue )
   {
     if( matrix.getLocalRowID( dof ) >= 0 )
@@ -384,6 +384,36 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     {
       rhs = 0.0;
     }
+  }
+
+  static inline void GEOSX_HOST_DEVICE
+  SpecifyFieldValue( globalIndex const dof,
+                     LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                     real64 & rhs,
+                     real64 const bcValue,
+                     real64 const fieldValue )
+  {
+    // if( matrix.getLocalRowID( dof ) >= 0 )
+    // {
+    arraySlice1d< globalIndex const > const columns = matrix.getColumns( dof );
+    arraySlice1d< real64 > const entries = matrix.getEntries( dof );
+    localIndex const numEntries = matrix.numNonZeros( dof );
+
+    real64 diagonal = 0;
+    for( localIndex j = 0; j < numEntries; ++j )
+    {
+      if( columns[ j ] == dof )
+      { diagonal = entries[ j ]; }
+      else
+      { entries[ j ] = 0; }
+    }
+
+    rhs = -diagonal * (bcValue - fieldValue);
+    // }
+    // else
+    // {
+    // rhs = 0.0;
+    // }
   }
 
   /**
@@ -406,6 +436,21 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
         rhs.set( dof[a], values[a] );
       }
     }
+  }
+
+  template< typename POLICY >
+  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+                                         arrayView1d< globalIndex const > const & dof,
+                                         arrayView1d< real64 const > const & values )
+  {
+    GEOSX_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      // if( rhs.getLocalRowID( dof[a] ) >= 0 )
+      // {
+      rhs[ dof[ a ] ] = values[ a ];
+      // }
+    } );
   }
 };
 
@@ -432,7 +477,26 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
   static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
                                         typename LAI::ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                         real64 & rhs,
-                                        real64 const & bcValue,
+                                        real64 const bcValue,
+                                        real64 const GEOSX_UNUSED_PARAM( fieldValue ) )
+  {
+    rhs += bcValue;
+  }
+
+  /**
+   * @brief Function to apply a value to a vector field for a single dof.
+   * @param[in] dof The degree of freedom that is to be modified.
+   * @param[in] matrix A ParalleMatrix object: the system matrix.
+   * @param[out] rhs The rhs contribution to be modified
+   * @param[in] bcValue The value to add to rhs
+   * @param[in] fieldValue unused.
+   *
+   */
+  GEOSX_HOST_DEVICE
+  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
+                                        LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
+                                        real64 & rhs,
+                                        real64 const bcValue,
                                         real64 const GEOSX_UNUSED_PARAM( fieldValue ) )
   {
     rhs += bcValue;
@@ -452,6 +516,21 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
                                          real64 * const values )
   {
     rhs.add( dof, values, num );
+  }
+
+  template< typename POLICY >
+  static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
+                                         arrayView1d< globalIndex const > const & dof,
+                                         arrayView1d< real64 const > const & values )
+  {
+    GEOSX_ASSERT_EQ( dof.size(), values.size() );
+    forAll< POLICY >( dof.size(), [rhs, dof, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      // if( rhs.getLocalRowID( dof[a] ) >= 0 )
+      // {
+      rhs[ dof[ a ] ] += values[ a ];
+      // }
+    } );
   }
 
 };

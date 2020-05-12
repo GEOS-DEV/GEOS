@@ -76,6 +76,8 @@ public:
    * the correct dimension
    */
   R1TensorT( realT x, realT y );  //2D only
+
+  GEOSX_HOST_DEVICE
   R1TensorT( realT x, realT y, realT z ); //3D only
 
   //***** ASSIGNMENT OPERATORS *************************************************
@@ -91,7 +93,7 @@ public:
 
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R1TensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -107,7 +109,7 @@ public:
   using TensorBaseT< T_dim >::operator+=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R1TensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -130,7 +132,7 @@ public:
   using TensorBaseT< T_dim >::operator-=;
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R1TensorT & operator-=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), T_dim );
@@ -158,7 +160,7 @@ public:
 
   //***** MULTIPLICATION OPERATIONS *******************************************
   /// multiply (inner product) Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
+  GEOSX_HOST_DEVICE void AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   realT ProductOfSquares() const;
 
@@ -177,7 +179,7 @@ public:
   void AijBi( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// multiply (inner product) Symmetric Rank2 tensor with Rank 1 tensor
-  void AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
+  GEOSX_HOST_DEVICE void AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// Hadamard product between two Rank1 tensors
   void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
@@ -500,7 +502,7 @@ inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim > & A, const R1
     this->t_data[2] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
   }
   else
-    std::cout << "R1TensorT not implemented for nsdof>3";
+    GEOSX_ERROR( "R1TensorT not implemented for nsdof>3" );
 }
 
 /**

@@ -50,10 +50,10 @@ struct StressCalculationKernel
     arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
 
-//    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
-    using KERNEL_POLICY = parallelHostPolicy;
+   using KERNEL_POLICY = parallelDevicePolicy< 32 >;
+    // using KERNEL_POLICY = parallelHostPolicy;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   [&] ( localIndex const k )
+                                   [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
 
@@ -318,7 +318,7 @@ struct ImplicitKernel
           ParallelMatrix * const matrix,
           ParallelVector * const rhs )
   {
-    GEOSX_MARK_FUNCTION;
+    GEOSX_MARK_FUNCTION_TAG( Normal );
     constexpr int dim = 3;
 
     // if the following is not static, then gcc8.1 gives a "error: use of 'this' in a constant expression"
@@ -538,6 +538,216 @@ struct ImplicitKernel
 
     return maxForce.get();
   }
+};
+
+/**
+ * @struct Structure to wrap templated function that implements the implicit time integration kernel.
+ */
+struct CRSImplicitKernel
+{
+// #if defined(GEOSX_USE_CUDA)
+  #define CALCFEMSHAPE
+// #endif
+
+  template< int NUM_NODES_PER_ELEM, int NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
+  static inline real64
+  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
+          localIndex const numElems,
+          real64 const GEOSX_UNUSED_PARAM( dt ),
+          arrayView3d< R1Tensor const > const & _dNdX,
+          arrayView2d< real64 const > const & _detJ,
+          FiniteElementBase const * const GEOSX_UNUSED_PARAM( fe ),
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+          arrayView1d< globalIndex const > const & globalDofNumber,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & _X,
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( uhattilde ),
+          arrayView2d< real64 const > const & density,
+          arrayView1d< real64 const > const & fluidPressure,
+          arrayView1d< real64 const > const & deltaFluidPressure,
+          real64 const biotCoefficient,
+          TimeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
+          real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
+          real64 const GEOSX_UNUSED_PARAM( massDamping ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
+          R1Tensor const & gravityVector,
+          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
+          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+          arrayView1d< real64 > const & rhs )
+  {
+    GEOSX_MARK_FUNCTION_TAG( CRSMatrix );
+    constexpr int NDIM = 3;
+
+    // if the following is not static, then gcc8.1 gives a "error: use of 'this' in a constant expression"
+    static constexpr int ndof = NDIM * NUM_NODES_PER_ELEM;
+
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+
+    arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
+
+  #if defined(CALCFEMSHAPE)
+    GEOSX_UNUSED_VAR( _dNdX );
+    GEOSX_UNUSED_VAR( _detJ );
+    auto const & X = _X;
+  #else
+    GEOSX_UNUSED_VAR( _X );
+    auto const & dNdX = _dNdX;
+    auto const & detJ = _detJ;
+  #endif
+
+    RAJA::ReduceMax< parallelDeviceReduce, double > maxForce( 0 );
+    RAJA::forall< parallelDevicePolicy< 32 > >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
+                                                [=] GEOSX_DEVICE ( localIndex const k )
+    {
+      globalIndex elementLocalDofIndex[ ndof ];
+      real64 R[ ndof ] = { 0 };
+      real64 dRdU[ ndof ][ ndof ] = {{ 0 }};
+
+      R1Tensor uhat_local[NUM_NODES_PER_ELEM];
+
+      real64 c[6][6];
+      constitutive.GetStiffness( k, c );
+
+    #if defined(CALCFEMSHAPE)
+      real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
+    #endif
+
+      if( elemGhostRank[k] < 0 )
+      {
+        for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+        {
+          localIndex const localNodeIndex = elemsToNodes( k, a );
+          for( int i=0; i<NDIM; ++i )
+          {
+            elementLocalDofIndex[ a * NDIM + i] = globalDofNumber[localNodeIndex]+i;
+          }
+        }
+
+        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          localIndex const nodeIndex = elemsToNodes( k, a );
+          uhat_local[ a ] = uhat[ nodeIndex ];
+        #if defined(CALCFEMSHAPE)
+          for ( int i = 0; i < NDIM; ++i )
+          { xLocal[ a ][ i ] = X[ nodeIndex ][ i ]; }
+        #endif
+        }
+
+        R1Tensor dNdXa;
+        R1Tensor dNdXb;
+
+        R1Tensor temp;
+        for( int q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+        {
+
+        #if defined(CALCFEMSHAPE)
+          real64 dNdX[ 8 ][ 3 ];
+          real64 const detJ_kq = FiniteElementShapeKernel::shapeFunctionDerivatives( q, xLocal, dNdX );
+          #define DNDX dNdX
+          #define DETJ detJ_kq
+        #else //defined(CALCFEMSHAPE)
+          #define DNDX dNdX[k][q]
+          #define DETJ detJ( k, q )
+        #endif //defined(CALCFEMSHAPE)
+
+          R2SymTensor referenceStress = stress[ k ][ q ];
+          if( !fluidPressure.empty() )
+          { referenceStress.PlusIdentity( -biotCoefficient * ( fluidPressure[ k ] + deltaFluidPressure[ k ] ) ); }
+
+          R2SymTensor stress0 = referenceStress;
+          stress0 *= DETJ;
+
+          for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+          {
+            temp.AijBj( stress0, { DNDX[ a ][ 0 ], DNDX[ a ][ 1 ], DNDX[ a ][ 2 ] } );
+            realT maxF = temp.MaxVal();
+            maxForce.max( maxF );
+
+            R[ a * NDIM + 0 ] -= temp[ 0 ];
+            R[ a * NDIM + 1 ] -= temp[ 1 ];
+            R[ a * NDIM + 2 ] -= temp[ 2 ];
+
+            for( int b = 0; b < NUM_NODES_PER_ELEM; ++b )
+            {
+              dRdU[ a * NDIM + 0 ][ b * NDIM + 0 ] -= ( c[ 0 ][ 0 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 5 ][ 5 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 1 ] +
+                                                        c[ 4 ][ 4 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 2 ] ) * DETJ;
+              dRdU[ a * NDIM + 0 ][ b * NDIM + 1 ] -= ( c[ 5 ][ 5 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 0 ][ 1 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 1 ] ) * DETJ;
+              dRdU[ a * NDIM + 0 ][ b * NDIM + 2 ] -= ( c[ 4 ][ 4 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 0 ][ 2 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 2 ] ) * DETJ;
+
+              dRdU[ a * NDIM + 1 ][ b * NDIM + 0 ] -= ( c[ 0 ][ 1 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 5 ][ 5 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 1 ] ) * DETJ;
+              dRdU[ a * NDIM + 1 ][ b * NDIM + 1 ] -= ( c[ 5 ][ 5 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 1 ][ 1 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 1 ] +
+                                                        c[ 3 ][ 3 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 2 ] ) * DETJ;
+              dRdU[ a * NDIM + 1 ][ b * NDIM + 2 ] -= ( c[ 3 ][ 3 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 1 ] +
+                                                        c[ 1 ][ 2 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 2 ] ) * DETJ;
+
+              dRdU[ a * NDIM + 2 ][ b * NDIM + 0 ] -= ( c[ 0 ][ 2 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 4 ][ 4 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 2 ] ) * DETJ;
+              dRdU[ a * NDIM + 2 ][ b * NDIM + 1 ] -= ( c[ 1 ][ 2 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 1 ] +
+                                                        c[ 3 ][ 3 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 2 ] ) * DETJ;
+              dRdU[ a * NDIM + 2 ][ b * NDIM + 2 ] -= ( c[ 4 ][ 4 ] * DNDX[ a ][ 0 ] * DNDX[ b ][ 0 ] +
+                                                        c[ 3 ][ 3 ] * DNDX[ a ][ 1 ] * DNDX[ b ][ 1 ] +
+                                                        c[ 2 ][ 2 ] * DNDX[ a ][ 2 ] * DNDX[ b ][ 2 ] ) * DETJ;
+            }
+          }
+
+          R1Tensor gravityForce = gravityVector;
+          gravityForce *= DETJ * density( k, q );
+          R[ q * NDIM + 0 ] += gravityForce[ 0 ];
+          R[ q * NDIM + 1 ] += gravityForce[ 1 ];
+          R[ q * NDIM + 2 ] += gravityForce[ 2 ];
+        }
+
+        // TODO It is simpler to do this...try it.
+        //  dRdU.Multiply(dof_np1,R);
+        for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          for( int b = 0; b < NUM_NODES_PER_ELEM; ++b )
+          {
+            for( int i = 0; i < NDIM; ++i )
+            {
+              for( int j = 0; j < NDIM; ++j )
+              {
+                R[ a * NDIM + i ] += dRdU[ a * NDIM + i ][ b * NDIM + j ] * uhat_local[ b ][ j ];
+              }
+            }
+          }
+
+          maxForce.max( fabs( R[ a * NDIM + 0 ] ) );
+          maxForce.max( fabs( R[ a * NDIM + 1 ] ) );
+          maxForce.max( fabs( R[ a * NDIM + 2 ] ) );
+        }
+
+        for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
+        {
+          for( int dim = 0; dim < NDIM; ++dim )
+          {
+            globalIndex const dof = elementLocalDofIndex[ NDIM * localNode + dim ];
+            matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                         elementLocalDofIndex,
+                                                                         dRdU[ NDIM * localNode + dim ],
+                                                                         NUM_NODES_PER_ELEM * NDIM );
+
+            RAJA::atomicAdd< parallelDeviceAtomic >( &rhs[ dof ], R[ NDIM * localNode + dim ] );
+          }
+        }
+      }
+    } );
+
+    return maxForce.get();
+  }
+
+  #undef CALCFEMSHAPE
+  #undef DNDX
+  #undef DETJ
 };
 
 } // namespace SolidMechanicsLagrangianSSLEKernels

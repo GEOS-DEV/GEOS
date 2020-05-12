@@ -89,7 +89,6 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 }
 
 
-
 /**
  * @brief Function to select which templated kernel function to call.
  * @tparam KERNELWRAPPER A struct or class that contains the following method
@@ -416,6 +415,43 @@ struct ImplicitKernel
     return 0;
   }
 
+};
+
+struct CRSImplicitKernel
+{
+  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
+  static inline real64
+  Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( constitutiveRelation ),
+          localIndex const GEOSX_UNUSED_PARAM( numElems ),
+          real64 const GEOSX_UNUSED_PARAM( dt ),
+          arrayView3d< R1Tensor const > const & GEOSX_UNUSED_PARAM( dNdX ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
+          FiniteElementBase const * const GEOSX_UNUSED_PARAM( fe ),
+          arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
+          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
+          arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
+          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
+          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
+          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( uhattilde ),
+          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( density ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
+          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
+          real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
+          TimeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
+          real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
+          real64 const GEOSX_UNUSED_PARAM( massDamping ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
+          real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
+          R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
+          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
+          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
+          arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( rhs ) )
+  {
+    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::CRSImplicitKernel::Launch() not implemented" );
+    return 0;
+  }
 };
 
 } // namespace SolidMechanicsLagrangianFEMKernels

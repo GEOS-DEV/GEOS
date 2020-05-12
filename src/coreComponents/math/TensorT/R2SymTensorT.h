@@ -114,7 +114,7 @@ public:
   R2SymTensorT & operator=( const R2SymTensorT & rhs ) = default;
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE inline
   R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -130,7 +130,7 @@ public:
   }
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE inline
   R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -149,7 +149,7 @@ public:
   R2SymTensorT & operator+=( const R2SymTensorT & rhs );
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE inline
   R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -165,7 +165,7 @@ public:
   }
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE inline
   R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );

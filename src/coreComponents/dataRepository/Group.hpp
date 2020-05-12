@@ -244,7 +244,7 @@ public:
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T * RegisterGroup( subGroupMap::KeyIndex & keyIndex )
+  T * RegisterGroup( subGroupMap::KeyIndex const & keyIndex )
   {
     T * rval = RegisterGroup< T >( keyIndex.Key(), std::move( std::make_unique< T >( keyIndex.Key(), this )) );
     keyIndex.setIndex( this->m_subGroups.getIndex( keyIndex.Key()) );
@@ -398,35 +398,29 @@ public:
    */
   template< typename T = Group >
   T const * GetGroup( string const & name ) const
-  {
-    return group_cast< T const * >( m_subGroups[name] );
-  }
+  { return group_cast< T const * >( m_subGroups[name] ); }
+
+  template< typename T = Group >
+  T & getGroupReference( string const & name )
+  { return dynamicCast< T & >( *m_subGroups[ name ] ); }
+
+  template< typename T = Group >
+  T const & getGroupReference( string const & name ) const
+  { return dynamicCast< T const & >( *m_subGroups[ name ] ); }
+
+  template< typename T = Group >
+  T & GetGroupReference( subGroupMap::KeyIndex const & key )
+  { return dynamicCast< T & >( *m_subGroups[key] ); }
+
+  template< typename T = Group >
+  T const & GetGroupReference( subGroupMap::KeyIndex const & key ) const
+  { return dynamicCast< T const & >( *m_subGroups[key] ); }
 
   /**
    * @brief Retrieve a sub-group from the current Group using a KeyIndexT.
    * @tparam T type of subgroup
-   * @param[in,out] key the KeyIndex to use for the lookup
+   * @param[in] key the KeyIndex to use for the lookup
    * @return A pointer to @p T that refers to the sub-group
-   */
-  template< typename T = Group >
-  T * GetGroup( subGroupMap::KeyIndex & key )
-  {
-    return group_cast< T * >( m_subGroups[key] );
-  }
-
-  /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex & key)
-   */
-  template< typename T = Group >
-  T const * GetGroup( subGroupMap::KeyIndex & key ) const
-  {
-    return group_cast< T const * >( m_subGroups[key] );
-  }
-
-  /**
-   * @copydoc GetGroup(subGroupMap::KeyIndex & key)
-   * @note Const-correctness may be broken if the key is incorrect as
-   *       @p key will be modified to contain the correct index.
    */
   template< typename T = Group >
   T * GetGroup( subGroupMap::KeyIndex const & key )
@@ -829,7 +823,7 @@ public:
    * @return            a pointer to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex & viewKey );
+  Wrapper< TBASE > * registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
 
   /**
    * @brief Register a Wrapper around a given object and take ownership.
@@ -1573,7 +1567,7 @@ Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
 /// @endcond
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > * Group::registerWrapper( ViewKey & viewKey )
+Wrapper< TBASE > * Group::registerWrapper( ViewKey const & viewKey )
 {
   ViewKey::index_type index;
   Wrapper< TBASE > * const rval = registerWrapper< T, TBASE >( viewKey.Key(), &index );

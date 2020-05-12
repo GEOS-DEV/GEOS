@@ -664,6 +664,9 @@ protected:
   /// Data structure to handle degrees of freedom
   DofManager m_dofManager;
 
+  LvArray::CRSMatrix< real64, globalIndex, localIndex > m_crsMatrix;
+  array1d< real64 > m_rhsArray;
+
   /// System matrix, rhs and solution
   ParallelMatrix m_matrix;
   ParallelVector m_rhs;

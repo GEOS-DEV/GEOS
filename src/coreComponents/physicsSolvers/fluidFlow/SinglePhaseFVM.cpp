@@ -246,7 +246,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
     m_derivativeFluxResidual_dAperture = std::make_unique< CRSMatrix< real64, localIndex > >( matrix->numLocalRows(),
                                                                                               matrix->numLocalCols() );
   }
-  m_derivativeFluxResidual_dAperture->setValues( 0.0 );
+  m_derivativeFluxResidual_dAperture->template setValues< serialPolicy >( 0.0 );
 
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();
@@ -363,7 +363,7 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
                                                                               1,
                                                                               matrix,
                                                                               rhs,
-                                                                              [&]( localIndex const GEOSX_UNUSED_PARAM( a ) ) -> real64
+                                                                              [&]( localIndex const GEOSX_UNUSED_PARAM( a ) )
     {
       return 0;
     } );
@@ -397,7 +397,7 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
                                                                                 1,
                                                                                 matrix,
                                                                                 rhs,
-                                                                                [&]( localIndex const a ) -> real64
+                                                                                [&]( localIndex const a )
     {
       return pres[a] + dPres[a];
     } );

@@ -1023,7 +1023,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                                                                                 m_numDofPerCell,
                                                                                 matrix,
                                                                                 rhs,
-                                                                                [&]( localIndex const a ) -> real64
+                                                                                [&]( localIndex const a )
     {
       return proppantConc[a] + dProppantConc[a];
     } );

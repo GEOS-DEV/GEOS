@@ -141,6 +141,71 @@ public:
                                                             matrix,
                                                             rhs );
   }
+
+  virtual real64
+  CRSElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
+                          localIndex NUM_QUADRATURE_POINTS,
+                          constitutive::ConstitutiveBase * const constitutiveRelation,
+                          localIndex const numElems,
+                          real64 const dt,
+                          arrayView3d< R1Tensor const > const & dNdX,
+                          arrayView2d< real64 const > const & detJ,
+                          FiniteElementBase const * const fe,
+                          arrayView1d< integer const > const & elemGhostRank,
+                          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                          arrayView1d< globalIndex const > const & globalDofNumber,
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
+                          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
+                          arrayView1d< R1Tensor const > const & vtilde,
+                          arrayView1d< R1Tensor const > const & uhattilde,
+                          arrayView2d< real64 const > const & density,
+                          arrayView1d< real64 const > const & fluidPressure,
+                          arrayView1d< real64 const > const & deltaFluidPressure,
+                          real64 const biotCoefficient,
+                          TimeIntegrationOption const tiOption,
+                          real64 const stiffnessDamping,
+                          real64 const massDamping,
+                          real64 const newmarkBeta,
+                          real64 const newmarkGamma,
+                          R1Tensor const & gravityVector,
+                          DofManager const * const dofManager,
+                          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                          arrayView1d< real64 > const & rhs ) const override
+  {
+    GEOSX_MARK_FUNCTION;
+    using ImplicitKernel = SolidMechanicsLagrangianSSLEKernels::CRSImplicitKernel;
+    return SolidMechanicsLagrangianFEMKernels::
+             ElementKernelLaunchSelector< ImplicitKernel >( NUM_NODES_PER_ELEM,
+                                                            NUM_QUADRATURE_POINTS,
+                                                            constitutiveRelation,
+                                                            numElems,
+                                                            dt,
+                                                            dNdX,
+                                                            detJ,
+                                                            fe,
+                                                            elemGhostRank,
+                                                            elemsToNodes,
+                                                            globalDofNumber,
+                                                            X,
+                                                            disp,
+                                                            uhat,
+                                                            vtilde,
+                                                            uhattilde,
+                                                            density,
+                                                            fluidPressure,
+                                                            deltaFluidPressure,
+                                                            biotCoefficient,
+                                                            tiOption,
+                                                            stiffnessDamping,
+                                                            massDamping,
+                                                            newmarkBeta,
+                                                            newmarkGamma,
+                                                            gravityVector,
+                                                            dofManager,
+                                                            matrix,
+                                                            rhs );
+  }
 };
 
 } /* namespace geosx */

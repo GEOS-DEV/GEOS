@@ -628,6 +628,7 @@ template< typename MATRIX >
 void DofManager::setSparsityPattern( MATRIX & matrix,
                                      bool const closePattern ) const
 {
+  GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( !m_reordered, "Cannot set monolithic sparsity pattern before reorderByRank() has been called." );
 
   matrix.open();
