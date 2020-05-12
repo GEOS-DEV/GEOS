@@ -22,7 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/interfaces/DenseLA.hpp"
+#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 
 namespace geosx
@@ -63,12 +63,11 @@ struct HybridFVMInnerProductHelper
       axis( icoord ) = 1.0;
 
       temp.dyadic_aa( axis );
-      temp *= values( icoord );
       for( localIndex i = 0; i < dim; ++i )
       {
         for( localIndex j = 0; j < dim; ++j )
         {
-          result( i, j ) += temp( i, j );
+          result( i, j ) = result( i, j ) + values( icoord ) * temp( i, j );
         }
       }
     }
@@ -86,19 +85,19 @@ struct HybridFVMInnerProductHelper
     // modified Gram-Schmidt algorithm
 
     // q0
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q0 ), q0 );
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q0 ), q0 );
 
     // q1
-    real64 const q0Dotq1 = DenseLA::vectorDot( q0, q1 );
-    DenseLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q1 ), q1 );
+    real64 const q0Dotq1 = BlasLapackLA::vectorDot( q0, q1 );
+    BlasLapackLA::vectorVectorAdd( q0, q1, -q0Dotq1 );
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q1 ), q1 );
 
     // q2
-    real64 const q0Dotq2 = DenseLA::vectorDot( q0, q2 );
-    DenseLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
-    real64 const q1Dotq2 = DenseLA::vectorDot( q1, q2 );
-    DenseLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
-    DenseLA::vectorScale( 1.0/DenseLA::vectorNorm2( q2 ), q2 );
+    real64 const q0Dotq2 = BlasLapackLA::vectorDot( q0, q2 );
+    BlasLapackLA::vectorVectorAdd( q0, q2, -q0Dotq2 );
+    real64 const q1Dotq2 = BlasLapackLA::vectorDot( q1, q2 );
+    BlasLapackLA::vectorVectorAdd( q1, q2, -q1Dotq2 );
+    BlasLapackLA::vectorScale( 1.0/BlasLapackLA::vectorNorm2( q2 ), q2 );
 
     for( localIndex i = 0; i < NF; ++i )
     {
@@ -177,7 +176,13 @@ struct TPFACellInnerProductKernel
           real64 const c2fDistance = cellToFaceVec.Normalize();
 
           // 2) assemble full coefficient tensor from principal axis/components
-          DenseLA::matrixScale( 0, permTensor );
+          for( localIndex i = 0; i < dim; ++i )
+          {
+            for( localIndex j = 0; j < dim; ++j )
+            {
+              permTensor( i, j ) = 0;
+            }
+          }
           HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
 
           // TODO: take symmetry into account to optimize this
@@ -296,47 +301,72 @@ struct QTPFACellInnerProductKernel
     }
 
     // 2) assemble full coefficient tensor from principal axis/components
-    DenseLA::matrixScale( 0, permMat );
+    for( localIndex i = 0; i < dim; ++i )
+    {
+      for( localIndex j = 0; j < dim; ++j )
+      {
+        permMat( i, j ) = 0;
+      }
+    }
     HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permMat );
 
     // 3) compute N K N'
-    DenseLA::matrixMatrixTMultiply( permMat,
-                                    normalsMat,
-                                    work_dimByNumFaces );
-    DenseLA::matrixMatrixMultiply( normalsMat,
-                                   work_dimByNumFaces,
-                                   transMatrix );
+    BlasLapackLA::matrixMatrixTMultiply( permMat,
+                                         normalsMat,
+                                         work_dimByNumFaces );
+    BlasLapackLA::matrixMatrixMultiply( normalsMat,
+                                        work_dimByNumFaces,
+                                        transMatrix );
 
     // 4) compute the orthonormalization of the matrix cellToFaceVec
     HybridFVMInnerProductHelper::Orthonormalize< NF >( q0, q1, q2, cellToFaceMat );
 
     // 5) compute P_Q = I - QQ'
-    DenseLA::matrixScale( 0, worka_numFacesByNumFaces );
     for( localIndex i = 0; i < NF; ++i )
     {
       worka_numFacesByNumFaces( i, i ) = 1;
+      for( localIndex j = 0; j < NF; ++j )
+      {
+        if( i == j )
+        {
+          worka_numFacesByNumFaces( i, j ) = 1;
+        }
+        else
+        {
+          worka_numFacesByNumFaces( i, j ) = 0;
+        }
+      }
     }
-    DenseLA::matrixMatrixTMultiply( cellToFaceMat,
-                                    cellToFaceMat,
-                                    worka_numFacesByNumFaces,
-                                    -1, 1 );
+    BlasLapackLA::matrixMatrixTMultiply( cellToFaceMat,
+                                         cellToFaceMat,
+                                         worka_numFacesByNumFaces,
+                                         -1, 1 );
 
     // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
     // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
     // Note that 7) is done at the last call to matrixMatrixMultiply
-    DenseLA::matrixScale( 0, workb_numFacesByNumFaces );
     for( localIndex i = 0; i < NF; ++i )
     {
-      workb_numFacesByNumFaces( i, i ) = transMatrix( i, i );
+      for( localIndex j = 0; j < NF; ++j )
+      {
+        if( i == j )
+        {
+          workb_numFacesByNumFaces( i, j ) = transMatrix( i, j );
+        }
+        else
+        {
+          workb_numFacesByNumFaces( i, j ) = 0;
+        }
+      }
     }
-    DenseLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
-                                   worka_numFacesByNumFaces,
-                                   workc_numFacesByNumFaces );
+    BlasLapackLA::matrixMatrixMultiply( workb_numFacesByNumFaces,
+                                        worka_numFacesByNumFaces,
+                                        workc_numFacesByNumFaces );
     real64 const elemVolumeInv = 1. / elemVolume;
-    DenseLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
-                                   workc_numFacesByNumFaces,
-                                   transMatrix,
-                                   tParam * elemVolumeInv, elemVolumeInv );
+    BlasLapackLA::matrixMatrixMultiply( worka_numFacesByNumFaces,
+                                        workc_numFacesByNumFaces,
+                                        transMatrix,
+                                        tParam * elemVolumeInv, elemVolumeInv );
   }
 
 };

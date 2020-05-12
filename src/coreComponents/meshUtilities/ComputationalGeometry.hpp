@@ -77,6 +77,7 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 static real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                                   localIndex const numPoints,
                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
@@ -126,15 +127,16 @@ static real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
     {
       for( localIndex a=0; a<numPoints; ++a )
       {
-        /*
-              GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
-                                         << points[pointsIndices[a]]( 1 ) << " "
-                                         << points[pointsIndices[a]]( 2 ) << " "
-                                         << pointsIndices[a] );
-         */
+#if !defined(__CUDA_ARCH__)	
+        GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
+                                   << points[pointsIndices[a]]( 1 ) << " "
+                                   << points[pointsIndices[a]]( 2 ) << " "
+                                   << pointsIndices[a] );
+#endif
       }
-
-      //GEOSX_ERROR( "Negative area found : " << area );
+#if !defined(__CUDA_ARCH__)	
+      GEOSX_ERROR( "Negative area found : " << area );
+#endif      
     }
     else
     {

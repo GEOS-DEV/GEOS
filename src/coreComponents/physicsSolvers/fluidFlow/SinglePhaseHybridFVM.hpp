@@ -36,12 +36,6 @@ class SinglePhaseHybridFVM : public SinglePhaseBase
 {
 public:
 
-  struct EquationType
-  {
-    static constexpr integer MASS_CONS  = 0;
-    static constexpr integer CONSTRAINT = 1;
-  };
-
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -177,6 +171,7 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseHybridFVM; }
 
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -185,6 +180,9 @@ private:
 
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
+
+  /// region filter used in flux assembly
+  SortedArray< localIndex > m_regionFilter;
 
 };
 

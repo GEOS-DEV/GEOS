@@ -366,6 +366,8 @@ struct AccumulationKernel< FaceElementSubRegion >
   }
 };
 
+/******************************** ResidualNormKernel ********************************/
+
 struct ResidualNormKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
@@ -399,6 +401,42 @@ struct ResidualNormKernel
     localResidualNorm[2] += count.get();
   }
 };
+
+/******************************** SolutionCheckKernel ********************************/
+
+struct SolutionCheckKernel
+{
+  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  static localIndex Launch( LOCAL_VECTOR const localSolution,
+                            globalIndex const rankOffset,
+                            arrayView1d< globalIndex const > const & presDofNumber,
+                            arrayView1d< integer const > const & ghostRank,
+                            arrayView1d< real64 const > const & pres,
+                            arrayView1d< real64 const > const & dPres,
+                            real64 const scalingFactor )
+  {
+    RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
+
+    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
+      {
+        localIndex const lid = presDofNumber[ei] - rankOffset;
+        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
+
+        if( newPres < 0.0 )
+        {
+          minVal.min( 0 );
+        }
+      }
+
+    } );
+    return minVal.get();
+  }
+
+};
+
+
 
 } // namespace SinglePhaseBaseKernels
 

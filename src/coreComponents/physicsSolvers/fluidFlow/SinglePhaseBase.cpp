@@ -352,7 +352,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                                           FaceElementSubRegion & subRegion )
   {
     arrayView1d< real64 const > const & aper  = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString );
-    arrayView1d< real64       > const & aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String );
+    arrayView1d< real64 > const & aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String );
 
     aper0.setValues< parallelDevicePolicy< 128 > >( aper );
 
@@ -496,7 +496,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
 
   arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
   arrayView1d< real64 const > const & densityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
-  arrayView1d< real64       > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
+  arrayView1d< real64 > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
   arrayView1d< real64 const > const & porosityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
   arrayView1d< real64 const > const & porosityRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
@@ -690,10 +690,10 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
                         string const & ) -> void
   {
     arrayView1d< globalIndex const > const &
-      dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
+    dofNumber = subRegion->getReference< array1d< globalIndex > >( dofKey );
 
     arrayView1d< integer const > const &
-      ghostRank = subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+    ghostRank = subRegion->getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
 
     SortedArray< localIndex > localSet;
     for( localIndex const a : lset )
@@ -788,6 +788,10 @@ void SinglePhaseBase::ResetViews( DomainPartition * const domain )
 
   m_deltaPressure = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::deltaPressureString );
   m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString );
+
+  m_volume = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+  m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+
 
   m_deltaVolume = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::deltaVolumeString );
   m_deltaVolume.setName( getName() + "/accessors/" + viewKeyStruct::deltaVolumeString );

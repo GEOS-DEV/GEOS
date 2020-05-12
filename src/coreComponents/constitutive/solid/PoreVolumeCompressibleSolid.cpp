@@ -96,7 +96,7 @@ void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 
   GEOSX_ASSERT_EQ( pres.size(), m_poreVolumeMultiplier.size() );
   GEOSX_ASSERT_EQ( dPres.size(), m_poreVolumeMultiplier.size() );
 
-  ExponentialRelation< real64, ExponentApproximationType::Linear> const relation = m_poreVolumeRelation;
+  ExponentialRelation< real64, ExponentApproximationType::Linear > const relation = m_poreVolumeRelation;
 
   localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
   localIndex const numQuad  = m_poreVolumeMultiplier.size( 1 );

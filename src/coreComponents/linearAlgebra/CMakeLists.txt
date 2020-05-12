@@ -6,8 +6,7 @@ message( "Entering /src/coreComponents/linearAlgebra/CMakeLists.txt")
 set( linearAlgebra_headers
      common.hpp
      interfaces/BlasLapackFunctions.h
-     interfaces/DenseLA.hpp
-     interfaces/DenseLAHelpers.hpp
+     interfaces/BlasLapackLA.hpp
      interfaces/InterfaceTypes.hpp
      interfaces/LinearOperator.hpp
      interfaces/MatrixBase.hpp

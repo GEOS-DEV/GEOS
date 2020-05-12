@@ -23,11 +23,10 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "finiteVolume/HybridFVMInnerProduct.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 
 namespace geosx
 {
-
-class DofManager;
 
 namespace SinglePhaseHybridFVMKernels
 {
@@ -69,7 +68,7 @@ struct AssemblerKernelHelper
   ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
                             arrayView1d< real64 const > const & dFacePres,
                             arrayView1d< real64 const > const & faceGravCoef,
-                            arraySlice1d< localIndex const > const elemToFaces,
+                            arraySlice1d< localIndex const > const & elemToFaces,
                             real64 const & elemPres,
                             real64 const & dElemPres,
                             real64 const & elemGravDepth,
@@ -104,17 +103,17 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  UpdateUpwindedCoefficients( arrayView2d< localIndex const > const & elemRegionList,
+  UpdateUpwindedCoefficients( localIndex const er,
+                              localIndex const esr,
+                              localIndex const ei,
+                              arrayView2d< localIndex const > const & elemRegionList,
                               arrayView2d< localIndex const > const & elemSubRegionList,
                               arrayView2d< localIndex const > const & elemList,
                               SortedArrayView< localIndex const > const & regionFilter,
-                              arraySlice1d< localIndex const > const elemToFaces,
+                              arraySlice1d< localIndex const > const & elemToFaces,
                               ElementView< arrayView1d< real64 const > > const & mobility,
                               ElementView< arrayView1d< real64 const > > const & dMobility_dp,
                               ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
-                              localIndex const er,
-                              localIndex const esr,
-                              localIndex const ei,
                               arraySlice1d< real64 const > const & oneSidedVolFlux,
                               arraySlice1d< real64 > const & upwMobility,
                               arraySlice1d< real64 > const & dUpwMobility_dp,
@@ -139,18 +138,19 @@ struct AssemblerKernelHelper
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static void
-  AssembleOneSidedMassFluxes( real64 const & dt,
-                              arrayView1d< globalIndex const > const & faceDofNumber,
-                              arraySlice1d< localIndex const > const elemToFaces,
+  AssembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
+                              arraySlice1d< localIndex const > const & elemToFaces,
                               globalIndex const elemDofNumber,
+                              globalIndex const rankOffset,
                               arraySlice1d< real64 const > const & oneSidedVolFlux,
                               arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
                               arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
                               arraySlice1d< real64 const > const & upwMobility,
                               arraySlice1d< real64 const > const & dUpwMobility_dp,
                               arraySlice1d< globalIndex const > const & upwDofNumber,
-                              ParallelMatrix * const matrix,
-                              ParallelVector * const rhs );
+                              real64 const & dt,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs );
 
 
   /**
@@ -168,13 +168,14 @@ struct AssemblerKernelHelper
   GEOSX_HOST_DEVICE
   static void
   AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
-                       arraySlice1d< localIndex const > const elemToFaces,
+                       arraySlice1d< localIndex const > const & elemToFaces,
                        globalIndex const elemDofNumber,
+                       globalIndex const rankOffset,
                        arraySlice1d< real64 const > const & oneSidedVolFlux,
                        arraySlice1d< real64 const > const & dOneSidedVolFlux_dp,
                        arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp,
-                       ParallelMatrix * const matrix,
-                       ParallelVector * const rhs );
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -184,7 +185,7 @@ struct AssemblerKernelHelper
   AssemblerKernelHelper::ComputeOneSidedVolFluxes< NF >( arrayView1d< real64 const > const & facePres, \
                                                          arrayView1d< real64 const > const & dFacePres, \
                                                          arrayView1d< real64 const > const & faceGravCoef, \
-                                                         arraySlice1d< localIndex const > const elemToFaces, \
+                                                         arraySlice1d< localIndex const > const & elemToFaces, \
                                                          real64 const & elemPres, \
                                                          real64 const & dElemPres, \
                                                          real64 const & elemGravDepth, \
@@ -196,28 +197,30 @@ struct AssemblerKernelHelper
                                                          arraySlice2d< real64 > const & dOneSidedVolFlux_dfp ); \
   extern template \
   void \
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( real64 const & dt, \
-                                                           arrayView1d< globalIndex const > const & faceDofNumber, \
-                                                           arraySlice1d< localIndex const > const elemToFaces, \
+  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( arrayView1d< globalIndex const > const & faceDofNumber, \
+                                                           arraySlice1d< localIndex const > const & elemToFaces, \
                                                            globalIndex const elemDofNumber, \
+                                                           globalIndex const rankOffset, \
                                                            arraySlice1d< real64 const > const & oneSidedVolFlux, \
                                                            arraySlice1d< real64 const > const & dOneSidedVolFlux_dp, \
                                                            arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp, \
                                                            arraySlice1d< real64 const > const & upwMobility, \
                                                            arraySlice1d< real64 const > const & dUpwMobility_dp, \
                                                            arraySlice1d< globalIndex const > const & upwDofNumber, \
-                                                           ParallelMatrix * const matrix, \
-                                                           ParallelVector * const rhs ); \
+                                                           real64 const & dt, \
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                                                           arrayView1d< real64 > const & localRhs ); \
   extern template \
   void \
   AssemblerKernelHelper::AssembleConstraints< NF >( arrayView1d< globalIndex const > const & faceDofNumber, \
-                                                    arraySlice1d< localIndex const > const elemToFaces, \
+                                                    arraySlice1d< localIndex const > const & elemToFaces, \
                                                     globalIndex const elemDofNumber, \
+                                                    globalIndex const rankOffset, \
                                                     arraySlice1d< real64 const > const & oneSidedVolFlux, \
                                                     arraySlice1d< real64 const > const & dOneSidedVolFlux_dp, \
                                                     arraySlice2d< real64 const > const & dOneSidedVolFlux_dfp, \
-                                                    ParallelMatrix * const matrix, \
-                                                    ParallelVector * const rhs )
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                                                    arrayView1d< real64 > const & localRhs )
 
 INST_AssembleKernelHelper( 4 );
 INST_AssembleKernelHelper( 5 );
@@ -280,12 +283,11 @@ struct AssemblerKernel
            arrayView2d< localIndex const > const & elemRegionList,
            arrayView2d< localIndex const > const & elemSubRegionList,
            arrayView2d< localIndex const > const & elemList,
-           globalIndex const rankOffset,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
-           arraySlice1d< localIndex const > const elemToFaces,
+           arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & dElemPres,
            real64 const & elemGravCoef,
@@ -294,8 +296,9 @@ struct AssemblerKernel
            ElementView< arrayView1d< real64 const > > const & mobility,
            ElementView< arrayView1d< real64 const > > const & dMobility_dp,
            ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
-           arraySlice2d< real64 const > const & transMatrix,
+           globalIndex const rankOffset,
            real64 const & dt,
+           arraySlice2d< real64 const > const & transMatrix,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 
@@ -347,8 +350,8 @@ struct FluxKernel
   Launch( localIndex er,
           localIndex esr,
           CellElementSubRegion const & subRegion,
+          constitutive::SingleFluidBase const & fluid,
           SortedArrayView< localIndex const > const & regionFilter,
-          MeshLevel const & mesh,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           arrayView2d< localIndex const > const & elemRegionList,
           arrayView2d< localIndex const > const & elemSubRegionList,
@@ -358,16 +361,14 @@ struct FluxKernel
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
-          arrayView2d< real64 const > const & elemDens,
-          arrayView2d< real64 const > const & dElemDens_dp,
           ElementView< arrayView1d< real64 const > > const & mobility,
           ElementView< arrayView1d< real64 const > > const & dMobility_dp,
+          ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+          localIndex const rankOffset,
           real64 const lengthTolerance,
           real64 const dt,
-          DofManager const * const dofManager,
-          ParallelMatrix * const matrix,
-          ParallelVector * const rhs );
-
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -376,8 +377,8 @@ struct FluxKernel
   void FluxKernel::Launch< NF >( localIndex er, \
                                  localIndex esr, \
                                  CellElementSubRegion const & subRegion, \
+                                 constitutive::SingleFluidBase const & fluid, \
                                  SortedArrayView< localIndex const > const & regionFilter, \
-                                 MeshLevel const & mesh, \
                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition, \
                                  arrayView2d< localIndex const > const & elemRegionList, \
                                  arrayView2d< localIndex const > const & elemSubRegionList, \
@@ -387,15 +388,14 @@ struct FluxKernel
                                  arrayView1d< real64 const > const & facePres, \
                                  arrayView1d< real64 const > const & dFacePres, \
                                  arrayView1d< real64 const > const & faceGravCoef, \
-                                 arrayView2d< real64 const > const & elemDens, \
-                                 arrayView2d< real64 const > const & dElemDens_dp, \
                                  ElementView< arrayView1d< real64 const > > const & mobility, \
                                  ElementView< arrayView1d< real64 const > > const & dMobility_dp, \
+                                 ElementView< arrayView1d< globalIndex const > > const & elemDofNumber, \
+                                 localIndex const rankOffset, \
                                  real64 const lengthTolerance, \
                                  real64 const dt, \
-                                 DofManager const * const dofManager, \
-                                 ParallelMatrix * const matrix, \
-                                 ParallelVector * const rhs )
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                                 arrayView1d< real64 > const & localRhs )
 
 INST_FluxKernel( 4 );
 INST_FluxKernel( 5 );
@@ -403,6 +403,67 @@ INST_FluxKernel( 6 );
 
 #undef INST_FluxKernel
 
+
+/******************************** ResidualNormKernel ********************************/
+
+struct ResidualNormKernel
+{
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+
+  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  static void
+  Launch( LOCAL_VECTOR const localResidual,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & facePresDofNumber,
+          arrayView1d< integer const > const & faceGhostRank,
+          arrayView2d< localIndex const > const & elemRegionList,
+          arrayView2d< localIndex const > const & elemSubRegionList,
+          arrayView2d< localIndex const > const & elemList,
+          ElementView< arrayView1d< real64 const > > const & elemVolume,
+          real64 const & defaultViscosity,
+          real64 * localResidualNorm )
+  {
+
+    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+
+    forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+    {
+      // if not ghost face and if adjacent to target region
+      if( faceGhostRank[iface] < 0 && facePresDofNumber[iface] >= 0 )
+      {
+        real64 normalizer = 0;
+        localIndex elemCounter = 0;
+        for( localIndex k=0; k<elemRegionList.size( 1 ); ++k )
+        {
+          localIndex const er  = elemRegionList[iface][k];
+          localIndex const esr = elemSubRegionList[iface][k];
+          localIndex const ei  = elemList[iface][k];
+
+          bool const onBoundary = (er == -1 || esr == -1 || ei == -1);
+
+          // if not on boundary, save the mobility and the upwDofNumber
+          if( !onBoundary )
+          {
+            normalizer += elemVolume[er][esr][ei];
+            elemCounter++;
+          }
+        }
+        normalizer /= elemCounter;
+        normalizer /= defaultViscosity;
+
+        localIndex const lid = facePresDofNumber[iface] - rankOffset;
+        real64 const val = localResidual[lid] / normalizer; // to get something dimensionless
+        sumScaled += val * val;
+      }
+    } );
+
+    *localResidualNorm = sumScaled.get();
+  }
+
+};
+
+/******************************** Kernel switches ********************************/
 
 namespace helpers
 {
@@ -420,7 +481,7 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     { lambda( std::integral_constant< T, 5 >() ); return;}
     case 6:
     { lambda( std::integral_constant< T, 6 >() ); return;}
-    default: GEOSX_ERROR( "Unknown numFaceInElem value: " << value );
+    default: GEOSX_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
