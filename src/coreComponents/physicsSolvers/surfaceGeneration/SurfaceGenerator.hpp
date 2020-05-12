@@ -536,6 +536,7 @@ private:
 
     //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
+    constexpr static auto VCCTOptionSIFString = "VCCTOption";
     constexpr static auto SIF_IString = "SIF_I";
     constexpr static auto SIF_IIString = "SIF_II";
     constexpr static auto SIF_IIIString = "SIF_III";
@@ -556,6 +557,7 @@ private:
   localIndex m_solidMaterialFullIndex;
 
   int m_nodeBasedSIF;
+  int m_VCCTOption;
 
   realT m_rockToughness;
 

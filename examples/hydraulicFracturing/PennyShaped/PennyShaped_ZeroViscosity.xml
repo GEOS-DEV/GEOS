@@ -19,7 +19,7 @@
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="5"
+      maxNumResolves="20"
       initialDt="0.1"
       >
       <NonlinearSolverParameters newtonTol="1.0e-4"
@@ -57,7 +57,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
-      inputFluxEstimate="1.0"
+      inputFluxEstimate="1.325"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
@@ -69,11 +69,12 @@
     
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
+      logLevel="1"
       discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
       nodeBasedSIF="1"
+      VCCTOption="2"
       solidMaterialName="rock"
       rockToughness="3.0e6"
       >
@@ -88,7 +89,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.02e-3"
+                       defaultAperture="0.03e-3"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -98,7 +99,7 @@
                                   defaultViscosity="1.0e-6"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
-                                  compressibility="5e-13"
+                                  compressibility="5e-12"
                                   referenceViscosity="1.0e-6"
                                   viscosibility="0.0"/>
 
@@ -116,7 +117,7 @@
       <TableFunction 
         name="aperTable" 
         coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  0.002e-3, 0.02e-3}" 
+        values      = "{  0.002e-3, 0.03e-3}" 
         />
     </Contact>
   </Constitutive>
@@ -125,6 +126,8 @@
   <Outputs>
       <Silo name="siloOutput"
             plotFileRoot="zeroViscosity"
+          writeEdgeMesh="1"
+          writeFEMFaces="1"
             plotLevel="3"
             parallelThreads="48"/>
       <Restart name="sidreRestart"/>

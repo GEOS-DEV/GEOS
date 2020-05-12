@@ -19,7 +19,7 @@
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="1"
+      maxNumResolves="20"
       initialDt="0.1"
       >
       <NonlinearSolverParameters newtonTol="1.0e-4"
@@ -57,7 +57,7 @@
       targetRegions="{Fracture}"
       fluidName="water"
       solidName="rock"
-      inputFluxEstimate="1.0"
+      inputFluxEstimate="1.325"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
@@ -74,6 +74,7 @@
       fractureRegion="Fracture"
       targetRegions="{Region2}"
       nodeBasedSIF="1"
+      VCCTOption="2"
       solidMaterialName="rock"
       rockToughness="0.3e6"
       >
