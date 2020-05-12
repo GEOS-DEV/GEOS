@@ -30,21 +30,6 @@ def main():
   print(output_name)
 
 
-def format_xml():
-  """Script to format xml files
-
-  @arg input Input file name
-  """
-
-  # Parse the user arguments
-  parser = argparse.ArgumentParser()
-  parser.add_argument('input', type=str, help='Input file name')
-  args = parser.parse_args()
-
-  # Process the xml file
-  xml_processor.format_xml(args.input)
-
-
 if __name__ == "__main__":
   main()
 
