@@ -68,7 +68,6 @@ void LASLine::ParseLine( string const & line )
     }
   }
   stringutilities::TrimLeft( m_description );
-  std::cout << m_keywordname << "----" << m_unit << "----" << m_data << "----" << m_description << std::endl;
 }
 
 std::streampos LASSection::ParseSection( std::ifstream & file )
