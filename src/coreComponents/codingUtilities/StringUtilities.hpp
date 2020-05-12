@@ -53,23 +53,12 @@ inline bool streq( char const * const strA, char const * const strB )
 /// Subdivide string by delimiters
 string_array Tokenize( std::string const & str, std::string const & delimiters );
 
-/// Trim whitespace from string
+/**
+ * @brief remove the whitespace from the left of a string
+ * @param[in] str the string to be trimmed
+ * @param[in] d the de delimiters, default ones are whitespaces and tabulations
+ */
 void TrimLeft(std::string& str, const std::string& d=" \t\n\r");
-void TrimRight(std::string& str, const std::string& d=" \t\n\r");
-void Trim(std::string& str, const std::string& d=" \t\n\r");
-
-inline void Trim(string_array& strVect, const std::string& d=" \t\n\r"){
-  for(int i =0 ; i < int(strVect.size()) ; ++i)
-    Trim(strVect[i],d);
-}
-
-/// Split string at first token
-string_array Split(const std::string& str, const std::string& delimiters);
-
-/// Remove all spaces ' ' from a string
-inline void RemoveSpaces(std::string& aString){
-  aString.erase(std::remove(aString.begin(), aString.end(), ' '), aString.end());
-}
 
 /**
  * @brief Retuns a string containing a padded value

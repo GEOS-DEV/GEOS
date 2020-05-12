@@ -92,7 +92,18 @@ class LASLine
   private:
     void ParseLine( string const & line );
 
+    void FindKeyWord( string const & line );
+
+    void FindUnit( string const & line );
+
   private:
+    enum struct TYPE
+    {
+      MNEM,
+      UNITS,
+      DATA,
+      DESCRIPTION
+    };
     /// Name of the keyword
     string m_keywordname;
 

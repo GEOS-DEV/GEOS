@@ -23,24 +23,49 @@ namespace geosx
 
 void LASLine::ParseLine( string const & line )
 {
-  // First get the keyword and the rest of the line
-  string_array keywordAndRest = stringutilities::Tokenize( line, "." );
-  stringutilities::RemoveSpaces( keywordAndRest[0] );
-  m_keywordname = keywordAndRest[0];
+  m_keywordname.reserve( 8 );
+  m_unit.reserve( 4 );
+  m_data.reserve( 60 );
+  m_description.reserve( 100 );
 
-  // Second get the unit and the rest of the line
-  string_array unitsAndRest = stringutilities::Tokenize( keywordAndRest[1], " ");
-  stringutilities::RemoveSpaces( unitsAndRest[0] );
-  m_unit = unitsAndRest[0];
+  TYPE curType = TYPE::MNEM;
+  for( char const & c : line )
+  {
+    if( c == '.' && curType == TYPE::MNEM )
+    {
+      curType = TYPE::UNITS;
+      continue;
+    }
+    else if( c == ' ' && curType == TYPE::UNITS )
+    {
+      curType = TYPE::DATA;
+      continue;
+    }
+    else if( c == ':' && curType == TYPE::DATA )
+    {
+      curType = TYPE::DESCRIPTION;
+      continue;
+    }
 
-  // Third get the value and the rest of te line
-  string_array valueAndRest = stringutilities::Tokenize( unitsAndRest[1], ":" );
-  stringutilities::Trim( valueAndRest[0] );
-  m_data = valueAndRest[0];
-
-  // Finally, get the description
-  stringutilities::Trim( valueAndRest[1] );
-  m_description = valueAndRest[1];
+    if( curType == TYPE::MNEM )
+    {
+      if( c == ' ') continue;
+      m_keywordname.push_back(c);
+    }
+    else if( curType == TYPE::UNITS )
+    {
+      m_unit.push_back(c);
+    }
+    else if( curType == TYPE::DATA )
+    {
+      if( c == ' ') continue;
+      m_data.push_back(c);
+    }
+    else if( curType == TYPE::DESCRIPTION )
+    {
+      m_data.push_back(c);
+    }
+  }
 }
 
 std::streampos LASSection::ParseSection( std::ifstream & file )
