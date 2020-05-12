@@ -17,6 +17,7 @@
  */
 
 #include "LASFile.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -63,9 +64,11 @@ void LASLine::ParseLine( string const & line )
     }
     else if( curType == TYPE::DESCRIPTION )
     {
-      m_data.push_back(c);
+      m_description.push_back(c);
     }
   }
+  stringutilities::TrimLeft( m_description );
+  std::cout << m_keywordname << "----" << m_unit << "----" << m_data << "----" << m_description << std::endl;
 }
 
 std::streampos LASSection::ParseSection( std::ifstream & file )
