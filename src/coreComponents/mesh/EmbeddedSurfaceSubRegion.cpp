@@ -268,7 +268,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
   int count = 0;
   if( k > 0 )
   {
-    count = offSet[k-1];
+    count = offSet[k];
   }
 
   for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )

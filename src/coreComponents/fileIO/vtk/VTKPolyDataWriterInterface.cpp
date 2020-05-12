@@ -188,12 +188,16 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > > VTKPo
   esr.getIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet );
 
   points->SetNumberOfPoints( intersectionPoints.size() );
+  std::cout << "Number of points: " << intersectionPoints.size() << std::endl;
   for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size(); pointIndex ++ )
   {
     points->SetPoint( pointIndex, intersectionPoints[pointIndex][0], intersectionPoints[pointIndex][1], intersectionPoints[pointIndex][2] );
   }
 
   cellsArray->SetNumberOfCells( esr.size() );
+  std::cout << "Number of cells: " << esr.size() << std::endl;
+  std::cout << "OffSet: " << offSet << std::endl;
+  std::cout << "Connectivity: " << connectivityList << std::endl;
   for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex ++ )
   {
     std::vector< vtkIdType > connectivity( offSet[cellIndex+1] - offSet[cellIndex] );
@@ -384,7 +388,7 @@ void VTKPolyDataWriterInterface::WriteEmbeddedSurfaceElementRegions( real64 time
     ug->SetPoints( VTKEmbeddedSurface.first );
     ug->SetCells( VTK_POLYGON, VTKEmbeddedSurface.second );
 
-    WriteElementFields< EmbeddedSurfaceRegion >( ug->GetCellData(), er );
+    WriteElementFields< EmbeddedSurfaceSubRegion >( ug->GetCellData(), er );
     WriteUnstructuredGrid( ug, time, er.getName() );
   } );
 }

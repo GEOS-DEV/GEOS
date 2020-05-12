@@ -40,7 +40,7 @@
 		xCoords="{0, 10}"
 		yCoords="{0, 10}" 
 		zCoords="{0, 10}" 
-		nx="{3}" ny="{3}" nz="{1}"
+		nx="{9}" ny="{9}" nz="{1}"
 		cellBlockNames="{cb1}" />
 	</Mesh>
 
@@ -68,20 +68,16 @@
 		name="preFracture" 
 		target="/Solvers/SurfaceGenerator" />
 
-		<SoloEvent 
-		name="output1" 
-		target="/Outputs/vtkOutput" />
-
 		<PeriodicEvent 
 		name="solverApplications" 
 		forceDt="1e3"
 		target="/Solvers/mechSolve" />
 
-		<!--PeriodicEvent 
+		<PeriodicEvent 
 		name="outputs" 
 		cycleFrequency="1"
 		targetExactTimestep="1" 
-		target="/Outputs/vtkOutput" /-->
+		target="/Outputs/vtkOutput" />
 		
 		<PeriodicEvent name="restarts"
                    timeFrequency="5.0"
@@ -164,9 +160,10 @@
 	</Functions>
 
 	<Outputs>
-		<!--VTK name="vtkOutput"
+		<VTK name="vtkOutput"
 		plotFileRoot="Sneddon"
-		plotLevel="4"/-->
+		plotLevel="2"
+		writeBinaryData = "1"/>
 		<Restart name="restartOutput"/>
 	</Outputs>
 
