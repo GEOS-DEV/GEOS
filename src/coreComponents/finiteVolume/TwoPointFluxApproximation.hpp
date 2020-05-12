@@ -33,17 +33,18 @@ public:
 
   TwoPointFluxApproximation() = delete;
 
-  TwoPointFluxApproximation(std::string const & name, dataRepository::Group * const parent);
+  TwoPointFluxApproximation( std::string const & name, dataRepository::Group * const parent );
 
 protected:
 
   virtual void computeCellStencil( DomainPartition const & domain ) override;
 
-  virtual void addToFractureStencil( DomainPartition const & domain,
-                                     string const & faceElementRegionName ) override;
+  virtual void addToFractureStencil( DomainPartition & domain,
+                                     string const & faceElementRegionName,
+                                     bool const initFlag ) override;
 
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       set<localIndex> const & faceSet,
+                                       SortedArrayView< localIndex const > const & faceSet,
                                        BoundaryStencil & stencil ) override;
 
 };

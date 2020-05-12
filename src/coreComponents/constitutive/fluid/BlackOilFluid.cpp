@@ -13,8 +13,8 @@
  */
 
 /**
-  * @file BlackOilFluid.cpp
-  */
+ * @file BlackOilFluid.cpp
+ */
 
 #include "BlackOilFluid.hpp"
 
@@ -33,24 +33,23 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
 
 BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
 {
-  if (str == "LiveOil")
+  if( str == "LiveOil" )
   {
     return BlackOilFluid::FluidType::LiveOil;
   }
-  else if (str == "DeadOil")
+  else if( str == "DeadOil" )
   {
     return BlackOilFluid::FluidType::DeadOil;
   }
   else
   {
-    GEOSX_ERROR("Unrecognized black-oil fluid type: " << str);
+    GEOSX_ERROR( "Unrecognized black-oil fluid type: " << str );
   }
   return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
 }
@@ -58,52 +57,45 @@ BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
 BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
 {
-  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag(InputFlags::REQUIRED);
-  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag(InputFlags::REQUIRED);
+  getWrapperBase( viewKeyStruct::componentMolarWeightString )->setInputFlag( InputFlags::REQUIRED );
+  getWrapperBase( viewKeyStruct::phaseNamesString )->setInputFlag( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of surface densities for each phase");
+  registerWrapper( viewKeyStruct::surfaceDensitiesString, &m_surfaceDensities )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "List of surface densities for each phase" );
 
-  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setRestartFlags(RestartFlags::NO_WRITE)->
-    setDescription("List of filenames with input PVT tables");
+  registerWrapper( viewKeyStruct::tableFilesString, &m_tableFiles )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setRestartFlags( RestartFlags::NO_WRITE )->
+    setDescription( "List of filenames with input PVT tables" );
 
-  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString, false )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Type of black-oil fluid (LiveOil/DeadOil)");
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidTypeString )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Type of black-oil fluid (LiveOil/DeadOil)" );
 }
 
 BlackOilFluid::~BlackOilFluid()
-{
-
-}
+{}
 
 void
 BlackOilFluid::DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const
+                             std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< BlackOilFluid > newModel = std::make_unique<BlackOilFluid>( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< BlackOilFluid >( name, parent );
+  }
 
-  newModel->m_useMass = this->m_useMass;
+  MultiFluidPVTPackageWrapper::DeliverClone( name, parent, clone );
+  BlackOilFluid & fluid = dynamicCast< BlackOilFluid & >( *clone );
 
-  newModel->m_componentNames       = this->m_componentNames;
-  newModel->m_componentMolarWeight = this->m_componentMolarWeight;
+  fluid.m_surfaceDensities = m_surfaceDensities;
+  fluid.m_tableFiles       = m_tableFiles;
+  fluid.m_fluidTypeString  = m_fluidTypeString;
+  fluid.m_fluidType        = m_fluidType;
 
-  newModel->m_phaseNames           = this->m_phaseNames;
-  newModel->m_pvtPackagePhaseTypes = this->m_pvtPackagePhaseTypes;
-
-  newModel->m_surfaceDensities = this->m_surfaceDensities;
-  newModel->m_tableFiles       = this->m_tableFiles;
-
-  newModel->m_fluidTypeString = this->m_fluidTypeString;
-  newModel->m_fluidType       = this->m_fluidType;
-
-  newModel->createFluid();
-
-  clone = std::move( newModel );
+  fluid.createFluid();
 }
 
 void BlackOilFluid::PostProcessInput()
@@ -116,12 +108,12 @@ void BlackOilFluid::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if (integer_conversion<localIndex>((data).size()) != integer_conversion<localIndex>(expected)) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
     GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
-                << (attr) << " attribute (" \
-                << (data).size() << "given, " \
-                << (expected) << " expected)" ); \
+                 << (attr) << " attribute (" \
+                 << (data).size() << "given, " \
+                 << (expected) << " expected)" ); \
   }
 
   BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
@@ -129,26 +121,30 @@ void BlackOilFluid::PostProcessInput()
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 
-  m_fluidType = stringToFluidType(m_fluidTypeString);
+  m_fluidType = stringToFluidType( m_fluidTypeString );
 }
 
 void BlackOilFluid::createFluid()
 {
-  std::vector<PHASE_TYPE> phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
-  std::vector<std::string> tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
-  std::vector<double> densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
-  std::vector<double> molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+  std::vector< PHASE_TYPE > phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
+  std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
+  std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
+  std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
 
-  switch (m_fluidType)
+  switch( m_fluidType )
   {
     case FluidType::LiveOil:
-      m_fluid = std::make_unique<BlackOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
-      break;
+    {
+      m_fluid = std::make_unique< BlackOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+    }
+    break;
     case FluidType::DeadOil:
-      m_fluid = std::make_unique<DeadOilMultiphaseSystem>( phases, tableFiles, densities, molarWeights );
-      break;
+    {
+      m_fluid = std::make_unique< DeadOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+    }
+    break;
     default:
-      GEOSX_ERROR("Unknown fluid type");
+      GEOSX_ERROR( "Unknown fluid type" );
   }
 }
 

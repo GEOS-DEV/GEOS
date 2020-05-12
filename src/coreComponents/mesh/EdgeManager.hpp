@@ -38,41 +38,41 @@ public:
   using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
 
   /**
-    * @name Static Factory Catalog Functions
-    */
-   ///@{
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
 
-   static const string CatalogName()
-   { return "EdgeManager"; }
+  static const string CatalogName()
+  { return "EdgeManager"; }
 
-   virtual const string getCatalogName() const override final
-   { return EdgeManager::CatalogName(); }
+  virtual const string getCatalogName() const override
+  { return EdgeManager::CatalogName(); }
 
+  ///@}
 
-   ///@}
-
+  static localIndex faceMapExtraSpacePerEdge()
+  { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );
   ~EdgeManager() override;
 
-//  void Initialize() {}
+  virtual void resize( localIndex const newsize ) override;
 
-  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT* const referenceObject = nullptr);
+  void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
+
   void SetIsExternal( FaceManager const * const faceManager );
-//  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-//                                                         array<globalIndex_array>& objectToCompositionObject );
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
-
   virtual void
-  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const  nodeManager,
-                                                   std::vector< std::vector< globalIndex > >& faceToNodes ) override final;
+  ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
+                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
-  virtual localIndex PackUpDownMapsSize( arrayView1d<localIndex const> const & packList ) const override;
+  virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d<localIndex const> const & packList ) const override;
+                                     arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                        localIndex_array & packList,
@@ -81,16 +81,14 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void depopulateUpMaps( std::set<localIndex> const & receivedEdges,
+  void compressRelationMaps();
+
+  void depopulateUpMaps( std::set< localIndex > const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
 
-  void ConnectivityFromGlobalToLocal( const set<localIndex>& indices,
-                                      const map<globalIndex,localIndex>& nodeGlobalToLocal,
-                                      const map<globalIndex,localIndex>& faceGlobalToLocal );
-
-//  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const set<localIndex>& newEdgeIndices,
-//                                     const set<localIndex>& modifiedEdgeIndices );
+  void ConnectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
+                                      const map< globalIndex, localIndex > & nodeGlobalToLocal,
+                                      const map< globalIndex, localIndex > & faceGlobalToLocal );
 
   void AddToEdgeToFaceMap( FaceManager const * const faceManager,
                            arrayView1d< localIndex const > const & newFaceIndices );
@@ -98,28 +96,16 @@ public:
   void SplitEdge( const localIndex indexToSplit,
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
-                  array1d<set<localIndex>>& nodesToEdges );
+                  array1d< SortedArray< localIndex > > & nodesToEdges );
 
   bool hasNode( const localIndex edgeID, const localIndex nodeID ) const;
 
-  void calculateCenter( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateCenter( localIndex const edgeIndex,
+                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
-  void calculateLength( localIndex const edgeIndex,
-                        arraySlice1d<R1Tensor const> const & X,
-                        R1Tensor & center ) const;
+  R1Tensor calculateLength( localIndex const edgeIndex,
+                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
-
-
-//  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
-// nodeB, const NodeManager& nodeManager);
-
-//  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
-
-
-//  FixedOneToManyRelation& m_toNodesRelation;
-//  UnorderedVariableOneToManyRelation& m_toFacesRelation;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -149,60 +135,58 @@ public:
 
   constexpr int maxEdgesPerNode() const { return 100; }
 
-  NodeMapType       & nodeList()       { return m_toNodesRelation; }
+  NodeMapType & nodeList()       { return m_toNodesRelation; }
+
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
-  {
-    return m_toNodesRelation(edgeIndex, nodeIndex);
-  }
+  { return m_toNodesRelation( edgeIndex, nodeIndex ); }
+
   localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
-  {
-    return m_toNodesRelation(edgeIndex, nodeIndex);
-  }
+  { return m_toNodesRelation( edgeIndex, nodeIndex ); }
 
+  FaceMapType & faceList()       { return m_toFacesRelation; }
 
-  FaceMapType       & faceList()       { return m_toFacesRelation; }
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
 
   // TODO These should be in their own subset of edges when we add that capability.
   /// maps from the edges to the fracture connectors index (edges that are fracture connectors)
-  set< localIndex > m_recalculateFractureConnectorEdges;
+  SortedArray< localIndex > m_recalculateFractureConnectorEdges;
   map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
-  array1d<localIndex> m_fractureConnectorsEdgesToEdges;
-  ArrayOfArrays<localIndex> m_fractureConnectorEdgesToFaceElements;
+  array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+  ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
 
 
 private:
   NodeMapType m_toNodesRelation;
   FaceMapType m_toFacesRelation;
 
-  map< localIndex, array1d<globalIndex> > m_unmappedGlobalIndicesInToNodes;
-  map< localIndex, SortedArray<globalIndex> > m_unmappedGlobalIndicesInToFaces;
+  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
+  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
 
-  template<bool DOPACK>
+  template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d<localIndex const> const & packList ) const;
+                                    arrayView1d< localIndex const > const & packList ) const;
 
 };
 
-inline void EdgeManager::calculateCenter( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
+                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor center = X[m_toNodesRelation[edgeIndex][0]];
   center += X[m_toNodesRelation[edgeIndex][1]];
   center *= 0.5;
+  return center;
 }
 
-inline void EdgeManager::calculateLength( localIndex const edgeIndex,
-                                          arraySlice1d<R1Tensor const> const & X,
-                                          R1Tensor & center ) const
+inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
+                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
-  center = X[m_toNodesRelation[edgeIndex][1]];
-  center -= X[m_toNodesRelation[edgeIndex][0]];
+  R1Tensor length = X[m_toNodesRelation[edgeIndex][1]];
+  length -= X[m_toNodesRelation[edgeIndex][0]];
+  return length;
 }
 
 }

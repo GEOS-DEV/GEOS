@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 #include "math/TensorT/TensorT.h"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
@@ -68,21 +68,18 @@ TEST( testPacking, testPacking )
   array1d< R1Tensor > veloc( size );
   array1d< R1Tensor > unpacked( size );
 
-  for( localIndex ii = 0 ; ii < size ; ++ii )
-    for( localIndex jj = 0 ; jj < 3 ; ++jj )
+  for( localIndex ii = 0; ii < size; ++ii )
+    for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
 
   buffer_unit_type * null_buf = NULL;
   localIndex calc_size = bufferOps::Pack< false >( null_buf, veloc );
-  localIndex expected_size = (sizeof(int)*2 + sizeof(localIndex)*3) + (( sizeof(double) * 3 + sizeof(int)) * size);
-  // [ ndim, dim_i_len, .. ,  ndim, din_i_stride, .. , data_len, tens_len_i, data_i, ... ]
-  EXPECT_EQ( calc_size, expected_size );
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
   bufferOps::Pack< true >( buffer, veloc );
   buffer_unit_type const * cbuffer = &buf[0];
   bufferOps::Unpack( cbuffer, unpacked );
-  for( localIndex ii = 0 ; ii < size ; ++ii )
+  for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_TRUE( veloc[ii] == unpacked[ii] );
 }
 
@@ -96,11 +93,11 @@ TEST( testPacking, testPackByIndex )
   array1d< localIndex > indices( pack_count );
   array1d< R1Tensor > unpacked( size );
 
-  for( localIndex ii = 0 ; ii < size ; ++ii )
-    for( localIndex jj = 0 ; jj < 3 ; ++jj )
+  for( localIndex ii = 0; ii < size; ++ii )
+    for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
 
-  for( localIndex ii = 0 ; ii < pack_count ; ++ii )
+  for( localIndex ii = 0; ii < pack_count; ++ii )
     indices[ii] = std::rand() % size;
 
   // std::sort(indices.begin(),indices.end())
@@ -108,14 +105,12 @@ TEST( testPacking, testPackByIndex )
   buffer_unit_type * null_buf = NULL;
   // [ ndim, din_i_stride, .. , num_tens_in_arr_i, tens_len_i, data_i, ... ]
   localIndex calc_size = bufferOps::PackByIndex< false >( null_buf, veloc, indices );
-  localIndex expected_size = (sizeof(int) + sizeof(localIndex)) + (sizeof(localIndex) + sizeof(double) * 3 + sizeof(int)) * pack_count;
-  EXPECT_EQ( calc_size, expected_size );
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
   bufferOps::PackByIndex< true >( buffer, veloc, indices );
   buffer_unit_type const * cbuffer = &buf[0];
   bufferOps::UnpackByIndex( cbuffer, unpacked, indices );
-  for( localIndex ii = 0 ; ii < size ; ++ii )
+  for( localIndex ii = 0; ii < size; ++ii )
   {
     if( std::find( indices.begin(), indices.end(), ii ) != indices.end() )
     {
@@ -124,26 +119,24 @@ TEST( testPacking, testPackByIndex )
   }
 }
 
-using policy = parallelDevicePolicy< >;
-
 TEST( testPacking, testTensorPacking )
 {
   std::srand( std::time( nullptr ));
   array1d< R1Tensor > tns( 1 );
-  for( localIndex ii = 0 ; ii < 3 ; ++ii )
+  for( localIndex ii = 0; ii < 3; ++ii )
     tns[0][ii] = drand();
 
   buffer_unit_type * null_buf = nullptr;
-  localIndex calc_size = bufferOps::PackDevice< policy, false >( null_buf, tns.toViewConst() );
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, tns.toViewConst() );
   buffer_type buf( calc_size );
   buffer_unit_type * b = &buf[0];
-  bufferOps::PackDevice< policy, true >( b, tns.toViewConst() );
+  bufferOps::PackDevice< true >( b, tns.toViewConst() );
 
   array1d< R1Tensor > unp( 1 );
   buffer_unit_type const * bc = &buf[0];
-  bufferOps::UnpackDevice< policy >( bc, unp.toView() );
+  bufferOps::UnpackDevice( bc, unp.toView() );
   unp.move( chai::CPU );
-  for( localIndex ii = 0 ; ii < 3 ; ++ii )
+  for( localIndex ii = 0; ii < 3; ++ii )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
 
@@ -154,23 +147,21 @@ TEST( testPacking, testPackingDevice )
   array1d< R1Tensor > veloc( size );
   array1d< R1Tensor > unpacked( size );
 
-  for( localIndex ii = 0 ; ii < size ; ++ii )
-    for( localIndex jj = 0 ; jj < 3 ; ++jj )
+  for( localIndex ii = 0; ii < size; ++ii )
+    for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
 
   buffer_unit_type * null_buf = NULL;
-  localIndex expected_size = (sizeof(int) + sizeof(localIndex))*2 + (sizeof(R1Tensor)*size);
-  localIndex calc_size = bufferOps::PackDevice< policy, false >( null_buf, veloc.toViewConst() );
-  EXPECT_EQ( calc_size, expected_size );
+  localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );
 
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  bufferOps::PackDevice< policy, true >( buffer, veloc.toViewConst());
+  bufferOps::PackDevice< true >( buffer, veloc.toViewConst());
 
   buffer_unit_type const * cbuffer = &buf[0];
-  bufferOps::UnpackDevice< policy >( cbuffer, unpacked.toView());
+  bufferOps::UnpackDevice( cbuffer, unpacked.toView());
   unpacked.move( chai::CPU );
-  for( localIndex ii = 0 ; ii < size ; ++ii )
+  for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
 
@@ -183,32 +174,28 @@ TEST( testPacking, testPackByIndexDevice )
   array1d< localIndex > indices( pack_count );
   array1d< R1Tensor > unpacked( size );
 
-  for( localIndex ii = 0 ; ii < size ; ++ii )
-    for( localIndex jj = 0 ; jj < 3 ; ++jj )
+  for( localIndex ii = 0; ii < size; ++ii )
+    for( localIndex jj = 0; jj < 3; ++jj )
       veloc[ii][jj] = drand();
 
-  for( localIndex ii = 0 ; ii < pack_count ; ++ii )
+  for( localIndex ii = 0; ii < pack_count; ++ii )
     indices[ii] = std::rand() % size;
 
   // std::sort(indices.begin(),indices.end())
 
   buffer_unit_type * null_buf = NULL;
   // [ num_dim, stride_i.. , tensor_0, tensor_1, ..., tensor_n ]
-  LvArray::ArrayView< R1Tensor const, 1 > const & veloc_view = veloc.toViewConst();
-  localIndex calc_size = bufferOps::PackByIndexDevice< policy, false >( null_buf, veloc_view, indices.toViewConst());
-  localIndex expected_size = sizeof(int) + // num_dim = 1
-                             sizeof(localIndex) + // stride_i
-                             sizeof(R1Tensor) * pack_count; // len_j + data (3 * double)
-  EXPECT_EQ( calc_size, expected_size );
+  arrayView1d< R1Tensor const > const & veloc_view = veloc.toViewConst();
+  localIndex calc_size = bufferOps::PackByIndexDevice< false >( null_buf, veloc_view, indices.toViewConst());
   buffer_type buf( calc_size );
   buffer_unit_type * buffer = &buf[0];
-  localIndex packed_size = bufferOps::PackByIndexDevice< policy, true >( buffer, veloc_view, indices.toViewConst());
+  localIndex packed_size = bufferOps::PackByIndexDevice< true >( buffer, veloc_view, indices.toViewConst());
   EXPECT_EQ ( calc_size, packed_size );
   buffer_unit_type const * cbuffer = &buf[0];
-  localIndex unpacked_size = bufferOps::UnpackByIndexDevice< policy >( cbuffer, unpacked.toView(), indices.toViewConst());
+  localIndex unpacked_size = bufferOps::UnpackByIndexDevice( cbuffer, unpacked.toView(), indices.toViewConst());
   EXPECT_EQ ( unpacked_size, packed_size );
   unpacked.move( chai::CPU );
-  for( localIndex ii = 0 ; ii < size ; ++ii )
+  for( localIndex ii = 0; ii < size; ++ii )
   {
     if( std::find( indices.begin(), indices.end(), ii ) != indices.end() )
     {

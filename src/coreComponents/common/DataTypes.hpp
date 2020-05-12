@@ -26,13 +26,17 @@
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/BufferAllocator.hpp"
+#include "common/DataLayouts.hpp"
 #include "Logger.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
-#include "cxx-utilities/src/ArrayOfArrays.hpp"
-#include "cxx-utilities/src/ArrayOfSets.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
+
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
 
@@ -57,11 +61,6 @@
 #include <vector>
 #include <set>
 
-/// macro definition to specify whether or not to use dynamic_cast
-#ifndef USE_DYNAMIC_CASTING
-  #define USE_DYNAMIC_CASTING 1
-#endif
-
 /**
  * top level geosx namespace contains all code that is specific to GEOSX
  */
@@ -74,21 +73,12 @@ namespace geosx
  * @tparam EXISTING_TYPE base type
  * @param val            base pointer to cast
  * @return               pointer cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
 {
   static_assert( std::is_pointer< NEW_TYPE >::value, "NEW_TYPE must be a pointer." );
-
-#if USE_DYNAMIC_CASTING
   return dynamic_cast< NEW_TYPE >( val );
-#else
-  return static_cast< NEW_TYPE >( val );
-#endif
 }
 
 /**
@@ -97,10 +87,6 @@ NEW_TYPE dynamicCast( EXISTING_TYPE * const val )
  * @tparam EXISTING_TYPE base type
  * @param val            base reference to cast
  * @return               reference cast to derived type or @p nullptr
- *
- * Depending on value of @p USE_DYNAMIC_CASTING, will use either
- * @p dynamic_cast or @p static_cast. The latter could result in undefined
- * behavior if the cast is invalid (e.g. EXISTING_TYPE not base of @p NEW_TYPE)
  */
 template< typename NEW_TYPE, typename EXISTING_TYPE >
 NEW_TYPE dynamicCast( EXISTING_TYPE & val )
@@ -109,7 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -152,9 +139,9 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef USE_CHAI
+#ifdef GEOSX_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
@@ -177,13 +164,13 @@ using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
-          int UNIT_STRIDE_DIM = NDIM - 1,
+          int USD = NDIM - 1,
           template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
-using ArrayView = LvArray::ArrayView< T, NDIM, UNIT_STRIDE_DIM, localIndex, DATA_VECTOR_TYPE >;
+using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, DATA_VECTOR_TYPE >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
-template< typename T, int NDIM, int UNIT_STRIDE_DIM = NDIM - 1 >
-using ArraySlice = LvArray::ArraySlice< T, NDIM, UNIT_STRIDE_DIM, localIndex >;
+template< typename T, int NDIM, int USD = NDIM - 1 >
+using ArraySlice = LvArray::ArraySlice< T, NDIM, USD, localIndex >;
 
 /// Multidimensional stack-based array type. See LvArray:StackArray for details.
 template< typename T, int NDIM, int MAXSIZE, typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
@@ -205,8 +192,8 @@ template< typename T >
 using arrayView1d = ArrayView< T, 1 >;
 
 /// Alias for 1D array slice.
-template< typename T, int UNIT_STRIDE_DIM = 0 >
-using arraySlice1d = ArraySlice< T, 1, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 0 >
+using arraySlice1d = ArraySlice< T, 1, USD >;
 
 /// Alias for 1D stack array.
 template< typename T, int MAXSIZE >
@@ -217,12 +204,12 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 2 > >
 using array2d = Array< T, 2, PERMUTATION >;
 
 /// Alias for 2D array view.
-template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arrayView2d = ArrayView< T, 2, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 1 >
+using arrayView2d = ArrayView< T, 2, USD >;
 
 /// Alias for 2D array slice.
-template< typename T, int UNIT_STRIDE_DIM = 1 >
-using arraySlice2d = ArraySlice< T, 2, UNIT_STRIDE_DIM >;
+template< typename T, int USD = 1 >
+using arraySlice2d = ArraySlice< T, 2, USD >;
 
 /// Alias for 2D stack array.
 template< typename T, int MAXSIZE >
@@ -233,48 +220,57 @@ template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 3 > >
 using array3d = Array< T, 3, PERMUTATION >;
 
 /// Alias for 3D array view.
-template< typename T, int UNIT_STRIDE_DIM=2 >
-using arrayView3d = ArrayView< T, 3, UNIT_STRIDE_DIM >;
+template< typename T, int USD=2 >
+using arrayView3d = ArrayView< T, 3, USD >;
 
 /// Alias for 3D array slice.
-template< typename T, int UNIT_STRIDE_DIM=2 >
-using arraySlice3d = ArraySlice< T, 3, UNIT_STRIDE_DIM >;
+template< typename T, int USD=2 >
+using arraySlice3d = ArraySlice< T, 3, USD >;
 
 /// Alias for 3D stack array.
 template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 /// Alias for 4D array.
-template< typename T >
-using array4d = Array< T, 4 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T >
-using arrayView4d = ArrayView< T, 4 >;
+template< typename T, int USD=3 >
+using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T >
-using arraySlice4d = ArraySlice< T, 4 >;
+template< typename T, int USD=4 >
+using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
 /// Alias for 5D array.
-template< typename T >
-using array5d = Array< T, 5 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T >
-using arrayView5d = ArrayView< T, 5 >;
+template< typename T, int USD=4 >
+using arrayView5d = ArrayView< T, 5, USD >;
 
 /// Alias for 5D array slice.
-template< typename T >
-using arraySlice5d = ArraySlice< T, 5 >;
+template< typename T, int USD=4 >
+using arraySlice5d = ArraySlice< T, 5, 4 >;
 
 /// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
+
+
+/// Alias for CRS Matrix class.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex >;
+
+/// Alias for CRS Matrix View.
+template< typename T, typename COL_INDEX=localIndex >
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const >;
 
 ///@}
 
@@ -285,7 +281,7 @@ using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
 /// A set of local indices.
 template< typename T >
-using set = LvArray::SortedArray< T, localIndex >;
+using set = std::set< T >;
 
 /// A sorted array of local indices.
 template< typename T >
@@ -319,6 +315,7 @@ template< typename T >
 using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
 
 ///@}
+
 
 /**
  * @name Ordered and unordered map types.
@@ -383,85 +380,42 @@ using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false >
 ///@{
 
 using integer_array        = array1d< integer >;
-using integer_const_array  = array1d< integer const >;
 
 using real32_array        = array1d< real32 >;
-using real32_const_array  = array1d< real32 const >;
 
 using real64_array        = array1d< real64 >;
-using real64_const_array  = array1d< real64 const >;
 
 using string_array        = array1d< string >;
-using string_const_array  = array1d< string const >;
 
 using path_array        = array1d< Path >;
-using path_const_array  = array1d< Path const >;
 
 using localIndex_array        = array1d< localIndex >;
-using localIndex_const_array  = array1d< localIndex const >;
 
 using globalIndex_array        = array1d< globalIndex >;
-using globalIndex_const_array  = array1d< globalIndex const >;
-
-using mpiBuffer = array1d< char >;
-
-using integer_set        = set< integer >;
-using integer_const_set  = set< integer const >;
-
-using real32_set        = set< real32 >;
-using real32_const_set  = set< real32 const >;
-
-using real64_set        = set< real64 >;
-using real64_const_set  = set< real64 const >;
-
-using string_set        = set< string >;
-using string_const_set  = set< string const >;
-
-using localIndex_set        = set< localIndex >;
-using localIndex_const_set  = set< localIndex const >;
-
-using globalIndex_set        = set< globalIndex >;
-using globalIndex_const_set  = set< globalIndex const >;
 
 
 
 using integer_array2d       = array2d< integer >;
-using integer_const_array2d = array2d< integer const >;
 
 using real32_array2d       = array2d< real32 >;
-using real32_const_array2d = array2d< real32 const >;
 
 using real64_array2d       = array2d< real64 >;
-using real64_const_array2d = array2d< real64 const >;
-
-using string_array2d       = array2d< string >;
-using string_const_array2d = array2d< string const >;
 
 using localIndex_array2d       = array2d< localIndex >;
-using localIndex_const_array2d = array2d< localIndex const >;
 
 using globalIndex_array2d       = array2d< globalIndex >;
-using globalIndex_const_array2d = array2d< globalIndex const >;
 
 
 
 using integer_array3d       = array3d< integer >;
-using integer_const_array3d = array3d< integer const >;
 
 using real32_array3d       = array3d< real32 >;
-using real32_const_array3d = array3d< real32 const >;
 
 using real64_array3d       = array3d< real64 >;
-using real64_const_array3d = array3d< real64 const >;
-
-using string_array3d       = array3d< string >;
-using string_const_array3d = array3d< string const >;
 
 using localIndex_array3d       = array3d< localIndex >;
-using localIndex_const_array3d = array3d< localIndex const >;
 
 using globalIndex_array3d       = array3d< globalIndex >;
-using globalIndex_const_array3d = array3d< globalIndex const >;
 
 ///@}
 
@@ -555,7 +509,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 
@@ -587,6 +541,7 @@ public:
     globalIndex_array2d_id,//!< globalIndex_array2d_id
     real32_array2d_id,     //!< real32_array2d_id
     real64_array2d_id,     //!< real64_array2d_id
+    real64_array2d_ji_id,   //!< real64_array2d_ji_id
     r1_array2d_id,         //!< r1_array2d_id
     r2_array2d_id,         //!< r2_array2d_id
     r2Sym_array2d_id,      //!< r2Sym_array2d_id
@@ -596,6 +551,7 @@ public:
     globalIndex_array3d_id,//!< globalIndex_array3d_id
     real32_array3d_id,     //!< real32_array3d_id
     real64_array3d_id,     //!< real64_array3d_id
+    real64_array3d_kji_id,  //!< real64_array3d_kji_id
 
     string_id,           //!< string_id
     Path_id,             //!< Path_id
@@ -604,58 +560,6 @@ public:
     mapPair_array_id,    //!< mapPair_array_id
     none_id              //!< none_id
   };
-
-  /**
-   * @brief Return a TypeID value given a name.
-   * @param name the string of the type
-   * @return a TypeIDs value corresponding to the input string
-   */
-  static TypeIDs typeID( string const & name )
-  {
-    const std::unordered_map< string, TypeIDs > type_names =
-    {
-      { "integer", TypeIDs::integer_id },
-      { "localIndex", TypeIDs::localIndex_id },
-      { "globalIndex", TypeIDs::globalIndex_id },
-      { "real32", TypeIDs::real32_id },
-      { "real64", TypeIDs::real64_id },
-      { "R1Tensor", TypeIDs::r1Tensor_id },
-      { "R2Tensor", TypeIDs::r2Tensor_id },
-      { "R2SymTensor", TypeIDs::r2SymTensor_id },
-      { "integer_array", TypeIDs::integer_array_id },
-      { "localIndex_array", TypeIDs::localIndex_array_id },
-      { "globalIndex_array", TypeIDs::globalIndex_array_id },
-      { "real32_array", TypeIDs::real32_array_id },
-      { "real64_array", TypeIDs::real64_array_id },
-      { "r1_array", TypeIDs::r1_array_id },
-      { "r2_array", TypeIDs::r2_array_id },
-      { "r2Sym_array", TypeIDs::r2Sym_array_id },
-
-      { "integer_array2d", TypeIDs::integer_array2d_id },
-      { "localIndex_array2d", TypeIDs::localIndex_array2d_id },
-      { "globalIndex_array2d", TypeIDs::globalIndex_array2d_id },
-      { "real32_array2d", TypeIDs::real32_array2d_id },
-      { "real64_array2d", TypeIDs::real64_array2d_id },
-      { "r1_array2d", TypeIDs::r1_array2d_id },
-      { "r2_array2d", TypeIDs::r2_array2d_id },
-      { "r2Sym_array2d", TypeIDs::r2Sym_array2d_id },
-
-      { "integer_array3d", TypeIDs::integer_array3d_id },
-      { "localIndex_array3d", TypeIDs::localIndex_array3d_id },
-      { "globalIndex_array3d", TypeIDs::globalIndex_array3d_id },
-      { "real32_array3d", TypeIDs::real32_array3d_id },
-      { "real64_array3d", TypeIDs::real64_array3d_id },
-
-      { "string", TypeIDs::string_id },
-      { "Path", TypeIDs::Path_id },
-      { "string_array", TypeIDs::string_array_id },
-      { "path_array", TypeIDs::path_array_id },
-      { "map_array", TypeIDs::path_array_id },
-      { "mapPair_array", TypeIDs::mapPair_array_id },
-      { "", TypeIDs::none_id }
-    };
-    return type_names.at( name );
-  }
 
   /**
    * @brief Return a TypeID enum given a std::type_index.
@@ -688,6 +592,7 @@ public:
       { std::type_index( typeid(globalIndex_array2d)), TypeIDs::globalIndex_array2d_id },
       { std::type_index( typeid(real32_array2d)), TypeIDs::real32_array2d_id },
       { std::type_index( typeid(real64_array2d)), TypeIDs::real64_array2d_id },
+      { std::type_index( typeid(array2d< real64, RAJA::PERM_JI >)), TypeIDs::real64_array2d_ji_id },
       { std::type_index( typeid(r1_array2d)), TypeIDs::r1_array2d_id },
       { std::type_index( typeid(r2_array2d)), TypeIDs::r2_array2d_id },
       { std::type_index( typeid(r2Sym_array2d)), TypeIDs::r2Sym_array2d_id },
@@ -697,6 +602,7 @@ public:
       { std::type_index( typeid(globalIndex_array3d)), TypeIDs::globalIndex_array3d_id },
       { std::type_index( typeid(real32_array3d)), TypeIDs::real32_array3d_id },
       { std::type_index( typeid(real64_array3d)), TypeIDs::real64_array3d_id },
+      { std::type_index( typeid(array3d< real64, RAJA::PERM_KJI >)), TypeIDs::real64_array3d_kji_id },
 
       { std::type_index( typeid(string)), TypeIDs::string_id },
       { std::type_index( typeid(Path)), TypeIDs::Path_id },
@@ -740,7 +646,17 @@ private:
         subPattern = constructArrayRegex( subPattern, dimension-1 );
       }
 
-      std::string arrayPattern = "\\{(" + subPattern + ",\\s*)*" + subPattern + "\\}";
+      std::string arrayPattern;
+      if( dimension == 1 )
+      {
+        // Allow the bottom-level to be empty
+        arrayPattern = "\\{\\s*((" + subPattern + ",\\s*)*" + subPattern + ")?\\s*\\}";
+      }
+      else
+      {
+        arrayPattern = "\\{\\s*(" + subPattern + ",\\s*)*" + subPattern + "\\s*\\}";
+      }
+
       return arrayPattern;
     }
 
@@ -765,9 +681,9 @@ private:
 
     // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
     // These are identical aside from the number of repetitions in the curly brackets
-    std::string r1 = "(" + rr + ",\\s*){2}" + rr;
-    std::string r2 = "(" + rr + ",\\s*){8}" + rr;
-    std::string r2s = "(" + rr + ",\\s*){5}" + rr;
+    std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
+    std::string r2 = "\\s*(" + rr + ",\\s*){8}" + rr;
+    std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
     std::unordered_map< std::string, std::string > regexMap =
@@ -802,11 +718,13 @@ private:
       {"real32_array3d", constructArrayRegex( rr, 3 )},
       {"real64_array3d", constructArrayRegex( rr, 3 )},
       {"string", rs},
-      {"Path", rs},
+      {"path", rs},
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )}
+      {"mapPair_array", constructArrayRegex( rs, 1 )},
+      {"geosx_TimeIntegrationOption", rs},
+      {"geosx_dataRepository_PlotLevel", ri}
     };
 
 public:
@@ -835,74 +753,6 @@ public:
      */
     std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
-
-
-  /**
-   * @brief this function provides a switchyard for the intrinsic supported GEOSX types which calls a generic lambda
-   *        that takes in a single argument which may be used to infer type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyIntrinsicTypeLambda1( const TypeIDs type,
-                                         LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ) );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ) );
-      }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
-      }
-    }
-  }
-
-
 
   /**
    * @brief this function provides a switchyard for the intrinsic supported GEOSX array types which calls a generic
@@ -949,6 +799,14 @@ public:
       case ( TypeIDs::r2Sym_array_id ):
       {
         return lambda( r2Sym_array( 1 ) );
+      }
+      case ( TypeIDs::real64_array2d_id ):
+      {
+        return lambda( array2d< real64 > {} );
+      }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI > {} );
       }
       default:
       {
@@ -1027,6 +885,10 @@ public:
       {
         return lambda( real64_array2d(), real64( 1 ) );
       }
+      case ( TypeIDs::real64_array2d_ji_id ):
+      {
+        return lambda( array2d< real64, RAJA::PERM_JI >(), real64( 1 ) );
+      }
       case ( TypeIDs::r1_array2d_id ):
       {
         return lambda( r1_array2d(), R1Tensor() );
@@ -1059,358 +921,16 @@ public:
       {
         return lambda( real64_array3d(), real64( 1 ) );
       }
+      case ( TypeIDs::real64_array3d_kji_id ):
+      {
+        return lambda( array3d< real64, RAJA::PERM_KJI >(), real64( 1 ) );
+      }
       default:
       {
         if( errorIfTypeNotFound )
         {
           GEOSX_ERROR( "TypeID not recognized." );
         }
-      }
-    }
-  }
-
-  /**
-   * @brief this function provides a switchyard for the supported GEOSX types which calls a generic lambda
-   *        that takes in a single argument which may be used to infer type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyTypeLambda1( const TypeIDs type,
-                                LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ) );
-      }
-      case ( TypeIDs::localIndex_array_id ):
-      {
-        return lambda( localIndex_array( 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array_id ):
-      {
-        return lambda( globalIndex_array( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ) );
-      }
-      case ( TypeIDs::r1_array_id ):
-      {
-        return lambda( r1_array( 1 ) );
-      }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ) );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ) );
-      }
-      case ( TypeIDs::integer_array2d_id ):
-      {
-        return lambda( integer_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::localIndex_array2d_id ):
-      {
-        return lambda( localIndex_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array2d_id ):
-      {
-        return lambda( globalIndex_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::real32_array2d_id ):
-      {
-        return lambda( real32_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::real64_array2d_id ):
-      {
-        return lambda( real64_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::r1_array2d_id ):
-      {
-        return lambda( r1_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::r2_array2d_id ):
-      {
-        return lambda( r2_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::r2Sym_array2d_id ):
-      {
-        return lambda( r2Sym_array2d( 1, 1 ) );
-      }
-      case ( TypeIDs::integer_array3d_id ):
-      {
-        return lambda( integer_array3d( 1, 1, 1 ) );
-      }
-      case ( TypeIDs::localIndex_array3d_id ):
-      {
-        return lambda( localIndex_array3d( 1, 1, 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array3d_id ):
-      {
-        return lambda( globalIndex_array3d( 1, 1, 1 ) );
-      }
-      case ( TypeIDs::real32_array3d_id ):
-      {
-        return lambda( real32_array3d( 1, 1, 1 ) );
-      }
-      case ( TypeIDs::real64_array3d_id ):
-      {
-        return lambda( real64_array3d( 1, 1, 1 ) );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ) );
-      }
-      case ( TypeIDs::string_array_id ):
-      {
-        return lambda( string_array( 1 ) );
-      }
-      case ( TypeIDs::path_array_id ):
-      {
-        return lambda( path_array( 1 ) );
-      }
-      case ( TypeIDs::mapPair_array_id ):
-      {
-        return lambda( mapPair_array() );
-      }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
-        return lambda( double(1) );
-      }
-    }
-  }
-
-
-  /**
-   * @brief this function provides a switchyard for the intrinsic supported GEOSX types which calls a generic
-   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyTypeLambda2( const TypeIDs type,
-                                LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor(), R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor(), R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor(), R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::localIndex_array_id ):
-      {
-        return lambda( localIndex_array( 1 ), localIndex( 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array_id ):
-      {
-        return lambda( globalIndex_array( 1 ), globalIndex( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1_array_id ):
-      {
-        return lambda( r1_array( 1 ), R1Tensor() );
-      }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ), R2SymTensor() );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ), string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ), Path( "" ) );
-      }
-      case ( TypeIDs::string_array_id ):
-      {
-        return lambda( string_array( 1 ), string( "" ) );
-      }
-      case ( TypeIDs::path_array_id ):
-      {
-        return lambda( path_array( 1 ), Path( "" ) );
-      }
-      // case ( TypeIDs::mapPair_array_id ):
-      // {
-      //   return lambda( mapPair_array(1), mapPair({}) );
-      // }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
-      }
-    }
-  }
-
-
-  /**
-   * @brief this function provides a switchyard for the supported GEOSX types which calls a generic
-   *        lambda that takes in a two arguments argument which may be used to infer array type and underlying type.
-   * @tparam LAMBDA the template arg that represents the lambda function
-   * @param type the TypeIDs we would like to pass to the lambda function
-   * @param lambda the lambda function to call
-   * @return the return type of lambda
-   */
-  template< typename LAMBDA >
-  static auto ApplyIntrinsicTypeLambda2( const TypeIDs type,
-                                         LAMBDA lambda )
-  {
-    switch( type )
-    {
-      case ( TypeIDs::integer_id ):
-      {
-        return lambda( integer( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_id ):
-      {
-        return lambda( real32( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_id ):
-      {
-        return lambda( real64( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::r1Tensor_id ):
-      {
-        return lambda( R1Tensor(), R1Tensor() );
-      }
-      case ( TypeIDs::r2Tensor_id ):
-      {
-        return lambda( R2Tensor(), R2Tensor() );
-      }
-      case ( TypeIDs::r2SymTensor_id ):
-      {
-        return lambda( R2SymTensor(), R2SymTensor() );
-      }
-      case ( TypeIDs::integer_array_id ):
-      {
-        return lambda( integer_array( 1 ), integer( 1 ) );
-      }
-      case ( TypeIDs::real32_array_id ):
-      {
-        return lambda( real32_array( 1 ), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array_id ):
-      {
-        return lambda( real64_array( 1 ), real64( 1 ) );
-      }
-      case ( TypeIDs::string_id ):
-      {
-        return lambda( string( "" ), string( "" ) );
-      }
-      case ( TypeIDs::Path_id ):
-      {
-        return lambda( Path( "" ), Path( "" ) );
-      }
-      case ( TypeIDs::string_array_id ):
-      {
-        return lambda( string_array( 1 ), string( "" ) );
-      }
-      case ( TypeIDs::path_array_id ):
-      {
-        return lambda( path_array( 1 ), Path( "" ) );
-      }
-      case ( TypeIDs::integer_array2d_id ):
-      {
-        return lambda( integer_array2d(), integer( 1 ) );
-      }
-      case ( TypeIDs::localIndex_array2d_id ):
-      {
-        return lambda( localIndex_array2d(), localIndex( 1 ) );
-      }
-      case ( TypeIDs::globalIndex_array2d_id ):
-      {
-        return lambda( globalIndex_array2d(), globalIndex() );
-      }
-      case ( TypeIDs::real32_array2d_id ):
-      {
-        return lambda( real32_array2d(), real32( 1 ) );
-      }
-      case ( TypeIDs::real64_array2d_id ):
-      {
-        return lambda( real64_array2d(), real64( 1 ) );
-      }
-      //  case ( TypeIDs::mapPair_array_id ):
-      //  {
-      //    return lambda( mapPair_array(1), mapPair({}) );
-      //  }
-      default:
-      {
-        GEOSX_ERROR( "TypeID not recognized." );
       }
     }
   }

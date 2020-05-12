@@ -1,19 +1,15 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 /**
@@ -23,182 +19,42 @@
 #ifndef SRC_CODINGUTILITIES_SFINAE_HPP_
 #define SRC_CODINGUTILITIES_SFINAE_HPP_
 
-#include "cxx-utilities/src/Macros.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/templateHelpers.hpp"
 
-
-/** This macro creates a struct that has a static member "value" which returns
-   true if the typename "TT" has a
- *  datamember "NAME".
+/**
+ * @brief Macro that expands to a static constexpr bool templated on two types that is only true when
+ *        the first type has a method @p NAME which takes arguments @p __VA_ARGS__ which may contain the second
+ *        template type. The name of the boolean variable is HasMemberFunction_ ## @p NAME.
+ * @param NAME The name of the method to look for.
+ * @param T The name of the template type in the argument list.
+ * @param __VA_ARGS__ The argument list to call the method with.
+ * @note The class type is available through the name CLASS.
+ * @note This doesn't check that the templated class method instantiation is valid, only that a
+ *       matching method was found.
  */
-#define HAS_MEMBER_DATA( NAME ) \
-  template<typename TT> \
-  struct has_datamember_ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( std::declval<U>().NAME, bool() ) \
-    { \
-      return std::is_member_object_pointer<decltype(&U::NAME)>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
-
-#define HAS_STATIC_MEMBER_DATA( NAME ) \
-  template<typename TT> \
-  struct has_staticdatamember_ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( U::NAME, bool() ) \
-    { \
-      return !std::is_function< decltype(U::NAME) >::value && !std::is_member_object_pointer<decltype(&U::NAME)>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
+#define HAS_MEMBER_FUNCTION_TEMPLATE_NO_RTYPE( NAME, T, ... ) \
+  IS_VALID_EXPRESSION_2( HasMemberFunction_ ## NAME, CLASS, T, std::declval< CLASS >().NAME( __VA_ARGS__ ) )
 
 
+/**
+ * @brief Macro that expands to a static constexpr bool templated on a type that is only true when
+ *        the type has a method @p NAME which takes arguments @p __VA_ARGS__ and whose return value is convertible
+ *        to @p RTYPE. The name of the boolean variable is HasMemberFunction_ ## @p NAME.
+ * @param NAME The name of the method to look for.
+ * @param RTYPE The type to attempt to convert the return value to.
+ * @param __VA_ARGS__ The argument list to call the method with.
+ * @note The class type is available through the name CLASS.
+ */
+#define HAS_MEMBER_FUNCTION( NAME, RTYPE, ... ) \
+  IS_VALID_EXPRESSION( HasMemberFunction_ ## NAME, CLASS, \
+                       std::is_convertible< decltype( std::declval< CLASS >().NAME( __VA_ARGS__ ) ), RTYPE >::value )
 
-#define HAS_MEMBER_FUNCTION_NAME( NAME ) \
-  template<typename TT > \
-  struct has_memberfunction_name_ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( std::is_member_function_pointer<decltype(&U::NAME)>::value, bool() ) \
-    { \
-      return std::is_member_function_pointer<decltype(&U::NAME)>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
-
-
-#define HAS_MEMBER_FUNCTION_VARIANT( NAME, VARIANT, RTYPE, CONST, PARAMS, ARGS ) \
-  template<typename TT > \
-  struct has_memberfunction_v ## VARIANT ## _ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( static_cast<RTYPE (U::*)( PARAMS ) CONST>(&U::NAME), bool() ) \
-    { \
-      return std::is_same< decltype( std::declval<U>().NAME( ARGS ) ), RTYPE>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
-
-#define HAS_MEMBER_FUNCTION( NAME, RTYPE, CONST, PARAMS, ARGS ) \
-  template<typename TT > \
-  struct has_memberfunction_ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( static_cast<RTYPE (U::*)( PARAMS ) CONST>(&U::NAME), bool() ) \
-    { \
-      return std::is_same< decltype( std::declval<U>().NAME( ARGS ) ), RTYPE>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
-
-
-#define HAS_STATIC_MEMBER_FUNCTION( NAME, RTYPE, ... ) \
-  template<typename TT> \
-  struct has_staticmemberfunction_ ## NAME \
-  { \
-private: \
-    template<typename U> static constexpr auto test( int )->decltype( U::NAME( __VA_ARGS__ ), bool() ) \
-    { \
-      return std::is_same< decltype( U::NAME( __VA_ARGS__ ) ), RTYPE>::value; \
-    } \
-    template<typename U> static constexpr auto test( ... )->bool \
-    { \
-      return false; \
-    } \
-public: \
-    static constexpr bool value = test<TT>( 0 ); \
-  };
-
-
-#define HAS_ENUM( NAME ) \
-  template<typename TT > \
-  struct has_enum_ ## NAME \
-  { \
-private: \
-    template<typename U> static auto test( int )->typename std::enable_if<std::is_enum< typename U::NAME >::value, std::true_type>::type; \
-    template<typename U> static auto test( ... )->std::false_type; \
-public: \
-    static constexpr bool value = decltype(test<TT>( 0 ))::value; \
-  };
-
+/**
+ * @brief Macro that expands to a static constexpr bool templated on a type that is only true when
+ *        the type has a an alias @p NAME. The name of the boolean variable is HasAlias_ ## @p NAME.
+ */
 #define HAS_ALIAS( NAME ) \
-  template<typename TT> \
-  struct has_alias_ ## NAME \
-  { \
-private: \
-    template<typename U> static auto test( int )->typename std::enable_if<!std::is_enum< typename U::NAME >::value, std::true_type>::type; \
-    template<typename U> static auto test( ... )->std::false_type; \
-public: \
-    static constexpr bool value = !(std::is_same<decltype(test<TT>( 0 )), std::false_type>::value); \
-  };
-
-
-
-#define CONDITIONAL_VIRTUAL_FUNCTION( CLASSNAME, FUNCNAME, RTYPE, CONST, PARAMS, ARGS ) \
-  template<typename U=T, bool has = has_memberfunction_ ## FUNCNAME<U>::value > \
-  struct wrapper ## FUNCNAME \
-  { \
-    RTYPE f( ... ) {return RTYPE(); } \
-  }; \
-  template<typename U> \
-  struct wrapper ## FUNCNAME<U, true> \
-  { \
-    RTYPE f( CLASSNAME * const obj, PARAMS ) \
-    { \
-      return (*obj).m_data->FUNCNAME( ARGS ); \
-    } \
-  }; \
-  virtual RTYPE FUNCNAME( PARAMS ) CONST override final \
-  { \
-    wrapper ## FUNCNAME<T> temp; \
-    return temp.f( this, ARGS ); \
-  }
-
-#define CONDITIONAL_VIRTUAL_FUNCTION0( CLASSNAME, FUNCNAME, RTYPE, CONST ) \
-  template<typename U=T, bool has = has_memberfunction_ ## FUNCNAME<U>::value > \
-  struct wrapper ## FUNCNAME \
-  { \
-    RTYPE f( ... ) {return RTYPE(); } \
-  }; \
-  template<typename U> \
-  struct wrapper ## FUNCNAME<U, true> \
-  { \
-    RTYPE f( CLASSNAME CONST * const obj ) \
-    { \
-      return (*obj).m_data->FUNCNAME(); \
-    } \
-  }; \
-  virtual RTYPE FUNCNAME() CONST override final \
-  { \
-    wrapper ## FUNCNAME<T> temp; \
-    return temp.f( this ); \
-  }
+  IS_VALID_EXPRESSION( HasAlias_ ## NAME, CLASS, !std::is_enum< typename CLASS::NAME >::value )
 
 #endif /* SRC_CODINGUTILITIES_SFINAE_HPP_ */

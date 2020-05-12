@@ -24,38 +24,37 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 OutputBase::OutputBase( std::string const & name,
                         Group * const parent ):
-  ExecutableGroup( name, parent),
+  ExecutableGroup( name, parent ),
   m_slaveDirectory(),
-  m_parallelThreads(1)
+  m_parallelThreads( 1 )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper(viewKeysStruct::slaveDirectoryString, &m_slaveDirectory, false )->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("slave directory path");
+  registerWrapper( viewKeysStruct::slaveDirectoryString, &m_slaveDirectory )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "slave directory path" );
 
-  registerWrapper(viewKeysStruct::parallelThreadsString, &m_parallelThreads, false )->
-    setApplyDefaultValue(1)->
-    setInputFlag(InputFlags::OPTIONAL)->
-    setDescription("Number of plot files.");
+  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads )->
+    setApplyDefaultValue( 1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Number of plot files." );
 
 }
 
 OutputBase::~OutputBase()
 {}
 
-OutputBase::CatalogInterface::CatalogType& OutputBase::GetCatalog()
+OutputBase::CatalogInterface::CatalogType & OutputBase::GetCatalog()
 {
   static OutputBase::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
 
-void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_ARG( group ) )
+void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group ) )
 {
   // This command doesn't seem to work anymore
   // SetupDirectoryStructure();
@@ -66,14 +65,14 @@ void OutputBase::SetupDirectoryStructure()
 {
   string slaveDirectory = m_slaveDirectory;
 
-  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX);
-  if (rank  == 0)
+  int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  if( rank  == 0 )
   {
-    if (!slaveDirectory.empty())
+    if( !slaveDirectory.empty())
     {
       string cmd = "mkdir -p " + slaveDirectory;
-      int ret = std::system(cmd.c_str());
-      GEOSX_ERROR_IF(ret != 0, "Command '" << cmd << "' exited with code " << std::to_string(ret));
+      int ret = std::system( cmd.c_str());
+      GEOSX_ERROR_IF( ret != 0, "Command '" << cmd << "' exited with code " << std::to_string( ret ));
     }
   }
 }

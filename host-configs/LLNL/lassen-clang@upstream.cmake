@@ -1,4 +1,4 @@
-include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/cxx-utilities/host-configs/lassen-clang@upstream.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../src/coreComponents/LvArray/host-configs/LLNL/lassen-clang@upstream.cmake)
 
 # asmjit doesn't work on PowerPC
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")
@@ -26,6 +26,8 @@ set(ESSL_LIBRARIES /usr/tcetmp/packages/essl/essl-6.2/lib64/libesslsmpcuda.so
                    ${GEOSX_TPL_ROOT_DIR}/liblapackforesslgeosx.a
                    /usr/tce/packages/xl/xl-beta-2019.06.20/alllibs/libxl.a
                    CACHE PATH "")
+
+set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
 
 set(PETSC_OMP_DIR ${GEOSX_TPL_ROOT_DIR}/omp-links-for-petsc CACHE STRING "")
 

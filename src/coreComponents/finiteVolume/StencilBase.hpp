@@ -62,9 +62,9 @@ public:
    * @param[in] connectorIndex The index of the connector element that the stencil acts across
    */
   virtual void add( localIndex const numPts,
-                    localIndex  const * const elementRegionIndices,
-                    localIndex  const * const elementSubRegionIndices,
-                    localIndex  const * const elementIndices,
+                    localIndex const * const elementRegionIndices,
+                    localIndex const * const elementSubRegionIndices,
+                    localIndex const * const elementIndices,
                     real64 const * const weights,
                     localIndex const connectorIndex ) = 0;
 
@@ -87,48 +87,48 @@ public:
    * @brief Const access to the element regions indices
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const &  getElementRegionIndices() const { return m_elementRegionIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element subregions indices
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const &  getElementSubRegionIndices() const { return m_elementSubRegionIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
 
   /**
    * @brief Const access to the element indices
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::IndexContainerViewConstType const &  getElementIndices() const { return m_elementIndices; }
+  typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices.toViewConst(); }
 
   /**
    * @brief Const access to the stencil weights
    * @return A view to const
    */
-  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights; }
+  typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights.toViewConst(); }
 
 protected:
   /// The container for the element region indices for each point in each stencil
-  typename LEAFCLASSTRAITS::IndexContainerType  m_elementRegionIndices;
+  typename LEAFCLASSTRAITS::IndexContainerType m_elementRegionIndices;
 
   /// The container for the element sub region indices for each point in each stencil
-  typename LEAFCLASSTRAITS::IndexContainerType  m_elementSubRegionIndices;
+  typename LEAFCLASSTRAITS::IndexContainerType m_elementSubRegionIndices;
 
   /// The container for the element indices for each point in each stencil
-  typename LEAFCLASSTRAITS::IndexContainerType  m_elementIndices;
+  typename LEAFCLASSTRAITS::IndexContainerType m_elementIndices;
 
   /// The container for the weights for each point in each stencil
   typename LEAFCLASSTRAITS::WeightContainerType m_weights;
 
   /// The map that provides the stencil index given the index of the underlying connector object.
-  map<localIndex, localIndex> m_connectorIndices;
+  map< localIndex, localIndex > m_connectorIndices;
 
 };
 
 
 
 template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
-void StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::reserve( localIndex const size )
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::reserve( localIndex const size )
 {
   m_elementRegionIndices.reserve( size * 2 );
   m_elementSubRegionIndices.reserve( size * 2 );
@@ -138,16 +138,16 @@ void StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::reserve( localIndex const size )
 
 
 template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
-bool StencilBase<LEAFCLASSTRAITS,LEAFCLASS>::zero( localIndex const connectorIndex )
+bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connectorIndex )
 {
   return
-  executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
+    executeOnMapValue( m_connectorIndices, connectorIndex, [&]( localIndex const connectionListIndex )
   {
-    for (localIndex i = 0; i < static_cast<LEAFCLASS *>(this)->stencilSize(connectorIndex); ++i)
+    for( localIndex i = 0; i < static_cast< LEAFCLASS * >(this)->stencilSize( connectorIndex ); ++i )
     {
       m_weights[connectionListIndex][i] = 0;
     }
-  });
+  } );
 }
 } /* namespace geosx */
 

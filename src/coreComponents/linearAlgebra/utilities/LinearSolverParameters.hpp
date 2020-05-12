@@ -34,16 +34,18 @@ class LinearSolverParameters
 {
 public:
 
-  integer logLevel = 0;                //!< Output level [0=none, 1=basic, 2=everything]
-  string  solverType = "cg";           //!< Solver type [direct, cg, gmres, bicgstab]
-  string  preconditionerType = "ilut"; //!< Preconditioner type [none, ilu, ilut, icc, amg]
-  integer dofsPerNode = 1;             //!< Can be used to enable dense-block algorithms if available
+  integer logLevel = 0;                ///< Output level [0=none, 1=basic, 2=everything]
+  string solverType = "direct";        ///< Solver type [direct, cg, gmres, bicgstab, preconditioner]
+  string preconditionerType = "iluk";  ///< Preconditioner type [none, iluk, ilut, amg, mgr, block]
+  integer dofsPerNode = 1;             ///< Dofs per node (or support location) for non-scalar problems
 
   struct
   {
-    real64  tolerance = 1e-6;
-    integer maxIterations = 200;
-    integer maxRestart = 200;
+    real64 tolerance = 1e-6;          ///< Relative convergence tolerance for iterative solvers
+    integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
+    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
+    integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
+    real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
   }
   krylov;
 
@@ -57,19 +59,23 @@ public:
   struct
   {
     integer maxLevels = 20;
-    string  cycleType = "V";
-    string  smootherType = "gaussSeidel";
-    string  coarseType = "direct";
-    integer numSweeps = 2;
-    bool    isSymmetric = true;
-    string  nullSpaceType = "constantModes";
+    string cycleType = "V";
+    string smootherType = "gaussSeidel";
+    string coarseType = "direct";
+    integer numSweeps = 2;                  ///< Number of smoother sweeps (or polynomial degree if using Chebyshev)
+    string preOrPostSmoothing = "both";     ///< Pre and/or post smoothing [pre,post,both]
+    real64 aggregationThreshold = 0.0;
+    real64 threshold = 0.25;
+    bool isSymmetric = true;
+    bool separateComponents = false;
+    string nullSpaceType = "constantModes";
   }
   amg;
 
   struct
   {
     integer fill = 0;
-    real64  threshold = 0.0;
+    real64 threshold = 0.0;
   }
   ilu;
 
@@ -89,6 +95,30 @@ public:
    *
    */
   ~LinearSolverParameters() = default;
+
+  /**
+   * @brief Einsenstat-Walker adaptive tolerance
+   *
+   */
+  static real64 eisenstatWalker( real64 newNewtonNorm, real64 oldNewtonNorm )
+  {
+    const real64 weakTol = 1e-3;
+    const real64 strongTol = 1e-8;
+    const real64 exponent = 2.0;
+    const real64 gamma = 0.9;
+
+    real64 normRatio = newNewtonNorm / oldNewtonNorm;
+    if( normRatio > 1 ) normRatio = 1;
+
+    real64 newKrylovTol = gamma*std::pow( normRatio, exponent );
+    real64 altKrylovTol = gamma*std::pow( oldNewtonNorm, exponent );
+
+    real64 krylovTol = std::max( newKrylovTol, altKrylovTol );
+    krylovTol = std::min( krylovTol, weakTol );
+    krylovTol = std::max( krylovTol, strongTol );
+
+    return krylovTol;
+  };
 };
 
 } /* namespace geosx */
