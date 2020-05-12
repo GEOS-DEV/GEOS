@@ -158,9 +158,9 @@ public:
    * @param[in] wellElementGlobalToLocalMap the global to local map of wellbore elements
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void ConnectToWellElements( WellGeneratorBase                     const & wellGeometry,
-                              unordered_map<globalIndex,localIndex> const & globalToLocalWellElementMap,
-                              globalIndex                                   elemOffsetGlobal );
+  void ConnectToWellElements( WellGeneratorBase const & wellGeometry,
+                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
+                              globalIndex elemOffsetGlobal );
 
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {

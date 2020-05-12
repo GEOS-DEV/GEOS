@@ -35,14 +35,14 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   WellGeneratorBase( name, parent )
 {
   registerWrapper( keys::nodeCoords, &m_inputPolyNodeCoords )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("Physical coordinates of the well polyline nodes");
+    setInputFlag( InputFlags::REQUIRED )->
+    setSizedFromParent( 0 )->
+    setDescription( "Physical coordinates of the well polyline nodes" );
 
-  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap  )->
-    setInputFlag(InputFlags::REQUIRED)->
-    setSizedFromParent(0)->
-    setDescription("Connectivity of the polyline segments");
+  registerWrapper( keys::segmentConn, &m_segmentToPolyNodeMap )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setSizedFromParent( 0 )->
+    setDescription( "Connectivity of the polyline segments" );
 }
 
 InternalWellGenerator::~InternalWellGenerator()
@@ -84,11 +84,11 @@ void InternalWellGenerator::PostProcessInput()
 void InternalWellGenerator::GeneratePolyLine()
 {
   // convert the 2D array to an 1D array of R1Tensor
-  m_polyNodeCoords.resize( m_inputPolyNodeCoords.size(0) );
-  for (globalIndex inode = 0; inode < m_inputPolyNodeCoords.size(0); ++inode)
+  m_polyNodeCoords.resize( m_inputPolyNodeCoords.size( 0 ) );
+  for( globalIndex inode = 0; inode < m_inputPolyNodeCoords.size( 0 ); ++inode )
   {
-    R1Tensor coords = { m_inputPolyNodeCoords[inode][0], 
-                        m_inputPolyNodeCoords[inode][1], 
+    R1Tensor coords = { m_inputPolyNodeCoords[inode][0],
+                        m_inputPolyNodeCoords[inode][1],
                         m_inputPolyNodeCoords[inode][2] };
     m_polyNodeCoords[inode] = coords;
   }

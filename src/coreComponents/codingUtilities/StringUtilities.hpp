@@ -58,7 +58,7 @@ string_array Tokenize( std::string const & str, std::string const & delimiters )
  * @param[in] str the string to be trimmed
  * @param[in] d the de delimiters, default ones are whitespaces and tabulations
  */
-void TrimLeft(std::string& str, const std::string& d=" \t\n\r");
+void TrimLeft( std::string & str, const std::string & d=" \t\n\r" );
 
 /**
  * @brief Retuns a string containing a padded value

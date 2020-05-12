@@ -278,10 +278,10 @@ void PerforationData::ConnectToMeshElements( MeshLevel const & mesh,
   resize( iperfLocal );
   ConstructGlobalToLocalMap();
 
-}  
- 
+}
+
 void PerforationData::ConnectToWellElements( WellGeneratorBase const & wellGeometry,
-                                             unordered_map<globalIndex,localIndex> const & globalToLocalWellElemMap, 
+                                             unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
   arrayView1d< globalIndex const > const & perfElemIndexGlobal = wellGeometry.GetPerfElemIndex();

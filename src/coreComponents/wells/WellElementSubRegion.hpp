@@ -204,11 +204,11 @@ public:
    * @param[in] nodeOffsetGlobal the offset of the first global well node ( = offset of last global mesh node + 1 )
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
-  void Generate( MeshLevel                        & mesh, 
-                 WellGeneratorBase          const & wellGeometry,
-                 arrayView1d<integer>             & elemStatus,
-                 globalIndex                        nodeOffsetGlobal,
-                 globalIndex                        elemOffsetGlobal );
+  void Generate( MeshLevel & mesh,
+                 WellGeneratorBase const & wellGeometry,
+                 arrayView1d< integer > & elemStatus,
+                 globalIndex nodeOffsetGlobal,
+                 globalIndex elemOffsetGlobal );
   /**
    * @brief For each perforation, find the reservoir element that contains the perforation
    * @param[in] meshLevel the mesh object (single level only)

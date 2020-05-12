@@ -86,9 +86,9 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
 /**
    Remove white space from left of string
  **/
-void TrimLeft(std::string& str, const std::string& trimChars)
+void TrimLeft( std::string & str, const std::string & trimChars )
 {
-  str.erase(0,str.find_first_not_of(trimChars));
+  str.erase( 0, str.find_first_not_of( trimChars ));
 }
 
 }

@@ -22,7 +22,7 @@
 namespace geosx
 {
 
-namespace dataRepository 
+namespace dataRepository
 {
 namespace keys
 {
@@ -36,7 +36,7 @@ string const meshBodyName     = "meshName";
 
 class WellGeneratorBase : public MeshGeneratorBase
 {
-  public:
+public:
 
   // define the top and bottom node of a segment
   struct NodeLocation
@@ -44,7 +44,7 @@ class WellGeneratorBase : public MeshGeneratorBase
     static constexpr integer TOP = 0;
     static constexpr integer BOTTOM = 1;
   };
-  WellGeneratorBase( const std::string& name,
+  WellGeneratorBase( const std::string & name,
                      Group * const parent );
 
   /**
@@ -54,35 +54,35 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   /**
    * @return the name of this type in the catalog
-   */  
+   */
   static string CatalogName() { return "WellGeneratorBase"; }
 
   /// Expand object catalogs for schema generation
   virtual void ExpandObjectCatalogs() override;
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
-  virtual Group * CreateChild( string const & childKey, 
+  virtual Group * CreateChild( string const & childKey,
                                string const & childName ) override;
 
   /**
    * @brief main function of this class: processes the well input and creates the globla well topology
    * @param domain the physical domain object
-   */  
+   */
   virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
-  /// not implemented 
+  /// not implemented
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
-                                           int const * GEOSX_UNUSED_PARAM( index ),
-                                           int const & GEOSX_UNUSED_PARAM( iEle ),
-                                           int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
-                                           int const GEOSX_UNUSED_PARAM( size )) override {}
+                                             int const * GEOSX_UNUSED_PARAM( index ),
+                                             int const & GEOSX_UNUSED_PARAM( iEle ),
+                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
+                                             int const GEOSX_UNUSED_PARAM( size )) override {}
 
 
   /// not implemented
   virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
-     
+
   // getters for element data
 
   /**
@@ -92,40 +92,40 @@ class WellGeneratorBase : public MeshGeneratorBase
   globalIndex GetNumElements() const { return m_numElems; }
 
   /**
-   * @brief Getter for the physical location of the centers of well elements 
+   * @brief Getter for the physical location of the centers of well elements
    * @return list of center locations of the well elements
    */
-  arrayView1d<R1Tensor const> const & GetElemCoords() const { return m_elemCenterCoords; }
+  arrayView1d< R1Tensor const > const & GetElemCoords() const { return m_elemCenterCoords; }
 
   /**
    * @brief Getter for the global indices mapping an element to the previous ones
    * @return list providing the global indices of the previous elements for each element
    */
-  arrayView1d< arrayView1d<globalIndex const > const> const & GetPrevElemIndices() const { return m_prevElemId.toViewConst(); }
+  arrayView1d< arrayView1d< globalIndex const > const > const & GetPrevElemIndices() const { return m_prevElemId.toViewConst(); }
 
   /**
    * @brief Getter for the global indices mapping an element to the next
    * @return list providing the global index of the next element for each element
    */
-  arrayView1d<globalIndex const> const & GetNextElemIndex() const { return m_nextElemId; }
+  arrayView1d< globalIndex const > const & GetNextElemIndex() const { return m_nextElemId; }
 
   /**
    * @brief Getter for the global indices of the well nodes nodes connected to each element
    * @return list providing the global index of the well nodes for each well element
    */
-  arrayView2d<globalIndex const> const & GetElemToNodesMap() const { return m_elemToNodesMap; }
+  arrayView2d< globalIndex const > const & GetElemToNodesMap() const { return m_elemToNodesMap; }
 
   /**
-   * @brief Getter for the physical location of the centers of well elements 
+   * @brief Getter for the physical location of the centers of well elements
    * @return list of center locations of the well elements
    */
-  arrayView1d<R1Tensor const> const & GetNodeCoords() const { return m_nodeCoords; }
+  arrayView1d< R1Tensor const > const & GetNodeCoords() const { return m_nodeCoords; }
 
   /**
-   * @brief Getter for the volume of the well elements 
+   * @brief Getter for the volume of the well elements
    * @return list of volumes of the well elements
    */
-  arrayView1d<real64 const> const & GetElemVolume() const { return m_elemVolume; }
+  arrayView1d< real64 const > const & GetElemVolume() const { return m_elemVolume; }
 
   // getters for perforation data
 
@@ -133,19 +133,19 @@ class WellGeneratorBase : public MeshGeneratorBase
    * @brief Getter for the well Peaceman index at the perforations
    * @return list of well peaceman index at all the perforations on the well
    */
-  arrayView1d<real64 const> const & GetPerfTransmissibility() const { return m_perfTransmissibility; }
-  
+  arrayView1d< real64 const > const & GetPerfTransmissibility() const { return m_perfTransmissibility; }
+
   /**
    * @brief Getter for the locations of the perforations
    * @return list of locations of all the perforations on the well
    */
-  arrayView1d<R1Tensor const> const & GetPerfCoords() const { return m_perfCoords; }
+  arrayView1d< R1Tensor const > const & GetPerfCoords() const { return m_perfCoords; }
 
   /**
    * @brief Getter for the global indices of the well elements connected to each perforation
    * @return list providing the global index of the connected well element for each perforation
    */
-  arrayView1d<globalIndex const> const & GetPerfElemIndex() const { return m_perfElemId; }
+  arrayView1d< globalIndex const > const & GetPerfElemIndex() const { return m_perfElemId; }
 
   /**
    * @brief Getter for the radius in the well
@@ -167,7 +167,7 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   void DebugWellGeometry() const;
 
-  protected:
+protected:
   void PostProcessInput() override;
 
   virtual void GeneratePolyLine() = 0;
@@ -184,14 +184,14 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   /**
    * @brief Discretize the polyline by placing well elements
-   */  
+   */
   void DiscretizePolyline();
 
   /**
    * @brief Map each perforation to a well element
-   */  
+   */
   void ConnectPerforationsToWellElements();
- 
+
   /**
    * @brief Merge perforations on the elements with multiple perforations
    */
@@ -199,19 +199,19 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   /**
    * @brief At a given node, find the next segment going in the direction of the bottom of the well
-   */  
+   */
   globalIndex GetNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
 
-  protected:
+protected:
 
   // Basic information on the well, given by the input
-  
+
   /// Coordinates of the polyline
-  array2d<real64>      m_inputPolyNodeCoords;
+  array2d< real64 >      m_inputPolyNodeCoords;
 
   /// Connectivity between the polyline nodes
-  array2d<globalIndex> m_segmentToPolyNodeMap;
+  array2d< globalIndex > m_segmentToPolyNodeMap;
 
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
@@ -227,76 +227,76 @@ class WellGeneratorBase : public MeshGeneratorBase
 
   /// Name of the mesh body associated with this well
   string m_meshBodyName;
-  
+
   // Geometry of the well (later passed to the WellElementSubRegion)
 
   // well element data
 
   /// Global number of well elements
-  globalIndex          m_numElems;
+  globalIndex m_numElems;
   /// Physical location of the center of the well element
-  array1d<R1Tensor>    m_elemCenterCoords;
+  array1d< R1Tensor >    m_elemCenterCoords;
 
   /// Global indices of the prev well elements (maybe need multiple prevs for branching)
-  array1d< array1d<globalIndex> > m_prevElemId;
+  array1d< array1d< globalIndex > > m_prevElemId;
 
   /// Global index of the next well element
-  array1d<globalIndex> m_nextElemId;
+  array1d< globalIndex > m_nextElemId;
 
   /// Connectivity between elements and nodes
-  array2d<globalIndex> m_elemToNodesMap;
+  array2d< globalIndex > m_elemToNodesMap;
 
   /// Volume of well elements
-  array1d<real64> m_elemVolume;
+  array1d< real64 > m_elemVolume;
 
 
 
   /// Number of nodes per well element
-  globalIndex const    m_numNodesPerElem;
+  globalIndex const m_numNodesPerElem;
 
   /// Global number of well nodes
-  globalIndex          m_numNodes;
- 
-  /// Global number of perforations
-  globalIndex          m_numPerforations;
- 
-  /// Physical location of the nodes
-  array1d<R1Tensor>    m_nodeCoords;
+  globalIndex m_numNodes;
 
-  /// Absolute physical location of the perforation 
-  array1d<R1Tensor>    m_perfCoords;
+  /// Global number of perforations
+  globalIndex m_numPerforations;
+
+  /// Physical location of the nodes
+  array1d< R1Tensor >    m_nodeCoords;
+
+  /// Absolute physical location of the perforation
+  array1d< R1Tensor >    m_perfCoords;
 
   /// Well Peaceman index at the perforation
-  array1d<real64>      m_perfTransmissibility;
+  array1d< real64 >      m_perfTransmissibility;
 
   /// Global index of the well element
-  array1d<globalIndex> m_perfElemId;
+  array1d< globalIndex > m_perfElemId;
 
 
   // Other data
 
   // Number of physical dimensions
   const int m_nDims;
-  
+
   /// Coordinates of the polyline nodes in R1Tensor format
-  array1d<R1Tensor>           m_polyNodeCoords;
-  
+  array1d< R1Tensor >           m_polyNodeCoords;
+
   /// Map from the polyline nodes to the polyline nodes
-  array1d< SortedArray<globalIndex> > m_polyNodeToSegmentMap;
+  array1d< SortedArray< globalIndex > > m_polyNodeToSegmentMap;
 
   /// Index of the node at the well head
-  globalIndex     m_polylineHeadNodeId;
+  globalIndex m_polylineHeadNodeId;
 
   /// Physical location of the polyline node wrt to well head
-  array1d<real64> m_nodeDistFromHead;
+  array1d< real64 > m_nodeDistFromHead;
 
   // Perforation data
 
   /// List of perforation names
-  string_array    m_perforationList;
+  string_array m_perforationList;
 
   /// Physical location of the perforation wrt to well head
-  array1d<real64> m_perfDistFromHead;
+  array1d< real64 > m_perfDistFromHead;
 
 };
 } // namespace

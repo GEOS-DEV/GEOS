@@ -222,10 +222,10 @@ void ElementRegionManager::GenerateWells( MeshManager * const meshManager,
     // get the global well geometry from the well generator
     string const generatorName = wellRegion.GetWellGeneratorName();
     WellGeneratorBase const * const wellGeometry =
-    meshManager->GetGroup<WellGeneratorBase>( generatorName );
+      meshManager->GetGroup< WellGeneratorBase >( generatorName );
 
     GEOSX_ERROR_IF( wellGeometry == nullptr,
-                  "WellGenerator " << generatorName << " not found in well " << wellRegion.getName() );
+                    "WellGenerator " << generatorName << " not found in well " << wellRegion.getName() );
 
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in WellGenerator)

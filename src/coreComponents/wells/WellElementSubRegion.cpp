@@ -385,7 +385,7 @@ void WellElementSubRegion::Generate( MeshLevel & mesh,
   SortedArray< globalIndex > & unownedElems = elemSetsByStatus[WellElemStatus::UNOWNED];
 
   // here we make sure that there are no shared elements
-  // this is enforced in the WellGeneratorBase that currently merges two perforations 
+  // this is enforced in the WellGeneratorBase that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOSX_ERROR_IF( sharedElems.size() > 0,

@@ -39,42 +39,42 @@ TEST( LASImport, testXML )
 
   // Check if the information sections are the same
   integer informationSectionIndex = 0;
-  lasFile_saved.forInformationSections([&]( auto & informationSection )
+  lasFile_saved.forInformationSections( [&]( auto & informationSection )
   {
-    informationSection->forLines([&]( auto & line )
+    informationSection->forLines( [&]( auto & line )
     {
       EXPECT_EQ( line.GetUnit(),
-          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetUnit() );
+                 lasFile.GetInformationSection( informationSectionIndex ).GetLine( line.GetKeyword() ).GetUnit() );
       EXPECT_EQ( line.GetDescription(),
-          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetDescription() );
+                 lasFile.GetInformationSection( informationSectionIndex ).GetLine( line.GetKeyword() ).GetDescription() );
       EXPECT_EQ( line.GetData(),
-          lasFile.GetInformationSection( informationSectionIndex).GetLine( line.GetKeyword() ).GetData() );
-    });
+                 lasFile.GetInformationSection( informationSectionIndex ).GetLine( line.GetKeyword() ).GetData() );
+    } );
     informationSectionIndex++;
-  });
+  } );
 
   // Check if the log sections are the same
   integer logSectionIndex = 0;
   real64 tolerance = 1e-5;
-  lasFile_saved.forLogSections([&]( auto & logSection )
+  lasFile_saved.forLogSections( [&]( auto & logSection )
   {
-    for( integer logIndex = 0; logIndex < logSection.NbLogs() ; logIndex++ )
+    for( integer logIndex = 0; logIndex < logSection.NbLogs(); logIndex++ )
     {
       auto log1 = logSection.GetLog( logIndex );
-      auto log2 = lasFile.GetLogSection(logSectionIndex).GetLog( logIndex );
+      auto log2 = lasFile.GetLogSection( logSectionIndex ).GetLog( logIndex );
       for( integer entryIndex = 0; entryIndex < logSection.LogSize(); entryIndex++ )
       {
-        EXPECT_LE( ( log1[entryIndex] - log2[entryIndex] ) / log2[entryIndex], tolerance);
+        EXPECT_LE( ( log1[entryIndex] - log2[entryIndex] ) / log2[entryIndex], tolerance );
       }
     }
-  });
+  } );
 
 }
 
-int main(int argc, char** argv)
+int main( int argc, char * * argv )
 {
-  ::testing::InitGoogleTest(&argc, argv);
-  geosx::basicSetup( argc, argv);
+  ::testing::InitGoogleTest( &argc, argv );
+  geosx::basicSetup( argc, argv );
 
   int const result = RUN_ALL_TESTS();
 

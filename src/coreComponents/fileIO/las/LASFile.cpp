@@ -50,21 +50,23 @@ void LASLine::ParseLine( string const & line )
 
     if( curType == TYPE::MNEM )
     {
-      if( c == ' ') continue;
-      m_keywordname.push_back(c);
+      if( c == ' ' )
+        continue;
+      m_keywordname.push_back( c );
     }
     else if( curType == TYPE::UNITS )
     {
-      m_unit.push_back(c);
+      m_unit.push_back( c );
     }
     else if( curType == TYPE::DATA )
     {
-      if( c == ' ') continue;
-      m_data.push_back(c);
+      if( c == ' ' )
+        continue;
+      m_data.push_back( c );
     }
     else if( curType == TYPE::DESCRIPTION )
     {
-      m_description.push_back(c);
+      m_description.push_back( c );
     }
   }
   stringutilities::TrimLeft( m_description );
@@ -72,29 +74,30 @@ void LASLine::ParseLine( string const & line )
 
 std::streampos LASSection::ParseSection( std::ifstream & file )
 {
-   string curLine;
-   std::streampos pos = file.tellg();
-   while ( std::getline(file, curLine) )
-   {
-     stringutilities::TrimLeft( curLine );
-     if( curLine[0] == '#' ) continue;
-     if( curLine[0] == '~' )                // We reach a new section
-     {
-       break;
-     }
-     pos = file.tellg();
-     ParseLine( curLine );
-   }
-   return pos;
+  string curLine;
+  std::streampos pos = file.tellg();
+  while( std::getline( file, curLine ) )
+  {
+    stringutilities::TrimLeft( curLine );
+    if( curLine[0] == '#' )
+      continue;
+    if( curLine[0] == '~' )                 // We reach a new section
+    {
+      break;
+    }
+    pos = file.tellg();
+    ParseLine( curLine );
+  }
+  return pos;
 }
 
 void LASInformationSection::WriteSection( std::ofstream & file ) const
 {
   file << "~" << GetName() << " Section\n";
-  this->forLines([&]( auto & line )
+  this->forLines( [&]( auto & line )
   {
     file << line.GetLine() << "\n";
-  });
+  } );
 }
 
 LASLine const & LASInformationSection::GetLine( string const & keyword ) const
@@ -123,9 +126,9 @@ bool LASInformationSection::HasKeyword( string const & keyword ) const
 }
 localIndex LASWellInformationSection::GetNumberOfLogEntries() const
 {
-  real64 start = GetLine("STRT").GetDataAsReal64();
-  real64 stop = GetLine("STOP").GetDataAsReal64();
-  real64 step = GetLine("STEP").GetDataAsReal64();
+  real64 start = GetLine( "STRT" ).GetDataAsReal64();
+  real64 stop = GetLine( "STOP" ).GetDataAsReal64();
+  real64 step = GetLine( "STEP" ).GetDataAsReal64();
 
   real64 length = stop - start;
   return std::round( length / step ) +1;
@@ -135,7 +138,7 @@ void LASInformationSection::ParseLine( string const & line )
 {
   LASLine curLine( line );
   GEOSX_ERROR_IF( HasKeyword( curLine.GetKeyword() ) != 0, "Keyword " << curLine.GetKeyword()
-                 << " was already defined in "<< GetName() );
+                                                                      << " was already defined in "<< GetName() );
   m_lines.push_back( curLine );
 }
 
@@ -175,15 +178,16 @@ void LASASCIILogDataSection::ParseLine( string const & line )
   m_count++;
 }
 
-void LASFile::Load( string const& fileName )
+void LASFile::Load( string const & fileName )
 {
   std::ifstream file( fileName );
   GEOSX_ERROR_IF( !file.is_open(), "Can't open " << fileName );
   string curLine;
-  while ( std::getline(file, curLine) )
+  while( std::getline( file, curLine ) )
   {
     stringutilities::TrimLeft( curLine );
-    if( curLine[0] == '#' ) continue;  // Comment
+    if( curLine[0] == '#' )
+      continue;                        // Comment
 
     if( curLine[0] == '~' )            // Section
     {
@@ -197,8 +201,8 @@ void LASFile::Load( string const& fileName )
       }
       else
       {
-        LASWellInformationSection * lastWellInformationSection = GetLastSection<LASWellInformationSection>();
-        LASCurveInformationSection * lastCurveInformationSection = GetLastSection<LASCurveInformationSection>();
+        LASWellInformationSection * lastWellInformationSection = GetLastSection< LASWellInformationSection >();
+        LASCurveInformationSection * lastCurveInformationSection = GetLastSection< LASCurveInformationSection >();
         LASASCIILogDataSection curLASASCIISection( lastWellInformationSection->GetNumberOfLogEntries(),
                                                    lastCurveInformationSection->GetNumberOfCurves() );
         std::streampos curPos = curLASASCIISection.ParseSection( file );
@@ -210,7 +214,7 @@ void LASFile::Load( string const& fileName )
   file.close();
 }
 
-void LASFile::Save( string const& fileName ) const
+void LASFile::Save( string const & fileName ) const
 {
   std::ofstream file( fileName );
   file << "# LAS Log file written by GEOSX" << "\n";
@@ -226,7 +230,7 @@ void LASFile::Save( string const& fileName ) const
     }
     informationSection->WriteSection( file );
     sectionsOutputed.insert( informationSection->GetName() );
-  });
+  } );
   if( countLog == 0 )
   {
     GEOSX_ASSERT( m_lasASCIILogDataSection.size() == 1 );
@@ -239,18 +243,18 @@ void LASFile::Save( string const& fileName ) const
   file.close();
 }
 
-arraySlice1d< real64> LASFile::GetLog( string const & logName ) const
+arraySlice1d< real64 > LASFile::GetLog( string const & logName ) const
 {
   if( !HasLog( logName ) )
   {
-    GEOSX_ERROR( logName << " not found in LAS file");
+    GEOSX_ERROR( logName << " not found in LAS file" );
   }
   localIndex logSectionIndex = 0;
   for( auto const & section :  m_lasInformationSections )
   {
     if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
     {
-      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( section.get() );
+      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection * >( section.get() );
       if( lasCurve->HasKeyword( logName ) )
       {
         localIndex logIndex = lasCurve->FindLogIndex( logName );
@@ -263,22 +267,22 @@ arraySlice1d< real64> LASFile::GetLog( string const & logName ) const
       }
     }
   }
-  return m_lasASCIILogDataSection[0].GetLog(0); // should never be reached
+  return m_lasASCIILogDataSection[0].GetLog( 0 ); // should never be reached
 }
 
 
-localIndex LASFile::LogSize( string const& logName ) const
+localIndex LASFile::LogSize( string const & logName ) const
 {
   if( !HasLog( logName ) )
   {
-    GEOSX_ERROR( logName << " not found in LAS file");
+    GEOSX_ERROR( logName << " not found in LAS file" );
   }
   localIndex logSectionIndex = 0;
   for( auto const & section : m_lasInformationSections )
   {
     if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
     {
-      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection* > ( section.get() );
+      LASCurveInformationSection * lasCurve = dynamic_cast< LASCurveInformationSection * >( section.get() );
       if( lasCurve->HasKeyword( logName ) )
       {
         GEOSX_ASSERT( lasCurve->FindLogIndex( logName ) > -1 );
@@ -299,7 +303,7 @@ bool LASFile::HasLog( string const & logName ) const
   {
     if( section->GetName() == LASCurveInformationSection::GetNameStatic() )
     {
-      if ( section->HasKeyword( logName ) )
+      if( section->HasKeyword( logName ) )
       {
         return true;
       }
@@ -319,8 +323,8 @@ T * LASFile::GetLastSection()
       return dynamic_cast< T * >( section.get() );
     }
   }
-  GEOSX_ERROR(" LAS Log file  is not valid: Log Data Section was " <<
-             " declared before the " << T::GetNameStatic() << " section");
+  GEOSX_ERROR( " LAS Log file  is not valid: Log Data Section was " <<
+               " declared before the " << T::GetNameStatic() << " section" );
   return nullptr;
 }
 
@@ -328,23 +332,23 @@ std::unique_ptr< LASInformationSection > LASInformationSection::CreateLASInforma
 {
   if( name == 'V' )          // Version Information
   {
-    return std::unique_ptr < LASVersionInformationSection > ( new LASVersionInformationSection() );
+    return std::unique_ptr< LASVersionInformationSection >( new LASVersionInformationSection() );
   }
   else if( name == 'W' )     // Well Information
   {
-    return std::unique_ptr< LASWellInformationSection > ( new LASWellInformationSection() );
+    return std::unique_ptr< LASWellInformationSection >( new LASWellInformationSection() );
   }
   else if( name == 'C' )     // Curve Information
   {
-    return std::unique_ptr< LASCurveInformationSection > ( new LASCurveInformationSection() );
+    return std::unique_ptr< LASCurveInformationSection >( new LASCurveInformationSection() );
   }
   else if( name == 'P' )     // Parameter Information
   {
-    return std::unique_ptr< LASParameterInformationSection > ( new LASParameterInformationSection() );
+    return std::unique_ptr< LASParameterInformationSection >( new LASParameterInformationSection() );
   }
   else if( name == 'O' )     // Other Information
   {
-    return std::unique_ptr< LASOtherInformationSection > ( new LASOtherInformationSection() );
+    return std::unique_ptr< LASOtherInformationSection >( new LASOtherInformationSection() );
   }
   else
   {

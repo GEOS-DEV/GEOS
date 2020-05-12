@@ -37,8 +37,8 @@ class LASLine;
 
 class LASWellGenerator : public WellGeneratorBase
 {
-  public:
-  LASWellGenerator( const std::string& name,
+public:
+  LASWellGenerator( const std::string & name,
                     Group * const parent );
 
 
@@ -49,16 +49,16 @@ class LASWellGenerator : public WellGeneratorBase
 
   /**
    * @return the name of this type in the catalog
-   */  
+   */
   static string CatalogName() { return "LASWell"; }
 
 
   /// not implemented
-  virtual void GenerateElementRegions( DomainPartition& GEOSX_UNUSED_PARAM( domain ) ) override {}
+  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   virtual void GeneratePolyLine() override final;
 
-  /// not implemented 
+  /// not implemented
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
                                              int const * GEOSX_UNUSED_PARAM( index ),
                                              int const & GEOSX_UNUSED_PARAM( iEle ),
@@ -68,10 +68,10 @@ class LASWellGenerator : public WellGeneratorBase
   /// not implemented
   virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
-  protected:
+protected:
   void PostProcessInput() override final;
 
-  private:
+private:
   void GeneratePolyLineFromXYZ( LASFile const & lasFile );
 
   void GeneratePolyLineFromDepth( LASFile const & lasFile );
@@ -80,7 +80,7 @@ class LASWellGenerator : public WellGeneratorBase
    * @brief Get the factor to conver input unit into meters
    */
   real64 GetFactor( LASLine const & lasLine );
-  private:
+private:
 
   /// Path to the LAS file
   string m_fileName;

@@ -39,12 +39,12 @@ string const segmentConn      = "polylineSegmentConn";
  * @class InternalWellGenerator
  *
  * This class processes the data of a single well from the XML and generates the well geometry
- */  
+ */
 class InternalWellGenerator : public WellGeneratorBase
 {
 public:
 
-  InternalWellGenerator( const std::string& name,
+  InternalWellGenerator( const std::string & name,
                          Group * const parent );
 
   /**
@@ -60,7 +60,7 @@ public:
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
-  /// not implemented 
+  /// not implemented
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
                                              int const * GEOSX_UNUSED_PARAM( index ),
                                              int const & GEOSX_UNUSED_PARAM( iEle ),
