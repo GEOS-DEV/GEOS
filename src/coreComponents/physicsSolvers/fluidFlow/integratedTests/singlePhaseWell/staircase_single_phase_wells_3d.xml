@@ -55,24 +55,22 @@
                   wellRegionName="wellRegion1"
                   wellControlsName="wellControls1"
                   meshName="mesh1"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   fileName="well_producer.las"
                   numElementsPerSegment="20">
         <Perforation name="producer1_perf1"
-                     distanceFromHead="11.95"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="11.95" />
     </LASWell> 
 
     <LASWell name="well_injector1"
                   wellRegionName="wellRegion2"
                   wellControlsName="wellControls2"
                   meshName="mesh1"
-                  crossSectionArea="0.3"
+                  radius="0.1"
                   fileName="well_injector.las"
                   numElementsPerSegment="30">
         <Perforation name="injector1_perf1"
-                     distanceFromHead="2.45"
-                     transmissibility="1e-12"/> 
+                     distanceFromHead="2.45"/>
     </LASWell> 
 
 
@@ -83,7 +81,7 @@
     <PeriodicEvent name="outputs"
                    timeFrequency="5e3"
                    targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
+                   target="/Outputs/vtkOuputLAS" />
 
     <PeriodicEvent name="solverApplications"
                    forceDt="5e3"
@@ -174,7 +172,7 @@
   </FieldSpecifications>
 
   <Outputs>
-    <Silo name="siloOutput"/>
+    <VTK name="vtkOuputLAS"/>
     <Restart name="restartOutput"/>
   </Outputs>
 </Problem>
