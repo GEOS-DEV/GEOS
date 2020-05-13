@@ -97,5 +97,6 @@ int main( int argc, char *argv[] )
 
   basicCleanup();
 
+  std::cout<<"leaving main"<<std::endl;
   return 0;
 }
