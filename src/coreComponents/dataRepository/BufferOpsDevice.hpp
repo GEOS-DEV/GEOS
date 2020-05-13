@@ -32,6 +32,10 @@ namespace geosx
 namespace bufferOps
 {
 
+  //std::map< localIndex, parallelDeviceEvent > neighborPackEvents;
+  extern parallelDeviceEvent * currentPackEvent;
+
+
 //------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T, int NDIM, int USD >
 typename std::enable_if< can_memcpy< T >, localIndex >::type

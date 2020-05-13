@@ -806,7 +806,20 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {
+    bufferOps::currentPackEvent = &neighbor.packEvent;
     neighbor.PackCommBufferForSync( fieldNames, *mesh, icomm.commID, on_device );
+  }
+  
+  // this causes all the packing kernels to finish prior to launching the compute kernels
+  //  getting the originally intended result of using async+streams
+  localIndex completed = 0;
+  localIndex nb_idx = 0;
+  while ( completed < neighbors.size() )
+  {
+    if(neighbors[nb_idx].packEvent.check()) 
+    {
+      completed++;
+    }
   }
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
@@ -819,6 +832,7 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
 
+    /// need to ensure the corresponding async pack operation has completed by this point
     neighbor.MPI_iSendReceiveBuffers( icomm.commID,
                                       icomm.mpiSendBufferRequest[neighborIndex],
                                       icomm.mpiRecvBufferRequest[neighborIndex],

@@ -25,6 +25,8 @@
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/IntegerConversion.hpp"
 
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
 namespace geosx
 {
 inline int CommTag( int const GEOSX_UNUSED_PARAM( senderRank ),
@@ -331,6 +333,8 @@ public:
 
   void AddNeighborGroupToMesh( MeshLevel & mesh ) const;
 
+
+  parallelDeviceEvent packEvent;
 private:
   int m_neighborRank;
 
@@ -349,6 +353,7 @@ private:
   MPI_Status m_mpiSendBufferStatus[maxComm];
   MPI_Status m_mpiRecvBufferStatus[maxComm];
 };
+
 
 
 

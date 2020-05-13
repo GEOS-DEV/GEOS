@@ -52,8 +52,9 @@ using parallelDeviceReduce = RAJA::cuda_reduce;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
 using parallelDeviceStream = RAJA::resources::Resource;
+using parallelDeviceEvent = RAJA::resources::Event;
 
-inline parallelDeviceStream getCudaStream( )
+inline parallelDeviceStream getDeviceStream( )
 {
   return RAJA::resources::Cuda();
 }
@@ -67,7 +68,16 @@ using parallelDeviceAsync  = parallelHostPolicy;
 using parallelDeviceReduce = parallelHostReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
 
-using parallelDeviceStream = localIndex;
+struct parallelDeviceEvent
+{
+  inline bool check( ) { return true; }
+  inline void wait( ) { return; }
+};
+struct parallelDeviceStream 
+{ 
+  inline void wait_for( parallelDeviceEvent * GEOSX_UNUSED_PARAM( event ) ) { return; }
+};
+
 
 #endif
 
@@ -79,11 +89,11 @@ RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
 
 
 template< typename POLICY, typename RESOURCE, typename LAMBDA >
-RAJA_INLINE void forAll( RESOURCE && res, const localIndex end, LAMBDA && body )
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && res, const localIndex end, LAMBDA && body )
 {
-  RAJA::forall< POLICY >( std::forward< RESOURCE>( res ),  
-			  RAJA::TypedRangeSegment< localIndex >( 0, end ), 
-			  std::forward< LAMBDA >( body ) );
+  return RAJA::forall< POLICY >( std::forward< RESOURCE >( res ),  
+				 RAJA::TypedRangeSegment< localIndex >( 0, end ), 
+				 std::forward< LAMBDA >( body ) );
 }
 
 } // namespace geosx

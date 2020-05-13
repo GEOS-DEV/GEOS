@@ -5,6 +5,7 @@ namespace geosx
 
 namespace bufferOps
 {
+parallelDeviceEvent * currentPackEvent = NULL;
 
 template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
@@ -106,8 +107,8 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
   buffer_unit_type * const devBuffer = buffer;
   if( DO_PACKING )
   {
-    parallelDeviceStream stream_resource = getCudaStream();
-    forAll< parallelDeviceAsync< > >( stream_resource, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
+    parallelDeviceStream streamResource = getDeviceStream();
+    *currentPackEvent = forAll< parallelDeviceAsync< > >( streamResource, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
       buffer_unit_type * threadBuffer = devBuffer + ii * unitSize;
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T const & value )
@@ -116,7 +117,6 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
         threadBuffer += sizeof( T );
       } );
     } );
-
     buffer += numIndices * unitSize;
   }
 
@@ -135,8 +135,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
   localIndex numIndices = indices.size();
   buffer_unit_type const * devBuffer = buffer;
   localIndex unitSize = var.size() / var.size( 0 ) * sizeof(T);
-  parallelDeviceStream stream_resource = getCudaStream();
-  forAll< parallelDeviceAsync< > >( stream_resource, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
+  parallelDeviceStream streamResource = getDeviceStream();
+  parallelDeviceEvent unpackEvent = forAll< parallelDeviceAsync< > >( streamResource, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
   {
     buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
     LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
@@ -145,7 +145,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
       threadBuffer += sizeof( T );
     } );
   } );
-
+  unpackEvent.wait();
   localIndex avSize = numIndices * unitSize;
   sizeOfPackedChars += avSize;
   buffer += avSize;
