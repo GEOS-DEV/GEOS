@@ -110,6 +110,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   Group & nodeSets = nodeManager->sets();
+  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( "all" ) )->reference();
+
   R1Tensor xMax( std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min(),
                  std::numeric_limits< real64 >::min());
@@ -130,6 +132,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     X( vertexLocalIndex, 0 ) = verticesIterator->get_coordinates().x * m_scale;
     X( vertexLocalIndex, 1 ) = verticesIterator->get_coordinates().y * m_scale;
     X( vertexLocalIndex, 2 ) = verticesIterator->get_coordinates().z * m_scale * zReverseFactor;
+    allNodes.insert( vertexLocalIndex );
 
     nodeLocalToGlobal[vertexLocalIndex] = vertexGlobalIndex;
     for( int i = 0; i < 3; i++ )

@@ -27,8 +27,8 @@ class HypreMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for ... .
+ * \class HypreSolver
+ * \brief This class creates and provides basic support for Hypre solvers.
  */
 
 class HypreSolver
