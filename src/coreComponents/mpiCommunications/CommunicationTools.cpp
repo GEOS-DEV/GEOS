@@ -797,6 +797,12 @@ void CommunicationTools::SynchronizePackSendRecv( const std::map< string, string
 {
   GEOSX_MARK_FUNCTION;
 
+  // currently each neighbord in neighbors array has a seperate pack buffer
+  // might want to combine the allocation of the buffers and just give each one an offset
+  // but that is probably less important than moving the kernel launch for all neighbor packing
+  // up to this loop
+
+
   MPI_iCommData sizeComm;
   for( NeighborCommunicator & neighbor : neighbors )
   {

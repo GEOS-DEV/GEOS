@@ -57,7 +57,7 @@ PackDevice( buffer_unit_type * & buffer,
   packedSize += PackPointerDevice< DO_PACKING >( buffer, var.strides(), NDIM );
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+    forAll< parallelDeviceAsync< > >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
     {
       reinterpret_cast< std::remove_const_t< T > * >( buffer )[ ii ] = var.data()[ ii ];
     } );
@@ -84,7 +84,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
     GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
   }
 
-  forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
+  forAll< parallelDeviceAsync< > >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
   {
     var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
   } );
@@ -93,11 +93,11 @@ UnpackDevice( buffer_unit_type const * & buffer,
   return packedSize;
 }
 
-template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
+ template< bool DO_PACKING, typename T, int NDIM, int USD, typename T_INDICES >
 typename std::enable_if< can_memcpy< T >, localIndex >::type
 PackByIndexDevice ( buffer_unit_type * & buffer,
                     ArrayView< T const, NDIM, USD > const & var,
-                    const T_INDICES & indices )
+                    const T_INDICES & indices)
 {
   localIndex const numIndices = indices.size();
   localIndex const unitSize = var.size() / var.size( 0 ) * sizeof( T );
@@ -106,7 +106,8 @@ PackByIndexDevice ( buffer_unit_type * & buffer,
   buffer_unit_type * const devBuffer = buffer;
   if( DO_PACKING )
   {
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
+    parallelDeviceStream stream_resource = getCudaStream();
+    forAll< parallelDeviceAsync< > >( stream_resource, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
     {
       buffer_unit_type * threadBuffer = devBuffer + ii * unitSize;
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T const & value )
@@ -134,7 +135,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
   localIndex numIndices = indices.size();
   buffer_unit_type const * devBuffer = buffer;
   localIndex unitSize = var.size() / var.size( 0 ) * sizeof(T);
-  forAll< parallelDevicePolicy<> >( numIndices, [=] GEOSX_DEVICE ( localIndex const i )
+  parallelDeviceStream stream_resource = getCudaStream();
+  forAll< parallelDeviceAsync< > >( stream_resource, numIndices, [=] GEOSX_DEVICE ( localIndex const i )
   {
     buffer_unit_type const * threadBuffer = devBuffer + i * unitSize;
     LvArray::forValuesInSlice( var[ indices[ i ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
