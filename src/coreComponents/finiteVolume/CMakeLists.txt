@@ -9,6 +9,7 @@ set( finiteVolume_headers
      FluxApproximationBase.hpp
      TwoPointFluxApproximation.hpp
      FluxStencil.hpp
+     HybridFVMInnerProduct.hpp
    )
 #
 # Specify all sources
@@ -20,9 +21,14 @@ set( finiteVolume_sources
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
      TwoPointFluxApproximation.cpp
+     HybridFVMInnerProduct.cpp     
    )
 
-set( dependencyList dataRepository codingUtilities managers )
+if ( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository codingUtilities managers)
+else()
+  set( dependencyList common)
+endif()
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
@@ -36,7 +42,7 @@ blt_add_library( NAME                  finiteVolume
                  SOURCES               ${finiteVolume_sources}
                  HEADERS               ${finiteVolume_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

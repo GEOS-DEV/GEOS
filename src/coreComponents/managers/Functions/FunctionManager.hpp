@@ -30,23 +30,14 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-  FunctionManager( const std::string& name,
-                      dataRepository::Group * const parent );
+  FunctionManager( const std::string & name,
+                   dataRepository::Group * const parent );
   virtual ~FunctionManager() override;
 
-  static FunctionManager * Instance()
+  static FunctionManager & Instance()
   {
-    static FunctionManager * theFunctionManager = nullptr;
-    if (theFunctionManager == nullptr)
-    {
-      theFunctionManager = new FunctionManager("Functions", nullptr); 
-    }
+    static FunctionManager theFunctionManager( "Functions", nullptr );
     return theFunctionManager;
-  }
-
-  static void finalize()
-  {
-    delete Instance();
   }
 
   static string CatalogName() { return "FunctionManager"; }
@@ -54,7 +45,7 @@ public:
 
   /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
-  
+
 };
 
 

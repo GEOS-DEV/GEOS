@@ -5,31 +5,43 @@
 #
 set( fileIO_headers
      silo/SiloFile.hpp
-     vtk/VTKFile.hpp
-     vtm/VtmFile.hpp
-     schema/SchemaUtilities.hpp
-     utils/utils.hpp )
+     schema/schemaUtilities.hpp )
 
 #
 # Specify all sources
 #
 set( fileIO_sources
      silo/SiloFile.cpp
-     vtk/VTKFile.cpp
-     vtm/VtmFile.cpp
-     schema/SchemaUtilities.cpp )
+     schema/schemaUtilities.cpp )
 
-set( dependencyList common silo hdf5 pugixml RAJA  )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common silo hdf5 pugixml RAJA  )
+else()
+  set( dependencyList common silo pugixml RAJA  )
+endif()
 
 if( ENABLE_MPI )
   add_subdirectory(coupling/hdf5_interface)
   set( dependencyList ${dependencyList} mpi hdf5_interface)
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp )
-endif()
+endif() 
 
-if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} conduit conduit_relay conduit_blueprint )
+if( ENABLE_VTK )
+  list( APPEND fileIO_headers
+               vtk/VTKPVDWriter.hpp
+               vtk/VTKVTMWriter.hpp
+               vtk/VTKGEOSXData.hpp
+               vtk/VTKPolyDataWriterInterface.hpp )
+
+  list( APPEND fileIO_sources
+               vtk/VTKGEOSXData.cpp
+               vtk/VTKPVDWriter.cpp
+               vtk/VTKVTMWriter.cpp
+               vtk/VTKPolyDataWriterInterface.cpp )
+
+
+  list( APPEND dependencyList vtk )
 endif()
 
 if( ENABLE_OPENMP )
@@ -44,11 +56,9 @@ blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
 geosx_add_code_checks(PREFIX fileIO )
-
-add_subdirectory( unitTests )

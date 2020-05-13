@@ -28,7 +28,8 @@
 
 // System includes
 #include <string>
-#include <mpi.h>
+
+/// @cond DO_NOT_DOCUMENT
 
 #define CONDUIT_TYPE_INFO( T, CONDUIT_TYPE ) \
   template<> \
@@ -38,7 +39,7 @@
     static constexpr int id = CONDUIT_TYPE ## _ID; \
     static constexpr int sizeOfConduitType = sizeof( type ); \
     static constexpr int numConduitValues = sizeof( T ) / sizeOfConduitType; \
-    static_assert( sizeof( T ) % sizeOfConduitType == 0, "T cannot be made made up of CONDUIT_TYPE." ); \
+    static_assert( sizeof( T ) % sizeOfConduitType == 0, #T " cannot be made made up of " #CONDUIT_TYPE "." ); \
   }
 
 namespace geosx
@@ -85,11 +86,15 @@ using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::rem
 
 extern conduit::Node rootConduitNode;
 
+std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
+
 void writeTree( std::string const & path );
 
 void loadTree( std::string const & path );
 
 } // namespace dataRepository
 } // namespace geosx
+
+/// @endcond
 
 #endif /* GEOSX_DATAREPOSITORY_CONDUITRESTART_HPP_ */

@@ -35,7 +35,7 @@ using namespace dataRepository;
 
 
 
-SymbolicFunction::SymbolicFunction( const std::string& name,
+SymbolicFunction::SymbolicFunction( const std::string & name,
                                     Group * const parent ):
   FunctionBase( name, parent )
 #ifdef GEOSX_USE_MATHPRESSO
@@ -43,13 +43,13 @@ SymbolicFunction::SymbolicFunction( const std::string& name,
   parserExpression()
 #endif
 {
-  registerWrapper<string_array>(keys::variableNames)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("List of variables in expression.  The order must match the evaluate argument");
+  registerWrapper< string_array >( keys::variableNames )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "List of variables in expression.  The order must match the evaluate argument" );
 
-  registerWrapper<string>(keys::expression)->
-    setInputFlag(InputFlags::REQUIRED)->
-    setDescription("Symbolic math expression");
+  registerWrapper< string >( keys::expression )->
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "Symbolic math expression" );
 }
 
 
@@ -60,20 +60,20 @@ void SymbolicFunction::InitializeFunction()
 {
 #ifdef GEOSX_USE_MATHPRESSO
   // Register variables
-  string_array & variables = getReference<string_array>(keys::variableNames);
-  for ( localIndex ii=0 ; ii<variables.size(); ++ii)
+  string_array & variables = getReference< string_array >( keys::variableNames );
+  for( localIndex ii=0; ii<variables.size(); ++ii )
   {
-    parserContext.addVariable(variables[ii].c_str(), static_cast<int>(ii * sizeof(double)));
+    parserContext.addVariable( variables[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
 
   // Add built in constants/functions (PI, E, sin, cos, ceil, exp, etc.),
   // compile
   parserContext.addBuiltIns();
-  std::string const& expression = getReference<std::string>(keys::expression);
-  mathpresso::Error err = parserExpression.compile(parserContext, expression.c_str(), mathpresso::kNoOptions);
-  GEOS_ERROR_IF(err != mathpresso::kErrorOk, "JIT Compiler Error");
+  std::string const & expression = getReference< std::string >( keys::expression );
+  mathpresso::Error err = parserExpression.compile( parserContext, expression.c_str(), mathpresso::kNoOptions );
+  GEOSX_ERROR_IF( err != mathpresso::kErrorOk, "JIT Compiler Error" );
 #else
-  GEOS_ERROR("GEOSX was not built with mathpresso!");
+  GEOSX_ERROR( "GEOSX was not built with mathpresso!" );
 #endif
 }
 

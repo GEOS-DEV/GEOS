@@ -11,8 +11,8 @@ set(managers_headers
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
-    Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -34,7 +34,7 @@ set(managers_headers
 # Specify all sources
 #
 set(managers_sources
-  	DomainPartition.cpp
+    DomainPartition.cpp
     EventManager.cpp
     Events/EventBase.cpp
     Events/PeriodicEvent.cpp
@@ -43,8 +43,8 @@ set(managers_sources
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
-    Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -65,7 +65,16 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
-set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+if( ENABLE_VTK )
+    list( APPEND managers_headers Outputs/VTKOutput.hpp )
+    list( APPEND managers_sources Outputs/VTKOutput.cpp )
+endif()
+
+if( BUILD_OBJ_LIBS )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
+else()
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
+endif()
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
@@ -79,11 +88,15 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
 blt_add_library( NAME                  managers
                  SOURCES               ${managers_sources}
                  HEADERS               ${managers_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( managers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

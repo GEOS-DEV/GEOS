@@ -22,8 +22,6 @@
 // TPL includes
 #include <gtest/gtest.h>
 
-// System includes
-#include <mpi.h>
 
 namespace geosx
 {
@@ -45,13 +43,10 @@ Wrapper< array1d< T > > * createArrayView( Group * parent, const string & name,
 
   /* Set the data */
   array1d< T > & view_data = view->reference();
-  for( int i = 0 ; i < view->size() ; i++ )
+  for( int i = 0; i < view->size(); i++ )
   {
     view_data[i] = data[i];
   }
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view_data.data() );
 
   return view;
 }
@@ -62,8 +57,8 @@ void checkArrayView( const Wrapper< array1d< T > > * view, int sfp, const array1
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
-  array1d< T > const & view_data = view->reference();
-  for( int i = 0 ; i < view->size() ; i++ )
+  arrayView1d< T const > const & view_data = view->reference();
+  for( int i = 0; i < view->size(); i++ )
   {
     EXPECT_EQ( view_data[i], data[i] );
   }
@@ -87,16 +82,13 @@ Wrapper< array2d< T > > * createArray2dView( Group * parent, const string & name
 
   /* Set the data */
   array2d< T > & view_data = view->reference();
-  for( int i = 0 ; i < dims[0] ; i++ )
+  for( int i = 0; i < dims[0]; i++ )
   {
-    for( int j = 0 ; j < dims[1] ; j++ )
+    for( int j = 0; j < dims[1]; j++ )
     {
       view_data[i][j] = data[i][j];
     }
   }
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_TRUE( view->dataPtr() == &view_data[0][0] );
 
   return view;
 }
@@ -108,10 +100,10 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
 
-  const array2d< T > & view_data = view->reference();
-  for( int i = 0 ; i < data.size( 0 ) ; i++ )
+  arrayView2d< T const > const & view_data = view->reference();
+  for( int i = 0; i < data.size( 0 ); i++ )
   {
-    for( int j = 0 ; j < data.size( 1 ) ; j++ )
+    for( int j = 0; j < data.size( 1 ); j++ )
     {
       EXPECT_EQ( view_data[i][j], data[i][j] );
     }
@@ -121,32 +113,29 @@ void checkArray2dView( const Wrapper< array2d< T > > * view, int sfp, const arra
 
 
 template< typename T >
-Wrapper< set< T > > * createSetView( Group * parent, const string & name,
-                                     localIndex sfp, const set< T > & data )
+Wrapper< SortedArray< T > > * createSetView( Group * parent, const string & name,
+                                             localIndex sfp, const SortedArray< T > & data )
 {
-  Wrapper< set< T > > * view = parent->registerWrapper< set< T > >( name );
+  Wrapper< SortedArray< T > > * view = parent->registerWrapper< SortedArray< T > >( name );
   view->setSizedFromParent( int(sfp) );
 
   /* Insert the data */
-  view->reference().insert( data.values(), data.size() );
+  view->reference().insert( data.begin(), data.end() );
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), data.size() );
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view->reference().values() );
 
   return view;
 }
 
 
 template< typename T >
-void checkSetView( const Wrapper< set< T > > * view, localIndex sfp, const set< T > & data )
+void checkSetView( const Wrapper< SortedArray< T > > * view, localIndex sfp, const SortedArray< T > & data )
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), data.size() );
-  const set< T > & view_data = view->reference();
-  for( int i = 0 ; i < view->size() ; i++ )
+  SortedArrayView< T const > const & view_data = view->reference();
+  for( int i = 0; i < view->size(); i++ )
   {
     EXPECT_EQ( view_data[i], data[i] );
   }
@@ -164,9 +153,6 @@ Wrapper< string > * createStringView( Group * parent, const string & name,
 
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( static_cast< uint >(view->size() ), str.size() );
-
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( view->dataPtr(), view->reference().c_str() );
 
   return view;
 }
@@ -190,12 +176,11 @@ Wrapper< string_array > * createStringArrayView( Group * parent, const string & 
   EXPECT_EQ( static_cast< uint >(view->size() ), arr.size() );
 
   string_array & view_data = view->reference();
-  for( localIndex i = 0 ; i < arr.size() ; ++i )
+  for( localIndex i = 0; i < arr.size(); ++i )
   {
     view_data[i] = arr[i];
   }
 
-  EXPECT_EQ( view->dataPtr(), view_data.data() );
   return view;
 }
 
@@ -204,8 +189,8 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 {
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->size(), arr.size() );
-  string_array const & view_data = view->reference();
-  for( int i = 0 ; i < view->size() ; i++ )
+  arrayView1d< string const > const & view_data = view->reference();
+  for( int i = 0; i < view->size(); i++ )
   {
     EXPECT_EQ( view_data[i], arr[i] );
   }
@@ -214,7 +199,8 @@ void checkStringArrayView( const Wrapper< string_array > * view, const int sfp, 
 
 template< typename T >
 Wrapper< T > * createScalarView( Group * parent, const string & name,
-                                 int sfp, const T & value ) {
+                                 int sfp, const T & value )
+{
   Wrapper< T > * view = parent->registerWrapper< T >( name );
   view->setSizedFromParent( sfp );
 
@@ -224,15 +210,13 @@ Wrapper< T > * createScalarView( Group * parent, const string & name,
   /* Check that the Wrapper size and byteSize return the proper values */
   EXPECT_EQ( view->size(), 1 );
 
-  /* Check that the Wrapper dataPtr points to the right thing */
-  EXPECT_EQ( *(view->dataPtr() ), value );
-
   return view;
 }
 
 
 template< typename T >
-void checkScalarView( const Wrapper< T > * view, int sfp, const T value ) {
+void checkScalarView( const Wrapper< T > * view, int sfp, const T value )
+{
   EXPECT_EQ( view->sizedFromParent(), sfp );
   EXPECT_EQ( view->reference(), value );
 }
@@ -253,7 +237,7 @@ TEST( testRestartExtended, testRestartExtended )
   int view_globalIndex_sfp = sfp++;
   int view_globalIndex_size = 100;
   globalIndex_array view_globalIndex_data( view_globalIndex_size );
-  for( int i = 0 ; i < view_globalIndex_size ; i++ )
+  for( int i = 0; i < view_globalIndex_size; i++ )
   {
     view_globalIndex_data[i] = i * i * i;
   }
@@ -304,7 +288,7 @@ TEST( testRestartExtended, testRestartExtended )
   int view_real641_sfp = sfp++;
   int view_real641_size = 1000;
   real64_array view_real641_data( view_real641_size );
-  for( int i = 0 ; i < view_real641_size ; i++ )
+  for( int i = 0; i < view_real641_size; i++ )
   {
     view_real641_data[i] = i * i / (i + 5.0);
   }
@@ -316,7 +300,7 @@ TEST( testRestartExtended, testRestartExtended )
   int view_real642_sfp = sfp++;
   int view_real642_size = 1000;
   real64_array view_real642_data( view_real642_size );
-  for( int i = 0 ; i < view_real642_size ; i++ )
+  for( int i = 0; i < view_real642_size; i++ )
   {
     view_real642_data[i] = i * i / (5.0 + 5.0 * i + i * i);
   }
@@ -332,7 +316,7 @@ TEST( testRestartExtended, testRestartExtended )
   int view_localIndex_sfp = sfp++;
   int view_localIndex_size = 953;
   localIndex_array view_localIndex_data( view_localIndex_size );
-  for( localIndex i = 0 ; i < view_localIndex_size ; i++ )
+  for( localIndex i = 0; i < view_localIndex_size; i++ )
   {
     view_localIndex_data[i] = i * i - 100 * i + 3;
   }
@@ -343,7 +327,7 @@ TEST( testRestartExtended, testRestartExtended )
   int view_real32_sfp = sfp++;
   int view_real32_size = 782;
   real32_array view_real32_data( view_real32_size );
-  for( int i = 0 ; i < view_real32_size ; i++ )
+  for( int i = 0; i < view_real32_size; i++ )
   {
     view_real32_data[i] = (i * i - 100.0f * i + 3.0f) / (i + 3.0f);
   }
@@ -363,10 +347,10 @@ TEST( testRestartExtended, testRestartExtended )
   createScalarView( mixed_group, view_pi_name, view_pi_sfp, view_pi_value );
 
 
-  /* Create a new set<int> Wrapper. */
+  /* Create a new SortedArray<int> Wrapper. */
   string view_setlocalIndex_name = "view_setlocalIndex";
   localIndex view_setlocalIndex_sfp = sfp++;
-  set< localIndex > view_setlocalIndex_set;
+  SortedArray< localIndex > view_setlocalIndex_set;
   view_setlocalIndex_set.insert( 4 );
   view_setlocalIndex_set.insert( 3 );
   view_setlocalIndex_set.insert( 10 );
@@ -376,10 +360,10 @@ TEST( testRestartExtended, testRestartExtended )
   createSetView( mixed_group, view_setlocalIndex_name, view_setlocalIndex_sfp, view_setlocalIndex_set );
 
 
-  /* Create a new set<string> Wrapper. */
+  /* Create a new SortedArray<string> Wrapper. */
   string view_setString_name = "view_setString";
   int view_setString_sfp = sfp++;
-  set< string > view_setString_set;
+  SortedArray< string > view_setString_set;
   view_setString_set.insert( "zaa" );
   view_setString_set.insert( "aab" );
   view_setString_set.insert( "QD" );
@@ -394,9 +378,9 @@ TEST( testRestartExtended, testRestartExtended )
   localIndex dim0 = 10;
   localIndex dim1 = 20;
   array2d< real64 > view_real642d_arr( dim0, dim1 );
-  for( localIndex i = 0 ; i < dim0 ; i++ )
+  for( localIndex i = 0; i < dim0; i++ )
   {
-    for( localIndex j = 0 ; j < dim1 ; j++ )
+    for( localIndex j = 0; j < dim1; j++ )
     {
       view_real642d_arr[i][j] = i * i / 3.0 + j;
     }
@@ -409,11 +393,11 @@ TEST( testRestartExtended, testRestartExtended )
   dim0 = 10;
   dim1 = 20;
   array2d< R1Tensor > view_r1t2d_arr( dim0, dim1 );
-  for( localIndex i = 0 ; i < dim0 ; i++ )
+  for( localIndex i = 0; i < dim0; i++ )
   {
-    for( localIndex j = 0 ; j < dim1 ; j++ )
+    for( localIndex j = 0; j < dim1; j++ )
     {
-      for( localIndex k = 0 ; k < 3 ; k++ )
+      for( localIndex k = 0; k < 3; k++ )
       {
         view_r1t2d_arr[i][j] = i * i / 3.0 + j + i * j * k / 7.0;
       }
@@ -454,8 +438,8 @@ TEST( testRestartExtended, testRestartExtended )
   Wrapper< real32_array > * view_real32_new = mixed_group_new->registerWrapper< real32_array >( view_real32_name );
   Wrapper< string > * view_what_new = mixed_group_new->registerWrapper< string >( view_what_name );
   Wrapper< real64 > * view_pi_new = mixed_group_new->registerWrapper< real64 >( view_pi_name );
-  Wrapper< set< localIndex > > * view_setlocalIndex_new = mixed_group_new->registerWrapper< set< localIndex > >( view_setlocalIndex_name );
-  Wrapper< set< string > > * view_setString_new = mixed_group_new->registerWrapper< set< string > >( view_setString_name );
+  Wrapper< SortedArray< localIndex > > * view_setlocalIndex_new = mixed_group_new->registerWrapper< SortedArray< localIndex > >( view_setlocalIndex_name );
+  Wrapper< SortedArray< string > > * view_setString_new = mixed_group_new->registerWrapper< SortedArray< string > >( view_setString_name );
   Wrapper< array2d< real64 > > * view_real642d_new = mixed_group_new->registerWrapper< array2d< real64 > >( view_real642d_name );
   Wrapper< array2d< R1Tensor > > * view_r1t2d_new = mixed_group_new->registerWrapper< array2d< R1Tensor > >( view_r1t2d_name );
 

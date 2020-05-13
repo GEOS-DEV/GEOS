@@ -5,7 +5,7 @@ set( LAI_tests
      testLAOperations.cpp 
      testArrayLAOperations.cpp
      testKrylovSolvers.cpp
-     testDofManager.cpp 
+     testDofManager.cpp
      testLAIHelperFunctions.cpp)
 
 set( nranks 2 )
@@ -13,7 +13,7 @@ set( nranks 2 )
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest geosx_core axom )
+set( dependencyList gtest geosx_core )
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )

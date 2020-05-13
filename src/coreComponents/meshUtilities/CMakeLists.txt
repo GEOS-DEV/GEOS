@@ -7,12 +7,12 @@ set(meshUtilities_headers
     MeshManager.hpp
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
-    VTMMeshGenerator.hpp
     MeshUtilities.hpp
     SimpleGeometricObjects/GeometricObjectManager.hpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.hpp
     SimpleGeometricObjects/Box.hpp
     SimpleGeometricObjects/ThickPlane.hpp
+    SimpleGeometricObjects/BoundedPlane.hpp
     StructuredGridUtilities.hpp
    )
 
@@ -24,17 +24,22 @@ set(meshUtilities_sources
     MeshManager.cpp
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
-    VTMMeshGenerator.cpp
     MeshUtilities.cpp
     SimpleGeometricObjects/GeometricObjectManager.cpp
     SimpleGeometricObjects/SimpleGeometricObjectBase.cpp
     SimpleGeometricObjects/Box.cpp
     SimpleGeometricObjects/Cylinder.cpp
     SimpleGeometricObjects/ThickPlane.cpp
+    SimpleGeometricObjects/BoundedPlane.cpp
    )
 
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common dataRepository fileIO mesh)
+else()
+  set( dependencyList common)
+endif()
 
-set( dependencyList common dataRepository fileIO mesh )
+set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")
@@ -55,7 +60,7 @@ blt_add_library( NAME                  meshUtilities
                  SOURCES               ${meshUtilities_sources}
                  HEADERS               ${meshUtilities_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( meshUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

@@ -1,30 +1,45 @@
 message(STATUS "Entering src/coreComponents/physicsSolvers/CMakeLists.txt")
 
+add_subdirectory (GEOSX_PTP)
+
 #
 # Specify solver headers
 #
 set( physicsSolvers_headers
+     NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
      SystemSolverParameters.hpp
-     CoupledSolvers/HydrofractureSolver.hpp
-     CoupledSolvers/PoroelasticSolver.hpp
-     CoupledSolvers/ReservoirSolver.hpp
-     SimpleSolvers/LaplaceFEM.hpp
-     FiniteVolume/FlowSolverBase.hpp
-     FiniteVolume/SinglePhaseFlow.hpp
-     FiniteVolume/SinglePhaseFlowKernels.hpp
-     FiniteVolume/CompositionalMultiphaseFlow.hpp
-     FiniteVolume/CompositionalMultiphaseFlowKernels.hpp
-     Wells/WellSolverBase.hpp
-     Wells/SinglePhaseWell.hpp
-     Wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/CompositionalMultiphaseFlow.hpp
+     fluidFlow/CompositionalMultiphaseFlowKernels.hpp
+     fluidFlow/CompositionalMultiphaseWell.hpp
+     fluidFlow/FlowSolverBase.hpp
+     fluidFlow/ProppantTransport.hpp
+     fluidFlow/ProppantTransportKernels.hpp
+     fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseFVM.hpp
+     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseBaseKernels.hpp
+     fluidFlow/SinglePhaseFVMKernels.hpp          
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
+     fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/SinglePhaseProppantBase.hpp
+     fluidFlow/WellSolverBase.hpp
+     fluidFlow/WellSolverBase.hpp
+     multiphysics/FlowProppantTransportSolver.hpp
+     multiphysics/HydrofractureSolver.hpp
+     multiphysics/PoroelasticSolver.hpp
+     multiphysics/ReservoirSolverBase.hpp
+     multiphysics/SinglePhaseReservoir.hpp
+     multiphysics/CompositionalMultiphaseReservoir.hpp
+     simplePDE/LaplaceFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
-     surfaceGeneration/SurfaceGenerator.hpp
-     src/DummySolver.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/TimeIntegrationOption.hpp
+     surfaceGeneration/SurfaceGenerator.hpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
 
 #
@@ -33,26 +48,42 @@ set( physicsSolvers_headers
 set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     NonlinearSolverParameters.cpp
      SystemSolverParameters.cpp
-     CoupledSolvers/HydrofractureSolver.cpp
-     CoupledSolvers/PoroelasticSolver.cpp
-     CoupledSolvers/ReservoirSolver.cpp
-     SimpleSolvers/LaplaceFEM.cpp
-     FiniteVolume/FlowSolverBase.cpp
-     FiniteVolume/SinglePhaseFlow.cpp
-     FiniteVolume/SinglePhaseFlowKernels.cpp
-     FiniteVolume/CompositionalMultiphaseFlow.cpp
-     FiniteVolume/CompositionalMultiphaseFlowKernels.cpp
-     Wells/WellSolverBase.cpp
-     Wells/SinglePhaseWell.cpp
-     Wells/CompositionalMultiphaseWell.cpp
+     fluidFlow/CompositionalMultiphaseFlow.cpp
+     fluidFlow/CompositionalMultiphaseFlowKernels.cpp
+     fluidFlow/CompositionalMultiphaseWell.cpp
+     fluidFlow/FlowSolverBase.cpp
+     fluidFlow/ProppantTransport.cpp
+     fluidFlow/ProppantTransportKernels.cpp
+     fluidFlow/SinglePhaseBase.cpp
+     fluidFlow/SinglePhaseBaseKernels.cpp
+     fluidFlow/SinglePhaseFVM.cpp
+     fluidFlow/SinglePhaseFVMKernels.cpp
+     fluidFlow/SinglePhaseHybridFVM.cpp     
+     fluidFlow/SinglePhaseHybridFVMKernels.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp     
+     fluidFlow/SinglePhaseWell.cpp
+     fluidFlow/WellSolverBase.cpp
+     multiphysics/FlowProppantTransportSolver.cpp
+     multiphysics/HydrofractureSolver.cpp
+     multiphysics/PoroelasticSolver.cpp
+     multiphysics/ReservoirSolverBase.cpp
+     multiphysics/SinglePhaseReservoir.cpp
+     multiphysics/CompositionalMultiphaseReservoir.cpp
+     simplePDE/LaplaceFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/SurfaceGenerator.cpp
-     src/DummySolver.cpp
+     surfaceGeneration/EmbeddedSurfaceGenerator.cpp
      )
 
-set( dependencyList common constitutive dataRepository linearAlgebra )
+if( BUILD_OBJ_LIBS)
+  set( dependencyList common constitutive dataRepository linearAlgebra )
+else()
+  set( dependencyList common linearAlgebra )
+endif()
+
 
 set( externalComponentDeps "" )
 if( ENABLE_GEOSX_PTP )
@@ -72,7 +103,7 @@ blt_add_library( NAME                  physicsSolvers
                  SOURCES               ${physicsSolvers_sources}
                  HEADERS               ${physicsSolvers_headers}
                  DEPENDS_ON            ${dependencyList} ${externalComponentDeps}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
 
 target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
@@ -80,7 +111,9 @@ if( externalComponentDeps )
   target_include_directories( physicsSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents)
 endif()
 
+
 geosx_add_code_checks( PREFIX physicsSolvers )
 
-add_subdirectory( unitTests )
+add_subdirectory( fluidFlow/unitTests )
+
 message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

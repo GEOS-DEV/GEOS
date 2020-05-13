@@ -20,88 +20,88 @@
 #include <sys/resource.h>
 
 /// returns the amount of cpu time use for this process
-realT getcputime(void);
+realT getcputime( void );
 
 
-int main(int argc, char* argv[] )
+int main( int argc, char * argv[] )
 {
 
 
   realT iRANDMAX = 1.0 / RAND_MAX;
 
-  std::srand(1234);
+  std::srand( 1234 );
 
-  const int num_nodes = atoi(argv[1]);
-  const int num_steps = atoi(argv[2]);
+  const int num_nodes = atoi( argv[1] );
+  const int num_steps = atoi( argv[2] );
 
 
-  R1TensorT<3>* const Disp = new R1TensorT<3>[num_nodes];
-  R1TensorT<3> Tot;
+  R1TensorT< 3 > * const Disp = new R1TensorT< 3 >[num_nodes];
+  R1TensorT< 3 > Tot;
 
   realT dt[num_steps];
 
-  realT* const xdisp = new realT[num_nodes];
-  realT* const ydisp = new realT[num_nodes];
-  realT* const zdisp = new realT[num_nodes];
+  realT * const xdisp = new realT[num_nodes];
+  realT * const ydisp = new realT[num_nodes];
+  realT * const zdisp = new realT[num_nodes];
   realT xtot = 0.0;
   realT ytot = 0.0;
   realT ztot = 0.0;
 
 
-  for( int a=0 ; a<num_nodes ; ++a )
+  for( int a=0; a<num_nodes; ++a )
   {
-    xdisp[a] = realT(rand()) * iRANDMAX;
-    ydisp[a] = realT(rand()) * iRANDMAX;
-    zdisp[a] = realT(rand()) * iRANDMAX;
-    Disp[a](0) = xacc[a];
-    Disp[a](1) = yacc[a];
-    Disp[a](2) = zacc[a];
+    xdisp[a] = realT( rand()) * iRANDMAX;
+    ydisp[a] = realT( rand()) * iRANDMAX;
+    zdisp[a] = realT( rand()) * iRANDMAX;
+    Disp[a]( 0 ) = xacc[a];
+    Disp[a]( 1 ) = yacc[a];
+    Disp[a]( 2 ) = zacc[a];
   }
 
-  for( int i=0 ; i<num_steps ; ++i )
+  for( int i=0; i<num_steps; ++i )
   {
-    dt[i] = realT(rand()) * iRANDMAX;
+    dt[i] = realT( rand()) * iRANDMAX;
   }
 
-  int flag = atoi(argv[3]);
+  int flag = atoi( argv[3] );
 
   // basic c-arrays
   realT t1 = getcputime();
 
   if( flag == 0 )
   {
-    function1(  xdisp, ydisp, zdisp,
-                xvel, yvel, zvel,
-                xacc, yacc, zacc,
-                &xtot,  &ytot,  &ztot,
-                dt, num_nodes, num_steps );
+    function1( xdisp, ydisp, zdisp,
+               xvel, yvel, zvel,
+               xacc, yacc, zacc,
+               &xtot, &ytot, &ztot,
+               dt, num_nodes, num_steps );
   }
   else
   {
-    function2(  Disp, Vel, Acc, &Tot,
-                dt, num_nodes, num_steps );
+    function2( Disp, Vel, Acc, &Tot,
+               dt, num_nodes, num_steps );
   }
   realT t2 = getcputime();
 
 
-  for( int a=0 ; a<num_nodes ; ++a )
+  for( int a=0; a<num_nodes; ++a )
   {
     xtot += xdisp[a];
     ytot += ydisp[a];
     ztot += zdisp[a];
   }
-  for( int a=0 ; a<num_nodes ; ++a )
+  for( int a=0; a<num_nodes; ++a )
   {
     Tot += Disp[a];
   }
 
 
-  GEOS_LOG("\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot);
-  GEOS_LOG("\t\t\t\t"<<Tot(0)<<' '<<Tot(1)<<' '<<Tot(2));
-//  GEOS_LOG("baseline CPU time    = "<<t2-t1);
-//  GEOS_LOG("Tensor CPU time      = "<<t3-t2<<std::endl);
+  GEOSX_LOG( "\t\t\t\t"<<xtot<<' '<<ytot<<' '<<ztot );
+  GEOSX_LOG( "\t\t\t\t"<<Tot( 0 )<<' '<<Tot( 1 )<<' '<<Tot( 2 ));
+//  GEOSX_LOG("baseline CPU time    = "<<t2-t1);
+//  GEOSX_LOG("Tensor CPU time      = "<<t3-t2<<std::endl);
 
-  GEOS_LOG(num_nodes<<' '<<t2-t1<<std::endl);
+  GEOSX_LOG( num_nodes<<' '<<t2-t1<<std::endl );
 
   delete [] xdisp;
   delete [] ydisp;
@@ -114,22 +114,22 @@ int main(int argc, char* argv[] )
 
 inline
 void CalculateGradient( realT Gradient[3][3],
-                        const realT* const x,
-                        const realT* const y,
-                        const realT* const z,
-                        const realT* const * const dNdX )
+                        const realT * const x,
+                        const realT * const y,
+                        const realT * const z,
+                        const realT * const * const dNdX )
 
 {
 
-  for( int i=0 ; i<3 ; ++i )
-    for( int j=0 ; j<3 ; ++j )
+  for( int i=0; i<3; ++i )
+    for( int j=0; j<3; ++j )
     {
       Gradient[i][j] = 0.0;
     }
 
-  for( int a=0 ; a<8 ; ++a )
+  for( int a=0; a<8; ++a )
   {
-    for( int i=0 ; i<3 ; ++i )
+    for( int i=0; i<3; ++i )
     {
       Gradient[0][i] += x[a] * dNdX[a][i];
       Gradient[1][i] += y[a] * dNdX[a][i];
@@ -140,14 +140,14 @@ void CalculateGradient( realT Gradient[3][3],
 }
 
 
-void CalculateGradient( R2TensorT<nsdof>& Gradient,
-                        const array1d<R1TensorT<nsdof> >& disp,
-                        const array1d<R1TensorT<nsdof> >& dNdX )
+void CalculateGradient( R2TensorT< nsdof > & Gradient,
+                        const array1d< R1TensorT< nsdof > > & disp,
+                        const array1d< R1TensorT< nsdof > > & dNdX )
 
 {
   Gradient = 0.0;
-  for( int a=0 ; a<8 ; ++a )
-    Gradient.plus_dyadic_ab( disp(a), dNdX(a));
+  for( int a=0; a<8; ++a )
+    Gradient.plus_dyadic_ab( disp( a ), dNdX( a ));
 
 }
 
@@ -159,11 +159,11 @@ void CalculateGradient( R2TensorT<nsdof>& Gradient,
  * time, and returns
  * the result.
  */
-realT getcputime(void)
+realT getcputime( void )
 {
   struct timeval tim;
   struct rusage ru;
-  getrusage(RUSAGE_SELF, &ru);
+  getrusage( RUSAGE_SELF, &ru );
 
   tim=ru.ru_utime;
   realT t=(realT)tim.tv_sec + (realT)tim.tv_usec / 1.0e6;

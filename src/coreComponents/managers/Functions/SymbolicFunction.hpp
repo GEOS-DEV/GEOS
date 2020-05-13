@@ -37,7 +37,7 @@ class SymbolicFunction : public FunctionBase
 {
 public:
   /// Main constructor
-  SymbolicFunction( const std::string& name,
+  SymbolicFunction( const std::string & name,
                     dataRepository::Group * const parent );
 
   /// Destructor
@@ -45,7 +45,7 @@ public:
 
   /// Catalog name interface
   static string CatalogName() { return "SymbolicFunction"; }
-  
+
   /// Function initialization
   virtual void InitializeFunction() override;
 
@@ -58,10 +58,10 @@ public:
    */
   inline void Evaluate( dataRepository::Group const * const group,
                         real64 const time,
-                        SortedArrayView<localIndex const> const & set,
+                        SortedArrayView< localIndex const > const & set,
                         real64_array & result ) const override final
   {
-    FunctionBase::EvaluateT<SymbolicFunction>( group, time, set, result );
+    FunctionBase::EvaluateT< SymbolicFunction >( group, time, set, result );
   }
 
   /**
@@ -71,9 +71,9 @@ public:
   inline real64 Evaluate( real64 const * const input ) const override final
   {
 #ifdef GEOSX_USE_MATHPRESSO
-    return parserExpression.evaluate( reinterpret_cast<void*>( const_cast<real64*>(input) ) );
+    return parserExpression.evaluate( reinterpret_cast< void * >( const_cast< real64 * >(input) ) );
 #else
-    GEOS_ERROR("GEOSX was not built with mathpresso!");
+    GEOSX_ERROR( "GEOSX was not built with mathpresso!" );
     return 0;
 #endif
   }

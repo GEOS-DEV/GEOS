@@ -46,10 +46,10 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( std::string const & name,
                                     Group * const parent ):
   Group( name, parent ),
-  m_numQuadraturePoints(1),
-  m_constitutiveDataGroup(nullptr)
+  m_numQuadraturePoints( 1 ),
+  m_constitutiveDataGroup( nullptr )
 {
-  setInputFlags(InputFlags::OPTIONAL_NONUNIQUE);
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
 ConstitutiveBase::~ConstitutiveBase()
@@ -57,7 +57,7 @@ ConstitutiveBase::~ConstitutiveBase()
 
 
 
-ConstitutiveBase::CatalogInterface::CatalogType& ConstitutiveBase::GetCatalog()
+ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::GetCatalog()
 {
   static ConstitutiveBase::CatalogInterface::CatalogType catalog;
   return catalog;
@@ -76,8 +76,8 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = wrapper.first;
-        std::unique_ptr<WrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-        parent->registerWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+        parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+          setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
   }
@@ -87,8 +87,8 @@ void ConstitutiveBase::AllocateConstitutiveData( dataRepository::Group * const p
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = wrapper.first;
-      std::unique_ptr<WrapperBase> newWrapper = wrapper.second->clone( wrapperName, parent );
-      parent->registerWrapper( makeFieldName(this->getName(), wrapperName), newWrapper.release() );
+      parent->registerWrapper( makeFieldName( this->getName(), wrapperName ), wrapper.second->clone( wrapperName, parent ) )->
+        setRestartFlags( RestartFlags::NO_WRITE );
     }
   }
 
@@ -99,14 +99,15 @@ void ConstitutiveBase::resize( localIndex newsize )
   Group::resize( newsize );
 }
 
-void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_ARG( name ),
-                                     Group * const GEOSX_UNUSED_ARG( parent ),
-                                     std::unique_ptr<ConstitutiveBase> & clone ) const
+void ConstitutiveBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
+                                     Group * const GEOSX_UNUSED_PARAM( parent ),
+                                     std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  clone->forWrappers([&]( WrapperBase & wrapper )
+  GEOSX_ASSERT( clone );
+  clone->forWrappers( [&]( WrapperBase & wrapper )
   {
-    wrapper.CopyWrapperAttributes( *(this->getWrapperBase(wrapper.getName() ) ) );
-  });
+    wrapper.CopyWrapperAttributes( *(this->getWrapperBase( wrapper.getName() ) ) );
+  } );
 }
 
 

@@ -20,7 +20,7 @@
 #define GEOSX_FILEIO_SILO_SILOFILE_HPP_
 
 #include "common/DataTypes.hpp"
-#include "constitutive/Solid/SolidBase.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/CellElementSubRegion.hpp"
@@ -113,17 +113,17 @@ public:
    */
   void MakeSubDirectory( string const & subdir, string const & rootdir )
   {
-    int const rank = MpiWrapper::Comm_rank(MPI_COMM_GEOSX);
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
 
     // char dirname[100];
     if( rank == 0 )
     {
 //      DBGetDir(m_dbBaseFilePtr, dirname );
-      DBMkDir(m_dbBaseFilePtr, rootdir.c_str());
+      DBMkDir( m_dbBaseFilePtr, rootdir.c_str());
     }
 
 //    DBGetDir (m_dbFilePtr, dirname );
-    DBMkDir(m_dbFilePtr, subdir.c_str());
+    DBMkDir( m_dbFilePtr, subdir.c_str());
   }
 
   /**
@@ -146,36 +146,36 @@ public:
    * DBPutZonelist2, and calls those functions to create a silo mesh object. In addition
    * the MultiVar is written in the root file.
    */
-  void WriteMeshObject(string const & meshName,
-                       const localIndex nnodes,
-                       real64* coords[3],
-                       const globalIndex* globalNodeNum,
-                       char const * const ghostNodeName,
-                       char const * const ghostZoneName,
-                       int const numShapes,
-                       int const * shapecnt,
-                       const localIndex* const * const meshConnectivity,
-                       const globalIndex* const * const globalElementNum,
-                       int const * const shapetype,
-                       int const * const shapesize,
-                       int const cycleNumber,
-                       real64 const problemTime);
+  void WriteMeshObject( string const & meshName,
+                        const localIndex nnodes,
+                        real64 * coords[3],
+                        const globalIndex * globalNodeNum,
+                        char const * const ghostNodeName,
+                        char const * const ghostZoneName,
+                        int const numShapes,
+                        int const * shapecnt,
+                        const localIndex * const * const meshConnectivity,
+                        const globalIndex * const * const globalElementNum,
+                        int const * const shapetype,
+                        int const * const shapesize,
+                        int const cycleNumber,
+                        real64 const problemTime );
 
 
-  void WritePolygonMeshObject(const std::string& meshName,
-                                        const localIndex nnodes,
-                                        realT* coords[3],
-                                        const globalIndex*,
-                                        const int numRegions,
-                                        const int* shapecnt,
-                                        const localIndex* const * const meshConnectivity,
-                                        const globalIndex* const * const globalElementNum,
-                                        const int* const * const,
-                                        const int* const shapetype,
-                                        const int* const shapesize,
-                                        const int cycleNumber,
-                                        const realT problemTime,
-                                        const int lnodelist);
+  void WritePolygonMeshObject( const std::string & meshName,
+                               const localIndex nnodes,
+                               realT * coords[3],
+                               const globalIndex *,
+                               const int numRegions,
+                               const int * shapecnt,
+                               const localIndex * const * const meshConnectivity,
+                               const globalIndex * const * const globalElementNum,
+                               const int * const * const,
+                               const int * const shapetype,
+                               const int * const shapesize,
+                               const int cycleNumber,
+                               const realT problemTime,
+                               const int lnodelist );
 /**
  * @brief write a domain parititon out to silo file
  * @param domain the domain partition to write
@@ -189,7 +189,7 @@ public:
                              bool const isRestart );
 
 
-  void WriteElementMesh( ElementRegionBase const * const elementRegion,
+  void WriteElementMesh( ElementRegionBase const & elementRegion,
                          NodeManager const * const nodeManager,
                          string const & meshName,
                          const localIndex nnodes,
@@ -222,7 +222,7 @@ public:
    */
   void WritePointMesh( string const & meshName,
                        const localIndex numPoints,
-                       real64* coords[3],
+                       real64 * coords[3],
                        int const cycleNumber,
                        real64 const problemTime );
 
@@ -236,13 +236,13 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh(string const & meshName,
-                     const localIndex nnodes,
-                     real64* coords[3],
-                     const localIndex_array& node1,
-                     const localIndex_array& node2,
-                     int const cycleNumber,
-                     real64 const problemTime);
+  void WriteBeamMesh( string const & meshName,
+                      const localIndex nnodes,
+                      real64 * coords[3],
+                      const localIndex_array & node1,
+                      const localIndex_array & node2,
+                      int const cycleNumber,
+                      real64 const problemTime );
 
   /**
    *
@@ -253,18 +253,18 @@ public:
    * @param cycleNumber current cycle number
    * @param problemTime current problem time
    */
-  void WriteBeamMesh(string const & meshName,
-                     const localIndex nnodes,
-                     real64* coords[3],
-                     integer_array& nodelist,
-                     int const cycleNumber,
-                     real64 const problemTime);
+  void WriteBeamMesh( string const & meshName,
+                      const localIndex nnodes,
+                      real64 * coords[3],
+                      integer_array & nodelist,
+                      int const cycleNumber,
+                      real64 const problemTime );
 
-  void WriteMaterialMapsFullStorage( ElementRegionBase const * const elementRegion,
+  void WriteMaterialMapsFullStorage( ElementRegionBase const & elementRegion,
                                      string const & meshName,
                                      string_array const & regionMaterialList,
                                      int const cycleNumber,
-                                     real64 const problemTime);
+                                     real64 const problemTime );
   /**
    *
    * @param group the group that holds the data to be written to the silo file
@@ -283,14 +283,14 @@ public:
                        int const cycleNum,
                        real64 const problemTime,
                        bool const isRestart,
-                       const localIndex_array& mask );
+                       const localIndex_array & mask );
 
-  void WriteElementRegionSilo( ElementRegionBase const * group,
-                                string const & siloDirName,
-                                string const & meshName,
-                                int const cycleNum,
-                                real64 const problemTime,
-                                bool const isRestart );
+  void WriteElementRegionSilo( ElementRegionBase const & elemRegion,
+                               string const & siloDirName,
+                               string const & meshName,
+                               int const cycleNum,
+                               real64 const problemTime,
+                               bool const isRestart );
   /**
    * Writes the contents of a group of Wrapper objects
    * @tparam the output varaible type
@@ -305,13 +305,13 @@ public:
    */
   template< typename OUTPUTTYPE >
   void WriteWrappersToSilo( string const & meshname,
-                                const dataRepository::Group::wrapperMap & wrappers,
-                                int const centering,
-                                int const cycleNum,
-                                real64 const problemTime,
-                                bool const isRestart,
-                                string const & multiRoot,
-                                const localIndex_array& mask );
+                            const dataRepository::Group::wrapperMap & wrappers,
+                            int const centering,
+                            int const cycleNum,
+                            real64 const problemTime,
+                            bool const isRestart,
+                            string const & multiRoot,
+                            const localIndex_array & mask );
 
   /**
    *
@@ -323,10 +323,10 @@ public:
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
-  template<typename OUTTYPE, typename TYPE>
+  template< typename OUTTYPE, typename TYPE >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array1d<TYPE>& field,
+                       arrayView1d< TYPE const > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -342,10 +342,10 @@ public:
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
-  template<typename OUTTYPE, typename TYPE>
+  template< typename OUTTYPE, typename TYPE, int USD >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array2d<TYPE>& field,
+                       arrayView2d< TYPE const, USD > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
@@ -361,21 +361,30 @@ public:
    * @param problemTime the current problem time
    * @param multiRoot location to write the multivar entries
    */
-  template<typename OUTTYPE, typename TYPE>
+  template< typename OUTTYPE, typename TYPE, int USD >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
-                       const array3d<TYPE>& field,
+                       arrayView3d< TYPE const, USD > const & field,
                        int const centering,
                        int const cycleNumber,
                        real64 const problemTime,
                        string const & multiRoot );
 
+  template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
+  void WriteDataField( string const & meshName,
+                       string const & fieldName,
+                       ArrayView< TYPE const, NDIM, USD > const & field,
+                       int const siloTensorRank,
+                       int const centering,
+                       int const cycleNumber,
+                       real64 const problemTime,
+                       string const & multiRoot );
 
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField( string const & meshName,
                                string const & fieldName,
-                               array1d<array1d<arrayView2d<TYPE const>>> const & field,
-                               ElementRegionBase const * const elemRegion,
+                               array1d< array1d< arrayView2d< TYPE const > > > const & field,
+                               ElementRegionBase const & elemRegion,
                                int const centering,
                                int const cycleNumber,
                                real64 const problemTime,
@@ -384,29 +393,29 @@ public:
 
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField2d( string const & meshName,
-                               string const & fieldName,
-                               ElementRegionBase const * const elemRegion,
-                               int const centering,
-                               int const cycleNumber,
-                               real64 const problemTime,
-                               string const & multiRoot,
-                               string_array const & materialNames );
-
-
-  template<typename OUTTYPE, typename TYPE>
-  void WriteMaterialDataField3d( string const & meshName,
                                  string const & fieldName,
-                                 ElementRegionBase const * const elemRegion,
+                                 ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
-  template<typename OUTTYPE, typename TYPE>
+
+  template< typename OUTTYPE, typename TYPE >
+  void WriteMaterialDataField3d( string const & meshName,
+                                 string const & fieldName,
+                                 ElementRegionBase const & elemRegion,
+                                 int const centering,
+                                 int const cycleNumber,
+                                 real64 const problemTime,
+                                 string const & multiRoot,
+                                 string_array const & materialNames );
+
+  template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField4d( string const & meshName,
                                  string const & fieldName,
-                                 ElementRegionBase const * const elemRegion,
+                                 ElementRegionBase const & elemRegion,
                                  int const centering,
                                  int const cycleNumber,
                                  real64 const problemTime,
@@ -419,6 +428,9 @@ public:
                                    string const & fieldName );
 
   void WriteStressVarDefinition( string const & MatDir );
+
+  void WriteVectorVarDefinition( string const & fieldName,
+                                 string const & subDirectory );
 
   /**
    * find the silo mesh type that we are attempting to reference
@@ -438,9 +450,9 @@ public:
    * @param optlist the option list assocaited with the multiXXXX
    */
   template< typename CBF >
-  void WriteMultiXXXX(const DBObjectType type, CBF DBPutMultiCB,
-                      int const centering, string const name, int const cycleNumber,
-                      string const & multiRoot, const DBoptlist* optlist = nullptr);
+  void WriteMultiXXXX( const DBObjectType type, CBF DBPutMultiCB,
+                       int const centering, string const name, int const cycleNumber,
+                       string const & multiRoot, const DBoptlist * optlist = nullptr );
 
 
   /**
@@ -451,7 +463,7 @@ public:
    * or multivar object on each domain. This is incorrect, so we must modify the rootfile to remove empty references
    * to the multivar or multimesh objects and replace their path with "EMPTY"
    */
-  void ClearEmptiesFromMultiObjects(int const cycleNum);
+  void ClearEmptiesFromMultiObjects( int const cycleNum );
 
 
   void setNumGroups( int const numGroups )
@@ -461,7 +473,7 @@ public:
 
   void setPlotLevel( int const plotLevel )
   {
-    m_plotLevel = dataRepository::IntToPlotLevel(plotLevel);
+    m_plotLevel = dataRepository::toPlotLevel( plotLevel );
   }
 
   void setWriteEdgeMesh( int const val )
@@ -489,10 +501,10 @@ public:
 private:
 
   /// pointer to the DBfile that this class is working on
-  DBfile* m_dbFilePtr;
+  DBfile * m_dbFilePtr;
 
   /// pointer to the Master DBfile
-  DBfile* m_dbBaseFilePtr;
+  DBfile * m_dbBaseFilePtr;
 
   /// total number of "parallel" files to write out
   int m_numGroups;
@@ -517,6 +529,7 @@ private:
   string m_baseFileName;
 
   string_array m_emptyMeshes;
+//  string_array m_emptyMaterials;
   string_array m_emptyVariables;
 
   integer m_writeEdgeMesh;
@@ -527,19 +540,6 @@ private:
   dataRepository::PlotLevel m_plotLevel;
 
   bool m_ghostFlags;
-
-  /**
-   *
-   * @return returns the ordering of nodes for a silo zone type.
-   */
-  integer_array SiloNodeOrdering(const string & elementType);
-
-
-
-
-
-
-
 };
 
 /**
@@ -555,7 +555,7 @@ namespace SiloFileUtilities
  * This templated function is a "specialization only" definition. There is no
  * general definition, only specializations for predetermined data types.
  */
-template<typename OUTTYPE>
+template< typename OUTTYPE >
 int DB_TYPE();
 
 /**
@@ -565,14 +565,14 @@ int DB_TYPE();
  * 1 for a scalar
  * 3 for a R1Tensor...etc.
  */
-template<typename TYPE>
+template< typename TYPE >
 int GetNumberOfVariablesInField();
 
 /**
  * @tparam TYPE the data type in question
  * @return the silo DB_VARTYPE specifier that describes the rank of the variable.
  */
-template<typename TYPE>
+template< typename TYPE >
 int GetTensorRank();
 
 /**
@@ -582,62 +582,67 @@ int GetTensorRank();
  * @param i the component of the varaible to cast, assuming there is dimensionaliy to the variable
  * @return the casted value
  */
-template<typename OUTTYPE, typename TYPE>
-OUTTYPE CastField(const TYPE& field, int const i = 0);     // avoids compiler
-                                                           // warning
+template< typename OUTTYPE, typename TYPE >
+OUTTYPE CastField( const TYPE & field, int const i = 0 );     // avoids compiler
+                                                              // warning
 
-template<typename OUTTYPE, typename TYPE>
-OUTTYPE CastField(const TYPE& field, int const i)
+template< typename OUTTYPE, typename TYPE >
+OUTTYPE CastField( const TYPE & field, int const i )
 {
   return field.Data()[i];
 }
 
 template<>
-inline real64 CastField<real64,R2SymTensor >( const R2SymTensor & field, int const i )
+inline real64 CastField< real64, R2SymTensor >( const R2SymTensor & field, int const i )
 {
   int ii = 0;
-  if( i==1 ) ii=2;
-  if( i==2 ) ii=5;
-  if( i==3 ) ii=4;
-  if( i==4 ) ii=3;
-  if( i==5 ) ii=1;
+  if( i==1 )
+    ii=2;
+  if( i==2 )
+    ii=5;
+  if( i==3 )
+    ii=4;
+  if( i==4 )
+    ii=3;
+  if( i==5 )
+    ii=1;
   return field.Data()[ii];
 }
 
 
-template<> inline int CastField<int, int> (const int& field, int const )
+template<> inline int CastField< int, int >( const int & field, int const )
 {
   return field;
 }
 
 
-template<> inline long int CastField<long int, long int> (const long int& field, int const )
+template<> inline long int CastField< long int, long int >( const long int & field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long int> (const long int& field, int const )
+template<> inline int CastField< int, long int >( const long int & field, int const )
 {
-  return integer_conversion<int>(field);
+  return LvArray::integerConversion< int >( field );
 }
 
-template<> inline long long int CastField<long long int, long long int> (const long long int& field, int const )
+template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const )
 {
   return field;
 }
 
-template<> inline int CastField<int, long long int> (const long long int& field, int const )
+template<> inline int CastField< int, long long int >( const long long int & field, int const )
 {
-  return integer_conversion<int>(field);
+  return LvArray::integerConversion< int >( field );
 }
 
-template<> inline real64 CastField<real64, real64> (const real64& field, int const )
+template<> inline real64 CastField< real64, real64 >( const real64 & field, int const )
 {
   return field;
 }
-template<> inline float CastField<float, real64> (const real64& field, int const )
+template<> inline float CastField< float, real64 >( const real64 & field, int const )
 {
-  return static_cast<float>(field);
+  return static_cast< float >(field);
 }
 
 
@@ -652,15 +657,11 @@ template<> inline float CastField<float, real64> (const real64& field, int const
  * the input variable, and in other cases such as in the case of a tensor, the names will have a suffix
  * with the component of the tensor.
  */
-template<typename TYPE>
-void SetVariableNames(string const & fieldName, string_array& varnamestring, char const* varnames[]);
+template< typename TYPE >
+void SetVariableNames( string const & fieldName, string_array & varnamestring, char const * varnames[] );
 
 
 }
-
-
-
-
 
 
 

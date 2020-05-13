@@ -91,13 +91,13 @@ TEST( testXmlWrapper, array3d )
   localIndex numI = 4;
   localIndex numJ = 5;
   localIndex numK = 3;
-  for( localIndex i=0 ; i<4 ; ++i )
+  for( localIndex i=0; i<4; ++i )
   {
     input += "{ ";
-    for( localIndex j=0 ; j<5 ; ++j )
+    for( localIndex j=0; j<5; ++j )
     {
       input += "{ ";
-      for( localIndex k=0 ; k<3 ; ++k )
+      for( localIndex k=0; k<3; ++k )
       {
         input += std::to_string( i*2+j*3+k*4 );
         if( k<(numK-1) )
@@ -126,11 +126,11 @@ TEST( testXmlWrapper, array3d )
   ASSERT_EQ( array.size( 1 ), numJ );
   ASSERT_EQ( array.size( 2 ), numK );
 
-  for( localIndex i=0 ; i<array.size( 0 ) ; ++i )
+  for( localIndex i=0; i<array.size( 0 ); ++i )
   {
-    for( localIndex j=0 ; j<array.size( 1 ) ; ++j )
+    for( localIndex j=0; j<array.size( 1 ); ++j )
     {
-      for( localIndex k=0 ; k<array.size( 2 ) ; ++k )
+      for( localIndex k=0; k<array.size( 2 ); ++k )
       {
         ASSERT_EQ( array[i][j][k], i*2+j*3+k*4 );
       }
@@ -147,10 +147,6 @@ int main( int argc, char * argv[] )
   result = RUN_ALL_TESTS();
 
   logger::FinalizeLogger();
-
-#ifdef USE_CHAI
-  chai::ArrayManager::finalize();
-#endif
 
   return result;
 }

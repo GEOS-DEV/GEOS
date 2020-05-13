@@ -9,7 +9,7 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/mesh/docs/Mesh
 
-   /coreComponents/physicsSolvers/docs/PhysicsSolvers
+   /coreComponents/physicsSolvers/PhysicsSolvers
 
    /coreComponents/constitutive/docs/Constitutive
 
@@ -21,9 +21,11 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
 
-   /coreComponents/MPI_Communications/docs/SpatialPartition.rst
+   /coreComponents/mpiCommunications/docs/SpatialPartition.rst
 
    /coreComponents/fileIO/doc/Outputs.rst
+
+   /coreComponents/fileIO/doc/InputValidation.rst
 
    /coreComponents/python/modules/pygeos_package/pygeos/pygeos_documentation
 

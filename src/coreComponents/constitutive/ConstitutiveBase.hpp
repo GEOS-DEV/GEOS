@@ -41,7 +41,7 @@ public:
    * @param name actual field name
    * @return prefixed field name that is used to access data
    */
-  inline static string makeFieldName(string const & prefix, string const & name) { return prefix + "_" + name; }
+  inline static string makeFieldName( string const & prefix, string const & name ) { return prefix + "_" + name; }
 
 
   ConstitutiveBase( string const & name,
@@ -57,12 +57,12 @@ public:
    */
   virtual void DeliverClone( string const & name,
                              Group * const parent,
-                             std::unique_ptr<ConstitutiveBase> & clone ) const = 0;
+                             std::unique_ptr< ConstitutiveBase > & clone ) const = 0;
 
 
-  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_ARG( pres ),
-                                         localIndex const GEOSX_UNUSED_ARG( k ),
-                                         localIndex const GEOSX_UNUSED_ARG( q ) ) {}
+  virtual void StateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
+                                         localIndex const GEOSX_UNUSED_PARAM( k ),
+                                         localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
   /**
    * @brief function to resize the fields in this constitutive model
@@ -70,15 +70,27 @@ public:
    */
   virtual void resize( localIndex newSize ) override;
 
+  /**
+   * @name Static Factory Catalog members and functions
+   */
+  ///@{
 
+  /// @typedef An alias for the ConstitutiveBase catalog
   using CatalogInterface = dataRepository::CatalogInterface< ConstitutiveBase, std::string const &, Group * const >;
-  static typename CatalogInterface::CatalogType& GetCatalog();
+
+  /**
+   * @brief Singleton accessor for catalog
+   * @return
+   */
+  static typename CatalogInterface::CatalogType & GetCatalog();
 
   /**
    * @brief function to return the catalog name of the derived class
    * @return a string that contains the catalog name of the derived class
    */
   virtual string GetCatalogName() = 0;
+
+  ///@}
 
   /**
    * @brief Allocate constitutive data and make views to data on parent objects

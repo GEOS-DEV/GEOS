@@ -12,6 +12,8 @@ set(mesh_headers
     ElementRegionManager.hpp
     FaceElementSubRegion.hpp
     FaceElementRegion.hpp
+    EmbeddedSurfaceSubRegion.hpp
+    EmbeddedSurfaceRegion.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp
@@ -34,6 +36,8 @@ set(mesh_sources
     ElementRegionManager.cpp
     FaceElementRegion.cpp
     FaceElementSubRegion.cpp
+    EmbeddedSurfaceRegion.cpp
+    EmbeddedSurfaceSubRegion.cpp
     FaceManager.cpp
     MeshBody.cpp
     MeshLevel.cpp
@@ -41,7 +45,12 @@ set(mesh_sources
     ToElementRelation.cpp
    )
 
-set(dependencyList managers metis)
+if( BUILD_OBJ_LIBS)
+  set(dependencyList managers metis)
+else()
+  set(dependencyList common metis)
+endif()
+
 
 if( ENABLE_OPENMP )
     set( dependencyList ${dependencyList} openmp )
@@ -55,7 +64,7 @@ blt_add_library( NAME                  mesh
                  SOURCES               ${mesh_sources}
                  HEADERS               ${mesh_headers}
                  DEPENDS_ON            ${dependencyList}
-                 #OBJECT                TRUE
+                 OBJECT                ${buildAsObj}
                )
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)

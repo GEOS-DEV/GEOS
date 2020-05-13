@@ -19,6 +19,7 @@
 #ifndef GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
 #define GEOSX_CODINGUTILITIES_STATIC_IF_HPP_
 
+// UNCRUSTIFY-OFF
 
 namespace geosx
 {
@@ -40,11 +41,36 @@ struct static_if_wrapper<true>
   }
 };
 
+/// static_if is sometimes used to contain code that is only valid on host
+/// host_device_static_if can be used when the contained code is valid both on
+///                       host and device
+template <bool COND>
+struct host_device_static_if
+{
+  template <typename LAMBDA_BODY>
+  constexpr inline GEOSX_HOST_DEVICE static void if_function(LAMBDA_BODY &&) { }
+};
+
+template <>
+struct host_device_static_if<true>
+{
+  template <typename LAMBDA_BODY>
+  constexpr inline GEOSX_HOST_DEVICE static void if_function(LAMBDA_BODY && lambda)
+  {
+    lambda();
+  }
+};
+
 }
 
 #define static_if( condition ) \
   geosx::static_if_wrapper<condition>::if_function( [&] () -> void
 
+#define static_if_host_device( condition ) \
+  geosx::host_device_static_if<condition>::if_function( [&] () -> void
+
 #define end_static_if );
+
+// UNCRUSTIFY-ON
 
 #endif /* GEOSX_CODINGUTILITIES_STATIC_IF_HPP_ */
