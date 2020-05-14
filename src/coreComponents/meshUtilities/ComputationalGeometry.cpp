@@ -308,7 +308,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
       area *= 0.5;
 
       // Set normal orientation according to a global criterion
-      //FixNormalOrientation_3D( normal );
+      FixNormalOrientation_3D( normal );
 
       // Compute the local rotation matrix according to the normal vector
       RotationMatrix_3D( normal, rotationMatrix );
