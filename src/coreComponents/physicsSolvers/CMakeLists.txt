@@ -9,7 +9,6 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     SystemSolverParameters.hpp
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
@@ -49,7 +48,6 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      NonlinearSolverParameters.cpp
-     SystemSolverParameters.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
