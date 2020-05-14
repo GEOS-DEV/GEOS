@@ -42,7 +42,7 @@ public:
   /// Krylov-method parameters
   struct Krylov
   {
-    real64 tolerance = 1e-6;          ///< Relative convergence tolerance for iterative solvers
+    real64 relTolerance = 1e-6;          ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
     integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
@@ -67,12 +67,13 @@ public:
     string coarseType = "direct";            ///< Coarse-level solver/smoother
     integer numSweeps = 2;                   ///< Number of smoother sweeps
     string preOrPostSmoothing = "both";      ///< Pre and/or post smoothing [pre,post,both]
-    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and smoothed-aggregation AMG)
+    real64 threshold = 0.0;                  ///< Threshold for "strong connections" (for classical and
+                                             ///< smoothed-aggregation AMG)
     integer isSymmetric = true;              ///< Identify if matrix is symmetric
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                       ///< Algebraic multigrid parameter struct
+  amg;
 
   /// Incomplete factorization parameters
   struct ILU
@@ -96,7 +97,7 @@ public:
   ~LinearSolverParameters() = default;
 
   /**
-   * @brief Einsenstat-Walker adaptive tolerance
+   * @brief Eisenstat-Walker adaptive tolerance
    *
    * This method enables an inexact-Newton method is which the linear solver
    * tolerance is chosen based on the nonlinear solver convergence behavior.

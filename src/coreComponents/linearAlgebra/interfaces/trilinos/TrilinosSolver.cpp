@@ -267,7 +267,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
   // Actually solve
   watch.zero();
   int const result = solver.Iterate( m_parameters.krylov.maxIterations,
-                                     m_parameters.krylov.tolerance );
+                                     m_parameters.krylov.relTolerance );
   m_solveTime = watch.elapsedTime();
 
   GEOSX_WARNING_IF( result, "TrilinosSolver: Krylov convergence not achieved" );

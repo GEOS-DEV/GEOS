@@ -95,7 +95,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( KSPCreate( comm, &ksp ) );
   GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), mat.unwrapped() ) );
   GEOSX_LAI_CHECK_ERROR( KSPGMRESSetRestart( ksp, m_parameters.krylov.maxRestart ) );
-  GEOSX_LAI_CHECK_ERROR( KSPSetTolerances( ksp, m_parameters.krylov.tolerance, PETSC_DEFAULT,
+  GEOSX_LAI_CHECK_ERROR( KSPSetTolerances( ksp, m_parameters.krylov.relTolerance, PETSC_DEFAULT,
                                            PETSC_DEFAULT, m_parameters.krylov.maxIterations ) );
 
   // pick the solver type

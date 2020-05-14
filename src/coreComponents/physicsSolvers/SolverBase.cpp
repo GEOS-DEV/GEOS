@@ -412,7 +412,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
           sprintf( output,
                    "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
                    m_linearSolverParameters.krylov.maxIterations,  //TODO: replace with real Status info
-                   m_linearSolverParameters.krylov.tolerance );
+                   m_linearSolverParameters.krylov.relTolerance );
           std::cout<<output;
         }
         std::cout<<std::endl;
@@ -457,7 +457,7 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       // if using adaptive Krylov tolerance scheme, update tolerance.
       if( m_linearSolverParameters.krylov.useAdaptiveTol )
       {
-        m_linearSolverParameters.krylov.tolerance =
+        m_linearSolverParameters.krylov.relTolerance =
           LinearSolverParameters::eisenstatWalker( residualNorm,
                                                    lastResidual,
                                                    m_linearSolverParameters.krylov.weakestTol );

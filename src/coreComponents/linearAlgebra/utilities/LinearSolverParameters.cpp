@@ -46,8 +46,8 @@ LinearSolverParametersGroup::LinearSolverParametersGroup( std::string const & na
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum iterations allowed" );
 
-  registerWrapper( viewKeysStruct::krylovTolString, &krylov.tolerance )->
-    setApplyDefaultValue( krylov.tolerance )->
+  registerWrapper( viewKeysStruct::krylovTolString, &krylov.relTolerance )->
+    setApplyDefaultValue( krylov.relTolerance )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Relative convergence tolerance" );
 

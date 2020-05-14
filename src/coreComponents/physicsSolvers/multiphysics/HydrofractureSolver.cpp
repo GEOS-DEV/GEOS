@@ -1557,7 +1557,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     list->set( "Preconditioner Type", "None" ); // will use user-defined P
     list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations",
                                                                                                 m_linearSolverParameters.krylov.maxIterations );
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", m_linearSolverParameters.krylov.tolerance );
+    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", m_linearSolverParameters.krylov.relTolerance );
 
     if( use_bicgstab )
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "BiCGStab" );
@@ -1593,7 +1593,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     if( getLogLevel()>=2 )
     {
       GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numKrylovIter <<
-                        " | TargetReduction " << m_linearSolverParameters.krylov.tolerance <<
+                        " | TargetReduction " << m_linearSolverParameters.krylov.relTolerance <<
                         " | AuxTime " << auxTime <<
                         " | SetupTime " << setupTime <<
                         " | SolveTime " << solveTime );
