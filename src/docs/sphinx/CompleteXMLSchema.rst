@@ -373,6 +373,13 @@ Element: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
 
 
+.. _XML_LinearSolverParameters:
+
+Element: LinearSolverParameters
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -623,13 +630,6 @@ Element: SurfaceGenerator
 Element: SymbolicFunction
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction.rst
-
-
-.. _XML_SystemSolverParameters:
-
-Element: SystemSolverParameters
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters.rst
 
 
 .. _XML_TableFunction:
@@ -1091,6 +1091,13 @@ Datastructure: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearSolverParameters:
+
+Datastructure: LinearSolverParameters
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -1348,13 +1355,6 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction_other.rst
-
-
-.. _DATASTRUCTURE_SystemSolverParameters:
-
-Datastructure: SystemSolverParameters
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

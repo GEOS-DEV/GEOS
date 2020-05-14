@@ -14,8 +14,8 @@
                                  lineSearchAction="2"
                                  lineSearchMaxCuts="2"
                                  maxTimeStepCuts="2"/>
-      <SystemSolverParameters logLevel="0"
-                              useDirectSolver="1"/>
+      <LinearSolverParameters solverType="direct"
+                              logLevel="0"/>
     </LagrangianContact>
 
     <SolidMechanicsLagrangianSSLE name="lagsolve"
@@ -26,7 +26,7 @@
                                   solidMaterialNames="{rock}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <LinearSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 

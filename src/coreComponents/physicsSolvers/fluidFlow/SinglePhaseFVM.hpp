@@ -45,7 +45,6 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_systemSolverParameters;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;
