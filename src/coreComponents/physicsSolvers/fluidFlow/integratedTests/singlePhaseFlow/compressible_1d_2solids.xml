@@ -11,7 +11,7 @@
                     solidNames="{rock1,rock2}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters useDirectSolver="1"/>
+      <LinearSolverParameters solverType="direct"/>
     </SinglePhaseFVM>
   </Solvers>
   

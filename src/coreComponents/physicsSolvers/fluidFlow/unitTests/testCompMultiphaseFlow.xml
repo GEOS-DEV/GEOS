@@ -15,11 +15,8 @@
                                  
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="2"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              useDirectSolver="0"
-                              solverType="Klu"
-                              ilut_fill="0"
-                              ilut_drop="0"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

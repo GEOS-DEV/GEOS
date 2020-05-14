@@ -9,7 +9,7 @@
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
       <NonlinearSolverParameters newtonMaxIter="40"/>
-      <SystemSolverParameters useDirectSolver="1"
+      <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
     </CompositionalMultiphaseReservoir>
     

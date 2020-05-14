@@ -109,11 +109,6 @@ void PrintPermutedMatrix( ParallelMatrix const & matrix,
                           ParallelMatrix const & permutationMatrixRight,
                           std::ostream & os );
 
-
-//void SeparateComponentFilter(ParallelMatrix const & src,
-//                             ParallelMatrix & dst,
-//                             const localIndex dofsPerNode);
-
 template< typename LAI >
 void SeparateComponentFilter( typename LAI::ParallelMatrix const & src,
                               typename LAI::ParallelMatrix & dst,

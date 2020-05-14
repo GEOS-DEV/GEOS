@@ -1,8 +1,6 @@
-
 <Problem>
 
   <Solvers>
-  
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
@@ -15,7 +13,7 @@
                                  useMass="0">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="15"/>
-      <SystemSolverParameters useDirectSolver="1"/>
+      <LinearSolverParameters solverType="direct"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

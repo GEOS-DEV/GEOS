@@ -561,7 +561,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   // We now switch to Krylov solvers
   parameters.logLevel = 0;
-  parameters.krylov.tolerance = 1e-8;
+  parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
   // We now do the same using ILU(k) preconditioned GMRES
   // Again the norm should be the norm of x.
@@ -574,7 +574,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   norm_comp = x_comp.norm2();
 
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.tolerance );
+             matrix_condition_number * parameters.krylov.relTolerance );
 
   // Set basic options
   parameters.solverType = "cg";
@@ -587,7 +587,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   solver.solve( matrix, x_comp, b );
 
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.tolerance );
+             matrix_condition_number * parameters.krylov.relTolerance );
 }
 
 

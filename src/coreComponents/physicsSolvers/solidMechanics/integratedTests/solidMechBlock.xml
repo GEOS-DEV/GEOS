@@ -11,10 +11,9 @@
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-4"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters useMLPrecond="1"
-                              scalingOption="0"
+      <LinearSolverParameters solverType="gmres"
                               krylovTol="1.0e-8"
-                              logLevel="0"/>
+                              preconditionerType="amg"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 

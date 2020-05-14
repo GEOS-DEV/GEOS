@@ -20,8 +20,8 @@
                                  lineSearchAction="0"
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
-      <SystemSolverParameters krylovTol="1.0e-12"
-                              useDirectSolver="0"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-12"/>
     
     </ProppantTransport>    
 
@@ -34,7 +34,7 @@
 
       <NonlinearSolverParameters newtonMinIter="1"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters />
+      <LinearSolverParameters />
     </FlowProppantTransport>
 
 
@@ -52,7 +52,8 @@
                                  lineSearchAction="0"
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
-       <SystemSolverParameters krylovTol="1.0e-12"/>
+       <LinearSolverParameters solverType="gmres"
+                               krylovTol="1.0e-12"/>
     </SinglePhaseProppantFVM>
 
 

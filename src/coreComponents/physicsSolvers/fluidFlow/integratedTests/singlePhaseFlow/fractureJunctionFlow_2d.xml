@@ -12,7 +12,8 @@
                      solidNames="{rock}">
       <NonlinearSolverParameters newtonTol="1.0e-8"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-12"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-12"/>
     </SinglePhaseFVM>
     
     <SurfaceGenerator name="SurfaceGen"

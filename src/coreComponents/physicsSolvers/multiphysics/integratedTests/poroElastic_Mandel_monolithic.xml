@@ -14,7 +14,7 @@
 	                         newtonTol="1.0e-2"
 	                         maxTimeStepCuts="1"
                                  lineSearchMaxCuts="0"/>                                 
-      <SystemSolverParameters useDirectSolver="1"
+      <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
     </Poroelastic>
 
