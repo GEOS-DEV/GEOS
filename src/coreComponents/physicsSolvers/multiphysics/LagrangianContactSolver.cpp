@@ -682,8 +682,8 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
             char output[46] = {0};
             sprintf( output,
                      "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                     m_systemSolverParameters.m_numKrylovIter,
-                     m_systemSolverParameters.m_krylovTol );
+                     m_linearSolverParameters.krylov.maxIterations,  //TODO: replace with real Status info
+                     m_linearSolverParameters.krylov.relTolerance );
             std::cout<<output;
           }
           std::cout<<std::endl;
@@ -699,9 +699,12 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
         // if using adaptive Krylov tolerance scheme, update tolerance.
         // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-        if( m_systemSolverParameters.useAdaptiveKrylovTol())
+        if( m_linearSolverParameters.krylov.useAdaptiveTol )
         {
-          m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker( residualNorm, lastResidual );
+          m_linearSolverParameters.krylov.relTolerance =
+            LinearSolverParameters::eisenstatWalker( residualNorm,
+                                                     lastResidual,
+                                                     m_linearSolverParameters.krylov.weakestTol );
         }
 
         // call the default linear solver on the system

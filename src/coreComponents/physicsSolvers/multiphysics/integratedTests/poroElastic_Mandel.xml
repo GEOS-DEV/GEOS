@@ -12,7 +12,7 @@
                  discretization="FE1"
                  targetRegions="{Region2}">
       <NonlinearSolverParameters newtonMaxIter="40"/>
-      <SystemSolverParameters logLevel="2"/>
+      <LinearSolverParameters logLevel="2"/>
     </Poroelastic>
 
   
@@ -25,7 +25,8 @@
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"
                               logLevel="2"/>
     </SolidMechanicsLagrangianSSLE>
   
@@ -37,7 +38,9 @@
                      solidNames="{shale}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-10"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"
+                              logLevel="2"/>
     </SinglePhaseFVM>
   </Solvers>
   
