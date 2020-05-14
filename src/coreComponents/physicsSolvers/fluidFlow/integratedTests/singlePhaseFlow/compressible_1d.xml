@@ -11,7 +11,8 @@
                      targetRegions="{Region1}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-10"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
   
