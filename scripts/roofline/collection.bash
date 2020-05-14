@@ -65,14 +65,23 @@ metrics+="lts__t_sectors_aperture_sysmem_op_read.sum,\
 lts__t_sectors_aperture_sysmem_op_write.sum"
 
 
-command=$1
-metricsFile=$2
+binRoot=$1
+inputFile=$2
+metricsFileRoot=$3
 
-echo $command
-echo $metricsFile
+echo $binRoot
+echo $inputFile
+echo $metricsFileRoot
 
-#srun -n1 nv-nsight-cu-cli -k sigma_gpp_gpu --metrics $metrics --csv ./gpp.x $input 0 > metrics.v$n 2>&1
 jsrun -n 1 -a 1 -g 1 --smpiargs="-disable_gpu_hooks" nv-nsight-cu-cli \
 -k SSLE  --metrics $metrics --csv \
-bin/geosx -i ../examples/sedovKernelTest.xml > $metricsFile 2>&1
+$binRoot-relwithdebinfo/bin/geosx -i $inputFile > $metricsFileRoot.nscompute 2>&1
+
+jsrun -n 1 -a 1 -g 1 \
+$binRoot-release/bin/geosx -i $inputFile -t "runtime-report(output=$metricsFileRoot.caliper)" > junk.txt 2>&1
+
+
+
+
+#bin/geosx -i ../examples/sedovKernelTest.xml > $metricsFile 2>&1
 

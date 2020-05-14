@@ -3,7 +3,7 @@
 import os,sys,glob
 from roofline import roofline
 
-def process(fin, LABELS, FLOPS, AIL1, AIL2, AIHBM):
+def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
   lTime  = []
   lFlop  = []
@@ -11,7 +11,8 @@ def process(fin, LABELS, FLOPS, AIL1, AIL2, AIHBM):
   lL2    = []
   lDram  = []
 
-  res = open(fin,"r")
+  nsComputeFile = fin + '.nscompute'
+  res = open(nsComputeFile,"r")
   prevLine = ""
 
   for line in res:
@@ -93,11 +94,23 @@ def process(fin, LABELS, FLOPS, AIL1, AIL2, AIHBM):
     prevLine = line     # end of for
 
   res.close()
+  
+  
+  caliperFile = fin + '.caliper'
+  res = open(caliperFile,"r")
+  prevLine = ""
+
+  for line in res:
+    if ( caliperKernelName in line) :
+      linesp=line.split()
+      caliperTime = float(linesp[1])
+
+  res.close()
 
   transactionSize = 32.
-  GIGA = 1024. * 1024. * 1024.
+  GIGA = 1.0e9
 
-  time      = sum(lTime)
+  time      = min( caliperTime, sum(lTime) )
   flop      = sum(lFlop)
   bytesL1   = sum(lL1)   * transactionSize
   bytesL2   = sum(lL2)   * transactionSize
@@ -110,7 +123,7 @@ def process(fin, LABELS, FLOPS, AIL1, AIL2, AIHBM):
   tmpAIHBM  = flop / bytesDram
 
   print(tmpLABEL)
-  print( "Time = ", time )
+  print("Time\t{}".format(time) )
   print("FLOP\t{}".format(flop))
   print("FLOPS\t{}".format(tmpFLOPS))
   print("AI_L1\t{}".format(tmpAIL1))
@@ -126,12 +139,15 @@ def process(fin, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
 if __name__== "__main__":
 
-  numFiles = len(sys.argv) - 1
-  print( numFiles )
+  caliperKernelName = sys.argv[1]
+  
+  fileStart = 2;
+  numFiles = len(sys.argv) - fileStart
+  print( "numFiles = {}".format(numFiles ))
 
   # Get all profiling files
   files = []
-  for f in range(1,numFiles+1):
+  for f in range(fileStart,numFiles+fileStart):
     files.append( sys.argv[f] )
   files.sort()
   
@@ -147,12 +163,12 @@ if __name__== "__main__":
 
   # Process profiling data
   for f in files:
-    print( "processing ", f )
-    process(f, LABELS, FLOPS, AIL1, AIL2, AIHBM)
+    print( "processing {}".format(f) )
+    process(f, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM)
 
   print(LABELS)
   print(FLOPS)
  
 
   # Generate roofline plot
-  #roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM)
+  roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM)

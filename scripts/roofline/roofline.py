@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+from matplotlib.ticker import FormatStrFormatter
 
 font = { 'size'   : 15}
 plt.rc('font', **font)
@@ -28,7 +29,7 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
   xmin = -0.65
   xmax = 2
   ymin = 400.0
-  ymax = 13000
+  ymax = 10000
 
   ax.set_xlim(10**xmin, 10**xmax)
   ax.set_ylim(ymin, ymax)
@@ -75,13 +76,13 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
     ax.plot(float(AIL2[i]),float(FLOPS[i]),c=colors[i],marker=styles[1],linestyle='None',ms=markersize,markerfacecolor='none',markeredgewidth=markerwidth,label=LABELS[i])
     ax.plot(float(AIHBM[i]),float(FLOPS[i]),c=colors[i],marker=styles[2],linestyle='None',ms=markersize,markerfacecolor='none',markeredgewidth=markerwidth,label=LABELS[i])
     ax.plot([float(AIL1[i]), float(AIL2[i]), float(AIHBM[i])], [float(FLOPS[i]), float(FLOPS[i]), float(FLOPS[i])], c=colors[i],linestyle='-')
-    ax.text(70-3*len(AIL1)+3*i,float(FLOPS[i]),str(i+1),color=colors[i],horizontalalignment='right',verticalalignment='center')
+#    ax.text(70-3*len(AIL1)+3*i,float(FLOPS[i]),str(i+1),color=colors[i],horizontalalignment='right',verticalalignment='center')
   for i in range(len(memRoofs)):
     marker_handles.append(ax.plot([],[],c='k',marker=styles[i],linestyle='None',ms=markersize,markerfacecolor='none',markeredgewidth=markerwidth,label=memRoofs[i][0])[0])
 
   for roof in cmpRoofs:
       ax.text(x[-ixx],roof[1],
-              roof[0] + ': ' + '{0:.1f}'.format(roof[1]) + ' GFLOP/s',
+              roof[0] + ': ' + '{0:.0f}'.format(roof[1]) + ' GFLOP/s',
               horizontalalignment='right',
               verticalalignment='bottom')
 
@@ -90,7 +91,7 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
                                    * fig.get_size_inches()[1]/fig.get_size_inches()[0] )
       if x[ixx]*roof[1] >ymin:
           ax.text(x[ixx],x[ixx]*roof[1]*(1+0.25*np.sin(ang)**2),
-              roof[0] + ': ' + '{0:.1f}'.format(float(roof[1])) + ' GB/s',
+              roof[0] + ': ' + '{0:.0f}'.format(float(roof[1])) + ' GB/s',
               horizontalalignment='left',
               verticalalignment='bottom',
               rotation=180/np.pi*ang)
@@ -108,16 +109,22 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
               verticalalignment='bottom',
               rotation=180/np.pi*ang)
 
-  leg1 = plt.legend(handles = marker_handles,loc='lower center', ncol=1,bbox_to_anchor = (0.3,0))
+  leg1 = plt.legend(handles = marker_handles,loc='lower center', ncol=1,bbox_to_anchor = (0.5,0))
   ax.add_artist(leg1)
 
   patch_handles = list()
   for i in range(0,len(AIHBM)):
       patch_handles.append(mpatches.Patch(color=colors[i],label = LABELS[i]))
 
-  leg2 = plt.legend(handles = patch_handles,loc=4,ncol=2,bbox_to_anchor = (1,0),scatterpoints = 1)
+  leg2 = plt.legend(handles = patch_handles,loc=4,ncol=1,bbox_to_anchor = (1,0),scatterpoints = 1)
 
   ax.text(xlim[0]*1.1,ylim[1]/1.1,'V100',horizontalalignment='left',verticalalignment='top')
+  
+  ax.minorticks_on()
+  # Customize the major grid
+  ax.grid(which='major', linestyle='-', linewidth='1.0', color='black')
+  # Customize the minor grid
+  ax.grid(which='minor', linestyle='-', linewidth='0.5', color='grey')
 
   plt.savefig(filename+'.png')
   plt.savefig(filename+'.eps')
