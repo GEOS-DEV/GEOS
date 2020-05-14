@@ -21,6 +21,7 @@
 #include "interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+#include "common/Stopwatch.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
@@ -76,6 +77,10 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
                                    EpetraVector & sol,
                                    EpetraVector & rhs )
 {
+  // Time setup and solve
+  Stopwatch watch;
+  watch.zero();
+
   // Create Epetra linear problem and instantiate solver.
   Epetra_LinearProblem problem( &mat.unwrapped(),
                                 &sol.unwrapped(),
@@ -90,9 +95,12 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
   // Factorize the matrix
   GEOSX_LAI_CHECK_ERROR( solver->SymbolicFactorization() );
   GEOSX_LAI_CHECK_ERROR( solver->NumericFactorization() );
+  m_setupTime = watch.elapsedTime();
 
   // Solve the system
+  watch.zero();
   GEOSX_LAI_CHECK_ERROR( solver->Solve() );
+  m_solveTime = watch.elapsedTime();
 
   // Basic output
   if( m_parameters.logLevel > 0 )
@@ -100,12 +108,17 @@ void TrilinosSolver::solve_direct( EpetraMatrix & mat,
     solver->PrintStatus();
     solver->PrintTiming();
   }
+
 }
 
 void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
                                    EpetraVector & sol,
                                    EpetraVector & rhs )
 {
+  // Time setup and solve
+  Stopwatch watch;
+  watch.zero();
+
   // Create Epetra linear problem.
   Epetra_LinearProblem problem( &mat.unwrapped(),
                                 &sol.unwrapped(),
@@ -132,7 +145,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_solver, AZ_cg ) );
   }
   else
-    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType (" << m_parameters.solverType << ") doesn't seem to exist" );
 
   // Create a null pointer to an ML amg preconditioner
   std::unique_ptr< ML_Epetra::MultiLevelPreconditioner > ml_preconditioner;
@@ -202,15 +215,14 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     list.set( "prec type", translate[m_parameters.amg.cycleType] );
     list.set( "smoother: type", translate[m_parameters.amg.smootherType] );
     list.set( "coarse: type", translate[m_parameters.amg.coarseType] );
-    //list.set( "aggregation: threshold", 0.0 );
-    //list.set( "smoother: pre or post", "post" );
+    list.set( "aggregation: threshold", m_parameters.amg.threshold );
+    list.set( "smoother: pre or post", m_parameters.amg.preOrPostSmoothing );
 
     //TODO: add user-defined null space / rigid body mode support
     //list.set("null space: type","pre-computed");
     //list.set("null space: vectors",&rigid_body_modes[0]);
     //list.set("null space: dimension", n_rbm);
 
-    //TODO: templatization for LAIHelperFunctions needed
     if( m_parameters.amg.separateComponents ) // apply separate displacement component filter
     {
       scratch = std::make_unique< EpetraMatrix >();
@@ -225,7 +237,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( solver.SetPrecOperator( ml_preconditioner.get() ) );
   }
   else
-    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType (" << m_parameters.preconditionerType << ") doesn't seem to exist" );
 
   // Ask for a convergence normalized by the right hand side
   GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_conv, AZ_rhs ) );
@@ -250,15 +262,50 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
       GEOSX_LAI_CHECK_ERROR( solver.SetAztecOption( AZ_output, AZ_none ) );
     }
   }
+  m_setupTime = watch.elapsedTime();
 
   // Actually solve
+  watch.zero();
   int const result = solver.Iterate( m_parameters.krylov.maxIterations,
-                                     m_parameters.krylov.tolerance );
+                                     m_parameters.krylov.relTolerance );
+  m_solveTime = watch.elapsedTime();
 
   GEOSX_WARNING_IF( result, "TrilinosSolver: Krylov convergence not achieved" );
 
-  //TODO: should we return performance feedback to have GEOSX pretty print details?:
-  //      i.e. iterations to convergence, residual reduction, etc.
+  // Basic performance info
+  m_iterations = solver.NumIters();
+  m_reduction = solver.ScaledResidual();
+}
+
+integer TrilinosSolver::iterations()
+{
+  if( m_parameters.solverType == "direct" )
+    return 1;
+  else
+    return m_iterations;
+}
+
+real64 TrilinosSolver::reduction()
+{
+  if( m_parameters.solverType == "direct" )
+    return std::numeric_limits< real64 >::epsilon();
+  else
+    return m_reduction;
+}
+
+real64 TrilinosSolver::setupTime()
+{
+  return m_setupTime;
+}
+
+real64 TrilinosSolver::solveTime()
+{
+  return m_solveTime;
+}
+
+real64 TrilinosSolver::totalTime()
+{
+  return setupTime()+solveTime();
 }
 
 } // end geosx namespace

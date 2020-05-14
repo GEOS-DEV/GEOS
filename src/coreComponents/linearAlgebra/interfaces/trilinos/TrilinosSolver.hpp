@@ -19,6 +19,8 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
+#include "common/DataTypes.hpp"
+
 namespace geosx
 {
 
@@ -57,6 +59,38 @@ public:
               EpetraVector & sol,
               EpetraVector & rhs );
 
+  /**
+   * @brief Number of krylov iterations to convergence.
+   *
+   * @note Value is meaningless if a direct solver is called and will return 1
+   */
+  integer iterations();
+
+  /**
+   * @brief Relative residual reduction.
+   *
+   * If the solve is successful, this value should be less than the target krylov
+   * tolerance.  If the solver stagnates, however, it may be higher.
+   *
+   * @note Value is meaningless if a direct solver is called and will return machine precision;
+   */
+  real64  reduction();
+
+  /**
+   * @brief Setup time (in seconds) for preconditioners and/or direct factorizations
+   */
+  real64  setupTime();
+
+  /**
+   * @brief Solve time (in seconds) exclusive of setup costs
+   */
+  real64  solveTime();
+
+  /**
+   * @brief Total time (in seconds), the sum of setupTime() and solveTime()
+   */
+  real64  totalTime();
+
 private:
 
   LinearSolverParameters const & m_parameters;
@@ -69,6 +103,10 @@ private:
                      EpetraVector & sol,
                      EpetraVector & rhs );
 
+  integer m_iterations;
+  real64 m_reduction;
+  real64 m_setupTime;
+  real64 m_solveTime;
 };
 
 } // end geosx namespace
