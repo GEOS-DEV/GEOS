@@ -33,7 +33,7 @@ class Stopwatch
 {
 public:
   /**
-   * @brief Constructor.  Calls zero().
+   * @brief Constructor.
    */
   Stopwatch()
   {
@@ -45,7 +45,7 @@ public:
    */
   void zero()
   {
-    start = std::chrono::steady_clock::now();
+    m_start = std::chrono::steady_clock::now();
   }
 
   /**
@@ -54,15 +54,13 @@ public:
    */
   real64 elapsedTime()
   {
-    end = std::chrono::steady_clock::now();
-    diff = end-start;
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::chrono::duration< real64 > diff = end-m_start;
     return diff.count();
   }
 
 private:
-  std::chrono::steady_clock::time_point start;
-  std::chrono::steady_clock::time_point end;
-  std::chrono::duration< real64 > diff;
+  std::chrono::steady_clock::time_point m_start;
 };
 
 } // end geosx
