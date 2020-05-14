@@ -31,7 +31,8 @@ XML Units:
                     fluidNames="{water}"
                     solidNames="{rock}"
                     inputFluxEstimate="1">
-      <SystemSolverParameters krylovTol="1.0e-12"
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-12"
                               logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>

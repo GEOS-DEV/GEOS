@@ -14,8 +14,8 @@ contactForce              r1_array       :ref:`DATASTRUCTURE_nodeManager` An arr
 externalForce             r1_array       :ref:`DATASTRUCTURE_nodeManager` An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces.                 
 uhatTilde                 r1_array       :ref:`DATASTRUCTURE_nodeManager` An array that holds the incremental displacement predictors on the nodes.                                                                                        
 velocityTilde             r1_array       :ref:`DATASTRUCTURE_nodeManager` An array that holds the velocity predictors on the nodes.                                                                                                        
+LinearSolverParameters    node                                            :ref:`DATASTRUCTURE_LinearSolverParameters`                                                                                                                      
 NonlinearSolverParameters node                                            :ref:`DATASTRUCTURE_NonlinearSolverParameters`                                                                                                                   
-SystemSolverParameters    node                                            :ref:`DATASTRUCTURE_SystemSolverParameters`                                                                                                                      
 ========================= ============== ================================ ================================================================================================================================================================ 
 
 

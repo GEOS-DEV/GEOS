@@ -1,4 +1,3 @@
-
 <Problem>
 <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
   <Solvers>
@@ -16,7 +15,7 @@
                                  newtonMaxIter="15"
                                  maxTimeStepCuts="2"
                                  lineSearchMaxCuts="2"/>
-      <SystemSolverParameters useDirectSolver="1"/>
+      <LinearSolverParameters solverType="direct"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->

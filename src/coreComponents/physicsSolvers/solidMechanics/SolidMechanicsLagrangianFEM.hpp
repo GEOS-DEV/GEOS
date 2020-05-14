@@ -367,9 +367,7 @@ public:
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
-  {
-    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } solidMechanicsGroupKeys;
+  {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
 

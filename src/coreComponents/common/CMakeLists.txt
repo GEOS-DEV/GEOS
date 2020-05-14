@@ -8,6 +8,7 @@ set(common_headers
     DataTypes.hpp
     Path.hpp
     GeosxMacros.hpp
+    Stopwatch.hpp
     TimingMacros.hpp
     Logger.hpp
     DataLayouts.hpp
