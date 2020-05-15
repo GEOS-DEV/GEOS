@@ -70,6 +70,8 @@ public:
                                integer const cycleNumber,
                                DomainPartition * const domain ) override;
 
+  void sparsityGeneration( DomainPartition const & domain );
+
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,

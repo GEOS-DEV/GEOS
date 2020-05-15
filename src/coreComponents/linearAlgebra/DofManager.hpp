@@ -64,6 +64,7 @@ getNeighborNodes( localIndex (& neighborNodes )[ N ],
 
 } // namespace internal
 
+template< int DIMS_PER_DOF >
 inline void
 finiteElement( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
                arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes,
@@ -73,11 +74,9 @@ finiteElement( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
 {
   GEOSX_MARK_FUNCTION;
 
-  constexpr int NDIM = 3;
   constexpr int MAX_ELEMS_PER_NODE = 8;
   constexpr int MAX_NODES_PER_ELEM = 8;
   constexpr int MAX_NODE_NEIGHBORS = 27;
-  constexpr int MAX_COLUMNS_PER_ROW = NDIM * MAX_NODE_NEIGHBORS;
 
   localIndex const numNodes = nodesToElems.size();
 
@@ -86,7 +85,7 @@ finiteElement( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
   {
     GEOSX_MARK_FUNCTION_TAG( resizing );
 
-    std::vector< localIndex > nnzPerRow( NDIM * numNodes );
+    std::vector< localIndex > nnzPerRow( DIMS_PER_DOF * numNodes );
     forAll< parallelHostPolicy >( numNodes,
                                   [&nnzPerRow, elemsToNodes, nodesToRegions, nodesToSubRegions, nodesToElems] ( localIndex const nodeID )
     {
@@ -99,13 +98,13 @@ finiteElement( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
 
       GEOSX_ASSERT_GE( MAX_NODE_NEIGHBORS, numNeighbors );
 
-      for( int dim = 0; dim < NDIM; ++dim )
+      for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
       {
-        nnzPerRow[ NDIM * nodeID + dim ] = NDIM * numNeighbors;
+        nnzPerRow[ DIMS_PER_DOF * nodeID + dim ] = DIMS_PER_DOF * numNeighbors;
       }
     } );
 
-    sparsity.resizeFromRowCapacities< parallelHostPolicy >( NDIM * numNodes, NDIM * numNodes, nnzPerRow.data() );
+    sparsity.resizeFromRowCapacities< parallelHostPolicy >( DIMS_PER_DOF * numNodes, DIMS_PER_DOF * numNodes, nnzPerRow.data() );
   }
 
   {
@@ -122,18 +121,18 @@ finiteElement( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
                                                                   nodesToSubRegions[ nodeID ],
                                                                   nodesToElems[ nodeID ] );
 
-      globalIndex dofNumbers[ MAX_COLUMNS_PER_ROW ];
+      globalIndex dofNumbers[ DIMS_PER_DOF * MAX_NODE_NEIGHBORS ];
       for( localIndex i = 0; i < numNeighbors; ++i )
       {
-        for( int dim = 0; dim < NDIM; ++dim )
+        for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
         {
-          dofNumbers[ NDIM * i + dim ] = NDIM * neighborNodes[ i ] + dim;
+          dofNumbers[ DIMS_PER_DOF * i + dim ] = DIMS_PER_DOF * neighborNodes[ i ] + dim;
         }
       }
 
-      for( int dim = 0; dim < NDIM; ++dim )
+      for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
       {
-        sparsityView.insertNonZeros( NDIM * nodeID + dim, dofNumbers, dofNumbers + NDIM * numNeighbors );
+        sparsityView.insertNonZeros( DIMS_PER_DOF * nodeID + dim, dofNumbers, dofNumbers + DIMS_PER_DOF * numNeighbors );
       }
     } );
   }

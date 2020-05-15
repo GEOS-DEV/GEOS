@@ -50,7 +50,7 @@ struct StressCalculationKernel
     arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
 
-   using KERNEL_POLICY = parallelDevicePolicy< 32 >;
+    using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     // using KERNEL_POLICY = parallelHostPolicy;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                    [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -632,7 +632,7 @@ struct CRSImplicitKernel
           localIndex const nodeIndex = elemsToNodes( k, a );
           uhat_local[ a ] = uhat[ nodeIndex ];
         #if defined(CALCFEMSHAPE)
-          for ( int i = 0; i < NDIM; ++i )
+          for( int i = 0; i < NDIM; ++i )
           { xLocal[ a ][ i ] = X[ nodeIndex ][ i ]; }
         #endif
         }

@@ -947,16 +947,16 @@ void verifySystem( LvArray::CRSMatrixView< real64 const, globalIndex const, loca
 
   GEOSX_ERROR_IF_NE( rhsArray.size(), rhs.localSize() );
 
-  if ( checkValues )
+  if( checkValues )
   {
     real64 const * const rhsPtr = rhs.extractLocalVector();
     forAll< POLICY >( rhsArray.size(), [rhsArray, rhsPtr, atol, rtol] ( localIndex const i )
     {
       real64 const diff = std::abs( rhsArray[ i ] - rhsPtr[ i ] );
       bool const equal = diff < atol ||
-                        ( std::fpclassify( rhsPtr[ i ] ) != FP_ZERO && diff / std::abs( rhsPtr[ i ] ) < rtol );
+                         ( std::fpclassify( rhsPtr[ i ] ) != FP_ZERO && diff / std::abs( rhsPtr[ i ] ) < rtol );
       GEOSX_ERROR_IF( !equal, std::setprecision( 16 ) << rhsArray[ i ] << ", " << rhsPtr[ i ] );
-    });
+    } );
   }
 
   GEOSX_ERROR_IF_NE( crsMatrix.numRows(), matrix.numLocalRows() );
@@ -974,15 +974,15 @@ void verifySystem( LvArray::CRSMatrixView< real64 const, globalIndex const, loca
 
     matrix.getRowCopy( row, columns, values );
 
-    for ( localIndex i = 0; i < nnz; ++i )
+    for( localIndex i = 0; i < nnz; ++i )
     {
       GEOSX_ERROR_IF_NE( crsMatrix.getColumns( row )[ i ], columns[ i ] );
 
-      if ( checkValues )
+      if( checkValues )
       {
         real64 const diff = std::abs( crsMatrix.getEntries( row )[ i ] - values[ i ] );
         bool const equal = diff < atol ||
-                          ( std::fpclassify( values[ i ] ) != FP_ZERO && diff / std::abs( values[ i ] ) < rtol );
+                           ( std::fpclassify( values[ i ] ) != FP_ZERO && diff / std::abs( values[ i ] ) < rtol );
         GEOSX_ERROR_IF( !equal, std::setprecision( 16 ) << crsMatrix.getEntries( row )[ i ] << ", " << values[ i ] );
       }
     }

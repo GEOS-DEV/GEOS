@@ -425,11 +425,11 @@ void SolidMechanicsLagrangianFEM::sparsityGeneration( DomainPartition const & do
     } );
   } );
 
-  sparsityGeneration::finiteElement( m_crsMatrix,
-                                     elemsToNodes.toViewConst(),
-                                     nodeManager.elementRegionList(),
-                                     nodeManager.elementSubRegionList(),
-                                     nodeManager.elementList() );
+  sparsityGeneration::finiteElement< 3 >( m_crsMatrix,
+                                          elemsToNodes.toViewConst(),
+                                          nodeManager.elementRegionList(),
+                                          nodeManager.elementSubRegionList(),
+                                          nodeManager.elementList() );
 
   m_rhsArray.resize( m_crsMatrix.numRows() );
   m_rhsArray = 0;
