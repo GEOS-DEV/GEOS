@@ -1,7 +1,6 @@
 <Problem>
 
   <Solvers>
-  
     <CompositionalMultiphaseFlow name="compflow"
                                  logLevel="1"
                                  discretization="fluidTPFA"
@@ -15,9 +14,8 @@
                                  newtonMaxIter="100"
                                  maxTimeStepCuts="5"
                                  lineSearchAction="0"/>
-      <SystemSolverParameters krylovTol="1.0e-7"
-                              useDirectSolver="0"
-                              useBicgstab="1"/>
+      <LinearSolverParameters solverType="bicgstab"
+                              krylovTol="1e-7"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
   

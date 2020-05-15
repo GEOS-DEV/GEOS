@@ -102,12 +102,9 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
-  ///@}
-
-  /**
-   * @name Overriding packing / Unpacking functions
-   */
-  ///@{
+  void CalculateElementGeometricQuantities( localIndex const k,
+                                            arrayView1d< real64 const > const & faceArea,
+                                            arrayView1d< R2Tensor const > const & faceRotationMatrix );
 
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -144,6 +141,9 @@ public:
 
     /// Face element area string.
     static constexpr auto elementAreaString            = "elementArea";
+
+    /// String for registering the elementRotationMatrix with the repository.
+    static constexpr auto elementRotationMatrixString  = "elementRotationMatrix";
 
     /// Face element to cell regions map string.
     static constexpr auto faceElementsToCellRegionsString    = "fractureElementsToCellRegions";
@@ -264,6 +264,9 @@ public:
    */
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  arrayView1d< R2Tensor > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
+
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
    * @brief Get separation coefficient.
@@ -320,6 +323,9 @@ private:
 
   /// Member level field for the element center
   array1d< real64 > m_elementArea;
+
+  /// The member level field for the element rotation matrix
+  array1d< R2Tensor > m_elementRotationMatrix;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

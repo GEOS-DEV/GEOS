@@ -302,7 +302,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested preconditionerType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested preconditionerType (" << m_parameters.preconditionerType << ") doesn't seem to exist" );
   }
 
   HYPRE_Int result = 0;
@@ -314,7 +314,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESCreate( comm, &solver ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetMaxIter( solver, m_parameters.krylov.maxIterations ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetKDim( solver, m_parameters.krylov.maxRestart ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver, m_parameters.krylov.tolerance ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetTol( solver, m_parameters.krylov.relTolerance ) );
 
     // Default for now
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, m_parameters.logLevel ) );
@@ -348,7 +348,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABCreate( comm, &solver ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetMaxIter( solver, m_parameters.krylov.maxIterations ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver, m_parameters.krylov.tolerance ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetTol( solver, m_parameters.krylov.relTolerance ) );
 
     // Default for now
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRBiCGSTABSetPrintLevel( solver, m_parameters.logLevel ) );
@@ -382,7 +382,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRPCGCreate( comm, &solver ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetMaxIter( solver, m_parameters.krylov.maxIterations ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver, m_parameters.krylov.tolerance ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetTol( solver, m_parameters.krylov.relTolerance ) );
 
     // Default for now
     GEOSX_LAI_CHECK_ERROR( HYPRE_PCGSetPrintLevel( solver, m_parameters.logLevel ) );
@@ -415,7 +415,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   }
   else
   {
-    GEOSX_ERROR( "The requested linear solverType doesn't seem to exist" );
+    GEOSX_ERROR( "The requested linear solverType (" << m_parameters.solverType << ")doesn't seem to exist" );
   }
 
   GEOSX_WARNING_IF( result, "HypreSolver: Krylov convergence not achieved" );

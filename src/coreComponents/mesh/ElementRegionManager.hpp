@@ -854,6 +854,10 @@ public:
    */
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+  ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const;
+
+  template< typename CONSTITUTIVE_TYPE >
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
 
   using Group::PackSize;
@@ -1323,6 +1327,40 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
         accessor[er][esr] = wrapper->reference();
       }
     } );
+  }
+  return accessor;
+}
+
+template< typename CONSTITUTIVE_TYPE >
+ElementRegionManager::ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+ElementRegionManager::ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const
+{
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE > accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const * const elemRegion = GetRegion( kReg );
+    accessor[kReg].resize( elemRegion->numSubRegions() );
+
+    for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
+    {
+      ElementSubRegionBase const * const subRegion = elemRegion->GetSubRegion( kSubReg );
+      dataRepository::Group const * const
+      constitutiveGroup = subRegion->GetConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm->numSubGroups() );
+
+      for( localIndex matIndex=0; matIndex<cm->numSubGroups(); ++matIndex )
+      {
+        string const constitutiveName = cm->GetGroup( matIndex )->getName();
+
+        CONSTITUTIVE_TYPE * const
+        constitutiveRelation = constitutiveGroup->GetGroup< CONSTITUTIVE_TYPE >( constitutiveName );
+        if( constitutiveRelation != nullptr )
+        {
+          accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
+        }
+      }
+    }
   }
   return accessor;
 }
