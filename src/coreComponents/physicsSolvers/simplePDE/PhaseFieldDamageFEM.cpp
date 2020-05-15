@@ -214,6 +214,11 @@ void PhaseFieldDamageFEM::SetupDofs(
   DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName, DofManager::Location::Node );
+
+  dofManager.addCoupling( m_fieldName,
+                          m_fieldName,
+                          DofManager::Connector::Elem );
+
 }
 
 void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
