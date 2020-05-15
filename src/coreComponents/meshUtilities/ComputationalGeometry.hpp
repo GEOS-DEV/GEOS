@@ -81,6 +81,39 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            real64 areaTolerance = 0.0 );
 
 /**
+ * Calculates the centroid of a convex 3D polygon as well as the normal and the rotation matrix
+ * @param[in] pointIndices list of index references for the points array in
+ * order (CW or CCW) about the polygon loop
+ * @param[in] numPoints the number of points in the polygon
+ * @param[in] points 3D point list
+ * @param[out] center 3D center of the given ordered polygon point list
+ * @param[out] normal Normal to the face
+ * @param[out] rotationMatrix Rotation matrix for the face
+ * @return area of the convex 3D polygon
+ */
+real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
+                           localIndex const numPoints,
+                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
+                           R1Tensor & center,
+                           R1Tensor & normal,
+                           R2Tensor & rotationMatrix,
+                           real64 const areaTolerance = 0.0 );
+
+/**
+ * Given the normal vector, it changes its orientation to be consistent in a global sense
+ * @param[in/out] normal Normal to the face
+ */
+void FixNormalOrientation_3D( R1Tensor & normal );
+
+/**
+ * Given the normal vector, it calculates the rotation matrix for a face in the 3D space
+ * @param[in] normal Normal to the face
+ * @param[out] rotationMatrix Rotation matrix for the face
+ */
+void RotationMatrix_3D( R1Tensor const & normal,
+                        R2Tensor & rotationMatrix );
+
+/**
  * @author settgast
  * Calculates the centroid of a convex 3D polygon as well as the normal
  * @param[in] pointIndices list of index references for the points array in
