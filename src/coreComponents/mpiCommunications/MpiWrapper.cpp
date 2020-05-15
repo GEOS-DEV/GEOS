@@ -78,7 +78,7 @@ void MpiWrapper::Comm_free( MPI_Comm & comm )
 #ifdef GEOSX_USE_MPI
   MPI_CHECK_ERROR( MPI_Comm_free( &comm ) );
 #else
-  comm = MPI_COMM_NULL;
+//  comm = MPI_COMM_NULL;
 #endif
 }
 
