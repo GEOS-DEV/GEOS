@@ -440,6 +440,7 @@ void overrideInputFileName( std::string const & inputFileName )
 ///////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
+  LvArray::resetSignalHandling();
   finalizeLAI();
   finalizeLogger();
   internal::addUmpireHighWaterMarks();
