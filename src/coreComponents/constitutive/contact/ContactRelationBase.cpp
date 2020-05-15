@@ -40,7 +40,8 @@ ContactRelationBase::ContactRelationBase( string const & name,
   m_apertureTolerance( 1.0e-99 )
 {
   registerWrapper( viewKeyStruct::penaltyStiffnessString, &m_penaltyStiffness )->
-    setInputFlag( InputFlags::REQUIRED )->
+    //setInputFlag( InputFlags::REQUIRED )->
+    setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::apertureToleranceString, &m_apertureTolerance )->
@@ -58,7 +59,17 @@ ContactRelationBase::ContactRelationBase( string const & name,
 ContactRelationBase::~ContactRelationBase()
 {}
 
+real64 ContactRelationBase::limitTangentialTractionNorm( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+{
+  GEOSX_ERROR( "ContactRelationBase::limitTangentialTractionNorm called!. Should be overridden." );
+  return 0;
+}
 
+real64 ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction( real64 const GEOSX_UNUSED_PARAM( normalTraction ) ) const
+{
+  GEOSX_ERROR( "ContactRelationBase::dLimitTangentialTractionNorm_dNormalTraction called!. Should be overridden." );
+  return 0;
+}
 
 Group *
 ContactRelationBase::CreateChild( string const & catalogKey, string const & childName )

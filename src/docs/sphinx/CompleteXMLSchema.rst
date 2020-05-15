@@ -331,6 +331,13 @@ Element: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
+.. _XML_LagrangianContact:
+
+Element: LagrangianContact
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact.rst
+
+
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -371,6 +378,13 @@ Element: LinearSolverParameters
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
+
+
+.. _XML_MohrCoulomb:
+
+Element: MohrCoulomb
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -1021,6 +1035,13 @@ Datastructure: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
 
 
+.. _DATASTRUCTURE_LagrangianContact:
+
+Datastructure: LagrangianContact
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact_other.rst
+
+
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -1075,6 +1096,13 @@ Datastructure: Mesh
 Datastructure: MeshBodies
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
+
+
+.. _DATASTRUCTURE_MohrCoulomb:
+
+Datastructure: MohrCoulomb
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
