@@ -52,6 +52,7 @@ typedef int MPI_Datatype;
   #define MPI_LONG_LONG_INT  ((MPI_Datatype)0x4c000809)
   #define MPI_UNSIGNED_LONG_LONG ((MPI_Datatype)0x4c000819)
   #define MPI_LONG_LONG      MPI_LONG_LONG_INT
+  #define MPI_CXX_BOOL       ((MPI_Datatype)0x0c000000)
 
 typedef int MPI_Op;
 
@@ -505,6 +506,8 @@ template<> inline MPI_Datatype MpiWrapper::getMpiType< long long int >()        
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned int >()           { return MPI_UNSIGNED; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long int >()      { return MPI_UNSIGNED_LONG; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long long int >() { return MPI_UNSIGNED_LONG_LONG; }
+
+template<> inline MPI_Datatype MpiWrapper::getMpiType< bool >()                   { return MPI_CXX_BOOL; }
 
 inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
 {
