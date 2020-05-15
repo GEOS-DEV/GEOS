@@ -16,9 +16,7 @@
 #ifndef GEOSX_MESH_BUFFEROPS_HPP_
 #define GEOSX_MESH_BUFFEROPS_HPP_
 
-/// @cond DO_NOT_DOCUMENT
 #include "common/DataTypes.hpp"
-/// @endcond
 
 class OrderedVariableToManyElementRelation;
 class FixedToManyElementRelation;
