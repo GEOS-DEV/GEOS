@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os,sys,glob
+import os,sys,glob, getopt
 from roofline import roofline
 
 def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
@@ -139,6 +139,11 @@ def process(fin, caliperKernelName, LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
 if __name__== "__main__":
 
+
+  if len(sys.argv) < 2:
+    print( 'process.py <name_of_kernel_in_caliper> <fileroot0> <fileroot...> ')
+    sys.exit(2)
+  
   caliperKernelName = sys.argv[1]
   
   fileStart = 2;
