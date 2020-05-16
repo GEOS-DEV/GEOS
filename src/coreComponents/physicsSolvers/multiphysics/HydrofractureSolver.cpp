@@ -1225,6 +1225,8 @@ HydrofractureSolver::
 
 }
 
+#ifdef USING_TRILINOS
+
 #include "Epetra_FEVector.h"
 #include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -1255,6 +1257,8 @@ HydrofractureSolver::
 #include "Teuchos_Time.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
+#endif
+
 namespace geosx
 {
 
@@ -1264,6 +1268,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
                                        ParallelVector & )
 {
   GEOSX_MARK_FUNCTION;
+
+#ifdef USING_TRILINOS
 
   /*
      globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
@@ -1636,6 +1642,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     p_solution[1]->Print( std::cout );
 
   }
+#endif
 }
 
 real64
