@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
-constexpr int MPI_COMM_GEOSX = 0;
+extern int MPI_COMM_GEOSX;
 #endif
 
 /**
