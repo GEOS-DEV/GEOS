@@ -15,11 +15,11 @@
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
-      <SystemSolverParameters
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
         krylovTol="1.0e-8"
         logLevel="0"
-        useMLPrecond="1"
-        scalingOption="2"
         />
     </Hydrofracture>
   
@@ -32,7 +32,8 @@
       solidMaterialNames="{rock}"
       contactRelationName="fractureContact"
       >
-      <SystemSolverParameters 
+      <LinearSolverParameters
+        solverType="gmres"
         krylovTol="1.0e-10"
         logLevel="0"
         />
@@ -47,7 +48,8 @@
       solidNames="{rock}"
       inputFluxEstimate="1.0"
       >
-      <SystemSolverParameters 
+      <LinearSolverParameters
+        solverType="gmres"
         krylovTol="1.0e-12"
         logLevel="0"
         />
