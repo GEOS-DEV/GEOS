@@ -3,8 +3,9 @@
 if [ "$1" == "-h" ]; then
   echo \
   "Usage: $0 [buildRoot - Root of build directories (i.e. build-lassen-clang@upstream)] " \
-              "[inputFile - name of input xml file] " \
-              "[metricsFileRoot - fileroot for the output metrics]"
+  "[inputFile - name of input xml file] " \
+  "[kernelPattern - character pattern in kernel name]"\
+  "[metricsFileRoot - fileroot for the output metrics]"
   echo "This script will execute:"
   echo "  1) A nv-nsight-cu-cli run from the $buildRoot-relwithdebinfo directory to attain FLOP and memory usage information,"
   echo "  2) A caliper enabled run from $buildRoot-release directory to attain timing information."
@@ -14,7 +15,8 @@ fi
 
 buildRoot=$1
 inputFile=$2
-metricsFileRoot=$3
+kernelPattern=$3
+metricsFileRoot=$4
 
 echo $buildRoot
 echo $inputFile
@@ -84,7 +86,7 @@ metrics+="lts__t_sectors_aperture_sysmem_op_read.sum,\
 lts__t_sectors_aperture_sysmem_op_write.sum"
 
 jsrun -n 1 -a 1 -g 1 --smpiargs="-disable_gpu_hooks" nv-nsight-cu-cli \
--k SSLE  --metrics $metrics --csv \
+-k $kernelPattern  --metrics $metrics --csv \
 $buildRoot-relwithdebinfo/bin/geosx -i $inputFile > $metricsFileRoot.nscompute 2>&1
 
 jsrun -n 1 -a 1 -g 1 \

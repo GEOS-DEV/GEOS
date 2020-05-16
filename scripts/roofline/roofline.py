@@ -120,7 +120,7 @@ def roofline(LABELS, FLOPS, AIL1, AIL2, AIHBM):
 
   ax.text(xlim[0]*1.1,ylim[1]/1.1,'V100',horizontalalignment='left',verticalalignment='top')
   
-  ax.minorticks_on()
+  #ax.minorticks_on()
   # Customize the major grid
   ax.grid(which='major', linestyle='-', linewidth='1.0', color='black')
   # Customize the minor grid
