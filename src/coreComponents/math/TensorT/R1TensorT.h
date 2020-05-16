@@ -159,8 +159,34 @@ public:
   GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE realT & operator[]( const int i )       { return this->t_data[i]; }
 
   //***** MULTIPLICATION OPERATIONS *******************************************
-  /// multiply (inner product) Rank2 tensor with Rank 1 tensor
-  GEOSX_HOST_DEVICE void AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
+  /**
+   * @brief Contract a rank-2 with a rank-1 tensor.
+   * @param[in] A rank2 tensor
+   * @param[in] B rank1 tensor
+   *
+   * This function contracts the input tensors and places the result into this->t_data.
+   */
+  template< int DIM = T_dim >
+  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
+  std::enable_if_t< DIM <= 3, void >
+  AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
+  {
+    if( T_dim == 1 )
+    {
+      this->t_data[0] = A.t_data[0] * B.t_data[0];
+    }
+    if( T_dim == 2 )
+    {
+      this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
+      this->t_data[1] = A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
+    }
+    else if( T_dim == 3 )
+    {
+      this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
+      this->t_data[1] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
+      this->t_data[2] = A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
+    }
+  }
 
   realT ProductOfSquares() const;
 
@@ -354,27 +380,6 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
  * this function contracts the input tensors and places the result into
  * this->t_data.
  */
-template< int T_dim >
-inline void R1TensorT< T_dim >::AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-  if( T_dim == 1 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0];
-  }
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
-    this->t_data[1] = A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
-    this->t_data[1] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
-    this->t_data[2] = A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
-  }
-  else
-    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-}
 
 /**
  * @param[in] A rank2 tensor

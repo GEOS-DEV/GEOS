@@ -112,51 +112,51 @@ void FluxKernel::
   typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   forAll< parallelDevicePolicy< 128 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
-      {
-        // working arrays
-        stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
-        stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
+  {
+    // working arrays
+    stackArray1d< globalIndex, numFluxElems > eqnRowIndices( numFluxElems );
+    stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( stencilSize );
 
-        stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-        stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+    stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
+    stackArray2d< real64, maxNumFluxElems *maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
 
-        FluxKernel::Compute( stencilSize,
-                             seri[iconn],
-                             sesri[iconn],
-                             sei[iconn],
-                             weights[iconn],
-                             pres,
-                             dPres,
-                             gravCoef,
-                             dens,
-                             dDens_dPres,
-                             mob,
-                             dMob_dPres,
-                             dt,
-                             localFlux,
-                             localFluxJacobian );
+    FluxKernel::Compute( stencilSize,
+                         seri[iconn],
+                         sesri[iconn],
+                         sei[iconn],
+                         weights[iconn],
+                         pres,
+                         dPres,
+                         gravCoef,
+                         dens,
+                         dDens_dPres,
+                         mob,
+                         dMob_dPres,
+                         dt,
+                         localFlux,
+                         localFluxJacobian );
 
-        // extract DOF numbers
-        for( localIndex i = 0; i < numFluxElems; ++i )
-        {
-          eqnRowIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        }
+    // extract DOF numbers
+    for( localIndex i = 0; i < numFluxElems; ++i )
+    {
+      eqnRowIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+    }
 
-        for( localIndex i = 0; i < stencilSize; ++i )
-        {
-          dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        }
+    for( localIndex i = 0; i < stencilSize; ++i )
+    {
+      dofColIndices[i] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+    }
 
-        addLocalContributionsToGlobalSystem< parallelDeviceAtomic >( numFluxElems,
-                                                                     stencilSize,
-                                                                     eqnRowIndices.data(),
-                                                                     dofColIndices.data(),
-                                                                     rankOffset,
-                                                                     localFluxJacobian.data(),
-                                                                     localFlux.data(),
-                                                                     localMatrix,
-                                                                     localRhs );
-      } );
+    addLocalContributionsToGlobalSystem< parallelDeviceAtomic >( numFluxElems,
+                                                                 stencilSize,
+                                                                 eqnRowIndices.data(),
+                                                                 dofColIndices.data(),
+                                                                 rankOffset,
+                                                                 localFluxJacobian.data(),
+                                                                 localFlux.data(),
+                                                                 localMatrix,
+                                                                 localRhs );
+  } );
 }
 
 template<>

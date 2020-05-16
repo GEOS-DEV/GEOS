@@ -430,16 +430,16 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   if( m_poroElasticFlag )
   {
     AssembleAccumulationTerms< true, parallelDevicePolicy< 128 > >( *domain,
-                                                                     dofManager,
-                                                                     m_localMatrix.toViewConstSizes(),
-                                                                     m_localRhs.toView() );
+                                                                    dofManager,
+                                                                    m_localMatrix.toViewConstSizes(),
+                                                                    m_localRhs.toView() );
   }
   else
   {
     AssembleAccumulationTerms< false, parallelDevicePolicy< 128 > >( *domain,
-                                                                      dofManager,
-                                                                      m_localMatrix.toViewConstSizes(),
-                                                                      m_localRhs.toView() );
+                                                                     dofManager,
+                                                                     m_localMatrix.toViewConstSizes(),
+                                                                     m_localRhs.toView() );
   }
 
   AssembleFluxTerms( time_n,
@@ -618,7 +618,7 @@ void SinglePhaseBase::ApplyBoundaryConditions( real64 time_n,
   GEOSX_MARK_FUNCTION;
 
   ApplySourceFluxBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
-  ApplyDiricletBC( time_n, dt, *domain, dofManager,  m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
+  ApplyDiricletBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
 }
 
 void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
@@ -661,10 +661,10 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
                                                                        1,
                                                                        localMatrix,
                                                                        localRhs,
-                                                                       [=] GEOSX_HOST_DEVICE( localIndex const a )
-                                                                       {
-                                                                         return pres[a] + dPres[a];
-                                                                       } );
+                                                                       [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      return pres[a] + dPres[a];
+    } );
   } );
 }
 
@@ -714,9 +714,9 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
                                                                        localMatrix,
                                                                        localRhs,
                                                                        [] GEOSX_HOST_DEVICE ( localIndex const )
-                                                                       {
-                                                                         return 0.0;
-                                                                       } );
+    {
+      return 0.0;
+    } );
 
   } );
 }
@@ -813,9 +813,10 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager * const elemManage
                                                                                                             fluidModelNames() );
   m_density.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::densityString );
 
-  m_dDens_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
-                                                                                                                targetRegionNames(),
-                                                                                                                fluidModelNames() );
+  m_dDens_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >(
+    SingleFluidBase::viewKeyStruct::dDens_dPresString,
+    targetRegionNames(),
+    fluidModelNames() );
   m_dDens_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
   m_viscosity = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::viscosityString,
@@ -823,9 +824,10 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager * const elemManage
                                                                                                               fluidModelNames() );
   m_viscosity.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::viscosityString );
 
-  m_dVisc_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-                                                                                                                targetRegionNames(),
-                                                                                                                fluidModelNames() );
+  m_dVisc_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >(
+    SingleFluidBase::viewKeyStruct::dVisc_dPresString,
+    targetRegionNames(),
+    fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
   m_poroMultiplier = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::poroMultString );

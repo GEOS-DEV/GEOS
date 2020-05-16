@@ -44,7 +44,7 @@ public:
 
   CompressibleSinglePhaseCompute( DensRelationType const & densRelation,
                                   ViscRelationType const & viscRelation )
-  : m_densRelation( densRelation ),
+    : m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
 

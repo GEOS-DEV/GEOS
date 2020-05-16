@@ -57,7 +57,7 @@ struct BoundaryStencil_Traits
 };
 
 class BoundaryStencil : public StencilBase< BoundaryStencil_Traits, BoundaryStencil >,
-                        public BoundaryStencil_Traits
+  public BoundaryStencil_Traits
 {
 public:
 

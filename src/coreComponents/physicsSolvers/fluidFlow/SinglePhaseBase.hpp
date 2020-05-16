@@ -325,12 +325,12 @@ void SinglePhaseBase::UpdateMobility( Group & dataGroup, localIndex const target
     fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
 
   SinglePhaseBaseKernels::MobilityKernel::Launch< parallelDevicePolicy< 128 > >( dataGroup.size(),
-                                                                                  dens,
-                                                                                  dDens_dPres,
-                                                                                  visc,
-                                                                                  dVisc_dPres,
-                                                                                  mob,
-                                                                                  dMob_dPres );
+                                                                                 dens,
+                                                                                 dDens_dPres,
+                                                                                 visc,
+                                                                                 dVisc_dPres,
+                                                                                 mob,
+                                                                                 dMob_dPres );
 
 }
 

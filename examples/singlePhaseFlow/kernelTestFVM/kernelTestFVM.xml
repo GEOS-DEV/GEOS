@@ -14,11 +14,10 @@
                     targetRegions="{Region2}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="15"/>
-      <SystemSolverParameters useDirectSolver="0"
+      <LinearSolverParameters solverType="gmres"
                               krylovTol="1.0"
-                              numKrylovIter="1"
-                              useMLPrecond="-1"
-                              useBicgstab="1"
+                              krylovMaxIter="1"
+                              preconditionerType="none"
                               logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>

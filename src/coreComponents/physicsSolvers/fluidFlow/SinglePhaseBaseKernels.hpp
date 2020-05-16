@@ -68,14 +68,14 @@ struct MobilityKernel
                       arrayView1d< real64 > const & dMob_dPres )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
-        {
-          Compute( dens[a][0],
-                   dDens_dPres[a][0],
-                   visc[a][0],
-                   dVisc_dPres[a][0],
-                   mob[a],
-                   dMob_dPres[a] );
-        } );
+    {
+      Compute( dens[a][0],
+               dDens_dPres[a][0],
+               visc[a][0],
+               dVisc_dPres[a][0],
+               mob[a],
+               dMob_dPres[a] );
+    } );
   }
 
   template< typename POLICY >
@@ -88,15 +88,15 @@ struct MobilityKernel
                       arrayView1d< real64 > const & dMob_dPres )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          Compute( dens[a][0],
-                   dDens_dPres[a][0],
-                   visc[a][0],
-                   dVisc_dPres[a][0],
-                   mob[a],
-                   dMob_dPres[a] );
-        } );
+    {
+      localIndex const a = targetSet[ i ];
+      Compute( dens[a][0],
+               dDens_dPres[a][0],
+               visc[a][0],
+               dVisc_dPres[a][0],
+               mob[a],
+               dMob_dPres[a] );
+    } );
   }
 
   template< typename POLICY >
@@ -106,11 +106,11 @@ struct MobilityKernel
                       arrayView1d< real64 > const & mob )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
-        {
-          Compute( dens[a][0],
-                   visc[a][0],
-                   mob[a] );
-        } );
+    {
+      Compute( dens[a][0],
+               visc[a][0],
+               mob[a] );
+    } );
   }
 
   template< typename POLICY >
@@ -120,12 +120,12 @@ struct MobilityKernel
                       arrayView1d< real64 > const & mob )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const a = targetSet[ i ];
-          Compute( dens[a][0],
-                   visc[a][0],
-                   mob[a] );
-        } );
+    {
+      localIndex const a = targetSet[ i ];
+      Compute( dens[a][0],
+               visc[a][0],
+               mob[a] );
+    } );
   }
 };
 
@@ -257,37 +257,37 @@ struct AccumulationKernel< CellElementSubRegion >
                       arrayView1d< real64 > const & localRhs )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-        {
-          if( elemGhostRank[ei] < 0 )
-          {
-            real64 localAccum, localAccumJacobian;
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        real64 localAccum, localAccumJacobian;
 
-            Compute< COUPLED >( dPres[ei],
-                                dens[ei][0],
-                                densOld[ei],
-                                dDens_dPres[ei][0],
-                                volume[ei],
-                                dVol[ei],
-                                poroRef[ei],
-                                poroOld[ei],
-                                pvmult[ei][0],
-                                dPVMult_dPres[ei][0],
-                                biotCoefficient,
-                                bulkModulus[ei],
-                                totalMeanStress[ei],
-                                oldTotalMeanStress[ei],
-                                poro[ei],
-                                localAccum,
-                                localAccumJacobian );
+        Compute< COUPLED >( dPres[ei],
+                            dens[ei][0],
+                            densOld[ei],
+                            dDens_dPres[ei][0],
+                            volume[ei],
+                            dVol[ei],
+                            poroRef[ei],
+                            poroOld[ei],
+                            pvmult[ei][0],
+                            dPVMult_dPres[ei][0],
+                            biotCoefficient,
+                            bulkModulus[ei],
+                            totalMeanStress[ei],
+                            oldTotalMeanStress[ei],
+                            poro[ei],
+                            localAccum,
+                            localAccumJacobian );
 
-            globalIndex const elemDOF = dofNumber[ei];
-            localIndex const localElemDof = elemDOF - rankOffset;
+        globalIndex const elemDOF = dofNumber[ei];
+        localIndex const localElemDof = elemDOF - rankOffset;
 
-            // add contribution to global residual and jacobian (no need for atomics here)
-            localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
-            localRhs[localElemDof] += localAccum;
-          }
-        } );
+        // add contribution to global residual and jacobian (no need for atomics here)
+        localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
+        localRhs[localElemDof] += localAccum;
+      }
+    } );
   }
 };
 
@@ -333,36 +333,36 @@ struct AccumulationKernel< FaceElementSubRegion >
                       arrayView1d< real64 > const & localRhs )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-        {
-          if( elemGhostRank[ei] < 0 )
-          {
-            real64 localAccum, localAccumJacobian;
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        real64 localAccum, localAccumJacobian;
 
-            real64 const effectiveVolume = volume[ei] * poroMultiplier[ei];
+        real64 const effectiveVolume = volume[ei] * poroMultiplier[ei];
 
-            Compute( dens[ei][0],
-                     densOld[ei],
-                     dDens_dPres[ei][0],
-                     effectiveVolume,
-                     dVol[ei],
-                     localAccum,
-                     localAccumJacobian );
+        Compute( dens[ei][0],
+                 densOld[ei],
+                 dDens_dPres[ei][0],
+                 effectiveVolume,
+                 dVol[ei],
+                 localAccum,
+                 localAccumJacobian );
 
 #if ALLOW_CREATION_MASS
-            if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
-            {
-              localAccum += creationMass[ei] * 0.25;
-            }
+        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+        {
+          localAccum += creationMass[ei] * 0.25;
+        }
 #endif
 
-            globalIndex const elemDOF = dofNumber[ei];
-            localIndex const localElemDof = elemDOF - rankOffset;
+        globalIndex const elemDOF = dofNumber[ei];
+        localIndex const localElemDof = elemDOF - rankOffset;
 
-            // add contribution to global residual and jacobian (no need for atomics here)
-            localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
-            localRhs[localElemDof] += localAccum;
-          }
-        } );
+        // add contribution to global residual and jacobian (no need for atomics here)
+        localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
+        localRhs[localElemDof] += localAccum;
+      }
+    } );
   }
 };
 

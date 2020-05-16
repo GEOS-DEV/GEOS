@@ -1209,11 +1209,11 @@ void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVec
                                     localIndex const hiCompIndex ) const
 {
   vectorToField< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( localVector,
-                                                                          srcFieldName,
-                                                                          dstFieldName,
-                                                                          scalingFactor,
-                                                                          loCompIndex,
-                                                                          hiCompIndex );
+                                                                         srcFieldName,
+                                                                         dstFieldName,
+                                                                         scalingFactor,
+                                                                         loCompIndex,
+                                                                         hiCompIndex );
 }
 
 // Copy values from DOFs to nodes
@@ -1241,11 +1241,11 @@ void DofManager::addVectorToField( arrayView1d< real64 const > const & localVect
                                    localIndex const hiCompIndex ) const
 {
   vectorToField< FieldSpecificationAdd, parallelDevicePolicy< 128 > >( localVector,
-                                                                        srcFieldName,
-                                                                        dstFieldName,
-                                                                        scalingFactor,
-                                                                        loCompIndex,
-                                                                        hiCompIndex );
+                                                                       srcFieldName,
+                                                                       dstFieldName,
+                                                                       scalingFactor,
+                                                                       loCompIndex,
+                                                                       hiCompIndex );
 }
 
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
@@ -1316,11 +1316,11 @@ void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
                                     localIndex const hiCompIndex ) const
 {
   fieldToVector< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( localVector,
-                                                                          srcFieldName,
-                                                                          dstFieldName,
-                                                                          scalingFactor,
-                                                                          loCompIndex,
-                                                                          hiCompIndex );
+                                                                         srcFieldName,
+                                                                         dstFieldName,
+                                                                         scalingFactor,
+                                                                         loCompIndex,
+                                                                         hiCompIndex );
 }
 
 // Copy values from nodes to DOFs
@@ -1348,11 +1348,11 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
                                    localIndex const hiCompIndex ) const
 {
   fieldToVector< FieldSpecificationAdd, parallelDevicePolicy< 128 > >( localVector,
-                                                                        srcFieldName,
-                                                                        dstFieldName,
-                                                                        scalingFactor,
-                                                                        loCompIndex,
-                                                                        hiCompIndex );
+                                                                       srcFieldName,
+                                                                       dstFieldName,
+                                                                       scalingFactor,
+                                                                       loCompIndex,
+                                                                       hiCompIndex );
 }
 
 // Just an interface to allow only three parameters

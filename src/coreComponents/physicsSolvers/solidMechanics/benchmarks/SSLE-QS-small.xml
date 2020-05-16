@@ -9,8 +9,8 @@
                                   solidMaterialNames="{shale}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters useMLPrecond="1"
-                              scalingOption="0"
+      <LinearSolverParameters solverType="bicgstab"
+                              preconditionerType="amg"
                               krylovTol="1.0e-12"
                               logLevel="0"/>
      </SolidMechanicsLagrangianSSLE>

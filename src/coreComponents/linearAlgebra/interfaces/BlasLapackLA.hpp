@@ -325,7 +325,7 @@ static void matrixScale( real64 const & alpha,
 
 #endif
 }
-  
+
 
 /**
  * @brief Returns the dot product of two vectors.

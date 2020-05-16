@@ -569,7 +569,7 @@ struct FaceDirichletBCKernel
 
     // Evaluate potential difference
     real64 const potDif = trans[ Order::ELEM ] * ( pres[er][esr][ei] + dPres[er][esr][ei] + densMean * gravCoef[er][esr][ei] )
-                        + trans[ Order::FACE ] * ( presFace[kf] + densMean * gravCoefFace[kf] );
+                          + trans[ Order::FACE ] * ( presFace[kf] + densMean * gravCoefFace[kf] );
 
     real64 const dPotDif_dP = trans[ Order::ELEM ] * ( 1.0 + dDens_dP * gravCoef[er][esr][ei] );
 

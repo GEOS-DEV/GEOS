@@ -632,8 +632,10 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
     for( localIndex ke = 0; ke < numPts; ++ke )
     {
-      if( elemRegionList[kf][ke] < 0 ) continue;
-      if( !regionFilter.contains( elemRegionList[kf][ke] )) continue;
+      if( elemRegionList[kf][ke] < 0 )
+        continue;
+      if( !regionFilter.contains( elemRegionList[kf][ke] ))
+        continue;
 
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];

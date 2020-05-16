@@ -366,9 +366,9 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
 
     // first, evaluate BC to get primary field values (pressure)
     fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( targetSet,
-                                                                                  time_n + dt,
-                                                                                  targetGroup,
-                                                                                  fieldName );
+                                                                                 time_n + dt,
+                                                                                 targetGroup,
+                                                                                 fieldName );
 
     // Now run the actual kernel
     BoundaryStencil const & stencil = fluxApprox->getWrapper< BoundaryStencil >( setName )->reference();
@@ -385,10 +385,10 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
       *constitutiveManager->GetConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
 
     bool const success =
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+      constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
       // create the fluid compute wrapper suitable for capturing in a kernel lambda
-      typename TYPEOFREF( fluid )::ComputeWrapper fluidCompute = fluid.createComputeWrapper();
+      typename TYPEOFREF( fluid ) ::ComputeWrapper fluidCompute = fluid.createComputeWrapper();
 
       FaceDirichletBCKernel::Launch( seri, sesri, sefi, trans,
                                      m_pressureDofIndex.toViewConst(),
