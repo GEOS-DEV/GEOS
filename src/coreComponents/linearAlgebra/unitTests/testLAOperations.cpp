@@ -497,6 +497,16 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   Matrix matrix;
   compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
 
+  ////////////////////////////////
+  Matrix matrix2;
+  compute2DElasticityOperator( MPI_COMM_GEOSX,
+                               1., 1., 4, 3,
+                               10000., 0.2,
+                               matrix2 );
+
+  GEOSX_ERROR("stop execution");
+  ////////////////////////////////
+
   // Condition number for the Laplacian matrix estimate
   // cond_estimate = 4 * n^2 / pi^2
   real64 matrix_condition_number = static_cast< real64 >( 4.0 * n * n / pow( M_PI, 2 ) );
