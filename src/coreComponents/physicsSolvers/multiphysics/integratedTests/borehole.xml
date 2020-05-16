@@ -589,7 +589,7 @@ also, a standard lsf launcher is now availabl
       discretization="FE1"
       targetRegions="{Omega}">
 
-      <SystemSolverParameters
+      <LinearSolverParameters
       logLevel="0"
       />
       <NonlinearSolverParameters
@@ -605,10 +605,10 @@ also, a standard lsf launcher is now availabl
       targetRegions="{Omega}"
       solidMaterialNames="{rock}">
 
-      <SystemSolverParameters
+      <LinearSolverParameters
+      solverType="gmres"
       krylovTol="1.0e-10"
-      logLevel="0"
-      />
+      logLevel="0"/>
       <NonlinearSolverParameters
       newtonTol = "1.0e-6"
       newtonMaxIter = "5"
@@ -623,9 +623,10 @@ also, a standard lsf launcher is now availabl
       fluidNames="{water}"
       solidNames="{rock}">
 
-      <SystemSolverParameters
+      <LinearSolverParameters
+      solverType="gmres"
       krylovTol="1.0e-10"
-      />
+      logLevel="0"/>
       <NonlinearSolverParameters
       newtonTol = "1.0e-6"
       newtonMaxIter = "8"
