@@ -19,10 +19,11 @@
 /// Source includes
 #include "schemaUtilities.hpp"
 
-#include "dataRepository/Group.hpp"
-#include "dataRepository/Wrapper.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/InputFlags.hpp"
+#include "dataRepository/Wrapper.hpp"
 
 /// System includes
 #include <regex>
@@ -193,7 +194,7 @@ void SchemaConstruction( Group * const group,
           {
             // Write any additional documentation that isn't expected by the .xsd format in a comment
             // Attribute description
-            string description = wrapper->getDescription();
+            string const description = wrapper->getDescription();
             string commentString = attributeName + " => ";
 
             if( !description.empty())
@@ -206,14 +207,10 @@ void SchemaConstruction( Group * const group,
             }
 
             // List of objects that registered this field
-            std::vector< string > registrars = wrapper->getRegisteringObjects();
-            if( registrars.size() > 0 )
+            std::set< string > const & registrars = wrapper->getRegisteringObjects();
+            if( !registrars.empty() )
             {
-              commentString += " => " + registrars[0];
-              for( size_t ii=1; ii<registrars.size(); ++ii )
-              {
-                commentString += ", " + registrars[ii];
-              }
+              commentString += " => " + stringutilities::strjoin( registrars.begin(), registrars.end(), ", " );
             }
 
             xmlWrapper::xmlNode commentNode = targetTypeDefNode.append_child( xmlWrapper::xmlTypes::node_comment );
