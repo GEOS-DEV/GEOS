@@ -91,6 +91,14 @@ public:
     return 0.5 * ( 1.0 + parentCoord * coord );
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static real64 oneDimensionalShapeHalf( real64 const halfParentCoord,
+                                                   real64 const coord )
+  {
+    return  0.5 + halfParentCoord * coord;
+  }
+
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -209,18 +217,19 @@ public:
   {
     real64 J[3][3] = {{0}};
 
+    real64 const quadratureCoords[3] = { quadratureFactor*parentCoords0( q ),
+                                         quadratureFactor*parentCoords1( q ),
+                                         quadratureFactor*parentCoords2( q ) };
 
-    real64 const coords[3] = { quadratureFactor*parentCoords0( q ),
-                               quadratureFactor*parentCoords1( q ),
-                               quadratureFactor*parentCoords2( q ) };
+    real64 const psi0[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[0] ),
+                             oneDimensionalShapeHalf(  0.5, quadratureCoords[0] ) };
+    real64 const psi1[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[1] ),
+                             oneDimensionalShapeHalf(  0.5, quadratureCoords[1] ) };
+    real64 const psi2[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[2] ),
+                             oneDimensionalShapeHalf(  0.5, quadratureCoords[2] ) };
+    constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
-    real64 const psi0[2] = { oneDimensionalShape( -1, coords[0] ),
-                             oneDimensionalShape(  1, coords[0] ) };
-    real64 const psi1[2] = { oneDimensionalShape( -1, coords[1] ),
-                             oneDimensionalShape(  1, coords[1] ) };
-    real64 const psi2[2] = { oneDimensionalShape( -1, coords[2] ),
-                             oneDimensionalShape(  1, coords[2] ) };
-    real64 const dpsi[2] = { -0.5, 0.5 };
+
 
     for( localIndex a=0; a<2; ++a )
     {
