@@ -13,7 +13,7 @@
 
   <Mesh>
     <PAMELAMeshGenerator name = "Wedge"
-                         file = "wedge2.msh"/>
+                         file = "wedge.msh"/>
   </Mesh>
 
   <Events maxTime="2.0">

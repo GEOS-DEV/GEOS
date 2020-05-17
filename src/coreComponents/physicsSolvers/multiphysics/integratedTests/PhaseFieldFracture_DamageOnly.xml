@@ -31,7 +31,7 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
-                logLevel="2"
+                logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>

@@ -511,7 +511,8 @@ void PhaseFieldDamageFEM::ApplyDirichletBC_implicit( real64 const time,
 
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
-
+  matrix.open();
+  rhs.open();
   fsManager.Apply( time,
                    &domain,
                    "nodeManager",
@@ -533,7 +534,8 @@ void PhaseFieldDamageFEM::ApplyDirichletBC_implicit( real64 const time,
   } );
 
   fsManager.ApplyFieldValue< serialPolicy >( time, &domain, "ElementRegions", viewKeyStruct::coeffName );
-
+  rhs.close();
+  matrix.close();
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, std::string const &,

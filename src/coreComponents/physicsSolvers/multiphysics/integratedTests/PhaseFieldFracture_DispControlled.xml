@@ -22,6 +22,7 @@
       <NonlinearSolverParameters newtonMaxIter="50"
                                  newtonTol="1.0e-6"/>
       <SystemSolverParameters krylovTol="1.0e-10"
+                              useDirectSolver="1"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -33,6 +34,10 @@
                 localDissipation = "Quadratic"
                 logLevel="1"
                 targetRegions="{Region1}">
+      <NonlinearSolverParameters newtonMaxIter="5"
+                                 newtonTol="1.0e-6"/>
+      <SystemSolverParameters useDirectSolver="1"
+                              logLevel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
@@ -114,7 +119,7 @@
                fieldName="TotalDisplacement"
                component="0"
                scale="2.0e-5"
-               functionName="f_b"
+               functionName = "f_b"
                setNames="{xpos}"/>
 
     <FieldSpecification name="xneg"
@@ -122,7 +127,7 @@
                fieldName="TotalDisplacement"
                component="0"
                scale="0"
-               functionName="f_b"
+               functionName = "f_b"
                setNames="{xneg}"/>
 
     <!-- <FieldSpecification name="xconstraint1"
