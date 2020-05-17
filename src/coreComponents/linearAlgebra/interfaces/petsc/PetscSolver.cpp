@@ -149,12 +149,12 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
   }
   PetscMatrix & precondMat = m_parameters.amg.separateComponents ? separateComponentMatrix : mat;
 
-  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), precondMat.unwrapped() ) );
-
   // create and compute a preconditioner and set into KSP
   PetscPreconditioner precond( m_parameters );
   precond.compute( precondMat );
   KSPSetPC( ksp, precond.unwrapped() );
+
+  GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), precondMat.unwrapped() ) );
 
   // display output
   if( m_parameters.logLevel > 0 )
