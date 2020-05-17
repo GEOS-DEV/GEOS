@@ -36,14 +36,8 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static T linearMap( T const i, T const j, T const k )
   {
-    return  i + 2 * j + 4 * k;
+    return i + 2 * j + 4 * k;
   }
-
-  template< typename T, T index >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static std::tuple< T, T, T> inverseLinearMap();
-
 
   template< typename T >
   GEOSX_HOST_DEVICE
@@ -96,7 +90,7 @@ public:
   constexpr static real64 oneDimensionalShapeHalf( real64 const halfParentCoord,
                                                    real64 const coord )
   {
-    return  0.5 + halfParentCoord * coord;
+    return 0.5 + halfParentCoord * coord;
   }
 
 
@@ -217,16 +211,16 @@ public:
   {
     real64 J[3][3] = {{0}};
 
-    real64 const quadratureCoords[3] = { quadratureFactor*parentCoords0( q ),
-                                         quadratureFactor*parentCoords1( q ),
-                                         quadratureFactor*parentCoords2( q ) };
+    real64 const quadratureCoords[3] = { quadratureFactor *parentCoords0( q ),
+                                         quadratureFactor *parentCoords1( q ),
+                                         quadratureFactor *parentCoords2( q ) };
 
     real64 const psi0[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[0] ),
-                             oneDimensionalShapeHalf(  0.5, quadratureCoords[0] ) };
+                             oneDimensionalShapeHalf( 0.5, quadratureCoords[0] ) };
     real64 const psi1[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[1] ),
-                             oneDimensionalShapeHalf(  0.5, quadratureCoords[1] ) };
+                             oneDimensionalShapeHalf( 0.5, quadratureCoords[1] ) };
     real64 const psi2[2] = { oneDimensionalShapeHalf( -0.5, quadratureCoords[2] ),
-                             oneDimensionalShapeHalf(  0.5, quadratureCoords[2] ) };
+                             oneDimensionalShapeHalf( 0.5, quadratureCoords[2] ) };
     constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
 
@@ -240,11 +234,13 @@ public:
           real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
                                     psi0[a] * dpsi[b] * psi2[c],
                                     psi0[a] * psi1[b] * dpsi[c] };
+          localIndex const nodeIndex = linearMap( a, b, c );
+
           for( int i = 0; i < 3; ++i )
           {
             for( int j = 0; j < 3; ++j )
             {
-              J[i][j] = J[i][j] + dNdXi[ j ] * X[linearMap(a,b,c)][i];
+              J[i][j] = J[i][j] + dNdXi[ j ] * X[nodeIndex][i];
             }
           }
         }
@@ -263,12 +259,13 @@ public:
           real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
                                     psi0[a] * dpsi[b] * psi2[c],
                                     psi0[a] * psi1[b] * dpsi[c] };
+          localIndex const nodeIndex = linearMap( a, b, c );
           for( int i = 0; i < 3; ++i )
           {
-            dNdX[a][i] = 0.0;
+            dNdX[nodeIndex][i] = 0.0;
             for( int j = 0; j < 3; ++j )
             {
-              dNdX[a][i] = dNdX[a][i] + dNdXi[ j ] * J[j][i];
+              dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[ j ] * J[j][i];
             }
           }
         }
