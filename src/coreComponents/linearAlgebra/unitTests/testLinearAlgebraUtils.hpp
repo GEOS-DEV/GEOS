@@ -25,7 +25,7 @@
 using namespace geosx;
 
 static void Q12d_local( real64 const & hx, real64 const & hy,
-                        real64 const & E,  real64 const & nu,
+                        real64 const & E, real64 const & nu,
                         stackArray2d< real64, 8*8 > & Ke );
 
 /*! @name Utility functions.
@@ -188,13 +188,13 @@ void compute2DElasticityOperator( MPI_Comm comm,
   // Compute total number of grid nodes (nNodes) and elements (nCells)
   globalIndex nCells = nCellsX * nCellsY;
   GEOSX_ERROR_IF( nCells < nproc, "less than one cell per processor" );
-  globalIndex nNodes = ( nCellsX + 1 ) * ( nCellsY + 1) ;
+  globalIndex nNodes = ( nCellsX + 1 ) * ( nCellsY + 1);
   real64 hx = domainSizeX / static_cast< real64 >( nCellsX );
   real64 hy = domainSizeY / static_cast< real64 >( nCellsY );
 
   // Compute cell partitioning
-  localIndex nLocalCells = LvArray::integerConversion<localIndex>( nCells / nproc );
-  localIndex nExtraCells = LvArray::integerConversion<localIndex>( nCells ) - nLocalCells * nproc;
+  localIndex nLocalCells = LvArray::integerConversion< localIndex >( nCells / nproc );
+  localIndex nExtraCells = LvArray::integerConversion< localIndex >( nCells ) - nLocalCells * nproc;
   globalIndex iCellLower = rank * nLocalCells + ( rank == 0 ? 0 : nExtraCells );
   globalIndex iCellUpper = iCellLower + nLocalCells + ( rank == 0 ? 0 : nExtraCells ) - 1;
 
@@ -215,7 +215,7 @@ void compute2DElasticityOperator( MPI_Comm comm,
   stackArray1d< globalIndex, 4 > cellNodes( 4 );
   stackArray1d< globalIndex, 8 > localDofIndex( 8 );
 
-  for( localIndex iCell = iCellLower; iCell <= iCellUpper; ++iCell)
+  for( localIndex iCell = iCellLower; iCell <= iCellUpper; ++iCell )
   {
 
     // Compute local DOF global indeces
@@ -247,26 +247,26 @@ static void Q12d_local( real64 const & hx, real64 const & hy,
 
   // --- Fill diagonal entries
   real64 Dxx = ( fac * hx * ( 1. - 2. * nu ) ) / ( 6. * hy )
-                    - ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
+               - ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
   real64 Dyy = ( fac * hy * ( 1. - 2. * nu ) ) / ( 6. * hx )
-                    - ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
-  for( localIndex i = 0; i < 8; i += 2)
+               - ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
+  for( localIndex i = 0; i < 8; i += 2 )
   {
     Ke( i, i ) = Dxx;
-    Ke( i + 1, i + 1) = Dyy;
+    Ke( i + 1, i + 1 ) = Dyy;
   }
 
   // --- Fill upper triangular part
   // --- --- Ke( 0, 1:7 )
   Ke( 0, 1 ) = fac / 8.;
   Ke( 0, 2 ) = ( fac * hx * ( 1. - 2. * nu ) ) / ( 12. * hy )
-             + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
+               + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
   Ke( 0, 3 ) = ( fac * ( -1 + 4. * nu ) ) / 8.;
   Ke( 0, 4 ) = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-             + ( fac * hx * (-1. + 2. * nu ) ) / ( 12. * hy );
+               + ( fac * hx * (-1. + 2. * nu ) ) / ( 12. * hy );
   Ke( 0, 5 ) = -Ke( 0, 1 );
   Ke( 0, 6 ) = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-             + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
+               + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
   Ke( 0, 7 ) = -( fac * ( -1. + 4. * nu ) ) / 8.;
 
   // --- --- Ke( 1, 2:7 )
@@ -276,7 +276,7 @@ static void Q12d_local( real64 const & hx, real64 const & hy,
   Ke( 1, 5 ) = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
   Ke( 1, 6 ) = Ke( 0, 3 );
   Ke( 1, 7 ) = ( fac * hy * ( 1. - 2. * nu ) ) / ( 12. * hx )
-             + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
+               + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
 
   // --- --- Ke( 2, 3:7 )
   Ke( 2, 3 ) =  Ke( 0, 5 );

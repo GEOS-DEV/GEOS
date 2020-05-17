@@ -498,76 +498,6 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   Matrix matrix;
   compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
 
-  ////////////////////////////////
-  // Compute 2D elasticity operator
-  Matrix matrix2;
-  real64 const domainSizeX = 1.0;
-  real64 const domainSizeY = 1.0;
-  globalIndex const nCellsX = 100;
-  globalIndex const nCellsY = 100;
-  real64 youngModulus = 10000.;
-  real64 poissonRatio = 0.2;
-  compute2DElasticityOperator( MPI_COMM_GEOSX,
-                               domainSizeX, domainSizeY, nCellsX, nCellsY,
-                               youngModulus, poissonRatio,
-                               matrix2 );
-
-  // Impose Dirichlet boundary conditions
-  // --- Fix domain bottom (first 2*(nCellsX + 1) rows of matrix2)
-  matrix2.open();
-  for (globalIndex iRow = 0; iRow < 2*(nCellsX + 1); ++iRow)
-  {
-    if( matrix2.getLocalRowID( iRow ) >= 0 )
-    {
-       matrix2.clearRow( iRow, true );
-    }
-  }
-  matrix2.close();
-
-  // Define some vectors
-  Vector x2_true;
-  Vector x2_comp;
-  Vector b2;
-
-  globalIndex nDof = 2 * ( nCellsX + 1 ) * ( nCellsY + 1 );
-  x2_true.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
-  x2_comp.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
-  b2.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
-
-  // We have some simple initialization options for vectors:
-  x2_true.rand(); // random
-  x2_comp.zero(); // zero
-
-  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
-  // back from the solvers.
-  matrix2.apply( x2_true, b2 );
-
-  LinearSolverParameters parameters2;
-  Solver solver2( parameters2 );
-
-  // Set basic options
-  parameters2.logLevel = 2;
-  parameters2.krylov.relTolerance = 1e-8;
-  parameters2.krylov.maxIterations = 300;
-  parameters2.solverType = "gmres";
-  parameters2.preconditionerType = "amg"; // for PETSc default options only
-  parameters2.amg.smootherType = "gaussSeidel";
-  parameters2.amg.separateComponents = true;
-  parameters2.dofsPerNode = 2;
-
-  // Solve using the iterative solver and compare norms with true solution
-  x2_comp.zero();
-  solver2.solve( matrix2, x2_comp, b2 );
-
-  real64 norm2_comp = x2_comp.norm2();
-  real64 norm2_true = x2_true.norm2();
-  EXPECT_LT( std::fabs( norm2_comp / norm2_true - 1. ),
-             1e-4 );
-
-  GEOSX_LOG_RANK_VAR( b2.norm2() );
-  GEOSX_LOG_RANK_VAR( std::fabs( norm2_comp / norm2_true - 1. ) );
-  ////////////////////////////////
-
   // Condition number for the Laplacian matrix estimate
   // cond_estimate = 4 * n^2 / pi^2
   real64 matrix_condition_number = static_cast< real64 >( 4.0 * n * n / pow( M_PI, 2 ) );
@@ -656,6 +586,77 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
 
   EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
              matrix_condition_number * parameters.krylov.relTolerance );
+
+  //////////////////////////////////////////////////////////////
+  // Compute 2D elasticity operator
+  Matrix matrix2;
+  real64 const domainSizeX = 1.0;
+  real64 const domainSizeY = 1.0;
+  globalIndex const nCellsX = 100;
+  globalIndex const nCellsY = 100;
+  real64 youngModulus = 10000.;
+  real64 poissonRatio = 0.2;
+  compute2DElasticityOperator( MPI_COMM_GEOSX,
+                               domainSizeX, domainSizeY, nCellsX, nCellsY,
+                               youngModulus, poissonRatio,
+                               matrix2 );
+
+  // Impose Dirichlet boundary conditions
+  // --- Fix domain bottom (first 2*(nCellsX + 1) rows of matrix2)
+  matrix2.open();
+  for( globalIndex iRow = 0; iRow < 2*(nCellsX + 1); ++iRow )
+  {
+    if( matrix2.getLocalRowID( iRow ) >= 0 )
+    {
+      matrix2.clearRow( iRow, true );
+    }
+  }
+  matrix2.close();
+
+  // Define some vectors
+  Vector x2_true;
+  Vector x2_comp;
+  Vector b2;
+
+  globalIndex nDof = 2 * ( nCellsX + 1 ) * ( nCellsY + 1 );
+  x2_true.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+  x2_comp.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+  b2.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+
+  // We have some simple initialization options for vectors:
+  x2_true.rand(); // random
+  x2_comp.zero(); // zero
+
+  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
+  // back from the solvers.
+  matrix2.apply( x2_true, b2 );
+
+  LinearSolverParameters parameters2;
+  Solver solver2( parameters2 );
+
+  // Set basic options
+  parameters2.logLevel = 0;
+  parameters2.krylov.relTolerance = 1e-8;
+  parameters2.krylov.maxIterations = 300;
+  parameters2.solverType = "gmres";
+  parameters2.preconditionerType = "amg"; // for PETSc default options only
+  parameters2.amg.smootherType = "gaussSeidel";
+  parameters2.amg.separateComponents = true;
+  parameters2.dofsPerNode = 2;
+
+  // Solve using the iterative solver and compare norms with true solution
+  x2_comp.zero();
+  solver2.solve( matrix2, x2_comp, b2 );
+
+  real64 norm2_comp = x2_comp.norm2();
+  real64 norm2_true = x2_true.norm2();
+  EXPECT_LT( std::fabs( norm2_comp / norm2_true - 1. ),
+             1e-5 );
+
+  /////////////////////////////////////////////////////////////
+
+
+
 }
 
 
@@ -808,8 +809,6 @@ REGISTER_TYPED_TEST_SUITE_P( LAOperationsTest,
 //
 //#endif
 ///////////////////////////////////////////////////////////////////////////////////////
-
-
 
 
 
