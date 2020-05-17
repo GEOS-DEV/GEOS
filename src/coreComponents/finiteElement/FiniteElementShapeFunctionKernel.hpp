@@ -30,6 +30,21 @@ public:
     return pCoords[i][a];
   }
 
+
+  template< typename T >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static T linearMap( T const i, T const j, T const k )
+  {
+    return  i + 2 * j + 4 * k;
+  }
+
+  template< typename T, T index >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static std::tuple< T, T, T> inverseLinearMap();
+
+
   template< typename T >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -70,6 +85,15 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
+  constexpr static real64 oneDimensionalShape( real64 const parentCoord,
+                                               real64 const coord )
+  {
+    return 0.5 * ( 1.0 + parentCoord * coord );
+  }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   constexpr static real64
   parentShapeFunctionValue( localIndex const a,
                             real64 const xi0,
@@ -89,20 +113,6 @@ public:
                                   localIndex const a,
                                   real64 (& dNdXi)[3] )
   {
-//    const static real64 pCoords[3][8] = { { -1,  1, -1,  1, -1,  1, -1,  1 },
-//                                          { -1, -1,  1,  1, -1, -1,  1,  1 },
-//                                          { -1, -1, -1, -1,  1,  1,  1,  1 } };
-//
-//    dNdXi[0] = 0.125 * pCoords[0][a] *
-//                       ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) *
-//                       ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
-//    dNdXi[1] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) *
-//                       pCoords[1][a] *
-//                       ( 1 + quadratureFactor*pCoords[2][q]*pCoords[2][a] ) ;
-//    dNdXi[2] = 0.125 * ( 1 + quadratureFactor*pCoords[0][q]*pCoords[0][a] ) *
-//                       ( 1 + quadratureFactor*pCoords[1][q]*pCoords[1][a] ) *
-//                       pCoords[2][a] ;
-
     dNdXi[0] = 0.125 *
                parentCoords0( a ) *
                ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
@@ -115,6 +125,30 @@ public:
                ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
                ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
                parentCoords2( a );
+  }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static void
+  parentShapeFunctionDerivatives( localIndex const q,
+                                  localIndex const xi,
+                                  localIndex const eta,
+                                  localIndex const zeta,
+                                  real64 (& dNdXi)[3] )
+  {
+    dNdXi[0] = 0.125 *
+               xi *
+               ( 1 + quadratureFactor*parentCoords1( q )*eta ) *
+               ( 1 + quadratureFactor*parentCoords2( q )*zeta );
+    dNdXi[1] = 0.125 *
+               ( 1 + quadratureFactor*parentCoords0( q )*xi ) *
+               eta *
+               ( 1 + quadratureFactor*parentCoords2( q )*zeta );
+    dNdXi[2] = 0.125 *
+               ( 1 + quadratureFactor*parentCoords0( q )*xi ) *
+               ( 1 + quadratureFactor*parentCoords1( q )*eta ) *
+               zeta;
   }
 
   GEOSX_HOST_DEVICE
@@ -165,7 +199,8 @@ public:
   }
 
 
-
+#define SUM_FACTORIZATION
+#if defined(SUM_FACTORIZATION)
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static real64 shapeFunctionDerivatives( localIndex const q,
@@ -174,108 +209,85 @@ public:
   {
     real64 J[3][3] = {{0}};
 
-//#define STOREPARENTSHAPEDER
-#ifdef STOREPARENTSHAPEDER
-    constexpr static real64 dNdXi[8][8][3] = {
+
+    real64 const coords[3] = { quadratureFactor*parentCoords0( q ),
+                               quadratureFactor*parentCoords1( q ),
+                               quadratureFactor*parentCoords2( q ) };
+
+    real64 const psi0[2] = { oneDimensionalShape( -1, coords[0] ),
+                             oneDimensionalShape(  1, coords[0] ) };
+    real64 const psi1[2] = { oneDimensionalShape( -1, coords[1] ),
+                             oneDimensionalShape(  1, coords[1] ) };
+    real64 const psi2[2] = { oneDimensionalShape( -1, coords[2] ),
+                             oneDimensionalShape(  1, coords[2] ) };
+    real64 const dpsi[2] = { -0.5, 0.5 };
+
+    for( localIndex a=0; a<2; ++a )
+    {
+      for( localIndex b=0; b<2; ++b )
       {
-        { dNdXi0( 0, 0 ), dNdXi1( 0, 0 ), dNdXi2( 0, 0 ) },
-        { dNdXi0( 0, 1 ), dNdXi1( 0, 1 ), dNdXi2( 0, 1 ) },
-        { dNdXi0( 0, 2 ), dNdXi1( 0, 2 ), dNdXi2( 0, 2 ) },
-        { dNdXi0( 0, 3 ), dNdXi1( 0, 3 ), dNdXi2( 0, 3 ) },
-        { dNdXi0( 0, 4 ), dNdXi1( 0, 4 ), dNdXi2( 0, 4 ) },
-        { dNdXi0( 0, 5 ), dNdXi1( 0, 5 ), dNdXi2( 0, 5 ) },
-        { dNdXi0( 0, 6 ), dNdXi1( 0, 6 ), dNdXi2( 0, 6 ) },
-        { dNdXi0( 0, 7 ), dNdXi1( 0, 7 ), dNdXi2( 0, 7 ) }
-      },
-      {
-        { dNdXi0( 1, 0 ), dNdXi1( 1, 0 ), dNdXi2( 1, 0 ) },
-        { dNdXi0( 1, 1 ), dNdXi1( 1, 1 ), dNdXi2( 1, 1 ) },
-        { dNdXi0( 1, 2 ), dNdXi1( 1, 2 ), dNdXi2( 1, 2 ) },
-        { dNdXi0( 1, 3 ), dNdXi1( 1, 3 ), dNdXi2( 1, 3 ) },
-        { dNdXi0( 1, 4 ), dNdXi1( 1, 4 ), dNdXi2( 1, 4 ) },
-        { dNdXi0( 1, 5 ), dNdXi1( 1, 5 ), dNdXi2( 1, 5 ) },
-        { dNdXi0( 1, 6 ), dNdXi1( 1, 6 ), dNdXi2( 1, 6 ) },
-        { dNdXi0( 1, 7 ), dNdXi1( 1, 7 ), dNdXi2( 1, 7 ) }
-      },
-      {
-        { dNdXi0( 2, 0 ), dNdXi1( 2, 0 ), dNdXi2( 2, 0 ) },
-        { dNdXi0( 2, 1 ), dNdXi1( 2, 1 ), dNdXi2( 2, 1 ) },
-        { dNdXi0( 2, 2 ), dNdXi1( 2, 2 ), dNdXi2( 2, 2 ) },
-        { dNdXi0( 2, 3 ), dNdXi1( 2, 3 ), dNdXi2( 2, 3 ) },
-        { dNdXi0( 2, 4 ), dNdXi1( 2, 4 ), dNdXi2( 2, 4 ) },
-        { dNdXi0( 2, 5 ), dNdXi1( 2, 5 ), dNdXi2( 2, 5 ) },
-        { dNdXi0( 2, 6 ), dNdXi1( 2, 6 ), dNdXi2( 2, 6 ) },
-        { dNdXi0( 2, 7 ), dNdXi1( 2, 7 ), dNdXi2( 2, 7 ) }
-      },
-      {
-        { dNdXi0( 3, 0 ), dNdXi1( 3, 0 ), dNdXi2( 3, 0 ) },
-        { dNdXi0( 3, 1 ), dNdXi1( 3, 1 ), dNdXi2( 3, 1 ) },
-        { dNdXi0( 3, 2 ), dNdXi1( 3, 2 ), dNdXi2( 3, 2 ) },
-        { dNdXi0( 3, 3 ), dNdXi1( 3, 3 ), dNdXi2( 3, 3 ) },
-        { dNdXi0( 3, 4 ), dNdXi1( 3, 4 ), dNdXi2( 3, 4 ) },
-        { dNdXi0( 3, 5 ), dNdXi1( 3, 5 ), dNdXi2( 3, 5 ) },
-        { dNdXi0( 3, 6 ), dNdXi1( 3, 6 ), dNdXi2( 3, 6 ) },
-        { dNdXi0( 3, 7 ), dNdXi1( 3, 7 ), dNdXi2( 3, 7 ) }
-      },
-      {
-        { dNdXi0( 4, 0 ), dNdXi1( 4, 0 ), dNdXi2( 4, 0 ) },
-        { dNdXi0( 4, 1 ), dNdXi1( 4, 1 ), dNdXi2( 4, 1 ) },
-        { dNdXi0( 4, 2 ), dNdXi1( 4, 2 ), dNdXi2( 4, 2 ) },
-        { dNdXi0( 4, 3 ), dNdXi1( 4, 3 ), dNdXi2( 4, 3 ) },
-        { dNdXi0( 4, 4 ), dNdXi1( 4, 4 ), dNdXi2( 4, 4 ) },
-        { dNdXi0( 4, 5 ), dNdXi1( 4, 5 ), dNdXi2( 4, 5 ) },
-        { dNdXi0( 4, 6 ), dNdXi1( 4, 6 ), dNdXi2( 4, 6 ) },
-        { dNdXi0( 4, 7 ), dNdXi1( 4, 7 ), dNdXi2( 4, 7 ) }
-      },
-      {
-        { dNdXi0( 5, 0 ), dNdXi1( 5, 0 ), dNdXi2( 5, 0 ) },
-        { dNdXi0( 5, 1 ), dNdXi1( 5, 1 ), dNdXi2( 5, 1 ) },
-        { dNdXi0( 5, 2 ), dNdXi1( 5, 2 ), dNdXi2( 5, 2 ) },
-        { dNdXi0( 5, 3 ), dNdXi1( 5, 3 ), dNdXi2( 5, 3 ) },
-        { dNdXi0( 5, 4 ), dNdXi1( 5, 4 ), dNdXi2( 5, 4 ) },
-        { dNdXi0( 5, 5 ), dNdXi1( 5, 5 ), dNdXi2( 5, 5 ) },
-        { dNdXi0( 5, 6 ), dNdXi1( 5, 6 ), dNdXi2( 5, 6 ) },
-        { dNdXi0( 5, 7 ), dNdXi1( 5, 7 ), dNdXi2( 5, 7 ) }
-      },
-      {
-        { dNdXi0( 6, 0 ), dNdXi1( 6, 0 ), dNdXi2( 6, 0 ) },
-        { dNdXi0( 6, 1 ), dNdXi1( 6, 1 ), dNdXi2( 6, 1 ) },
-        { dNdXi0( 6, 2 ), dNdXi1( 6, 2 ), dNdXi2( 6, 2 ) },
-        { dNdXi0( 6, 3 ), dNdXi1( 6, 3 ), dNdXi2( 6, 3 ) },
-        { dNdXi0( 6, 4 ), dNdXi1( 6, 4 ), dNdXi2( 6, 4 ) },
-        { dNdXi0( 6, 5 ), dNdXi1( 6, 5 ), dNdXi2( 6, 5 ) },
-        { dNdXi0( 6, 6 ), dNdXi1( 6, 6 ), dNdXi2( 6, 6 ) },
-        { dNdXi0( 6, 7 ), dNdXi1( 6, 7 ), dNdXi2( 6, 7 ) }
-      },
-      {
-        { dNdXi0( 7, 0 ), dNdXi1( 7, 0 ), dNdXi2( 7, 0 ) },
-        { dNdXi0( 7, 1 ), dNdXi1( 7, 1 ), dNdXi2( 7, 1 ) },
-        { dNdXi0( 7, 2 ), dNdXi1( 7, 2 ), dNdXi2( 7, 2 ) },
-        { dNdXi0( 7, 3 ), dNdXi1( 7, 3 ), dNdXi2( 7, 3 ) },
-        { dNdXi0( 7, 4 ), dNdXi1( 7, 4 ), dNdXi2( 7, 4 ) },
-        { dNdXi0( 7, 5 ), dNdXi1( 7, 5 ), dNdXi2( 7, 5 ) },
-        { dNdXi0( 7, 6 ), dNdXi1( 7, 6 ), dNdXi2( 7, 6 ) },
-        { dNdXi0( 7, 7 ), dNdXi1( 7, 7 ), dNdXi2( 7, 7 ) }
+        for( localIndex c=0; c<2; ++c )
+        {
+          real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+                                    psi0[a] * dpsi[b] * psi2[c],
+                                    psi0[a] * psi1[b] * dpsi[c] };
+          for( int i = 0; i < 3; ++i )
+          {
+            for( int j = 0; j < 3; ++j )
+            {
+              J[i][j] = J[i][j] + dNdXi[ j ] * X[linearMap(a,b,c)][i];
+            }
+          }
+        }
       }
-    };
+    }
 
-#define DNDXI( q, a, j ) dNdXi[q][a][j]
-#define CALC_DNDXI( q, a )
+    real64 const invDetJ = inverse( J, &(dNdX[0][0]) );
+
+
+    for( localIndex a=0; a<2; ++a )
+    {
+      for( localIndex b=0; b<2; ++b )
+      {
+        for( localIndex c=0; c<2; ++c )
+        {
+          real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+                                    psi0[a] * dpsi[b] * psi2[c],
+                                    psi0[a] * psi1[b] * dpsi[c] };
+          for( int i = 0; i < 3; ++i )
+          {
+            dNdX[a][i] = 0.0;
+            for( int j = 0; j < 3; ++j )
+            {
+              dNdX[a][i] = dNdX[a][i] + dNdXi[ j ] * J[j][i];
+            }
+          }
+        }
+      }
+    }
+
+    return 1.0 / invDetJ;
+  }
+
 #else
-    real64 dNdXi[3];
-#define CALC_DNDXI( q, a ) parentShapeFunctionDerivatives( q, a, dNdXi )
-#define DNDXI( q, a, i ) dNdXi[i]
-#endif
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 shapeFunctionDerivatives( localIndex const q,
+                                          real64 const (&X)[numNodes][3],
+                                          real64 (& dNdX)[numNodes][3] )
+  {
+    real64 J[3][3] = {{0}};
+    real64 dNdXi[3];
 
     for( localIndex a=0; a<numNodes; ++a )
     {
-      CALC_DNDXI( q, a );
+      parentShapeFunctionDerivatives( q, a, dNdXi );
       for( int i = 0; i < 3; ++i )
       {
         for( int j = 0; j < 3; ++j )
         {
-          J[i][j] = J[i][j] + X[a][i] * DNDXI( q, a, j );
+          J[i][j] = J[i][j] + X[a][i] * dNdXi[ j ];
         }
       }
     }
@@ -284,21 +296,19 @@ public:
 
     for( localIndex a=0; a<numNodes; ++a )
     {
-      CALC_DNDXI( q, a );
+      parentShapeFunctionDerivatives( q, a, dNdXi );
       for( int i = 0; i < 3; ++i )
       {
         dNdX[a][i] = 0.0;
         for( int j = 0; j < 3; ++j )
         {
-          dNdX[a][i] = dNdX[a][i] + DNDXI( q, a, j ) * J[j][i];
+          dNdX[a][i] = dNdX[a][i] + dNdXi[ j ] * J[j][i];
         }
       }
     }
-
     return 1.0 / invDetJ;
-#undef CALC_DNDXI
-#undef DNDXI
   }
+#endif
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
