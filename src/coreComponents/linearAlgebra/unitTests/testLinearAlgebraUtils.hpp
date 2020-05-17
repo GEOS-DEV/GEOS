@@ -24,10 +24,6 @@
 
 using namespace geosx;
 
-//static void Q12d_local( real64 const & hx, real64 const & hy,
-//                        real64 const & E,  real64 const & nu,
-//                        array2d< real64 > & Ke );
-
 static void Q12d_local( real64 const & hx, real64 const & hy,
                         real64 const & E,  real64 const & nu,
                         stackArray2d< real64, 8*8 > & Ke );
@@ -191,10 +187,6 @@ void compute2DElasticityOperator( MPI_Comm comm,
 
   // Compute total number of grid nodes (nNodes) and elements (nCells)
   globalIndex nCells = nCellsX * nCellsY;
-  GEOSX_LOG_RANK_VAR( nCellsX );
-  GEOSX_LOG_RANK_VAR( nCellsY );
-  GEOSX_LOG_RANK_VAR( nCells );
-  GEOSX_LOG_RANK_VAR( nproc );
   GEOSX_ERROR_IF( nCells < nproc, "less than one cell per processor" );
   globalIndex nNodes = ( nCellsX + 1 ) * ( nCellsY + 1) ;
   real64 hx = domainSizeX / static_cast< real64 >( nCellsX );
@@ -212,19 +204,6 @@ void compute2DElasticityOperator( MPI_Comm comm,
 
   stackArray2d< real64, 8*8 > Ke( 8, 8 );
   Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
-
-//  /////////////////////////////////////////
-//  std::cout << "\n";
-//  for( localIndex i = 0; i < 8; ++i )
-//  {
-//    for( localIndex j = 0; j < 8; ++j )
-//    {
-//      std::cout << Ke(i, j) << " ";
-//    }
-//    std::cout << "\n";
-//  }
-//  std::cout << "\n";
-//  /////////////////////////////////////////
 
   // Create a matrix of global size N with at most 18 non-zeros per row
   elasticity2D.createWithGlobalSize( nNodes*2, 18, comm );
@@ -253,93 +232,10 @@ void compute2DElasticityOperator( MPI_Comm comm,
     // Assemble local stiffness matrix and right-hand side
     elasticity2D.insert( localDofIndex.data(), localDofIndex.data(), Ke.data(), 8, 8 );
   }
-  GEOSX_LOG_RANK( "Finito assemblaggio");
+
   // Close the matrix
   elasticity2D.close();
-  elasticity2D.write( "elasticity_mat.mtx" );
-  GEOSX_LOG_RANK( "Matrice chiusa");
-  GEOSX_LOG_RANK_VAR( youngModulus );
-  GEOSX_LOG_RANK_VAR( poissonRatio );
-  GEOSX_LOG_RANK_VAR( hx );
-  GEOSX_LOG_RANK_VAR( hy );
-  GEOSX_LOG_RANK_VAR( nCells );
 }
-
-//static void Q12d_local( real64 const & hx, real64 const & hy,
-//                        real64 const & E, real64 const & nu,
-//                        array2d< real64 > & Ke )
-//{
-//  real64 fac = E / ( 1. - 2. * nu ) / (1. + nu );
-//
-//  // Populate stiffness matrix
-//
-//  // --- Fill diagonal entries
-//  real64 Dxx = ( fac * hx * ( 1. - 2. * nu ) ) / ( 6. * hy )
-//                    - ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
-//  real64 Dyy = ( fac * hy * ( 1. - 2. * nu ) ) / ( 6. * hx )
-//                    - ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
-//  for( localIndex i = 0; i < 8; i += 2)
-//  {
-//    Ke( i, i ) = Dxx;
-//    Ke( i + 1, i + 1) = Dyy;
-//  }
-//
-//  // --- Fill upper triangular part
-//  // --- --- Ke( 0, 1:7 )
-//  Ke( 0, 1 ) = fac / 8.;
-//  Ke( 0, 2 ) = ( fac * hx * ( 1. - 2. * nu ) ) / ( 12. * hy )
-//             + ( fac * hy * ( -1. + nu ) ) / ( 3. * hx );
-//  Ke( 0, 3 ) = ( fac * ( -1 + 4. * nu ) ) / 8.;
-//  Ke( 0, 4 ) = ( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-//             + ( fac * hx * (-1. + 2. * nu ) ) / ( 12. * hy );
-//  Ke( 0, 5 ) = -Ke( 0, 1 );
-//  Ke( 0, 6 ) = -( fac * hy * ( -1. + nu ) ) / ( 6. * hx )
-//             + ( fac * hx * ( -1. + 2. * nu ) ) / ( 6. * hy );
-//  Ke( 0, 7 ) = -( fac * ( -1. + 4. * nu ) ) / 8.;
-//
-//  // --- --- Ke( 1, 2:7 )
-//  Ke( 1, 2 ) = Ke( 0, 7 );
-//  Ke( 1, 3 ) = -( fac * ( hy * hy * ( 1. - 2. * nu ) + hx * hx *( -1. + nu ) ) ) / ( 6. * hx * hy );
-//  Ke( 1, 4 ) = Ke( 0, 5 );
-//  Ke( 1, 5 ) = ( fac * hx * ( -1. + nu ) ) / ( 6. * hy ) + ( fac * hy * ( -1. + 2. * nu ) ) / ( 12. * hx );
-//  Ke( 1, 6 ) = Ke( 0, 3 );
-//  Ke( 1, 7 ) = ( fac * hy * ( 1. - 2. * nu ) ) / ( 12. * hx )
-//             + ( fac * hx * ( -1. + nu ) ) / ( 3. * hy );
-//
-//  // --- --- Ke( 2, 3:7 )
-//  Ke( 2, 3 ) =  Ke( 0, 5 );
-//  Ke( 2, 4 ) =  Ke( 0, 6 );
-//  Ke( 2, 5 ) =  Ke( 1, 6 );
-//  Ke( 2, 6 ) = ( fac * hy * ( -1 + nu ) ) / ( 6. * hx ) + ( fac * hx * ( -1. + 2. * nu ) ) / ( 12. * hy );
-//  Ke( 2, 7 ) =  Ke( 0, 1 );
-//
-//  // --- --- Ke( 3, 4:7 )
-//  Ke( 3, 4 ) = Ke( 1, 2 );
-//  Ke( 3, 5 ) = Ke( 1, 7 );
-//  Ke( 3, 6 ) = Ke( 0, 1 );
-//  Ke( 3, 7 ) = Ke( 1, 5 );
-//
-//  // --- --- Ke( 4, 5:7 )
-//  Ke( 4, 5 ) = Ke( 0, 1 );
-//  Ke( 4, 6 ) = Ke( 0, 2 );
-//  Ke( 4, 7 ) = Ke( 0, 3 );
-//
-//  // --- --- Ke( 5, 6:7 )
-//  Ke( 5, 6 ) = Ke( 0, 7 );
-//  Ke( 5, 7 ) = Ke( 1, 3 );
-//
-//  // --- --- Ke( 6, 7 )
-//  Ke( 6, 7 ) = Ke( 0, 5 );
-//
-//  // --- Fill lower triangular part
-//  for( localIndex i = 1; i < 8; ++i )
-//  {
-//    for( localIndex j = 0; j < i; ++j )
-//    {
-//      Ke( i, j ) = Ke( j, i );
-//    }
-//  }
-//}
 
 static void Q12d_local( real64 const & hx, real64 const & hy,
                         real64 const & E, real64 const & nu,
