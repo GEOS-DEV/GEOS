@@ -8,10 +8,8 @@
                  logLevel="2"
                  discretization="FE1"
                  targetRegions="{Region1}">
-    <NonlinearSolverParameters newtonMaxIter="50"
-                               newtonTol="1.0e-6"/>
-    <SystemSolverParameters krylovTol="1.0e-10"
-                               logLevel="0"/>
+    <NonlinearSolverParameters newtonMaxIter="50"/>
+    <SystemSolverParameters logLevel="0"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
@@ -33,7 +31,7 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
-                logLevel="1"
+                logLevel="2"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -56,11 +54,13 @@
   </Mesh>
 
   <Events maxTime="1.0">
+    <SoloEvent name="siloOutput0"
+               target="/Outputs/SiloOutput"/>
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0"
-                   target="/Solvers/PhaseFieldSolve" />
+                   target="/Solvers/PhaseFieldSolve"/>
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
