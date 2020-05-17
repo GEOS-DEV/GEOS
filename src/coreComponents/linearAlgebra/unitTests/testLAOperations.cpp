@@ -17,55 +17,23 @@
  */
 
 #include <gtest/gtest.h>
-#include "codingUtilities/UnitTestUtilities.hpp"
-#include "testLinearAlgebraUtils.hpp"
+
 #include "common/DataTypes.hpp"
-#include "managers/initialization.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-
-/**
- * \file testLAOperations.cpp
- * \brief This test file is part of the ctest suite and tests linear algebra interfaces.
- * It mainly uses dummy 2D Laplace operator matrices
- * to test the solvers along with a simple (block) identity preconditioner.
- */
+#include "managers/initialization.hpp"
+#include "testLinearAlgebraUtils.hpp"
 
 using namespace geosx;
 
 static real64 constexpr machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 
-// BEGIN_RST_NARRATIVE testLAOperations.rst
-
-/**
- * @brief Test case class for LA operations tests
- * @tparam LAI Linear Algebra Interface
- */
 template< typename LAI >
 class LAOperationsTest : public ::testing::Test
 {};
 
 TYPED_TEST_SUITE_P( LAOperationsTest );
 
-/*! @name Test functions.
- * @brief Templated functions to test the linear solvers.
- */
-//@{
-
-// ==============================
-// Test Linear Algebra Operations
-// ==============================
-// In these functions we test the linear algebra (vector and matrix) operations
-
-/**
- * @function testVectorFunction
- *
- * @brief Test vector functions including create, add/set, accessors,
- * and linear algebra operations.
- */
-// -----------------------------------------
-// Test vector functions
-// -----------------------------------------
 TYPED_TEST_P( LAOperationsTest, VectorFunctions )
 {
   // Define alias
@@ -269,15 +237,6 @@ TYPED_TEST_P( LAOperationsTest, VectorFunctions )
 }
 
 #if 0
-/**
- * @function testMatrixFunctions
- *
- * @brief Test matrix functions including create, add/set, accessors,
- * and linear algebra operations.
- */
-// -----------------------------------------
-// Test matrix functions
-// -----------------------------------------
 TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 {
   // Define aliases
@@ -472,138 +431,6 @@ TYPED_TEST_P( LAOperationsTest, MatrixFunctions )
 }
 #endif
 
-// -------------------------------------
-// Test libraries operations and solvers
-// -------------------------------------
-// We start by testing the linear algebra operations. We fill two matrices (one will be a
-// preconditioner) and make sure the sparse storage is behaving properly. We then test the
-// iterative and direct solvers available.
-
-LinearSolverParameters params_Direct()
-{
-  LinearSolverParameters parameters;
-  parameters.solverType = "direct";
-  return parameters;
-}
-
-LinearSolverParameters params_GMRES_ILU()
-{
-  LinearSolverParameters parameters;
-  parameters.krylov.relTolerance = 1e-8;
-  parameters.krylov.maxIterations = 300;
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "iluk";
-  parameters.ilu.fill = 1;
-  return parameters;
-}
-
-LinearSolverParameters params_CG_AMG()
-{
-  LinearSolverParameters parameters;
-  parameters.krylov.relTolerance = 1e-8;
-  parameters.krylov.maxIterations = 300;
-  parameters.solverType = "cg";
-  parameters.preconditionerType = "amg";
-  parameters.amg.smootherType = "gaussSeidel";
-  parameters.amg.coarseType = "direct";
-  return parameters;
-}
-
-template< typename LAI >
-void solveAndCompare( LinearSolverParameters const & params,
-                      typename LAI::ParallelMatrix & mat,
-                      typename LAI::ParallelVector & rhs,
-                      typename LAI::ParallelVector const & sol_true,
-                      real64 const relTol )
-{
-  typename LAI::ParallelVector sol_comp( sol_true );
-  sol_comp.zero();
-
-  typename LAI::LinearSolver solver( params );
-  solver.solve( mat, sol_comp, rhs );
-
-  EXPECT_LT( std::fabs( sol_comp.norm2() / sol_true.norm2() - 1. ), relTol );
-}
-
-/**
- * @function testInterfaceSolvers
- *
- * @brief Test the packaged solvers from the LAI as well as basic linear algebra operations,
- * such as matrix-vector products, dot products, norms and residuals.
- */
-TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
-{
-  // Define aliases templated on the Linear Algebra Interface (LAI).
-  using Matrix = typename TypeParam::ParallelMatrix;
-  using Vector = typename TypeParam::ParallelVector;
-
-  // Use an nxn cartesian mesh to generate the Laplace 2D operator.
-  globalIndex n = 100;
-  globalIndex N = n * n;
-
-  // Compute a 2D Laplace operator
-  Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
-
-  // Condition number for the Laplacian matrix estimate
-  // cond_estimate = 4 * n^2 / pi^2
-  real64 const matrix_condition_number = 4.0 * n * n / std::pow( M_PI, 2 );
-
-  // Define some vectors
-  Vector x_true;
-  Vector x_comp;
-  Vector b;
-
-  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
-
-  // We have some simple initialization options for vectors:
-  x_true.rand(); // random
-  x_comp.zero(); // zero
-  b.set( 1.0 ); // ones
-
-  // Also define a residual vector, this time using the copy constructor
-  Vector r( b );
-
-  // Test dot product: r.b = b.b = N
-  real64 dotTest = r.dot( b );
-  EXPECT_DOUBLE_EQ( dotTest, N );
-
-  // Test various norms
-  real64 const norm1 = b.norm1();
-  real64 const norm2 = b.norm2();
-  real64 const normInf = b.normInf();
-
-  EXPECT_NEAR( norm1, N, N * machinePrecision );
-  EXPECT_NEAR( norm2, n, n * machinePrecision );
-  EXPECT_NEAR( normInf, 1., machinePrecision );
-
-  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
-  // back from the solvers.
-  matrix.apply( x_true, b );
-
-  // Test the residual function by computing r = b - Ax = 0
-  matrix.residual( x_true, b, r );
-  real64 normRes = r.normInf();
-  EXPECT_NEAR( normRes, 0., machinePrecision );
-
-  // Test direct solver
-  solveAndCompare< TypeParam >( params_Direct(), matrix, b, x_true, matrix_condition_number * machinePrecision );
-
-  // Test ILU(k) preconditioned GMRES
-  solveAndCompare< TypeParam >( params_GMRES_ILU(), matrix, b, x_true, matrix_condition_number * params_GMRES_ILU().krylov.relTolerance );
-
-  // Test AMG preconditioned CG
-  solveAndCompare< TypeParam >( params_CG_AMG(), matrix, b, x_true, matrix_condition_number * params_CG_AMG().krylov.relTolerance );
-}
-
-
-//------------------------------
-// Test matrix-matrix operations
-//------------------------------
-// Currently just test matrix-matrix multiply, but eventually
-// should include add and other level-III operations
 TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
@@ -622,10 +449,6 @@ TYPED_TEST_P( LAOperationsTest, MatrixMatrixOperations )
   EXPECT_DOUBLE_EQ( b, 64.0 );
 }
 
-//-----------------------------------
-// Test rectangular matrix operations
-//-----------------------------------
-// Create a rectangular matrix and check its sizes and norms
 TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
 {
   using Matrix = typename TypeParam::ParallelMatrix;
@@ -662,14 +485,8 @@ TYPED_TEST_P( LAOperationsTest, RectangularMatrixOperations )
   EXPECT_DOUBLE_EQ( c, std::sqrt( static_cast< real64 >( nRows * ( nRows + 1 ) * ( 2 * nRows + 1 ) ) / 3.0 ) );
 }
 
-// END_RST_NARRATIVE
-
-//@}
-
 REGISTER_TYPED_TEST_SUITE_P( LAOperationsTest,
                              VectorFunctions,
-                             //MatrixFunctions,
-                             InterfaceSolvers,
                              MatrixMatrixOperations,
                              RectangularMatrixOperations );
 
@@ -684,6 +501,289 @@ INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, LAOperationsTest, HypreInterface, );
 #ifdef GEOSX_USE_PETSC
 INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, LAOperationsTest, PetscInterface, );
 #endif
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+LinearSolverParameters params_Direct()
+{
+  LinearSolverParameters parameters;
+  parameters.solverType = "direct";
+  parameters.krylov.relTolerance = machinePrecision;
+  return parameters;
+}
+
+LinearSolverParameters params_GMRES_ILU()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.solverType = "gmres";
+  parameters.preconditionerType = "iluk";
+  parameters.ilu.fill = 1;
+  return parameters;
+}
+
+LinearSolverParameters params_GMRES_AMG()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.solverType = "gmres";
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
+  return parameters;
+}
+
+LinearSolverParameters params_CG_AMG()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.solverType = "cg";
+  parameters.preconditionerType = "amg";
+  parameters.amg.smootherType = "gaussSeidel";
+  parameters.amg.coarseType = "direct";
+  return parameters;
+}
+
+template< typename LAI >
+class SolverTestBase : public ::testing::Test
+{
+public:
+
+  using Matrix = typename LAI::ParallelMatrix;
+  using Vector = typename LAI::ParallelVector;
+
+  static constexpr globalIndex meshSize = 100;
+
+protected:
+
+  void SetUpVectors()
+  {
+    sol_true.createWithGlobalSize( matrix.numGlobalCols(), MPI_COMM_GEOSX );
+    sol_true.rand();
+
+    rhs.createWithGlobalSize( matrix.numGlobalRows(), MPI_COMM_GEOSX );
+    matrix.apply( sol_true, rhs );
+  }
+
+  Matrix matrix;
+  Vector rhs;
+  Vector sol_true;
+  real64 cond_est = 1.0;
+
+  void test( LinearSolverParameters const & params )
+  {
+    typename LAI::ParallelVector sol_comp;
+    sol_comp.createWithGlobalSize( sol_true.globalSize(), sol_true.getComm() );
+    sol_comp.zero();
+
+    typename LAI::LinearSolver solver( params );
+    solver.solve( matrix, sol_comp, rhs );
+
+    real64 const relTol = cond_est * params.krylov.relTolerance;
+    EXPECT_TRUE( solver.result().success() );
+    EXPECT_LT( std::fabs( sol_comp.norm2() / sol_true.norm2() - 1. ), relTol );
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+template< typename LAI >
+class SolverTestLaplace2D : public SolverTestBase< LAI >
+{
+public:
+
+  using Base = SolverTestBase< LAI >;
+  using Matrix = typename Base::Matrix;
+  using Vector = typename Base::Vector;
+
+protected:
+
+  void SetUp() override
+  {
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, this->meshSize, this->matrix );
+    this->SetUpVectors();
+
+    // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
+    this->cond_est = 4.0 * this->meshSize * this->meshSize / std::pow( M_PI, 2 );
+  }
+};
+
+TYPED_TEST_SUITE_P( SolverTestLaplace2D );
+
+TYPED_TEST_P( SolverTestLaplace2D, Direct )
+{
+  this->test( params_Direct() );
+}
+
+TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
+{
+  this->test( params_GMRES_ILU() );
+}
+
+TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
+{
+  this->test( params_CG_AMG() );
+}
+
+REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
+                             Direct,
+                             GMRES_ILU,
+                             CG_AMG );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, SolverTestLaplace2D, TrilinosInterface, );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, SolverTestLaplace2D, HypreInterface, );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestLaplace2D, PetscInterface, );
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+template< typename LAI >
+class SolverTestElasticity2D : public SolverTestBase< LAI >
+{
+public:
+
+  using Base = SolverTestBase< LAI >;
+  using Matrix = typename Base::Matrix;
+  using Vector = typename Base::Vector;
+
+protected:
+
+  void SetUp() override
+  {
+    compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, this->meshSize, this->meshSize, 10000., 0.2, this->matrix );
+
+    // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
+    this->matrix.open();
+    for( globalIndex iRow = 0; iRow < 2 * (this->meshSize + 1); ++iRow )
+    {
+      if( this->matrix.getLocalRowID( iRow ) >= 0 )
+      {
+        this->matrix.clearRow( iRow, true );
+      }
+    }
+    this->matrix.close();
+
+    this->SetUpVectors();
+    this->cond_est = 1e2; // based on tolerance used in Nicola's original test
+  }
+};
+
+TYPED_TEST_SUITE_P( SolverTestElasticity2D );
+
+TYPED_TEST_P( SolverTestElasticity2D, Direct )
+{
+  this->test( params_Direct() );
+}
+
+TYPED_TEST_P( SolverTestElasticity2D, GMRES_AMG )
+{
+  LinearSolverParameters params = params_GMRES_AMG();
+  params.amg.separateComponents = true;
+  params.dofsPerNode = 2;
+  this->test( params );
+}
+
+REGISTER_TYPED_TEST_SUITE_P( SolverTestElasticity2D,
+                             Direct,
+                             GMRES_AMG );
+
+#ifdef GEOSX_USE_TRILINOS
+INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, SolverTestElasticity2D, TrilinosInterface, );
+#endif
+
+#ifdef GEOSX_USE_HYPRE
+INSTANTIATE_TYPED_TEST_SUITE_P( Hypre, SolverTestElasticity2D, HypreInterface, );
+#endif
+
+#ifdef GEOSX_USE_PETSC
+INSTANTIATE_TYPED_TEST_SUITE_P( Petsc, SolverTestElasticity2D, PetscInterface, );
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////
+//
+//template<typename LAI>
+//void parallel_vector_copy_constructor()
+//{
+//
+//  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  typename LAI::ParallelVector x;
+//  typename LAI::ParallelVector y;
+//  localIndex const localSize = rank*10 + 1;
+//
+//  array1d<real64> vec(localSize);
+//
+//  // Populate vector with random coefficients
+//  BlasLapackLA::vectorRand( vec,
+//                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+//
+//  x.create( vec, MPI_COMM_WORLD );
+//  x.close();
+//
+//  y.create(x);
+//
+//  for( globalIndex i = x.ilower(); i < x.iupper(); ++i )
+//  {
+//    EXPECT_EQ( x.get( i ), y.get( i ) );
+//  }
+//}
+//
+//template<typename LAI>
+//void parallel_vector_create_with_local_size()
+//{
+//  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+//  typename LAI::ParallelVector x;
+//  localIndex const localSize = rank*10;
+//  globalIndex const globalSize = MpiWrapper::Sum( localSize );
+//
+//  x.createWithLocalSize( localSize, MPI_COMM_WORLD );
+//
+//  EXPECT_EQ( x.localSize(), localSize );
+//  EXPECT_EQ( x.globalSize(), globalSize );
+//}
+//
+//template<typename LAI>
+//void parallel_vector_create_with_global_size()
+//{
+//  int const numRanks = MpiWrapper::Comm_size( MPI_COMM_WORLD );
+//  typename LAI::ParallelVector x;
+//  localIndex const localSize = integer_conversion< localIndex >( numRanks );
+//  globalIndex const globalSize = integer_conversion< globalIndex >( localSize * localSize );
+//
+//  // Testing createWithGlobalSize
+//  x.createWithGlobalSize( globalSize, MPI_COMM_WORLD );
+//  EXPECT_EQ( x.localSize(), localSize );
+//  EXPECT_EQ( x.globalSize(), globalSize );
+//}
+//
+//#ifdef GEOSX_USE_TRILINOS
+//
+//TEST( EpetraVector, EpetraVector )
+//{
+//  parallel_vector_copy_constructor< TrilinosInterface >();
+//}
+//
+//TEST( EpetraVector, createWithLocalSize )
+//{
+//  parallel_vector_create_with_local_size< TrilinosInterface >();
+//}
+//
+//TEST( EpetraVector, createWithGlobalSize )
+//{
+//  parallel_vector_create_with_global_size< TrilinosInterface >();
+//}
+//
+//#endif
+///////////////////////////////////////////////////////////////////////////////////////
 
 int main( int argc, char * * argv )
 {
