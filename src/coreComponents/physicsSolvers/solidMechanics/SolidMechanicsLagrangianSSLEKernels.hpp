@@ -227,9 +227,9 @@ struct ExplicitKernel
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + ( stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ] );
-          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + ( stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ] );
-          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + ( stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ] );
+          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
+          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
+          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
         }
       }    //quadrature loop
 
