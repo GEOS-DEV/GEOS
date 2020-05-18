@@ -102,7 +102,7 @@ struct ExplicitKernel
 #endif
   // If UPDATE_STRESS is undef, then stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
-  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
+//  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -195,7 +195,6 @@ struct ExplicitKernel
   #define DETJ detJ( k, q )
 #endif //defined(CALCFEMSHAPE)
 
-        real64 stressLocal[ 6 ] = {0};
         real64 strain[6] = {0};
         for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
@@ -209,7 +208,9 @@ struct ExplicitKernel
 
 #if UPDATE_STRESS == 2
         constitutive.SmallStrain( k, q, strain );
+        real64 stressLocal[ 6 ] = {0};
 #else
+        real64 stressLocal[ 6 ] = {0};
         constitutive.SmallStrainNoState( k, strain, stressLocal );
 #endif
 
