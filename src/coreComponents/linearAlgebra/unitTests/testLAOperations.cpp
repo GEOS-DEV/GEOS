@@ -636,18 +636,18 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
     matrix.apply( x_true, b );
 
     // Initialize iterative solver
-    LinearSolverParameters parameters2;
-    Solver solver2( parameters2 );
+    LinearSolverParameters parameters;
+    Solver solver2( parameters );
 
     // Set basic options
-    parameters2.logLevel = 0;
-    parameters2.krylov.relTolerance = 1e-8;
-    parameters2.krylov.maxIterations = 300;
-    parameters2.solverType = "gmres";
-    parameters2.preconditionerType = "amg"; // for PETSc default options only
-    parameters2.amg.smootherType = "gaussSeidel";
-    parameters2.amg.separateComponents = true;
-    parameters2.dofsPerNode = 2;
+    parameters.logLevel = 0;
+    parameters.krylov.relTolerance = 1e-8;
+    parameters.krylov.maxIterations = 300;
+    parameters.solverType = "gmres";
+    parameters.preconditionerType = "amg"; // for PETSc default options only
+    parameters.amg.smootherType = "gaussSeidel";
+    parameters.amg.separateComponents = true;
+    parameters.dofsPerNode = 2;
 
     // Solve using the iterative solver and compare norms with true solution
     x_comp.zero();

@@ -311,8 +311,6 @@ static inline void Q12d_local( real64 const & hx, real64 const & hy,
     }
   }
 }
-// END_RST_NARRATIVE
-
 //@}
 
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP
