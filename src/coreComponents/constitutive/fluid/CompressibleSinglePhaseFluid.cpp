@@ -84,6 +84,11 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( std::string const & 
     setApplyDefaultValue("linear")->
     setInputFlag(InputFlags::OPTIONAL)->
     setDescription("Type of viscosity model (linear, quadratic, exponential)");
+	
+  registerWrapper( viewKeyStruct::fluidTypeString, &m_fluidType, false )->
+    setApplyDefaultValue(0)->
+    setInputFlag(InputFlags::OPTIONAL)->
+    setDescription("type of fluid (fluid in soil or fracture)");
 }
 
 CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
@@ -119,7 +124,7 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
   newConstitutiveRelation->m_viscosityModelString = this->m_viscosityModelString;
   newConstitutiveRelation->m_densityModelType     = this->m_densityModelType;
   newConstitutiveRelation->m_viscosityModelType   = this->m_viscosityModelType;
-
+  newConstitutiveRelation->m_fluidType            = this->m_fluidType;
 }
 
 void CompressibleSinglePhaseFluid::PostProcessInput()
@@ -169,8 +174,18 @@ void CompressibleSinglePhaseFluid::PointUpdateDensity( real64 const & pressure, 
 void CompressibleSinglePhaseFluid::PointUpdatePressureExplicit( real64 & pressure, localIndex const k, localIndex const q )
 {
   real64 pressureCap = 1e8;
-  pressure =  (pressure <= 0.5 * pressureCap ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
-                                                        : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
+  if(m_fluidType == 0)
+  {
+	 pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
+	 ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
+	 : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
+ 
+  }
+  else
+  {
+	  pressure =  (pressure <= 0.5 * pressureCap ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
+	  : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
+  }
   //pressure = m_density[k][q] < m_referenceDensity ? 0 : (pressure <= 0.5 * pressureCap
   //                                                      ? (1 - m_referenceDensity / m_density[k][q]) / m_compressibility + m_referencePressure
   //                                                      : 0.5 * pressureCap + ( pressure - 0.5 * pressureCap) / (1.0 / m_compressibility - 0.5 * pressureCap) * 0.5 * pressureCap);
@@ -263,3 +278,4 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, std::str
 } /* namespace constitutive */
 
 } /* namespace geosx */
+

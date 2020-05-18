@@ -1247,6 +1247,8 @@
 		<xsd:attribute name="defaultViscosity" type="real64" use="required" />
 		<!--densityModel => Type of density model (linear, quadratic, exponential)-->
 		<xsd:attribute name="densityModel" type="string" default="linear" />
+		<!--fluidType => type of fluid (fluid in soil or fracture)-->
+		<xsd:attribute name="fluidType" type="integer" default="0" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->

@@ -134,6 +134,7 @@ public:
     static constexpr auto referenceViscosityString = "referenceViscosity";
     static constexpr auto densityModelString       = "densityModel";
     static constexpr auto viscosityModelString     = "viscosityModel";
+	static constexpr auto fluidTypeString     = "fluidType";
 
     dataRepository::ViewKey compressibility    = { compressibilityString    };
     dataRepository::ViewKey viscosibility      = { viscosibilityString      };
@@ -142,6 +143,7 @@ public:
     dataRepository::ViewKey referenceViscosity = { referenceViscosityString };
     dataRepository::ViewKey densityModel       = { densityModelString       };
     dataRepository::ViewKey viscosityModel     = { viscosityModelString     };
+	dataRepository::ViewKey fluidType     = { fluidTypeString     };
 
   } viewKeysCompressibleSinglePhaseFluid;
 
@@ -185,6 +187,9 @@ private:
 
   /// type of viscosity model (linear, quadratic, exponential)
   ExponentApproximationType m_viscosityModelType;
+  
+  // type of fluid (fluid in soil or fracture)
+  int m_fluidType;
 };
 
 
@@ -220,3 +225,4 @@ inline void CompressibleSinglePhaseFluid::Inverse( real64 const & property,
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_FLUID_COMPRESSIBLESINGLEPHASEFLUID_HPP_ */
+
