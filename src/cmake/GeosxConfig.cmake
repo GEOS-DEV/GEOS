@@ -54,10 +54,11 @@ install( FILES ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
 function( make_full_config_file 
           PREPROCESSOR_VARS )
     foreach( DEP in ${PREPROCESSOR_VARS})
-        set(USE_${DEP} TRUE  )
-        set(GEOSX_USE_${DEP} TRUE  )
-        set(${DEP} TRUE  )
+        set( USE_${DEP} TRUE )
+        set( GEOSX_USE_${DEP} TRUE )
+        set( ${DEP} TRUE )
     endforeach()
+    set( GEOSX_CMAKE_BUILD_TYPE "\"Release\"" )
 
     configure_file( ${CMAKE_SOURCE_DIR}/coreComponents/common/GeosxConfig.hpp.in
                     ${CMAKE_SOURCE_DIR}/docs/doxygen/GeosxConfig.hpp )
