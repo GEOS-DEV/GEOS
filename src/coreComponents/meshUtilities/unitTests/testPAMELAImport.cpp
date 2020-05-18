@@ -103,10 +103,10 @@ TEST( PAMELAImport, testGMSH )
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
     "<ElementRegions>" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{100_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"1\" cellBlocks=\"{101_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"2\" cellBlocks=\"{102_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"3\" cellBlocks=\"{103_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"0\" cellBlocks=\"{Overburden1_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"1\" cellBlocks=\"{Overburden2_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"2\" cellBlocks=\"{Reservoir_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"3\" cellBlocks=\"{Underburden_TETRA}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
@@ -132,7 +132,7 @@ TEST( PAMELAImport, testECLIPSE )
   inputStreamRegion <<
     "<?xml version=\"1.0\" ?>" <<
     "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{0_HEX}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"0\" cellBlocks=\"{DEFAULT_HEX}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 

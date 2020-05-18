@@ -14,8 +14,8 @@ $PhysicalNames
 2 9 "Hor3"
 2 99 "Fault1"
 2 100 "Fault2"
-3 101 "Overbuden1"
-3 102 "Overbuden2"
+3 101 "Overburden1"
+3 102 "Overburden2"
 3 103 "Reservoir"
 3 104 "Underburden"
 $EndPhysicalNames

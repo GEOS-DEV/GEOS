@@ -155,8 +155,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   for( auto regionItr = polyhedronPartMap.begin(); regionItr != polyhedronPartMap.end(); ++regionItr )
   {
     auto regionPtr = regionItr->second;
-    auto regionIndex = regionPtr->Index;
-    auto regionIndexStr = std::to_string( regionIndex );
+    string_array labelTokenized = stringutilities::Tokenize( regionPtr->Label, "_" );
+    string regionName = labelTokenized[ labelTokenized.size() - 2 ];
 
     // Iterate on cell types
     for( auto cellBlockIterator = regionPtr->SubParts.begin();
@@ -166,14 +166,13 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       auto cellBlockType = cellBlockPAMELA->ElementType;
       auto cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
-      std::cout << cellBlockName << std::endl;
       if( cellBlockName == "HEX" )
       {
         auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
         cellBlock->SetElementType( "C3D8" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -216,8 +215,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
-        std::cout << regionIndexStr + "_" + cellBlockName << std::endl;
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
         cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -252,7 +250,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
         cellBlock->SetElementType( "C3D6" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -291,7 +289,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionIndexStr + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
         cellBlock->SetElementType( "C3D5" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -365,7 +363,6 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
   
   /// Import surfaces
-  std::cout << "begin surface " << std::endl;
   auto polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
   for( auto surfaceItr = polygonPartMap.begin(); surfaceItr != polygonPartMap.end(); ++surfaceItr )
   {
