@@ -320,7 +320,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
           localToGlobal[cellLocalIndex] = cellGlobalIndex;
         }
       }
-      
+
       /// Import ppt
       if( cellBlock != nullptr )
       {
@@ -361,7 +361,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
     }
   }
-  
+
   /// Import surfaces
   auto polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
   for( auto surfaceItr = polygonPartMap.begin(); surfaceItr != polygonPartMap.end(); ++surfaceItr )
@@ -377,7 +377,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       auto cellBlockPAMELA = cellBlockIterator->second;
       auto cellBlockType = cellBlockPAMELA->ElementType;
       auto cellBlockName = ElementToLabel.at( cellBlockType );
-      if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD")
+      if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
       {
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
              cellItr != cellBlockPAMELA->SubCollection.end_owned();
