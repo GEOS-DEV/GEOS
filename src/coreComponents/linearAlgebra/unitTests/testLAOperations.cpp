@@ -601,6 +601,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
                                youngModulus, poissonRatio,
                                matrix2 );
 
+
   // Impose Dirichlet boundary conditions
   // --- Fix domain bottom (first 2*(nCellsX + 1) rows of matrix2)
   matrix2.open();
@@ -612,6 +613,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
     }
   }
   matrix2.close();
+
 
   // Define some vectors
   Vector x2_true;
@@ -651,7 +653,7 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   real64 norm2_comp = x2_comp.norm2();
   real64 norm2_true = x2_true.norm2();
   EXPECT_LT( std::fabs( norm2_comp / norm2_true - 1. ),
-             1e-5 );
+             1e-6 );
 
   /////////////////////////////////////////////////////////////
 

@@ -230,7 +230,7 @@ void PetscMatrix::insert( globalIndex const rowIndex,
                           real64 const value )
 {
   GEOSX_LAI_ASSERT( insertable() );
-  GEOSX_LAI_CHECK_ERROR( MatSetValue( m_mat, rowIndex, colIndex, value, INSERT_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetValue( m_mat, rowIndex, colIndex, value, ADD_VALUES ) );
 }
 
 void PetscMatrix::add( globalIndex const rowIndex,
@@ -260,7 +260,7 @@ void PetscMatrix::insert( globalIndex const rowIndex,
 {
   GEOSX_LAI_ASSERT( insertable() );
   PetscInt rows[1] = {rowIndex};
-  GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, INSERT_VALUES ) );
+  GEOSX_LAI_CHECK_ERROR( MatSetValues( m_mat, 1, rows, size, toPetscInt( colIndices ), values, ADD_VALUES ) );
 }
 
 void PetscMatrix::add( globalIndex const rowIndex,
@@ -305,7 +305,7 @@ void PetscMatrix::insert( globalIndex const rowIndex,
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
                                        values,
-                                       INSERT_VALUES ) );
+                                       ADD_VALUES ) );
 }
 
 void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -347,7 +347,7 @@ void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
                                        values.dataIfContiguous(),
-                                       INSERT_VALUES ) );
+                                       ADD_VALUES ) );
 }
 
 void PetscMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -394,7 +394,7 @@ void PetscMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
                                        colIndices.size(),
                                        toPetscInt( colIndices ),
                                        values.dataIfContiguous(),
-                                       INSERT_VALUES ) );
+                                       ADD_VALUES ) );
   GEOSX_LAI_CHECK_ERROR( MatSetOption( m_mat, MAT_ROW_ORIENTED, PETSC_TRUE ) );
 }
 
@@ -443,7 +443,7 @@ void PetscMatrix::insert( globalIndex const * rowIndices,
                                        numCols,
                                        toPetscInt( colIndices ),
                                        values,
-                                       INSERT_VALUES ) );
+                                       ADD_VALUES ) );
 }
 
 void PetscMatrix::apply( PetscVector const & src,
