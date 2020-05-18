@@ -166,7 +166,7 @@ public:
       }
     }
 
-    real64 const invDetJ = inverse( J, &(dNdX[0][0]) );
+    real64 const detJ = inverse( J, &(dNdX[0][0]) );
 
 
     for( localIndex a=0; a<2; ++a )
@@ -191,7 +191,7 @@ public:
       }
     }
 
-    return 1.0 / invDetJ;
+    return detJ;
   }
 
 #else
@@ -249,13 +249,14 @@ public:
     scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
     scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    scratch[9] = 1 / ( J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] );
+    scratch[9] =  J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ;
+    scratch[10] = 1.0 / scratch[9];
 
     for( int i=0; i<3; ++i )
     {
       for( int j=0; j<3; ++j )
       {
-        J[i][j] = scratch[3*i+j] * scratch[9];
+        J[i][j] = scratch[3*i+j] * scratch[10];
       }
     }
 
