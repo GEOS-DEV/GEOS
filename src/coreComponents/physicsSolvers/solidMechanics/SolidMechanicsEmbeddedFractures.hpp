@@ -42,7 +42,7 @@ public:
    */
   static string CatalogName()
   {
-    return "SolidMechanics_FEM_AES";
+    return "SolidMechanicsEmbeddedFractures";
   }
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
@@ -101,17 +101,8 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto totalMeanStressString = "totalMeanStress";
-    constexpr static auto oldTotalMeanStressString = "oldTotalMeanStress";
-
     constexpr static auto solidSolverNameString = "solidSolverName";
 
     constexpr static auto contactRelationNameString = "contactRelationName";
@@ -158,8 +149,6 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
   string m_contactRelationName;
-
-//  ParallelMatrix m_permutationMatrix; // it's used to have the output based on global ordering
 
 };
 

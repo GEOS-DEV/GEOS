@@ -29,7 +29,7 @@ EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const
 {
   this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< EmbeddedSurfaceSubRegion >( "default" );
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture)->
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The default aperture of for new embedded surface Elements." );
 }

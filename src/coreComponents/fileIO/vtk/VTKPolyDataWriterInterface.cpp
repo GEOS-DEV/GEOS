@@ -176,7 +176,8 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >VTKPol
 std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > > VTKPolyDataWriterInterface::GetEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
                                                                                                                            ElementRegionManager const & elemManager,
                                                                                                                            NodeManager const & nodeManager,
-                                                                                                                           EdgeManager const & edgeManager) const
+                                                                                                                           EdgeManager const & edgeManager )
+const
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
@@ -188,20 +189,16 @@ std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > > VTKPo
   esr.getIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet );
 
   points->SetNumberOfPoints( intersectionPoints.size() );
-  std::cout << "Number of points: " << intersectionPoints.size() << std::endl;
-  for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size(); pointIndex ++ )
+  for( localIndex pointIndex = 0; pointIndex < intersectionPoints.size(); pointIndex++ )
   {
     points->SetPoint( pointIndex, intersectionPoints[pointIndex][0], intersectionPoints[pointIndex][1], intersectionPoints[pointIndex][2] );
   }
 
   cellsArray->SetNumberOfCells( esr.size() );
-  std::cout << "Number of cells: " << esr.size() << std::endl;
-  std::cout << "OffSet: " << offSet << std::endl;
-  std::cout << "Connectivity: " << connectivityList << std::endl;
-  for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex ++ )
+  for( localIndex cellIndex = 0; cellIndex < esr.size(); cellIndex++ )
   {
     std::vector< vtkIdType > connectivity( offSet[cellIndex+1] - offSet[cellIndex] );
-    for( localIndex nodeCellIndex = 0; LvArray::integerConversion< size_t > (nodeCellIndex) < connectivity.size(); nodeCellIndex++ )
+    for( localIndex nodeCellIndex = 0; LvArray::integerConversion< size_t >( nodeCellIndex ) < connectivity.size(); nodeCellIndex++ )
     {
       connectivity[nodeCellIndex] = connectivityList[ offSet[cellIndex] + nodeCellIndex ];
     }

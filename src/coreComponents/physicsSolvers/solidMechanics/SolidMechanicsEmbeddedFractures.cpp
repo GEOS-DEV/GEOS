@@ -46,11 +46,11 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const std::str
   m_solidSolverName(),
   m_solidSolver( nullptr )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName)->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
-  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName)->
+  registerWrapper( viewKeyStruct::contactRelationNameString, &m_contactRelationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
@@ -364,12 +364,12 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         array1d< real64 >            tractionVec( 3 );
         array2d< real64 >            dTdw( 3, 3 );
 
-        BlasLapackLA::matrixScale( 0, Kwu_elem );
-        BlasLapackLA::matrixScale( 0, Kuw_elem );
-        BlasLapackLA::matrixScale( 0, Kww_elem );
-        BlasLapackLA::vectorScale( 0, R1 );
-        BlasLapackLA::vectorScale( 0, R0 );
-        BlasLapackLA::matrixScale( 0, dTdw );
+        Kwu_elem = 0.0;
+        Kuw_elem = 0.0;
+        Kww_elem = 0.0;
+        R0 = 0.0;
+        R1 = 0.0;
+        dTdw = 0.0;
 
         // Equilibrium and compatibility operators for the element
         // number of strain components x number of jump enrichments. The comp operator is different
@@ -525,17 +525,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   // close all the objects
   rhs.close();
   matrix.close();
-  if( getLogLevel() == 4 )
-  {
-//     {
-//       string filename = "Kmatrix_NoBC.mtx";
-//       matrix.write( filename, true );
-//     }
-//     {
-//       string filename = "rhs_NoBC.mtx";
-//       rhs.write( filename, true );
-//     }
-  }
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
@@ -587,13 +576,6 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
     }
   }
   BlasLapackLA::matrixScale( -hInv, eqMatrix );
-
-//  for (int i = 0; i < 6; ++i)
-//   {
-//     std::cout << "eqMat(1," + std::to_string(i+1) + ") " << eqMatrix(0, i) << std::endl;
-//     std::cout << "eqMat(2," + std::to_string(i+1) + ") " << eqMatrix(1, i) << std::endl;
-//     std::cout << "eqMat(3," + std::to_string(i+1) + ") " << eqMatrix(2, i) << std::endl;
-//   }
 }
 
 void
@@ -675,12 +657,6 @@ SolidMechanicsEmbeddedFractures::
       compMatrix( VoigtIndex, 2 ) += t2DmSym( i, j );
     }
   }
-//  for (int i = 0; i < 6; ++i)
-//     {
-//       std::cout << "compMat(" + std::to_string(i+1) + ",1) " << compMatrix(i, 0) << std::endl;
-//       std::cout << "compMat(" + std::to_string(i+1) + ",2) " << compMatrix(i, 1) << std::endl;
-//       std::cout << "compMat(" + std::to_string(i+1) + ",3) " << compMatrix(i, 2) << std::endl;
-//     }
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > & strainMatrix,
@@ -730,42 +706,6 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
                                           dofManager,
                                           matrix,
                                           rhs );
-
-
-  switch( getLogLevel() )
-  {
-    case 3:
-    {
-      GEOSX_LOG_RANK_0( "***********************************************************" );
-      GEOSX_LOG_RANK_0( "Stiffness matrix" );
-      GEOSX_LOG_RANK_0( "***********************************************************" );
-      matrix.print( std::cout );
-      MpiWrapper::Barrier();
-
-      GEOSX_LOG_RANK_0( "***********************************************************" );
-      GEOSX_LOG_RANK_0( "rhs" );
-      GEOSX_LOG_RANK_0( "***********************************************************" );
-      rhs.print( std::cout );
-      MpiWrapper::Barrier();
-    }
-    break;
-    case 4:
-    {
-//      integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-//      {
-//        string filename = "Kmatrix_" + std::to_string( newtonIter ) + ".mtx";
-//        matrix.write( filename, true );
-//        GEOSX_LOG_RANK_0( "matrix: written to " << filename );
-//      }
-//      {
-//        string filename = "rhs_" + std::to_string( newtonIter ) + ".mtx";
-//        rhs.write( filename, true );
-//        GEOSX_LOG_RANK_0( "rhs: written to " << filename );
-//      }
-    }
-    break;
-  } //end of switch statement
-
 }
 
 real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const * const domain,
@@ -786,20 +726,6 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
   return solidResidualNorm;
 }
 
-void SolidMechanicsEmbeddedFractures::SolveSystem( DofManager const & dofManager,
-                                                   ParallelMatrix & matrix,
-                                                   ParallelVector & rhs,
-                                                   ParallelVector & solution )
-{
-  solution.zero();
-
-  SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  // Debug for logLevel >= 2
-  GEOSX_LOG_LEVEL_RANK_0( 3, "After SolidMechanicsEmbeddedFractures::SolveSystem" );
-  GEOSX_LOG_LEVEL_RANK_0( 3, "\nSolution:\n" << solution );
-}
-
 void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
                                                            ParallelVector const & solution,
                                                            real64 const scalingFactor,
@@ -816,6 +742,8 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
 
   dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
 
+
+// TODO
 //  std::map<string, string_array > fieldNames;
 //  fieldNames["node"].push_back( viewKeyStruct::dispJumpString );
 //  fieldNames["node"].push_back( viewKeyStruct::deltaDispJumpString );

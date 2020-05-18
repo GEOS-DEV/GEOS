@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Problem>
 	<Solvers gravityVector="0.0, 0.0, 0.0" >
-		<SolidMechanics_FEM_AES 
+		<SolidMechanicsEmbeddedFractures 
 		name="mechSolve" 
 		targetRegions="{Region1,Fracture}"
 		initialDt="10"
@@ -17,7 +17,7 @@
         useDirectSolver="1"
         solverType="direct"
         logLevel="0"/>
-		</SolidMechanics_FEM_AES>
+		</SolidMechanicsEmbeddedFractures>
 		<SolidMechanicsLagrangianSSLE 
 		name="matrixSolver" 
         timeIntegrationOption="QuasiStatic"
