@@ -1,29 +1,4 @@
-<!--
-Problem: borehole under far-field stress, drained condition
-Created by: Sy Tuan Nguyen
-Last update: 23 apr 2019 (Herve Gross)
-Objective: to benchmark the poroelastic solver in GEOSX with analytical result
-
-
-Notifications of geosx updates:
-
-0. dislike geos that does not require a space between a value and a keyword. geosx require a space
-
-1. newtonTol and newtonMaxIter (the old keyword for this parameter was maxIterNewton) are placed in the block NonlinearSolverParameters
-2. all the keyword *verbose* are changed to logLevel
-3. gravityVector is changed to 0,0,0. It seems not required
-4. the keyword SinglePhaseFlow is changed to SinglePhaseFVM
-5. the box all, xpos, etc. need to be defined while using external mesh
-
-also, a standard lsf launcher is now availabl
--->
-
-
 <Problem>
-  <!--Included>
-  <File name=""/>
-  </Included-->
-
   <!--Tables-->
   <Functions>
     <TableFunction
@@ -38,7 +13,7 @@ also, a standard lsf launcher is now availabl
   <Mesh>
     <PAMELAMeshGenerator
     name="mesh1"
-    file="fast.msh"
+    file="borehole_geometry.msh"
     />
   </Mesh>
 
