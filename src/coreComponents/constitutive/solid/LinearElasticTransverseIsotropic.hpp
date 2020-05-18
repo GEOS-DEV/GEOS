@@ -151,7 +151,7 @@ LinearElasticTransverseIsotropicUpdates::
 {
   real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
   stress[0] = m_c11[k] * voigtStrain[0] +  c12temp * voigtStrain[1] + m_c13[k]*voigtStrain[2];
-  stress[1] =  c12temp * voigtStrain[0] + m_c11[k] * voigtStrain[1] + m_c13[k]*voigtStrain[2] ;
+  stress[1] =  c12temp * voigtStrain[0] + m_c11[k] * voigtStrain[1] + m_c13[k]*voigtStrain[2];
   stress[2] = m_c13[k] * voigtStrain[0] + m_c13[k] * voigtStrain[1] + m_c33[k]*voigtStrain[2];
 
   stress[3] = m_c44[k]*voigtStrain[3];

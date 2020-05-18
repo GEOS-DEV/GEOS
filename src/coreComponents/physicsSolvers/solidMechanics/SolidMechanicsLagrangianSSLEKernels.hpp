@@ -102,7 +102,7 @@ struct ExplicitKernel
 #endif
   // If UPDATE_STRESS is undef, then stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
-//  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
+  #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -208,7 +208,6 @@ struct ExplicitKernel
 
 #if UPDATE_STRESS == 2
         constitutive.SmallStrain( k, q, strain );
-        real64 stressLocal[ 6 ] = {0};
 #else
         real64 stressLocal[ 6 ] = {0};
         constitutive.SmallStrainNoState( k, strain, stressLocal );
@@ -217,20 +216,20 @@ struct ExplicitKernel
         for( localIndex c = 0; c < 6; ++c )
         {
 #if UPDATE_STRESS == 2
-          stressLocal[ c ] =  constitutive.m_stress( k, q, c ) * (-DETJ);
+          strain[ c ] =  constitutive.m_stress( k, q, c ) * (-DETJ);
 #elif UPDATE_STRESS == 1
-          stressLocal[ c ] = ( stressLocal[ c ] + constitutive.m_stress( k, q, c ) ) *(-DETJ);
+          strain[ c ] = -( stressLocal[ c ] + constitutive.m_stress( k, q, c ) ) * DETJ;
 #else
-          stressLocal[ c ] *= -DETJ;
+          strain[ c ] = -stressLocal[ c ] * DETJ;
 #endif
         }
 
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
-          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
-          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
+          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + strain[ 0 ] * DNDX[ a ][ 0 ] + strain[ 5 ] * DNDX[ a ][ 1 ] + strain[ 4 ] * DNDX[ a ][ 2 ];
+          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + strain[ 5 ] * DNDX[ a ][ 0 ] + strain[ 1 ] * DNDX[ a ][ 1 ] + strain[ 3 ] * DNDX[ a ][ 2 ];
+          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + strain[ 4 ] * DNDX[ a ][ 0 ] + strain[ 3 ] * DNDX[ a ][ 1 ] + strain[ 2 ] * DNDX[ a ][ 2 ];
         }
       }    //quadrature loop
 

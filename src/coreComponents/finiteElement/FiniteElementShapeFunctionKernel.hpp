@@ -29,21 +29,21 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords0( localIndex const a )
   {
-    return -1.0 + 2.0 * (a & 1) ;
+    return -1.0 + 2.0 * (a & 1);
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords1( localIndex const a )
   {
-    return -1.0 + ( a & 2 ) ;
+    return -1.0 + ( a & 2 );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords2( localIndex const a )
   {
-    return -1.0 + 0.5 * ( a & 4 ) ;
+    return -1.0 + 0.5 * ( a & 4 );
   }
 
 
@@ -113,10 +113,6 @@ public:
                ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
                parentCoords2( a );
   }
-
-
-
-
 
 
 
@@ -249,7 +245,7 @@ public:
     scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
     scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    scratch[9] =  J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] ;
+    scratch[9] =  J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2];
     scratch[10] = 1.0 / scratch[9];
 
     for( int i=0; i<3; ++i )
