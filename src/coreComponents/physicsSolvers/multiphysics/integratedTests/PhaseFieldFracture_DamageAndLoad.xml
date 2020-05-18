@@ -138,7 +138,7 @@
                         fieldName="Damage"
                         initialCondition="0"
                         objectPath="nodeManager"
-                        scale="1"
+                        scale="0"
                         setNames="{centerPoint}"/>
 
   </FieldSpecifications>
