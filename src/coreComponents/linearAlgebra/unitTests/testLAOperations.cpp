@@ -490,175 +490,174 @@ TYPED_TEST_P( LAOperationsTest, InterfaceSolvers )
   using Vector = typename TypeParam::ParallelVector;
   using Solver = typename TypeParam::LinearSolver;
 
-  // Use an nxn cartesian mesh to generate the Laplace 2D operator.
-  globalIndex n = 100;
-  globalIndex N = n * n;
-
-  // Compute a 2D Laplace operator
-  Matrix matrix;
-  compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
-
-  // Condition number for the Laplacian matrix estimate
-  // cond_estimate = 4 * n^2 / pi^2
-  real64 matrix_condition_number = static_cast< real64 >( 4.0 * n * n / pow( M_PI, 2 ) );
-
-  // Define some vectors
-  Vector x_true;
-  Vector x_comp;
-  Vector b;
-
-  x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
-  b.createWithGlobalSize( N, MPI_COMM_GEOSX );
-
-  // We have some simple initialization options for vectors:
-  x_true.rand(); // random
-  x_comp.zero(); // zero
-  b.set( 1.0 ); // ones
-
-  // Also define a residual vector, this time using the copy constructor
-  Vector r( b );
-
-  // Test dot product: r.b = b.b = N
-  real64 dotTest = r.dot( b );
-  EXPECT_DOUBLE_EQ( dotTest, N );
-
-  // Test various norms
-  real64 norm1 = b.norm1();
-  real64 norm2 = b.norm2();
-  real64 normInf = b.normInf();
-
-  EXPECT_NEAR( norm1, N, N * machinePrecision );
-  EXPECT_NEAR( norm2, n, n * machinePrecision );
-  EXPECT_NEAR( normInf, 1., machinePrecision );
-
-  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
-  // back from the solvers.
-  matrix.apply( x_true, b );
-
-  // Test the residual function by computing r = b - Ax = 0
-  matrix.residual( x_true, b, r );
-  real64 normRes = r.normInf();
-  EXPECT_NEAR( normRes, 0., machinePrecision );
-
-  // Now create a solver parameter list and solver
-  LinearSolverParameters parameters;
-  Solver solver( parameters );
-
-  // We now do the same using a direct solver.
-  // Again the norm should be the norm of x. We use a tougher tolerance on the test
-  // compared to the iterative solution. This should be accurate to machine precision
-  // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
-  x_comp.zero();
-  parameters.solverType = "direct";
-  solver.solve( matrix, x_comp, b );
-  real64 norm_comp = x_comp.norm2();
-  real64 norm_true = x_true.norm2();
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * machinePrecision );
-
-  // We now switch to Krylov solvers
-  parameters.logLevel = 0;
-  parameters.krylov.relTolerance = 1e-8;
-  parameters.krylov.maxIterations = 300;
-  // We now do the same using ILU(k) preconditioned GMRES
-  // Again the norm should be the norm of x.
-  parameters.solverType = "gmres";
-  parameters.preconditionerType = "iluk";
-  parameters.ilu.fill = 1;
-  x_comp.zero();
-  solver.solve( matrix, x_comp, b );
-
-  norm_comp = x_comp.norm2();
-
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.relTolerance );
-
-  // Set basic options
-  parameters.solverType = "cg";
-  parameters.preconditionerType = "amg"; // for PETSc default options only
-  parameters.amg.smootherType = "gaussSeidel";
-  parameters.amg.coarseType = "direct";
-  norm_comp = x_comp.norm2();
-  // Solve using the iterative solver and compare norms with true solution
-  x_comp.zero();
-  solver.solve( matrix, x_comp, b );
-
-  EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
-             matrix_condition_number * parameters.krylov.relTolerance );
-
-  //////////////////////////////////////////////////////////////
-  // Compute 2D elasticity operator
-  Matrix matrix2;
-  real64 const domainSizeX = 1.0;
-  real64 const domainSizeY = 1.0;
-  globalIndex const nCellsX = 100;
-  globalIndex const nCellsY = 100;
-  real64 youngModulus = 10000.;
-  real64 poissonRatio = 0.2;
-  compute2DElasticityOperator( MPI_COMM_GEOSX,
-                               domainSizeX, domainSizeY, nCellsX, nCellsY,
-                               youngModulus, poissonRatio,
-                               matrix2 );
-
-
-  // Impose Dirichlet boundary conditions
-  // --- Fix domain bottom (first 2*(nCellsX + 1) rows of matrix2)
-  matrix2.open();
-  for( globalIndex iRow = 0; iRow < 2*(nCellsX + 1); ++iRow )
+  // Test for a Laplace operator
   {
-    if( matrix2.getLocalRowID( iRow ) >= 0 )
-    {
-      matrix2.clearRow( iRow, true );
-    }
+    // Use an nxn cartesian mesh to generate the Laplace 2D operator.
+    globalIndex n = 100;
+    globalIndex N = n * n;
+
+    // Compute a 2D Laplace operator
+    Matrix matrix;
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, matrix );
+
+    // Condition number for the Laplacian matrix estimate
+    // cond_estimate = 4 * n^2 / pi^2
+    real64 matrix_condition_number = static_cast< real64 >( 4.0 * n * n / pow( M_PI, 2 ) );
+
+    // Define some vectors
+    Vector x_true;
+    Vector x_comp;
+    Vector b;
+
+    x_true.createWithGlobalSize( N, MPI_COMM_GEOSX );
+    x_comp.createWithGlobalSize( N, MPI_COMM_GEOSX );
+    b.createWithGlobalSize( N, MPI_COMM_GEOSX );
+
+    // We have some simple initialization options for vectors:
+    x_true.rand(); // random
+    x_comp.zero(); // zero
+    b.set( 1.0 ); // ones
+
+    // Also define a residual vector, this time using the copy constructor
+    Vector r( b );
+
+    // Test dot product: r.b = b.b = N
+    real64 dotTest = r.dot( b );
+    EXPECT_DOUBLE_EQ( dotTest, N );
+
+    // Test various norms
+    real64 norm1 = b.norm1();
+    real64 norm2 = b.norm2();
+    real64 normInf = b.normInf();
+
+    EXPECT_NEAR( norm1, N, N * machinePrecision );
+    EXPECT_NEAR( norm2, n, n * machinePrecision );
+    EXPECT_NEAR( normInf, 1., machinePrecision );
+
+    // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
+    // back from the solvers.
+    matrix.apply( x_true, b );
+
+    // Test the residual function by computing r = b - Ax = 0
+    matrix.residual( x_true, b, r );
+    real64 normRes = r.normInf();
+    EXPECT_NEAR( normRes, 0., machinePrecision );
+
+    // Now create a solver parameter list and solver
+    LinearSolverParameters parameters;
+    Solver solver( parameters );
+
+    // We now do the same using a direct solver.
+    // Again the norm should be the norm of x. We use a tougher tolerance on the test
+    // compared to the iterative solution. This should be accurate to machine precision
+    // and some round off error. We (arbitrarily) chose 1e-12 as a good guess.
+    x_comp.zero();
+    parameters.solverType = "direct";
+    solver.solve( matrix, x_comp, b );
+    real64 norm_comp = x_comp.norm2();
+    real64 norm_true = x_true.norm2();
+    EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+               matrix_condition_number * machinePrecision );
+
+    // We now switch to Krylov solvers
+    parameters.logLevel = 0;
+    parameters.krylov.relTolerance = 1e-8;
+    parameters.krylov.maxIterations = 300;
+    // We now do the same using ILU(k) preconditioned GMRES
+    // Again the norm should be the norm of x.
+    parameters.solverType = "gmres";
+    parameters.preconditionerType = "iluk";
+    parameters.ilu.fill = 1;
+    x_comp.zero();
+    solver.solve( matrix, x_comp, b );
+
+    norm_comp = x_comp.norm2();
+
+    EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+               matrix_condition_number * parameters.krylov.relTolerance );
+
+    // Set basic options
+    parameters.solverType = "cg";
+    parameters.preconditionerType = "amg"; // for PETSc default options only
+    parameters.amg.smootherType = "gaussSeidel";
+    parameters.amg.coarseType = "direct";
+    norm_comp = x_comp.norm2();
+    // Solve using the iterative solver and compare norms with true solution
+    x_comp.zero();
+    solver.solve( matrix, x_comp, b );
+
+    EXPECT_LT( std::fabs( norm_comp / norm_true - 1. ),
+               matrix_condition_number * parameters.krylov.relTolerance );
   }
-  matrix2.close();
+
+  // Test for a plain strain elasticity operator
+  {
+    // Compute 2D elasticity operator
+    Matrix matrix;
+    real64 const domainSizeX = 1.0;
+    real64 const domainSizeY = 1.0;
+    globalIndex const nCellsX = 100;
+    globalIndex const nCellsY = 100;
+    real64 youngModulus = 10000.;
+    real64 poissonRatio = 0.2;
+    compute2DElasticityOperator( MPI_COMM_GEOSX,
+                                 domainSizeX, domainSizeY, nCellsX, nCellsY,
+                                 youngModulus, poissonRatio,
+                                 matrix );
 
 
-  // Define some vectors
-  Vector x2_true;
-  Vector x2_comp;
-  Vector b2;
+    // Impose Dirichlet boundary conditions: fix domain bottom
+    // (first 2*(nCellsX + 1) rows of matrix2)
+    matrix.open();
+    for( globalIndex iRow = 0; iRow < 2*(nCellsX + 1); ++iRow )
+    {
+      if( matrix.getLocalRowID( iRow ) >= 0 )
+      {
+        matrix.clearRow( iRow, true );
+      }
+    }
+    matrix.close();
 
-  globalIndex nDof = 2 * ( nCellsX + 1 ) * ( nCellsY + 1 );
-  x2_true.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
-  x2_comp.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
-  b2.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+    // Define three vectors
+    Vector x_true; //<true solution
+    Vector x_comp; //<numerical solution
+    Vector b;      //<computed RHS
 
-  // We have some simple initialization options for vectors:
-  x2_true.rand(); // random
-  x2_comp.zero(); // zero
+    globalIndex nDof = 2 * ( nCellsX + 1 ) * ( nCellsY + 1 );
+    x_true.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+    x_comp.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
+    b.createWithGlobalSize( nDof, MPI_COMM_GEOSX );
 
-  // Compute the matrix/vector multiplication. We compute b as Ax and will aim to get x
-  // back from the solvers.
-  matrix2.apply( x2_true, b2 );
+    // Initialize solution vectors
+    x_true.rand();
+    x_comp.zero();
 
-  LinearSolverParameters parameters2;
-  Solver solver2( parameters2 );
+    // Compute RHS
+    matrix.apply( x_true, b );
 
-  // Set basic options
-  parameters2.logLevel = 0;
-  parameters2.krylov.relTolerance = 1e-8;
-  parameters2.krylov.maxIterations = 300;
-  parameters2.solverType = "gmres";
-  parameters2.preconditionerType = "amg"; // for PETSc default options only
-  parameters2.amg.smootherType = "gaussSeidel";
-  parameters2.amg.separateComponents = true;
-  parameters2.dofsPerNode = 2;
+    // Initialize iterative solver
+    LinearSolverParameters parameters2;
+    Solver solver2( parameters2 );
 
-  // Solve using the iterative solver and compare norms with true solution
-  x2_comp.zero();
-  solver2.solve( matrix2, x2_comp, b2 );
+    // Set basic options
+    parameters2.logLevel = 0;
+    parameters2.krylov.relTolerance = 1e-8;
+    parameters2.krylov.maxIterations = 300;
+    parameters2.solverType = "gmres";
+    parameters2.preconditionerType = "amg"; // for PETSc default options only
+    parameters2.amg.smootherType = "gaussSeidel";
+    parameters2.amg.separateComponents = true;
+    parameters2.dofsPerNode = 2;
 
-  real64 norm2_comp = x2_comp.norm2();
-  real64 norm2_true = x2_true.norm2();
-  EXPECT_LT( std::fabs( norm2_comp / norm2_true - 1. ),
-             1e-6 );
+    // Solve using the iterative solver and compare norms with true solution
+    x_comp.zero();
+    solver2.solve( matrix, x_comp, b );
 
-  /////////////////////////////////////////////////////////////
-
-
-
+    real64 norm2_comp = x_comp.norm2();
+    real64 norm2_true = x_true.norm2();
+    EXPECT_LT( std::fabs( norm2_comp / norm2_true - 1. ),
+               1e-6 );
+  }
 }
 
 

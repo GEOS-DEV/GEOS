@@ -24,9 +24,9 @@
 
 using namespace geosx;
 
-static void Q12d_local( real64 const & hx, real64 const & hy,
-                        real64 const & E, real64 const & nu,
-                        stackArray2d< real64, 8*8 > & Ke );
+static inline void Q12d_local( real64 const & hx, real64 const & hy,
+                               real64 const & E, real64 const & nu,
+                               stackArray2d< real64, 8*8 > & Ke );
 
 /*! @name Utility functions.
  * @brief Functions used to construct useful matrices in the test files.
@@ -38,15 +38,10 @@ static void Q12d_local( real64 const & hx, real64 const & hy,
  *
  * @param comm MPI communicator.
  * @param N global size of the square identity matrix.
+ *
+ * This function computes the identity matrix. It can be used to generate a dummy
+ * preconditioner.
  */
-
-// BEGIN_RST_NARRATIVE testLAOperations.rst
-
-// ==============================
-// Compute Identity
-// ==============================
-// This function computes the identity matrix. It can be used to generate a dummy
-// preconditioner.
 template< typename MATRIX >
 void computeIdentity( MPI_Comm comm,
                       globalIndex N,
@@ -83,14 +78,11 @@ void computeZero( MPI_Comm comm,
  *
  * @param comm MPI communicator.
  * @param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
+ *
+ * This function computes the matrix corresponding to a 2D Laplace operator. These
+ * matrices arise from a classical finite volume formulation on a cartesian mesh
+ * (5-point stencil).
  */
-
-// ==============================
-// Compute 2D Laplace Operator
-// ==============================
-// This function computes the matrix corresponding to a 2D Laplace operator. These
-// matrices arise from a classical finite volume formulation on a cartesian mesh
-// (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
 template< typename MATRIX >
 void compute2DLaplaceOperator( MPI_Comm comm,
                                globalIndex n,
@@ -161,17 +153,24 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
 }
 
-// ==============================
-// Compute 2D Laplace Operator
-// ==============================
-// This function computes the matrix corresponding to a 2D elasticity operator,
-// assuming plane strain conditions based on finite element discretization.
-// A regular grid grid consisting of quadrilateral element. ...
-//
-// beam 0 disp on the left boundary
-//
-// INPUT: Lx, Ly, Nx, Ny
-//
+/**
+ * @brief Compute the 2D elasticity (plane strain) operator
+ *
+ * @param comm MPI communicator.
+ * @param domainSizeX domain size in the X-direction
+ * @param domainSizeY domain size in the Y-direction
+ * @param nCellsX number of cells in the X-direction
+ * @param nCellsY number of cells in the Y-direction
+ * @param youngModulus Young's modulus value (same for all cells)
+ * @param poissonRation Poisson's ratio value (same for all cells)
+ *
+ * This function computes the matrix corresponding to a 2D elasticity operator,
+ * assuming plane strain conditions, based on a Q1 finite element discretization.
+ * The discretized domain has dimensions domainSizeX * domainSizeY.  A regular grid
+ * consting of nCellsX * nCellsY cells is used. The medium is characterized by
+ * homogeneous Young's modulus and Poisson's ratio. The assembled matrix is
+ * singular, meaning that Dirichlet boundary conditions have not been enforced.
+ */
 template< typename MATRIX >
 void compute2DElasticityOperator( MPI_Comm comm,
                                   real64 domainSizeX,
@@ -237,9 +236,9 @@ void compute2DElasticityOperator( MPI_Comm comm,
   elasticity2D.close();
 }
 
-static void Q12d_local( real64 const & hx, real64 const & hy,
-                        real64 const & E, real64 const & nu,
-                        stackArray2d< real64, 8*8 > & Ke )
+static inline void Q12d_local( real64 const & hx, real64 const & hy,
+                               real64 const & E, real64 const & nu,
+                               stackArray2d< real64, 8*8 > & Ke )
 {
   real64 fac = E / ( 1. - 2. * nu ) / (1. + nu );
 
