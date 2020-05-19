@@ -191,8 +191,8 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
   matrix.open();
 
 
-  physicsLoopInterface::
-    FiniteElementRegionLoop::FillSparsity< serialPolicy,
+  finiteElement::
+    RegionLoopSparsity::FillSparsity< serialPolicy,
                                       LaplaceFEMKernel,
                                       CellElementSubRegion >( *mesh,
                                                               targetRegionNames(),
@@ -234,18 +234,18 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
-  physicsLoopInterface::
-    FiniteElementRegionLoop::Execute< serialPolicy,
-                                      LaplaceFEMKernel,
-                                      Dummy,
-                                      CellElementSubRegion >( *mesh,
-                                                           targetRegionNames(),
-                                                           array1d<string>(),
-                                                           feDiscretization,
-                                                           dofIndex,
-                                                           matrix,
-                                                           rhs,
-                                                           LaplaceFEMKernel::Parameters( m_fieldName ));
+  LaplaceFEMKernel::
+  Execute< serialPolicy,
+           LaplaceFEMKernel,
+           Dummy,
+           CellElementSubRegion >( *mesh,
+                                   targetRegionNames(),
+                                   array1d<string>(),
+                                   feDiscretization,
+                                   dofIndex,
+                                   matrix,
+                                   rhs,
+                                   LaplaceFEMKernel::Parameters( m_fieldName ));
 
   matrix.close();
   rhs.close();

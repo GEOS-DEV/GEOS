@@ -19,15 +19,15 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
 
-#include "../PhysicsLoopInterface.hpp"
+#include "finiteElement/kernelInterface/RegionLoopSparsity.hpp"
 
 namespace geosx
 {
 
-class LaplaceFEMKernel
+class LaplaceFEMKernel : public finiteElement::RegionLoopSparsity
 {
 public:
-  using Base = physicsLoopInterface::FiniteElementRegionLoop;
+  using Base = finiteElement::RegionLoopSparsity;
   static constexpr int numTestDofPerSP = 1;
   static constexpr int numTrialDofPerSP = 1;
 
@@ -98,7 +98,7 @@ public:
                                         1 >
   {
 public:
-    using KernelBase = Base::Kernels< SUBREGION_TYPE,
+    using KernelsBase = Base::Kernels< SUBREGION_TYPE,
                                       CONSTITUTIVE_TYPE,
                                       NUM_NODES_PER_ELEM,
                                       NUM_NODES_PER_ELEM,
@@ -107,12 +107,14 @@ public:
 
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
-    using KernelBase::m_dofNumber;
-    using KernelBase::m_matrix;
-    using KernelBase::m_rhs;
-    using KernelBase::elemsToNodes;
-    using KernelBase::constitutiveUpdate;
-    using KernelBase::m_finiteElementSpace;
+    using KernelsBase::m_dofNumber;
+    using KernelsBase::m_matrix;
+    using KernelsBase::m_rhs;
+    using KernelsBase::elemsToNodes;
+    using KernelsBase::elemGhostRank;
+    using KernelsBase::constitutiveUpdate;
+    using KernelsBase::m_finiteElementSpace;
+    using KernelsBase::Launch;
 
     using StackVars = StackVariables< numNodesPerElem,
                                       numNodesPerElem >;
@@ -125,14 +127,14 @@ public:
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & parameters ):
-      KernelBase( inputDofNumber,
+      KernelsBase( inputDofNumber,
                   inputMatrix,
                   inputRhs,
                   nodeManager,
                   elementSubRegion,
                   finiteElementSpace,
                   inputConstitutiveType,
-                  inputConstitutiveType->createKernelWrapper() ),
+                  parameters ),
       m_primaryField( nodeManager.template getReference< array1d< real64 > >( parameters.m_fieldName )),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
@@ -155,6 +157,7 @@ public:
 
         stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
         stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
+        stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
       }
     }
 

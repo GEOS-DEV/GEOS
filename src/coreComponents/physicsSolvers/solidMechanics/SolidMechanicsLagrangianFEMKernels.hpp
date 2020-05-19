@@ -18,12 +18,12 @@
 
 #pragma once
 
-#include "../PhysicsLoopInterface.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+#include "finiteElement/kernelInterface/RegionLoopSparsity.hpp"
 #include "finiteElement/Kinematics.h"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
@@ -422,10 +422,10 @@ struct ImplicitKernel
 
 };
 
-class QuasiStatic
+class QuasiStatic : public finiteElement::RegionLoopSparsity
 {
 public:
-  using Base = physicsLoopInterface::FiniteElementRegionLoop;
+  using Base = finiteElement::RegionLoopSparsity;
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
@@ -516,7 +516,7 @@ public:
              SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & GEOSX_UNUSED_PARAM( parameters ) )://,
+             Parameters const & parameters ):
       KernelBase( inputDofNumber,
                   inputMatrix,
                   inputRhs,
@@ -524,7 +524,7 @@ public:
                   elementSubRegion,
                   finiteElementSpace,
                   inputConstitutiveType,
-                  inputConstitutiveType->createKernelWrapper() ),
+                  parameters ),
       m_disp( nodeManager.totalDisplacement()),
       m_uhat( nodeManager.incrementalDisplacement()),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
@@ -554,6 +554,7 @@ public:
         for( int i=0; i<3; ++i )
         {
           stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+          stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
         }
       }
 
@@ -690,7 +691,6 @@ public:
 //                meanForce += fabs( stack.localResidual[a] );
       }
 //            meanForce /= stack.ndof;
-
 
       m_matrix.add( stack.localRowDofIndex,
                     stack.localColDofIndex,
@@ -921,7 +921,7 @@ public:
 //class SmallStrainFracturePenaltyContact
 //{
 //public:
-//  using Base = physicsLoopInterface::FiniteElementRegionLoop;
+//  using Base = physicsLoopInterface::RegionLoop;
 //  static constexpr int maxNumNodesPerFace = 4;
 //  static constexpr int numTestDofPerSP = 3;
 //  static constexpr int numTrialDofPerSP = 3;
@@ -1122,7 +1122,7 @@ class ExplicitSmallStrain
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
 public:
-  using Base = physicsLoopInterface::FiniteElementRegionLoop;
+  using Base = finiteElement::RegionLoop;
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
@@ -1154,9 +1154,10 @@ public:
       fLocal{ { 0.0} },
       varLocal{ {0.0} }
 #if defined(CALCFEMSHAPE)
-      ,xLocal(),
-          dNdX(),
-          detJ()
+      ,
+      xLocal(),
+      dNdX(),
+      detJ()
 #endif
     {}
 
@@ -1356,8 +1357,8 @@ public:
                    PARAMETERS_TYPE const & parameters,
                    KERNEL_CLASS const & kernelClass )
     {
-      return physicsLoopInterface::
-             FiniteElementRegionLoop::
+      return finiteElement::
+             RegionLoop::
              Kernels< SUBREGION_TYPE,
                       CONSTITUTIVE_TYPE,
                       NUM_NODES_PER_ELEM,

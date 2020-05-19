@@ -14,11 +14,11 @@
 
 
 /**
- * @file PhysicsLoopInterface.hpp
+ * @file RegionLoop.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_PHYSICSLOOPINTERFACE_HPP_
-#define GEOSX_PHYSICSSOLVERS_PHYSICSLOOPINTERFACE_HPP_
+#ifndef GEOSX_FINITEELEMENT_REGIONLOOP_HPP_
+#define GEOSX_FINITEELEMENT_REGIONLOOP_HPP_
 
 #include "common/DataTypes.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
@@ -33,7 +33,7 @@ namespace geosx
 /**
  * @namespace Contains implementations of physics loops.
  */
-namespace physicsLoopInterface
+namespace finiteElement
 {
 
 /**
@@ -77,7 +77,7 @@ discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
  * element method over a loop of element regions.
  *
  */
-class FiniteElementRegionLoop
+class RegionLoop
 {
 public:
 
@@ -102,53 +102,9 @@ public:
    * contributions.
    */
   template< int NUM_ROWS,
-            int NUM_COLS,
-            bool ROWS_EQ_COL = (NUM_ROWS)==(NUM_COLS) >
-  struct StackVariables
-  {
-public:
-    static constexpr int numRows = NUM_ROWS;
-    static constexpr int numCols = NUM_COLS;
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      localRowDofIndex{ 0 },
-      localColDofIndex{ 0 },
-      localResidual{ 0.0 },
-      localJacobian{ {0.0} }
-    {}
-
-    globalIndex localRowDofIndex[numRows];
-    globalIndex localColDofIndex[numRows];
-    real64 localResidual[numRows];
-    real64 localJacobian[numRows][numCols];
-  };
-
-
-  template< int NUM_ROWS,
             int NUM_COLS >
-  struct StackVariables< NUM_ROWS,
-                         NUM_COLS,
-                         true >
-  {
-public:
-    static constexpr int numRows = NUM_ROWS;
-    static constexpr int numCols = NUM_COLS;
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      localRowDofIndex{ 0 },
-      localColDofIndex( localRowDofIndex ),
-      localResidual{ 0.0 },
-      localJacobian{ {0.0} }
-    {}
-
-    globalIndex localRowDofIndex[numRows];
-    globalIndex * const localColDofIndex;   // non-memcopyable...problem if we are capturing.
-    real64 localResidual[numRows];
-    real64 localJacobian[numRows][numCols];
-  };
-
+  struct StackVariables
+  {};
 
   //***************************************************************************
   /**
@@ -163,59 +119,31 @@ public:
   class Kernels
   {
 public:
-
-    static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
-    static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
-    static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
-    static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
-
-    using StackVars = StackVariables< numTestSupportPointsPerElem*numDofPerTestSupportPoint,
-                                      numTrialSupportPointsPerElem*numDofPerTrialSupportPoint >;
-
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
+    Kernels( SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
-      Kernels( inputDofNumber,
-               inputMatrix,
-               inputRhs,
-               nodeManager,
-               elementSubRegion,
+      Kernels( elementSubRegion,
                finiteElementSpace,
                inputConstitutiveType,
                typename CONSTITUTIVE_TYPE::KernelWrapper() )
+    {}
+    Kernels( SUBREGION_TYPE const & elementSubRegion,
+             FiniteElementBase const * const finiteElementSpace,
+             CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
+             typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
+      elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
+      elemGhostRank( elementSubRegion.ghostRank() ),
+      constitutiveUpdate( inputConstitutiveUpdate ),
+      m_finiteElementSpace( finiteElementSpace )
     {}
 
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
-    {
-      for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
-      {
-        localIndex const localNodeIndex = elemsToNodes[ k][ a ];
-        for( int i=0; i<numDofPerTestSupportPoint; ++i )
-        {
-          stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
-        }
-      }
-
-      // TODO This is incorrect. The support points of the trial space is not necessarily the nodes.
-      for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
-      {
-        localIndex const localNodeIndex = elemsToNodes[ k][ a];
-        for( int i=0; i<numDofPerTrialSupportPoint; ++i )
-        {
-          stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
-        }
-      }
-
-    }
+    void preKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+                    STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+    {}
 
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
@@ -244,19 +172,17 @@ public:
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-//    GEOSX_HOST_DEVICE
+    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 postKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                       STACK_VARIABLE_TYPE & stack ) const
+                       STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {
-      m_matrix.insert( stack.localRowDofIndex,
-                       stack.localColDofIndex,
-                       &(stack.localJacobian[0][0]),
-                       stack.numRows,
-                       stack.numCols );
       return 0;
     }
+
+
+
 
     template< typename POLICY,
               int NUM_QUADRATURE_POINTS,
@@ -333,31 +259,12 @@ public:
     }
 
 
-    arrayView1d< globalIndex const > const m_dofNumber;
-    ParallelMatrix & m_matrix;
-    ParallelVector & m_rhs;
+
+//protected:
     typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
     arrayView1d< integer const > const elemGhostRank;
     typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
     FiniteElementBase const * m_finiteElementSpace;
-
-protected:
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
-             typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
-      m_dofNumber( inputDofNumber ),
-      m_matrix( inputMatrix ),
-      m_rhs( inputRhs ),
-      elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
-      elemGhostRank( elementSubRegion.ghostRank() ),
-      constitutiveUpdate( inputConstitutiveUpdate ),
-      m_finiteElementSpace( finiteElementSpace )
-    {}
 
   };
 
@@ -449,37 +356,6 @@ protected:
 
     return maxResidual;
   }
-
-
-
-  //***************************************************************************
-  template< typename POLICY,
-            typename UPDATE_CLASS,
-            typename REGION_TYPE >
-  static
-  real64 FillSparsity( MeshLevel & mesh,
-                       arrayView1d< string const > const & targetRegions,
-                       FiniteElementDiscretization const * const feDiscretization,
-                       arrayView1d< globalIndex const > const & inputDofNumber,
-                       ParallelMatrix & inputMatrix,
-                       ParallelVector & inputRhs )
-  {
-    return Execute< POLICY,
-                    UPDATE_CLASS,
-                    constitutive::Dummy,
-                    REGION_TYPE,
-                    FiniteElementRegionLoop::Parameters,
-                    UPDATE_CLASS::template SparsityKernels >( mesh,
-                                                              targetRegions,
-                                                              array1d<string>(),
-                                                              feDiscretization,
-                                                              inputDofNumber,
-                                                              inputMatrix,
-                                                              inputRhs,
-                                                              FiniteElementRegionLoop::Parameters() );
-  }
-
-
 };
 
 }
@@ -487,4 +363,4 @@ protected:
 
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_PHYSICSLOOPINTERFACE_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_REGIONLOOP_HPP_ */
