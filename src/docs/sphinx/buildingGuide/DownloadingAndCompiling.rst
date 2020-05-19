@@ -77,7 +77,7 @@ They are very similar, and you may whether define the dedicated (classical) envi
 
 (If you are running on an LC system, there is already a hostconfig and copy of the thirdPartyLibs installed, so you can skip the third party libraries compilation step).
 
-Starting with the third-party libraries, the config-build.script will run cmake for you.
+Starting with the third-party libraries, the config-build.script will run `cmake` for you.
 More details about compiling the thirdPartyLibs are provided in :ref:`Third party libraries build management pattern`.
 
 .. code-block:: sh

@@ -44,7 +44,8 @@ be supplied as the value of ``coefficientName`` attribute of the flux approximat
 Input example
 =========================
 
-.. code-block:: xml
+
+.. code-block::xml
 
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
