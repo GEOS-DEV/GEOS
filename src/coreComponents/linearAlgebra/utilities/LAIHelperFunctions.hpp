@@ -91,16 +91,24 @@ ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
                               ParallelMatrix const & permutationMatrixLeft,
                               ParallelMatrix const & permutationMatrixRight );
 
-/**
- * @brief Apply a separate component approximation (filter) to a matrix.
- * @tparam MATRIX the type of matrices
- * @param src         the source matrix
- * @param dst         the target (filtered) matrix
- * @param dofsPerNode number of degrees-of-freedom per node
- */
-template< typename MATRIX >
-void SeparateComponentFilter( MATRIX const & src,
-                              MATRIX & dst,
+
+void PrintPermutedVector( ParallelVector const & vector,
+                          ParallelMatrix const & permuationMatrix,
+                          std::ostream & os );
+
+
+void PrintPermutedMatrix( ParallelMatrix const & matrix,
+                          ParallelMatrix const & permutationMatrix,
+                          std::ostream & os );
+
+void PrintPermutedMatrix( ParallelMatrix const & matrix,
+                          ParallelMatrix const & permutationMatrixLeft,
+                          ParallelMatrix const & permutationMatrixRight,
+                          std::ostream & os );
+
+template< typename LAI >
+void SeparateComponentFilter( typename LAI::ParallelMatrix const & src,
+                              typename LAI::ParallelMatrix & dst,
                               const localIndex dofsPerNode )
 {
   GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );

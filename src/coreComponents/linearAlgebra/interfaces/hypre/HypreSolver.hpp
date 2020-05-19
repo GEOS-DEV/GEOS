@@ -27,8 +27,8 @@ class HypreMatrix;
 class LinearSolverParameters;
 
 /**
- * @class HypreSolver
- * @brief This class creates and provides basic support for ILUT and BoomerAMG.
+ * \class HypreSolver
+ * \brief This class creates and provides basic support for Hypre solvers.
  */
 class HypreSolver
 {
