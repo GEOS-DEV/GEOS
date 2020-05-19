@@ -199,8 +199,7 @@ struct TPFACellInnerProductKernel
           // 3) compute the one-sided face transmissibility
           transMatrix[ifaceLoc][jfaceLoc]  = Dot( cellToFaceVec, faceConormal );
           transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
-          transMatrix[ifaceLoc][jfaceLoc]  = std::max( transMatrix[ifaceLoc][jfaceLoc],
-                                                       weightTolerance );
+          transMatrix[ifaceLoc][jfaceLoc]  = LvArray::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
         }
         else
         {

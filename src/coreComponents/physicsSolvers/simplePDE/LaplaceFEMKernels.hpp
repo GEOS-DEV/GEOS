@@ -35,8 +35,8 @@ struct ImplicitKernel
   static real64 Launch( arrayView3d< R1Tensor const > const & dNdX,
                         arrayView2d< real64 const > const & detJ,
                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes,
-                        arrayView1d< integer const > const & elemGhostRank,
                         arrayView1d< globalIndex const > const & dofIndex,
+                        globalIndex const dofRankOffset,
                         LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix )
   {
     localIndex const numElems = dNdX.size( 0 );
@@ -50,35 +50,37 @@ struct ImplicitKernel
     GEOSX_ERROR_IF_NE( elemNodes.size( 0 ), numElems );
     GEOSX_ERROR_IF_NE( elemNodes.size( 1 ), NUM_NODES_PER_ELEM );
 
-    GEOSX_ERROR_IF_NE( elemGhostRank.size(), numElems );
-
     // begin element loop, skipping ghost elements
     forAll< parallelDevicePolicy< 32 > >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      globalIndex elemDofIndex[ NUM_NODES_PER_ELEM ];
+      globalIndex dofIndices[ NUM_NODES_PER_ELEM ];
       real64 elementMatrix[ NUM_NODES_PER_ELEM ][ NUM_NODES_PER_ELEM ] = { { 0 } };
 
-      if( elemGhostRank[k] < 0 )
+      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
       {
-        for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+          dofIndices[ a ] = dofIndex[ elemNodes( k, a ) ];
+
+          real64 diffusion = 1.0;
+          for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
           {
-            elemDofIndex[ a ] = dofIndex[ elemNodes( k, a ) ];
-
-            real64 diffusion = 1.0;
-            for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
-            {
-              elementMatrix[ a ][ b ] += detJ( k, q ) *
-                                         diffusion *
-                                         +Dot( dNdX( k, q, a ), dNdX( k, q, b ) );
-            }
-
+            elementMatrix[ a ][ b ] += detJ( k, q ) *
+                                       diffusion *
+                                       +Dot( dNdX( k, q, a ), dNdX( k, q, b ) );
           }
-        }
 
-        for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
-        { matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( elemDofIndex[ i ], elemDofIndex, elementMatrix[ i ], NUM_NODES_PER_ELEM ); }
+        }
+      }
+
+      for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+      {
+        globalIndex const dof = dofIndices[ i ] - dofRankOffset;
+        if( dof < 0 || dof >= matrix.numRows() ) continue;
+        matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                     dofIndices,
+                                                                     elementMatrix[ i ],
+                                                                     NUM_NODES_PER_ELEM );
       }
     } );
 

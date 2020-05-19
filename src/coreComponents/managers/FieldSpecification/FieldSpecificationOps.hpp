@@ -388,32 +388,34 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
 
   static inline void GEOSX_HOST_DEVICE
   SpecifyFieldValue( globalIndex const dof,
+                     globalIndex const dofRankOffset,
                      LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
                      real64 & rhs,
                      real64 const bcValue,
                      real64 const fieldValue )
   {
-    // if( matrix.getLocalRowID( dof ) >= 0 )
-    // {
-    arraySlice1d< globalIndex const > const columns = matrix.getColumns( dof );
-    arraySlice1d< real64 > const entries = matrix.getEntries( dof );
-    localIndex const numEntries = matrix.numNonZeros( dof );
-
-    real64 diagonal = 0;
-    for( localIndex j = 0; j < numEntries; ++j )
+    globalIndex const localRow = dof - dofRankOffset;
+    if( localRow >= 0 && localRow < matrix.numRows() )
     {
-      if( columns[ j ] == dof )
-      { diagonal = entries[ j ]; }
-      else
-      { entries[ j ] = 0; }
-    }
+      arraySlice1d< globalIndex const > const columns = matrix.getColumns( localRow );
+      arraySlice1d< real64 > const entries = matrix.getEntries( localRow );
+      localIndex const numEntries = matrix.numNonZeros( localRow );
 
-    rhs = -diagonal * (bcValue - fieldValue);
-    // }
-    // else
-    // {
-    // rhs = 0.0;
-    // }
+      real64 diagonal = 0;
+      for( localIndex j = 0; j < numEntries; ++j )
+      {
+        if( columns[ j ] == dof )
+        { diagonal = entries[ j ]; }
+        else
+        { entries[ j ] = 0; }
+      }
+
+      rhs = -diagonal * (bcValue - fieldValue);
+    }
+    else
+    {
+      rhs = 0.0;
+    }
   }
 
   /**
@@ -441,15 +443,15 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   template< typename POLICY >
   static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,
+                                         globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )
   {
     GEOSX_ASSERT_EQ( dof.size(), values.size() );
-    forAll< POLICY >( dof.size(), [rhs, dof, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      // if( rhs.getLocalRowID( dof[a] ) >= 0 )
-      // {
-      rhs[ dof[ a ] ] = values[ a ];
-      // }
+      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      if( localRow >= 0 && localRow < rhs.size() )
+      { rhs[ localRow ] = values[ a ]; }
     } );
   }
 };
@@ -494,6 +496,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    */
   GEOSX_HOST_DEVICE
   static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
+                                        globalIndex const GEOSX_UNUSED_PARAM( dofRankOffset ),
                                         LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
                                         real64 & rhs,
                                         real64 const bcValue,
@@ -521,15 +524,15 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
   template< typename POLICY >
   static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,
+                                         globalIndex const dofRankOffset,
                                          arrayView1d< real64 const > const & values )
   {
     GEOSX_ASSERT_EQ( dof.size(), values.size() );
-    forAll< POLICY >( dof.size(), [rhs, dof, values] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< POLICY >( dof.size(), [rhs, dof, dofRankOffset, values] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      // if( rhs.getLocalRowID( dof[a] ) >= 0 )
-      // {
-      rhs[ dof[ a ] ] += values[ a ];
-      // }
+      globalIndex const localRow = dof[ a ] - dofRankOffset;
+      if( localRow >= 0 && localRow < rhs.size() )
+      { rhs[ localRow ] += values[ a ]; }
     } );
   }
 

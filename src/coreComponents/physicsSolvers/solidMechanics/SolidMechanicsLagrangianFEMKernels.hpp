@@ -335,78 +335,6 @@ struct ExplicitKernel
 
 };
 
-/**
- * @struct Structure to wrap templated function that implements the implicit time integration kernel.
- */
-struct ImplicitKernel
-{
-  /**
-   * @brief Launch of the element processing kernel for implicit time integration.
-   * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
-   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
-   * @tparam CONSTITUTIVE_TYPE the type of the constitutive relation that is being used.
-   * @param constitutiveRelation A pointer to the constitutive relation that is being used.
-   * @param numElems The number of elements the kernel will process.
-   * @param dt The timestep.
-   * @param dNdX The derivatives of the shape functions wrt the reference configuration.
-   * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
-   * @param fe A pointer to the finite element class used in this kernel.
-   * @param elemGhostRank An array containing the values of the owning ranks for ghost elements.
-   * @param elemsToNodes The map from the elements to the nodes that form that element.
-   * @param globalDofNumber The map from localIndex to the globalDOF number.
-   * @param disp The array of total displacements.
-   * @param uhat The array of incremental displacements (displacement for this step).
-   * @param vtilde The array for the velocity predictor.
-   * @param uhattilde The array for the incremental displacement predictor.
-   * @param density The array containing the density
-   * @param fluidPressure Array containing element fluid pressure at the beginning of the step.
-   * @param deltaFluidPressure Array containing the change in element fluid pressure over this step.
-   * @param biotCoefficient The biotCoefficient used to calculate effective stress.
-   * @param tiOption The time integration option used for the integration.
-   * @param stiffnessDamping The stiffness damping coefficient for the Newmark method assuming Rayleigh damping.
-   * @param massDamping The mass damping coefficient for the Newmark method assuming Rayleigh damping.
-   * @param newmarkBeta The value of \beta in the Newmark update.
-   * @param newmarkGamma The value of \gamma in the Newmark update.
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix sparse matrix containing the derivatives of the residual wrt displacement
-   * @param rhs parallel vector containing the global residual
-   * @return The maximum nodal force contribution from all elements.
-   */
-  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
-  static inline real64
-  Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( constitutiveRelation ),
-          localIndex const GEOSX_UNUSED_PARAM( numElems ),
-          real64 const GEOSX_UNUSED_PARAM( dt ),
-          arrayView3d< R1Tensor const > const & GEOSX_UNUSED_PARAM( dNdX ),
-          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
-          FiniteElementBase const * const GEOSX_UNUSED_PARAM( fe ),
-          arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
-          arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
-          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
-          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
-          arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( uhattilde ),
-          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( density ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( fluidPressure ),
-          arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( deltaFluidPressure ),
-          real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
-          TimeIntegrationOption const GEOSX_UNUSED_PARAM( tiOption ),
-          real64 const GEOSX_UNUSED_PARAM( stiffnessDamping ),
-          real64 const GEOSX_UNUSED_PARAM( massDamping ),
-          real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
-          real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
-          R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
-          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-          ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-          ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
-  {
-    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented" );
-    return 0;
-  }
-
-};
-
 struct CRSImplicitKernel
 {
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
@@ -420,6 +348,7 @@ struct CRSImplicitKernel
           arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
+          globalIndex const GEOSX_UNUSED_PARAM( dofRankOffset ),
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
           arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),

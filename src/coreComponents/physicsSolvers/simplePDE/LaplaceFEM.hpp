@@ -70,7 +70,7 @@ public:
                                integer const cycleNumber,
                                DomainPartition * const domain ) override;
 
-  void sparsityGeneration( DomainPartition const & domain );
+  void sparsityGeneration( DomainPartition const & domain, DofManager const & dofManager );
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -84,6 +84,13 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
+
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
   virtual void
   AssembleSystem( real64 const time,
@@ -127,9 +134,7 @@ public:
 
   void ApplyDirichletBC_implicit( real64 const time,
                                   DofManager const & dofManager,
-                                  DomainPartition & domain,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs );
+                                  DomainPartition & domain );
 
   //START_SPHINX_INCLUDE_01
   enum class timeIntegrationOption

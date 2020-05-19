@@ -224,8 +224,11 @@ real64 SolverBase::LinearImplicitStep( real64 const & time_n,
   ImplicitStepSetup( time_n, dt, domain, dofManager, matrix, rhs, solution );
 
   // call assemble to fill the matrix and the rhs
-  matrix.zero();
-  rhs.zero();
+  if( matrix.ready() )
+  {
+    matrix.zero();
+    rhs.zero();
+  }
   AssembleSystem( time_n, dt, domain, dofManager, matrix, rhs );
 
   // apply boundary conditions to system
@@ -423,8 +426,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // call assemble to fill the matrix and the rhs
-      matrix.zero();
-      rhs.zero();
+      if( matrix.ready() )
+      {
+        matrix.zero();
+        rhs.zero();
+      }
       AssembleSystem( time_n, stepDt, domain, dofManager, matrix, rhs );
 
       // apply boundary conditions to system

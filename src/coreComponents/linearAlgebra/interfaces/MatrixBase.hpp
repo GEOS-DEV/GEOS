@@ -215,14 +215,16 @@ protected:
 
   /**
    * @brief Create parallel matrix from a local CRS matrix.
-   * @param localMatrix the input local matrix
-   * @param comm the MPI communicator to use
+   * @param localMatrix The input local matrix.
+   * @param dofRankOffset The starting global row of @p localMatrix.
+   * @param comm The MPI communicator to use.
    *
    * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
    *
    * @todo Replace generic implementation with more efficient ones in each package.
    */
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       globalIndex const dofRankOffset,
                        MPI_Comm const & comm )
   {
     localMatrix.move( chai::CPU, false );
@@ -234,14 +236,14 @@ protected:
     }
 
     createWithLocalSize( localMatrix.numRows(),
-                         localMatrix.numColumns(),
+                         localMatrix.numRows(),
                          maxEntriesPerRow,
                          comm );
 
     open();
-    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
     {
-      insert( i, localMatrix.getColumns( i ), localMatrix.getEntries( i ) );
+      insert( localRow + dofRankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
     }
     close();
   }
@@ -976,7 +978,7 @@ void verifySystem( LvArray::CRSMatrixView< real64 const, globalIndex const, loca
 
 
 #if 1
-  using POLICY = parallelHostPolicy;
+  using POLICY = serialPolicy;
 
   GEOSX_ERROR_IF_NE( rhsArray.size(), rhs.localSize() );
 
@@ -993,23 +995,26 @@ void verifySystem( LvArray::CRSMatrixView< real64 const, globalIndex const, loca
   }
 
   GEOSX_ERROR_IF_NE( crsMatrix.numRows(), matrix.numLocalRows() );
-  GEOSX_ERROR_IF_NE( crsMatrix.numColumns(), matrix.numLocalCols() );
+  // GEOSX_ERROR_IF_NE( crsMatrix.numColumns(), matrix.numGlobalCols() );
 
   GEOSX_UNUSED_VAR( checkValues );
 
   forAll< POLICY >( crsMatrix.numRows(), [crsMatrix, &matrix, checkValues, atol, rtol] ( localIndex const row )
   {
     localIndex const nnz = matrix.localRowLength( row );
-    GEOSX_ERROR_IF_NE( crsMatrix.numNonZeros( row ), nnz );
+    GEOSX_ERROR_IF_NE_MSG( crsMatrix.numNonZeros( row ), nnz, row );
 
     array1d< globalIndex > columns( nnz );
     array1d< real64 > values( nnz );
 
-    matrix.getRowCopy( row, columns, values );
+    matrix.getRowCopy( matrix.getGlobalRowID( row ), columns, values );
+    GEOSX_ERROR_IF_NE( crsMatrix.numNonZeros( row ), columns.size() );
+
+    LvArray::sortedArrayManipulation::dualSort( columns.begin(), columns.end(), values.begin() );
 
     for( localIndex i = 0; i < nnz; ++i )
     {
-      GEOSX_ERROR_IF_NE( crsMatrix.getColumns( row )[ i ], columns[ i ] );
+      GEOSX_ERROR_IF_NE_MSG( crsMatrix.getColumns( row )[ i ], columns[ i ], "Row = " << row << ", i = " << i );
 
       if( checkValues )
       {

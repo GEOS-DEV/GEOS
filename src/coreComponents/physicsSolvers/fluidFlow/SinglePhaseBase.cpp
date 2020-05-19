@@ -294,7 +294,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
     m_localMatrix.setName( this->getName() + "/localMatrix" );
     m_localRhs.setName( this->getName() + "/localRhs" );
 
-    matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
     rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
     solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
 
@@ -658,7 +658,7 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
                                                                        time_n + dt,
                                                                        subRegion,
                                                                        dofNumber,
-                                                                       1,
+                                                                       dofManager.rankOffset(),
                                                                        localMatrix,
                                                                        localRhs,
                                                                        [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -710,7 +710,7 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
                                                                        dt,
                                                                        subRegion,
                                                                        dofNumber,
-                                                                       1,
+                                                                       dofManager.rankOffset(),
                                                                        localMatrix,
                                                                        localRhs,
                                                                        [] GEOSX_HOST_DEVICE ( localIndex const )
@@ -730,7 +730,7 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 
 #if DO_LIN_SOLVE
 
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+  matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
   rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
 
   rhs.scale( -1.0 );

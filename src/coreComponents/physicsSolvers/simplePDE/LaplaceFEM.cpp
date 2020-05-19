@@ -136,36 +136,21 @@ real64 LaplaceFEM::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return dt;
 }
 
-void LaplaceFEM::sparsityGeneration( DomainPartition const & domain )
+void LaplaceFEM::sparsityGeneration( DomainPartition const & domain, DofManager const & dofManager )
 {
   GEOSX_MARK_FUNCTION;
 
   MeshLevel const & meshLevel = *( domain.getMeshBody( 0 )->getMeshLevel( 0 ) );
   NodeManager const & nodeManager = *meshLevel.getNodeManager();
   ElementRegionManager const & elementRegionManager = *meshLevel.getElemManager();
-  array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodes( elementRegionManager.numRegions() );
 
-  forTargetRegionsComplete< CellElementRegion >( meshLevel,
-                                                 [&] ( localIndex, localIndex const er, CellElementRegion const & region )
-  {
-    elemsToNodes[ er ].resize( region.numSubRegions() );
-
-    region.forElementSubRegionsIndex< CellElementSubRegion >(
-      [&] ( localIndex const esr, CellElementSubRegion const & subRegion )
-    {
-      elemsToNodes[ er ][ esr ] = subRegion.nodeList().toViewConst();
-    } );
-  } );
-
-  sparsityGeneration::finiteElement< 1 >( m_crsMatrix,
-                                          elemsToNodes.toViewConst(),
-                                          nodeManager.elementRegionList(),
-                                          nodeManager.elementSubRegionList(),
-                                          nodeManager.elementList() );
+  dofManager.setFiniteElementSparsityPattern< 1 >( m_crsMatrix,
+                                                   elementRegionManager,
+                                                   nodeManager,
+                                                   targetRegionNames(),
+                                                   m_fieldName );
 
   m_rhsArray.resize( m_crsMatrix.numRows() );
-
-  verifySystem( m_crsMatrix.toViewConst(), m_rhsArray.toViewConst(), m_matrix, m_rhs, false, 1e-10, 1e-10 );
 }
 
 void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -178,7 +163,6 @@ void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
 {
   // Computation of the sparsity pattern
   SetupSystem( domain, dofManager, matrix, rhs, solution );
-  sparsityGeneration( *domain );
 }
 
 void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -197,17 +181,36 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( do
                           DofManager::Connector::Elem );
 }
 
+void LaplaceFEM::SetupSystem( DomainPartition * const domain,
+                              DofManager & dofManager,
+                              ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                              ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
+                              ParallelVector & solution )
+{
+  GEOSX_MARK_FUNCTION;
+
+  dofManager.setMesh( domain, 0, 0 );
+
+  SetupDofs( domain, dofManager );
+  dofManager.reorderByRank();
+
+  localIndex const numLocalDof = dofManager.numLocalDofs();
+
+  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+
+  sparsityGeneration( *domain, dofManager );
+}
+
 //START_SPHINX_INCLUDE_04
-void LaplaceFEM::AssembleSystem( real64 const time_n,
+void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  DomainPartition * const domain,
                                  DofManager const & dofManager,
-                                 ParallelMatrix & matrix,
-                                 ParallelVector & rhs )
+                                 ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                 ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
-  m_crsMatrix.setValues< parallelHostPolicy >( 0 );
-  m_rhsArray.setValues< parallelHostPolicy >( 0 );
-  verifySystem( m_crsMatrix.toViewConst(), m_rhsArray.toViewConst(), m_matrix, m_rhs, true, 1e-10, 1e-10 );
+  m_crsMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
+  m_rhsArray.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   Group * const nodeManager = mesh->getNodeManager();
@@ -218,11 +221,8 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
-  array1d< globalIndex > const & dofIndex =
+  arrayView1d< globalIndex const > const & dofIndex =
     nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
-
-  matrix.open();
-  rhs.open();
 
   // begin region loop
   for( localIndex er=0; er<elemManager->numRegions(); ++er )
@@ -243,7 +243,6 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
       localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
 
-      arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
       finiteElementLaunchDispatch< LaplaceFEMKernels::ImplicitKernel >( numNodesPerElement,
@@ -251,71 +250,37 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                                                         dNdX,
                                                                         detJ,
                                                                         elemNodes,
-                                                                        elemGhostRank,
                                                                         dofIndex,
+                                                                        dofManager.rankOffset(),
                                                                         m_crsMatrix.toViewConstSizes() );
 
-      globalIndex_array elemDofIndex( numNodesPerElement );
-      real64_array element_rhs( numNodesPerElement );
-      real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
-
-      // begin element loop, skipping ghost elements
-      forAll< serialPolicy >( elementSubRegion.size(), [=, &elemDofIndex, &element_rhs, &element_matrix, &matrix, &rhs] ( localIndex const k )
-      {
-        if( elemGhostRank[k] < 0 )
-        {
-          element_rhs = 0.0;
-          element_matrix = 0.0;
-          for( localIndex q=0; q<n_q_points; ++q )
-          {
-            for( localIndex a=0; a<numNodesPerElement; ++a )
-            {
-              elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
-
-              real64 diffusion = 1.0;
-              for( localIndex b=0; b<numNodesPerElement; ++b )
-              {
-                element_matrix( a, b ) += detJ[k][q] *
-                                          diffusion *
-                                          +Dot( dNdX[k][q][a], dNdX[k][q][b] );
-              }
-
-            }
-          }
-          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
-          rhs.add( elemDofIndex, element_rhs );
-        }
-      } );
     } );
   }
-  matrix.close();
-  rhs.close();
 
-  verifySystem( m_crsMatrix.toViewConst(), m_rhsArray.toViewConst(), matrix, rhs, true, 1e-10, 1e-10 );
   //END_SPHINX_INCLUDE_04
 
   if( getLogLevel() == 2 )
   {
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
+    // GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    // GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    // std::cout << m_crsMatrix.toViewConst();
+    // GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    // std::cout << m_rhsArray;
   }
 
   if( getLogLevel() >= 3 )
   {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+    // integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
+    // string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    // matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
-    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
+    // string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    // rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    // GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
+    // GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    // GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -340,39 +305,33 @@ void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition * const domain,
                                           DofManager const & dofManager,
-                                          ParallelMatrix & matrix,
-                                          ParallelVector & rhs )
+                                          ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+                                          ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
-  matrix.open();
-  rhs.open();
-  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain, m_matrix, m_rhs );
-  matrix.close();
-  rhs.close();
-
-  verifySystem( m_crsMatrix.toViewConst(), m_rhsArray.toViewConst(), m_matrix, m_rhs, false, 1e-10, 1e-10 );
+  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain );
 
   if( getLogLevel() == 2 )
   {
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
+    // GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    // GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    // std::cout << matrix;
+    // GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    // std::cout << rhs;
   }
 
   if( getLogLevel() >= 3 )
   {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+    // integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-    string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
+    // string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    // matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
 
-    string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
+    // string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
+    // rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
 
-    GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
+    // GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
+    // GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
+    // GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
   }
 }
 
@@ -381,6 +340,8 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
+  matrix.create( m_crsMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
+  rhs.create( m_rhsArray.toViewConst(), MPI_COMM_GEOSX );
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
 
@@ -389,9 +350,7 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             DofManager const & dofManager,
-                                            DomainPartition & domain,
-                                            ParallelMatrix & matrix,
-                                            ParallelVector & rhs )
+                                            DomainPartition & domain )
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
@@ -403,23 +362,14 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const GEOSX_UNUSED_PARAM( fieldName ) )->void
+                        string const GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc->ApplyBoundaryConditionToSystem< FieldSpecificationEqual, LAInterface >( targetSet,
-                                                                                time,
-                                                                                targetGroup,
-                                                                                m_fieldName,
-                                                                                dofManager.getKey( m_fieldName ),
-                                                                                1,
-                                                                                matrix,
-                                                                                rhs );
-
     bc->ApplyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
                                                                                                time,
                                                                                                targetGroup,
                                                                                                m_fieldName,
                                                                                                dofManager.getKey( m_fieldName ),
-                                                                                               1,
+                                                                                               dofManager.rankOffset(),
                                                                                                m_crsMatrix.toViewConstSizes(),
                                                                                                m_rhsArray.toView() );
   } );

@@ -400,18 +400,33 @@ public:
   T const * GetGroup( string const & name ) const
   { return group_cast< T const * >( m_subGroups[name] ); }
 
+  /**
+   * @brief @return Return a reference to the Group @p name.
+   * @tparam The type to return.
+   * @param key The name of the group to retrieve.
+   * @note Will abort if the group doesn't exist.
+   */
   template< typename T = Group >
-  T & getGroupReference( string const & name )
-  { return dynamicCast< T & >( *m_subGroups[ name ] ); }
+  T & getGroupReference( string const & key )
+  { return dynamicCast< T & >( *m_subGroups[ key ] ); }
 
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
   template< typename T = Group >
-  T const & getGroupReference( string const & name ) const
-  { return dynamicCast< T const & >( *m_subGroups[ name ] ); }
+  T const & getGroupReference( string const & key ) const
+  { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
 
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
   template< typename T = Group >
   T & GetGroupReference( subGroupMap::KeyIndex const & key )
   { return dynamicCast< T & >( *m_subGroups[key] ); }
 
+  /**
+   * @copydoc getGroupReference( string const & )
+   */
   template< typename T = Group >
   T const & GetGroupReference( subGroupMap::KeyIndex const & key ) const
   { return dynamicCast< T const & >( *m_subGroups[key] ); }
