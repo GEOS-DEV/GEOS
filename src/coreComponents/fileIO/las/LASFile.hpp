@@ -34,7 +34,17 @@ class LASVersionInformationSection;
 class LASLine
 {
 public:
-  LASLine() = default;
+  LASLine() :
+    m_keywordname( "" ),
+    m_unit( "" ),
+    m_data( "" ),
+    m_description( "" )
+  {
+  }
+  
+  ~LASLine()
+  {
+  }
 
   LASLine( string const & line )
   {
@@ -82,7 +92,7 @@ public:
     return !m_unit.empty();
   }
 
-  /*
+  /*!
    * @brief Build a string containing the line
    */
   string GetLine() const
