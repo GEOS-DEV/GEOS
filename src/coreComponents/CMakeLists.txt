@@ -79,16 +79,24 @@ if( GEOSX_USE_ATK )
 endif()
 
 
+if( GEOSX_BUILD_SHARED_LIBS )
+  set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )
+  set( CSL_TYPE SHARED )
+else()
+  set( GEOSX_BUILD_SHARED_BOOL FALSE CACHE BOOL "" )
+  set( CSL_TYPE STATIC )
+endif()
+
 if( BUILD_OBJ_LIBS )
   blt_add_library ( NAME geosx_core
                     SOURCES dummy.cpp
                     DEPENDS_ON  ${coreLibs}
-                    SHARED TRUE
+                    SHARED ${GEOSX_BUILD_SHARED_BOOL}
                   )
 else()
   blt_combine_static_libraries( NAME          geosx_core
                                 SOURCE_LIBS   ${coreLibs}
-                                LIB_TYPE SHARED
+                                LIB_TYPE ${CSL_TYPE}
                                 LINK_PREPEND  ${GEOSX_LINK_PREPEND_FLAG}
                                 LINK_POSTPEND ${GEOSX_LINK_POSTPEND_FLAG}
                               )
@@ -100,7 +108,7 @@ set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 # To install the shared library
 install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
-#set( geosx_core_libs geosx_core CACHE PATH "" FORCE)
+set( geosx_core_libs ${coreLibs} CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
