@@ -1,6 +1,6 @@
 <Problem>
 
-  <Solvers>
+  <Solvers gravityVector="0.0, 0.0, 0.0">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -14,7 +14,7 @@
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
                                   timeIntegrationOption="QuasiStatic"
-                                  logLevel="1"
+                                  logLevel="2"
                                   discretization="FE1"
                                   targetRegions="{Region1}"
                                   solidMaterialNames="{shale}"
@@ -47,9 +47,9 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{4}"
-                  ny="{4}"
-                  nz="{4}"
+                  nx="{1}"
+                  ny="{1}"
+                  nz="{1}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
@@ -101,38 +101,38 @@
   <Constitutive>
     <LinearElasticIsotropic name="shale"
                             defaultDensity="2700"
-                            defaultBulkModulus="1.7500e5"
-                            defaultShearModulus="8.0769e4"/>
+                            defaultBulkModulus="2.00e5"
+                            defaultShearModulus="3.00e5"/>
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="xboundary"
+    <FieldSpecification name="xtop"
                         fieldName="TotalDisplacement"
                         component="0"
                         objectPath="nodeManager"
                         scale="1e-6"
-                        setNames="{xpos}"/>
+                        setNames="{top}"/>
 
-    <FieldSpecification name="xboundary"
+    <FieldSpecification name="xbottom"
                         fieldName="TotalDisplacement"
                         component="0"
                         objectPath="nodeManager"
-                        scale="-1e-6"
-                        setNames="{xneg}"/>
+                        scale="0"
+                        setNames="{bottom}"/>
 
     <FieldSpecification name="yboundary"
                         fieldName="TotalDisplacement"
                         component="1"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{yneg, ypos}"/>
+                        setNames="{xneg}"/>
 
     <FieldSpecification name="zboundary"
                         fieldName="TotalDisplacement"
                         component="2"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{zneg, zpos}"/>
+                        setNames="{xneg}"/>
 
     <FieldSpecification name="pointSource"
                         fieldName="Damage"
@@ -162,6 +162,8 @@
 
   <Geometry>
     <Box name="centerPoint" xMin="-0.001, -0.001, -0.001" xMax="+0.001, +0.001, +0.001"/>
+    <Box name="bottom" xMin="-1.001, -1.001, -1.001" xMax="-0.999, +1.001, +1.001"/>
+    <Box name="top" xMin="+0.999, -1.001, -1.001" xMax="+1.001, +1.001, +1.001"/>
   </Geometry>
 
 </Problem>
