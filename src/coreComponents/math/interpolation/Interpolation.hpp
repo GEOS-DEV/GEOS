@@ -60,22 +60,23 @@ static real64 ParabolicInterpolationThreePoints( real64 const lambdac,
   // p(lambda) = ff0 + (c1 lambda + c2 lambda^2)/d1
   // d1 = (lambdac - lambdam)*lambdac*lambdam < 0
   //      so, if c2 > 0 we have negative curvature and default to
-  //      lambdap = sigam1 * lambda.
+  //      lambdap = sigma1 * lambda.
   real64 const c2 = lambdam*(ffT-ff0)-lambdac*(ffm-ff0);
   if( c2 >= 0.0 )
   {
     return ( sigma1*lambdac );
   }
   real64 const c1 = lambdac*lambdac*(ffm-ff0)-lambdam*lambdam*(ffT-ff0);
-  real64 lambdap = -c1*0.5/c2;
-  if( lambdap < sigma0*lambdac )
+  real64 lambdap = -c1*0.5;
+  if( lambdap > sigma0*lambdac*c2 )
   {
-    lambdap = sigma0*lambdac;
+    lambdap = sigma0*lambdac*c2;
   }
-  if( lambdap > sigma1*lambdac )
+  if( lambdap < sigma1*lambdac*c2 )
   {
-    lambdap = sigma1*lambdac;
+    lambdap = sigma1*lambdac*c2;
   }
+  lambdap /= c2;
   return lambdap;
 }
 
