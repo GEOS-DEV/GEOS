@@ -26,8 +26,8 @@ namespace geosx
 {
 
 class FlowSolverBase;
-class ProppantTransport;  
-  
+class ProppantTransport;
+
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
@@ -83,7 +83,7 @@ public:
                        real64 const & dt,
                        integer const cycleNumber,
                        DomainPartition * domain );
-  
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -96,8 +96,8 @@ private:
   string m_flowSolverName;
 
   FlowSolverBase * m_flowSolver;
-  ProppantTransport * m_proppantSolver;  
-  
+  ProppantTransport * m_proppantSolver;
+
 };
 
 } /* namespace geosx */

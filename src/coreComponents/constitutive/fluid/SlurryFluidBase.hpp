@@ -67,7 +67,7 @@ public:
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate
    */
-  
+
   virtual void PointUpdate( real64 const & pressure,
                             real64 const & proppantConcentration,
                             arraySlice1d< real64 const > const & Componentconcentration,

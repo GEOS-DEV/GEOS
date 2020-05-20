@@ -202,8 +202,8 @@ void ProppantTransport::UpdateFluidModel( Group & dataGroup, localIndex const ta
   arrayView2d< real64 const > const & componentConc  = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
   arrayView2d< real64 const > const & dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc(m_numComponents);
-  
+  stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc( m_numComponents );
+
   forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
     for( localIndex c = 0; c < m_numComponents; ++c )
@@ -211,7 +211,7 @@ void ProppantTransport::UpdateFluidModel( Group & dataGroup, localIndex const ta
       updatedCompConc[c] = componentConc[a][c] + dComponentConc[a][c];
     }
 
-    fluid.PointUpdateFluidProperty( pres[a] + dPres[a], updatedCompConc, 0.0, a, 0 );    
+    fluid.PointUpdateFluidProperty( pres[a] + dPres[a], updatedCompConc, 0.0, a, 0 );
   } );
 
 }
@@ -228,17 +228,17 @@ void ProppantTransport::UpdateComponentDensity( Group & dataGroup, localIndex co
   arrayView2d< real64 const > const & componentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString );
   arrayView2d< real64 const > const & dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString );
 
-  stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc(m_numComponents);
-  
+  stackArray1d< real64, MAX_NUM_COMPONENTS >  updatedCompConc( m_numComponents );
+
   forAll< serialPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
     for( localIndex c = 0; c < m_numComponents; ++c )
     {
-      updatedCompConc[c] = componentConc[a][c] + dComponentConc[a][c];      
+      updatedCompConc[c] = componentConc[a][c] + dComponentConc[a][c];
 
     }
 
-    fluid.PointUpdateComponentDensity( pres[a] + dPres[a], updatedCompConc, a, 0 );    
+    fluid.PointUpdateComponentDensity( pres[a] + dPres[a], updatedCompConc, a, 0 );
   } );
 
 }
@@ -360,7 +360,8 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
 }
 
-// By now the proppant trasnport solver is coupled with single-phase flow solver. This SolverStep function is used for stand-alone proppant transport modeling which is not fully implemented and tested
+// By now the proppant trasnport solver is coupled with single-phase flow solver. This SolverStep function is used for
+// stand-alone proppant transport modeling which is not fully implemented and tested
 
 real64 ProppantTransport::SolverStep( real64 const & time_n,
                                       real64 const & dt,
@@ -386,16 +387,16 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
   }
 
   PreStepUpdate( time_n, dt, cycleNumber, domain );
-  
+
   // currently the only method is implicit time integration
   real64 dtReturn= this->NonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain,
-                                          m_dofManager,
-                                          m_matrix,
-                                          m_rhs,
-                                          m_solution );
+                                                dt,
+                                                cycleNumber,
+                                                domain,
+                                                m_dofManager,
+                                                m_matrix,
+                                                m_rhs,
+                                                m_solution );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
 
@@ -431,13 +432,13 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
                                       localIndex const esr,
                                       ElementRegionBase &,
                                       ElementSubRegionBase & subRegion )
-    {    
+    {
 
       subRegion.CalculateElementGeometricQuantities( nodeManager,
                                                      faceManager );
 
       UpdateProppantMobility( subRegion );
-      
+
       arrayView1d< real64 > const & packVf = m_proppantPackVolumeFraction[er][esr];
 
       arrayView1d< real64 > const & poroMultiplier = m_poroMultiplier[er][esr];
@@ -459,7 +460,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
   }
 
   localIndex const NC = m_numComponents;
-  
+
   forTargetSubRegionsComplete( mesh,
                                [&]( localIndex const,
                                     localIndex const er,
@@ -476,7 +477,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
     arrayView1d< R1Tensor > const & cellBasedFlux = m_cellBasedFlux[er][esr];
 
-    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )    
+    forAll< serialPolicy >( subRegion.size(), [=] ( localIndex ei )
     {
 
       for( localIndex c = 0; c < NC; ++c )
@@ -491,7 +492,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
       cellBasedFlux[ei] = 0.0;
 
     } );
-    
+
   } );
 
   UpdateCellBasedFlux( time, domain );
@@ -732,7 +733,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   GEOSX_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
-  downVector.Normalize();  
+  downVector.Normalize();
 
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
@@ -1320,7 +1321,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   GEOSX_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
-  downVector.Normalize();    
+  downVector.Normalize();
 
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -1375,8 +1376,8 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   GEOSX_MARK_FUNCTION;
 
   R1Tensor downVector = gravityVector();
-  downVector.Normalize();  
-  
+  downVector.Normalize();
+
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   NumericalMethodsManager const * numericalMethodManager =

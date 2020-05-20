@@ -904,7 +904,8 @@ struct FluxKernel
           if( edgeToFaceProppantFlux[i] >= 0.0 )
           {
 
-            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) * dt;
+            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) *
+                                            dt;
 
           }
           else

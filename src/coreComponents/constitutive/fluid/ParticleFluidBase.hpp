@@ -32,7 +32,7 @@ namespace constitutive
  * @class ParticleFluidBase
  * A class to calculate proppant transport and settling properties
  */
-  
+
 class ParticleFluidBase : public ConstitutiveBase
 {
 public:
@@ -60,13 +60,14 @@ public:
    * @param[in] nIndex, power-law fluid n index value
    * @param[in] KIndex, power-law fluid K index value
    * @param[in] fluidDensity, fluid density
-   * @param[in] dFluidDensity_dPressure, derivatives of the fluid density wrt the pressure 
-   * @param[in] dFluidDensity_dComponentConcentration, derivatives of the fluid density wrt the composition 
+   * @param[in] dFluidDensity_dPressure, derivatives of the fluid density wrt the pressure
+   * @param[in] dFluidDensity_dComponentConcentration, derivatives of the fluid density wrt the composition
    * @param[in] k, first constitutive index (e.g. elem index)
    *
-   * @note This function should generally not be called from a kernel, use BatchUpdate instead and this function is used for calculation of proppant transport properties in power-law fluid
+   * @note This function should generally not be called from a kernel, use BatchUpdate instead and this function is used
+   * for calculation of proppant transport properties in power-law fluid
    */
-  
+
   virtual void PointUpdate( localIndex const NC,
                             real64 const & proppantConcentration,
                             arraySlice1d< real64 const > const & ComponentConcentration,
@@ -82,16 +83,16 @@ public:
    * @param[in] NC, number of fluid components
    * @param[in] proppantConcentration, proppant concentration value
    * @param[in] fluidDensity, fluid density
-   * @param[in] dFluidDensity_dPressure, derivatives of the fluid density wrt the pressure 
-   * @param[in] dFluidDensity_dComponentConcentration, derivatives of the fluid density wrt the composition 
+   * @param[in] dFluidDensity_dPressure, derivatives of the fluid density wrt the pressure
+   * @param[in] dFluidDensity_dComponentConcentration, derivatives of the fluid density wrt the composition
    * @param[in] fluidViscosity, fluid viscosity
-   * @param[in] dFluidViscosity_dPressure, derivatives of the fluid viscosity wrt the pressure 
-   * @param[in] dFluidViscosity_dComponentConcentration, derivatives of the fluid viscosity wrt the composition 
+   * @param[in] dFluidViscosity_dPressure, derivatives of the fluid viscosity wrt the pressure
+   * @param[in] dFluidViscosity_dComponentConcentration, derivatives of the fluid viscosity wrt the composition
    * @param[in] k, first constitutive index (e.g. elem index)
    *
    * @note This function should generally not be called from a kernel, use BatchUpdate instead.
    */
-  
+
   virtual void PointUpdate( localIndex const NC,
                             real64 const & proppantConcentration,
                             real64 const & fluidDensity,
@@ -106,10 +107,10 @@ public:
    * @brief Perform a batch constitutive update (all points).
    * @param[in] concentration, proppant concentration values
 
-     Not implemented    
+     Not implemented
 
    */
-  
+
   virtual void BatchUpdate( arrayView1d< real64 const > const & concentration ) = 0;
 
 
@@ -118,7 +119,7 @@ public:
    *
    * @note This puts an upper bound on memory use, allowing to optimize code better
    */
-  
+
   static constexpr localIndex MAX_NUM_COMPONENTS = 32;
 
   // *** Data repository keys
