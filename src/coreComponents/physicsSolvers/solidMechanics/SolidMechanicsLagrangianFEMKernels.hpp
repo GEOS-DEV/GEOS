@@ -1130,13 +1130,19 @@ public:
   {
 
     Parameters( real64 const dt,
-                real64 const inputGravityVector[3] ):
+                real64 const inputGravityVector[3],
+                string const elementListName ):
       m_dt( dt ),
-      m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
-    {}
+      m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+      m_elementListName{'\0'}
+    {
+      elementListName.copy( m_elementListName, elementListName.size() );
+    }
 
     real64 const m_dt;
     real64 const m_gravityVector[3];
+    char m_elementListName[100];
+
   };
 
 
@@ -1180,7 +1186,6 @@ public:
 
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
-
     using StackVars = StackVariables< numNodesPerElem,
                                       numNodesPerElem >;
 
@@ -1206,7 +1211,8 @@ public:
       u(nodeManager.totalDisplacement()),
       vel(nodeManager.velocity()),
       acc(nodeManager.acceleration()),
-      m_dt(parameters.m_dt)
+      m_dt(parameters.m_dt),
+      m_elementList( elementSubRegion.template getReference<SortedArray<localIndex>>(parameters.m_elementListName ).toViewConst() )
     {}
 
     typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
@@ -1222,6 +1228,7 @@ public:
     arrayView2d< real64 const, nodes::VELOCITY_USD > const vel;
     arrayView2d< real64, nodes::ACCELERATION_USD > const acc;
     real64 const m_dt;
+    SortedArrayView< localIndex const > const m_elementList;
 
 
     template< typename STACK_VARIABLE_TYPE >
@@ -1347,62 +1354,43 @@ public:
       return meanForce;
     }
 
+
     template< typename POLICY,
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
               typename PARAMETERS_TYPE,
-              typename KERNEL_CLASS >
-    static
-    real64 Launch( localIndex const numElems,
-                   PARAMETERS_TYPE const & parameters,
-                   KERNEL_CLASS const & kernelClass )
+              typename COMPONENT_TYPE >
+    static real64
+    Launch( localIndex const ,//numElems,
+            PARAMETERS_TYPE const & parameters,
+            COMPONENT_TYPE const & kernelComponent )
     {
-      return finiteElement::
-             KernelBase::
-             Components< SUBREGION_TYPE,
-                      CONSTITUTIVE_TYPE,
-                      NUM_NODES_PER_ELEM,
-                      NUM_NODES_PER_ELEM,
-                      numTestDofPerSP,
-                      numTrialDofPerSP>::template Launch< POLICY,
-                                                          NUM_QUADRATURE_POINTS,
-                                                          STACK_VARIABLES,
-                                                          PARAMETERS_TYPE,
-                                                          KERNEL_CLASS>( numElems, parameters, kernelClass );
+      GEOSX_MARK_FUNCTION;
+      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+
+      localIndex const numElems = kernelComponent.m_elementList.size();
+      forAll< POLICY >( numElems,
+                        [=] GEOSX_DEVICE ( localIndex const index )
+      {
+        localIndex const k = kernelComponent.m_elementList[ index ];
+
+        STACK_VARIABLES stack;
+
+        kernelComponent.setup( k, stack );
+        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+        {
+          kernelComponent.quadraturePointStateUpdate( k, q, stack );
+
+          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
+
+          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
+        }
+        maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
+      } );
+      return maxResidual.get();
     }
 
-//    template< typename POLICY,
-//              int NUM_QUADRATURE_POINTS,
-//              typename STACK_VARIABLES,
-//              typename PARAMETERS_TYPE,
-//              typename KERNEL_CLASS >
-//    static
-//    real64 Launch( localIndex const numElems,
-//                   PARAMETERS_TYPE const & parameters,
-//                   KERNEL_CLASS const & kernelClass )
-//    {
-//      GEOSX_MARK_FUNCTION;
-//      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
-//
-//      forAll< POLICY >( numElems,
-//                        [=] GEOSX_DEVICE ( localIndex const k )
-//      {
-//        STACK_VARIABLES stack;
-//
-//        kernelClass.setup( k, stack );
-//        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-//        {
-//          kernelClass.quadraturePointStateUpdate( k, q, stack );
-//
-//          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
-//
-//          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
-//        }
-//        kernelClass.complete( k, parameters, stack );
-//      } );
-//      return maxResidual.get();
-//    }
-//
+
   };
 #undef CALCFEMSHAPE
 #undef DNDX

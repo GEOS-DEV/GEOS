@@ -188,13 +188,13 @@ public:
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
               typename PARAMETERS_TYPE,
-              typename KERNEL_CLASS >
+              typename COMPONENT_TYPE >
     static
     typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
                              std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
     Launch( localIndex const numElems,
-                          PARAMETERS_TYPE const & parameters,
-                          KERNEL_CLASS const & kernelClass )
+            PARAMETERS_TYPE const & parameters,
+            COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
       RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
@@ -204,18 +204,18 @@ public:
       {
         STACK_VARIABLES stack;
 
-        kernelClass.setup( k, stack );
+        kernelComponent.setup( k, stack );
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          kernelClass.quadraturePointStateUpdate( k, q, stack );
+          kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
 
-          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
         }
-        if( kernelClass.elemGhostRank[k] < 0 )
+        if( kernelComponent.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelClass.complete( k, parameters, stack ) );
+          maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
         }
       } );
       return maxResidual.get();
@@ -225,13 +225,13 @@ public:
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
               typename PARAMETERS_TYPE,
-              typename KERNEL_CLASS >
+              typename COMPONENT_TYPE >
     static
     typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
                                 std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
     Launch( localIndex const numElems,
-                          PARAMETERS_TYPE const & parameters,
-                          KERNEL_CLASS const & kernelClass )
+            PARAMETERS_TYPE const & parameters,
+            COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
       RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
@@ -241,18 +241,18 @@ public:
       {
         STACK_VARIABLES stack;
 
-        kernelClass.setup( k, stack );
+        kernelComponent.setup( k, stack );
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          kernelClass.quadraturePointStateUpdate( k, q, stack );
+          kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
 
-          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
         }
-        if( kernelClass.elemGhostRank[k] < 0 )
+        if( kernelComponent.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelClass.complete( k, parameters, stack ) );
+          maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
         }
       } );
       return maxResidual.get();
@@ -336,7 +336,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                           CONSTITUTIVE_TYPE,
                                           NUM_NODES_PER_ELEM,
                                           NUM_NODES_PER_ELEM >;
-        KERNEL_TYPE kernelClass( inputDofNumber,
+        KERNEL_TYPE kernelComponent( inputDofNumber,
                                  inputMatrix,
                                  inputRhs,
                                  nodeManager,
@@ -348,9 +348,9 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
         maxResidual = std::max( maxResidual,
                                 KERNEL_TYPE::template Launch< POLICY,
                                                      NUM_QUADRATURE_POINTS,
-                                                     typename decltype(kernelClass)::StackVars >( numElems,
+                                                     typename decltype(kernelComponent)::StackVars >( numElems,
                                                                                                   parameters,
-                                                                                                  kernelClass ) );
+                                                                                                  kernelComponent ) );
       } );
     } );
   } );
