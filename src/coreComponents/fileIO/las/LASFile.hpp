@@ -34,17 +34,9 @@ class LASVersionInformationSection;
 class LASLine
 {
 public:
-  LASLine() :
-    m_keywordname( "" ),
-    m_unit( "" ),
-    m_data( "" ),
-    m_description( "" )
-  {
-  }
+  LASLine() {}
   
-  ~LASLine()
-  {
-  }
+  ~LASLine() {}
 
   LASLine( string const & line )
   {
