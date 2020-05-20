@@ -143,7 +143,7 @@ real64 const * getPointerToComponent( R2SymTensor const & var, int const compone
 template< typename T >
 inline std::enable_if_t< traits::HasMemberFunction_size< T >, localIndex >
 size( T const & value )
-{ return integer_conversion< localIndex >( value.size() ); }
+{ return LvArray::integerConversion< localIndex >( value.size() ); }
 
 template< typename T >
 inline std::enable_if_t< !traits::HasMemberFunction_size< T >, localIndex >
@@ -289,7 +289,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  internal::logOutputType( cxx_utilities::demangleType( var ), "Packing for output: " );
+  internal::logOutputType( LvArray::demangleType( var ), "Packing for output: " );
 
   // Get the number of bytes in the packed object.
   localIndex const byteSize = bufferOps::PackSize( var );
@@ -327,7 +327,7 @@ inline
 void
 pushDataToConduitNode( std::string const & var, conduit::Node & node )
 {
-  internal::logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( LvArray::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< signed char >::id;
   conduit::DataType const dtype( conduitTypeID, var.size() );
@@ -341,7 +341,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pushDataToConduitNode( T const & var, conduit::Node & node )
 {
-  internal::logOutputType( cxx_utilities::demangleType( var ), "Output via external pointer: " );
+  internal::logOutputType( LvArray::demangleType( var ), "Output via external pointer: " );
 
   constexpr int conduitTypeID = conduitTypeInfo< typename traits::Pointer< T > >::id;
   constexpr int sizeofConduitType = conduitTypeInfo< typename traits::Pointer< T > >::sizeOfConduitType;
@@ -359,7 +359,7 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_child( "__values__" );
 
-  localIndex const byteSize = integer_conversion< localIndex >( valuesNode.dtype().strided_bytes() );
+  localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
 
   resize( var, numElements );
@@ -374,7 +374,7 @@ pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
   conduit::Node const & valuesNode = node.fetch_child( "__values__" );
 
-  localIndex const byteSize = integer_conversion< localIndex >( valuesNode.dtype().strided_bytes() );
+  localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
 
   T const * const values = reinterpret_cast< T const * >( valuesNode.data_ptr() );
@@ -388,7 +388,7 @@ std::enable_if_t< bufferOps::can_memcpy< T > >
 pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
                        conduit::Node & node )
 {
-  internal::logOutputType( cxx_utilities::demangleType( var ), "Output array via external pointer: " );
+  internal::logOutputType( LvArray::demangleType( var ), "Output array via external pointer: " );
 
   // Push the data into conduit
   constexpr int conduitTypeID = conduitTypeInfo< T >::id;
@@ -559,7 +559,7 @@ void addBlueprintField( T const &,
                         std::string const &,
                         std::vector< std::string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << cxx_utilities::demangleType< T >() <<
+  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::demangleType< T >() <<
                "\nWas trying to write it to " << fields.path() );
 }
 
@@ -605,7 +605,7 @@ void populateMCArray( T const &,
                       conduit::Node & node,
                       std::vector< std::string > const & )
 {
-  GEOSX_ERROR( "Cannot create a mcarray out of " << cxx_utilities::demangleType< T >() <<
+  GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::demangleType< T >() <<
                "\nWas trying to write it to " << node.path() );
 }
 
@@ -643,7 +643,7 @@ averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 template< typename T >
 std::unique_ptr< int > averageOverSecondDim( T const & )
 {
-  GEOSX_ERROR( "Cannot average over the second dimension of " << cxx_utilities::demangleType< T >() );
+  GEOSX_ERROR( "Cannot average over the second dimension of " << LvArray::demangleType< T >() );
   return std::unique_ptr< int >( nullptr );
 }
 

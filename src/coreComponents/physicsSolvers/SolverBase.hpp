@@ -15,8 +15,6 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
-
-
 #include <string>
 #include <limits>
 
@@ -26,18 +24,15 @@
 #include "dataRepository/ExecutableGroup.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "physicsSolvers/SystemSolverParameters.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
-
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/DofManager.hpp"
 
 namespace geosx
 {
 
 class DomainPartition;
-class SystemSolverParameters;
 
 namespace dataRepository
 {
@@ -184,7 +179,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
@@ -211,7 +206,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
   LineSearch( real64 const & time_n,
@@ -241,7 +236,7 @@ public:
    * assumes that the solution is achieved in a iteration. The use of this function requires that
    * the other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 LinearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
@@ -508,7 +503,7 @@ public:
 
   struct groupKeyStruct
   {
-    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
     constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
@@ -524,26 +519,36 @@ public:
   R1Tensor const gravityVector() const;
 
   /**
-   * accessor for the system solver parameters.
-   * @return
+   * @brief accessor for the linear solver parameters.
+   * @return the linear solver parameter list
    */
-
-  SystemSolverParameters * getSystemSolverParameters()
+  LinearSolverParameters & getLinearSolverParameters()
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters;
   }
 
-  SystemSolverParameters const * getSystemSolverParameters() const
+  /**
+   * @brief const accessor for the linear solver parameters.
+   * @return the linear solver parameter list
+   */
+  LinearSolverParameters const & getLinearSolverParameters() const
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters;
   }
 
-
+  /**
+   * @brief accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters & getNonlinearSolverParameters()
   {
     return m_nonlinearSolverParameters;
   }
 
+  /**
+   * @brief const accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters const & getNonlinearSolverParameters() const
   {
     return m_nonlinearSolverParameters;
@@ -618,10 +623,6 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
-
-  void SetLinearSolverParameters();
-
   string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
@@ -660,8 +661,6 @@ protected:
   void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
 
-  SystemSolverParameters m_systemSolverParameters;
-
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -678,7 +677,8 @@ protected:
   ParallelVector m_solution;
 
   /// Linear solver parameters
-  LinearSolverParameters m_linearSolverParameters;
+  //LinearSolverParameters m_linearSolverParameters;
+  LinearSolverParametersGroup m_linearSolverParameters;
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;

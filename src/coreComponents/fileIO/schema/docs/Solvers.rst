@@ -10,6 +10,7 @@ CompositionalMultiphaseWell      node               :ref:`XML_CompositionalMulti
 EmbeddedSurfaceGenerator         node               :ref:`XML_EmbeddedSurfaceGenerator`         
 FlowProppantTransport            node               :ref:`XML_FlowProppantTransport`            
 Hydrofracture                    node               :ref:`XML_Hydrofracture`                    
+LagrangianContact                node               :ref:`XML_LagrangianContact`                
 LaplaceFEM                       node               :ref:`XML_LaplaceFEM`                       
 Poroelastic                      node               :ref:`XML_Poroelastic`                      
 ProppantTransport                node               :ref:`XML_ProppantTransport`                

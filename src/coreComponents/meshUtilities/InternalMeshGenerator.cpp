@@ -193,7 +193,7 @@ void InternalMeshGenerator::PostProcessInput()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( integer_conversion< long >( m_elementType.size()) != m_numElePerBox.size())
+  if( LvArray::integerConversion< long >( m_elementType.size()) != m_numElePerBox.size())
   {
     if( m_elementType.size() == 1 )
     {
@@ -210,7 +210,7 @@ void InternalMeshGenerator::PostProcessInput()
   }
 
 
-  for( localIndex i = 0; i < integer_conversion< localIndex >( m_elementType.size() ); ++i )
+  for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
     if( m_elementType[i] == "C3D8" )
     {
@@ -659,7 +659,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 // domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion( *iterRegion );
-          int const numNodesPerElem = integer_conversion< int >( elemRegion->numNodesPerElement());
+          int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion->numNodesPerElement());
           integer_array nodeIDInBox( numNodesPerElem );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
@@ -854,7 +854,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( integer_conversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
+          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
           // ensures
           // that
           // the

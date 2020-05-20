@@ -52,6 +52,7 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea );
   this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter );
   this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal );
+  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix );
 
   m_toElements.resize( 0, 2 );
 
@@ -536,20 +537,20 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   localIndex const numNodes = nodeManager->size();
 
   ArrayOfArrays< FaceBuilder > facesByLowestNode( numNodes, 2 * maxFacesPerNode() );
-  createFacesByLowestNode( *elementManager, facesByLowestNode );
+  createFacesByLowestNode( *elementManager, facesByLowestNode.toView() );
 
   array1d< localIndex > uniqueFaceOffsets( numNodes + 1 );
-  localIndex const numFaces = calculateTotalNumberOfFaces( facesByLowestNode, uniqueFaceOffsets );
+  localIndex const numFaces = calculateTotalNumberOfFaces( facesByLowestNode.toViewConst(), uniqueFaceOffsets );
 
   resizeFaceToNodeMap( *elementManager,
-                       facesByLowestNode,
+                       facesByLowestNode.toViewConst(),
                        uniqueFaceOffsets,
                        nodeList() );
 
   resize( numFaces );
 
   populateMaps( *elementManager,
-                facesByLowestNode,
+                facesByLowestNode.toViewConst(),
                 uniqueFaceOffsets,
                 elementRegionList(),
                 elementSubRegionList(),
@@ -570,8 +571,8 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   {
     auto const & setWrapper = nodeSets[i];
     std::string const & setName = setWrapper->getName();
-    const SortedArray< localIndex > & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName );
-    ConstructSetFromSetAndMap( targetSet, m_nodeList, setName );
+    SortedArrayView< localIndex const > const & targetSet = nodeManager->sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
+    ConstructSetFromSetAndMap( targetSet, m_nodeList.toViewConst(), setName );
   } );
 
   SetDomainBoundaryObjects( nodeManager );
@@ -585,6 +586,7 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
   real64_array & faceArea  = getReference< real64_array >( viewKeyStruct::faceAreaString );
   r1_array & faceNormal = getReference< r1_array >( viewKeyStruct::faceNormalString );
   r1_array & faceCenter = getReference< r1_array >( viewKeyStruct::faceCenterString );
+  r2_array & rotationMatrix = getReference< r2_array >( viewKeyStruct::faceRotationMatrixString );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
@@ -594,7 +596,8 @@ void FaceManager::computeGeometry( NodeManager const * const nodeManager )
                                                                     m_nodeList.sizeOfArray( faceID ),
                                                                     X,
                                                                     faceCenter[ faceID ],
-                                                                    faceNormal[ faceID ] );
+                                                                    faceNormal[ faceID ],
+                                                                    rotationMatrix[ faceID ] );
   } );
 }
 
@@ -618,7 +621,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference< integer_array >( nodeManager->viewKeys.domainBoundaryIndicator );
   nodeDomainBoundaryIndicator = 0;
 
-  ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList().toViewConst();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const k )
   {
@@ -653,7 +656,7 @@ void FaceManager::SetIsExternal()
 localIndex FaceManager::getMaxFaceNodes() const
 {
   localIndex maxSize = 0;
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = nodeList().toViewConst();
   for( localIndex kf =0; kf < size(); ++kf )
   {
     maxSize = std::max( maxSize, faceToNodeMap.sizeOfArray( kf ) );
@@ -678,7 +681,7 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   elemManager->forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
   { subRegion.calculateElementCenters( X ); } );
 
-  ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList();
+  ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList().toView();
 
   forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
   {
@@ -787,7 +790,7 @@ void FaceManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
 
   localIndex const numFaces = size();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = this->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = this->nodeList().toViewConst();
   arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
 
   globalFaceNodes.resize( numFaces );
@@ -849,7 +852,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString ) );
 
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_nodeList.Base(),
+                                           m_nodeList.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToNodes,
                                            packList,
                                            this->localToGlobalMap(),
@@ -857,7 +860,7 @@ localIndex FaceManager::PackUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString ) );
   packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_edgeList.Base(),
+                                           m_edgeList.Base().toViewConst(),
                                            m_unmappedGlobalIndicesInToEdges,
                                            packList,
                                            this->localToGlobalMap(),

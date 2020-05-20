@@ -582,7 +582,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     ExplicitElementKernelLaunch( numNodesPerElement,
                                  numQuadraturePoints,
                                  &constitutiveRelation,
-                                 this->m_elemsAttachedToSendOrReceiveNodes[er][esr],
+                                 this->m_elemsAttachedToSendOrReceiveNodes[er][esr].toViewConst(),
                                  elemsToNodes,
                                  dNdX,
                                  detJ,
@@ -594,7 +594,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   } ); //Element Region
 #endif
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -623,7 +623,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
     ExplicitElementKernelLaunch( numNodesPerElement,
                                  numQuadraturePoints,
                                  &constitutiveRelation,
-                                 this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr],
+                                 this->m_elemsNotAttachedToSendOrReceiveNodes[er][esr].toViewConst(),
                                  elemsToNodes,
                                  dNdX,
                                  detJ,
@@ -635,7 +635,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   } ); //Element Region
 #endif
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes );
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -690,7 +690,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
   NodeManager * const nodeManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
 
   real64_array const & faceArea  = faceManager->getReference< real64_array >( "faceArea" );
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -791,7 +791,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
 
   arrayView1d< real64 const > const & faceArea  = faceManager->faceArea();
   arrayView1d< R1Tensor const > const & faceNormal  = faceManager->faceNormal();
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -805,7 +805,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     globalIndex nodeDOF[20];
     real64 nodeRHS[20];
 
-    int const numNodes = integer_conversion< int >( faceToNodeMap.sizeOfArray( kf ));
+    int const numNodes = LvArray::integerConversion< int >( faceToNodeMap.sizeOfArray( kf ));
     for( int a=0; a<numNodes; ++a )
     {
       for( int component=0; component<3; ++component )
@@ -1361,7 +1361,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     fc = {0, 0, 0};
 
     arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
-    ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList();
+    ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
     arrayView1d< globalIndex > const & nodeDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );

@@ -1,5 +1,5 @@
-[submodule "src/coreComponents/cxx-utilities"]
-	path = src/coreComponents/cxx-utilities
+[submodule "src/coreComponents/LvArray"]
+	path = src/coreComponents/LvArray
 	url = ../cxx-utilities.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt

@@ -316,7 +316,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 #endif
                         matrix,
                         rhs,
-                        *m_derivativeFluxResidual_dAperture );
+                        m_derivativeFluxResidual_dAperture->toView() );
   } );
 }
 
@@ -361,7 +361,7 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
       }
     }
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet,
+    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet.toViewConst(),
                                                                               time_n + dt,
                                                                               dt,
                                                                               subRegion,

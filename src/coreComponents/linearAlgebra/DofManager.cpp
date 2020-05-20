@@ -48,7 +48,8 @@ void DofManager::initializeDataStructure()
 {
   // we pre-allocate an oversized array to store connectivity type
   // instead of resizing it dynamically as fields are added.
-  m_coupling.resize( MAX_FIELDS, MAX_FIELDS );
+  m_coupling.clear();
+  m_coupling.resize( MAX_FIELDS, std::vector< CouplingDescription >( MAX_FIELDS ) );
 }
 
 void DofManager::clear()
@@ -325,7 +326,7 @@ struct ConnLocPatternBuilder
 {
   static void build( MeshLevel * const mesh,
                      DofManager::FieldDescription const & field,
-                     array1d< string > const & regions,
+                     std::vector< std::string > const & regions,
                      localIndex const rowOffset,
                      LvArray::SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -372,7 +373,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
 {
   static void build( MeshLevel * const mesh,
                      DofManager::FieldDescription const & field,
-                     array1d< string > const & regions,
+                     std::vector< std::string > const & regions,
                      localIndex const rowOffset,
                      LvArray::SparsityPattern< globalIndex > & connLocPattern )
   {
@@ -414,7 +415,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
 template< DofManager::Location LOC, DofManager::Location CONN >
 void makeConnLocPattern( MeshLevel * const mesh,
                          DofManager::FieldDescription const & field,
-                         array1d< string > const & regions,
+                         std::vector< std::string > const & regions,
                          LvArray::SparsityPattern< globalIndex > & connLocPattern )
 {
   using Loc = DofManager::Location;
@@ -616,9 +617,10 @@ void DofManager::setSparsityPattern( MATRIX & matrix,
   GEOSX_ERROR_IF( !m_reordered, "Cannot set monolithic sparsity pattern before reorderByRank() has been called." );
 
   matrix.open();
-  for( localIndex blockRow = 0; blockRow < m_fields.size(); ++blockRow )
+  localIndex const numFields = LvArray::integerConversion< localIndex >( m_fields.size() );
+  for( localIndex blockRow = 0; blockRow < numFields; ++blockRow )
   {
-    for( localIndex blockCol = 0; blockCol < m_fields.size(); ++blockCol )
+    for( localIndex blockCol = 0; blockCol < numFields; ++blockCol )
     {
       setSparsityPatternOneBlock( matrix, blockRow, blockCol );
     }
@@ -684,7 +686,7 @@ void vectorToFieldImpl( VECTOR const & vector,
         {
           FIELD_OP::template SpecifyFieldValue( field,
                                                 i,
-                                                integer_conversion< integer >( c - loComp ),
+                                                LvArray::integerConversion< integer >( c - loComp ),
                                                 scalingFactor * localVector[lid + c] );
         }
       }
@@ -729,7 +731,7 @@ void fieldToVectorImpl( VECTOR & vector,
         {
           FIELD_OP::template ReadFieldValue( field,
                                              i,
-                                             integer_conversion< integer >( c - loComp ),
+                                             LvArray::integerConversion< integer >( c - loComp ),
                                              localVector[lid + c] );
         }
       }
@@ -898,8 +900,7 @@ void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity )
 {
-  string_array dummy_regions;
-  addCoupling( rowFieldName, colFieldName, connectivity, dummy_regions, true );
+  addCoupling( rowFieldName, colFieldName, connectivity, {}, true );
 }
 
 // Just another interface to allow four parameters (no symmetry)
@@ -917,8 +918,7 @@ void DofManager::addCoupling( string const & rowFieldName,
                               Connector const connectivity,
                               bool const symmetric )
 {
-  string_array dummy_regions;
-  addCoupling( rowFieldName, colFieldName, connectivity, dummy_regions, symmetric );
+  addCoupling( rowFieldName, colFieldName, connectivity, {}, symmetric );
 }
 
 // The real function, allowing the creation of coupling blocks
@@ -939,17 +939,17 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
 
   // get row/col field regions
-  string_array const & rowRegions = m_fields[rowFieldIndex].regions;
-  string_array const & colRegions = m_fields[colFieldIndex].regions;
-  string_array & regionList = m_coupling[rowFieldIndex][colFieldIndex].regions;
+  std::vector< std::string > const & rowRegions = m_fields[rowFieldIndex].regions;
+  std::vector< std::string > const & colRegions = m_fields[colFieldIndex].regions;
+  std::vector< std::string > & regionList = m_coupling[rowFieldIndex][colFieldIndex].regions;
 
   if( regions.empty() )
   {
     // Populate with regions common between two fields
     regionList.resize( std::min( rowRegions.size(), colRegions.size() ) );
-    string_array::iterator it = std::set_intersection( rowRegions.begin(), rowRegions.end(),
-                                                       colRegions.begin(), colRegions.end(),
-                                                       regionList.begin() );
+    auto it = std::set_intersection( rowRegions.begin(), rowRegions.end(),
+                                     colRegions.begin(), colRegions.end(),
+                                     regionList.begin() );
     regionList.resize( std::distance( regionList.begin(), it ) );
   }
   else

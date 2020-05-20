@@ -28,14 +28,14 @@
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
 #include "Logger.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/ArrayOfArrays.hpp"
-#include "cxx-utilities/src/ArrayOfSets.hpp"
-#include "cxx-utilities/src/CRSMatrix.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -95,8 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
-                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
-constexpr int MPI_COMM_GEOSX = 0;
+extern int MPI_COMM_GEOSX;
 #endif
 
 /**
@@ -139,9 +139,9 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef USE_CHAI
+#ifdef GEOSX_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
@@ -509,7 +509,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 
@@ -626,6 +626,35 @@ public:
    */
   class typeRegex
   {
+public:
+
+    /// The type of map used to store the map of type parsing regular expressions
+    using regexMapType = std::map< std::string, std::string >;
+
+    /**
+     * @brief Get an iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::iterator begin(){return regexMap.begin();}
+
+    /**
+     * @brief Get an iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::iterator end(){return regexMap.end();}
+
+    /**
+     * @brief Get a const iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::const_iterator begin() const {return regexMap.begin();}
+
+    /**
+     * @brief Get a const iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::const_iterator end() const {return regexMap.end();}
+
 private:
 
     /**
@@ -686,7 +715,7 @@ private:
     std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
-    std::unordered_map< std::string, std::string > regexMap =
+    regexMapType regexMap =
     {
       {"integer", ri},
       {"localIndex", ri},
@@ -726,32 +755,6 @@ private:
       {"geosx_TimeIntegrationOption", rs},
       {"geosx_dataRepository_PlotLevel", ri}
     };
-
-public:
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
 
   /**

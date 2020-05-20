@@ -22,7 +22,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -161,7 +160,7 @@ void CompressibleSinglePhaseFluid::BatchUpdate( arrayView1d< double const > cons
   } );
   makeExponentialRelation( m_viscosityModelType, m_referencePressure, m_referenceViscosity, m_viscosibility, [&] ( auto relation )
   {
-    SingleFluidBase::BatchDensityUpdateKernel< CompressibleSinglePhaseFluid >( pressure, relation );
+    SingleFluidBase::BatchViscosityUpdateKernel< CompressibleSinglePhaseFluid >( pressure, relation );
   } );
 }
 

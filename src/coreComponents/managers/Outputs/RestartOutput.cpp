@@ -28,7 +28,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 RestartOutput::RestartOutput( std::string const & name,
                               Group * const parent ):
