@@ -191,15 +191,14 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
   matrix.open();
 
 
-  finiteElement::
-    RegionLoopSparsity::FillSparsity< serialPolicy,
-                                      LaplaceFEMKernel,
-                                      CellElementSubRegion >( *mesh,
-                                                              targetRegionNames(),
-                                                              nullptr,
-                                                              dofIndex,
-                                                              matrix,
-                                                              rhs);
+  finiteElement::FillSparsity< serialPolicy,
+                               LaplaceFEMKernel,
+                               CellElementSubRegion >( *mesh,
+                                                       targetRegionNames(),
+                                                       nullptr,
+                                                       dofIndex,
+                                                       matrix,
+                                                       rhs);
 
 
   matrix.close();
@@ -234,18 +233,18 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   matrix.open();
   rhs.open();
 
-  LaplaceFEMKernel::
-  Execute< serialPolicy,
-           LaplaceFEMKernel,
-           Dummy,
-           CellElementSubRegion >( *mesh,
-                                   targetRegionNames(),
-                                   array1d<string>(),
-                                   feDiscretization,
-                                   dofIndex,
-                                   matrix,
-                                   rhs,
-                                   LaplaceFEMKernel::Parameters( m_fieldName ));
+  finiteElement::
+  RegionBasedKernelApplication< serialPolicy,
+                                LaplaceFEMKernel,
+                                Dummy,
+                                CellElementSubRegion >( *mesh,
+                                                        targetRegionNames(),
+                                                        array1d<string>(),
+                                                        feDiscretization,
+                                                        dofIndex,
+                                                        matrix,
+                                                        rhs,
+                                                        LaplaceFEMKernel::Parameters( m_fieldName ));
 
   matrix.close();
   rhs.close();

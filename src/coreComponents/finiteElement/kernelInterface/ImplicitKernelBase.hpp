@@ -12,7 +12,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RegionLoop.hpp"
+#include "KernelBase.hpp"
 
 /**
  * @file RegionLoopSparsity.hpp
@@ -40,7 +40,7 @@ namespace finiteElement
  * element method over a loop of element regions.
  *
  */
-class RegionLoopSparsity : public RegionLoop
+class ImplicitKernelBase : public KernelBase
 {
 public:
 
@@ -56,7 +56,7 @@ public:
    */
   template< int NUM_ROWS,
             int NUM_COLS >
-  struct StackVariables : RegionLoop::StackVariables<NUM_ROWS,NUM_COLS>
+  struct StackVariables : KernelBase::StackVariables<NUM_ROWS,NUM_COLS>
   {
 public:
     static constexpr int numRows = NUM_ROWS;
@@ -88,7 +88,7 @@ public:
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
             int NUM_DOF_PER_TEST_SP,
             int NUM_DOF_PER_TRIAL_SP >
-  class Kernels : RegionLoop::Kernels< SUBREGION_TYPE,
+  class Components : KernelBase::Components< SUBREGION_TYPE,
                                       CONSTITUTIVE_TYPE,
                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
@@ -97,7 +97,7 @@ public:
   {
 public:
 
-    using KernelsBase = RegionLoop::Kernels< SUBREGION_TYPE,
+    using ComponentsBase = KernelBase::Components< SUBREGION_TYPE,
                                              CONSTITUTIVE_TYPE,
                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
@@ -112,14 +112,14 @@ public:
     using StackVars = StackVariables< numTestSupportPointsPerElem*numDofPerTestSupportPoint,
                                       numTrialSupportPointsPerElem*numDofPerTrialSupportPoint >;
 
-    using KernelsBase::elemsToNodes;
-    using KernelsBase::elemGhostRank;
-    using KernelsBase::constitutiveUpdate;
-    using KernelsBase::m_finiteElementSpace;
-    using KernelsBase::Launch;
+    using ComponentsBase::elemsToNodes;
+    using ComponentsBase::elemGhostRank;
+    using ComponentsBase::constitutiveUpdate;
+    using ComponentsBase::m_finiteElementSpace;
+    using ComponentsBase::Launch;
 
 
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
+    Components( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
@@ -127,7 +127,7 @@ public:
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
-      KernelsBase( elementSubRegion,
+      ComponentsBase( elementSubRegion,
                    finiteElementSpace,
                    inputConstitutiveType,
                    inputConstitutiveType->createKernelWrapper() ),
@@ -139,7 +139,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
+    void setup( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
@@ -166,7 +166,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
                        localIndex const GEOSX_UNUSED_PARAM( q ),
                        STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
@@ -174,7 +174,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
                           PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
@@ -183,7 +183,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                             localIndex const GEOSX_UNUSED_PARAM( q ),
                             PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                             STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
@@ -192,7 +192,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
@@ -208,36 +208,33 @@ public:
     ParallelMatrix & m_matrix;
     ParallelVector & m_rhs;
   };
-
-  //***************************************************************************
-  template< typename POLICY,
-            typename UPDATE_CLASS,
-            typename REGION_TYPE >
-  static
-  real64 FillSparsity( MeshLevel & mesh,
-                       arrayView1d< string const > const & targetRegions,
-                       FiniteElementDiscretization const * const feDiscretization,
-                       arrayView1d< globalIndex const > const & inputDofNumber,
-                       ParallelMatrix & inputMatrix,
-                       ParallelVector & inputRhs )
-  {
-    return Execute< POLICY,
-                    UPDATE_CLASS,
-                    constitutive::Dummy,
-                    REGION_TYPE,
-                    RegionLoop::Parameters,
-                    UPDATE_CLASS::template SparsityKernels >( mesh,
-                                                              targetRegions,
-                                                              array1d<string>(),
-                                                              feDiscretization,
-                                                              inputDofNumber,
-                                                              inputMatrix,
-                                                              inputRhs,
-                                                              RegionLoop::Parameters() );
-  }
-
-
 };
+
+//***************************************************************************
+template< typename POLICY,
+          typename UPDATE_CLASS,
+          typename REGION_TYPE >
+static
+real64 FillSparsity( MeshLevel & mesh,
+                     arrayView1d< string const > const & targetRegions,
+                     FiniteElementDiscretization const * const feDiscretization,
+                     arrayView1d< globalIndex const > const & inputDofNumber,
+                     ParallelMatrix & inputMatrix,
+                     ParallelVector & inputRhs )
+{
+  return RegionBasedKernelApplication< POLICY,
+                  ImplicitKernelBase,
+                  constitutive::Dummy,
+                  REGION_TYPE,
+                  UPDATE_CLASS::template SparsityComponents >( mesh,
+                                                            targetRegions,
+                                                            array1d<string>(),
+                                                            feDiscretization,
+                                                            inputDofNumber,
+                                                            inputMatrix,
+                                                            inputRhs,
+                                                            ImplicitKernelBase::Parameters() );
+}
 
 }
 }

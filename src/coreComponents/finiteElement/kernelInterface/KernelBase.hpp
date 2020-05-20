@@ -77,7 +77,7 @@ discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
  * element method over a loop of element regions.
  *
  */
-class RegionLoop
+class KernelBase
 {
 public:
 
@@ -116,19 +116,19 @@ public:
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
             int NUM_DOF_PER_TEST_SP,
             int NUM_DOF_PER_TRIAL_SP >
-  class Kernels
+  class Components
   {
 public:
-    Kernels( SUBREGION_TYPE const & elementSubRegion,
+    Components( SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
-      Kernels( elementSubRegion,
+      Components( elementSubRegion,
                finiteElementSpace,
                inputConstitutiveType,
                typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
-    Kernels( SUBREGION_TYPE const & elementSubRegion,
+    Components( SUBREGION_TYPE const & elementSubRegion,
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
@@ -141,14 +141,14 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void setup( localIndex const GEOSX_UNUSED_PARAM( k ),
                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void updateKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
                        localIndex const GEOSX_UNUSED_PARAM( q ),
                        STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
@@ -156,7 +156,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                           localIndex const GEOSX_UNUSED_PARAM( q ),
                           PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
@@ -165,7 +165,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void integrationKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                             localIndex const GEOSX_UNUSED_PARAM( q ),
                             PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                             STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
@@ -174,7 +174,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {
@@ -204,18 +204,18 @@ public:
       {
         STACK_VARIABLES stack;
 
-        kernelClass.preKernel( k, stack );
+        kernelClass.setup( k, stack );
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          kernelClass.updateKernel( k, q, stack );
+          kernelClass.quadraturePointStateUpdate( k, q, stack );
 
-          kernelClass.stiffnessKernel( k, q, parameters, stack );
+          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
 
-          kernelClass.integrationKernel( k, q, parameters, stack );
+          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
         }
         if( kernelClass.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelClass.postKernel( k, parameters, stack ) );
+          maxResidual.max( kernelClass.complete( k, parameters, stack ) );
         }
       } );
       return maxResidual.get();
@@ -241,18 +241,18 @@ public:
       {
         STACK_VARIABLES stack;
 
-        kernelClass.preKernel( k, stack );
+        kernelClass.setup( k, stack );
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          kernelClass.updateKernel( k, q, stack );
+          kernelClass.quadraturePointStateUpdate( k, q, stack );
 
-          kernelClass.stiffnessKernel( k, q, parameters, stack );
+          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
 
-          kernelClass.integrationKernel( k, q, parameters, stack );
+          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
         }
         if( kernelClass.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelClass.postKernel( k, parameters, stack ) );
+          maxResidual.max( kernelClass.complete( k, parameters, stack ) );
         }
       } );
       return maxResidual.get();
@@ -267,97 +267,96 @@ public:
     FiniteElementBase const * m_finiteElementSpace;
 
   };
-
-  //***************************************************************************
-  template< typename POLICY,
-            typename UPDATE_CLASS,
-            typename CONSTITUTIVE_BASE,
-            typename REGION_TYPE,
-            typename PARAMETER_CLASS,
-            template< typename SUBREGION_TYPE,
-                      typename CONSTITUTIVE_TYPE,
-                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_CLASS = UPDATE_CLASS::template Kernels >
-  static
-  real64 Execute( MeshLevel & mesh,
-                  arrayView1d< string const > const & targetRegions,
-                  arrayView1d< string const > const & constitutiveNames,
-                  FiniteElementDiscretization const * const feDiscretization,
-                  arrayView1d< globalIndex const > const & inputDofNumber,
-                  ParallelMatrix & inputMatrix,
-                  ParallelVector & inputRhs,
-                  PARAMETER_CLASS const & parameters )
-  {
-
-    real64 maxResidual = 0;
-
-    NodeManager & nodeManager = *(mesh.getNodeManager());
-    ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
-
-
-    elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                              [&] ( localIndex const targetRegionIndex,
-                                                                    auto & elementSubRegion )
-    {
-      localIndex const numElems = elementSubRegion.size();
-      typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
-
-
-      FiniteElementBase const * finiteElementSpace = nullptr;
-      if( feDiscretization != nullptr )
-      {
-        finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
-      }
-
-      localIndex const
-      numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
-                                   1 :
-                                   finiteElementSpace->n_quadrature_points();
-
-      discretizationLaunchSelector( elementSubRegion.numNodesPerElement(),
-                                    numQuadraturePointsPerElem,
-                                    [&]( auto constNNPE,
-                                         auto constNQPPE )
-      {
-        constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
-        constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
-
-        constitutive::ConstitutiveBase * const
-        constitutiveRelation = ( targetRegionIndex <= constitutiveNames.size()-1 ) ?
-                               elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] ) : nullptr;
-
-        constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                          [&]( auto * const castedConstitutiveRelation )
-        {
-          using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
-
-          using KERNEL_TYPE = KERNEL_CLASS< SUBREGIONTYPE,
-                                            CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM >;
-          KERNEL_TYPE kernelClass( inputDofNumber,
-                                   inputMatrix,
-                                   inputRhs,
-                                   nodeManager,
-                                   elementSubRegion,
-                                   finiteElementSpace,
-                                   castedConstitutiveRelation,
-                                   parameters );
-
-          maxResidual = std::max( maxResidual,
-                                  KERNEL_TYPE::template Launch< POLICY,
-                                                       NUM_QUADRATURE_POINTS,
-                                                       typename decltype(kernelClass)::StackVars >( numElems,
-                                                                                                    parameters,
-                                                                                                    kernelClass ) );
-        } );
-      } );
-    } );
-
-    return maxResidual;
-  }
 };
 
+
+//***************************************************************************
+template< typename POLICY,
+          typename UPDATE_CLASS,
+          typename CONSTITUTIVE_BASE,
+          typename REGION_TYPE,
+          template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE = UPDATE_CLASS::template Components>
+static
+real64 RegionBasedKernelApplication( MeshLevel & mesh,
+                arrayView1d< string const > const & targetRegions,
+                arrayView1d< string const > const & constitutiveNames,
+                FiniteElementDiscretization const * const feDiscretization,
+                arrayView1d< globalIndex const > const & inputDofNumber,
+                ParallelMatrix & inputMatrix,
+                ParallelVector & inputRhs,
+                typename UPDATE_CLASS::Parameters const & parameters )
+{
+
+  real64 maxResidual = 0;
+
+  NodeManager & nodeManager = *(mesh.getNodeManager());
+  ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
+
+
+  elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
+                                                            [&] ( localIndex const targetRegionIndex,
+                                                                  auto & elementSubRegion )
+  {
+    localIndex const numElems = elementSubRegion.size();
+    typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
+
+
+    FiniteElementBase const * finiteElementSpace = nullptr;
+    if( feDiscretization != nullptr )
+    {
+      finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
+    }
+
+    localIndex const
+    numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
+                                 1 :
+                                 finiteElementSpace->n_quadrature_points();
+
+    discretizationLaunchSelector( elementSubRegion.numNodesPerElement(),
+                                  numQuadraturePointsPerElem,
+                                  [&]( auto constNNPE,
+                                       auto constNQPPE )
+    {
+      constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
+      constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
+
+      constitutive::ConstitutiveBase * const
+      constitutiveRelation = ( targetRegionIndex <= constitutiveNames.size()-1 ) ?
+                             elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] ) : nullptr;
+
+      constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
+                                                                        [&]( auto * const castedConstitutiveRelation )
+      {
+        using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+
+        using KERNEL_TYPE = COMPONENTS_TYPE< SUBREGIONTYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          NUM_NODES_PER_ELEM,
+                                          NUM_NODES_PER_ELEM >;
+        KERNEL_TYPE kernelClass( inputDofNumber,
+                                 inputMatrix,
+                                 inputRhs,
+                                 nodeManager,
+                                 elementSubRegion,
+                                 finiteElementSpace,
+                                 castedConstitutiveRelation,
+                                 parameters );
+
+        maxResidual = std::max( maxResidual,
+                                KERNEL_TYPE::template Launch< POLICY,
+                                                     NUM_QUADRATURE_POINTS,
+                                                     typename decltype(kernelClass)::StackVars >( numElems,
+                                                                                                  parameters,
+                                                                                                  kernelClass ) );
+      } );
+    } );
+  } );
+
+  return maxResidual;
+}
 }
 }
 

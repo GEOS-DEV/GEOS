@@ -19,15 +19,15 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
 
-#include "finiteElement/kernelInterface/RegionLoopSparsity.hpp"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
 {
 
-class LaplaceFEMKernel : public finiteElement::RegionLoopSparsity
+class LaplaceFEMKernel : public finiteElement::ImplicitKernelBase
 {
 public:
-  using Base = finiteElement::RegionLoopSparsity;
+  using BaseKernel = finiteElement::ImplicitKernelBase;
   static constexpr int numTestDofPerSP = 1;
   static constexpr int numTrialDofPerSP = 1;
 
@@ -35,10 +35,10 @@ public:
   /**
    * @class Parameters
    */
-  struct Parameters : public Base::Parameters
+  struct Parameters : public BaseKernel::Parameters
   {
     Parameters( string const & fieldName ):
-      Base::Parameters(),
+      BaseKernel::Parameters(),
       m_fieldName{'\0'}
     {
       fieldName.copy( m_fieldName, fieldName.size() );
@@ -51,11 +51,11 @@ public:
   //***************************************************************************
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
-  struct StackVariables : Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+  struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
                                                 NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >
   {
 public:
-    using StackVariablesBase = Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+    using StackVariablesBase = BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >;
 
     using StackVariablesBase::numRows;
@@ -78,7 +78,7 @@ public:
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
-  using SparsityKernels = Base::Kernels< SUBREGION_TYPE,
+  using SparsityComponents = BaseKernel::Components< SUBREGION_TYPE,
                                          CONSTITUTIVE_TYPE,
                                          NUM_NODES_PER_ELEM,
                                          NUM_NODES_PER_ELEM,
@@ -90,7 +90,7 @@ public:
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
-  class Kernels : public Base::Kernels< SUBREGION_TYPE,
+  class Components : public BaseKernel::Components< SUBREGION_TYPE,
                                         CONSTITUTIVE_TYPE,
                                         NUM_NODES_PER_ELEM,
                                         NUM_NODES_PER_ELEM,
@@ -98,7 +98,7 @@ public:
                                         1 >
   {
 public:
-    using KernelsBase = Base::Kernels< SUBREGION_TYPE,
+    using ComponentsBase = BaseKernel::Components< SUBREGION_TYPE,
                                       CONSTITUTIVE_TYPE,
                                       NUM_NODES_PER_ELEM,
                                       NUM_NODES_PER_ELEM,
@@ -107,19 +107,19 @@ public:
 
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
-    using KernelsBase::m_dofNumber;
-    using KernelsBase::m_matrix;
-    using KernelsBase::m_rhs;
-    using KernelsBase::elemsToNodes;
-    using KernelsBase::elemGhostRank;
-    using KernelsBase::constitutiveUpdate;
-    using KernelsBase::m_finiteElementSpace;
-    using KernelsBase::Launch;
+    using ComponentsBase::m_dofNumber;
+    using ComponentsBase::m_matrix;
+    using ComponentsBase::m_rhs;
+    using ComponentsBase::elemsToNodes;
+    using ComponentsBase::elemGhostRank;
+    using ComponentsBase::constitutiveUpdate;
+    using ComponentsBase::m_finiteElementSpace;
+    using ComponentsBase::Launch;
 
     using StackVars = StackVariables< numNodesPerElem,
                                       numNodesPerElem >;
 
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
+    Components( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & nodeManager,
@@ -127,7 +127,7 @@ public:
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & parameters ):
-      KernelsBase( inputDofNumber,
+      ComponentsBase( inputDofNumber,
                   inputMatrix,
                   inputRhs,
                   nodeManager,
@@ -148,7 +148,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
+    void setup( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
@@ -166,7 +166,7 @@ public:
               typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const k,
+    void quadraturePointJacobianContribution( localIndex const k,
                           localIndex const q,
                           PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & stack ) const
@@ -183,7 +183,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM(k),
+    real64 complete( localIndex const GEOSX_UNUSED_PARAM(k),
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {

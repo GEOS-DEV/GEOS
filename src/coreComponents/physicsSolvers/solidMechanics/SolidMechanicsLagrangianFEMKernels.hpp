@@ -23,8 +23,8 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-#include "finiteElement/kernelInterface/RegionLoopSparsity.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
@@ -422,14 +422,14 @@ struct ImplicitKernel
 
 };
 
-class QuasiStatic : public finiteElement::RegionLoopSparsity
+class QuasiStatic : public finiteElement::ImplicitKernelBase
 {
 public:
-  using Base = finiteElement::RegionLoopSparsity;
+  using BaseKernel = finiteElement::ImplicitKernelBase;
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
-  struct Parameters : public Base::Parameters
+  struct Parameters : public BaseKernel::Parameters
   {
     Parameters( real64 const inputGravityVector[3] ):
       m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
@@ -441,11 +441,11 @@ public:
 
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
-  struct StackVariables : Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+  struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
                                                 NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >
   {
 public:
-    using StackVariablesBase = Base::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
+    using StackVariablesBase = BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >;
     using StackVariablesBase::numRows;
     using StackVariablesBase::numCols;
@@ -469,7 +469,7 @@ public:
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
-  using SparsityKernels = Base::Kernels< SUBREGION_TYPE,
+  using SparsityComponents = BaseKernel::Components< SUBREGION_TYPE,
                                          CONSTITUTIVE_TYPE,
                                          NUM_NODES_PER_ELEM,
                                          NUM_NODES_PER_ELEM,
@@ -480,7 +480,7 @@ public:
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
-  class Kernels : public Base::Kernels< SUBREGION_TYPE,
+  class Components : public BaseKernel::Components< SUBREGION_TYPE,
                                         CONSTITUTIVE_TYPE,
                                         NUM_NODES_PER_ELEM,
                                         NUM_NODES_PER_ELEM,
@@ -488,7 +488,7 @@ public:
                                         numTrialDofPerSP >
   {
 public:
-    using KernelBase = Base::Kernels< SUBREGION_TYPE,
+    using ComponentsBase = BaseKernel::Components< SUBREGION_TYPE,
                                       CONSTITUTIVE_TYPE,
                                       NUM_NODES_PER_ELEM,
                                       NUM_NODES_PER_ELEM,
@@ -497,19 +497,19 @@ public:
 
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
-    using KernelBase::m_dofNumber;
-    using KernelBase::m_matrix;
-    using KernelBase::m_rhs;
-    using KernelBase::elemsToNodes;
-    using KernelBase::constitutiveUpdate;
-    using KernelBase::m_finiteElementSpace;
+    using ComponentsBase::m_dofNumber;
+    using ComponentsBase::m_matrix;
+    using ComponentsBase::m_rhs;
+    using ComponentsBase::elemsToNodes;
+    using ComponentsBase::constitutiveUpdate;
+    using ComponentsBase::m_finiteElementSpace;
 
     using StackVars = StackVariables< numNodesPerElem,
                                       numNodesPerElem >;
 
 
 
-    Kernels( arrayView1d< globalIndex const > const & inputDofNumber,
+    Components( arrayView1d< globalIndex const > const & inputDofNumber,
              ParallelMatrix & inputMatrix,
              ParallelVector & inputRhs,
              NodeManager const & nodeManager,
@@ -517,7 +517,7 @@ public:
              FiniteElementBase const * const finiteElementSpace,
              CONSTITUTIVE_TYPE * const inputConstitutiveType,
              Parameters const & parameters ):
-      KernelBase( inputDofNumber,
+      ComponentsBase( inputDofNumber,
                   inputMatrix,
                   inputRhs,
                   nodeManager,
@@ -541,7 +541,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
+    void setup( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
@@ -563,7 +563,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void updateKernel( localIndex const k,
+    void quadraturePointStateUpdate( localIndex const k,
                        localIndex const q,
                        STACK_VARIABLE_TYPE & stack ) const
     {
@@ -593,7 +593,7 @@ public:
               typename DYNAMICS_LAMBDA = nvstd::function< void( localIndex, localIndex) >*/ >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const k,
+    void quadraturePointJacobianContribution( localIndex const k,
                           localIndex const q,
                           PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & stack/*,
@@ -644,7 +644,7 @@ public:
               typename DYNAMICS_LAMBDA = STD_FUNCTION< void( real64 * ) >*/ >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void integrationKernel( localIndex const k,
+    void quadraturePointResidualContribution( localIndex const k,
                             localIndex const q,
                             PARAMETERS_TYPE const & parameters,
                             STACK_VARIABLE_TYPE & stack/*,
@@ -679,7 +679,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( localIndex const GEOSX_UNUSED_PARAM( k ),
+    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE & stack ) const
     {
@@ -810,7 +810,7 @@ public:
 //    template< typename STACK_VARIABLE_TYPE >
 //  //    GEOSX_HOST_DEVICE
 //    GEOSX_FORCE_INLINE
-//    void preKernel( localIndex const k,
+//    void setup( localIndex const k,
 //                    STACK_VARIABLE_TYPE & stack ) const
 //    {
 //      for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
@@ -833,7 +833,7 @@ public:
 //    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
 //  //    GEOSX_HOST_DEVICE
 //    GEOSX_FORCE_INLINE
-//    void stiffnessKernel( localIndex const k,
+//    void quadraturePointJacobianContribution( localIndex const k,
 //                          localIndex const q,
 //                          PARAMETERS_TYPE const & parameters,
 //                          STACK_VARIABLE_TYPE & stack ) const
@@ -847,7 +847,7 @@ public:
 //      real64 const & newmarkBeta = parameters.newmarkBeta;
 //      real64 const & dt = parameters.dt;
 //
-//      KernelBase::stiffnessKernel( k, q, parameters, stack, [&]( localIndex const a, localIndex const b )
+//      KernelBase::quadraturePointJacobianContribution( k, q, parameters, stack, [&]( localIndex const a, localIndex const b )
 //      {
 //        real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ(k,q);
 //        real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )*
@@ -870,7 +870,7 @@ public:
 //    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
 //  //    GEOSX_HOST_DEVICE
 //    GEOSX_FORCE_INLINE
-//    real64 postKernel( PARAMETERS_TYPE const & parameters,
+//    real64 complete( PARAMETERS_TYPE const & parameters,
 //                       STACK_VARIABLE_TYPE & stack ) const
 //    {
 //      constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
@@ -909,7 +909,7 @@ public:
 //        }
 //      }
 //
-//      return KernelBase::postKernel( parameters, stack );
+//      return KernelBase::complete( parameters, stack );
 //    }
 //  };
 //
@@ -1024,7 +1024,7 @@ public:
 //    template< typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
 //    GEOSX_FORCE_INLINE
-//    void preKernel( localIndex const k,
+//    void setup( localIndex const k,
 //                    STACK_VARIABLE_TYPE & stack ) const
 //    {
 //      R1Tensor Nbar = m_faceNormal[elemsToFaces[kfe][0]];
@@ -1084,7 +1084,7 @@ public:
 //    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
 //    GEOSX_FORCE_INLINE
-//    real64 postKernel( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+//    real64 complete( PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
 //                       STACK_VARIABLE_TYPE & stack ) const
 //    {
 //      real64 meanForce = 0;
@@ -1122,7 +1122,7 @@ class ExplicitSmallStrain
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
 public:
-  using Base = finiteElement::RegionLoop;
+  using Base = finiteElement::KernelBase;
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
@@ -1174,7 +1174,7 @@ public:
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
-  class Kernels
+  class Components
   {
 public:
 
@@ -1186,7 +1186,7 @@ public:
 
 
 
-    Kernels( arrayView1d< globalIndex const > const & ,
+    Components( arrayView1d< globalIndex const > const & ,
              ParallelMatrix & ,
              ParallelVector & ,
              NodeManager & nodeManager,
@@ -1227,7 +1227,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void preKernel( localIndex const k,
+    void setup( localIndex const k,
                     STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
@@ -1251,7 +1251,7 @@ public:
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void updateKernel( localIndex const k,
+    void quadraturePointStateUpdate( localIndex const k,
                        localIndex const q,
                        STACK_VARIABLE_TYPE & stack ) const
     {
@@ -1298,9 +1298,9 @@ public:
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + ( stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ] );
-          stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + ( stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ] );
-          stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + ( stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ] );
+          stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
+          stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
+          stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
         }
     }
 
@@ -1308,7 +1308,7 @@ public:
               typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void stiffnessKernel( localIndex const ,
+    void quadraturePointJacobianContribution( localIndex const ,
                           localIndex const ,
                           PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                           STACK_VARIABLE_TYPE & ) const
@@ -1319,7 +1319,7 @@ public:
               typename STACK_VARIABLE_TYPE>
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void integrationKernel( localIndex const GEOSX_UNUSED_PARAM(k),
+    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM(k),
                             localIndex const GEOSX_UNUSED_PARAM(q),
                             PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM(parameters),
                             STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM(stack) ) const
@@ -1329,7 +1329,7 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 postKernel( localIndex const k,
+    real64 complete( localIndex const k,
                        PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                        STACK_VARIABLE_TYPE const & stack ) const
     {
@@ -1358,8 +1358,8 @@ public:
                    KERNEL_CLASS const & kernelClass )
     {
       return finiteElement::
-             RegionLoop::
-             Kernels< SUBREGION_TYPE,
+             KernelBase::
+             Components< SUBREGION_TYPE,
                       CONSTITUTIVE_TYPE,
                       NUM_NODES_PER_ELEM,
                       NUM_NODES_PER_ELEM,
@@ -1389,16 +1389,16 @@ public:
 //      {
 //        STACK_VARIABLES stack;
 //
-//        kernelClass.preKernel( k, stack );
+//        kernelClass.setup( k, stack );
 //        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
 //        {
-//          kernelClass.updateKernel( k, q, stack );
+//          kernelClass.quadraturePointStateUpdate( k, q, stack );
 //
-//          kernelClass.stiffnessKernel( k, q, parameters, stack );
+//          kernelClass.quadraturePointJacobianContribution( k, q, parameters, stack );
 //
-//          kernelClass.integrationKernel( k, q, parameters, stack );
+//          kernelClass.quadraturePointResidualContribution( k, q, parameters, stack );
 //        }
-//        kernelClass.postKernel( k, parameters, stack );
+//        kernelClass.complete( k, parameters, stack );
 //      } );
 //      return maxResidual.get();
 //    }
