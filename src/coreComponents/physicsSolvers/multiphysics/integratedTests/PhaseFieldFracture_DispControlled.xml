@@ -1,6 +1,6 @@
 <Problem>
 
-  <Solvers>
+  <Solvers gravityVector = "0.0, 0.0, 0.0">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -22,7 +22,6 @@
       <NonlinearSolverParameters newtonMaxIter="50"
                                  newtonTol="1.0e-6"/>
       <SystemSolverParameters krylovTol="1.0e-10"
-                              useDirectSolver="1"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -36,7 +35,7 @@
                 targetRegions="{Region1}">
       <NonlinearSolverParameters newtonMaxIter="5"
                                  newtonTol="1.0e-6"/>
-      <SystemSolverParameters useDirectSolver="1"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -76,7 +75,7 @@
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/PFCrack_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -181,7 +180,7 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="PFCrack_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
     <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>

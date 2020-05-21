@@ -1,6 +1,6 @@
 <Problem>
 
-  <Solvers>
+  <Solvers gravityVector = "0.0, 0.0, 0.0">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -68,12 +68,12 @@
     <PeriodicEvent name="vtkOutput"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/PFCrack_VTKOutput" />
+                   target="/Outputs/DamageOnly_VTKOutput" />
 
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/DamageOnly_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -111,21 +111,21 @@
                         component="0"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{xneg, xpos}"/>
+                        setNames="{all}"/>
 
     <FieldSpecification name="yboundary"
                         fieldName="TotalDisplacement"
                         component="1"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{yneg, ypos}"/>
+                        setNames="{all}"/>
 
     <FieldSpecification name="zboundary"
                         fieldName="TotalDisplacement"
                         component="2"
                         objectPath="nodeManager"
                         scale="0"
-                        setNames="{zneg, zpos}"/>
+                        setNames="{all}"/>
 
     <FieldSpecification name="pointSource"
                         fieldName="Damage"
@@ -148,8 +148,8 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="DamageOnly_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="DamageOnly_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

@@ -298,16 +298,10 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
-      real64 ell = 0.2;                                                                  //phase-field length scale
-      real64 Gc = 2.7;                                                                  //energy release rate
-      double threshold = 3 * Gc / (16 * ell);                                                                  //elastic
-                                                                                                               // energy
-                                                                                                               // threshold
-                                                                                                               // - use
-                                                                                                               // when
-                                                                                                               // LocalDissipation
-                                                                                                               // is
-                                                                                                               // Linear
+      real64 ell = 0.2;                                 //phase-field length scale
+      real64 Gc = 2.7;                                  //energy release rate
+      double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
+                                                                                                                                                                                      // Linear
       arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
       //real64 diffusion = 1.0;
       // begin element loop, skipping ghost elements

@@ -1,6 +1,6 @@
 <Problem>
 
-  <Solvers>
+  <Solvers gravityVector = "0.0, 0.0, 0.0">
     <PhaseFieldFracture name="PhaseFieldSolve"
                  solidSolverName="SolidMechSolve"
                  damageSolverName="DamageSolve"
@@ -64,12 +64,12 @@
     <PeriodicEvent name="outputs"
                    timeFrequency="1"
                    targetExactTimestep="1"
-                   target="/Outputs/PFCrack_VTKOutput" />
+                   target="/Outputs/Homogenous_VTKOutput" />
 
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/Homogenous_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -182,8 +182,8 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="Homogenous_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="Homogenous_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

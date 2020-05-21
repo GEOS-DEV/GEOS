@@ -68,12 +68,12 @@
     <PeriodicEvent name="vtkOutput"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/PFCrack_VTKOutput" />
+                   target="/Outputs/DamageAndLoad_VTKOutput" />
 
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/SiloOutput"/>
+                   target="/Outputs/DamageAndLoad_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
@@ -155,8 +155,8 @@
 
   </Functions>
   <Outputs>
-    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <VTK name="PFCrack_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="DamageAndLoad_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="DamageAndLoad_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
