@@ -66,7 +66,7 @@ Input example
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
 
-      <SystemSolverParameters name="SystemSolverParameters"
+      <LinearSolverParameters name="LinearSolverParameters"
                               krylovTol="1.0e-12"
                               useDirectSolver="0"/>
     </ProppantTransport>    
@@ -93,7 +93,7 @@ Input example
                                  newtonMinIter="0"
                                  maxTimeStepCuts="5"/>
 
-       <SystemSolverParameters name="SystemSolverParameters"
+       <LinearSolverParameters name="LinearSolverParameters"
                                krylovTol="1.0e-12"/>
 
     </SinglePhaseFlow>

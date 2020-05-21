@@ -57,7 +57,7 @@ def generate_test_xml_files(root_dir):
                      fluidName="water"
                      solidName="rock"
                      targetRegions="{Region1}">
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <LinearSolverParameters krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
     </SinglePhaseFlow>

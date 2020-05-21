@@ -62,7 +62,7 @@ and the maximum number of iterations.
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="Domain">
-      <SystemSolverParameters
+      <LinearSolverParameters
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>
@@ -408,7 +408,7 @@ and the maximum number of iterations.
                           solidName="rock"
                           discretization="singlePhaseTPFA"
                           targetRegions="Domain">
-      <SystemSolverParameters name="SystemSolverParameters"
+      <LinearSolverParameters name="LinearSolverParameters"
                               krylovTol="1.0e-10"
                               newtonTol="1.0e-6"
                               maxIterNewton="8"/>

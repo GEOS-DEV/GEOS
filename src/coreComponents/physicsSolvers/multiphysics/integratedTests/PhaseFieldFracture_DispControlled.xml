@@ -9,7 +9,7 @@
                  discretization="FE1"
                  targetRegions="{Region1}">
       <NonlinearSolverParameters newtonMaxIter="2"/>
-      <SystemSolverParameters logLevel="2"/>
+      <LinearSolverParameters logLevel="2"/>
     </PhaseFieldFracture>
 
     <SolidMechanicsLagrangianSSLE name="SolidMechSolve"
@@ -21,7 +21,7 @@
                                   >
       <NonlinearSolverParameters newtonMaxIter="50"
                                  newtonTol="1.0e-6"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <LinearSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -35,7 +35,7 @@
                 targetRegions="{Region1}">
       <NonlinearSolverParameters newtonMaxIter="5"
                                  newtonTol="1.0e-6"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
+      <LinearSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
@@ -125,7 +125,7 @@
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="0"
-               scale="0"
+               scale="0.0"
                functionName = "f_b"
                setNames="{xneg}"/>
 

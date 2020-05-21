@@ -151,14 +151,14 @@ void PhaseFieldDamageFEM::PostProcessInput()
   }
 
   // Set basic parameters for solver
-  m_linearSolverParameters.logLevel = 0;
-  m_linearSolverParameters.solverType = "gmres";
-  m_linearSolverParameters.krylov.tolerance = 1e-8;
-  m_linearSolverParameters.krylov.maxIterations = 250;
-  m_linearSolverParameters.krylov.maxRestart = 250;
-  m_linearSolverParameters.preconditionerType = "amg";
-  m_linearSolverParameters.amg.smootherType = "gaussSeidel";
-  m_linearSolverParameters.amg.coarseType = "direct";
+  // m_linearSolverParameters.logLevel = 0;
+  // m_linearSolverParameters.solverType = "gmres";
+  // m_linearSolverParameters.krylov.tolerance = 1e-8;
+  // m_linearSolverParameters.krylov.maxIterations = 250;
+  // m_linearSolverParameters.krylov.maxRestart = 250;
+  // m_linearSolverParameters.preconditionerType = "amg";
+  // m_linearSolverParameters.amg.smootherType = "gaussSeidel";
+  // m_linearSolverParameters.amg.coarseType = "direct";
 }
 
 real64 PhaseFieldDamageFEM::SolverStep( real64 const & time_n, real64 const & dt,
