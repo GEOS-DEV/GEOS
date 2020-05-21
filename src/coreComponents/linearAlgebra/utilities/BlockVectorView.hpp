@@ -25,25 +25,33 @@ namespace geosx
 {
 
 /**
- * @brief This class creates and provides basic support for block vectors objects.
- * @tparam VECTOR type of vectors
+ * @brief Abstract view of a block vector.
+ * @tparam VECTOR type of sub-vectors
+ *
+ * This class does not deal with constructing or storing sub-vectors, only provides high-level access functions.
+ * See derived classes BlockVector and BlockVectorWrapper for ways to construct a block vector.
  */
 template< typename VECTOR >
 class BlockVectorView
 {
 public:
 
+  /// Alias for sub-vector type
   using Vector = VECTOR;
 
   /**
-   * @brief Deleted copy assignment
+   * @brief Deleted copy assignment.
+   * @param rhs the block vector to copy
+   * @return reference to @p this object
    */
-  BlockVectorView & operator=( BlockVectorView const & x ) = delete;
+  BlockVectorView & operator=( BlockVectorView const & rhs ) = delete;
 
   /**
-   * @brief Deleted move assignment
+   * @brief Deleted move assignment.
+   * @param rhs the block vector to move from
+   * @return reference to @p this object
    */
-  BlockVectorView & operator=( BlockVectorView && x ) noexcept = delete;
+  BlockVectorView & operator=( BlockVectorView && rhs ) noexcept = delete;
 
   /**
    * @brief Destructor.
@@ -57,7 +65,7 @@ public:
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
-   * @param src Vector to copy
+   * @param src the vector to copy
    */
   void copy( BlockVectorView const & src );
 
@@ -68,8 +76,7 @@ public:
 
   /**
    * @brief Scale the block vector with <tt>factor</tt>.
-   * @param factor Multiplication factor.
-   *
+   * @param factor multiplication factor
    */
   void scale( real64 const factor );
 
@@ -80,47 +87,45 @@ public:
 
   /**
    * @brief Set vector elements to random entries.
+   * @param seed the random seed to use
    */
   void rand( unsigned const seed = 1984 );
 
   /**
    * @brief Dot product.
-   * @param blockVec Block vector.
-   * @param result Result of the dot product.
-   *
+   * @param x the block vector to compute product with
+   * @return the dot product
    */
   real64 dot( BlockVectorView const & x ) const;
 
   /**
    * @brief 2-norm of the block vector.
-   * @param result 2-norm of the block vector.
-   *
+   * @return 2-norm of the block vector
    */
   real64 norm2() const;
 
   /**
    * @brief Inf-norm of the block vector.
-   * @param result Inf-norm of the block vector.
+   * @return inf-norm of the block vector
    */
   real64 normInf() const;
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + y</tt>.
    * @note The naming convention follows the logic of the BLAS library.
-   * @param alpha Scaling factor for added vector.
-   * @param x Vector to add.
+   * @param alpha scaling factor for added vector
+   * @param x     vector to add
    */
   void axpy( real64 const alpha,
              BlockVectorView const & x );
 
   /**
    * @brief Update vector <tt>y</tt> as <tt>y = alpha*x + beta*y</tt>.
-   *
    * @note The naming convention follows the logic of the BLAS library.
    *
-   * @param alpha Scaling factor for added vector.
-   * @param x Vector to add.
-   * @param beta Scaling factor for self vector.
+   * @param alpha scaling factor for added vector
+   * @param x     vector to add
+   * @param beta  scaling factor for self vector
    */
   void axpby( real64 const alpha,
               BlockVectorView const & x,
@@ -147,14 +152,15 @@ public:
   localIndex localSize() const;
 
   /**
-   * @brief Print the block vector
+   * @brief Print the block vector.
    * @param os the stream to print to
    */
   void print( std::ostream & os = std::cout ) const;
 
   /**
    * @brief Get a reference to the vector corresponding to block @p blockRowIndex.
-   * @param blockIndex Index of the block to return.
+   * @param blockIndex index of the block to return
+   * @return a reference to the sub-block
    */
   VECTOR const & block( localIndex const blockIndex ) const;
 
@@ -177,25 +183,25 @@ protected:
 
   /**
    * @brief Create a vector of @p nBlocks blocks.
-   * @param nBlocks Number of blocks.
+   * @param nBlocks number of blocks
    */
   explicit BlockVectorView( localIndex const nBlocks );
 
   /**
-   * @brief Copy constructor
+   * @brief Copy constructor.
    */
   BlockVectorView( BlockVectorView const & x ) = default;
 
   /**
-   * @brief Move constructor
+   * @brief Move constructor.
    */
   BlockVectorView( BlockVectorView && x ) = default;
 
   ///@}
 
   /**
-   * @brief Set pointer to a vector
-   * @param i index of vector
+   * @brief Set pointer to a vector.
+   * @param i   index of vector
    * @param vec new pointer to vector
    */
   void setPointer( localIndex i, VECTOR * vec )

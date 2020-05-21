@@ -25,3 +25,4 @@ the GEOSX framework should also read the Developer Guide.
 
    poroElasticity/Tutorial
 
+   fieldCase/Tutorial

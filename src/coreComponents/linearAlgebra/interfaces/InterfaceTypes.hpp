@@ -33,20 +33,31 @@
 #include "linearAlgebra/interfaces/petsc/PetscInterface.hpp"
 #endif
 
+/// Macro to concatenate two strings (low level)
 #define CONCAT_( A, B ) A ## B
-#define CONCAT( A, B ) CONCAT_( A, B )
 
+/// Macro to concatenate two strings (user level)
+#define CONCAT( A, B ) CONCAT_( A, B )
 
 namespace geosx
 {
 
+/// Alias for current interface
 using LAInterface = CONCAT( GEOSX_LA_INTERFACE, Interface );
 
-// The following aliases are added into geosx namespace for global use
+/// Alias for ParallelMatrix
 using ParallelMatrix = LAInterface::ParallelMatrix;
+/// Alias for ParallelVector
 using ParallelVector = LAInterface::ParallelVector;
+/// Alias for LinearSolver
 using LinearSolver   = LAInterface::LinearSolver;
 
+/**
+ * @brief High level interface to call the proper LAI initialize function.
+ *
+ * @param[in] argc standard argc as in any C main
+ * @param[in] argv standard argv as in any C main
+ */
 inline void setupLAI( int & argc, char * * & argv )
 {
 #ifdef GEOSX_USE_TRILINOS
@@ -60,6 +71,9 @@ inline void setupLAI( int & argc, char * * & argv )
 #endif
 }
 
+/**
+ * @brief High level interface to call the proper LAI finalize function.
+ */
 inline void finalizeLAI()
 {
 #ifdef GEOSX_USE_TRILINOS
