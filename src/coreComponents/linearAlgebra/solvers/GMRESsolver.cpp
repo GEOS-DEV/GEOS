@@ -108,8 +108,8 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   Stopwatch watch;
 
-  // Get the norm of the right hand side
-  real64 const bnorm = b.norm2();
+  // Compute the target absolute tolerance
+  real64 const absTol = b.norm2() * m_tolerance;
 
   // Define vectors
   VectorTemp r = createTempVector( b );
@@ -131,6 +131,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.resize( m_maxIterations + 1 );
 
+  real64 rnorm = 0.0;
   for( localIndex k = 0; k <= m_maxIterations && m_result.status != LinearSolverResult::Status::Success; )
   {
     // Re-initialize Krylov subspace
@@ -142,11 +143,11 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
     for( j = 0; j < m_maxRestart && k <= m_maxIterations; ++j, ++k, ++m_result.numIterations )
     {
       // Record iteration progress
-      real64 const rnorm = std::fabs( g[j] );
+      rnorm = std::fabs( g[j] );
       logProgress( k, rnorm );
 
       // Convergence check
-      if( ( m_result.residualReduction = rnorm / bnorm ) < m_tolerance )
+      if( rnorm < absTol )
       {
         m_result.status = LinearSolverResult::Status::Success;
         break;
@@ -194,6 +195,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.residualReduction = rnorm / absTol * m_tolerance;
   m_result.solveTime = watch.elapsedTime();
 }
 
