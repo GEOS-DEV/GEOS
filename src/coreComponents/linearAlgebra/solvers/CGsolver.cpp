@@ -66,8 +66,8 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 {
   Stopwatch watch;
 
-  // Get the norm of the right hand side
-  real64 const bnorm = b.norm2();
+  // Compute the target absolute tolerance
+  real64 const absTol = b.norm2() * m_tolerance;
 
   // Define residual vector
   VectorTemp r = createTempVector( b );
@@ -87,15 +87,17 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
   p.zero();
   m_result.status = LinearSolverResult::Status::NotConverged;
+  m_result.numIterations = 0;
   m_residualNorms.resize( m_maxIterations + 1 );
 
+  real64 rnorm = 0.0;
   for( localIndex k = 0; k <= m_maxIterations; ++k, ++m_result.numIterations )
   {
-    real64 const rnorm = r.norm2();
+    rnorm = r.norm2();
     logProgress( k, rnorm );
 
     // Convergence check on ||rk||/||b||
-    if( ( m_result.residualReduction = rnorm / bnorm ) < m_tolerance )
+    if( rnorm < absTol )
     {
       m_result.status = LinearSolverResult::Status::Success;
       break;
@@ -129,6 +131,7 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 
   logResult();
   m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.residualReduction = rnorm / absTol * m_tolerance;
   m_result.solveTime = watch.elapsedTime();
 }
 

@@ -64,9 +64,11 @@ class DofManagerTestBase : public ::testing::Test
 {
 public:
 
+  using Base = ::testing::Test;
+
   DofManagerTestBase():
-    ::testing::Test(),
-                                             problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
+    Base(),
+    problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
     dofManager( "test" )
   {
     setupProblem( problemManager.get(), xmlInput );
