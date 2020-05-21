@@ -162,7 +162,11 @@ public:
 
   LinearSolverParametersGroup() = delete;
 
-  /// Constructor
+  /**
+   * Constructor
+   * @param name Group name
+   * @param parent Group parent
+   */
   LinearSolverParametersGroup( std::string const & name, Group * const parent );
 
   /// Copy constructor
@@ -171,7 +175,10 @@ public:
   /// Destructor
   virtual ~LinearSolverParametersGroup() override = default;
 
-  /// Catalog name
+  /**
+   * Catalog name
+   * @returns Catalog name
+   */
   static string CatalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
@@ -195,7 +202,7 @@ public:
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key
-  } viewKeys;
+  } viewKeys; ///< View keys
 };
 
 } /* namespace geosx */

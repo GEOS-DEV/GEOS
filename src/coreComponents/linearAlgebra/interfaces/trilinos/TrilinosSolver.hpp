@@ -74,22 +74,26 @@ public:
    * If the solve is successful, this value should be less than the target krylov
    * tolerance.  If the solver stagnates, however, it may be higher.
    *
+   * @return Reduction value
    * @note Value is meaningless if a direct solver is called and will return machine precision;
    */
   real64  reduction();
 
   /**
    * @brief Setup time (in seconds) for preconditioners and/or direct factorizations
+   * @return Setup time
    */
   real64  setupTime();
 
   /**
    * @brief Solve time (in seconds) exclusive of setup costs
+   * @return Solve time
    */
   real64  solveTime();
 
   /**
    * @brief Total time (in seconds), the sum of setupTime() and solveTime()
+   * @return Total time
    */
   real64  totalTime();
 
