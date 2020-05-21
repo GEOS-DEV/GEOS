@@ -52,7 +52,8 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea );
   this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter );
   this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal );
-  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix );
+  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix )->
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   m_toElements.resize( 0, 2 );
 
@@ -583,21 +584,17 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
 void FaceManager::computeGeometry( NodeManager const * const nodeManager )
 {
-  real64_array & faceArea  = getReference< real64_array >( viewKeyStruct::faceAreaString );
-  r1_array & faceNormal = getReference< r1_array >( viewKeyStruct::faceNormalString );
-  r1_array & faceCenter = getReference< r1_array >( viewKeyStruct::faceCenterString );
-  r2_array & rotationMatrix = getReference< r2_array >( viewKeyStruct::faceRotationMatrixString );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceID )
   {
-    faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
-                                                                    m_nodeList.sizeOfArray( faceID ),
-                                                                    X,
-                                                                    faceCenter[ faceID ],
-                                                                    faceNormal[ faceID ],
-                                                                    rotationMatrix[ faceID ] );
+    m_faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
+                                                                      m_nodeList.sizeOfArray( faceID ),
+                                                                      X,
+                                                                      m_faceCenter[ faceID ],
+                                                                      m_faceNormal[ faceID ],
+                                                                      m_faceRotationMatrix[ faceID ] );
   } );
 }
 

@@ -68,6 +68,8 @@ public:
    */
   virtual void compute( Matrix const & mat ) override;
 
+  using PreconditionerBase< TrilinosInterface >::compute;
+
   /**
    * @brief Apply operator to a vector
    * @param src Input vector (x).

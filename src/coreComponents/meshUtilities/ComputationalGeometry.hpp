@@ -102,7 +102,7 @@ real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
                            R1Tensor & center,
                            R1Tensor & normal,
-                           R2Tensor & rotationMatrix,
+                           arraySlice2d< real64 > const rotationMatrix,
                            real64 const areaTolerance = 0.0 );
 
 /**
@@ -117,7 +117,7 @@ void FixNormalOrientation_3D( R1Tensor & normal );
  * @param[out] rotationMatrix rotation matrix for the face
  */
 void RotationMatrix_3D( R1Tensor const & normal,
-                        R2Tensor & rotationMatrix );
+                        arraySlice2d< real64 > const rotationMatrix );
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
