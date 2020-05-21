@@ -14,8 +14,8 @@
 
 /*
  * @file WellControls.hpp
- *
  */
+
 
 #ifndef GEOSX_WELLS_WELLCONTROLS_HPP
 #define GEOSX_WELLS_WELLCONTROLS_HPP
@@ -24,7 +24,6 @@
 
 namespace geosx
 {
-
 namespace dataRepository
 {
 namespace keys
@@ -36,70 +35,99 @@ static constexpr auto wellControls = "WellControls";
 
 /**
  * @class WellControls
- *
- * This class describes the controls used to operate a well
+ * @brief This class describes the controls used to operate a well.
  */
 class WellControls : public dataRepository::Group
 {
 public:
 
-  // define the type of well (producer or injector)
+  /** Type of wells
+   * Either producer or injector.
+   */
   enum class Type
   {
-    PRODUCER,
-    INJECTOR
+    PRODUCER,  /**< A production well */
+    INJECTOR   /**< An injection well */
   };
 
-  // define the well control
+
+  /** Types of well controls
+   * Used to specifiy a well's operating conditions
+   */
   enum class Control
   {
-    BHP,
-    GASRATE,
-    OILRATE,
-    WATERRATE,
-    LIQUIDRATE
+    BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
+    GASRATE, /**< The well operates at a specified gas flow rate */
+    OILRATE, /**< The well operates at a specified oil flow rate */
+    WATERRATE, /**< The well operates at a specified water flow rate */
+    LIQUIDRATE /**< The well operates at a specified liquid flow rate (oil + water) */
   };
 
+
   /**
-   * @brief main constructor for Group Objects
-   * @param name the name of this instantiation of Group in the repository
-   * @param parent the parent group of this instantiation of Group
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
    */
   explicit WellControls( string const & name, dataRepository::Group * const parent );
 
+
   /**
-   * @brief default destructor
+   * @brief Default destructor.
    */
   ~WellControls() override;
 
-  /// deleted default constructor
+  /**
+   * @brief Deleted default constructor.
+   */
   WellControls() = delete;
 
-  /// deleted copy constructor
+  /**
+   * @brief Deleted copy constructor.
+   */
   WellControls( WellControls const & ) = delete;
 
-  /// deleted move constructor
+  /**
+   * @brief Deleted move constructor.
+   */
   WellControls( WellControls && ) = delete;
 
-  /// deleted assignment operator
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a perforation object
+   */
   WellControls & operator=( WellControls const & ) = delete;
 
-  /// deleted move operator
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a perforation object
+   */
   WellControls & operator=( WellControls && ) = delete;
 
+  ///@}
+
   /**
-   * @brief Setter for the reference well elem index where the control will be enforced
-   * @param refIndex the reference well elem index where the control will be enforced
+   * @name Getters / Setters
+   */
+  ///@{
+
+  /**
+   * @brief Set the reference well elem index where the control will be enforced.
+   * @param[in] refIndex reference well element index where the control will be enforced
    */
   void SetReferenceWellElementIndex( localIndex refIndex )
   {
     m_refWellElemIndex = refIndex;
   }
 
-
   /**
-   * @brief Getter for the reference well elem index where the control will be enforced
-   * @return the reference well element index where the control will be enforced
+   * @brief Get the reference well element index where the control will be enforced.
+   * @return a localIndex value representing the reference well element index where the control will be enforced
    */
   localIndex const & GetReferenceWellElementIndex() const
   {
@@ -107,90 +135,131 @@ public:
   }
 
   /**
-   * @brief Getter for the well type (injector or producer)
-   * @return the well type
+   * @brief Get the well type (injector or producer).
+   * @return a well Type enum
    */
   Type GetType() const { return m_type; }
 
+
   /**
-   * @brief Setter for the control equation at this well
-   * @param control the type of control that is enforced
-   * @param val the value of the control (max pressure, min rate, etc)
+   * @brief Set the control type and numerical value for a well.
+   * @param[in] control a Control enum with the type of control that is enforced
+   * @param[in] val value for the control (depending on the control type, can be a maximum bottom hole pressure, a
+   * minimum water rate...)
    */
   void SetControl( Control control, real64 const & val );
 
+
   /**
-   * @brief Getter for the control equation at this well
-   * @return the type of control that is enforced at this well
+   * @brief Get the control type for the well.
+   * @return the Control enum enforced at the well
    */
   Control GetControl() const { return m_currentControl; }
 
+
   /**
-   * @brief Getter for the target BH pressure
-   * @return the target BH pressure
+   * @brief Get the target Bottom Hole Pressure value.
+   * @return a value for the target Bottom Hole Pressure
    */
   const real64 & GetTargetBHP() const { return m_targetBHP; }
 
+
   /**
-   * @brief Getter for the target rate
+   * @brief Get the target rate
    * @return the target rate
    */
   const real64 & GetTargetRate() const { return m_targetRate; }
 
+
   /**
-   * @brief Getter for the composition of the injection rate
-   * @param the index of the component
-   * @return the global component fraction for component ic
+   * @brief Const accessor for the composition of the injection rate
+   * @return a global component fraction vector
    */
   arrayView1d< real64 const > const & GetInjectionStream() const { return m_injectionStream; }
 
-  void Debug() const;
+  ///@}
 
+  /// @cond DO_NOT_DOCUMENT
+  void Debug() const;
+  /// @endcond
+
+  /**
+   * @brief Struct to serve as a container for variable strings and keys.
+   * @struct viewKeyStruct
+   */
   struct viewKeyStruct
   {
-
+    /// String key for the reference index (currently unused)
     static constexpr auto refWellElemIndexString = "referenceWellElementIndex";
+    /// String key for the well type
     static constexpr auto typeString             = "type";
+    /// String key for the well control
     static constexpr auto controlString          = "control";
+    /// String key for the well target BHP
     static constexpr auto targetBHPString        = "targetBHP";
+    /// String key for the well target rate
     static constexpr auto targetRateString       = "targetRate";
+    /// String key for the well injection stream
     static constexpr auto injectionStreamString  = "injectionStream";
-
+    /// ViewKey for the reference index (currently unused)
     dataRepository::ViewKey referenceIndex  = { refWellElemIndexString };
+    /// ViewKey for the well type
     dataRepository::ViewKey type            = { typeString };
+    /// ViewKey for the well control
     dataRepository::ViewKey control         = { controlString };
+    /// ViewKey for the well target BHP
     dataRepository::ViewKey targetBHP       = { targetBHPString };
+    /// ViewKey for the well target rate
     dataRepository::ViewKey targetRate      = { targetRateString };
+    /// ViewKey for the well injection stream
     dataRepository::ViewKey injectionStream = { injectionStreamString };
-
-  } viewKeysWellControls;
+  }
+  /// ViewKey struct for the WellControls class
+  viewKeysWellControls;
 
 protected:
 
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   virtual void PostProcessInput() override;
 
+  /**
+   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @param[in] rootGroup A group that is passed in to the initialization functions
+   *                  in order to facilitate the initialization.
+   */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
 private:
 
-  /// well type
+  /// Well type as string
   string m_typeString;
+
+  /// Well type (as Type enum)
   Type m_type;
 
-  /// reference index
+  /// Reference index (currently unused)
   localIndex m_refWellElemIndex;
 
-  /// well controls
+  /// Well controls as string
   string m_inputControlString;
+
+  /// Well controls as a Control enum
   Control m_currentControl;
+
+  /// Target bottom hole pressure value
   real64 m_targetBHP;
+
+  /// Target rate value
   real64 m_targetRate;
 
-  /// global component fraction at the injector
+  /// Vector with global component fractions at the injector
   array1d< real64 >  m_injectionStream;
 
 };
 
 } //namespace geosx
 
-#endif //GEOSX_MANAGERS_WELLS_WELLCONTROLS_HPP
+#endif //GEOSX_WELLS_WELLCONTROLS_HPP

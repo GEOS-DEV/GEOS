@@ -14,16 +14,13 @@
 
 /*
  * @file WellControls.cpp
- *
  */
 
 #include "WellControls.hpp"
-
 #include "dataRepository/InputFlags.hpp"
 
 namespace geosx
 {
-
 
 using namespace dataRepository;
 
@@ -64,6 +61,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Global component densities for the injection stream" );
 
 }
+
 
 WellControls::~WellControls()
 {}
@@ -158,6 +156,7 @@ void WellControls::PostProcessInput()
   }
 }
 
+
 void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
@@ -165,8 +164,8 @@ void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const G
   {
     m_targetRate *= -1;
   }
-
 }
+
 
 void WellControls::Debug() const
 {

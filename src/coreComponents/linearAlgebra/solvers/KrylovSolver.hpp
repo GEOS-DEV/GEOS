@@ -46,6 +46,12 @@ public:
 
   /**
    * @brief Constructor
+   *
+   * @param [in] A reference to the system matrix.
+   * @param [in] M reference to the preconditioning operator.
+   * @param [in] tolerance relative residual norm reduction tolerance.
+   * @param [in] maxIterations maximum number of Krylov iterations.
+   * @param [in] verbosity solver verbosity level.
    */
   KrylovSolver( LinearOperator< Vector > const & A,
                 LinearOperator< Vector > const & M,
@@ -70,16 +76,20 @@ public:
   virtual ~KrylovSolver() override = default;
 
   /**
-   * @brief Solve the system <tt>M^{-1}(Ax - b) = 0</tt> with CG
-   * using monolithic GEOSX matrices.
+   * @brief Solve preconditioned system
    *
-   * @param A system matrix.
-   * @param x system solution (input = initial guess, output = solution).
-   * @param b system right hand side.
-   * @param M preconditioner.
+   * @param [in] b system right hand side.
+   * @param [inout] x system solution (input = initial guess, output = solution).
    */
   virtual void solve( Vector const & b, Vector & x ) const = 0;
 
+
+  /**
+   * @brief Apply operator to a vector.
+   *
+   * @param src Input vector (src).
+   * @param dst Output vector (dst).
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override final
   {
     solve( src, dst );
@@ -95,10 +105,25 @@ public:
     return m_operator.numGlobalCols();
   }
 
+  /**
+   * @brief Get the number of Krylov iterations.
+   *
+   * @return Number of Krylov iterations.
+   */
   localIndex numIterations( ) const { return m_numIterations; };
 
+  /**
+   * @brief Get the residual norm at each iteration.
+   *
+   * @return View of the 1d array containing the residual norm at each iteration.
+   */
   arrayView1d< const real64 > residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
 
+  /**
+   * @brief Get the flag indicatin if convergence has been achieved.
+   *
+   * @return Convergence flag.
+   */
   bool convergenceFlag( ) const { return m_convergenceFlag; };
 
 private:
@@ -136,7 +161,7 @@ protected:
   /// solver verbosity level
   integer m_verbosity;
 
-  /// actual number if Krylov iterations
+  /// actual number of Krylov iterations
   mutable localIndex m_numIterations = 0;
 
   /// residual norm vector

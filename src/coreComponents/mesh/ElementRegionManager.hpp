@@ -36,51 +36,77 @@ namespace geosx
 class MeshManager;
 
 /**
- * Class to manage the data stored at the element level.
+ * @class ElementRegionManager
+ * @brief The ElementRegionManager class provides an interface to ObjectManagerBase in order to manage ElementRegion
+ * data
  */
 class ElementRegionManager : public ObjectManagerBase
 {
 public:
 
+  /**
+   * Limit on max number of nodes for each element
+   */
   constexpr static int maxNumNodesPerElem = 8;
 
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of  VIEWTYPE.
+   * @tparam VIEWTYPE data type
+   */
   template< typename VIEWTYPE >
   using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
 
+  /**
+   * @brief The ElementViewAccessor at the ElementRegionManager level is a 2D array of ReferenceWrapper around VIEWTYPE.
+   * @tparam VIEWTYPE data type
+   */
   template< typename VIEWTYPE >
   using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > >;
 
   /**
-   * The MaterialViewAccessor at the ElementRegionManager level is an 3d array that contains a
-   * ReferenceWrapper around the VIEWTYPE. The dimensions are denoted as follows:
+   * @brief The MaterialViewAccessor at the ElementRegionManager level is a 3D array of VIEWTYPE.
+   * @tparam VIEWTYPE data type
    * var[elementRegionIndex][elementSubRegionIndex][materialIndexInRegion]
    */
   template< typename VIEWTYPE >
   using MaterialViewAccessor = array1d< array1d< array1d< VIEWTYPE > > >;
 
+  /**
+   * @brief The ConstitutiveRelationAccessor at the ElementRegionManager level is a 3D array of CONSTITUTIVE_TYPE
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   */
   template< typename CONSTITUTIVE_TYPE >
   using ConstitutiveRelationAccessor = array1d< array1d< array1d< CONSTITUTIVE_TYPE * > > >;
 
   /**
-   * @name Static Factory Catalog Functions
+   * @brief The function is to return the name of the ElementRegionManager in the object catalog
+   * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  ///@{
-
   static const string CatalogName()
   { return "ZoneManager"; }
 
+  /**
+   * @brief Virtual access to CatalogName()
+   * @return string that contains the catalog name used to register/lookup this class in the object catalog
+   */
   virtual const string getCatalogName() const override final
   { return ElementRegionManager::CatalogName(); }
 
+  /**
+   * @brief Constructor.
+   * @param [in] name the name of this ObjectManager
+   * @param [in] parent the parent Group
+   */
+  ElementRegionManager( string const & name, Group * const parent );
 
-
-  ///@}
-
-  ElementRegionManager( string const &, Group * const parent );
+  /**
+   * @brief Destructor
+   */
   virtual ~ElementRegionManager() override;
 
   /**
-   * @brief Get the number of elements within all ElementSubRegions of type T
+   * @brief Get the number of elements in all ElementSubRegions of type T.
+   * @return number of elements
    */
   template< typename T = ElementSubRegionBase >
   localIndex getNumberOfElements() const
@@ -95,73 +121,156 @@ public:
 
 //  void Initialize(  ){}
 
+  /**
+   * @brief Generate the mesh.
+   * @param [in] cellBlockManager pointer to the CellBlockManager
+   */
   void GenerateMesh( Group * const cellBlockManager );
 
+  /**
+   * @brief Generate the cell-to-edge map
+   * @param [in] faceManager pointer to the FaceManager
+   */
   void GenerateCellToEdgeMaps( FaceManager const * const faceManager );
 
+  /**
+   * @brief Generate the aggregates.
+   * @param [in] faceManager pointer to the FaceManager
+   * @param [in] nodeManager pointer to the NodeManager
+   */
   void GenerateAggregates( FaceManager const * const faceManager, NodeManager const * const nodeManager );
 
+  /**
+   * @brief Generate the wells.
+   * @param [in] meshManager pointer to meshManager
+   * @param [in] meshLevel pointer to meshLevel
+   */
   void GenerateWells( MeshManager * const meshManager, MeshLevel * const meshLevel );
 
+  /**
+   * @brief Create a new ElementRegion object as a child of this group.
+   * @param childKey catalog key of the new ElementRegion derived type to create
+   * @param childName name of the new ElementRegion object
+   * @return pointer to the created ElementRegion object
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
-
+  /**
+   * @brief Expand any catalogs in the data structure
+   */
   virtual void ExpandObjectCatalogs() override;
 
+  /**
+   * @brief Inform the schema generator of any deviations between the xml and GEOS data structures.
+   * @param schemaRoot        XML node corresponding to the root
+   * @param schemaParent      XML node for the parent node
+   * @param documentationType type of XML schema generated
+   */
   virtual void SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
                                     xmlWrapper::xmlNode schemaParent,
                                     integer documentationType ) override;
 
   using Group::resize;
 
+  /**
+   * @brief Set the number of elements for a set of element regions.
+   * @param numElements list of the new element numbers
+   * @param regionNames list of the element region names
+   * @param elementTypes list of the element types
+   */
   void resize( integer_array const & numElements,
                string_array const & regionNames,
                string_array const & elementTypes );
 
+  /**
+   * @brief Set the maximum local and global index.
+   */
   void SetMaxGlobalIndex();
 
+  /**
+   * @brief Get a collection of element regions
+   * @return reference to immutable subGroupMap
+   */
   subGroupMap const & GetRegions() const
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
   }
+
+  /**
+   * @brief Get a collection of element regions.
+   * @return reference to mutable subGroupMap
+   */
   subGroupMap & GetRegions()
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups();
   }
 
+  /**
+   * @brief Get a element region.
+   * @param regionName name of element region
+   * @return pointer to const ElementRegionBase
+   */
   template< typename T=ElementRegionBase >
   T const * GetRegion( string const & regionName ) const
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( regionName );
   }
 
+  /**
+   * @brief Get a element region.
+   * @param regionName name of element region
+   * @return pointer to ElementRegionBase
+   */
   template< typename T=ElementRegionBase >
   T * GetRegion( string const & regionName )
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( regionName );
   }
 
+  /**
+   * @brief This is a const function to get a element region.
+   * @param index index of element region
+   * @return pointer to const ElementRegionBase
+   */
   template< typename T=ElementRegionBase >
   T const * GetRegion( localIndex const index ) const
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
   }
 
+  /**
+   * @brief This is a function to get a element region.
+   * @param index index of element region
+   * @return pointer to ElementRegionBase
+   */
   template< typename T=ElementRegionBase >
   T * GetRegion( localIndex const index )
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetGroup< T >( index );
   }
 
+  /**
+   * @brief Get number of the regions.
+   * @return number of the regions
+   */
   localIndex numRegions() const
   {
     return this->GetGroup( groupKeyStruct::elementRegionsGroup )->GetSubGroups().size();
   }
 
+  /**
+   * @brief Get number of the cell blocks.
+   * @return number of the cell blocks
+   */
   localIndex numCellBlocks() const;
 
-
+  /**
+   * @brief This function is used to launch kernel function over all the element regions with region type =
+   * ElementRegionBase.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda )
   {
@@ -169,6 +278,12 @@ public:
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over all the element regions with region type =
+   * ElementRegionBase.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegions( LAMBDA && lambda ) const
   {
@@ -176,6 +291,14 @@ public:
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the target element regions with region type =
+   * ElementRegionBase.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
@@ -183,6 +306,14 @@ public:
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the target element regions with region type =
+   * ElementRegionBase.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
@@ -190,8 +321,11 @@ public:
     elementRegions->forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
-
-
+  /**
+   * @brief This const function is used to launch kernel function over all the types of element regions.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
@@ -199,6 +333,11 @@ public:
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over all the types of element regions.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
@@ -206,8 +345,12 @@ public:
                                WellElementRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
-
-
+  /**
+   * @brief This function is used to launch kernel function over all the element regions that can be casted to one of
+   * the specified region types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda )
   {
@@ -222,6 +365,12 @@ public:
     }
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over all the element regions that can be casted to one
+   * of the specified region types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
   void forElementRegionsComplete( LAMBDA lambda ) const
   {
@@ -236,7 +385,13 @@ public:
     }
   }
 
-
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element regions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
   {
@@ -244,6 +399,13 @@ public:
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element regions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
   {
@@ -251,6 +413,14 @@ public:
                                WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element regions with region type =
+   * specified element region types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
   {
@@ -261,6 +431,14 @@ public:
     } );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element regions with region
+   * type = specified element region types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
   {
@@ -271,6 +449,11 @@ public:
     } );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of all the subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
@@ -278,6 +461,12 @@ public:
                           WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of all the subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
@@ -285,6 +474,13 @@ public:
                           WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
@@ -292,6 +488,13 @@ public:
                           WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
@@ -299,6 +502,12 @@ public:
                           WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of the specified subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda )
   {
@@ -313,6 +522,12 @@ public:
       );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of the specified subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegions( LAMBDA && lambda ) const
   {
@@ -326,6 +541,14 @@ public:
     } );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
@@ -340,6 +563,14 @@ public:
     } );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
@@ -354,6 +585,11 @@ public:
     } );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of all subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA && lambda ) const
   {
@@ -361,6 +597,11 @@ public:
                                   WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of all subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA && lambda )
   {
@@ -368,6 +609,13 @@ public:
                                   WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
@@ -375,6 +623,13 @@ public:
                                                                                                                                 std::forward< LAMBDA >( lambda ) );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
@@ -382,7 +637,12 @@ public:
                                                                                                                                 std::forward< LAMBDA >( lambda ) );
   }
 
-
+  /**
+   * @brief This function is used to launch kernel function over all the element subregions that can be casted to one of
+   * the specified subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA && lambda )
   {
@@ -402,6 +662,12 @@ public:
     }
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over all the element subregions that can be casted to
+   * one of the specified subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forElementSubRegionsComplete( LAMBDA && lambda ) const
   {
@@ -421,7 +687,14 @@ public:
     }
   }
 
-
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions that can be
+   * casted to one of the specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
@@ -441,6 +714,14 @@ public:
     } );
   }
 
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions that can
+   * be casted to one of the specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
@@ -460,32 +741,85 @@ public:
     } );
   }
 
-
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
                                                     string const & neighborName = string() ) const;
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
                                                     string const & neighborName = string() );
 
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   */
   template< typename VIEWTYPE >
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
   ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
 
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   */
   template< typename VIEWTYPE >
   ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
   ConstructReferenceAccessor( string const & viewName, string const & neighborName = string() );
 
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param cm pointer to ConstitutiveManager
+   * @return MaterialViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
   ConstructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm ) const;
 
+  /**
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param cm pointer to ConstitutiveManager
+   * @return MaterialViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   MaterialViewAccessor< LHS >
   ConstructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const * const cm );
 
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   ConstructMaterialViewAccessor( string const & viewName,
@@ -493,6 +827,17 @@ public:
                                  arrayView1d< string const > const & materialNames,
                                  bool const allowMissingViews = false ) const;
 
+  /**
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
   ElementViewAccessor< LHS >
   ConstructMaterialViewAccessor( string const & viewName,
@@ -500,6 +845,13 @@ public:
                                  arrayView1d< string const > const & materialNames,
                                  bool const allowMissingViews = false );
 
+
+  /**
+   * @brief Construct a ConstitutiveRelationAccessor.
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   * @param cm pointer to ConstitutiveManager
+   * @return ConstitutiveRelationAccessor
+   */
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const;
@@ -517,73 +869,177 @@ public:
   using ObjectManagerBase::PackUpDownMaps;
   using ObjectManagerBase::UnpackUpDownMaps;
 
-
-
+  /**
+   * @brief Get the buffer size needed to pack a list of wrappers.
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of the buffer required to pack the wrappers
+   */
   int PackSize( string_array const & wrapperNames,
                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
+  /**
+   * @brief Pack a list of wrappers to a buffer.
+   * @param buffer pointer to the buffer to be packed
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of data packed to the buffer
+   */
   int Pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   using ObjectManagerBase::Unpack;
+
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to unpack
+   * @return the size of data unpacked
+   */
   int Unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor< arrayView1d< localIndex > > & packList );
 
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to unpack
+   * @return the size of data unpacked.
+   */
   int Unpack( buffer_unit_type const * & buffer,
               ElementReferenceAccessor< array1d< localIndex > > & packList );
 
-
-
+  /**
+   * @brief Get the size of the buffer to be packed.
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
   int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
+  /**
+   * @brief Pack a buffer.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
   int PackGlobalMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
-
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @return the size of the data unpacked
+   */
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
+  /**
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
   int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
   int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
+  /**
+   * @brief Pack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
   int PackUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
   int PackUpDownMaps( buffer_unit_type * & buffer,
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
-
+  /**
+   * @brief Unpack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @param overwriteMap flag to indicate whether to overwrite the local map
+   * @return the size of data packed.
+   */
   int UnpackUpDownMaps( buffer_unit_type const * & buffer,
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
-
+  /**
+   * @brief Group key associated with elementRegionsGroup
+     struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
+   */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
     static constexpr auto elementRegionsGroup = "elementRegionsGroup";
-  } m_ElementRegionManagerKeys;
+  } m_ElementRegionManagerKeys; ///< Element region manager keys
 
 
 private:
+
+  /**
+   * @brief Pack a list of wrappers or get the buffer size needed to pack.
+   * @param buffer pointer to the buffer to be packed
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of the buffer required to pack the wrappers
+   */
   template< bool DOPACK >
   int PackPrivate( buffer_unit_type * & buffer,
                    string_array const & wrapperNames,
                    ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
+  /**
+   * @brief Pack a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
   template< bool DOPACK >
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                              ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
+  /**
+   * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
   template< bool DOPACK, typename T >
   int
   PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                          T const & packList ) const;
-
+  /**
+   * @brief Unpack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @return the size of the data unpacked
+   */
   template< typename T >
   int UnpackPrivate( buffer_unit_type const * & buffer,
                      T & packList );
 
+  /**
+   * @brief Copy constructor.
+   */
   ElementRegionManager( const ElementRegionManager & );
+
+  /**
+   * @brief Copy assignment operator.
+   * @return reference to this object
+   */
   ElementRegionManager & operator=( const ElementRegionManager & );
 };
 

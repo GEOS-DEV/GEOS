@@ -22,25 +22,19 @@
 #include "common/DataTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
-/*! @name Utility functions.
+/**
+ * @name Utility functions for linear algebra unit tests.
  * @brief Functions used to construct useful matrices in the test files.
  */
-//@{
+///@{
 
 /**
- * @brief Compute an identity matrix
- *
- * @param comm MPI communicator.
- * @param N global size of the square identity matrix.
+ * @brief Compute an identity matrix.
+ * @tparam MATRIX type of matrix
+ * @param comm MPI communicator
+ * @param N global size of the square identity matrix
+ * @param I the output matrix
  */
-
-// BEGIN_RST_NARRATIVE testLAOperations.rst
-
-// ==============================
-// Compute Identity
-// ==============================
-// This function computes the identity matrix. It can be used to generate a dummy
-// preconditioner.
 template< typename MATRIX >
 void computeIdentity( MPI_Comm comm,
                       geosx::globalIndex N,
@@ -62,29 +56,34 @@ void computeIdentity( MPI_Comm comm,
   I.close();
 }
 
+/**
+ * @brief Construct a square zero matrix.
+ * @tparam MATRIX type of matrix
+ * @param comm MPI communicator
+ * @param N global size of the natrix
+ * @param Z the output matrix
+ */
 template< typename MATRIX >
 void computeZero( MPI_Comm comm,
                   geosx::globalIndex N,
-                  MATRIX & I )
+                  MATRIX & Z )
 {
-  I.createWithGlobalSize( N, 0, comm );
-  I.open();
-  I.close();
+  Z.createWithGlobalSize( N, 0, comm );
+  Z.open();
+  Z.close();
 }
 
 /**
- * @brief Compute the 2D Laplace operator
+ * @brief Compute the 2D Laplace operator.
+ * @tparam MATRIX type of matrix
+ * @param comm      MPI communicator.
+ * @param n         size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
+ * @param laplace2D the output matrix
  *
- * @param comm MPI communicator.
- * @param n size of the nxn mesh for the square 2D Laplace operator matrix. Matrix size will be N=n^2.
+ * This function computes the matrix corresponding to a 2D Laplace operator. These
+ * matrices arise from a classical finite volume formulation on a cartesian mesh
+ * (5-point stencil). Input is the mesh size, n, from which the total dofs is N = n^2;
  */
-
-// ==============================
-// Compute 2D Laplace Operator
-// ==============================
-// This function computes the matrix corresponding to a 2D Laplace operator. These
-// matrices arise from a classical finite volume formulation on a cartesian mesh
-// (5-point stencil).  Input is the mesh size, n, from which the total dofs is N = n^2;
 template< typename MATRIX >
 void compute2DLaplaceOperator( MPI_Comm comm,
                                geosx::globalIndex n,
@@ -155,8 +154,6 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
 }
 
-// END_RST_NARRATIVE
-
-//@}
+///@}
 
 #endif //GEOSX_LINEARALGEBRA_UNITTESTS_TESTLINEARALGEBRAUTILS_HPP

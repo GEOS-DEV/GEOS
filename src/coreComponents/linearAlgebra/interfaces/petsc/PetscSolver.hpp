@@ -27,17 +27,16 @@ class PetscMatrix;
 class LinearSolverParameters;
 
 /**
- * \class PetscSolver
- * \brief This class creates and provides basic support for PETSc solvers.
+ * @class PetscSolver
+ * @brief This class creates and provides basic support for PETSc solvers.
  */
-
 class PetscSolver
 {
 public:
 
   /**
    * @brief Solver constructor, with parameter list reference
-   *
+   * @param[in] parameters structure containing linear solver parameters
    */
   PetscSolver( LinearSolverParameters const & parameters );
 
@@ -49,10 +48,12 @@ public:
 
   /**
    * @brief Solve system with an iterative solver.
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
    * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
    */
-
   void solve( PetscMatrix & mat,
               PetscVector & sol,
               PetscVector & rhs );

@@ -38,13 +38,20 @@ class CGsolver : public KrylovSolver< VECTOR >
 {
 public:
 
+  /// Alias for template parameter
   using Vector = typename KrylovSolver< VECTOR >::Vector;
 
   //! @name Constructor/Destructor Methods
   //@{
 
   /**
-   * @brief Constructor.
+   * @brief Constructor
+   *
+   * @param [in] A reference to the system matrix.
+   * @param [in] M reference to the preconditioning operator.
+   * @param [in] tolerance relative residual norm reduction tolerance.
+   * @param [in] maxIterations maximum number of Krylov iterations.
+   * @param [in] verbosity solver verbosity level.
    */
   CGsolver( LinearOperator< Vector > const & A,
             LinearOperator< Vector > const & M,
@@ -62,12 +69,19 @@ public:
   //! @name KrylovSolver interface
   //@{
 
+  /**
+   * @brief Solve preconditioned system
+   *
+   * @param [in] b system right hand side.
+   * @param [inout] x system solution (input = initial guess, output = solution).
+   */
   virtual void solve( Vector const & b, Vector & x ) const override final;
 
   //@}
 
 protected:
 
+  /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
   using KrylovSolver< VECTOR >::m_operator;

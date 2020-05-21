@@ -24,11 +24,19 @@
 namespace geosx
 {
 
+/**
+ * @brief Concrete representation of a block vector.
+ * @tparam VECTOR type of sub-vectors
+ *
+ * This extends BlockVectorView class by providing storage for sub-block vectors.
+ * The @p VECTOR type needs to be default-constructible.
+ */
 template< typename VECTOR >
 class BlockVector : public BlockVectorView< VECTOR >
 {
 public:
 
+  /// Alias for base type
   using Base = BlockVectorView< VECTOR >;
 
   /**
@@ -38,19 +46,19 @@ public:
   explicit BlockVector( localIndex const nBlocks );
 
   /**
-   * @brief Copy constructor that performs a deep copy of each sub-vector
+   * @brief Copy constructor that performs a deep copy of each sub-vector.
    * @param rhs the block vector to copy
    */
   BlockVector( BlockVector const & rhs );
 
   /**
-   * @brief Move constructor
+   * @brief Move constructor.
    * @param rhs the block vector to move from
    */
   BlockVector( BlockVector && rhs );
 
   /**
-   * @brief Conversion constructor from a compatible view with a deep copy of each sub-vector
+   * @brief Conversion constructor from a compatible view with a deep copy of each sub-vector.
    * @param rhs the block vector view to copy from
    * @note declared explicit to avoid unintended deep copying
    */
@@ -65,7 +73,7 @@ private:
 
   void setPointers();
 
-  /// storage for actual vectors
+  /// Storage for actual vectors
   array1d< VECTOR > m_vectorStorage;
 };
 
