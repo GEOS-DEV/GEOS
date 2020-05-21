@@ -96,12 +96,12 @@ if( ENABLE_OPENMP )
 endif()
 
 if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core axom
+                   DEPENDS_ON geosx_core 
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )

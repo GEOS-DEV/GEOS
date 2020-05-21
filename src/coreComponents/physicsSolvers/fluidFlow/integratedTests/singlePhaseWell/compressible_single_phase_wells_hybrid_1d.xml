@@ -10,7 +10,7 @@
                targetRegions="{Region1,wellRegion1,wellRegion2}">
       <NonlinearSolverParameters lineSearchAction="0"
                                  newtonMaxIter="40"/>
-      <SystemSolverParameters useDirectSolver="1"
+      <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
     </SinglePhaseReservoir>
   

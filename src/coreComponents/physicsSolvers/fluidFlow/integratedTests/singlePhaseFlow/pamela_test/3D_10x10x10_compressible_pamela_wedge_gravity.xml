@@ -12,7 +12,8 @@
                           targetRegions="{Domain}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-10"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
 
@@ -22,7 +23,6 @@
   </Mesh>
 
   <Geometry>
-    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
     <Box name="left" xMin="-1, -1, -1" xMax="0.9, 11, 11"/>
   </Geometry>
 
