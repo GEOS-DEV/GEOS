@@ -23,7 +23,6 @@
 
 
 
-
 namespace geosx
 {
 
@@ -56,7 +55,7 @@ public:
    */
   template< int NUM_ROWS,
             int NUM_COLS >
-  struct StackVariables : KernelBase::StackVariables<NUM_ROWS,NUM_COLS>
+  struct StackVariables : KernelBase::StackVariables< NUM_ROWS, NUM_COLS >
   {
 public:
     static constexpr int numRows = NUM_ROWS;
@@ -89,28 +88,28 @@ public:
             int NUM_DOF_PER_TEST_SP,
             int NUM_DOF_PER_TRIAL_SP >
   class Components : KernelBase::Components< SUBREGION_TYPE,
-                                      CONSTITUTIVE_TYPE,
-                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
-                                      NUM_DOF_PER_TEST_SP,
-                                      NUM_DOF_PER_TRIAL_SP >
-  {
-public:
-
-    using ComponentsBase = KernelBase::Components< SUBREGION_TYPE,
                                              CONSTITUTIVE_TYPE,
                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                              NUM_DOF_PER_TEST_SP,
-                                             NUM_DOF_PER_TRIAL_SP >;
+                                             NUM_DOF_PER_TRIAL_SP >
+  {
+public:
+
+    using ComponentsBase = KernelBase::Components< SUBREGION_TYPE,
+                                                   CONSTITUTIVE_TYPE,
+                                                   NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                                                   NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                                   NUM_DOF_PER_TEST_SP,
+                                                   NUM_DOF_PER_TRIAL_SP >;
 
     static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
     static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
     static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
     static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
 
-    using StackVars = StackVariables< numTestSupportPointsPerElem*numDofPerTestSupportPoint,
-                                      numTrialSupportPointsPerElem*numDofPerTrialSupportPoint >;
+    using StackVars = StackVariables< numTestSupportPointsPerElem *numDofPerTestSupportPoint,
+                                      numTrialSupportPointsPerElem *numDofPerTrialSupportPoint >;
 
     using ComponentsBase::elemsToNodes;
     using ComponentsBase::elemGhostRank;
@@ -120,17 +119,17 @@ public:
 
 
     Components( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
+                ParallelMatrix & inputMatrix,
+                ParallelVector & inputRhs,
+                NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                SUBREGION_TYPE const & elementSubRegion,
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
       ComponentsBase( elementSubRegion,
-                   finiteElementSpace,
-                   inputConstitutiveType,
-                   inputConstitutiveType->createKernelWrapper() ),
+                      finiteElementSpace,
+                      inputConstitutiveType,
+                      inputConstitutiveType->createKernelWrapper() ),
       m_dofNumber( inputDofNumber ),
       m_matrix( inputMatrix ),
       m_rhs( inputRhs )
@@ -140,7 +139,7 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
+                STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
       {
@@ -167,34 +166,34 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
-                       localIndex const GEOSX_UNUSED_PARAM( q ),
-                       STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                     localIndex const GEOSX_UNUSED_PARAM( q ),
+                                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                          localIndex const GEOSX_UNUSED_PARAM( q ),
-                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                          STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                              localIndex const GEOSX_UNUSED_PARAM( q ),
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                            localIndex const GEOSX_UNUSED_PARAM( q ),
-                            PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                              localIndex const GEOSX_UNUSED_PARAM( q ),
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                       STACK_VARIABLE_TYPE & stack ) const
+                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                     STACK_VARIABLE_TYPE & stack ) const
     {
       m_matrix.insert( stack.localRowDofIndex,
                        stack.localColDofIndex,
@@ -223,17 +222,17 @@ real64 FillSparsity( MeshLevel & mesh,
                      ParallelVector & inputRhs )
 {
   return RegionBasedKernelApplication< POLICY,
-                  ImplicitKernelBase,
-                  constitutive::Dummy,
-                  REGION_TYPE,
-                  UPDATE_CLASS::template SparsityComponents >( mesh,
-                                                            targetRegions,
-                                                            array1d<string>(),
-                                                            feDiscretization,
-                                                            inputDofNumber,
-                                                            inputMatrix,
-                                                            inputRhs,
-                                                            ImplicitKernelBase::Parameters() );
+                                       ImplicitKernelBase,
+                                       constitutive::Dummy,
+                                       REGION_TYPE,
+                                       UPDATE_CLASS::template SparsityComponents >( mesh,
+                                                                                    targetRegions,
+                                                                                    array1d< string >(),
+                                                                                    feDiscretization,
+                                                                                    inputDofNumber,
+                                                                                    inputMatrix,
+                                                                                    inputRhs,
+                                                                                    ImplicitKernelBase::Parameters() );
 }
 
 }

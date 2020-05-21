@@ -39,7 +39,7 @@ public:
   {
     Parameters( string const & fieldName ):
       BaseKernel::Parameters(),
-      m_fieldName{'\0'}
+                                         m_fieldName{ '\0' }
     {
       fieldName.copy( m_fieldName, fieldName.size() );
     }
@@ -51,12 +51,12 @@ public:
   //***************************************************************************
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
-  struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
-                                                NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >
+  struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
+                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM *numTrialDofPerSP >
   {
 public:
-    using StackVariablesBase = BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM*numTestDofPerSP,
-                                                     NUM_TRIAL_SUPPORT_POINTS_PER_ELEM*numTrialDofPerSP >;
+    using StackVariablesBase = BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
+                                                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM *numTrialDofPerSP >;
 
     using StackVariablesBase::numRows;
     using StackVariablesBase::numCols;
@@ -79,11 +79,11 @@ public:
             int NUM_NODES_PER_ELEM,
             int >
   using SparsityComponents = BaseKernel::Components< SUBREGION_TYPE,
-                                         CONSTITUTIVE_TYPE,
-                                         NUM_NODES_PER_ELEM,
-                                         NUM_NODES_PER_ELEM,
-                                         1,
-                                         1 >;
+                                                     CONSTITUTIVE_TYPE,
+                                                     NUM_NODES_PER_ELEM,
+                                                     NUM_NODES_PER_ELEM,
+                                                     1,
+                                                     1 >;
 
   //***************************************************************************
   template< typename SUBREGION_TYPE,
@@ -91,19 +91,19 @@ public:
             int NUM_NODES_PER_ELEM,
             int >
   class Components : public BaseKernel::Components< SUBREGION_TYPE,
-                                        CONSTITUTIVE_TYPE,
-                                        NUM_NODES_PER_ELEM,
-                                        NUM_NODES_PER_ELEM,
-                                        1,
-                                        1 >
+                                                    CONSTITUTIVE_TYPE,
+                                                    NUM_NODES_PER_ELEM,
+                                                    NUM_NODES_PER_ELEM,
+                                                    1,
+                                                    1 >
   {
 public:
     using ComponentsBase = BaseKernel::Components< SUBREGION_TYPE,
-                                      CONSTITUTIVE_TYPE,
-                                      NUM_NODES_PER_ELEM,
-                                      NUM_NODES_PER_ELEM,
-                                      1,
-                                      1 >;
+                                                   CONSTITUTIVE_TYPE,
+                                                   NUM_NODES_PER_ELEM,
+                                                   NUM_NODES_PER_ELEM,
+                                                   1,
+                                                   1 >;
 
     static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
@@ -120,21 +120,21 @@ public:
                                       numNodesPerElem >;
 
     Components( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & parameters ):
+                ParallelMatrix & inputMatrix,
+                ParallelVector & inputRhs,
+                NodeManager const & nodeManager,
+                SUBREGION_TYPE const & elementSubRegion,
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                Parameters const & parameters ):
       ComponentsBase( inputDofNumber,
-                  inputMatrix,
-                  inputRhs,
-                  nodeManager,
-                  elementSubRegion,
-                  finiteElementSpace,
-                  inputConstitutiveType,
-                  parameters ),
+                      inputMatrix,
+                      inputRhs,
+                      nodeManager,
+                      elementSubRegion,
+                      finiteElementSpace,
+                      inputConstitutiveType,
+                      parameters ),
       m_primaryField( nodeManager.template getReference< array1d< real64 > >( parameters.m_fieldName )),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
@@ -149,7 +149,7 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
+                STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
       {
@@ -167,9 +167,9 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const k,
-                          localIndex const q,
-                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                          STACK_VARIABLE_TYPE & stack ) const
+                                              localIndex const q,
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
       {
@@ -183,9 +183,9 @@ public:
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    real64 complete( localIndex const GEOSX_UNUSED_PARAM(k),
-                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                       STACK_VARIABLE_TYPE & stack ) const
+    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                     STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
       {

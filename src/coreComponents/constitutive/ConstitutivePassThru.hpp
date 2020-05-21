@@ -35,7 +35,7 @@ struct ConstitutivePassThru;
 
 
 template<>
-struct ConstitutivePassThru<SolidBase>
+struct ConstitutivePassThru< SolidBase >
 {
   template< typename LAMBDA >
   static
@@ -66,7 +66,7 @@ struct ConstitutivePassThru<SolidBase>
 
 
 template<>
-struct ConstitutivePassThru<Dummy>
+struct ConstitutivePassThru< Dummy >
 {
   template< typename LAMBDA >
   static
@@ -99,13 +99,13 @@ bool ConstitutiveBasePassThru( ConstitutiveBase * const constitutiveRelation,
   bool rval = true;
   if( dynamic_cast< SolidBase * >( constitutiveRelation ) )
   {
-    ConstitutivePassThru<SolidBase>::Execute( static_cast< SolidBase *>(constitutiveRelation),
-                                              std::forward<LAMBDA&&>(lambda) );
+    ConstitutivePassThru< SolidBase >::Execute( static_cast< SolidBase * >(constitutiveRelation),
+                                                std::forward< LAMBDA&& >( lambda ) );
   }
   else if( dynamic_cast< Dummy * >( constitutiveRelation ) )
   {
-    ConstitutivePassThru<Dummy>::Execute( static_cast< Dummy *>(constitutiveRelation),
-                                          std::forward<LAMBDA&&>(lambda) );
+    ConstitutivePassThru< Dummy >::Execute( static_cast< Dummy * >(constitutiveRelation),
+                                            std::forward< LAMBDA&& >( lambda ) );
   }
   return rval;
 }

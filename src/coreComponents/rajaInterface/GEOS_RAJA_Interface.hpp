@@ -64,12 +64,12 @@ struct ReducePolicy
   using type = parallelDeviceReduce;
 };
 
-template <> struct ReducePolicy<serialPolicy>
+template<> struct ReducePolicy< serialPolicy >
 {
   using type = serialReduce;
 };
 
-template <> struct ReducePolicy<parallelHostPolicy>
+template<> struct ReducePolicy< parallelHostPolicy >
 {
   using type = parallelHostReduce;
 };
@@ -80,12 +80,12 @@ struct AtomicPolicy
   using type = parallelDeviceAtomic;
 };
 
-template <> struct AtomicPolicy<serialPolicy>
+template<> struct AtomicPolicy< serialPolicy >
 {
   using type = serialAtomic;
 };
 
-template <> struct AtomicPolicy<parallelHostPolicy>
+template<> struct AtomicPolicy< parallelHostPolicy >
 {
   using type = parallelHostAtomic;
 };

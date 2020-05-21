@@ -81,7 +81,7 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
                      matrix,
                      rhs,
                      solution,
-                     setSparsity);
+                     setSparsity );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 

@@ -40,12 +40,12 @@ public:
                 real64 const inputMassDamping,
                 real64 const inputStiffnessDamping,
                 real64 const inputDt ):
-    Base::Parameters( inputGravityVector ),
-      newmarkGamma(inputNewmarkGamma),
-      newmarkBeta(inputNewmarkBeta),
-      massDamping(inputMassDamping),
-      stiffnessDamping(inputStiffnessDamping),
-      dt(inputDt)
+      Base::Parameters( inputGravityVector ),
+      newmarkGamma( inputNewmarkGamma ),
+      newmarkBeta( inputNewmarkBeta ),
+      massDamping( inputMassDamping ),
+      stiffnessDamping( inputStiffnessDamping ),
+      dt( inputDt )
     {}
 
     real64 const newmarkGamma;
@@ -82,12 +82,12 @@ public:
   template< typename SUBREGION_TYPE,
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
-            int  >
+            int >
   class Components : public Base::Components< SUBREGION_TYPE, CONSTITUTIVE_TYPE, NUM_NODES_PER_ELEM, NUM_NODES_PER_ELEM >
   {
-  public:
+public:
 
-    using ComponentsBase = Base::Components<SUBREGION_TYPE,CONSTITUTIVE_TYPE, NUM_NODES_PER_ELEM, NUM_NODES_PER_ELEM>;
+    using ComponentsBase = Base::Components< SUBREGION_TYPE, CONSTITUTIVE_TYPE, NUM_NODES_PER_ELEM, NUM_NODES_PER_ELEM >;
     using ComponentsBase::m_dofNumber;
     using ComponentsBase::m_matrix;
     using ComponentsBase::m_rhs;
@@ -102,24 +102,24 @@ public:
 
 
     Components( arrayView1d< globalIndex const > const & inputDofNumber,
-             ParallelMatrix & inputMatrix,
-             ParallelVector & inputRhs,
-             NodeManager const & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE & constitutiveModel,
-             Base::Parameters const & parameters ):
+                ParallelMatrix & inputMatrix,
+                ParallelVector & inputRhs,
+                NodeManager const & nodeManager,
+                SUBREGION_TYPE const & elementSubRegion,
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE & constitutiveModel,
+                Base::Parameters const & parameters ):
       ComponentsBase( inputDofNumber,
-                 inputMatrix,
-                 inputRhs,
-                 nodeManager,
-                 elementSubRegion,
-                 finiteElementSpace,
-                 constitutiveModel,
-                 parameters ),
-      m_vtilde(nodeManager.totalDisplacement()),
-      m_uhattilde(nodeManager.totalDisplacement()),
-      m_density(constitutiveModel.getDensity())
+                      inputMatrix,
+                      inputRhs,
+                      nodeManager,
+                      elementSubRegion,
+                      finiteElementSpace,
+                      constitutiveModel,
+                      parameters ),
+      m_vtilde( nodeManager.totalDisplacement()),
+      m_uhattilde( nodeManager.totalDisplacement()),
+      m_density( constitutiveModel.getDensity())
     {}
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
@@ -127,10 +127,10 @@ public:
     arrayView2d< real64 const > const m_density;
 
     template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
+                STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
       {
@@ -150,12 +150,12 @@ public:
     }
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const k,
-                          localIndex const q,
-                          PARAMETERS_TYPE const & parameters,
-                          STACK_VARIABLE_TYPE & stack ) const
+                                              localIndex const q,
+                                              PARAMETERS_TYPE const & parameters,
+                                              STACK_VARIABLE_TYPE & stack ) const
     {
 
       std::vector< double > const & N = m_finiteElementSpace->values( q );
@@ -168,17 +168,17 @@ public:
 
       ComponentsBase::quadraturePointJacobianContribution( k, q, parameters, stack, [&]( localIndex const a, localIndex const b )
       {
-        real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ(k,q);
+        real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
         real64 temp1 = ( massDamping * newmarkGamma/( newmarkBeta * dt ) + 1.0 / ( newmarkBeta * dt * dt ) )*
- integrationFactor;
+                       integrationFactor;
 
         constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
         for( int i=0; i<nsdof; ++i )
         {
           realT const acc = 1.0 / ( newmarkBeta * dt * dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i]
- );
+                                                                );
           realT const vel = stack.vtilde_local[b][i] + newmarkGamma/( newmarkBeta * dt ) *( stack.uhat_local[b][i] -
- stack.uhattilde_local[b][i] );
+                                                                                            stack.uhattilde_local[b][i] );
 
           stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
           stack.localResidual[ a*nsdof+i ] -= ( massDamping * vel + acc ) * integrationFactor;
@@ -187,10 +187,10 @@ public:
     }
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+    //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( PARAMETERS_TYPE const & parameters,
-                       STACK_VARIABLE_TYPE & stack ) const
+                     STACK_VARIABLE_TYPE & stack ) const
     {
       constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
       real64 const & stiffnessDamping = parameters.stiffnessDamping;
@@ -207,24 +207,24 @@ public:
             for( int j=0; j<nsdof; ++j )
             {
               stack.localResidual[ a*nsdof+i ] += stiffnessDamping * stack.localJacobian[ a*nsdof+i][ b*nsdof+j ] *
-                                               ( stack.vtilde_local[b][j] + newmarkGamma/(newmarkBeta *
- dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+                                                  ( stack.vtilde_local[b][j] + newmarkGamma/(newmarkBeta *
+                                                                                             dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
 
               stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping *
- newmarkGamma / ( newmarkBeta * dt ) ) +
-                                           stack.dRdU_InertiaMassDamping[ a ][ b ] ;
+                                                                                        newmarkGamma / ( newmarkBeta * dt ) ) +
+                                                           stack.dRdU_InertiaMassDamping[ a ][ b ];
             }
           }
         }
       }
 
-      for( localIndex a=0 ; a<STACK_VARIABLE_TYPE::ndof ; ++a )
+      for( localIndex a=0; a<STACK_VARIABLE_TYPE::ndof; ++a )
       {
-        for( localIndex b=0 ; b<STACK_VARIABLE_TYPE::ndof ; ++b )
+        for( localIndex b=0; b<STACK_VARIABLE_TYPE::ndof; ++b )
         {
           stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + stiffnessDamping * newmarkGamma / (
- newmarkBeta * dt ) ) +
-                                       stack.dRdU_InertiaMassDamping[ a ][ b ] ;
+                                                                      newmarkBeta * dt ) ) +
+                                       stack.dRdU_InertiaMassDamping[ a ][ b ];
         }
       }
 

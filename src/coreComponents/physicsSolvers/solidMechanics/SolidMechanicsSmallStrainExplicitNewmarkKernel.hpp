@@ -46,7 +46,7 @@ public:
     Parameters( real64 const dt,
                 string const elementListName ):
       m_dt( dt ),
-      m_elementListName{'\0'}
+      m_elementListName{ '\0' }
     {
       elementListName.copy( m_elementListName, elementListName.size() );
     }
@@ -103,14 +103,14 @@ public:
 
 
 
-    Components( arrayView1d< globalIndex const > const & ,
-             ParallelMatrix & ,
-             ParallelVector & ,
-             NodeManager & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & parameters )://,
+    Components( arrayView1d< globalIndex const > const &,
+                ParallelMatrix &,
+                ParallelVector &,
+                NodeManager & nodeManager,
+                SUBREGION_TYPE const & elementSubRegion,
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                Parameters const & parameters )://,
       elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
       elemGhostRank( elementSubRegion.ghostRank() ),
       constitutiveUpdate( inputConstitutiveType->createKernelWrapper() ),
@@ -119,12 +119,12 @@ public:
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
 #endif
-      X(nodeManager.referencePosition()),
-      u(nodeManager.totalDisplacement()),
-      vel(nodeManager.velocity()),
-      acc(nodeManager.acceleration()),
-      m_dt(parameters.m_dt),
-      m_elementList( elementSubRegion.template getReference<SortedArray<localIndex>>(parameters.m_elementListName ).toViewConst() )
+      X( nodeManager.referencePosition()),
+      u( nodeManager.totalDisplacement()),
+      vel( nodeManager.velocity()),
+      acc( nodeManager.acceleration()),
+      m_dt( parameters.m_dt ),
+      m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( parameters.m_elementListName ).toViewConst() )
     {}
 
     typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
@@ -147,7 +147,7 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
+                STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
@@ -171,13 +171,13 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointStateUpdate( localIndex const k,
-                       localIndex const q,
-                       STACK_VARIABLE_TYPE & stack ) const
+                                     localIndex const q,
+                                     STACK_VARIABLE_TYPE & stack ) const
     {
 
 #if defined(CALCFEMSHAPE)
-        real64 dNdX[ 8 ][ 3 ];
-        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
+      real64 dNdX[ 8 ][ 3 ];
+      real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
   #define DNDX dNdX
   #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
@@ -185,72 +185,70 @@ public:
   #define DETJ detJ( k, q )
 #endif //defined(CALCFEMSHAPE)
 
-        real64 stressLocal[ 6 ] = {0};
-        real64 strain[6] = {0};
-        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-        {
-          strain[0] = strain[0] + DNDX[ a ][0] * stack.varLocal[ a ][0];
-          strain[1] = strain[1] + DNDX[ a ][1] * stack.varLocal[ a ][1];
-          strain[2] = strain[2] + DNDX[ a ][2] * stack.varLocal[ a ][2];
-          strain[3] = strain[3] + DNDX[ a ][2] * stack.varLocal[ a ][1] + DNDX[ a ][1] * stack.varLocal[ a ][2];
-          strain[4] = strain[4] + DNDX[ a ][2] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][2];
-          strain[5] = strain[5] + DNDX[ a ][1] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][1];
-        }
+      real64 stressLocal[ 6 ] = {0};
+      real64 strain[6] = {0};
+      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+      {
+        strain[0] = strain[0] + DNDX[ a ][0] * stack.varLocal[ a ][0];
+        strain[1] = strain[1] + DNDX[ a ][1] * stack.varLocal[ a ][1];
+        strain[2] = strain[2] + DNDX[ a ][2] * stack.varLocal[ a ][2];
+        strain[3] = strain[3] + DNDX[ a ][2] * stack.varLocal[ a ][1] + DNDX[ a ][1] * stack.varLocal[ a ][2];
+        strain[4] = strain[4] + DNDX[ a ][2] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][2];
+        strain[5] = strain[5] + DNDX[ a ][1] * stack.varLocal[ a ][0] + DNDX[ a ][0] * stack.varLocal[ a ][1];
+      }
 
 #if UPDATE_STRESS == 2
-        constitutiveUpdate.SmallStrain( k, q, strain );
+      constitutiveUpdate.SmallStrain( k, q, strain );
 #else
-        constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+      constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
 #endif
 
-        for( localIndex c = 0; c < 6; ++c )
-        {
+      for( localIndex c = 0; c < 6; ++c )
+      {
 #if UPDATE_STRESS == 2
-          stressLocal[ c ] =  constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
+        stressLocal[ c ] =  constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
 #elif UPDATE_STRESS == 1
-          stressLocal[ c ] = ( stressLocal[ c ] + constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
+        stressLocal[ c ] = ( stressLocal[ c ] + constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
 #else
-          stressLocal[ c ] *= -DETJ;
+        stressLocal[ c ] *= -DETJ;
 #endif
-        }
+      }
 
 
-        for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
-        {
-          stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
-          stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
-          stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
-        }
+      for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+      {
+        stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
+        stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
+        stack.fLocal[ a ][ 2 ] = stack.fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
+      }
     }
 
     template< typename PARAMETERS_TYPE,
               typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void quadraturePointJacobianContribution( localIndex const ,
-                          localIndex const ,
-                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                          STACK_VARIABLE_TYPE & ) const
-    {
-    }
+    void quadraturePointJacobianContribution( localIndex const,
+                                              localIndex const,
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & ) const
+    {}
 
     template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE>
+              typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
-    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM(k),
-                            localIndex const GEOSX_UNUSED_PARAM(q),
-                            PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM(parameters),
-                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM(stack) ) const
-    {
-    }
+    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
+                                              localIndex const GEOSX_UNUSED_PARAM( q ),
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+    {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const k,
-                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                       STACK_VARIABLE_TYPE const & stack ) const
+                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                     STACK_VARIABLE_TYPE const & stack ) const
     {
       real64 meanForce = 0;
 
@@ -273,12 +271,12 @@ public:
               typename PARAMETERS_TYPE,
               typename COMPONENT_TYPE >
     static real64
-    Launch( localIndex const ,//numElems,
+    Launch( localIndex const, //numElems,
             PARAMETERS_TYPE const & parameters,
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
-      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+      RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
 
       localIndex const numElems = kernelComponent.m_elementList.size();
       forAll< POLICY >( numElems,

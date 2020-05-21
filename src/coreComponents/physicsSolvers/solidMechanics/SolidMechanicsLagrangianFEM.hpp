@@ -381,12 +381,12 @@ public:
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
-    return subRegion.getReference<SortedArray<localIndex>>(viewKeyStruct::elemsAttachedToSendOrReceiveNodes);
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes );
   }
 
   SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
-    return subRegion.getReference<SortedArray<localIndex>>(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes);
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes );
   }
 
 

@@ -45,11 +45,11 @@ public:
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
   struct StackVariables : public KernelBase::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                             NUM_TRIAL_SUPPORT_POINTS_PER_ELEM>
+                                                             NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
   {
 public:
     using StackVariablesBase = KernelBase::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM>;
+                                                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >;
 
     using StackVariablesBase::numNodes;
     using StackVariablesBase::fLocal;
@@ -73,22 +73,20 @@ public:
 
 
 
-
-
   template< typename SUBREGION_TYPE,
             typename CONSTITUTIVE_TYPE,
             int NUM_NODES_PER_ELEM,
             int >
   class Components : public KernelBase::Components< SUBREGION_TYPE,
-                                              CONSTITUTIVE_TYPE,
-                                              NUM_NODES_PER_ELEM,
-                                              NUM_NODES_PER_ELEM >
+                                                    CONSTITUTIVE_TYPE,
+                                                    NUM_NODES_PER_ELEM,
+                                                    NUM_NODES_PER_ELEM >
   {
 public:
-    using ComponentsBase = KernelBase::Components<SUBREGION_TYPE,
-                                              CONSTITUTIVE_TYPE,
-                                              NUM_NODES_PER_ELEM,
-                                              NUM_NODES_PER_ELEM >;
+    using ComponentsBase = KernelBase::Components< SUBREGION_TYPE,
+                                                   CONSTITUTIVE_TYPE,
+                                                   NUM_NODES_PER_ELEM,
+                                                   NUM_NODES_PER_ELEM >;
     using ComponentsBase::numNodesPerElem;
     using ComponentsBase::m_dt;
     using ComponentsBase::elemsToNodes;
@@ -106,11 +104,11 @@ public:
     Components( arrayView1d< globalIndex const > const & inputDofNumber,
                 ParallelMatrix & inputMatrix,
                 ParallelVector & inputRhs,
-             NodeManager & nodeManager,
-             SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & parameters ):
+                NodeManager & nodeManager,
+                SUBREGION_TYPE const & elementSubRegion,
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                Parameters const & parameters ):
       ComponentsBase( inputDofNumber,
                       inputMatrix,
                       inputRhs,
@@ -118,14 +116,14 @@ public:
                       elementSubRegion,
                       finiteElementSpace,
                       inputConstitutiveType,
-                      parameters)
+                      parameters )
     {}
 
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const k,
-                    STACK_VARIABLE_TYPE & stack ) const
+                STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
@@ -149,94 +147,94 @@ public:
                                      STACK_VARIABLE_TYPE & stack ) const
     {
 #if defined(CALCFEMSHAPE)
-        real64 dNdX[ 8 ][ 3 ];
-        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+      real64 dNdX[ 8 ][ 3 ];
+      real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
 #define DNDX dNdX
 #define DETJ detJ
 #else
 #define DNDX dNdX[k][q]
 #define DETJ detJ( k, q )
 #endif
-        R2Tensor dUhatdX, dUdX;
-        real64 * const GEOSX_RESTRICT g0 = dUhatdX.Data();
-        real64 * const GEOSX_RESTRICT g1 = dUdX.Data();
+      R2Tensor dUhatdX, dUdX;
+      real64 * const GEOSX_RESTRICT g0 = dUhatdX.Data();
+      real64 * const GEOSX_RESTRICT g1 = dUdX.Data();
 
-        for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-        {
-          g0[0] += stack.varLocal[a][0]*DNDX[a][0];
-          g0[1] += stack.varLocal[a][0]*DNDX[a][1];
-          g0[2] += stack.varLocal[a][0]*DNDX[a][2];
-          g0[3] += stack.varLocal[a][1]*DNDX[a][0];
-          g0[4] += stack.varLocal[a][1]*DNDX[a][1];
-          g0[5] += stack.varLocal[a][1]*DNDX[a][2];
-          g0[6] += stack.varLocal[a][2]*DNDX[a][0];
-          g0[7] += stack.varLocal[a][2]*DNDX[a][1];
-          g0[8] += stack.varLocal[a][2]*DNDX[a][2];
-
-
-          g1[0] += stack.uLocal[a][0]*DNDX[a][0];
-          g1[1] += stack.uLocal[a][0]*DNDX[a][1];
-          g1[2] += stack.uLocal[a][0]*DNDX[a][2];
-          g1[3] += stack.uLocal[a][1]*DNDX[a][0];
-          g1[4] += stack.uLocal[a][1]*DNDX[a][1];
-          g1[5] += stack.uLocal[a][1]*DNDX[a][2];
-          g1[6] += stack.uLocal[a][2]*DNDX[a][0];
-          g1[7] += stack.uLocal[a][2]*DNDX[a][1];
-          g1[8] += stack.uLocal[a][2]*DNDX[a][2];
-        }
+      for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+      {
+        g0[0] += stack.varLocal[a][0]*DNDX[a][0];
+        g0[1] += stack.varLocal[a][0]*DNDX[a][1];
+        g0[2] += stack.varLocal[a][0]*DNDX[a][2];
+        g0[3] += stack.varLocal[a][1]*DNDX[a][0];
+        g0[4] += stack.varLocal[a][1]*DNDX[a][1];
+        g0[5] += stack.varLocal[a][1]*DNDX[a][2];
+        g0[6] += stack.varLocal[a][2]*DNDX[a][0];
+        g0[7] += stack.varLocal[a][2]*DNDX[a][1];
+        g0[8] += stack.varLocal[a][2]*DNDX[a][2];
 
 
-        dUhatdX *= m_dt;
-
-        R2Tensor F, Ldt, fInv;
-
-        // calculate du/dX
-        F = dUhatdX;
-        F *= 0.5;
-        F += dUdX;
-        F.PlusIdentity( 1.0 );
-        fInv.Inverse( F );
-
-        // chain rule: calculate dv/du = dv/dX * dX/du
-        Ldt.AijBjk( dUhatdX, fInv );
-
-        // calculate gradient (end of step)
-        F = dUhatdX;
-        F += dUdX;
-        F.PlusIdentity( 1.0 );
-        real64 const detF = F.Det();
-        fInv.Inverse( F );
+        g1[0] += stack.uLocal[a][0]*DNDX[a][0];
+        g1[1] += stack.uLocal[a][0]*DNDX[a][1];
+        g1[2] += stack.uLocal[a][0]*DNDX[a][2];
+        g1[3] += stack.uLocal[a][1]*DNDX[a][0];
+        g1[4] += stack.uLocal[a][1]*DNDX[a][1];
+        g1[5] += stack.uLocal[a][1]*DNDX[a][2];
+        g1[6] += stack.uLocal[a][2]*DNDX[a][0];
+        g1[7] += stack.uLocal[a][2]*DNDX[a][1];
+        g1[8] += stack.uLocal[a][2]*DNDX[a][2];
+      }
 
 
-        R2Tensor Rot;
-        R2SymTensor Dadt;
-        HughesWinget( Rot, Dadt, Ldt );
+      dUhatdX *= m_dt;
 
-        constitutiveUpdate.HypoElastic( k, q, Dadt.Data(), Rot );
+      R2Tensor F, Ldt, fInv;
 
-        real64 const integrationFactor = - DETJ * detF;
+      // calculate du/dX
+      F = dUhatdX;
+      F *= 0.5;
+      F += dUdX;
+      F.PlusIdentity( 1.0 );
+      fInv.Inverse( F );
 
-        real64 const * const stress = constitutiveUpdate.m_stress[k][q];
+      // chain rule: calculate dv/du = dv/dX * dX/du
+      Ldt.AijBjk( dUhatdX, fInv );
 
-        real64 P[ 3 ][ 3 ];
-        P[ 0 ][ 0 ] = ( stress[ 0 ] * fInv( 0, 0 ) + stress[ 5 ] * fInv( 0, 1 ) + stress[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
-        P[ 0 ][ 1 ] = ( stress[ 0 ] * fInv( 1, 0 ) + stress[ 5 ] * fInv( 1, 1 ) + stress[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
-        P[ 0 ][ 2 ] = ( stress[ 0 ] * fInv( 2, 0 ) + stress[ 5 ] * fInv( 2, 1 ) + stress[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
+      // calculate gradient (end of step)
+      F = dUhatdX;
+      F += dUdX;
+      F.PlusIdentity( 1.0 );
+      real64 const detF = F.Det();
+      fInv.Inverse( F );
 
-        P[ 1 ][ 0 ] = ( stress[ 5 ] * fInv( 0, 0 ) + stress[ 1 ] * fInv( 0, 1 ) + stress[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
-        P[ 1 ][ 1 ] = ( stress[ 5 ] * fInv( 1, 0 ) + stress[ 1 ] * fInv( 1, 1 ) + stress[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
-        P[ 1 ][ 2 ] = ( stress[ 5 ] * fInv( 2, 0 ) + stress[ 1 ] * fInv( 2, 1 ) + stress[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
 
-        P[ 2 ][ 0 ] = ( stress[ 4 ] * fInv( 0, 0 ) + stress[ 3 ] * fInv( 0, 1 ) + stress[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
-        P[ 2 ][ 1 ] = ( stress[ 4 ] * fInv( 1, 0 ) + stress[ 3 ] * fInv( 1, 1 ) + stress[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
-        P[ 2 ][ 2 ] = ( stress[ 4 ] * fInv( 2, 0 ) + stress[ 3 ] * fInv( 2, 1 ) + stress[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
+      R2Tensor Rot;
+      R2SymTensor Dadt;
+      HughesWinget( Rot, Dadt, Ldt );
 
-        for( int a=0; a<NUM_NODES_PER_ELEM; ++a )    // loop through all shape functions in element
-        {
-          stack.fLocal[a][0] = stack.fLocal[a][0] + P[ 0 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 0 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 0 ][ 2 ] * DNDX[ a ][ 2 ];
-          stack.fLocal[a][1] = stack.fLocal[a][1] + P[ 1 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 1 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 1 ][ 2 ] * DNDX[ a ][ 2 ];
-          stack.fLocal[a][2] = stack.fLocal[a][2] + P[ 2 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 2 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 2 ][ 2 ] * DNDX[ a ][ 2 ];
-        }
+      constitutiveUpdate.HypoElastic( k, q, Dadt.Data(), Rot );
+
+      real64 const integrationFactor = -DETJ * detF;
+
+      real64 const * const stress = constitutiveUpdate.m_stress[k][q];
+
+      real64 P[ 3 ][ 3 ];
+      P[ 0 ][ 0 ] = ( stress[ 0 ] * fInv( 0, 0 ) + stress[ 5 ] * fInv( 0, 1 ) + stress[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
+      P[ 0 ][ 1 ] = ( stress[ 0 ] * fInv( 1, 0 ) + stress[ 5 ] * fInv( 1, 1 ) + stress[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
+      P[ 0 ][ 2 ] = ( stress[ 0 ] * fInv( 2, 0 ) + stress[ 5 ] * fInv( 2, 1 ) + stress[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+      P[ 1 ][ 0 ] = ( stress[ 5 ] * fInv( 0, 0 ) + stress[ 1 ] * fInv( 0, 1 ) + stress[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
+      P[ 1 ][ 1 ] = ( stress[ 5 ] * fInv( 1, 0 ) + stress[ 1 ] * fInv( 1, 1 ) + stress[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
+      P[ 1 ][ 2 ] = ( stress[ 5 ] * fInv( 2, 0 ) + stress[ 1 ] * fInv( 2, 1 ) + stress[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+      P[ 2 ][ 0 ] = ( stress[ 4 ] * fInv( 0, 0 ) + stress[ 3 ] * fInv( 0, 1 ) + stress[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
+      P[ 2 ][ 1 ] = ( stress[ 4 ] * fInv( 1, 0 ) + stress[ 3 ] * fInv( 1, 1 ) + stress[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
+      P[ 2 ][ 2 ] = ( stress[ 4 ] * fInv( 2, 0 ) + stress[ 3 ] * fInv( 2, 1 ) + stress[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
+
+      for( int a=0; a<NUM_NODES_PER_ELEM; ++a )      // loop through all shape functions in element
+      {
+        stack.fLocal[a][0] = stack.fLocal[a][0] + P[ 0 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 0 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 0 ][ 2 ] * DNDX[ a ][ 2 ];
+        stack.fLocal[a][1] = stack.fLocal[a][1] + P[ 1 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 1 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 1 ][ 2 ] * DNDX[ a ][ 2 ];
+        stack.fLocal[a][2] = stack.fLocal[a][2] + P[ 2 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 2 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 2 ][ 2 ] * DNDX[ a ][ 2 ];
+      }
 
     }
 

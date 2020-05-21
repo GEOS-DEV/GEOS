@@ -188,7 +188,7 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
                                                        nullptr,
                                                        dofIndex,
                                                        matrix,
-                                                       rhs);
+                                                       rhs );
 
 
   matrix.close();
@@ -224,17 +224,17 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   rhs.open();
 
   finiteElement::
-  RegionBasedKernelApplication< serialPolicy,
-                                LaplaceFEMKernel,
-                                Dummy,
-                                CellElementSubRegion >( *mesh,
-                                                        targetRegionNames(),
-                                                        array1d<string>(),
-                                                        feDiscretization,
-                                                        dofIndex,
-                                                        matrix,
-                                                        rhs,
-                                                        LaplaceFEMKernel::Parameters( m_fieldName ));
+    RegionBasedKernelApplication< serialPolicy,
+                                  LaplaceFEMKernel,
+                                  Dummy,
+                                  CellElementSubRegion >( *mesh,
+                                                          targetRegionNames(),
+                                                          array1d< string >(),
+                                                          feDiscretization,
+                                                          dofIndex,
+                                                          matrix,
+                                                          rhs,
+                                                          LaplaceFEMKernel::Parameters( m_fieldName ));
 
   matrix.close();
   rhs.close();

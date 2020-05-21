@@ -120,18 +120,18 @@ public:
   {
 public:
     Components( SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const inputConstitutiveType,
-             Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
       Components( elementSubRegion,
-               finiteElementSpace,
-               inputConstitutiveType,
-               typename CONSTITUTIVE_TYPE::KernelWrapper() )
+                  finiteElementSpace,
+                  inputConstitutiveType,
+                  typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
     Components( SUBREGION_TYPE const & elementSubRegion,
-             FiniteElementBase const * const finiteElementSpace,
-             CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
-             typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
+                FiniteElementBase const * const finiteElementSpace,
+                CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
+                typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
       elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
       elemGhostRank( elementSubRegion.ghostRank() ),
       constitutiveUpdate( inputConstitutiveUpdate ),
@@ -142,45 +142,44 @@ public:
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void setup( localIndex const GEOSX_UNUSED_PARAM( k ),
-                    STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
-                       localIndex const GEOSX_UNUSED_PARAM( q ),
-                       STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                     localIndex const GEOSX_UNUSED_PARAM( q ),
+                                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                          localIndex const GEOSX_UNUSED_PARAM( q ),
-                          PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                          STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                              localIndex const GEOSX_UNUSED_PARAM( q ),
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                            localIndex const GEOSX_UNUSED_PARAM( q ),
-                            PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                              localIndex const GEOSX_UNUSED_PARAM( q ),
+                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
     template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                       PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
-                       STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
+                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {
       return 0;
     }
-
 
 
 
@@ -197,7 +196,7 @@ public:
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
-      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+      RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
 
       forAll< POLICY >( numElems,
                         [=] ( localIndex const k )
@@ -234,7 +233,7 @@ public:
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
-      RAJA::ReduceMax< typename ReducePolicy<POLICY>::type, real64 > maxResidual( 0 );
+      RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
 
       forAll< POLICY >( numElems,
                         [=] GEOSX_DEVICE ( localIndex const k )
@@ -278,16 +277,16 @@ template< typename POLICY,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE = UPDATE_CLASS::template Components>
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE = UPDATE_CLASS::template Components >
 static
 real64 RegionBasedKernelApplication( MeshLevel & mesh,
-                arrayView1d< string const > const & targetRegions,
-                arrayView1d< string const > const & constitutiveNames,
-                FiniteElementDiscretization const * const feDiscretization,
-                arrayView1d< globalIndex const > const & inputDofNumber,
-                ParallelMatrix & inputMatrix,
-                ParallelVector & inputRhs,
-                typename UPDATE_CLASS::Parameters const & parameters )
+                                     arrayView1d< string const > const & targetRegions,
+                                     arrayView1d< string const > const & constitutiveNames,
+                                     FiniteElementDiscretization const * const feDiscretization,
+                                     arrayView1d< globalIndex const > const & inputDofNumber,
+                                     ParallelMatrix & inputMatrix,
+                                     ParallelVector & inputRhs,
+                                     typename UPDATE_CLASS::Parameters const & parameters )
 {
 
   real64 maxResidual = 0;
@@ -333,24 +332,24 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
         using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
         using KERNEL_TYPE = COMPONENTS_TYPE< SUBREGIONTYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          NUM_NODES_PER_ELEM,
-                                          NUM_NODES_PER_ELEM >;
+                                             CONSTITUTIVE_TYPE,
+                                             NUM_NODES_PER_ELEM,
+                                             NUM_NODES_PER_ELEM >;
         KERNEL_TYPE kernelComponent( inputDofNumber,
-                                 inputMatrix,
-                                 inputRhs,
-                                 nodeManager,
-                                 elementSubRegion,
-                                 finiteElementSpace,
-                                 castedConstitutiveRelation,
-                                 parameters );
+                                     inputMatrix,
+                                     inputRhs,
+                                     nodeManager,
+                                     elementSubRegion,
+                                     finiteElementSpace,
+                                     castedConstitutiveRelation,
+                                     parameters );
 
         maxResidual = std::max( maxResidual,
                                 KERNEL_TYPE::template Launch< POLICY,
-                                                     NUM_QUADRATURE_POINTS,
-                                                     typename decltype(kernelComponent)::StackVars >( numElems,
-                                                                                                  parameters,
-                                                                                                  kernelComponent ) );
+                                                              NUM_QUADRATURE_POINTS,
+                                                              typename decltype(kernelComponent)::StackVars >( numElems,
+                                                                                                               parameters,
+                                                                                                               kernelComponent ) );
       } );
     } );
   } );

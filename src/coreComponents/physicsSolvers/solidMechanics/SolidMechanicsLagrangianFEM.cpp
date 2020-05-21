@@ -213,11 +213,11 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
         setDescription( "Array to hold the beginning of step stress for implicit problem rewinds" )->
         reference().resizeDimension< 2 >( 6 );
 
-      subRegion.registerWrapper<SortedArray<localIndex>>(viewKeyStruct::elemsAttachedToSendOrReceiveNodes)->
+      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes )->
         setPlotLevel( PlotLevel::NOPLOT )->
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper<SortedArray<localIndex>>(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes)->
+      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes )->
         setPlotLevel( PlotLevel::NOPLOT )->
         setRestartFlags( RestartFlags::NO_WRITE );
     } );
@@ -355,8 +355,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
   {
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
     {
-      SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes(elementSubRegion);
-      SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes(elementSubRegion);
+      SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
+      SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
 
       elemsAttachedToSendOrReceiveNodes.setName(
         "SolidMechanicsLagrangianFEM::m_elemsAttachedToSendOrReceiveNodes["
@@ -566,8 +566,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        m_matrix,
                                                                        m_rhs,
                                                                        SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
-                                                                       Parameters( dt,
-                                                                                   viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
+                                                                         Parameters( dt,
+                                                                                     viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
@@ -587,8 +587,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        m_matrix,
                                                                        m_rhs,
                                                                        SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
-                                                                       Parameters( dt,
-                                                                                   viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
+                                                                         Parameters( dt,
+                                                                                     viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
 
   // apply this over a set
@@ -949,25 +949,25 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
 
   {
     finiteElement::
+      FillSparsity< serialPolicy,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStatic,
+                    FaceElementSubRegion >( mesh,
+                                            targetRegionNames(),
+                                            nullptr,
+                                            dofNumber,
+                                            matrix,
+                                            rhs );
+  }
+
+  finiteElement::
     FillSparsity< serialPolicy,
                   SolidMechanicsLagrangianFEMKernels::QuasiStatic,
-                  FaceElementSubRegion >( mesh,
+                  CellElementSubRegion >( mesh,
                                           targetRegionNames(),
                                           nullptr,
                                           dofNumber,
                                           matrix,
                                           rhs );
-  }
-
-  finiteElement::
-  FillSparsity< serialPolicy,
-                SolidMechanicsLagrangianFEMKernels::QuasiStatic,
-                CellElementSubRegion >( mesh,
-                                        targetRegionNames(),
-                                        nullptr,
-                                        dofNumber,
-                                        matrix,
-                                        rhs );
 
   matrix.close();
 

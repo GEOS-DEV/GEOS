@@ -971,7 +971,7 @@ void LagrangianContactSolver::SetupSystem( DomainPartition * const domain,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs,
                                            ParallelVector & solution,
-                                           bool const GEOSX_UNUSED_PARAM(setSparsity) )
+                                           bool const GEOSX_UNUSED_PARAM( setSparsity ) )
 {
   GEOSX_MARK_FUNCTION;
 
