@@ -2954,8 +2954,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
 
   localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
-  ElementRegionManager::ElementViewAccessor< array3d< R1Tensor > > const
-  dNdX = elementManager.ConstructViewAccessor< array3d< R1Tensor > >( keys::dNdX );
+  ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
+  dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
 
   ElementRegionManager::ElementViewAccessor< array2d< real64 > > const
   detJ = elementManager.ConstructViewAccessor< array2d< real64 > >( keys::detJ );
@@ -3784,8 +3784,8 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
 
-  ElementRegionManager::ElementViewAccessor< array3d< R1Tensor > > const
-  dNdX = elementManager.ConstructViewAccessor< array3d< R1Tensor > >( keys::dNdX );
+  ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
+  dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
 
   ElementRegionManager::ElementViewAccessor< array2d< real64 > > const
   detJ = elementManager.ConstructViewAccessor< array2d< real64 > >( keys::detJ );

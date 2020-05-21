@@ -152,9 +152,7 @@ constexpr bool is_array = LvArray::isArray< T >;
 
 /// True if T is a Tensor class.
 template< typename T >
-constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2SymTensor >;
+constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor >;
 
 } /* namespace traits */
 
