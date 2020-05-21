@@ -25,10 +25,10 @@ namespace geosx
 {
 
 /**
- * @brief Storage for linear solver parameters
+ * @brief Set of parameters for a linear solver or preconditioner.
  *
- * This class holds a simple tree of linear solver options.  They are set to
- * default values, but can be overwritten as needed.
+ * This class holds a simple tree of linear solver options.
+ * They are set to default values, but can be overwritten as needed.
  */
 class LinearSolverParameters
 {
@@ -42,7 +42,7 @@ public:
   /// Krylov-method parameters
   struct Krylov
   {
-    real64 relTolerance = 1e-6;          ///< Relative convergence tolerance for iterative solvers
+    real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
     integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
@@ -73,7 +73,7 @@ public:
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;
+  amg;                                      //!< Algebraic Multigrid (AMG) parameters
 
   /// Incomplete factorization parameters
   struct ILU
@@ -162,7 +162,11 @@ public:
 
   LinearSolverParametersGroup() = delete;
 
-  /// Constructor
+  /**
+   * Constructor
+   * @param name Group name
+   * @param parent Group parent
+   */
   LinearSolverParametersGroup( std::string const & name, Group * const parent );
 
   /// Copy constructor
@@ -171,7 +175,10 @@ public:
   /// Destructor
   virtual ~LinearSolverParametersGroup() override = default;
 
-  /// Catalog name
+  /**
+   * Catalog name
+   * @returns Catalog name
+   */
   static string CatalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
@@ -195,7 +202,7 @@ public:
 
     static constexpr auto iluFillString      = "iluFill";       ///< ILU fill key
     static constexpr auto iluThresholdString = "iluThreshold";  ///< ILU threshold key
-  } viewKeys;
+  } viewKeys; ///< View keys
 };
 
 } /* namespace geosx */
