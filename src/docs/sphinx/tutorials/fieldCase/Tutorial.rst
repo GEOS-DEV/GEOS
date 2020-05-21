@@ -155,7 +155,7 @@ previously defined in the ``NumericalMethod`` tag. The ``targetRegions`` refers 
 to the Reservoir, because we just want to solve the flow in this region. The ``fluidNames``
 and ``solidNames`` refers to the previously defined materials in the ``Constitutive`` tag.
 
-The ``NonlinearSolverParameters`` and ``SystemSolverParameters`` are then used to set the
+The ``NonlinearSolverParameters`` and ``LinearSolverParameters`` are then used to set the
 numerical solver parameters such as the Newton tolerance and the maximum number of
 iterations.
 

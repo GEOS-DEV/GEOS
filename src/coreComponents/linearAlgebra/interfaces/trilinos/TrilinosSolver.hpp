@@ -64,6 +64,7 @@ public:
   /**
    * @brief Number of krylov iterations to convergence.
    *
+   * @returns Iteration count
    * @note Value is meaningless if a direct solver is called and will return 1
    */
   integer iterations();

@@ -55,7 +55,9 @@
                     targetRegions="{Reservoir}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <LinearSolverParameters krylovTol="1.0e-10"/>
+      <LinearSolverParameters solverType="gmres"
+                              preconditionerType="amg"
+                              krylovTol="1.0e-10"/>
     </SinglePhaseFVM>
   </Solvers>
   <!-- SPHINX_FIELD_CASE_SOLVER_END -->
