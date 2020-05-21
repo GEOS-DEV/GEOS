@@ -50,6 +50,30 @@ inline bool streq( char const * const strA, std::string const & strB )
 inline bool streq( char const * const strA, char const * const strB )
 { return !strcmp( strA, strB ); }
 
+/**
+ * @brief Join strings or other printable objects with a delimiter.
+ * @tparam S    type of delimiter, usually char, char const * or std::string
+ * @tparam IT   type of iterator into the range of objects to join
+ * @param delim delimiter used to glue together strings
+ * @param first iterator to start of the range
+ * @param last  iterator past-the-end of the range
+ * @return a new string containing input strings concatenated with a delimiter
+ */
+template< typename IT, typename S = char >
+std::string strjoin( IT first, IT last, S const & delim = S() )
+{
+  std::ostringstream oss;
+  if( first != last )
+  {
+    oss << *first;
+  }
+  while( ++first != last )
+  {
+    oss << delim << *first;
+  }
+  return oss.str();
+}
+
 /// Subdivide string by delimiters
 string_array Tokenize( std::string const & str, std::string const & delimiters );
 

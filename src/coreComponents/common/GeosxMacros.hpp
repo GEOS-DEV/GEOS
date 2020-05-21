@@ -77,7 +77,7 @@ void i_g_n_o_r_e( T & ) {}
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
 #if defined(GEOSX_USE_OPENMP)
-  /// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
+/// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
   #define PRAGMA_OMP( clause ) _Pragma( clause )
 //  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
 #else

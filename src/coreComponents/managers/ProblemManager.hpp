@@ -44,7 +44,7 @@ class DomainPartition;
 class ProblemManager : public dataRepository::Group
 {
 public:
-  
+
   /**
    * @param name the name of this object manager
    * @param parent the parent Group
@@ -261,10 +261,10 @@ private:
 
   /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;
-  
+
   /// The EventManager
   EventManager * m_eventManager;
-  
+
   /// The FunctionManager
   FunctionManager * m_functionManager;
 };

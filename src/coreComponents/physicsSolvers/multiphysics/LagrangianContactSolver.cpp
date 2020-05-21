@@ -1485,7 +1485,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
   NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const * const stabilizationMethod = fvManager.getFluxApproximation( m_discretizationName );
-  
+
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();
 

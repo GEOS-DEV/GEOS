@@ -96,9 +96,9 @@ void FiniteElementDiscretization::PostProcessInput()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  NumericalMethodsManager const &  numericalMethods = *(this->getParent()->getParent()->group_cast<NumericalMethodsManager const*>());
-  Group const &  basisManager = numericalMethods.getBasisFunctions();
-  Group const &  quadratureManager = numericalMethods.getQuadratureRules();
+  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
+  Group const & basisManager = numericalMethods.getBasisFunctions();
+  Group const & quadratureManager = numericalMethods.getQuadratureRules();
 
   m_basis = basisManager.GetGroup< BasisBase >( basisName );
   m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );

@@ -655,7 +655,7 @@ void ProblemManager::ApplyNumericalMethods()
     feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
     FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( numericalMethodName );
+      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( numericalMethodName );
 
     for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
     {

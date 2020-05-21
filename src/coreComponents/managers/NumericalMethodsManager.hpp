@@ -30,8 +30,7 @@ namespace geosx
 namespace dataRepository
 {
 namespace keys
-{
-}
+{}
 }
 
 /**
@@ -79,7 +78,7 @@ public:
   /**
    * @brief @return Returns reference to BasisFunctionManager m_basisFunctions.
    */
-  BasisFunctionManager       & getBasisFunctions()       { return m_basisFunctions; }
+  BasisFunctionManager & getBasisFunctions()       { return m_basisFunctions; }
 
   /**
    * @brief @return Returns reference to const QuadratureRuleManager m_quadratureRules.
@@ -89,7 +88,7 @@ public:
   /**
    * @brief @return Returns reference to QuadratureRuleManager m_quadratureRules.
    */
-  QuadratureRuleManager       & getQuadratureRules()       { return m_quadratureRules; }
+  QuadratureRuleManager & getQuadratureRules()       { return m_quadratureRules; }
 
   /**
    * @brief @return Returns reference to const FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
@@ -99,12 +98,12 @@ public:
   /**
    * @brief @return Returns reference to FiniteElementDiscretizationManager m_finiteElementDiscretizationManager.
    */
-  FiniteElementDiscretizationManager       & getFiniteElementDiscretizationManager()       { return m_finiteElementDiscretizationManager; }
+  FiniteElementDiscretizationManager & getFiniteElementDiscretizationManager()       { return m_finiteElementDiscretizationManager; }
 
   /**
    * @brief @return Returns reference to FiniteVolumeManager m_finiteVolumeManager.
    */
-  FiniteVolumeManager       & getFiniteVolumeManager()       { return m_finiteVolumeManager; }
+  FiniteVolumeManager & getFiniteVolumeManager()       { return m_finiteVolumeManager; }
 
   /**
    * @brief @return Returns reference to const FiniteVolumeManager m_finiteVolumeManager.

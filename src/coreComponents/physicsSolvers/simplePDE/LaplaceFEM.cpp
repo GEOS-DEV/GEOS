@@ -180,7 +180,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
+    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();

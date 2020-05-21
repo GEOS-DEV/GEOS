@@ -130,30 +130,30 @@ typedef ToElementRelation< array2d< localIndex > > FixedToManyElementRelation;
 /// @brief A ToElementRelation where each object is related to an arbitrary number of elements.
 typedef ToElementRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyElementRelation;
 
-  /**
-   * @brief Remove an element relation from an object in the relation.
-   * @param relation The relationship mapping to remove a single element relation from
-   *                 a single object from.
-   * @param firstIndex The object index to remove an element relation from.
-   * @param er The element region to remove.
-   * @param esr The element subregion to remove.
-   * @param ei The element index to remove.
-   */
+/**
+ * @brief Remove an element relation from an object in the relation.
+ * @param relation The relationship mapping to remove a single element relation from
+ *                 a single object from.
+ * @param firstIndex The object index to remove an element relation from.
+ * @param er The element region to remove.
+ * @param esr The element subregion to remove.
+ * @param ei The element index to remove.
+ */
 void erase( OrderedVariableToManyElementRelation & relation,
             localIndex const firstIndex,
             localIndex const er,
             localIndex const esr,
             localIndex const ei );
 
-  /**
-   * @brief Insert an element relation for an object in the relation.
-   * @param relation The relationship mapping to insert a single element relation for
-   *                 a single object into.
-   * @param firstIndex The object index to insert an element relation from.
-   * @param er The element region to insert.
-   * @param esr The element subregion to insert.
-   * @param ei The element index to insert.
-   */
+/**
+ * @brief Insert an element relation for an object in the relation.
+ * @param relation The relationship mapping to insert a single element relation for
+ *                 a single object into.
+ * @param firstIndex The object index to insert an element relation from.
+ * @param er The element region to insert.
+ * @param esr The element subregion to insert.
+ * @param ei The element index to insert.
+ */
 void insert( OrderedVariableToManyElementRelation & relation,
              localIndex const firstIndex,
              localIndex const er,

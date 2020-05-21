@@ -121,9 +121,9 @@ public:
   void SetEdgeMaps( EdgeManager const * const edgeManager );
 
   /**
-     * @brief Set the nodeToEdge map.
-     * @param faceManager a constant pointer to the FaceeManager
-     */
+   * @brief Set the nodeToEdge map.
+   * @param faceManager a constant pointer to the FaceeManager
+   */
   void SetFaceMaps( FaceManager const * const faceManager );
 
 

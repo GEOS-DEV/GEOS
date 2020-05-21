@@ -2950,7 +2950,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 
@@ -3779,7 +3779,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   localIndex const numQuadraturePoints = feDiscretization->m_finiteElement->n_quadrature_points();
 

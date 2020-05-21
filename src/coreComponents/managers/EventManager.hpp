@@ -80,7 +80,7 @@ public:
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
-  
+
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
@@ -103,7 +103,7 @@ public:
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
-  
+
   /// Catalog interface
   static CatalogInterface::CatalogType & GetCatalog();
 

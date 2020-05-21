@@ -233,7 +233,7 @@ void SolidMechanicsLagrangianFEM::InitializePreSubGroups( Group * const rootGrou
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
   GEOSX_ERROR_IF( feDiscretization == nullptr, getName() << ": FE discretization not found: " << m_discretizationName );
 }
 
@@ -258,7 +258,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",

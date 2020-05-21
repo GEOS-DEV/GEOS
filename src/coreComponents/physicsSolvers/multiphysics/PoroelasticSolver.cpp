@@ -419,7 +419,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix->open();
   rhs->open();

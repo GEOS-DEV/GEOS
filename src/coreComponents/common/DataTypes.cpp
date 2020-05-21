@@ -25,6 +25,8 @@ namespace geosx
 {
 #ifdef GEOSX_USE_MPI
 MPI_Comm MPI_COMM_GEOSX;
+#else
+int MPI_COMM_GEOSX = 0;
 #endif
 
 void printTypeSummary()
