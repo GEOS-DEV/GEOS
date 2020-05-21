@@ -47,10 +47,7 @@ struct SymSize< 1 >
   enum { value = 1 };
 };
 
-template< int T_dim > class R2TensorT;
 template< int T_dim > class R1TensorT;
-template< int T_dim > class R4minSymTensorT;
-template< int T_dim > class R6minSymTensorT;
 
 /**
  * @brief R2SymTensorT is a symetic rank-2 tensor object type
@@ -114,7 +111,7 @@ public:
   R2SymTensorT & operator=( const R2SymTensorT & rhs ) = default;
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R2SymTensorT & operator=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -130,7 +127,7 @@ public:
   }
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R2SymTensorT & operator=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -149,7 +146,7 @@ public:
   R2SymTensorT & operator+=( const R2SymTensorT & rhs );
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R2SymTensorT & operator+=( LvArray::ArraySlice< realT const, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -165,7 +162,7 @@ public:
   }
 
   template< int USD >
-  GEOSX_HOST_DEVICE constexpr inline
+  GEOSX_HOST_DEVICE CONSTEXPR_WITH_NDEBUG inline
   R2SymTensorT & operator+=( LvArray::ArraySlice< realT, 1, USD > const & src )
   {
     GEOSX_ASSERT_EQ( src.size(), SIZE );
@@ -190,22 +187,10 @@ public:
   //***** MULTIPLICATION OPERATIONS *******************************************
   realT AijBij( const R2SymTensorT & A, const R2SymTensorT & B );
   void AijBjk( const R2SymTensorT & A, const R2SymTensorT & B );
-  void AijAkj( const R2TensorT< T_dim > & A );
-  void AjiAjk( const R2TensorT< T_dim > & A );
   void AijAjk( const R2SymTensorT & A );
-
-  void AijAkj_plus_Aik_plus_Aki( const R2TensorT< T_dim > & A );
-  void AjiAjk_plus_Aik_plus_Aki( const R2TensorT< T_dim > & A );
-  void AijAkj_m_Aik_m_Aki( const R2TensorT< T_dim > & A );
-
-  GEOSX_HOST_DEVICE
-  void QijAjkQlk( const R2SymTensorT & A, const R2TensorT< T_dim > & Q );
 
   void dyadic_aa( const R1TensorT< T_dim > & a );
   void dyadic_ab_plus_ba( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
-
-  void AijklBkl( const R4minSymTensorT< T_dim > & A, const R2SymTensorT & B );
-  void AijklBij( const R4minSymTensorT< T_dim > & A, const R2SymTensorT & B );
 
   //**** Overloaded arithmetic operators
   //  ******************************************
@@ -270,11 +255,7 @@ public:
   void
   print( std::ostream & os ) const;
 
-  friend class R2TensorT< T_dim >;
   friend class R1TensorT< T_dim >;
-  friend class R4minSymTensorT< T_dim >;
-  friend class R6minSymTensorT< T_dim >;
-
 
 private:
 //  R2SymTensorT(R2SymTensorT< T_dim >&);
@@ -292,12 +273,6 @@ private:
 template< int T_dim >
 void R2SymTensorT< T_dim >::print( std::ostream & os ) const
 {
-  //  if( ouput_format_flag == 0 )
-  //    R2TensorBaseT< T_dim ,
-  //                   SymSize<T_dim>::value ,
-  //                   R2SymTensorT<T_dim> >::print(os);
-  //  else if( ouput_format_flag == 1 )
-  //  {
   for( int i = 1; i <= T_dim; ++i )
     os << (*this)( i, i ) << '\t';
 
@@ -307,7 +282,6 @@ void R2SymTensorT< T_dim >::print( std::ostream & os ) const
       if( !d_ij( i, j ))
         os << (*this)( i, j ) << '\t';
   }
-  //  }
 }
 
 template< int T_dim >
@@ -464,7 +438,7 @@ inline realT R2SymTensorT< T_dim >::Det( void ) const
                                  t_data[3]));
   else
   {
-    GEOSX_WARNING( "R2TensorT::Det() not implemented for dimension > 3" );
+    GEOSX_WARNING( "R2SymTensorT::Det() not implemented for dimension > 3" );
   }
 
   return det;
@@ -499,7 +473,7 @@ inline realT R2SymTensorT< T_dim >::Inner( void ) const
            * (this->t_data[3]) + 2 * (this->t_data[4]) * (this->t_data[4]) + this->t_data[5] * (this->t_data[5]);
   else
   {
-    GEOSX_WARNING( "R2TensorT::Inner() not implemented for dimension > 3" );
+    GEOSX_WARNING( "R2SymTensorT::Inner() not implemented for dimension > 3" );
   }
 
   return rval;
@@ -566,7 +540,7 @@ realT R2SymTensorT< T_dim >::Inverse( R2SymTensorT< T_dim > & tensor )
   }
   else
   {
-    GEOSX_WARNING( "R2SymTensorT::Inverse( R2TensorT ) not implemented for dimension > 3" );
+    GEOSX_WARNING( "R2SymTensorT::Inverse( R2SymTensorT ) not implemented for dimension > 3" );
   }
   return det;
 }
@@ -999,305 +973,10 @@ inline void R2SymTensorT< T_dim >::AijBjk( const R2SymTensorT< T_dim > & A, cons
   }
   else
   {
-    GEOSX_WARNING( "R2SymTensorT::AijBjk(R2TensorT) not implemented for dimension > 3 " );
+    GEOSX_WARNING( "R2SymTensorT::AijBjk(R2SymTensorT) not implemented for dimension > 3 " );
   }
 
 }
-
-#include "R2TensorT.h"
-#include "R4minSymTensorT.h"
-
-/**
- * @param[in] A rank-2 tensor
- *
- * This function performs matrix multiplication \f$\mathbf {AA^T}\f$ -or-
- *\f$A_{ij} A_{kj}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijAkj( const R2TensorT< T_dim > & A )
-{
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * A.t_data[0] + A.t_data[1] * A.t_data[1];
-    this->t_data[1] = A.t_data[0] * A.t_data[2] + A.t_data[1] * A.t_data[3];
-    this->t_data[2] = A.t_data[2] * A.t_data[2] + A.t_data[3] * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[0] * A.t_data[0] + A.t_data[1] * A.t_data[1] + A.t_data[2] * A.t_data[2];
-
-    this->t_data[1] = A.t_data[3] * A.t_data[0] + A.t_data[4] * A.t_data[1] + A.t_data[5] * A.t_data[2];
-    this->t_data[2] = A.t_data[3] * A.t_data[3] + A.t_data[4] * A.t_data[4] + A.t_data[5] * A.t_data[5];
-
-    this->t_data[3] = A.t_data[6] * A.t_data[0] + A.t_data[7] * A.t_data[1] + A.t_data[8] * A.t_data[2];
-    this->t_data[4] = A.t_data[6] * A.t_data[3] + A.t_data[7] * A.t_data[4] + A.t_data[8] * A.t_data[5];
-    this->t_data[5] = A.t_data[6] * A.t_data[6] + A.t_data[7] * A.t_data[7] + A.t_data[8] * A.t_data[8];
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 " );
-  }
-
-}
-
-/**
- * @param[in] A rank-2 tensor
- *
- * This function performs matrix multiplication \f$\mathbf {A^TA}\f$ -or-
- *\f$A_{ji} A_{jk}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AjiAjk( const R2TensorT< T_dim > & A )
-{
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * A.t_data[0] + A.t_data[2] * A.t_data[2];
-    this->t_data[1] = A.t_data[0] * A.t_data[1] + A.t_data[2] * A.t_data[3];
-    this->t_data[2] = A.t_data[1] * A.t_data[1] + A.t_data[3] * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[0] * A.t_data[0] + A.t_data[3] * A.t_data[3] + A.t_data[6] * A.t_data[6];
-
-    this->t_data[1] = A.t_data[0] * A.t_data[1] + A.t_data[3] * A.t_data[4] + A.t_data[6] * A.t_data[7];
-    this->t_data[2] = A.t_data[1] * A.t_data[1] + A.t_data[4] * A.t_data[4] + A.t_data[7] * A.t_data[7];
-
-    this->t_data[3] = A.t_data[0] * A.t_data[2] + A.t_data[3] * A.t_data[5] + A.t_data[6] * A.t_data[8];
-    this->t_data[4] = A.t_data[1] * A.t_data[2] + A.t_data[4] * A.t_data[5] + A.t_data[7] * A.t_data[8];
-    this->t_data[5] = A.t_data[2] * A.t_data[2] + A.t_data[5] * A.t_data[5] + A.t_data[8] * A.t_data[8];
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3 " );
-  }
-
-}
-
-/**
- * @param[in] A symmetric rank-2 tensor
- *
- * This function performs matrix multiplication \f$\mathbf {AA}\f$ -or-
- *\f$A_{ij} A_{jk}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijAjk( const R2SymTensorT< T_dim > & A )
-{
-
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * A.t_data[0] + A.t_data[2] * A.t_data[2];
-    this->t_data[1] = A.t_data[0] * A.t_data[1] + A.t_data[2] * A.t_data[3];
-    this->t_data[2] = A.t_data[1] * A.t_data[1] + A.t_data[3] * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    /*    this->t_data[0] = A.t_data[0]*A.t_data[0] + A.t_data[3]*A.t_data[3] +
-       A.t_data[6]*A.t_data[6];
-
-       this->t_data[1] = A.t_data[0]*A.t_data[1] + A.t_data[3]*A.t_data[4] +
-          A.t_data[6]*A.t_data[7];
-       this->t_data[2] = A.t_data[1]*A.t_data[1] + A.t_data[4]*A.t_data[4] +
-          A.t_data[7]*A.t_data[7];
-
-       this->t_data[3] = A.t_data[0]*A.t_data[2] + A.t_data[3]*A.t_data[5] +
-          A.t_data[6]*A.t_data[8];
-       this->t_data[4] = A.t_data[1]*A.t_data[2] + A.t_data[4]*A.t_data[5] +
-          A.t_data[7]*A.t_data[8];
-       this->t_data[5] = A.t_data[2]*A.t_data[2] + A.t_data[5]*A.t_data[5] +
-          A.t_data[8]*A.t_data[8];*/
-
-    const realT o1 = A.t_data[1] * A.t_data[1];
-    const realT o2 = A.t_data[3] * A.t_data[3];
-    const realT o3 = A.t_data[4] * A.t_data[4];
-
-    this->t_data[0] = o1 + o2 + A.t_data[0] * A.t_data[0];
-    this->t_data[1] = A.t_data[0] * A.t_data[1] + A.t_data[1] * A.t_data[2] + A.t_data[3] * A.t_data[4];
-    this->t_data[2] = o1 + o3 + A.t_data[2] * A.t_data[2];
-    this->t_data[3] = A.t_data[0] * A.t_data[3] + A.t_data[1] * A.t_data[4] + A.t_data[3] * A.t_data[5];
-    this->t_data[4] = A.t_data[1] * A.t_data[3] + A.t_data[2] * A.t_data[4] + A.t_data[4] * A.t_data[5];
-    this->t_data[5] = o2 + o3 + A.t_data[5] * A.t_data[5];
-
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AijAkj(R2TensorT) not implemented for dimension > 3" );
-  }
-
-}
-
-/**
- * @param[in] A rank-2 tensor
- *
- * This function performs compound matrix operation \f$\mathbf {AA^T+A+A^T}\f$
- *-or- \f$A_{ij} A_{kj} +  A_{ik} +  A_{ki}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijAkj_plus_Aik_plus_Aki( const R2TensorT< T_dim > & A )
-{
-  AijAkj( A );
-  if( T_dim == 2 )
-  {
-    this->t_data[0] += 2 * A.t_data[0];
-    this->t_data[1] += A.t_data[1] + A.t_data[2];
-    this->t_data[2] += 2 * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] += 2 * A.t_data[0];
-
-    this->t_data[1] += A.t_data[1] + A.t_data[3];
-    this->t_data[2] += 2 * A.t_data[4];
-
-    this->t_data[3] += A.t_data[2] + A.t_data[6];
-    this->t_data[4] += A.t_data[5] + A.t_data[7];
-    this->t_data[5] += 2 * A.t_data[8];
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AijAkj_plus_Aik_plus_Aki not implemented for dimension > 3" );
-    return;
-  }
-}
-
-/**
- * @param[in] A rank-2 tensor
- *
- * This function performs compound matrix operation \f$\mathbf {A^TA+A+A^T}\f$
- *-or- \f$A_{ji} A_{jk} +  A_{ik} +  A_{ki}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AjiAjk_plus_Aik_plus_Aki( const R2TensorT< T_dim > & A )
-{
-  AjiAjk( A );
-  if( T_dim == 2 )
-  {
-    this->t_data[0] += 2 * A.t_data[0];
-    this->t_data[1] += A.t_data[1] + A.t_data[2];
-    this->t_data[2] += 2 * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] += 2 * A.t_data[0];
-
-    this->t_data[1] += A.t_data[1] + A.t_data[3];
-    this->t_data[2] += 2 * A.t_data[4];
-
-    this->t_data[3] += A.t_data[2] + A.t_data[6];
-    this->t_data[4] += A.t_data[5] + A.t_data[7];
-    this->t_data[5] += 2 * A.t_data[8];
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AjiAjk_plus_Aik_plus_Aki not implemented for dimension > 3" );
-    return;
-  }
-}
-
-
-/**
- * @param[in] A rank-2 tensor
- *
- * This function performs compound matrix operation \f$\mathbf {AA^T-A-A^T}\f$
- *-or- \f$A_{ij} A_{kj} -  A_{ik} -  A_{ki}\f$
- */
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijAkj_m_Aik_m_Aki( const R2TensorT< T_dim > & A )
-{
-  this->AijAkj( A );
-  if( T_dim == 2 )
-  {
-    this->t_data[0] -= 2 * A.t_data[0];
-    this->t_data[1] -= A.t_data[1] + A.t_data[2];
-    this->t_data[2] -= 2 * A.t_data[3];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] -= 2 * A.t_data[0];
-
-    this->t_data[1] -= A.t_data[1] + A.t_data[3];
-    this->t_data[2] -= 2 * A.t_data[4];
-
-    this->t_data[3] -= A.t_data[2] + A.t_data[6];
-    this->t_data[4] -= A.t_data[5] + A.t_data[7];
-    this->t_data[5] -= 2 * A.t_data[8];
-  }
-  else
-  {
-    GEOSX_WARNING( "R2SymTensorT::AijAkj_m_Aik_m_Aki not implemented for dimension > 3" );
-    return;
-  }
-}
-
-
-/**
- * @param[in] A symmetric rank-2 tensor
- * @param[in] Q rank-2 tensor
- *
- * This function performs compound matrix operation \f$\mathbf {QAQ^T}\f$ -or-
- *\f$Q_{ij} A_{jk} Q_{lk}\f$. This is
- * inteded to be a rotationAxis of a R2SymTensor with Q being an orthonormal
- * matrix.
- */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void R2SymTensorT< T_dim >::QijAjkQlk( const R2SymTensorT< T_dim > & A, const R2TensorT< T_dim > & Q )
-{
-//  if (T_dim == 2)
-//  {
-//    this->t_data[0] = Q.t_data[0] * Q.t_data[0] * A.t_data[0] + 2 * Q.t_data[0] * Q.t_data[1] * A.t_data[1] +
-// Q.t_data[1] * Q.t_data[1] * A.t_data[2];
-//    this->t_data[1] = Q.t_data[0] * Q.t_data[3] * A.t_data[0] + Q.t_data[0] * Q.t_data[4] * A.t_data[1] + Q.t_data[1]
-// * Q.t_data[3] * A.t_data[1] + Q.t_data[1]
-//                      * Q.t_data[4] * A.t_data[2];
-//    this->t_data[2] = Q.t_data[3] * Q.t_data[3] * A.t_data[0] + 2 * Q.t_data[3] * Q.t_data[4] * A.t_data[1] +
-// Q.t_data[4] * Q.t_data[4] * A.t_data[2];
-//  }
-//  else if (T_dim == 3)
-//  {
-  realT o1, o2, o3, o4, o5, o6, o7, o8, o9, o10, o11, o12, o13, o14, o15, o16, o17, o18, o19, o20, o21, o22, o23, o24;
-  o1 = A.t_data[0] * Q.t_data[3];
-  o2 = A.t_data[1] * Q.t_data[4];
-  o3 = A.t_data[3] * Q.t_data[5];
-  o4 = o1 + o2 + o3;
-  o5 = A.t_data[1] * Q.t_data[3];
-  o6 = A.t_data[2] * Q.t_data[4];
-  o7 = A.t_data[4] * Q.t_data[5];
-  o8 = o5 + o6 + o7;
-  o9 = A.t_data[3] * Q.t_data[3];
-  o10 = A.t_data[4] * Q.t_data[4];
-  o11 = A.t_data[5] * Q.t_data[5];
-  o12 = o10 + o11 + o9;
-  o13 = A.t_data[0] * Q.t_data[6];
-  o14 = A.t_data[1] * Q.t_data[7];
-  o15 = A.t_data[3] * Q.t_data[8];
-  o16 = o13 + o14 + o15;
-  o17 = A.t_data[1] * Q.t_data[6];
-  o18 = A.t_data[2] * Q.t_data[7];
-  o19 = A.t_data[4] * Q.t_data[8];
-  o20 = o17 + o18 + o19;
-  o21 = A.t_data[3] * Q.t_data[6];
-  o22 = A.t_data[4] * Q.t_data[7];
-  o23 = A.t_data[5] * Q.t_data[8];
-  o24 = o21 + o22 + o23;
-
-  this->t_data[0] = Q.t_data[0] * (A.t_data[0] * Q.t_data[0] + A.t_data[1] * Q.t_data[1] + A.t_data[3] * Q.t_data[2])
-                    + Q.t_data[1] * (A.t_data[1] * Q.t_data[0] + A.t_data[2] * Q.t_data[1] + A.t_data[4] * Q.t_data[2])
-                    + Q.t_data[2] * (A.t_data[3] * Q.t_data[0] + A.t_data[4] * Q.t_data[1] + A.t_data[5] * Q.t_data[2]);
-
-  this->t_data[1] = o4 * Q.t_data[0] + o8 * Q.t_data[1] + o12 * Q.t_data[2];
-  this->t_data[2] = o4 * Q.t_data[3] + o8 * Q.t_data[4] + o12 * Q.t_data[5];
-  this->t_data[3] = o16 * Q.t_data[0] + o20 * Q.t_data[1] + o24 * Q.t_data[2];
-  this->t_data[4] = o16 * Q.t_data[3] + o20 * Q.t_data[4] + o24 * Q.t_data[5];
-  this->t_data[5] = o16 * Q.t_data[6] + o20 * Q.t_data[7] + o24 * Q.t_data[8];
-//  }
-//  else
-//  {
-//    GEOSX_WARNING("R2SymTensorT::QijAjkQlk(R2TensorT) not implemented for dimension > 3");
-//  }
-
-}
-
 
 /**
  * @param[in] a rank-1 tensor
@@ -1381,37 +1060,6 @@ inline void R2SymTensorT< T_dim >::dyadic_ab_plus_ba( const R1TensorT< T_dim > &
     GEOSX_WARNING( "R2SymTensorT::dyadic_ab(R1TensorT,R1TensorT) not implemented for dimension )> 3" );
   }
 }
-
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijklBkl( const R4minSymTensorT< T_dim > & A, const R2SymTensorT< T_dim > & B )
-{
-  int n_dim =  SymSize< T_dim >::value;
-
-  for( int i=0; i<n_dim; ++i )
-  {
-    this->t_data[i] = 0.;
-    for( int j=0; j<n_dim; ++j )
-    {
-      this->t_data[i] += A.t_data[i+j*n_dim]*B.t_data[j];
-    }
-  }
-}
-
-template< int T_dim >
-inline void R2SymTensorT< T_dim >::AijklBij( const R4minSymTensorT< T_dim > & A, const R2SymTensorT< T_dim > & B )
-{
-  int n_dim =  SymSize< T_dim >::value;
-
-  for( int i=0; i<n_dim; ++i )
-  {
-    this->t_data[i] = 0.;
-    for( int j=0; j<n_dim; ++j )
-    {
-      this->t_data[i] += A.t_data[i*n_dim+j]*B.t_data[j];
-    }
-  }
-}
-
 
 #ifdef __INTEL_COMPILER
 #pragma warning pop

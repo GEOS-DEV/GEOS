@@ -78,36 +78,6 @@ template< typename ... INDICES >
 std::string getIndicesToComponent( R1Tensor const &, int const component, INDICES const ... existingIndices )
 { return LvArray::getIndexString( existingIndices ..., component ); }
 
-template< typename ... INDICES >
-std::string getIndicesToComponent( R2Tensor const &, int const component, INDICES const ... existingIndices )
-{
-  int const i = component / 3;
-  int const j = component % 3;
-  return LvArray::getIndexString( existingIndices ..., i, j );
-}
-
-template< typename ... INDICES >
-std::string getIndicesToComponent( R2SymTensor const &, int const component, INDICES const ... existingIndices )
-{
-  if( component == 0 )
-    return LvArray::getIndexString( existingIndices ..., 0, 0 );
-  if( component == 1 )
-    return LvArray::getIndexString( existingIndices ..., 1, 0 );
-  if( component == 2 )
-    return LvArray::getIndexString( existingIndices ..., 1, 1 );
-  if( component == 3 )
-    return LvArray::getIndexString( existingIndices ..., 2, 0 );
-  if( component == 4 )
-    return LvArray::getIndexString( existingIndices ..., 2, 1 );
-  if( component == 5 )
-    return LvArray::getIndexString( existingIndices ..., 2, 2 );
-  else
-  {
-    GEOSX_ERROR( "Component out of bounds for a R2SymTensor: " << component );
-    return std::string();
-  }
-}
-
 template< typename T >
 T const * getPointerToComponent( T const & var, int const component )
 {
@@ -119,20 +89,6 @@ inline
 real64 const * getPointerToComponent( R1Tensor const & var, int const component )
 {
   GEOSX_ERROR_IF_GE( component, 3 );
-  return &var.Data()[ component ];
-}
-
-inline
-real64 const * getPointerToComponent( R2Tensor const & var, int const component )
-{
-  GEOSX_ERROR_IF_GE( component, 9 );
-  return &var.Data()[ component ];
-}
-
-inline
-real64 const * getPointerToComponent( R2SymTensor const & var, int const component )
-{
-  GEOSX_ERROR_IF_GE( component, 6 );
   return &var.Data()[ component ];
 }
 

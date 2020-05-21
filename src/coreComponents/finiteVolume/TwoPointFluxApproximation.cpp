@@ -22,6 +22,7 @@
 #include "CellElementStencilTPFA.hpp"
 #include "FaceElementStencil.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 #include <cmath>
 
@@ -39,31 +40,6 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
 
   registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
     setRestartFlags( RestartFlags::NO_WRITE );
-
-}
-
-namespace
-{
-
-void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
-{
-  result = 0.0;
-  R1Tensor axis;
-  R2SymTensor temp;
-
-  // assemble full tensor from eigen-decomposition
-  for( unsigned icoord = 0; icoord < 3; ++icoord )
-  {
-    // assume principal axis aligned with global coordinate system
-    axis = 0.0;
-    axis( icoord ) = 1.0;
-
-    // XXX: is there a more elegant way to do this?
-    temp.dyadic_aa( axis );
-    temp *= values( icoord );
-    result += temp;
-  }
-}
 
 }
 
@@ -108,7 +84,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  R2SymTensor coefTensor;
   real64 faceArea, faceWeight, faceWeightInv;
 
   stackArray1d< localIndex, numElems > stencilCellsRegionIndex( numElems );
@@ -162,16 +137,13 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
         real64 const c2fDistance = cellToFaceVec.Normalize();
 
-        // assemble full coefficient tensor from principal axis/components
-        makeFullTensor( coefficient[er][esr][ei], coefTensor );
-
-        faceConormal.AijBj( coefTensor, faceNormal );
+        faceConormal.AiBi( coefficient[er][esr][ei], faceNormal );
         real64 halfWeight = Dot( cellToFaceVec, faceConormal );
 
         // correct negative weight issue arising from non-K-orthogonal grids
         if( halfWeight < 0.0 )
         {
-          faceConormal.AijBj( coefTensor, cellToFaceVec );
+          faceConormal.AiBi( coefficient[er][esr][ei], cellToFaceVec );
           halfWeight = Dot( cellToFaceVec, faceConormal );
         }
 
@@ -527,7 +499,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
         stencilCellsIndex.resize( numElems );
         stencilWeights.resize( numElems );
 
-        R2SymTensor coefTensor;
         R1Tensor cellToFaceVec;
         R1Tensor faceConormal;
 
@@ -546,10 +517,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
             real64 const c2fDistance = cellToFaceVec.Normalize();
 
-            // assemble full coefficient tensor from principal axis/components
-            makeFullTensor( coefficient[er][esr][ei], coefTensor );
-
-            faceConormal.AijBj( coefTensor, faceNormal[faceIndex] );
+            faceConormal.AiBi( coefficient[er][esr][ei], faceNormal[faceIndex] );
             real64 const ht = Dot( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
 
             // assume the h for the faceElement to the connector (Face) is zero. thus the weights are trivial.
@@ -617,7 +585,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   constexpr localIndex numElems = BoundaryStencil::NUM_POINT_IN_FLUX;
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  R2SymTensor coefTensor;
   real64 faceArea, faceWeight;
 
   stackArray1d< PointDescriptor, numElems > stencilPoints( numElems );
@@ -659,16 +626,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
       real64 const c2fDistance = cellToFaceVec.Normalize();
 
-      // assemble full coefficient tensor from principal axis/components
-      makeFullTensor( coefficient[er][esr][ei], coefTensor );
-
-      faceConormal.AijBj( coefTensor, faceNormal );
+      faceConormal.AiBi( coefficient[er][esr][ei], faceNormal );
       faceWeight = Dot( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
       {
-        faceConormal.AijBj( coefTensor, cellToFaceVec );
+        faceConormal.AiBi( coefficient[er][esr][ei], cellToFaceVec );
         faceWeight = Dot( cellToFaceVec, faceConormal );
       }
 
