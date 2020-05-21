@@ -9,6 +9,7 @@ CompositionalMultiphaseWell      node :ref:`DATASTRUCTURE_CompositionalMultiphas
 EmbeddedSurfaceGenerator         node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`         
 FlowProppantTransport            node :ref:`DATASTRUCTURE_FlowProppantTransport`            
 Hydrofracture                    node :ref:`DATASTRUCTURE_Hydrofracture`                    
+LagrangianContact                node :ref:`DATASTRUCTURE_LagrangianContact`                
 LaplaceFEM                       node :ref:`DATASTRUCTURE_LaplaceFEM`                       
 PhaseFieldDamageFEM              node :ref:`DATASTRUCTURE_PhaseFieldDamageFEM`              
 PhaseFieldFracture               node :ref:`DATASTRUCTURE_PhaseFieldFracture`               

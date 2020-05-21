@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
-constexpr int MPI_COMM_GEOSX = 0;
+extern int MPI_COMM_GEOSX;
 #endif
 
 /**
@@ -626,6 +626,35 @@ public:
    */
   class typeRegex
   {
+public:
+
+    /// The type of map used to store the map of type parsing regular expressions
+    using regexMapType = std::map< std::string, std::string >;
+
+    /**
+     * @brief Get an iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::iterator begin(){return regexMap.begin();}
+
+    /**
+     * @brief Get an iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::iterator end(){return regexMap.end();}
+
+    /**
+     * @brief Get a const iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::const_iterator begin() const {return regexMap.begin();}
+
+    /**
+     * @brief Get a const iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::const_iterator end() const {return regexMap.end();}
+
 private:
 
     /**
@@ -686,7 +715,7 @@ private:
     std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
-    std::unordered_map< std::string, std::string > regexMap =
+    regexMapType regexMap =
     {
       {"integer", ri},
       {"localIndex", ri},
@@ -726,32 +755,6 @@ private:
       {"geosx_TimeIntegrationOption", rs},
       {"geosx_dataRepository_PlotLevel", ri}
     };
-
-public:
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
 
   /**

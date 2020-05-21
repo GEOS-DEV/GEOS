@@ -17,10 +17,10 @@
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="50"
                                  lineSearchMaxCuts="10"/>
-      <SystemSolverParameters
+      <LinearSolverParameters
         logLevel="0"
-        useMLPrecond="1"
-        scalingOption="2"
+        solverType="gmres"
+        preconditionerType="amg"
         />
     </Hydrofracture>
   
@@ -35,7 +35,8 @@
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <SystemSolverParameters 
+      <LinearSolverParameters
+        solverType="gmres"
         krylovTol="1.0e-10"
         logLevel="0"
         />
@@ -51,7 +52,8 @@
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
-      <SystemSolverParameters
+      <LinearSolverParameters
+        solverType="gmres"
         krylovTol="1.0e-12"
         logLevel="0"
         />

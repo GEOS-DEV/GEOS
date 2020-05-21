@@ -35,6 +35,7 @@ set( linearAlgebra_sources
      solvers/CGsolver.cpp
      solvers/BiCGSTABsolver.cpp
      utilities/LAIHelperFunctions.cpp
+     utilities/LinearSolverParameters.cpp
      DofManager.cpp )
 
 if( BUILD_OBJ_LIBS )

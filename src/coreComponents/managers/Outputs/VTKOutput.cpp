@@ -17,7 +17,6 @@
  */
 
 #include "VTKOutput.hpp"
-#include "fileIO/vtk/VTKFile.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -31,7 +30,7 @@ VTKOutput::VTKOutput( std::string const & name,
   m_plotFileRoot(),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_vtkFile( name )
+  m_writer( name )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -51,9 +50,6 @@ VTKOutput::VTKOutput( std::string const & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Output the data in binary format" );
 
-  m_vtkFile.SetPlotLevel( m_plotLevel );
-  m_vtkFile.SetBinaryMode( m_writeBinaryData );
-
 }
 
 VTKOutput::~VTKOutput()
@@ -63,13 +59,22 @@ VTKOutput::~VTKOutput()
 
 void VTKOutput::Execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
-                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                         integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                         real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          Group * domain )
 {
   DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
-  m_vtkFile.Write( time_n, *domainPartition );
+  if( m_writeBinaryData )
+  {
+    m_writer.SetOutputMode( vtk::VTKOutputMode::BINARY );
+  }
+  else
+  {
+    m_writer.SetOutputMode( vtk::VTKOutputMode::ASCII );
+  }
+  m_writer.SetPlotLevel( m_plotLevel );
+  m_writer.Write( time_n, cycleNumber, *domainPartition );
 }
 
 
