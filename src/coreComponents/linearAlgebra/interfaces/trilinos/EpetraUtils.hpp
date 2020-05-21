@@ -23,11 +23,21 @@
 namespace geosx
 {
 
+/**
+ * @brief Converts a non-const array from GEOSX globalIndex type to Epetra long long
+ * @param[in] index the input array
+ * @return the converted array
+ */
 inline long long * toEpetraLongLong( globalIndex * const index )
 {
   return reinterpret_cast< long long * >(index);
 }
 
+/**
+ * @brief Converts a const array from GEOSX globalIndex type to Epetra long long
+ * @param[in] index the input array
+ * @return the converted array
+ */
 inline long long const * toEpetraLongLong( globalIndex const * const index )
 {
   return reinterpret_cast< long long const * >(index);

@@ -34,12 +34,13 @@ or_die python scripts/config-build.py \
               -DCUDA_ARCH:STRING=${CUDA_ARCH:sm_70}
 
 or_die cd ${GEOSX_BUILD_DIR}
+#or_die make geosx_doxygen VERBOSE=1
 or_die make -j $(nproc) VERBOSE=1
 or_die make install VERBOSE=1
 
 # Unit tests
 if [[ "$*" != *--disable-unit-tests* ]]; then
   or_die ctest -V
-fi 
+fi
 
 exit 0

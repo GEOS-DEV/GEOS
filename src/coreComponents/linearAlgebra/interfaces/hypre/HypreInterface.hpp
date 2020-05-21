@@ -27,18 +27,33 @@ namespace geosx
 {
 
 /**
- * \class HypreInterface
- * \brief This class holds aliases based on the Hypre library.
+ * @class HypreInterface
+ * @brief This class holds aliases based on the Hypre library.
  */
-
 struct HypreInterface
 {
-  static void initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) ) {}
+  /**
+   * @brief Initializes the MPI environment for the Hypre library
+   *
+   * @param[in] argc standard argc as in any C main
+   * @param[in] argv standard argv as in any C main
+   */
+  static void initialize( int & argc, char * * & argv )
+  {
+    GEOSX_UNUSED_VAR( argc );
+    GEOSX_UNUSED_VAR( argv );
+  }
 
+  /**
+   * @brief Finalizes the MPI environment for the Hypre library
+   */
   static void finalize() {}
 
+  /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;
+  /// Alias for HypreVector
   using ParallelVector = HypreVector;
+  /// Alias for HypreSolver
   using LinearSolver   = HypreSolver;
 
 };

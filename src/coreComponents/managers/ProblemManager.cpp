@@ -21,6 +21,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -636,7 +637,7 @@ void ProblemManager::GenerateMesh()
 void ProblemManager::ApplyNumericalMethods()
 {
   NumericalMethodsManager const * const
-  numericalMethodManager = GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  numericalMethodManager = GetGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.Key() );
 
   DomainPartition * domain  = getDomainPartition();
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
@@ -650,10 +651,11 @@ void ProblemManager::ApplyNumericalMethods()
     string const numericalMethodName = solver->getDiscretization();
     arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
-    FiniteElementDiscretizationManager const *
-      feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+    FiniteElementDiscretizationManager const &
+    feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
-    FiniteElementDiscretization const * feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( numericalMethodName );
+    FiniteElementDiscretization const *
+      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( numericalMethodName );
 
     for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
     {

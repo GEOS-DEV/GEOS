@@ -509,11 +509,10 @@ protected:
   /**
    * @brief Matrix/Matrix multiplication.
    *
-   * Compute <tt>this * B = C<tt>.
+   * Compute <tt>this * B = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -526,11 +525,10 @@ protected:
   /**
    * @brief Matrix/Matrix transpose multiplication.
    *
-   * Compute <tt>this^T * B = C<tt>.
+   * Compute <tt>this^T * B = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -543,11 +541,10 @@ protected:
   /**
    * @brief Matrix/Matrix transpose multiplication.
    *
-   * Compute <tt>B * this^T = C<tt>.
+   * Compute <tt>B * this^T = C</tt>.
    *
    * @param src Input matrix (B).
    * @param dst Output matrix (C).
-   * @param closeResult whether to close @p dst for additional entries.
    *
    * Note that the output matrix C should have the same
    * row-map as this.  If close() has already been called
@@ -635,9 +632,8 @@ protected:
   /**
    * @brief Post-multiplies (right) with diagonal matrix consisting of the values in vecRight
    * and pre-multiplies (left) with diagonal matrix consisting of the values in vec.
-   * @param vec vecLeft to pre-multiply with.
-   * @param vec vecRight to post-multiply with.
-   *
+   * @param vecLeft vec to pre-multiply with.
+   * @param vecRight vec to post-multiply with.
    */
   virtual void leftRightScale( Vector const & vecLeft,
                                Vector const & vecRight ) = 0;
@@ -645,7 +641,7 @@ protected:
   /**
    * @brief Matrix transposition.
    *
-   * Compute <tt>B = this^T<tt>.
+   * Compute <tt>B = this^T</tt>.
    *
    * @param dst Output matrix (B).
    *
@@ -680,6 +676,7 @@ protected:
 
   /**
    * @brief Get row length via local row index.
+   * @param[in] localRowIndex the local row index
    * @return the number of nonzero entries in the row
    *
    * TODO: Breaks the goal of hiding local row indexing from user.
@@ -689,6 +686,7 @@ protected:
 
   /**
    * @brief Get row length via global row index.
+   * @param[in] globalRowIndex the global row index
    * @return the number of nonzero entries in the row
    */
   virtual localIndex globalRowLength( globalIndex globalRowIndex ) const = 0;
@@ -730,11 +728,13 @@ protected:
 
   /**
    * @brief Returns the index of the first global row owned by that processor.
+   * @return the index of the first global row owned by that processor
    */
   virtual globalIndex ilower() const = 0;
 
   /**
    * @brief Returns the next index after last global row owned by that processor.
+   * @return the next index after last global row owned by that processor
    *
    * @note The intention is for [ilower; iupper) to be used as a half-open index range
    */
@@ -742,11 +742,13 @@ protected:
 
   /**
    * @brief Returns the number of nonzeros in the local portion of the matrix
+   * @return the number of nonzeros in the local portion of the matrix
    */
   virtual localIndex numLocalNonzeros() const = 0;
 
   /**
    * @brief Returns the total number of nonzeros in the matrix
+   * @return the total number of nonzeros in the matrix
    */
   virtual globalIndex numGlobalNonzeros() const = 0;
 
@@ -798,7 +800,8 @@ protected:
 
   /**
    * @brief Write the matrix to filename in a matlab-compatible format.
-   * @param mtxFormat if @p true, MatrixMarket format is used, otherwise MATLAB
+   * @param filename name of the output file
+   * @param[in] format output format
    *
    * Within octave / matlab:
    * >> load filename

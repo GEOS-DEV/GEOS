@@ -1482,9 +1482,9 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
 
   // Get the finite volume method used to compute the stabilization
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteVolumeManager const * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
-  FluxApproximationBase const * const stabilizationMethod = fvManager->getFluxApproximation( m_stabilizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const * const stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();

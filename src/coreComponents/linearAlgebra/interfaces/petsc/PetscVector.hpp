@@ -42,6 +42,11 @@
  *   This leads to an extra memory indirection on every use.
  */
 struct _p_Vec;
+
+/**
+ * @var typedef struct _p_Vec * Vec;
+ * @brief The type definition for PETSc Vec
+ */
 typedef struct _p_Vec * Vec;
 
 namespace geosx
@@ -68,24 +73,28 @@ public:
   /**
    * @brief Copy constructor.
    * @param src PetscVector to be copied.
+   * @return the new vector.
    */
   PetscVector( PetscVector const & src );
 
   /**
    * @brief Move constructor
    * @param src PetscVector to move from
+   * @return the new vector.
    */
   PetscVector( PetscVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
    * @param src PetscVector to be copied.
+   * @return the new vector.
    */
   PetscVector & operator=( PetscVector const & src );
 
   /**
    * @brief Move assignment.
    * @param src PetscVector to be moved from.
+   * @return the new vector.
    */
   PetscVector & operator=( PetscVector && src ) noexcept;
 
@@ -198,17 +207,21 @@ public:
 
   /**
    * @brief Returns a const pointer to the underlying Vec.
+   * @return the const pointer to the underlying Vec.
    */
   const Vec & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Vec.
+   * @return the non-const pointer to the underlying Vec.
    */
   Vec & unwrapped();
 
 protected:
 
-  // Underlying Petsc Vec
+  /**
+   * Pointer to underlying PETSc Vec
+   */
   Vec m_vec;
 };
 

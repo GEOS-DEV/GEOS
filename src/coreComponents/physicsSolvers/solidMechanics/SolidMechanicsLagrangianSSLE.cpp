@@ -54,12 +54,13 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager =
-    *domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const & feDiscretizationManager =
-    *numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( dataRepository::keys::finiteElementDiscretizations );
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const &
+  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incDisp = nodeManager.incrementalDisplacement();
 

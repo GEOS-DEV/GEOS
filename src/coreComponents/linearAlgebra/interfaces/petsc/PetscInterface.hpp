@@ -27,18 +27,33 @@ namespace geosx
 {
 
 /**
- * \class PetscInterface
- * \brief This class holds aliases based on the Petsc library.
+ * @class PetscInterface
+ * @brief This class holds aliases based on the Petsc library.
  */
-
 struct PetscInterface
 {
+  /**
+   * @brief Initializes the MPI environment for the Petsc library
+   *
+   * @param[in] argc standard argc as in any C main
+   * @param[in] argv standard argv as in any C main
+   *
+   * Essentially, it is a wrapper for PetscInitialize
+   */
   static void initialize( int & argc, char * * & argv );
 
+  /**
+   * @brief Finalizes the MPI environment for the Petsc library
+   *
+   * Essentially, it is a wrapper for PetscFinalize
+   */
   static void finalize();
 
+  /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;
+  /// Alias for PetscVector
   using ParallelVector = PetscVector;
+  /// Alias for PetscSolver
   using LinearSolver   = PetscSolver;
 };
 

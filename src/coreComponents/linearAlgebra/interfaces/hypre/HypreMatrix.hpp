@@ -24,16 +24,28 @@
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
-// Just a placeholder to avoid to include two HYPRE header files
-//#include "_hypre_IJ_mv.h"
-//#include "_hypre_parcsr_mv.h"
-
-// IJMatrix definition
+/**
+ * @struct hypre_IJMatrix_struct
+ * @brief Just a placeholder to avoid to include "_hypre_IJ_mv.h"
+ */
 struct hypre_IJMatrix_struct;
+
+/**
+ * @var typedef struct hypre_IJMatrix_struct * HYPRE_IJMatrix
+ * @brief The type definition for hypre IJ matrix
+ */
 typedef struct hypre_IJMatrix_struct * HYPRE_IJMatrix;
 
-// ParCSRMatrix definition
+/**
+ * @struct hypre_ParCSRMatrix_struct
+ * @brief Just a placeholder to avoid to include "_hypre_parcsr_mv.h"
+ */
 struct hypre_ParCSRMatrix_struct;
+
+/**
+ * @var typedef struct hypre_ParCSRMatrix_struct * HYPRE_ParCSRMatrix
+ * @brief The type definition for hypre ParCSR matrix
+ */
 typedef struct hypre_ParCSRMatrix_struct * HYPRE_ParCSRMatrix;
 
 namespace geosx
@@ -63,6 +75,8 @@ public:
 
   /**
    * @brief Copy constructor.
+   * @param[in] src the matrix to be copied
+   * @return the new matrix
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
@@ -282,14 +296,27 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the underlying HYPRE_IJMatrix object.
+   * @brief Returns a const pointer to the underlying HYPRE_IJMatrix object.
+   * @return the const pointer to the underlying HYPRE_IJMatrix object
    */
   HYPRE_IJMatrix const & unwrapped() const;
 
+  /**
+   * @brief Returns a non-const pointer to the underlying HYPRE_IJMatrix object.
+   * @return the non-const pointer to the underlying HYPRE_IJMatrix object
+   */
   HYPRE_IJMatrix & unwrapped();
 
+  /**
+   * @brief Returns a const pointer to the underlying HYPRE_ParCSRMatrix object.
+   * @return the const pointer to the underlying HYPRE_ParCSRMatrix object
+   */
   HYPRE_ParCSRMatrix const & unwrappedParCSR() const;
 
+  /**
+   * @brief Returns a non-const pointer to the underlying HYPRE_ParCSRMatrix object.
+   * @return the non-const pointer to the underlying HYPRE_ParCSRMatrix object
+   */
   HYPRE_ParCSRMatrix & unwrappedParCSR();
 
 private:

@@ -32,12 +32,18 @@ public:
 
   virtual ~PreconditionerIdentity() = default;
 
+  /// Alias for vector type
   using Vector = typename LinearOperator< typename LAI::ParallelVector >::Vector;
+
+  /// Alias for matrix type
   using Matrix = typename LAI::ParallelMatrix;
 
+
   /**
-   * @brief Compute the preconditioner from a matrix
-   * @param mat the matrix to precondition
+   * @brief Apply operator to a vector.
+   *
+   * @param src Input vector (src).
+   * @param dst Output vector (dst).
    */
   virtual void apply( Vector const & src,
                       Vector & dst ) const override

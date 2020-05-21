@@ -21,16 +21,28 @@
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
-// Just a placeholder to avoid to include two HYPRE header files
-// #include "HYPRE_IJ_mv.h"
-// #include "HYPRE_parcsr_mv.h"
-
-// IJVector definition
+/**
+ * @struct hypre_IJVector_struct
+ * @brief Just a placeholder to avoid to include "HYPRE_IJ_mv.h"
+ */
 struct hypre_IJVector_struct;
+
+/**
+ * @var typedef struct hypre_IJVector_struct * HYPRE_IJVector
+ * @brief The type definition for hypre IJ vector
+ */
 typedef struct hypre_IJVector_struct * HYPRE_IJVector;
 
-// ParVector definition
+/**
+ * @struct hypre_ParVector_struct
+ * @brief Just a placeholder to avoid to include "HYPRE_parcsr_mv.h"
+ */
 struct hypre_ParVector_struct;
+
+/**
+ * @var typedef struct hypre_ParVector_struct * HYPRE_ParVector
+ * @brief The type definition for hypre ParVector
+ */
 typedef struct hypre_ParVector_struct * HYPRE_ParVector;
 
 namespace geosx
@@ -59,25 +71,28 @@ public:
   /**
    * @brief Copy constructor.
    * @param src vector to be copied
-   *
+   * @return the new vector.
    */
   HypreVector( HypreVector const & src );
 
   /**
    * @brief Move constructor.
    * @param src vector to be moved
+   * @return the new vector.
    */
   HypreVector( HypreVector && src ) noexcept;
 
   /**
    * @brief Copy assignment.
    * @param src HypreVector to be copied.
+   * @return the new vector.
    */
   HypreVector & operator=( HypreVector const & src );
 
   /**
    * @brief Move assignment.
    * @param src HypreVector to be moved.
+   * @return the new vector.
    */
   HypreVector & operator=( HypreVector && src ) noexcept;
 
@@ -190,11 +205,13 @@ public:
 
   /**
    * @brief Returns a const pointer to the underlying HYPRE_ParVector object.
+   * @return the const pointer to the underlying HYPRE_ParVector object
    */
   HYPRE_ParVector const & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying HYPRE_ParVector object.
+   * @return the non-const pointer to the underlying HYPRE_ParVector object
    */
   HYPRE_ParVector & unwrapped();
 

@@ -59,6 +59,9 @@ public:
    * @brief Copy constructor.
    *
    * Create new matrix from matrix <tt>src</tt>.
+   *
+   * @param[in] src the matrix to be copied
+   * @return the new matrix
    */
   EpetraMatrix( EpetraMatrix const & src );
 
@@ -276,12 +279,14 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a const pointer to the underlying matrix.
+   * @return const pointer to the underlying matrix
    */
   Epetra_FECrsMatrix const & unwrapped() const;
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a non-const pointer to the underlying matrix.
+   * @return non-const pointer to the underlying matrix
    */
   Epetra_FECrsMatrix & unwrapped();
 
