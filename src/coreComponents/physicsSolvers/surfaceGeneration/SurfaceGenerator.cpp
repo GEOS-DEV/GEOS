@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -34,8 +35,6 @@
 #ifdef USE_GEOSX_PTP
 #include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
-
-#include <set>
 
 namespace geosx
 {
@@ -274,82 +273,21 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-<<<<<<< HEAD
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::DegreeFromCrack >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::SIFNode >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::RuptureTime >( this->getName() );
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
-=======
-#if defined(USE_EXTRINSIC_MESH_DATA)
-    extrinsicMeshData::ParentIndex::registerData ( *nodeManager, this->getName() );
-    extrinsicMeshData::ChildIndex::registerData ( *nodeManager, this->getName() );
-#else
-    nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
-    nodeManager->RegisterChildIndices( this->getName(), "Child index of node." );
-#endif
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::SIF_I >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::SIF_II >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::SIF_III >( this->getName() );
 
->>>>>>> a3dd43ce3... fixup
-
-    nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "connectivity distance from crack." );
-
-    nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackTipString )->
-      setApplyDefaultValue( 100000 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "degree of connectivity separation from crack tip." );
-
-    nodeManager->registerWrapper< real64_array >( viewKeyStruct::SIFNodeString )->
-      setApplyDefaultValue( 0 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "SIF on the node" );
-
-    nodeManager->registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
-      setApplyDefaultValue( m_nonRuptureTime )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "Time that the node was ruptured." );
-
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_I of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IIString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_II of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IIIString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_III of the edge." );
-
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the face." );
-
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "child index of the face." );
+    faceManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    faceManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
 
     faceManager->registerWrapper< integer_array >( viewKeyStruct::ruptureStateString )->
       setApplyDefaultValue( 0 )->

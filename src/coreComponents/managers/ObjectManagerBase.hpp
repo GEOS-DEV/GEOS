@@ -548,6 +548,39 @@ public:
     return rval;
   }
 
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::Type > &
+  registerExtrinsicData( string const & nameOfRegisteringObject )
+  {
+    // These are required to work-around the need for instantiation of
+    // the static constexpr trait components. This will not be required once
+    // we move to c++17.
+    constexpr typename TRAIT::DataType defaultValue = TRAIT::defaultValue;
+    constexpr dataRepository::PlotLevel plotLevel = TRAIT::plotLevel;
+    string const description = TRAIT::description;
+
+    return *(this->registerWrapper< typename TRAIT::Type >( TRAIT::key )->
+               setApplyDefaultValue( defaultValue )->
+               setPlotLevel( plotLevel )->
+               setDescription( description )->
+               setRegisteringObjects( nameOfRegisteringObject ) );
+  }
+
+  template< typename TRAIT >
+  auto const & getExtrinsicData() const
+  {
+    return this->getReference<typename TRAIT::Type>( TRAIT::key).toViewConst();
+  }
+
+  template< typename TRAIT >
+  auto const & getExtrinsicData()
+  {
+    return this->getReference<typename TRAIT::Type>(TRAIT::key).toView();
+  }
+
+
+  //**********************************************************************************************************************
+
   /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct

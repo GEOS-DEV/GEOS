@@ -5,8 +5,8 @@
  *      Author: settgast
  */
 
-#ifndef GEOSX_MESH_MESHFIELDS_HPP_
-#define GEOSX_MESH_MESHFIELDS_HPP_
+#ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
+#define GEOSX_EXTRINSIC_MESH_DATA_HPP_
 
 
 #include "managers/ObjectManagerBase.hpp"
@@ -20,80 +20,17 @@ namespace extrinsicMeshData
 {
 
 /**
- * @struct ExtrinisicMeshDataBase
- * @brief  A base class for use in a CRT pattern that provides the generic
- *         registration function and data access methods for all derived
- *         classes.
- * @tparam LEAF The Derived Type that uses #ExtrinisicMeshDataBase as a base,
- *              and provides the required alias and static varaibles to execute
- *              the methods in this class.
- *
- * More about the crt pattern..
- */
-template< typename LEAF >
-struct ExtrinisicMeshDataBase
-{
-  /**
-   * @brief Register a data object on a mesh object.
-   * @param om Reference to #ObjectManagerBase that the data object will be
-   *           registered on.
-   * @param nameOfRegisteringObject The name of the object that is calling
-   *                                for this data to be registered.
-   */
-  static void registerData( ObjectManagerBase & om,
-                            string const & nameOfRegisteringObject )
-  {
-    om.registerWrapper< typename LEAF::Type >( LEAF::key )->
-        setApplyDefaultValue( LEAF::defaultValue )->
-        setPlotLevel( LEAF::plotLevel )->
-        setDescription( LEAF::description )->
-        setRegisteringObjects( nameOfRegisteringObject );
-  }
-
-  /**
-   *
-   * @param om
-   * @return
-   */
-  static auto const & get( ObjectManagerBase const & om )
-  {
-    return om.getReference<typename LEAF::Type>( LEAF::key).toViewConst();
-  }
-
-  /**
-   *
-   * @param om
-   * @return
-   */
-  static auto const & get( ObjectManagerBase & om )
-  {
-    return om.getReference<typename LEAF::Type>(LEAF::key).toView();
-  }
-};
-
-
-
-
-/**
  * @struct ParentIndex
  * @brief  Holds the interface for registering and getting access to the
  *         data where the parentIndex will be stored.
  */
-struct ParentIndex : public ExtrinisicMeshDataBase< ParentIndex >
+struct ParentIndex
 {
-  /// char[] key for the parentIndex.
   static constexpr auto key = "parentIndex";
-
-  /// Type of data to be registered with the repository.
-  using Type = array1d<localIndex>;
-
-  /// The default value for the data.
-  static constexpr auto defaultValue = -1;
-
-  /// The plot level for the registered data.
+  using DataType = localIndex;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = -1;
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2;
-
-  /// The description to place in the sphinx documentation for this entry.
   static constexpr auto description = "Index of parent within the mesh object it is registered on.";
 };
 
@@ -103,28 +40,97 @@ struct ParentIndex : public ExtrinisicMeshDataBase< ParentIndex >
  * @brief  Holds the interface for registering and getting access to the
  *         data where the childIndex will be stored.
  */
-struct ChildIndex : public ExtrinisicMeshDataBase< ChildIndex >
+struct ChildIndex
 {
-  /// char[] key for the childIndex.
   static constexpr auto key = "childIndex";
-
-  /// Type of data to be registered with the repository.
-  using Type = array1d<localIndex>;
-
-  /// The default value for the data.
+  using DataType = localIndex;
+  using Type = array1d<DataType>;
   static constexpr auto defaultValue = -1;
-
-  /// The plot level for the registered data.
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2;
-
-  /// The description to place in the sphinx documentation for this entry.
   static constexpr auto description = "Index of child within the  mesh object it is registered on.";
 };
 
 
-} // namespace meshfields
+struct DegreeFromCrack
+{
+  static constexpr auto key = "degreeFromCrack";
+  using DataType = integer;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = -1;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto description = "Connectivity distance from crack.";
+};
+
+struct DegreeFromCrackTip
+{
+  static constexpr auto key = "degreeFromCrackTip";
+  using DataType = integer;
+  using Type = array1d<integer>;
+  static constexpr DataType defaultValue = 100000;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto description = "Degree of connectivity separation from crack tip.";
+};
+
+struct SIFNode
+{
+  static constexpr auto key = "SIFNode";
+  using DataType = real64;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = 0;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto description = "SIF on the node.";
+};
+
+struct RuptureTime
+{
+  static constexpr auto key = "ruptureTime";
+  using DataType = real64;
+  using Type = array1d<real64>;
+  static constexpr DataType defaultValue = 1.0e9;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto description = "Time that the node was ruptured.";
+};
+
+
+
+
+
+struct SIF_I
+{
+  static constexpr auto key = "SIF_I";
+  using DataType = real64;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = -1;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto description = "SIF_I of the edge.";
+};
+struct SIF_II
+{
+  static constexpr auto key = "SIF_II";
+  using DataType = real64;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = -1;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto description = "SIF_II of the edge.";
+};
+struct SIF_III
+{
+  static constexpr auto key = "SIF_III";
+  using DataType = real64;
+  using Type = array1d<DataType>;
+  static constexpr DataType defaultValue = -1;
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto description = "SIF_III of the edge.";
+};
+
+
+
+
+
+
+} // namespace extrinsicMeshData
 } // namespace geosx
 
-#define USE_EXTRINSIC_MESH_DATA
+#define GEOSX_EXTRINSIC_MESH_DATA_HPP_
 
 #endif /* GEOSX_MESH_MESHFIELDS_HPP_ */

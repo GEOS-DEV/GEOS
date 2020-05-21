@@ -67,41 +67,11 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-<<<<<<< HEAD
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
-=======
-#if defined(USE_EXTRINSIC_MESH_DATA)
-    extrinsicMeshData::ParentIndex::registerData( *nodeManager, this->getName() );
-    extrinsicMeshData::ChildIndex::registerData( *nodeManager, this->getName() );
-    extrinsicMeshData::ParentIndex::registerData( *edgeManager, this->getName() );
-    extrinsicMeshData::ChildIndex::registerData( *edgeManager, this->getName() );
-#else
-    nodeManager->RegisterParentIndices( this->getName(), "Parent index of node." );
-    nodeManager->RegisterChildIndices( this->getName(), "Child index of node."  );
-    edgeManager->RegisterParentIndices( this->getName(), "Parent index of the edge." );
-    edgeManager->RegisterChildIndices( this->getName(), "Child index of the edge." );
-#endif
-
-
->>>>>>> a3dd43ce3... fixup
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
   }
 }
 
