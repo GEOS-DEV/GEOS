@@ -190,7 +190,7 @@ Note that all paths for files included in the XML file are relative to this XML 
 
 For internal mesh generation,
 
-  .. code-block:: sh
+.. code-block:: sh
 
   GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
@@ -205,7 +205,7 @@ For internal mesh generation,
 
 The time iteration are then logged until the end of the simulation
 
-  .. code-block:: sh
+.. code-block:: sh
 
   Running simulation
   Time: 0s, dt:20s, Cycle: 0
@@ -417,7 +417,7 @@ This indicates initialization of GEOSX.
 The mesh preprocessing tool PAMELA is launched next,
 with console messages as follows.
 
-  .. code-block:: sh
+.. code-block:: sh
 
   0 >>> **********************************************************************
   0 >>>                          PAMELA Library Import tool

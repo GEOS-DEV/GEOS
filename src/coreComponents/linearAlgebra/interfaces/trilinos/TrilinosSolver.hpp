@@ -19,6 +19,8 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
+#include "common/DataTypes.hpp"
+
 namespace geosx
 {
 
@@ -27,10 +29,9 @@ class EpetraMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ * @class TrilinosSolver
+ * @brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
  */
-
 class TrilinosSolver
 {
 public:
@@ -38,6 +39,7 @@ public:
   /**
    * @brief Solver constructor, with parameter list reference
    *
+   * @param[in] parameters structure containing linear solver parameters
    */
   TrilinosSolver( LinearSolverParameters const & parameters );
 
@@ -49,13 +51,52 @@ public:
 
   /**
    * @brief Solve system with an iterative solver.
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-
   void solve( EpetraMatrix & mat,
               EpetraVector & sol,
               EpetraVector & rhs );
+
+  /**
+   * @brief Number of krylov iterations to convergence.
+   *
+   * @returns Iteration count
+   * @note Value is meaningless if a direct solver is called and will return 1
+   */
+  integer iterations();
+
+  /**
+   * @brief Relative residual reduction.
+   *
+   * If the solve is successful, this value should be less than the target krylov
+   * tolerance.  If the solver stagnates, however, it may be higher.
+   *
+   * @return Reduction value
+   * @note Value is meaningless if a direct solver is called and will return machine precision;
+   */
+  real64  reduction();
+
+  /**
+   * @brief Setup time (in seconds) for preconditioners and/or direct factorizations
+   * @return Setup time
+   */
+  real64  setupTime();
+
+  /**
+   * @brief Solve time (in seconds) exclusive of setup costs
+   * @return Solve time
+   */
+  real64  solveTime();
+
+  /**
+   * @brief Total time (in seconds), the sum of setupTime() and solveTime()
+   * @return Total time
+   */
+  real64  totalTime();
 
 private:
 
@@ -69,6 +110,10 @@ private:
                      EpetraVector & sol,
                      EpetraVector & rhs );
 
+  integer m_iterations;
+  real64 m_reduction;
+  real64 m_setupTime;
+  real64 m_solveTime;
 };
 
 } // end geosx namespace

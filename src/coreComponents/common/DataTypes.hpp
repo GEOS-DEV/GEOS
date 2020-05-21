@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
-constexpr int MPI_COMM_GEOSX = 0;
+extern int MPI_COMM_GEOSX;
 #endif
 
 /**
@@ -115,12 +115,16 @@ constexpr int MPI_COMM_GEOSX = 0;
 
 /// Unsigned size type.
 using size_t      = std::size_t;
+
 /// Signed integer type.
 using integer     = std::int32_t;
+
 /// Local index type (for indexing objects within an MPI partition).
 using localIndex  = std::ptrdiff_t;
+
 /// Global index type (for indexing objects across MPI partitions).
 using globalIndex = long long int;//std::int64_t;
+
 /// String type.
 using string      = std::string;
 
@@ -340,6 +344,7 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
 {};
+/// @endcond
 
 /**
  * @brief Stream output operator for map types.
@@ -362,7 +367,6 @@ std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const
   stream << "}";
   return stream;
 }
-/// @endcond
 
 /// Ordered map type.
 template< typename TKEY, typename TVAL >
@@ -379,69 +383,101 @@ using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false >
  */
 ///@{
 
-using integer_array        = array1d< integer >;
+/// A 1-dimensional array of geosx::integer types.
+using integer_array = array1d< integer >;
 
-using real32_array        = array1d< real32 >;
+/// A 1-dimensional array of geosx::real32 types.
+using real32_array = array1d< real32 >;
 
-using real64_array        = array1d< real64 >;
+/// A 1-dimensional array of geosx::real64 types.
+using real64_array = array1d< real64 >;
 
-using string_array        = array1d< string >;
+/// A 1-dimensional array of geosx::string types.
+using string_array = array1d< string >;
 
-using path_array        = array1d< Path >;
+/// A 1-dimensional array of geosx::Path types
+using path_array = array1d< Path >;
 
-using localIndex_array        = array1d< localIndex >;
+/// A 1-dimensional array of geosx::localIndex types
+using localIndex_array = array1d< localIndex >;
 
-using globalIndex_array        = array1d< globalIndex >;
-
-
-
-using integer_array2d       = array2d< integer >;
-
-using real32_array2d       = array2d< real32 >;
-
-using real64_array2d       = array2d< real64 >;
-
-using localIndex_array2d       = array2d< localIndex >;
-
-using globalIndex_array2d       = array2d< globalIndex >;
+/// A 1-dimensional array of geosx::globalIndex types
+using globalIndex_array = array1d< globalIndex >;
 
 
+/// A 2-dimensional array of geosx::integer types.
+using integer_array2d = array2d< integer >;
 
-using integer_array3d       = array3d< integer >;
+/// A 2-dimensional array of geosx::real32 types.
+using real32_array2d = array2d< real32 >;
 
-using real32_array3d       = array3d< real32 >;
+/// A 2-dimensional array of geosx::real64 types.
+using real64_array2d = array2d< real64 >;
 
-using real64_array3d       = array3d< real64 >;
+/// A 2-dimensional array of geosx::localIndex types
+using localIndex_array2d = array2d< localIndex >;
 
-using localIndex_array3d       = array3d< localIndex >;
+/// A 2-dimensional array of geosx::globalIndex types
+using globalIndex_array2d = array2d< globalIndex >;
 
-using globalIndex_array3d       = array3d< globalIndex >;
+
+/// A 3-dimensional array of geosx::integer types.
+using integer_array3d = array3d< integer >;
+
+/// A 3-dimensional array of geosx::real32 types.
+using real32_array3d = array3d< real32 >;
+
+/// A 3-dimensional array of geosx::real64 types.
+using real64_array3d = array3d< real64 >;
+
+/// A 3-dimensional array of geosx::localIndex types.
+using localIndex_array3d = array3d< localIndex >;
+
+/// A 3-dimensional array of geosx::globalIndex types.
+using globalIndex_array3d = array3d< globalIndex >;
 
 ///@}
+
+/// @cond DO_NOT_DOCUMENT
 
 /**
  * @name Legacy typedefs.
  */
 ///@{
 
+
+/// A 1-dimensional array of ::R1Tensor types.
 using r1_array = array1d< R1Tensor >;
+
+/// A 1-dimensional array of ::R2Tensor types.
 using r2_array = array1d< R2Tensor >;
+
+/// A 1-dimensional array of ::R2SymTensor types.
 using r2Sym_array = array1d< R2SymTensor >;
 
+/// A 2-dimensional array of ::R1Tensor types.
 using r1_array2d= array2d< R1Tensor >;
+
+/// A 2-dimensional array of ::R2Tensor types.
 using r2_array2d= array2d< R2Tensor >;
+
+/// A 2-dimensional array of ::R2SymTensor types.
 using r2Sym_array2d= array2d< R2SymTensor >;
 
-//using mapPair = std::pair<integer, localIndex>;
+/// A 1-dimensional array of ::R1Tensor types.
 using mapPair_array = std::pair< localIndex_array, localIndex_array >;
 
+///@}
+/// @endcond DO_NOT_DOCUMENT
 
+/// A variable for the maximum value of a geosx::globalIndex.
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits< globalIndex >::max();
+
+/// A variable for the maximum value of a geosx::localIndex.
 constexpr static auto LOCALINDEX_MAX = std::numeric_limits< localIndex >::max();
 
+/// A global variable for the value of a object that has not been assigned a geosx::globalIndex.
 constexpr static localIndex unmappedLocalIndexValue = -1;
-
-///@}
 
 
 /**
@@ -626,6 +662,35 @@ public:
    */
   class typeRegex
   {
+public:
+
+    /// The type of map used to store the map of type parsing regular expressions
+    using regexMapType = std::map< std::string, std::string >;
+
+    /**
+     * @brief Get an iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::iterator begin(){return regexMap.begin();}
+
+    /**
+     * @brief Get an iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::iterator end(){return regexMap.end();}
+
+    /**
+     * @brief Get a const iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::const_iterator begin() const {return regexMap.begin();}
+
+    /**
+     * @brief Get a const iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::const_iterator end() const {return regexMap.end();}
+
 private:
 
     /**
@@ -686,7 +751,7 @@ private:
     std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
-    std::unordered_map< std::string, std::string > regexMap =
+    regexMapType regexMap =
     {
       {"integer", ri},
       {"localIndex", ri},
@@ -726,32 +791,6 @@ private:
       {"geosx_TimeIntegrationOption", rs},
       {"geosx_dataRepository_PlotLevel", ri}
     };
-
-public:
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
 
   /**

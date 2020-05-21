@@ -44,38 +44,59 @@ class InternalWellGenerator : public WellGeneratorBase
 {
 public:
 
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   InternalWellGenerator( const std::string & name,
                          Group * const parent );
 
   /**
-   * @brief default destructor
+   * @brief Default destructor.
    */
   virtual ~InternalWellGenerator() override;
 
+  ///@}
+
   /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  /**
+   * @brief Get the catalog name.
    * @return the name of this type in the catalog
    */
   static string CatalogName() { return "InternalWell"; }
 
-  /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
+  ///@}
+
+  /**
+   * @name Overriding functions defined in MeshGeneratorBase and above
+   */
+  ///@{
 
   /// not implemented
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
-                                             int const * GEOSX_UNUSED_PARAM( index ),
-                                             int const & GEOSX_UNUSED_PARAM( iEle ),
-                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_PARAM( size )) override {}
+  virtual void GetElemToNodesRelationInBox ( std::string const &,
+                                             int const *,
+                                             int const &,
+                                             int *,
+                                             int const ) override {}
 
   /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
+  virtual void RemapMesh ( dataRepository::Group * const ) override {}
 
 protected:
   void PostProcessInput() override final;
 
 private:
   void GeneratePolyLine() override final;
-
 };
 }
 
