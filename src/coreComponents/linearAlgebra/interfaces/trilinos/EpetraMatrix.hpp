@@ -43,6 +43,9 @@ class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
 {
 public:
 
+  /// Compatible vector type
+  using Vector = EpetraVector;
+
   /**
    * @name Constructor/Destructor methods
    */

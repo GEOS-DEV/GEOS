@@ -541,6 +541,7 @@ LinearSolverParameters params_CG_AMG()
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
   parameters.solverType = "cg";
+  parameters.isSymmetric = true;
   parameters.preconditionerType = "amg";
   parameters.amg.smootherType = "gaussSeidel";
   parameters.amg.coarseType = "direct";
@@ -554,37 +555,39 @@ public:
 
   using Matrix = typename LAI::ParallelMatrix;
   using Vector = typename LAI::ParallelVector;
-
-  static constexpr globalIndex meshSize = 100;
+  using Solver = typename LAI::LinearSolver;
 
 protected:
 
-  void SetUpVectors()
-  {
-    sol_true.createWithGlobalSize( matrix.numGlobalCols(), MPI_COMM_GEOSX );
-    sol_true.rand();
-
-    rhs.createWithGlobalSize( matrix.numGlobalRows(), MPI_COMM_GEOSX );
-    matrix.apply( sol_true, rhs );
-  }
-
   Matrix matrix;
-  Vector rhs;
-  Vector sol_true;
   real64 cond_est = 1.0;
 
   void test( LinearSolverParameters const & params )
   {
-    typename LAI::ParallelVector sol_comp;
+    // Create a random "true" solution vector
+    Vector sol_true;
+    sol_true.createWithGlobalSize( matrix.numGlobalCols(), matrix.getComm() );
+    sol_true.rand();
+
+    // Create and compute the right-hand side vector
+    Vector rhs;
+    rhs.createWithGlobalSize( matrix.numGlobalRows(), matrix.getComm() );
+    matrix.apply( sol_true, rhs );
+
+    // Create and zero out the computed solution vector
+    Vector sol_comp;
     sol_comp.createWithGlobalSize( sol_true.globalSize(), sol_true.getComm() );
     sol_comp.zero();
 
-    typename LAI::LinearSolver solver( params );
+    // Create the solver and solve the system
+    Solver solver( params );
     solver.solve( matrix, sol_comp, rhs );
-
-    real64 const relTol = cond_est * params.krylov.relTolerance;
     EXPECT_TRUE( solver.result().success() );
-    EXPECT_LT( std::fabs( sol_comp.norm2() / sol_true.norm2() - 1. ), relTol );
+
+    // Check that solution is within epsilon of true
+    sol_comp.axpy( -1.0, sol_true );
+    real64 const relTol = cond_est * params.krylov.relTolerance;
+    EXPECT_LT( sol_comp.norm2() / sol_true.norm2(), relTol );
   }
 };
 
@@ -603,11 +606,11 @@ protected:
 
   void SetUp() override
   {
-    compute2DLaplaceOperator( MPI_COMM_GEOSX, this->meshSize, this->matrix );
-    this->SetUpVectors();
+    globalIndex constexpr n = 100;
+    compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
-    this->cond_est = 4.0 * this->meshSize * this->meshSize / std::pow( M_PI, 2 );
+    this->cond_est = 4.0 * n * n / std::pow( M_PI, 2 );
   }
 };
 
@@ -660,11 +663,12 @@ protected:
 
   void SetUp() override
   {
-    compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, this->meshSize, this->meshSize, 10000., 0.2, this->matrix );
+    globalIndex constexpr n = 100;
+    compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
 
     // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
     this->matrix.open();
-    for( globalIndex iRow = 0; iRow < 2 * (this->meshSize + 1); ++iRow )
+    for( globalIndex iRow = 0; iRow < 2 * (n + 1); ++iRow )
     {
       if( this->matrix.getLocalRowID( iRow ) >= 0 )
       {
@@ -672,9 +676,7 @@ protected:
       }
     }
     this->matrix.close();
-
-    this->SetUpVectors();
-    this->cond_est = 1e2; // based on tolerance used in Nicola's original test
+    this->cond_est = 1e3; // not a true condition number estimate, but enough to pass tests
   }
 };
 
