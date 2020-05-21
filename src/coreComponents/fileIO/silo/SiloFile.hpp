@@ -748,28 +748,6 @@ OUTTYPE CastField( const TYPE & field, int const i )
 }
 
 /**
- * @param field the value to cast
- * @param i the component of the varaible to cast, assuming there is dimensionaliy to the variable
- * @return the casted value
- */
-template<>
-inline real64 CastField< real64, R2SymTensor >( const R2SymTensor & field, int const i )
-{
-  int ii = 0;
-  if( i==1 )
-    ii=2;
-  if( i==2 )
-    ii=5;
-  if( i==3 )
-    ii=4;
-  if( i==4 )
-    ii=3;
-  if( i==5 )
-    ii=1;
-  return field.Data()[ii];
-}
-
-/**
  * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
  *       parameter introduced to remove warning
  * @param field the value to cast

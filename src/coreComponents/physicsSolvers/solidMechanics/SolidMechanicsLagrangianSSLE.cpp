@@ -68,10 +68,9 @@ SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
   forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                           CellElementSubRegion & elementSubRegion )
   {
-    arrayView3d< R1Tensor const > const &
-    dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
+    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-    arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( dataRepository::keys::detJ );
+    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
