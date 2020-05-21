@@ -35,7 +35,7 @@ class LASLine
 {
 public:
   LASLine() {}
-  
+
   ~LASLine() {}
 
   LASLine( string const & line )
@@ -192,7 +192,7 @@ protected:
   array1d< string > m_mandatoryKeyword;
 
   /// Contains all the lines (A line = keyword + value(s))
-  array1d< LASLine > m_lines;
+  std::vector< LASLine > m_lines;
 };
 
 /*!
