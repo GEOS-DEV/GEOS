@@ -47,13 +47,15 @@ namespace geosx
 template< typename MATRIX, typename VECTOR >
 class MatrixBase : public virtual LinearOperator< VECTOR >
 {
-protected:
+public:
 
   /// Type alias for actual derived matrix class
   using Matrix = MATRIX;
 
   /// Type alias for a compatible vector class
   using Vector = VECTOR;
+
+protected:
 
   /**
    * @name Constructors/destructor/assignment

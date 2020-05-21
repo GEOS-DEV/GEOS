@@ -57,6 +57,9 @@ class HypreMatrix final : public virtual LinearOperator< HypreVector >,
 {
 public:
 
+  /// Compatible vector type
+  using Vector = HypreVector;
+
   /**
    * @name Constructor/Destructor Methods
    */

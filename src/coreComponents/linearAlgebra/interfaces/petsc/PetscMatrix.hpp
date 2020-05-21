@@ -42,6 +42,9 @@ class PetscMatrix final : public virtual LinearOperator< PetscVector >,
 {
 public:
 
+  /// Compatible vector type
+  using Vector = PetscVector;
+
   /// Alias for PETSc matrix struct pointer
   using Mat = struct _p_Mat *;
 
