@@ -292,7 +292,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     if( m_parameters.amg.separateComponents )
     {
       scratch = std::make_unique< HypreMatrix >(); // default constructed, does nothing
-      LAIHelperFunctions::SeparateComponentFilter( mat, *scratch, m_parameters.dofsPerNode );
+      LAIHelperFunctions::SeparateComponentFilter< HypreInterface >( mat, *scratch, m_parameters.dofsPerNode );
       precondParCSRMat = scratch->unwrappedParCSR();
     }
 

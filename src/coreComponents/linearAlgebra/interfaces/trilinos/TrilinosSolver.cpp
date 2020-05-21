@@ -226,7 +226,7 @@ void TrilinosSolver::solve_krylov( EpetraMatrix & mat,
     if( m_parameters.amg.separateComponents ) // apply separate displacement component filter
     {
       scratch = std::make_unique< EpetraMatrix >();
-      LAIHelperFunctions::SeparateComponentFilter( mat, *scratch, m_parameters.dofsPerNode );
+      LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( mat, *scratch, m_parameters.dofsPerNode );
       ml_preconditioner = std::make_unique< ML_Epetra::MultiLevelPreconditioner >( scratch->unwrapped(), list );
     }
     else // just use original matrix to construct amg operator

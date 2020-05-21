@@ -166,7 +166,7 @@ void PetscSolver::solve_krylov( PetscMatrix & mat,
     // apply separate displacement component filter
     if( m_parameters.amg.separateComponents )
     {
-      LAIHelperFunctions::SeparateComponentFilter( mat, scratch, m_parameters.dofsPerNode );
+      LAIHelperFunctions::SeparateComponentFilter< PetscInterface >( mat, scratch, m_parameters.dofsPerNode );
       GEOSX_LAI_CHECK_ERROR( KSPGetOperators( ksp, &mat.unwrapped(), nullptr ) );
       GEOSX_LAI_CHECK_ERROR( PetscObjectReference((PetscObject)mat.unwrapped()); );
       GEOSX_LAI_CHECK_ERROR( KSPSetOperators( ksp, mat.unwrapped(), scratch.unwrapped() ) );
