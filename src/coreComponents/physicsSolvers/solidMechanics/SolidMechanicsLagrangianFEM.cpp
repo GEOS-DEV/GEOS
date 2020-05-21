@@ -17,6 +17,11 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
+#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
+#include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
+#include "SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp"
+
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -551,7 +556,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   finiteElement::RegionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain,
+                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain,
                                                constitutive::SolidBase,
                                                CellElementSubRegion >( mesh,
                                                                        targetRegionNames(),
@@ -560,9 +565,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        array1d< globalIndex >(),
                                                                        m_matrix,
                                                                        m_rhs,
-                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain::
+                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
                                                                        Parameters( dt,
-                                                                                   gravityVector().Data(),
                                                                                    viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
@@ -573,7 +577,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   CommunicationTools::SynchronizePackSendRecv( fieldNames, &mesh, domain->getNeighbors(), m_iComm, true );
 
   finiteElement::RegionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain,
+                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain,
                                                constitutive::SolidBase,
                                                CellElementSubRegion >( mesh,
                                                                        targetRegionNames(),
@@ -582,9 +586,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        array1d< globalIndex >(),
                                                                        m_matrix,
                                                                        m_rhs,
-                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrain::
+                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
                                                                        Parameters( dt,
-                                                                                   gravityVector().Data(),
                                                                                    viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
 
