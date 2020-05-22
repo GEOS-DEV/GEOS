@@ -47,7 +47,7 @@ class FunctionBase : public dataRepository::Group
 public:
   /**
    * @brief constructor
-   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param name the name of the FunctionBase in the data repository
    * @param parent the parent group of this group.
    */
   FunctionBase( const std::string & name,
@@ -59,7 +59,8 @@ public:
   virtual ~FunctionBase() override;
 
   /**
-   * @name Static Factory Catalog Functions
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
    */
   static string CatalogName() { return "FunctionBase"; }
 
@@ -70,6 +71,10 @@ public:
 
   /**
    * @brief Test to see if the function is a 1D function of time
+   * @return integer value:
+   *         - 0 is the function does not have time as parameter
+   *         - 1 is the function has time as one of the parameters
+   *         - 2 is the function has time as only parameter
    */
   integer isFunctionOfTime() const;
 
@@ -92,15 +97,20 @@ public:
    */
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
-  // Setup catalog
+  /// Alias for the catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< FunctionBase, std::string const &, Group * const >;
+
+  /**
+   * @brief return the catalog entry for the function
+   * @return the catalog entry
+   */
   static CatalogInterface::CatalogType & GetCatalog()
   {
     static CatalogInterface::CatalogType catalog;
     return catalog;
   }
 
-  /*
+  /**
    * @brief This generates statistics by applying a function to an object
    * @param group a pointer to the object holding the function arguments
    * @param time current time
@@ -112,8 +122,17 @@ public:
                               SortedArray< localIndex > const & set ) const;
 
 protected:
+  /// names for the input variables
   string_array m_inputVarNames;
 
+  /**
+   * @brief Method to apply an function with an arbitrary type of output
+   * @tparam LEAF the return type
+   * @param[in] group a pointer to the object holding the function arguments
+   * @param[in] time current time
+   * @param[in] set the subset of nodes to apply the function to
+   * @param[out] result the results
+   */
   template< typename LEAF >
   void EvaluateT( dataRepository::Group const * const group,
                   real64 const time,
@@ -124,7 +143,6 @@ protected:
 
 };
 
-/// Method to apply an function with an arbitrary type of output
 template< typename LEAF >
 void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64 const time,

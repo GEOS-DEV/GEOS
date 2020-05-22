@@ -215,15 +215,20 @@ public:
     dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
     dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
     dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
-    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of subdivisions in x key
-    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of subdivisions in y key
-    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of subdivisions in z key
-    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning key
+    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in x key
+    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in y key
+    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in z key
+    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning
+                                                                                     ///< key
     dataRepository::ViewKey schemaFileName           = {"schemaFileName"};           ///< Schema file name key
     dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
     dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
     dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned memory key
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
+                                                                                     ///< memory key
   } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys

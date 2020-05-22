@@ -35,7 +35,7 @@ class FunctionManager : public dataRepository::Group
 public:
   /**
    * @brief constructor
-   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param name the name of the FunctionManager in the data repository
    * @param parent the parent group of this group.
    */
   FunctionManager( const std::string & name,
@@ -57,7 +57,8 @@ public:
   }
 
   /**
-   * @name Static Factory Catalog Functions
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
    */
   static string CatalogName() { return "FunctionManager"; }
 
