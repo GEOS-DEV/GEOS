@@ -58,7 +58,7 @@ public:
   static FieldSpecificationManager & get();
 
   /**
-   * @brief create a new FieldSpecificationBase object as a child of this group.
+   * @brief Create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
    * @param childName the name of the new FieldSpecificationBase object in the repository
    * @return the group child
