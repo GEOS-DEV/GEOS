@@ -8,7 +8,7 @@
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
- * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
 
