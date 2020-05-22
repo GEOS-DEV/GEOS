@@ -29,8 +29,11 @@ namespace dataRepository
 {
 namespace keys
 {
+/**
+ * @brief The key for inputVarNames
+ * @return the key
+ */
 string const inputVarNames( "inputVarNames" );
-
 }
 }
 
@@ -42,20 +45,32 @@ string const inputVarNames( "inputVarNames" );
 class FunctionBase : public dataRepository::Group
 {
 public:
-  /// Main constructor
+  /**
+   * @brief constructor
+   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   FunctionBase( const std::string & name,
                 dataRepository::Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief destructor
+   */
   virtual ~FunctionBase() override;
 
-  /// Catalog name interface
+  /**
+   * @name Static Factory Catalog Functions
+   */
   static string CatalogName() { return "FunctionBase"; }
 
-  /// Function initialization
+  /**
+   * @brief Function initialization
+   */
   virtual void InitializeFunction(){}
 
-  /// Test to see if the function is a 1D function of time
+  /**
+   * @brief Test to see if the function is a 1D function of time
+   */
   integer isFunctionOfTime() const;
 
   /**
@@ -73,6 +88,7 @@ public:
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
+   * @return the function evaluation
    */
   virtual real64 Evaluate( real64 const * const input ) const = 0;
 
