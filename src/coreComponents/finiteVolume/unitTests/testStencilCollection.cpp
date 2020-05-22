@@ -30,8 +30,8 @@ using namespace geosx;
 
 struct Cell
 {
-  Cell(): er( 0 ), esr( 0 ), ei( 0 ) {}
-  Cell( localIndex i ): er( 0 ), esr( 0 ), ei( i ) {}
+  GEOSX_HOST_DEVICE Cell(): er( 0 ), esr( 0 ), ei( 0 ) {}
+  GEOSX_HOST_DEVICE Cell( localIndex i ): er( 0 ), esr( 0 ), ei( i ) {}
 
   localIndex er;
   localIndex esr;

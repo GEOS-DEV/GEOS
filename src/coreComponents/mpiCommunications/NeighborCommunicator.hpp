@@ -23,7 +23,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 
 namespace geosx
 {
@@ -360,7 +360,7 @@ void NeighborCommunicator::MPI_iSendReceive( array1d< T > const & sendBuffer,
                                              int const commID,
                                              MPI_Comm mpiComm )
 {
-  m_sendBufferSize[commID] = integer_conversion< int >( sendBuffer.size());
+  m_sendBufferSize[commID] = LvArray::integerConversion< int >( sendBuffer.size());
 
   MPI_iSendReceive( &m_sendBufferSize[commID],
                     1,

@@ -19,6 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_BLASLAPACKFUNCTIONS_HPP_
 
+/// This macro provide a flexible interface for Fortran naming convetion for compiled objects
 #ifdef FORTRAN_MANGLE_NO_UNDERSCORE
 #define FORTRAN_MANGLE( name ) name
 #else

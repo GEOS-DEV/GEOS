@@ -145,9 +145,9 @@ void BlueprintOutput::Execute( real64 const time,
   GEOSX_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
   /// Write out the root index file, then write out the mesh.
-  char rootFilePath[ 64 ];
-  sprintf( rootFilePath, "blueprintFiles/cycle_%07d", cycle );
-  std::string const filePathForRank = dataRepository::writeRootFile( fileRoot, rootFilePath );
+  char buffer[ 128 ];
+  GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
+  std::string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 }
 

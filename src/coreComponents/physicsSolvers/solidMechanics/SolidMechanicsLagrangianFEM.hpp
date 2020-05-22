@@ -177,10 +177,11 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               SortedArray< localIndex > const & elementList,
+                               SortedArrayView< localIndex const > const & elementList,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
                                arrayView3d< R1Tensor const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
                                arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
                                arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
@@ -195,6 +196,7 @@ public:
                                                             elemsToNodes,
                                                             dNdX,
                                                             detJ,
+                                                            X,
                                                             u,
                                                             vel,
                                                             acc,
@@ -365,9 +367,7 @@ public:
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
-  {
-    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } solidMechanicsGroupKeys;
+  {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
 

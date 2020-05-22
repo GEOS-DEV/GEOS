@@ -27,32 +27,32 @@ class HypreMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for ... .
+ * @class HypreSolver
+ * @brief This class creates and provides basic support for ILUT and BoomerAMG.
  */
-
 class HypreSolver
 {
 public:
 
   /**
    * @brief Solver constructor, with parameter list reference
-   *
+   * @param[in] parameters structure containing linear solver parameters
    */
   HypreSolver( LinearSolverParameters const & parameters );
 
   /**
    * @brief Virtual destructor.
-   *
    */
   virtual ~HypreSolver() = default;
 
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
-   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
    */
-
   void solve( HypreMatrix & mat,
               HypreVector & sol,
               HypreVector & rhs );

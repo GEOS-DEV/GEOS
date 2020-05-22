@@ -288,11 +288,11 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions( integer_conversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( integer_conversion< localIndex >( idim ));
+    const int dim = partition.m_Partitions( LvArray::integerConversion< localIndex >( idim ));
+    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = partition.m_coords( integer_conversion< localIndex >( idim )) + i;
+      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
       bool ok = true;
       if( periodic )
       {

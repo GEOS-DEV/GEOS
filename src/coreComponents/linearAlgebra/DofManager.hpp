@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -81,7 +81,7 @@ public:
   {
     string name; //!< field name
     Location location; //!< support location
-    string_array regions; //!< list of support region names
+    std::vector< string > regions; //!< list of support region names
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
     string docstring; //!< documentation string
@@ -92,20 +92,20 @@ public:
     globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
   };
 
+  /**
+   * Coupling description
+   */
   struct CouplingDescription
   {
-    Connector connector = Connector::None;
-    string_array regions;
-    FluxApproximationBase const * stencils = nullptr;
+    Connector connector = Connector::None;  //!< geometric object defining dof connections
+    std::vector< std::string > regions; //!< list of region names
+    FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
   /**
    * @brief Constructor.
    *
    * @param [in] name a unique name for this DoF manager
-   * @param [in] verbosity Optional localIndex setting the verbosity level.
-   *                       - 0: nothing (default)
-   *                       - >0: minimal info
    */
   DofManager( string name );
 
@@ -181,7 +181,7 @@ public:
    * and form a dense block. The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
    * dense sub-blocks.
    *
-   * @param [in] field string the name of the field.
+   * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
    * @param [in] regions names of regions where this field is defined.
@@ -282,6 +282,9 @@ public:
 
   /**
    * @brief Check if string key is already being used
+   *
+   * @param name field key to check
+   * @return flag true if exists
    */
   bool fieldExists( string const & name ) const;
 
@@ -289,6 +292,7 @@ public:
    * @brief Return the key used to record the field in the DofManager.
    *
    * @param [in] fieldName string the name of the field.
+   * @return string indicating name of the field.
    */
   string getKey( string const & fieldName ) const;
 
@@ -297,6 +301,7 @@ public:
    * monolithic size.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     number of global dofs
    */
   globalIndex numGlobalDofs( string const & fieldName = "" ) const;
 
@@ -305,6 +310,7 @@ public:
    * monolithic size.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     number of local dofs
    */
   localIndex numLocalDofs( string const & fieldName = "" ) const;
 
@@ -313,6 +319,7 @@ public:
    * the specified field.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     the rank offset
    */
   localIndex rankOffset( string const & fieldName = "" ) const;
 
@@ -356,7 +363,6 @@ public:
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
    * @param scalingFactor a factor to scale vector values by
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -380,7 +386,6 @@ public:
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
    * @param scalingFactor a factor to scale vector values by
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -401,7 +406,6 @@ public:
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
    * @param vector target LA vector
@@ -425,7 +429,6 @@ public:
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
    * @param vector target LA vector
@@ -448,6 +451,8 @@ public:
    * @brief Create a matrix that restricts full vectors to one field vectors
    * @param fieldName name of the target field
    * @param restrictor resulting operator
+   * @param comm MPI communicator
+   * @param transpose create transposed restrictor (a prolongator)
    * @param loCompIndex starting DOF component index (for partial restriction)
    * @param hiCompIndex index past the ending DOF component (for partial restriction)
    *
@@ -466,6 +471,8 @@ public:
 
   /**
    * @brief Print the summary of declared fields and coupling.
+   *
+   * @param os output stream
    */
   void printFieldInfo( std::ostream & os = std::cout ) const;
 
@@ -563,10 +570,10 @@ private:
   MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  array1d< FieldDescription > m_fields;
+  std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  array2d< CouplingDescription > m_coupling;
+  std::vector< std::vector< CouplingDescription > > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

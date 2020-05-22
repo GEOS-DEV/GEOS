@@ -28,6 +28,11 @@
  * See comment in PetscVector.hpp about the rationale for this declaration.
  */
 struct _p_Mat;
+
+/**
+ * @var typedef struct _p_Mat * Mat;
+ * @brief The type definition for PETSc Mat
+ */
 typedef struct _p_Mat * Mat;
 
 namespace geosx
@@ -57,6 +62,8 @@ public:
 
   /**
    * @brief Copy constructor.
+   * @param[in] src the matrix to be copied
+   * @return the new matrix
    *
    * Create new matrix from matrix <tt>src</tt>.
    */
@@ -276,12 +283,14 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a const pointer to the underlying matrix.
+   * @return the const pointer to the underlying matrix.
    */
   const Mat & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying matrix.
+   * @return the non-const pointer to the underlying matrix.
    */
   Mat & unwrapped();
 

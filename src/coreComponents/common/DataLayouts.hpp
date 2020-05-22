@@ -20,7 +20,7 @@
 #define GEOSX_COMMON_DATALAYOUTS_HPP_
 
 #include "RAJA/RAJA.hpp"
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 
 namespace geosx
 {

@@ -19,7 +19,7 @@
  */
 
 #include "common/GeosxConfig.hpp"
-#include "cxx-utilities/src/Macros.hpp"
+#include "LvArray/src/Macros.hpp"
 
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
@@ -38,6 +38,7 @@
   #define GEOSX_DEVICE __device__
   #define GEOSX_HOST_DEVICE __host__ __device__
   #define GEOSX_FORCE_INLINE __forceinline__
+  #define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.
   #define GEOSX_HOST
@@ -47,6 +48,8 @@
   #define GEOSX_HOST_DEVICE
 /// Marks a function or lambda for inlining
   #define GEOSX_FORCE_INLINE inline
+/// Compiler directive specifying to unroll the loop.
+  #define PRAGMA_UNROLL
 #endif
 
 ///@}
@@ -74,9 +77,11 @@ void i_g_n_o_r_e( T & ) {}
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
 #if defined(GEOSX_USE_OPENMP)
+/// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
   #define PRAGMA_OMP( clause ) _Pragma( clause )
 //  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
 #else
+/// No-op version of PRAGMA_OMP
   #define PRAGMA_OMP( clause )
 #endif
 

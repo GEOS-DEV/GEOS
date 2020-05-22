@@ -646,13 +646,11 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domai
                        m_numDofPerCell,
                        targetRegionNames() );
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * const fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
@@ -817,13 +815,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * const fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
@@ -1119,12 +1115,12 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
       }
     }
 
-    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet,
+    fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, LAInterface >( localSet.toViewConst(),
                                                                               time + dt,
                                                                               dt,
                                                                               subRegion,
                                                                               dofNumber,
-                                                                              integer_conversion< int >( m_numDofPerCell ),
+                                                                              LvArray::integerConversion< int >( m_numDofPerCell ),
                                                                               *matrix,
                                                                               *rhs,
                                                                               [&] ( localIndex const GEOSX_UNUSED_PARAM( a )) -> real64

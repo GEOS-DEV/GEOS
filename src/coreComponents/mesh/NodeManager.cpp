@@ -97,7 +97,7 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
     m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
   }
 
-  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation;
+  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation.toView();
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex * const edges = toEdgesTemp[ nodeID ];
@@ -114,7 +114,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
   localIndex const numFaces = faceToNodes.size();
   localIndex const numNodes = size();
 
@@ -379,8 +379,8 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
                                     ElementRegionManager const & elemRegionManager )
 {
 
-  ObjectManagerBase::CleanUpMap( receivedNodes, m_toEdgesRelation, edgesToNodes );
-  ObjectManagerBase::CleanUpMap( receivedNodes, m_toFacesRelation, facesToNodes );
+  ObjectManagerBase::CleanUpMap( receivedNodes, m_toEdgesRelation.toView(), edgesToNodes );
+  ObjectManagerBase::CleanUpMap( receivedNodes, m_toFacesRelation.toView(), facesToNodes );
 
   for( auto const & targetIndex : receivedNodes )
   {
