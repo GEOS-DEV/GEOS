@@ -170,29 +170,26 @@ public:
                                      STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template<typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                      STACK_VARIABLE_TYPE & stack ) const
     {
       m_matrix.insert( stack.localRowDofIndex,

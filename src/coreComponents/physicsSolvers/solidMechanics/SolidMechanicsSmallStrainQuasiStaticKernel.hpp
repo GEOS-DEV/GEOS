@@ -140,7 +140,8 @@ public:
       m_disp( nodeManager.totalDisplacement()),
       m_uhat( nodeManager.incrementalDisplacement()),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-      detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
+      detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
+      m_gravityVector{ parameters.m_gravityVector[0], parameters.m_gravityVector[1], parameters.m_gravityVector[2] }
     {}
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
@@ -148,6 +149,7 @@ public:
 
     arrayView3d< R1Tensor const > const dNdX;
     arrayView2d< real64 const > const detJ;
+    real64 const m_gravityVector[3];
 
 
     template< typename STACK_VARIABLE_TYPE >
@@ -200,15 +202,13 @@ public:
     }
 
 
-    template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE /*,
+    template< typename STACK_VARIABLE_TYPE /*,
                                               typename DYNAMICS_LAMBDA = nvstd::function< void( localIndex, localIndex)
                                                  >*/>
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const k,
                                               localIndex const q,
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & stack /*,
                                                                              DYNAMICS_LAMBDA && dynamicsTerms = []
                                                                                 GEOSX_DEVICE ( localIndex,
@@ -254,14 +254,12 @@ public:
       }
     }
 
-    template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE /*,
+    template< typename STACK_VARIABLE_TYPE /*,
                                               typename DYNAMICS_LAMBDA = STD_FUNCTION< void( real64 * ) >*/>
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const k,
                                               localIndex const q,
-                                              PARAMETERS_TYPE const & parameters,
                                               STACK_VARIABLE_TYPE & stack /*,
                                                                              DYNAMICS_LAMBDA && stressModifier = []
                                                                                 GEOSX_DEVICE ( real64 * ) {}*/) const
@@ -280,23 +278,22 @@ public:
         stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * dNdX( k, q, a )[ 0 ] +
                                               stress[ 5 ] * dNdX( k, q, a )[ 1 ] +
                                               stress[ 4 ] * dNdX( k, q, a )[ 2 ] -
-                                              parameters.m_gravityVector[0] ) * detJ( k, q );
+                                              m_gravityVector[0] ) * detJ( k, q );
         stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * dNdX( k, q, a )[ 0 ] +
                                               stress[ 1 ] * dNdX( k, q, a )[ 1 ] +
                                               stress[ 3 ] * dNdX( k, q, a )[ 2 ] -
-                                              parameters.m_gravityVector[1] ) * detJ( k, q );
+                                              m_gravityVector[1] ) * detJ( k, q );
         stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * dNdX( k, q, a )[ 0 ] +
                                               stress[ 3 ] * dNdX( k, q, a )[ 1 ] +
                                               stress[ 2 ] * dNdX( k, q, a )[ 2 ] -
-                                              parameters.m_gravityVector[2] ) * detJ( k, q );
+                                              m_gravityVector[2] ) * detJ( k, q );
       }
     }
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                      STACK_VARIABLE_TYPE & stack ) const
     {
       real64 meanForce = 0;

@@ -39,7 +39,7 @@ public:
   {
     Parameters( string const & fieldName ):
       BaseKernel::Parameters(),
-                                         m_fieldName{ '\0' }
+      m_fieldName{ '\0' }
     {
       fieldName.copy( m_fieldName, fieldName.size() );
     }
@@ -161,14 +161,12 @@ public:
       }
     }
 
-    template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE,
+    template< typename STACK_VARIABLE_TYPE,
               typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const k,
                                               localIndex const q,
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
@@ -180,11 +178,10 @@ public:
       }
     }
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     //GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                      STACK_VARIABLE_TYPE & stack ) const
     {
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )

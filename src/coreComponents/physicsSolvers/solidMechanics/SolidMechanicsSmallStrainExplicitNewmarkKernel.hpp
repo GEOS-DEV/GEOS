@@ -223,31 +223,26 @@ public:
       }
     }
 
-    template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const,
                                               localIndex const,
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & ) const
     {}
 
-    template< typename PARAMETERS_TYPE,
-              typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const k,
-                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                      STACK_VARIABLE_TYPE const & stack ) const
     {
       real64 meanForce = 0;
@@ -268,11 +263,9 @@ public:
     template< typename POLICY,
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
-              typename PARAMETERS_TYPE,
               typename COMPONENT_TYPE >
     static real64
     Launch( localIndex const, //numElems,
-            PARAMETERS_TYPE const & parameters,
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
@@ -291,11 +284,11 @@ public:
         {
           kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
-          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointResidualContribution( k, q, stack );
         }
-        maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
+        maxResidual.max( kernelComponent.complete( k, stack ) );
       } );
       return maxResidual.get();
     }

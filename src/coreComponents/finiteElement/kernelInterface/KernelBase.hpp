@@ -128,6 +128,8 @@ public:
                   inputConstitutiveType,
                   typename CONSTITUTIVE_TYPE::KernelWrapper() )
     {}
+
+
     Components( SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
                 CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
@@ -153,29 +155,26 @@ public:
                                      STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                               localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template< typename PARAMETERS_TYPE, typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     PARAMETERS_TYPE const & GEOSX_UNUSED_PARAM( parameters ),
                      STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {
       return 0;
@@ -186,13 +185,11 @@ public:
     template< typename POLICY,
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
-              typename PARAMETERS_TYPE,
               typename COMPONENT_TYPE >
     static
     typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
                              std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
     Launch( localIndex const numElems,
-            PARAMETERS_TYPE const & parameters,
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
@@ -208,13 +205,13 @@ public:
         {
           kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
-          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointResidualContribution( k, q, stack );
         }
         if( kernelComponent.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
+          maxResidual.max( kernelComponent.complete( k, stack ) );
         }
       } );
       return maxResidual.get();
@@ -223,13 +220,11 @@ public:
     template< typename POLICY,
               int NUM_QUADRATURE_POINTS,
               typename STACK_VARIABLES,
-              typename PARAMETERS_TYPE,
               typename COMPONENT_TYPE >
     static
     typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
                                 std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
     Launch( localIndex const numElems,
-            PARAMETERS_TYPE const & parameters,
             COMPONENT_TYPE const & kernelComponent )
     {
       GEOSX_MARK_FUNCTION;
@@ -245,13 +240,13 @@ public:
         {
           kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-          kernelComponent.quadraturePointJacobianContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
-          kernelComponent.quadraturePointResidualContribution( k, q, parameters, stack );
+          kernelComponent.quadraturePointResidualContribution( k, q, stack );
         }
         if( kernelComponent.elemGhostRank[k] < 0 )
         {
-          maxResidual.max( kernelComponent.complete( k, parameters, stack ) );
+          maxResidual.max( kernelComponent.complete( k, stack ) );
         }
       } );
       return maxResidual.get();
@@ -348,7 +343,6 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                 KERNEL_TYPE::template Launch< POLICY,
                                                               NUM_QUADRATURE_POINTS,
                                                               typename decltype(kernelComponent)::StackVars >( numElems,
-                                                                                                               parameters,
                                                                                                                kernelComponent ) );
       } );
     } );
