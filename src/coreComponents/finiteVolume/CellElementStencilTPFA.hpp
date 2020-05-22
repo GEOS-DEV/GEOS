@@ -77,6 +77,10 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @brief Returns the stencil size
+   * @return the stencil size
+   */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
 
@@ -85,8 +89,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_PARAM( index ) ) const
-  { return MAX_STENCIL_SIZE; }
+  constexpr localIndex stencilSize( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return MAX_STENCIL_SIZE;
+  }
 
 };
 

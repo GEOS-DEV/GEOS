@@ -80,6 +80,10 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @brief Returns the stencil size
+   * @return the stencil size
+   */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
 

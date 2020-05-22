@@ -43,9 +43,21 @@ public:
     m_connectorIndices()
   {}
 
+  /**
+   * @brief destructor
+   */
   virtual ~StencilBase() = default;
+
+  /**
+   * @brief constructor
+   */
   StencilBase( StencilBase const & ) = default;
+
+  /**
+   * @brief move constructor
+   */
   StencilBase( StencilBase && ) = default;
+
   /**
    * @brief reserve the size of the stencil
    * @param[in] size the size of the stencil to reserve
