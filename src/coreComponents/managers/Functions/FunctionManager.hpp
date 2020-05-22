@@ -25,29 +25,56 @@
 namespace geosx
 {
 
-
-
+/**
+ * @class FunctionManager
+ *
+ * A class to manage arbitrary N-dimensional functions.
+ */
 class FunctionManager : public dataRepository::Group
 {
 public:
+  /**
+   * @brief constructor
+   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   FunctionManager( const std::string & name,
                    dataRepository::Group * const parent );
+
+  /**
+   * @brief destructor
+   */
   virtual ~FunctionManager() override;
 
+  /**
+   * @brief Return the function manager instance
+   * @return the function manager instance
+   */
   static FunctionManager & Instance()
   {
     static FunctionManager theFunctionManager( "Functions", nullptr );
     return theFunctionManager;
   }
 
+  /**
+   * @name Static Factory Catalog Functions
+   */
   static string CatalogName() { return "FunctionManager"; }
+
+  /**
+   * @brief Create a new FunctionManager object as a child of this group.
+   * @param functionCatalogKey the catalog key of the new FunctionManager derived type to create
+   * @param functionName the name of the new FunctionManager object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & functionCatalogKey, string const & functionName ) override;
 
-  /// This function is used to expand any catalogs in the data structure
+  /**
+   * @brief This function is used to expand any catalogs in the data structure
+   */
   virtual void ExpandObjectCatalogs() override;
 
 };
-
 
 } /* namespace geosx */
 

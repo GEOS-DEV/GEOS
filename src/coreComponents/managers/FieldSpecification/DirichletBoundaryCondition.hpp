@@ -24,13 +24,33 @@
 namespace geosx
 {
 
+/**
+ * @class DirichletBoundaryCondition
+ * A class to manage Dirichlet boundary conditions
+ */
 class DirichletBoundaryCondition : public FieldSpecificationBase
 {
 public:
+  /**
+   * @brief constructor
+   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   DirichletBoundaryCondition( string const & name, dataRepository::Group * const parent );
+
+  /**
+   * @brief destructor
+   */
   DirichletBoundaryCondition() = delete;
+
+  /**
+   * @brief destructor
+   */
   virtual ~DirichletBoundaryCondition();
 
+  /**
+   * @name Static Factory Catalog Functions
+   */
   static string CatalogName() { return "Dirichlet"; }
 
   virtual const string getCatalogName() const
@@ -39,8 +59,6 @@ public:
   }
 
 };
-
-
 
 } /* namespace geosx */
 

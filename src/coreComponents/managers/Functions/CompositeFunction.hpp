@@ -36,17 +36,27 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-  /// Main constructor
+  /**
+   * @brief constructor
+   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   CompositeFunction( const std::string & name,
                      dataRepository::Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief destructor
+   */
   virtual ~CompositeFunction() override;
 
-  /// Catalog name interface
+  /**
+   * @name Static Factory Catalog Functions
+   */
   static string CatalogName() { return "CompositeFunction"; }
 
-  /// Function initialization
+  /**
+   * @brief Function initialization
+   */
   virtual void InitializeFunction() override;
 
   /**
@@ -64,6 +74,7 @@ public:
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
+   * @return the function evaluation
    */
   virtual real64 Evaluate( real64 const * const input ) const override final;
 
