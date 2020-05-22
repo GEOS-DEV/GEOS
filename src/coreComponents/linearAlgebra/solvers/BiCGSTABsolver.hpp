@@ -50,8 +50,7 @@ public:
   ///@{
 
   /**
-   * @brief Constructor
-   *
+   * @brief Constructor.
    * @param [in] A reference to the system matrix.
    * @param [in] M reference to the preconditioning operator.
    * @param [in] tolerance relative residual norm reduction tolerance.
@@ -78,7 +77,6 @@ public:
 
   /**
    * @brief Solve preconditioned system
-   *
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */

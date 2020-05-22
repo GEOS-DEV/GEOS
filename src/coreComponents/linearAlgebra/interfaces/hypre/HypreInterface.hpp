@@ -51,6 +51,7 @@ struct HypreInterface
   /**
    * @brief Create a hypre-based preconditioner object.
    * @param params the preconditioner parameters
+   * @return owning pointer to the newly created preconditioner
    */
   static std::unique_ptr< PreconditionerBase< HypreInterface > >
   createPreconditioner( LinearSolverParameters params );

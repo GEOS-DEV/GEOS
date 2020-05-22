@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PreconditionerAMG.hpp
+ * @file TrilinosPreconditioner.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSAMG_HPP_
@@ -35,26 +35,59 @@ class ParameterList;
 namespace geosx
 {
 
+/**
+ * @brief Wrapper around Trilinos-based preconditioners.
+ */
 class TrilinosPreconditioner final : public PreconditionerBase< TrilinosInterface >
 {
 public:
 
+  /// Alias for base type
   using Base = PreconditionerBase< TrilinosInterface >;
+
+  /// Alias for vector type
   using Vector = typename Base::Vector;
+
+  /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   */
   explicit TrilinosPreconditioner( LinearSolverParameters params );
 
+  /**
+   * @brief Destructor.
+   */
   virtual ~TrilinosPreconditioner() override;
 
+  /**
+   * @brief Compute the preconditioner from a matrix.
+   * @param mat the matrix to precondition.
+   */
   virtual void compute( Matrix const & mat ) override;
 
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector.
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override;
 
   virtual void clear() override;
 
+  /**
+   * @brief Access the underlying Epetra preconditioning operator.
+   * @return reference to the Epetra operator
+   */
   Epetra_Operator const & unwrapped() const;
 
+  /**
+   * @copydoc unwrapped() const
+   */
   Epetra_Operator & unwrapped();
 
 private:

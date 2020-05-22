@@ -78,14 +78,12 @@ public:
 
   /**
    * @brief Get the number of global rows.
-   *
    * @return Number of global rows in the operator.
    */
   virtual globalIndex numGlobalRows() const = 0;
 
   /**
    * @brief Get the number of global columns.
-   *
    * @return Number of global columns in the operator.
    */
   virtual globalIndex numGlobalCols() const = 0;

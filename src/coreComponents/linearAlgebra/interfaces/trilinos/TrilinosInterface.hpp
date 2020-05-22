@@ -51,6 +51,7 @@ struct TrilinosInterface
   /**
    * @brief Create a Trilinos-based preconditioner object.
    * @param params the preconditioner parameters
+   * @return an owning pointer to the newly created preconditioner
    */
   static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
   createPreconditioner( LinearSolverParameters params );

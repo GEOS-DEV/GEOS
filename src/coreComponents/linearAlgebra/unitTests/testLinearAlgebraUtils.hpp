@@ -159,6 +159,14 @@ void compute2DLaplaceOperator( MPI_Comm comm,
 
 }
 
+/**
+ * @brief Compute a 1st order FEM local stiffness matrix for a quad element.
+ * @param hx element width
+ * @param hy element height
+ * @param E Young's modulus
+ * @param nu Poisson ratio
+ * @param Ke the output stiffness matrix
+ */
 inline void Q12d_local( real64 const & hx,
                         real64 const & hy,
                         real64 const & E,
@@ -239,14 +247,15 @@ inline void Q12d_local( real64 const & hx,
 
 /**
  * @brief Compute the 2D elasticity (plane strain) operator
- *
- * @param comm MPI communicator.
+ * @tparam MATRIX type of output matrix
+ * @param comm MPI communicator
  * @param domainSizeX domain size in the X-direction
  * @param domainSizeY domain size in the Y-direction
  * @param nCellsX number of cells in the X-direction
  * @param nCellsY number of cells in the Y-direction
  * @param youngModulus Young's modulus value (same for all cells)
- * @param poissonRation Poisson's ratio value (same for all cells)
+ * @param poissonRatio Poisson's ratio value (same for all cells)
+ * @param elasticity2D the output matrix
  *
  * This function computes the matrix corresponding to a 2D elasticity operator,
  * assuming plane strain conditions, based on a Q1 finite element discretization.

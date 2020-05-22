@@ -62,10 +62,31 @@ protected:
     : m_closed( true )
   {}
 
+  /**
+   * @brief Copy constructor.
+   */
   VectorBase( VectorBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
   VectorBase( VectorBase && ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase const & ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase && ) = default;
+
+  /**
+   * @brief Destructor.
+   */
   ~VectorBase() = default;
 
   ///@}

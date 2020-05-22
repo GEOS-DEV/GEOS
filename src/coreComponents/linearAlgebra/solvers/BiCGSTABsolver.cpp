@@ -22,22 +22,12 @@
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
+#include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
 {
 
-// BEGIN_RST_NARRATIVE BiCGSTABsolver.rst
-// ==============================
-// BiCGSTAB Solver
-// ==============================
-// Implementation of the BiCGSTAB algorithm.
-// The notation is consistent with "Iterative Methods for
-// Linear and Non-Linear Equations" from C.T. Kelley (1995)
-// and "Iterative Methods for Sparse Linear Systems" from Y. Saad (2003).
 
-// ----------------------------
-// Constructor
-// ----------------------------
 template< typename VECTOR >
 BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
                                           LinearOperator< Vector > const & M,
@@ -47,15 +37,9 @@ BiCGSTABsolver< VECTOR >::BiCGSTABsolver( LinearOperator< Vector > const & A,
   : KrylovSolver< VECTOR >( A, M, tolerance, maxIterations, verbosity )
 {}
 
-// ----------------------------
-// Destructor
-// ----------------------------
 template< typename VECTOR >
 BiCGSTABsolver< VECTOR >::~BiCGSTABsolver() = default;
 
-// ----------------------------
-// Monolithic BiCGSTAB solver
-// ----------------------------
 template< typename VECTOR >
 void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
@@ -93,8 +77,10 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.resize( m_maxIterations + 1 );
 
+  localIndex k;
   real64 rnorm = 0.0;
-  for( localIndex k = 0; k <= m_maxIterations; ++k, ++m_result.numIterations )
+
+  for( k = 0; k <= m_maxIterations; ++k )
   {
     rnorm = r.norm2();
     logProgress( k, rnorm );
@@ -109,6 +95,9 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     // Compute r0.rk
     real64 const rho = r.dot( r0 );
 
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega );
+
     // Compute beta
     real64 const beta = rho / rho_old * alpha / omega;
 
@@ -121,7 +110,9 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     m_operator.apply( y, v );
 
     // Compute alpha
-    alpha = rho / v.dot( r0 );
+    real64 const vr0 = v.dot( r0 );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( vr0 );
+    alpha = rho / vr0;
 
     // compute x = x + alpha*y
     x.axpy( alpha, y );
@@ -140,7 +131,9 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     m_precond.apply( t, q );
 
     // Update omega
-    omega = q.dot( z ) / q.dot( q );
+    real64 const q2 = q.dot( q );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( q2 );
+    omega = q.dot( z ) / q2;
 
     // Update x = x + omega*z
     x.axpy( omega, z );
@@ -153,13 +146,13 @@ void BiCGSTABsolver< VECTOR >::solve( Vector const & b,
     rho_old = rho;
   }
 
-  logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.numIterations = k;
   m_result.residualReduction = rnorm / absTol * m_tolerance;
   m_result.solveTime = watch.elapsedTime();
-}
 
-// END_RST_NARRATIVE
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
+}
 
 // -----------------------
 // Explicit Instantiations
