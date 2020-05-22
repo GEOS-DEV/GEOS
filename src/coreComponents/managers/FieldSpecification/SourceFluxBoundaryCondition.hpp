@@ -57,7 +57,8 @@ public:
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   /**
-   * @name Static Factory Catalog Functions
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
    */
   static string CatalogName() { return "SourceFlux"; }
 

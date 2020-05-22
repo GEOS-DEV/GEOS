@@ -35,6 +35,7 @@ struct OpEqual
    * @tparam U type of the right-hand side
    * @param[in] lhs value to set
    * @param[in] rhs input value
+   * @return none
    */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
@@ -55,6 +56,7 @@ struct OpAdd
    * @tparam U type of the right-hand side
    * @param[in] lhs value to update
    * @param[in] rhs input value
+   * @return none
    */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
@@ -80,6 +82,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index] (+)= value.
    */
@@ -103,6 +106,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value.
    */
@@ -124,6 +128,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component not used.
    * @param[out] value The value read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index].
    */
@@ -146,6 +151,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component not used.
    * @param[out] value The value read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index][component].
    */
@@ -168,6 +174,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along second dimension of 2d array.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value.
    */
@@ -201,6 +208,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
@@ -239,6 +247,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index][component].
    */
@@ -262,6 +271,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    */
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
@@ -286,6 +296,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along third dimension of 3d array.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index] (+)= value for all values of field[index].
    */
@@ -325,6 +336,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
@@ -369,6 +381,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    */
   template< typename T, int USD >
   GEOSX_HOST_DEVICE

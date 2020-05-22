@@ -62,10 +62,15 @@ public:
   static CatalogInterface::CatalogType & GetCatalog();
 
   /**
-   * @name Static Factory Catalog Functions
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
    */
   static string CatalogName() { return "FieldSpecification"; }
 
+  /**
+   * @brief return the catalog name
+   * @return the catalog name
+   */
   virtual const string getCatalogName() const
   {
     return FieldSpecificationBase::CatalogName();
