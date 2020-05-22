@@ -1061,9 +1061,9 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--K_IC => K_IC on the face-->
+		<!--K_IC => K_IC in each plane. => SurfaceGenerator-->
 		<xsd:attribute name="K_IC" type="r1_array" />
-		<!--SIFonFace => SIF on the face-->
+		<!--SIFonFace => SIF on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--boundaryFaceDensity => (no description available)-->
 		<xsd:attribute name="boundaryFaceDensity" type="real64_array2d" />
@@ -1075,7 +1075,7 @@
 		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
 		<!--childIndex => Index of child within the  mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<!--degreeFromCrackTip => Degree of connectivity separation from crack tip. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
@@ -1107,7 +1107,7 @@
 		<xsd:attribute name="gravityCoefficient" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--isFaceSeparable => A flag to mark if the face is separable-->
+		<!--isFaceSeparable => A flag to mark if the face is separable. => SurfaceGenerator-->
 		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
@@ -1115,11 +1115,11 @@
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--primaryCandidateFace => The face that has the highest score for splitability-->
+		<!--primaryCandidateFace => SIF_III of the edge. => SurfaceGenerator-->
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
-		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
+		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
-		<!--ruptureTime => Time that the face was ruptured.-->
+		<!--ruptureTime => Time that the object was ruptured. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
@@ -1175,7 +1175,7 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-		<!--ruptureTime => Time that the node was ruptured. => SurfaceGenerator-->
+		<!--ruptureTime => Time that the object was ruptured. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
