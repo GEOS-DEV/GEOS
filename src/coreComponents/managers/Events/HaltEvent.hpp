@@ -59,12 +59,14 @@ public:
   real64 m_externalDt;
   real64 m_maxRuntime;
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto maxRuntimeString = "maxRuntime";
 
     dataRepository::ViewKey maxRuntime = { "maxRuntime" };
   } haltEventViewKeys;
+  /// @endcond
 
 };
 

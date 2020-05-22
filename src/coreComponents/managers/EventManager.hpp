@@ -80,7 +80,7 @@ public:
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
@@ -98,7 +98,7 @@ public:
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
-
+  /// @endcond
   ///@}
 
   /// Catalog interface

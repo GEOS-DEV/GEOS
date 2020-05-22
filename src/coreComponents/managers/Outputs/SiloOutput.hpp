@@ -52,12 +52,7 @@ public:
 
   /**
    * @brief Writes out a Silo plot file.
-   * @param time_n The current simulation time.
-   * @param dt The current time step.
-   * @param cycleNumber The current cycle.
-   * @param eventCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails EventBase::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -68,11 +63,7 @@ public:
 
   /**
    * @brief Writes out a Silo plot file at the end of the simulation.
-   * @param time_n The last simulation time.
-   * @param cycleNumber The last cycle.
-   * @param eventCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails ExecutableGroup::Cleanup()
    */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,

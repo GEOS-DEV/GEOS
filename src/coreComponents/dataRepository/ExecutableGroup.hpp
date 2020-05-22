@@ -45,7 +45,7 @@ public:
    * @param[in] cycleNumber   global cycle number
    * @param[in] eventCounter  index of event that triggered execution
    * @param[in] eventProgress fractional progress in current cycle
-   * @param[in,out] domain    the physical domain
+   * @param[in,out] domain    the physical domain up-casted to a Group.
    *
    * If the start criteria are satisfied, then the event manager
    * will call this method.

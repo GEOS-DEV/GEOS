@@ -97,6 +97,7 @@ public:
   /// A pointer to an optional function
   dataRepository::Group * m_functionTarget;
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto timeFrequencyString = "timeFrequency";
@@ -120,6 +121,7 @@ public:
     dataRepository::ViewKey functionStatOption = { "stat" };
     dataRepository::ViewKey eventThreshold = { "threshold" };
   } periodicEventViewKeys;
+  /// @endcond
 
   real64 m_timeFrequency;
   integer m_cycleFrequency;

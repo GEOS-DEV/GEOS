@@ -34,32 +34,44 @@ namespace geosx
 class EventBase : public ExecutableGroup
 {
 public:
-  /// Main constructor
+  /**
+   * @brief Main constructor.
+   * @param name The name of the object in the data repository.
+   * @param parent The parent of this object in the data repository.
+   **/
   explicit EventBase( std::string const & name,
                       Group * const parent );
 
   /// Destructor
   virtual ~EventBase() override;
 
-  // Catalog name interface
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "EventBase"; }
 
   /**
-   * If the event forecast is equal to 1, then signal the targets to prepare for execution
-   * during the next cycle.
+   * @brief If the event forecast is equal to 1, then signal the targets to prepare for execution
+   *        during the next cycle.
+   * @param time The current simulation time.
+   * @param dt The current time increment.
+   * @param cycle The current cycle.
+   * @param domain The DomainPartition the event is occuring on up-casted to a Group.
    */
   virtual void SignalToPrepareForExecution( real64 const time,
                                             real64 const dt,
                                             integer const cycle,
                                             dataRepository::Group * domain ) override;
   /**
-   * If the event forecast is equal to 0, then call the step function on its target and/or children.
+   * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
+   * @copydetails ExecutableGroup::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const,
-                        real64 const,
+                        integer const eventCounter,
+                        real64 const eventProgress,
                         dataRepository::Group * domain ) override;
 
   /**
@@ -95,17 +107,27 @@ public:
   void GetTargetReferences();
 
   /**
-   * Events are triggered based upon their forecast values, which are defined
-   * as the expected number of code cycles before they are executed.  This method
-   * will call EstimateEventTiming (defined in each subclass) on this event and
-   * its children.
+   * @brief Events are triggered based upon their forecast values, which are defined
+   *        as the expected number of code cycles before they are executed.  This method
+   *        will call EstimateEventTiming (defined in each subclass) on this event and
+   *        its children.
+   * @param time The current simulation time.
+   * @param dt The current simulation time increment.
+   * @param cycle the current simulation cycle.
+   * @param The problem domain up-cast to a Group.
    */
   virtual void CheckEvents( real64 const time,
                             real64 const dt,
                             integer const cycle,
                             dataRepository::Group * domain );
 
-  /// Method to estimate the timing of the event
+  /**
+   * @brief Perform the calculations to estimate the timing of the event.
+   * @param time The current simulation time.
+   * @param dt The current simulation time increment.
+   * @param cycle the current simulation cycle.
+   * @param The problem domain up-cast to a Group.
+   */
   virtual void EstimateEventTiming( real64 const time,
                                     real64 const dt,
                                     integer const cycle,
@@ -136,7 +158,7 @@ public:
   void SetProgressIndicator( array1d< integer > & eventCounters );
 
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto eventTargetString = "target";
@@ -162,15 +184,27 @@ public:
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
     dataRepository::ViewKey isTargetExecuting = { "isTargetExecuting" };
   } viewKeys;
+  /// @endcond
 
-  ///Catalog interface
+  /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
 
-  /// Access functions
+  /**
+   * @brief Get the forecast for this event.
+   * @return The forecast.
+   */
   integer GetForecast(){ return m_eventForecast; }
+
+  /**
+   * @brief Set the forecast for this event.
+   * @param forecast The forecast.
+   */
   void SetForecast( integer forecast ){ m_eventForecast = forecast; }
 
+  /**
+   * @brief Get the event's exit flag from the last execution.
+   */
   integer GetExitFlag();
   void SetExitFlag( integer flag ){ m_exitFlag = flag; }
 

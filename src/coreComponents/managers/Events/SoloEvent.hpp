@@ -56,7 +56,7 @@ public:
    */
   virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto targetTimeString = "targetTime";
@@ -67,6 +67,7 @@ public:
     dataRepository::ViewKey targetCycle = { "targetCycle" };
     dataRepository::ViewKey targetExactTimestep = { "targetExactTimestep" };
   } SoloEventViewKeys;
+  /// @endcond
 
   real64 m_targetTime;
   integer m_targetCycle;
