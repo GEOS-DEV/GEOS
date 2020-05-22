@@ -138,9 +138,6 @@ public:
 
 
 
-
-
-
     template< typename STACK_VARIABLE_TYPE >
     //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
@@ -179,16 +176,16 @@ public:
       ComponentsBase::quadraturePointJacobianContribution( k, q, stack, [&]( localIndex const a, localIndex const b )
       {
         real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
-        real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt ) + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )*
-                       integrationFactor;
+        real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
+                         + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
         constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
         for( int i=0; i<nsdof; ++i )
         {
-          realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i]
-                                                                );
-          realT const vel = stack.vtilde_local[b][i] + m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i] -
-                                                                                            stack.uhattilde_local[b][i] );
+          realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
+          realT const vel = stack.vtilde_local[b][i] +
+                            m_newmarkGamma/( m_newmarkBeta * m_dt ) *( stack.uhat_local[b][i]
+                                                                       - stack.uhattilde_local[b][i] );
 
           stack.dRdU_InertiaMassDamping[ a*nsdof+i][ b*nsdof+i ] -= temp1;
           stack.localResidual[ a*nsdof+i ] -= ( m_massDamping * vel + acc ) * integrationFactor;
@@ -212,12 +209,10 @@ public:
             for( int j=0; j<nsdof; ++j )
             {
               stack.localResidual[ a*nsdof+i ] += m_stiffnessDamping * stack.localJacobian[ a*nsdof+i][ b*nsdof+j ] *
-                                                  ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta *
-                                                      m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+                                                  ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
 
-              stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping *
-                  m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
-                                                           stack.dRdU_InertiaMassDamping[ a ][ b ];
+              stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
+                                                           + stack.dRdU_InertiaMassDamping[ a ][ b ];
             }
           }
         }
@@ -227,9 +222,8 @@ public:
       {
         for( localIndex b=0; b<STACK_VARIABLE_TYPE::ndof; ++b )
         {
-          stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / (
-              m_newmarkBeta * m_dt ) ) +
-                                       stack.dRdU_InertiaMassDamping[ a ][ b ];
+          stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
+                                       + stack.dRdU_InertiaMassDamping[ a ][ b ];
         }
       }
 

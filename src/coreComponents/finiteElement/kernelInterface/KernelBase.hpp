@@ -272,7 +272,7 @@ template< typename POLICY,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE = UPDATE_CLASS::template Components >
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE>
 static
 real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,

@@ -39,7 +39,7 @@ public:
   {
     Parameters( string const & fieldName ):
       BaseKernel::Parameters(),
-      m_fieldName{ '\0' }
+                                         m_fieldName{ '\0' }
     {
       fieldName.copy( m_fieldName, fieldName.size() );
     }

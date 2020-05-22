@@ -186,7 +186,7 @@ public:
                                               STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
     {}
 
-    template<typename STACK_VARIABLE_TYPE >
+    template< typename STACK_VARIABLE_TYPE >
 //    GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE
     real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
