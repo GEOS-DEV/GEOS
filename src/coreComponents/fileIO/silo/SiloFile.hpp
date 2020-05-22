@@ -29,7 +29,7 @@
 
 #include "silo.h"
 
-// forward declaration for structure internal to silo/pmpio.h
+/// _PMPIO_baton_t struct forward declaration (internal to silo/pmpio.h
 struct _PMPIO_baton_t;
 typedef _PMPIO_baton_t PMPIO_baton_t;
 
