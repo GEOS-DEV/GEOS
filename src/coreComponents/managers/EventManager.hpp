@@ -104,7 +104,7 @@ public:
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
-  /// Catalog interface
+  /// @copydoc dataRepository::Group::GetCatalog()
   static CatalogInterface::CatalogType & GetCatalog();
 
 private:

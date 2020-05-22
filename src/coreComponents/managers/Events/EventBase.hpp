@@ -75,8 +75,11 @@ public:
                         dataRepository::Group * domain ) override;
 
   /**
-   * This method will call the execute method on the target
-   * and/or children if present.
+   * @brief Call the execute method on the target and/or children if present.
+   * @param time The current simulation time.
+   * @param dt The current simulation time increment.
+   * @param cycle The current simulation cycle.
+   * @param domain The DomainPartition up-casted to a Group.
    */
   void Step( real64 const time,
              real64 const dt,
@@ -84,21 +87,28 @@ public:
              dataRepository::Group * domain );
 
   /**
+   * @copydoc dataRepository::Group::CreateChild()
+   *
    * An event may have an arbitrary number of sub-events defined as children in the input xml.
-   * e.g.: <Events>
-   *         <PeriodicEvent name="base_event" ...>
-   *           <PeriodicEvent name="sub_event" .../>
-   *           ...
-   *         </PeriodicEvent>
-   *       </Events>
+   * e.g.:
+   * @code{.unparsed}
+   * <Events>
+   *   <PeriodicEvent name="base_event" ...>
+   *     <PeriodicEvent name="sub_event" .../>
+   *     ...
+   *   </PeriodicEvent>
+   * </Events>
+   * @endcode
    */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-
-  /// This function is used to expand any catalogs in the data structure
+  /**
+   * @brief Expand any catalogs in the data structure.
+   */
   virtual void ExpandObjectCatalogs() override;
 
   /**
+   * @brief Process input data to retrieve targeted objects internally.
    * The target object for an event may be specified via the keyword "target" in the input xml.
    * This string is empty by default and uses GetGroupByPath() method in Group, which returns
    * a pointer to the target using a unix-style path as an input (both absolute and relative paths work).
@@ -114,7 +124,7 @@ public:
    * @param time The current simulation time.
    * @param dt The current simulation time increment.
    * @param cycle the current simulation cycle.
-   * @param The problem domain up-cast to a Group.
+   * @param domain The problem domain up-cast to a Group.
    */
   virtual void CheckEvents( real64 const time,
                             real64 const dt,
@@ -126,7 +136,7 @@ public:
    * @param time The current simulation time.
    * @param dt The current simulation time increment.
    * @param cycle the current simulation cycle.
-   * @param The problem domain up-cast to a Group.
+   * @param domain The problem domain up-cast to a Group.
    */
   virtual void EstimateEventTiming( real64 const time,
                                     real64 const dt,
@@ -134,26 +144,38 @@ public:
                                     dataRepository::Group * domain ) = 0;
 
   /**
-   * This method will collect time-step size requests from its
-   * targets and/or children.
+   * @brief Collect time-step size requests from targets and/or children.
+   * @param time The current simulation time.
+   * @return The requested time step.
    */
   virtual real64 GetTimestepRequest( real64 const time ) override;
 
 
   /**
-   * This method is used to get event-specifit dt requests
+   * @brief Get event-specifit dt requests.
+   * @param time The current simulation time.
+   * @return The requested time step.
    */
-  virtual real64 GetEventTypeDtRequest( real64 const GEOSX_UNUSED_PARAM( time ) ) { return std::numeric_limits< real64 >::max(); }
+  virtual real64 GetEventTypeDtRequest( real64 const time )
+  {
+    GEOSX_UNUSED_VAR( time );
+    return std::numeric_limits< real64 >::max();
+  }
 
 
-  /// This method is used to count the number of events/sub-events
+  /**
+   * @brief Count the number of events/sub-events
+   * @param[out] eventCounters The event count for each event/sub-event.
+   */
   void GetExecutionOrder( array1d< integer > & eventCounters );
 
   /**
-   * This method is used to determine how to handle the timestamp for an event
-   * If the event occurs after anything targeting a SolverBase object, then
-   * set the m_isPostSolverEvent flag.  If set, then the time passed to the target
-   * will be time + dt.
+   * @brief Update the event progress for the event/sub-events.
+   * @note This method is used to determine how to handle the timestamp for an event
+   * @note If the event occurs after anything targeting a SolverBase object, then
+   *       set the m_isPostSolverEvent flag.  If set, then the time passed to the target
+   *       will be time + dt.
+   * @param eventCounters The event count for each event/sub-event.
    */
   void SetProgressIndicator( array1d< integer > & eventCounters );
 
@@ -188,6 +210,7 @@ public:
 
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+  /// @copydoc dataRepository::Group::GetCatalog()
   static CatalogInterface::CatalogType & GetCatalog();
 
   /**
@@ -203,25 +226,59 @@ public:
   void SetForecast( integer forecast ){ m_eventForecast = forecast; }
 
   /**
-   * @brief Get the event's exit flag from the last execution.
+   * @brief Get the sum of the exit flags for the event/sub-events from the last execution.
+   * @return The sum of the exit flags for the event/sub-events.
    */
   integer GetExitFlag();
+
+  /**
+   * @brief Set this event objects exit flag.
+   * @param flag The exit flag value.
+   */
   void SetExitFlag( integer flag ){ m_exitFlag = flag; }
 
+  /**
+   * @brief Get the event count.
+   * @return The event count.
+   */
   integer GetEventCount() const { return m_eventCount; }
+
+  /**
+   * @brief Get the event progress.
+   * @return The event progress.
+   */
   real64  GetEventProgress() const { return m_eventProgress; }
 
+  /**
+   * @brief Get the current time increment request for this event.
+   * @return The current time increment request.
+   */
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
+  /**
+   * @brief Get the time the event began.
+   * @return The time the event began.
+   */
   real64  GetBeginTime() const { return m_beginTime; }
+
+  /**
+   * @brief Get the time the event ended.
+   * @return The time the event ended.
+   */
   real64  GetEndTime() const { return m_endTime; }
+
+  /**
+   * @brief Get the target of this event.
+   * @return The target of this event.
+   */
   ExecutableGroup * GetEventTarget() const { return m_target; }
 
 
 protected:
+  /// The last time the event occured.
   real64 m_lastTime;
+  /// The last cycle the event occured.
   integer m_lastCycle;
-
 
 private:
   string m_eventTarget;
@@ -240,10 +297,8 @@ private:
   real64 m_eventProgress;
   real64 m_currentEventDtRequest;
 
-
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
-
 };
 
 } /* namespace geosx */
