@@ -62,7 +62,7 @@ public:
    * @param time The current simulation time.
    * @param dt The current time step.
    * @param cycle The current cycle.
-   * @param evenCounter The event counter.
+   * @param eventCounter The event counter.
    * @param eventProgress The event progress.
    * @param domain The DomainPartition to write out up-casted to a Group.
    */
@@ -77,7 +77,7 @@ public:
    * @brief Writes out a Blueprint plot file at the end of the simulation.
    * @param time The current simulation time.
    * @param cycle The current cycle.
-   * @param evenCounter The event counter.
+   * @param eventCounter The event counter.
    * @param eventProgress The event progress.
    * @param domain The DomainPartition to write out up-casted to a Group.
    */
