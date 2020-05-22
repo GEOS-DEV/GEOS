@@ -83,16 +83,6 @@ public:
 
   //***************************************************************************
   /**
-   * @class Parameters
-   *
-   * Contains non-mesh parameters passed in from the calling scope.
-   */
-  struct Parameters
-  {};
-
-
-  //***************************************************************************
-  /**
    * @class StackVariables
    * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
    * @tparam NUM_COLS The number or columns to allocate for the jacobian.
@@ -121,8 +111,7 @@ public:
 public:
     Components( SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
-                CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
+                CONSTITUTIVE_TYPE * const inputConstitutiveType ):
       Components( elementSubRegion,
                   finiteElementSpace,
                   inputConstitutiveType,
@@ -272,7 +261,8 @@ template< typename POLICY,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE>
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE,
+          typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
 real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
@@ -281,7 +271,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< globalIndex const > const & inputDofNumber,
                                      ParallelMatrix & inputMatrix,
                                      ParallelVector & inputRhs,
-                                     typename UPDATE_CLASS::Parameters const & parameters )
+                                     KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
 
   real64 maxResidual = 0;
@@ -337,7 +327,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      elementSubRegion,
                                      finiteElementSpace,
                                      castedConstitutiveRelation,
-                                     parameters );
+                                     std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
 
         maxResidual = std::max( maxResidual,
                                 KERNEL_TYPE::template Launch< POLICY,

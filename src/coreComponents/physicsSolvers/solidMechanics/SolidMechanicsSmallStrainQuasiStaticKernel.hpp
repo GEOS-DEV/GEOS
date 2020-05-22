@@ -41,16 +41,6 @@ public:
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
-  struct Parameters : public BaseKernel::Parameters
-  {
-    Parameters( real64 const inputGravityVector[3] ):
-      m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
-    {}
-
-    real64 const m_gravityVector[3];
-  };
-
-
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
   struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
@@ -128,20 +118,19 @@ public:
                 SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
                 CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                Parameters const & parameters ):
+                real64 const inputGravityVector[3] ):
       ComponentsBase( inputDofNumber,
                       inputMatrix,
                       inputRhs,
                       nodeManager,
                       elementSubRegion,
                       finiteElementSpace,
-                      inputConstitutiveType,
-                      parameters ),
+                      inputConstitutiveType ),
       m_disp( nodeManager.totalDisplacement()),
       m_uhat( nodeManager.incrementalDisplacement()),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
-      m_gravityVector{ parameters.m_gravityVector[0], parameters.m_gravityVector[1], parameters.m_gravityVector[2] }
+      m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
     {}
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;

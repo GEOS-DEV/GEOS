@@ -32,23 +32,6 @@ public:
   static constexpr int numTrialDofPerSP = 1;
 
   //***************************************************************************
-  /**
-   * @class Parameters
-   */
-  struct Parameters : public BaseKernel::Parameters
-  {
-    Parameters( string const & fieldName ):
-      BaseKernel::Parameters(),
-                                         m_fieldName{ '\0' }
-    {
-      fieldName.copy( m_fieldName, fieldName.size() );
-    }
-
-    char m_fieldName[100];
-  };
-
-
-  //***************************************************************************
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
   struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
@@ -126,16 +109,15 @@ public:
                 SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
                 CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                Parameters const & parameters ):
+                string const & fieldName ):
       ComponentsBase( inputDofNumber,
                       inputMatrix,
                       inputRhs,
                       nodeManager,
                       elementSubRegion,
                       finiteElementSpace,
-                      inputConstitutiveType,
-                      parameters ),
-      m_primaryField( nodeManager.template getReference< array1d< real64 > >( parameters.m_fieldName )),
+                      inputConstitutiveType ),
+      m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
       dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
       detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
     {}

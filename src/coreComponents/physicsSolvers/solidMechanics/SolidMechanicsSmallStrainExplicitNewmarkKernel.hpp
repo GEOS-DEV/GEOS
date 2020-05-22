@@ -40,22 +40,6 @@ public:
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
 
-  struct Parameters
-  {
-
-    Parameters( real64 const dt,
-                string const elementListName ):
-      m_dt( dt ),
-      m_elementListName{ '\0' }
-    {
-      elementListName.copy( m_elementListName, elementListName.size() );
-    }
-
-    real64 const m_dt;
-    char m_elementListName[100];
-
-  };
-
 //*****************************************************************************
   template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
@@ -110,7 +94,8 @@ public:
                 SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
                 CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                Parameters const & parameters )://,
+                real64 const dt,
+                string const & elementListName ):
       elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
       elemGhostRank( elementSubRegion.ghostRank() ),
       constitutiveUpdate( inputConstitutiveType->createKernelWrapper() ),
@@ -123,8 +108,8 @@ public:
       u( nodeManager.totalDisplacement()),
       vel( nodeManager.velocity()),
       acc( nodeManager.acceleration()),
-      m_dt( parameters.m_dt ),
-      m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( parameters.m_elementListName ).toViewConst() )
+      m_dt( dt ),
+      m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
     {}
 
     typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;

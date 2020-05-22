@@ -566,9 +566,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        array1d< globalIndex >(),
                                                                        m_matrix,
                                                                        m_rhs,
-                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
-                                                                         Parameters( dt,
-                                                                                     viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
+                                                                       dt,
+                                                                       string(viewKeyStruct::elemsAttachedToSendOrReceiveNodes));
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
@@ -588,10 +587,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                        array1d< globalIndex >(),
                                                                        m_matrix,
                                                                        m_rhs,
-                                                                       SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::
-                                                                         Parameters( dt,
-                                                                                     viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
-
+                                                                       dt,
+                                                                       string(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes));
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
@@ -1032,7 +1029,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                       dofNumber,
                                                                                       matrix,
                                                                                       rhs,
-                                                                                      Update::Parameters( gravityVector().Data()));
+                                                                                      gravityVector().Data() );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {

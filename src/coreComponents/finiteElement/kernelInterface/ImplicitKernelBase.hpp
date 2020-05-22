@@ -124,8 +124,7 @@ public:
                 NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                 SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
-                CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                Parameters const & GEOSX_UNUSED_PARAM( parameters ) ):
+                CONSTITUTIVE_TYPE * const inputConstitutiveType ):
       ComponentsBase( elementSubRegion,
                       finiteElementSpace,
                       inputConstitutiveType,
@@ -228,8 +227,7 @@ real64 FillSparsity( MeshLevel & mesh,
                                                                                     feDiscretization,
                                                                                     inputDofNumber,
                                                                                     inputMatrix,
-                                                                                    inputRhs,
-                                                                                    ImplicitKernelBase::Parameters() );
+                                                                                    inputRhs );
 }
 
 }

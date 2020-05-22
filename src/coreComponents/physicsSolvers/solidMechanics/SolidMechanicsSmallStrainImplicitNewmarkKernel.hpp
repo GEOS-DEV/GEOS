@@ -32,29 +32,6 @@ class ImplicitNewmark
 public:
   using Base = QuasiStatic;
 
-  struct Parameters : public Base::Parameters
-  {
-    Parameters( real64 const inputGravityVector[3],
-                real64 const inputNewmarkGamma,
-                real64 const inputNewmarkBeta,
-                real64 const inputMassDamping,
-                real64 const inputStiffnessDamping,
-                real64 const inputDt ):
-      Base::Parameters( inputGravityVector ),
-      newmarkGamma( inputNewmarkGamma ),
-      newmarkBeta( inputNewmarkBeta ),
-      massDamping( inputMassDamping ),
-      stiffnessDamping( inputStiffnessDamping ),
-      dt( inputDt )
-    {}
-
-    real64 const newmarkGamma;
-    real64 const newmarkBeta;
-    real64 const massDamping;
-    real64 const stiffnessDamping;
-    real64 const dt;
-  };
-
   template< int NUM_NODES_PER_ELEM, int NUM_DOF_PER_NODE >
   struct StackVariables : Base::StackVariables< NUM_NODES_PER_ELEM, NUM_DOF_PER_NODE >
   {
@@ -108,7 +85,12 @@ public:
                 SUBREGION_TYPE const & elementSubRegion,
                 FiniteElementBase const * const finiteElementSpace,
                 CONSTITUTIVE_TYPE & constitutiveModel,
-                Parameters const & parameters ):
+                real64 const inputGravityVector[3],
+                real64 const inputNewmarkGamma,
+                real64 const inputNewmarkBeta,
+                real64 const inputMassDamping,
+                real64 const inputStiffnessDamping,
+                real64 const inputDt):
       ComponentsBase( inputDofNumber,
                       inputMatrix,
                       inputRhs,
@@ -116,15 +98,15 @@ public:
                       elementSubRegion,
                       finiteElementSpace,
                       constitutiveModel,
-                      parameters ),
+                      inputGravityVector ),
       m_vtilde( nodeManager.totalDisplacement()),
       m_uhattilde( nodeManager.totalDisplacement()),
       m_density( constitutiveModel.getDensity()),
-      m_newmarkGamma( parameters.newmarkGamma ),
-      m_newmarkBeta( parameters.newmarkBeta ),
-      m_massDamping( parameters.massDamping ),
-      m_stiffnessDamping( parameters.stiffnessDamping ),
-      m_dt( parameters.dt )
+      m_newmarkGamma( inputNewmarkGamma ),
+      m_newmarkBeta( inputNewmarkBeta ),
+      m_massDamping( inputMassDamping ),
+      m_stiffnessDamping( inputStiffnessDamping ),
+      m_dt( inputDt )
     {}
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;

@@ -235,7 +235,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                                           dofIndex,
                                                           matrix,
                                                           rhs,
-                                                          LaplaceFEMKernel::Parameters( m_fieldName ));
+                                                          m_fieldName );
 
   matrix.close();
   rhs.close();
