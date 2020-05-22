@@ -58,10 +58,9 @@ public:
                                                            LinearOperator< VECTOR > const & precond );
 
   /**
-   * @brief Constructor
-   *
-   * @param [in] A reference to the system matrix.
-   * @param [in] M reference to the preconditioning operator.
+   * @brief Constructor.
+   * @param [in] matrix reference to the system matrix.
+   * @param [in] precond reference to the preconditioning operator.
    * @param [in] tolerance relative residual norm reduction tolerance.
    * @param [in] maxIterations maximum number of Krylov iterations.
    * @param [in] verbosity solver verbosity level.
@@ -79,7 +78,6 @@ public:
 
   /**
    * @brief Solve preconditioned system
-   *
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
@@ -107,16 +105,28 @@ public:
     return m_operator.numGlobalCols();
   }
 
+  /**
+   * @brief Get result of a linear solve.
+   * @return struct containing status and various statistics of the last solve
+   */
   LinearSolverResult const & result() const
   {
     return m_result;
   }
 
+  /**
+   * @brief Get convergence history of a linear solve.
+   * @return array containing residual norms of every iteration (including initial)
+   */
   arrayView1d< real64 const > const & history() const
   {
     return m_residualNorms;
   }
 
+  /**
+   * @brief Get log level.
+   * @return integer value of the log level
+   */
   integer getLogLevel() const
   {
     return m_logLevel;
@@ -130,7 +140,8 @@ public:
 
 private:
 
-  // Helper struct to get temporary stored vector type from vector view types
+  ///@cond DO_NOT_DOCUMENT
+
   template< typename VEC >
   struct VectorStorageHelper
   {
@@ -160,11 +171,20 @@ private:
     }
   };
 
+  ///@endcond DO_NOT_DOCUMENT
+
 protected:
 
   /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename VectorStorageHelper< VECTOR >::type;
 
+  /**
+   * @brief Helper function to create temporary vectors based on a source vector.
+   * @param src the source vector, whose size and parallel distribution will be used
+   * @return the new vector
+   *
+   * The main purpose is to deal with BlockVector/View/Wrapper hierarchy.
+   */
   static VectorTemp createTempVector( Vector const & src )
   {
     return VectorStorageHelper< VECTOR >::createFrom( src );
@@ -188,7 +208,8 @@ protected:
   {
     GEOSX_LOG_LEVEL_RANK_0( 1, methodName() << ' ' <<
                             ( m_result.success() ? "converged" : "failed to converge" ) <<
-                            " in " << m_result.numIterations << " iterations." );
+                            " in " << m_result.numIterations << " iterations " <<
+                            "(" << m_result.solveTime << " s)" );
   }
 
   /// reference to the operator to be solved

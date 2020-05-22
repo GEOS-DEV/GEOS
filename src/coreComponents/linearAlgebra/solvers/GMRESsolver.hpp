@@ -38,7 +38,10 @@ class GMRESsolver : public KrylovSolver< VECTOR >
 {
 public:
 
+  /// Alias for the base type
   using Base = KrylovSolver< VECTOR >;
+
+  /// Alias for the vector type
   using Vector = typename Base::Vector;
 
   /**
@@ -48,9 +51,15 @@ public:
 
   /**
    * @brief Solver object constructor.
+   * @param[in] matrix        reference to the system matrix
+   * @param[in] precond       reference to the preconditioning operator
+   * @param[in] tolerance     relative residual norm reduction tolerance
+   * @param[in] maxIterations maximum number of Krylov iterations
+   * @param[in] verbosity     solver verbosity level
+   * @param[in] maxRestart    number of iterations until restart
    */
-  GMRESsolver( LinearOperator< Vector > const & A,
-               LinearOperator< Vector > const & M,
+  GMRESsolver( LinearOperator< Vector > const & matrix,
+               LinearOperator< Vector > const & precond,
                real64 const tolerance,
                localIndex const maxIterations,
                integer const verbosity = 0,
@@ -68,6 +77,11 @@ public:
    */
   ///@{
 
+  /**
+   * @brief Solve preconditioned system
+   * @param [in] b system right hand side.
+   * @param [inout] x system solution (input = initial guess, output = solution).
+   */
   virtual void solve( Vector const & b, Vector & x ) const override final;
 
   virtual string methodName() const override final
@@ -79,6 +93,7 @@ public:
 
 protected:
 
+  /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
   using Base::m_operator;

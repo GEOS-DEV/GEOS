@@ -13,7 +13,7 @@
  */
 
 /**
- * @file LinearSolverStats.hpp
+ * @file LinearSolverResult.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_LINEARSOLVERRESULT_HPP_
@@ -34,6 +34,9 @@ namespace geosx
  */
 struct LinearSolverResult
 {
+  /**
+   * @brief Status of the linear solve.
+   */
   enum class Status
   {
     InProgress,
@@ -57,6 +60,10 @@ struct LinearSolverResult
   /// Solve time (in seconds) exclusive of setup costs
   real64 solveTime = 0.0;
 
+  /**
+   * @brief Check whether the last solve was successful.
+   * @return @p true if last solve was successful, @p false otherwise
+   */
   bool success() const
   {
     return status == Status::Success;

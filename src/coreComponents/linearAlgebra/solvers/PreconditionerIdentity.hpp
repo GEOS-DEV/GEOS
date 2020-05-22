@@ -41,13 +41,6 @@ public:
 
   virtual ~PreconditionerIdentity() = default;
 
-  /// Alias for vector type
-  using Vector = typename LinearOperator< typename LAI::ParallelVector >::Vector;
-
-  /// Alias for matrix type
-  using Matrix = typename LAI::ParallelMatrix;
-
-
   /**
    * @brief Apply operator to a vector.
    *

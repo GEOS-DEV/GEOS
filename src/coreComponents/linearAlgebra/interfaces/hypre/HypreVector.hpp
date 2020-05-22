@@ -47,9 +47,10 @@ namespace geosx
 {
 
 /**
- * @brief This class creates and provides basic support for the HYPRE_ParVector
- *        vector object type used in Hypre using the linear-algebraic system
- *        interface (IJ interface).
+ * @brief Wrapper class for hypre's ParVector.
+ *
+ * This class creates and provides basic support for the HYPRE_ParVector object
+ * type used in Hypre using the linear-algebraic system interface (IJ interface).
  */
 class HypreVector final : private VectorBase< HypreVector >
 {
@@ -69,14 +70,12 @@ public:
   /**
    * @brief Copy constructor.
    * @param src vector to be copied
-   * @return the new vector.
    */
   HypreVector( HypreVector const & src );
 
   /**
    * @brief Move constructor.
    * @param src vector to be moved
-   * @return the new vector.
    */
   HypreVector( HypreVector && src ) noexcept;
 

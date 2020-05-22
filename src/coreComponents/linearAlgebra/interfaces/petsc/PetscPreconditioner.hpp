@@ -42,24 +42,54 @@ using PC = _p_PC *;
 namespace geosx
 {
 
+/**
+ * @brief Wrapper around PETSc-based preconditioners.
+ */
 class PetscPreconditioner final : public PreconditionerBase< PetscInterface >
 {
 public:
 
+  /// Alias for base type
   using Base = PreconditionerBase< PetscInterface >;
+
+  /// Alias for vector type
   using Vector = typename Base::Vector;
+
+  /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   */
   explicit PetscPreconditioner( LinearSolverParameters params );
 
+  /**
+   * @brief Destructor.
+   */
   virtual ~PetscPreconditioner() override;
 
+  /**
+   * @brief Compute the preconditioner from a matrix.
+   * @param mat the matrix to precondition.
+   */
   virtual void compute( Matrix const & mat ) override;
 
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector.
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override;
 
   virtual void clear() override;
 
+  /**
+   * @brief Access the underlying implementation.
+   * @return the wrapped PETSc preconditioner
+   */
   PC const & unwrapped() const;
 
 private:
