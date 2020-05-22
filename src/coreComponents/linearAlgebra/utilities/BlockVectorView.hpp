@@ -39,6 +39,9 @@ public:
   /// Alias for sub-vector type
   using Vector = VECTOR;
 
+  /// @name Constructors
+  ///@{
+
   /**
    * @brief Deleted copy assignment.
    * @param rhs the block vector to copy
@@ -216,12 +219,12 @@ protected:
   /**
    * @brief Copy constructor.
    */
-  BlockVectorView( BlockVectorView const & x ) = default;
+  BlockVectorView( BlockVectorView const & ) = default;
 
   /**
    * @brief Move constructor.
    */
-  BlockVectorView( BlockVectorView && x ) = default;
+  BlockVectorView( BlockVectorView && ) = default;
 
   ///@}
 

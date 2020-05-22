@@ -72,41 +72,60 @@ inline HYPRE_BigInt const * toHYPRE_BigInt( globalIndex const * const index )
  */
 struct HyprePrecFuncs
 {
+  /// Alias for setup function type
   using SetupFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
+
+  /// Alias for apply function type
   using ApplyFunc = HYPRE_Int (*)( HYPRE_Solver, HYPRE_ParCSRMatrix, HYPRE_ParVector, HYPRE_ParVector );
+
+  /// Alias for destroy function type
   using DestroyFunc = HYPRE_Int (*)( HYPRE_Solver );
 
-  SetupFunc setup{};
-  ApplyFunc apply{};
-  DestroyFunc destroy{};
+  SetupFunc setup{};     ///< pointer to setup function
+  ApplyFunc apply{};     ///< pointer to apply function
+  DestroyFunc destroy{}; ///< pointer to destroy function
 };
 
+/**
+ * @brief Container for hypre Krylov solver function pointers.
+ */
 struct HypreSolverFuncs
 {
+  /// Alias for set preconditioner function type
   using SetPrecondFunc = HYPRE_Int ( * )( HYPRE_Solver,
                                           HYPRE_PtrToParSolverFcn,
                                           HYPRE_PtrToParSolverFcn,
                                           HYPRE_Solver );
+
+  /// Alias for setup function type
   using SetupFunc = HYPRE_Int ( * )( HYPRE_Solver,
                                      HYPRE_ParCSRMatrix,
                                      HYPRE_ParVector,
                                      HYPRE_ParVector );
+
+  /// Alias for solve function type
   using SolveFunc = HYPRE_Int ( * )( HYPRE_Solver,
                                      HYPRE_ParCSRMatrix,
                                      HYPRE_ParVector,
                                      HYPRE_ParVector );
+
+  /// Alias for get number of iterations function type
   using GetNumIter = HYPRE_Int ( * )( HYPRE_Solver solver,
                                       HYPRE_Int * num_iterations );
+
+  /// Alias for get final residual norm function type
   using GetFinalNorm = HYPRE_Int ( * )( HYPRE_Solver solver,
                                         HYPRE_Real * norm );
+
+  /// Alias for destroy function type
   using DestroyFunc = HYPRE_Int ( * )( HYPRE_Solver );
 
-  SetPrecondFunc setPrecond{};
-  SetupFunc setup{};
-  SolveFunc solve{};
-  GetNumIter getNumIter{};
-  GetFinalNorm getFinalNorm{};
-  DestroyFunc destroy{};
+  SetPrecondFunc setPrecond{}; ///< pointer to set preconditioner function
+  SetupFunc setup{};           ///< pointer to setup function
+  SolveFunc solve{};           ///< pointer to solve function
+  GetNumIter getNumIter{};     ///< pointer to get number of iterations function
+  GetFinalNorm getFinalNorm{}; ///< pointer to get final residual norm function
+  DestroyFunc destroy{};       ///< pointer to destroy function
 };
 
 }

@@ -16,6 +16,7 @@ set( linearAlgebra_headers
      solvers/CGsolver.hpp
      solvers/GMRESsolver.hpp
      solvers/KrylovSolver.hpp
+     solvers/KrylovUtils.hpp
      solvers/PreconditionerBase.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/SeparateComponentPreconditioner.hpp

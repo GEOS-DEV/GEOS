@@ -24,6 +24,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
 {
@@ -90,8 +91,10 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
   m_result.numIterations = 0;
   m_residualNorms.resize( m_maxIterations + 1 );
 
+  localIndex k;
   real64 rnorm = 0.0;
-  for( localIndex k = 0; k <= m_maxIterations; ++k, ++m_result.numIterations )
+
+  for( k = 0; k <= m_maxIterations; ++k )
   {
     rnorm = r.norm2();
     logProgress( k, rnorm );
@@ -117,7 +120,9 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     m_operator.apply( p, Ap );
 
     // compute alpha
-    real64 const alpha = tau / p.dot( Ap );
+    real64 const pAp = p.dot( Ap );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( pAp );
+    real64 const alpha = tau / pAp;
 
     // Update x = x + alpha*p
     x.axpby( alpha, p, 1.0 );
@@ -129,10 +134,12 @@ void CGsolver< VECTOR >::solve( Vector const & b, Vector & x ) const
     tau_old = tau;
   }
 
-  logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.numIterations = k;
   m_result.residualReduction = rnorm / absTol * m_tolerance;
   m_result.solveTime = watch.elapsedTime();
+
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // END_RST_NARRATIVE

@@ -47,28 +47,62 @@ namespace geosx
 /// Forward-declared struct that hosts pointers to preconditioner functions
 struct HyprePrecFuncs;
 
+/**
+ * @brief Wrapper around hypre-based preconditioners.
+ */
 class HyprePreconditioner final : public PreconditionerBase< HypreInterface >
 {
 public:
 
+  /// Alias for base type
   using Base = PreconditionerBase< HypreInterface >;
+
+  /// Alias for vector type
   using Vector = typename Base::Vector;
+
+  /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /**
+   * @brief Constructor.
+   * @param params preconditioner parameters
+   */
   explicit HyprePreconditioner( LinearSolverParameters params );
 
+  /**
+   * @brief Destructor.
+   */
   virtual ~HyprePreconditioner() override;
 
+  /**
+   * @brief Compute the preconditioner from a matrix.
+   * @param mat the matrix to precondition.
+   */
   virtual void compute( Matrix const & mat ) override;
 
+  /**
+   * @brief Apply operator to a vector
+   * @param src Input vector (x).
+   * @param dst Output vector (b).
+   *
+   * @warning @p src and @p dst cannot alias the same vector.
+   */
   virtual void apply( Vector const & src, Vector & dst ) const override;
 
   virtual void clear() override;
 
-  HypreMatrix const & getPreconditioningMatrix() const;
-
+  /**
+   * @brief Access the underlying implementation.
+   * @return reference to hypre preconditioner
+   */
   HYPRE_Solver const & unwrapped() const;
 
+  /**
+   * @brief Access the underlying implementation.
+   * @return reference to container of preconditioner functions.
+   *
+   * Intended for use by HypreSolver.
+   */
   HyprePrecFuncs const & unwrappedFuncs() const;
 
 private:

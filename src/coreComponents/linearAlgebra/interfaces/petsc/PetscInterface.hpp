@@ -55,6 +55,7 @@ struct PetscInterface
   /**
    * @brief Create a PETSc-based preconditioner object.
    * @param params the parameters for preconditioner
+   * @return owning pointer to the newly created preconditioner
    */
   static std::unique_ptr< PreconditionerBase< PetscInterface > >
   createPreconditioner( LinearSolverParameters params );

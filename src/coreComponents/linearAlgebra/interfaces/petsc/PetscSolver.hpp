@@ -59,6 +59,10 @@ public:
               PetscVector & sol,
               PetscVector & rhs );
 
+  /**
+   * @brief Get the result of previous solve.
+   * @return struct with last solve stats
+   */
   LinearSolverResult const & result()
   {
     return m_result;

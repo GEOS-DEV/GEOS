@@ -49,7 +49,6 @@ public:
 
   /**
    * @brief Compute the preconditioner from a matrix.
-   *
    * @param mat the matrix to precondition.
    */
   virtual void compute( Matrix const & mat )
@@ -86,21 +85,37 @@ public:
     m_mat = nullptr;
   }
 
+  /**
+   * @brief Get the number of global rows.
+   * @return Number of global rows in the operator.
+   */
   virtual globalIndex numGlobalRows() const override
   {
     return m_mat->numGlobalRows();
   }
 
+  /**
+   * @brief Get the number of global columns.
+   * @return Number of global columns in the operator.
+   */
   virtual globalIndex numGlobalCols() const override
   {
     return m_mat->numGlobalCols();
   }
 
+  /**
+   * @brief Chech if preconditioner is ready to use
+   * @return @p true if compute() has been called but not clear().
+   */
   bool ready() const
   {
     return m_mat != nullptr;
   }
 
+  /**
+   * @brief Access the matrix the preconditioner was computed from
+   * @return reference to the matrix (user's repsonsibility to ensure it's still valid)
+   */
   Matrix const & matrix() const
   {
     GEOSX_LAI_ASSERT( ready() );
