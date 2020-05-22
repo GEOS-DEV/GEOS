@@ -41,8 +41,13 @@ class FaceManager : public ObjectManagerBase
 {
 public:
 
+  /// FaceToNode map type
   using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+
+  /// FaceToEdge map type
   using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+
+  /// FaceToElement map type
   using ElemMapType = FixedToManyElementRelation;
 
   /**
@@ -258,15 +263,18 @@ public:
                                                    std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   /**
-   * @name viewKeyStruct/groupKeyStruct
-   */
+    * @name viewKeyStruct/groupKeyStruct
+    */
   ///@{
 
   /**
-   * @struct Containing added view access key to be bound with class data member
+   *  @struct viewKeysStruct
+   *  @brief struct containing the view access keys to be bound with class data member
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+
   {
+    /// @cond DO_NOT_DOCUMENT
     static constexpr auto nodeListString              = "nodeList";
     static constexpr auto edgeListString              = "edgeList";
     static constexpr auto elementRegionListString     = "elemRegionList";
@@ -282,13 +290,22 @@ public:
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
     dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
     dataRepository::ViewKey elementList           = { elementListString };
-  } viewKeys;
+    /// @endcond
+  }
+  /// viewKeys
+  viewKeys;
+
+
 
  /**
-  * @struct Containing added group access key to be bound with class in group hierarchy
+  * @struct groupKeyStruct
+  * @brief  contains added group access keys to be bound with class in group hierarchy
   */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {} groupKeys;
+  {}
+  /// groupKeys
+  groupKeys;
+
   ///@}
 
  /**
@@ -298,12 +315,12 @@ public:
   
   /**
    * @brief Get the constant upper limit for number of faces per Node.
-   * @return constant expression of the maximal number of faces per node
+   * @return constant expression of the max number of faces per node
    */
   constexpr int maxFacesPerNode() const { return 100; }
   
   /**
-   * @brief Get a mutable accessor to a table containing all the face area
+   * @brief Get a mutable accessor to a table containing all the face area.
    * @details this table is mutable so it can be used to compute
    * or modify the face area in this FaceManager
    * @return a table containing all the face area
@@ -311,13 +328,13 @@ public:
   array1d< real64 > & faceArea()       { return m_faceArea; }
   
   /**
-   * @brief Get an immutable accessor to a table containing all the face area
+   * @brief Get an immutable accessor to a table containing all the face area.
    * @return an immutable table containing all the face area
    */
   array1d< real64 > const & faceArea() const { return m_faceArea; }
 
   /**
-   * @brief Get a mutable asscessor to a table containing all the face centers
+   * @brief Get a mutable asscessor to a table containing all the face centers.
    * @details this table is mutable so it can be used to compute
    * or modify the face centers in this FaceManager
    * @return a table containing all the face centers
@@ -325,13 +342,13 @@ public:
   array1d< R1Tensor > & faceCenter()       { return m_faceCenter; }
   
   /**
-   * @brief Get an immutable accessor to a table containing all the face centers
+   * @brief Get an immutable accessor to a table containing all the face centers.
    * @return an immutable table containing all the face centers
    */
   array1d< R1Tensor > const & faceCenter() const { return m_faceCenter; }
 
   /**
-   * @brief Get a mutable accessor to a table containing all the face normals
+   * @brief Get a mutable accessor to a table containing all the face normals.
    * @details this table is mutable so it can be used to compute
    * or modify the face normals in this FaceManager
    * @return a table containing all the face normals
@@ -339,16 +356,25 @@ public:
   array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
   
   /**
-   * @brief Get an immutable accessor to a table containing all the face normals
+   * @brief Get an immutable accessor to a table containing all the face normals.
    * @return an immutable table containing all the face normals
    */
   array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
 
+  /**
+   * @brief Get a mutable accessor to a table containing all the face rotationa matrix.
+   * @return a table containing all the face rotation matrixes
+   */
   array1d< R2Tensor > & faceRotationMatrix()       { return m_faceRotationMatrix; }
+
+  /**
+   * @brief Get an immutable accessor to a table containig all the face rotation matrix.
+   * @return constant reference to the list of all face rotation matrixes.
+   */
   array1d< R2Tensor > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   /**
-   * @brief Get a mutable accessor to a map containing the list of each nodes for each faces
+   * @brief Get a mutable accessor to a map containing the list of each nodes for each faces.
    * @return non-const reference to a map containing the list of each nodes for each faces
    */
   NodeMapType & nodeList()                    { return m_nodeList; }
@@ -366,7 +392,7 @@ public:
   EdgeMapType & edgeList()       { return m_edgeList; }
   
   /**
-   * @brief Get an immutable accessor to a map containing the list of each edges for each faces
+   * @brief Get an immutable accessor to a map containing the list of each edges for each faces.
    * @return const reference to a map containing the list of each edges for each faces
    */
   EdgeMapType const & edgeList() const { return m_edgeList; }
@@ -462,6 +488,8 @@ private:
   
   /// list of faces normal
   array1d< R1Tensor > m_faceNormal;
+
+  // list of the rotation matrix to switch from the fracture (n,t1,t2) to the element reference (x,y,z) system.
   array1d< R2Tensor > m_faceRotationMatrix;
 
   /// constant expression of the maximum number of nodes per faces

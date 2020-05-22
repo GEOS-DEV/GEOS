@@ -49,8 +49,14 @@ class NodeManager : public ObjectManagerBase
 public:
 
   //START_SPHINX_INCLUDE_01
+
+  /// nodeToEdge map type
   using EdgeMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
+
+  /// nodeToFace map type
   using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
+
+  /// nodeToElement map type
   using ElemMapType = OrderedVariableToManyElementRelation;
   //END_SPHINX_INCLUDE_01
 
@@ -93,6 +99,7 @@ public:
    */
   ~NodeManager() override;
 
+  /// @cond DO_NOT_DOCUMENT
   /**
   * @brief deleted constructor
   */
@@ -107,13 +114,14 @@ public:
   * @brief deleted assignement operator
   */
   NodeManager & operator=( const NodeManager & ) = delete;
+  /// @endcond
 
   ///@}
   
   /**
    * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
    * @details the size of the NodeManager is the number of nodes
-   * @param[in] newSize the new size of the NodeManager
+   * @param[in] newsize the new size of the NodeManager
    */
   virtual void resize( localIndex const newsize ) override;
 
@@ -233,36 +241,76 @@ public:
   ///@{
 
   /**
-   *  @struct Containing added view access key to be bound with class data member
+   *  @brief contains the added view access keys to be bound with class data member.
+   *  @struct viewKeyStruct
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
+    /// String to access the reference position
     static constexpr auto referencePositionString       = "ReferencePosition";
+
+    /// String to access the displacement
     static constexpr auto totalDisplacementString       = "TotalDisplacement";
+
+    /// String to access the incremental displacement
     static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
+
+    /// String to access the edge map
     static constexpr auto edgeListString                = "edgeList";
+
+    /// String to access the face map
     static constexpr auto faceListString                = "faceList";
+
+    /// String to access the element region map
     static constexpr auto elementRegionListString       = "elemRegionList";
+
+    /// String to access the element subregion map
     static constexpr auto elementSubRegionListString    = "elemSubRegionList";
+
+    /// String to access the element map
     static constexpr auto elementListString             = "elemList";
 
+    /// String to access the reference position
     dataRepository::ViewKey referencePosition       = { referencePositionString };
+
+    /// String to access the displacement
     dataRepository::ViewKey totalDisplacement       = { totalDisplacementString };
+
+    /// String to access the incremental displacement
     dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString };
+
+    /// String to access the edge map
     dataRepository::ViewKey edgeList                = { edgeListString };
+
+    /// String to access the face map
     dataRepository::ViewKey faceList                = { faceListString };
+
+    /// String to access the element region map
     dataRepository::ViewKey elementRegionList       = { elementRegionListString };
+
+    /// String to access the element subregion map
     dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString };
+
+    /// String to access the element map
     dataRepository::ViewKey elementList             = { elementListString };
+
+    /// String to access the velocity
     dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
+
+    /// String to access the acceleration
     dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
-  } viewKeys;
+  }
+  /// viewKeys
+  viewKeys;
 
   /**
-   * @struct Containing added group access key to be bound with class in group hierarchy
+   * @brief contains the added group access keys to be bound with class in group hierarchy
+   * @struct groupKeys
    */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {} groupKeys;
+  {}
+  /// groupKeys
+  groupKeys;
   
   ///@}
 

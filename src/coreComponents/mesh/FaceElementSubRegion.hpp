@@ -102,6 +102,12 @@ public:
   void CalculateElementGeometricQuantities( localIndex const index,
                                             arrayView1d< real64 const > const & faceArea );
 
+  /**
+   * @brief Function to compute the geometric quantities of a specific face element.
+   * @param k index of the face element
+   * @param faceArea array of all surface areas
+   * @param faceRotationMatrix array of all rotation matrix
+   */
   void CalculateElementGeometricQuantities( localIndex const k,
                                             arrayView1d< real64 const > const & faceArea,
                                             arrayView1d< R2Tensor const > const & faceRotationMatrix );
@@ -264,7 +270,15 @@ public:
    */
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  /**
+   * @brief Get face element rotation matrix.
+   * @return a list of all face element rotation matrixces.
+   */
   arrayView1d< R2Tensor > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+
+  /**
+   * @copydoc getElementRotationMatrix()
+   */
   arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

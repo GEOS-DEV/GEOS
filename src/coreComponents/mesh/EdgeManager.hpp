@@ -42,7 +42,10 @@ class EdgeManager : public ObjectManagerBase
 {
 public:
 
+  /// EdgeToNode map type
   using NodeMapType = FixedOneToManyRelation;
+
+  /// EdgeToFace map type
   using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
 
   /**
@@ -66,7 +69,10 @@ public:
 
   ///@}
 
-  /// Oversize the Face mapping by this amount for each edge (hardcoded)
+  /**
+   * @brief Oversize the Face mapping by this amount for each edge (hardcoded)
+   * @return extra space for each edge of the EdgetoFace map
+   */
   static localIndex faceMapExtraSpacePerEdge()
   { return 4; }
 
@@ -106,7 +112,7 @@ public:
   
   /**
    * @brief Set external edges.
-   * @detail external edges are the edges on the faces which are external
+   * @details external edges are the edges on the faces which are external
    * @param[in] faceManager the face manager to obtain external face
    */
   void SetIsExternal( FaceManager const * const faceManager );
@@ -153,7 +159,7 @@ public:
    * @param[in] buffer buffer containing the packed indices
    * @param[in,out] packList the array of local index to be unpacked
    * @param[in] overwriteUpMaps boolean to state if the Up maps should be overwritten
-   * @param[in] overwriteDownsMaps boolean to state if the Downs maps should be overwritten
+   * @param[in] overwriteDownMaps boolean to state if the Downs maps should be overwritten
    * @return The size of the unpacked array
    */
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -163,7 +169,7 @@ public:
   
   /**
    * @brief Call FixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
-   * @param[in] clearIfUnmaped boolean to indicate if the unmaped indices should be removed or not
+   * @param[in] clearIfUnmapped boolean to indicate if the unmaped indices should be removed or not
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
   
@@ -221,8 +227,8 @@ public:
 
   /**
    * @brief Calculate the center of an edge given its index.
-   * @param[in] edgeIndex index of the edge
-   * @param[in] X array view of nodes associated with the edge
+   * @param edgeIndex index of the edge
+   * @param X array view of nodes associated with the edge
    * @return coordinate of the edge center
    */
   R1Tensor calculateCenter( localIndex const edgeIndex,
@@ -230,8 +236,8 @@ public:
 
   /**
    * @brief Calculate the length of an edge.
-   * @param[in] edgeIndex index of the edge 
-   * @param[in] X array view of the nodes associated with the NodeManager of current domain
+   * @param edgeIndex index of the edge
+   * @param X array view of the nodes associated with the NodeManager of current domain
    * @return length of the edge
    */
   R1Tensor calculateLength( localIndex const edgeIndex,
@@ -243,10 +249,12 @@ public:
   ///@{
 
   /**
-   * @struct Container of keys needed to access the data of the class member
+   * @struct viewKeyStruct
+   * @brief Container of keys needed to access the data of the class member
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
+    /// @cond DO_NOT_DOCUMENT
     static constexpr auto nodeListString              = "nodeList";
     static constexpr auto faceListString              = "faceList";
     static constexpr auto elementRegionListString     = "elemRegionList";
@@ -261,11 +269,20 @@ public:
     dataRepository::ViewKey elementRegionList     = { elementRegionListString };
     dataRepository::ViewKey elementSubRegionList  = { elementSubRegionListString };
     dataRepository::ViewKey elementList           = { elementListString };
+    /// @endcond
+  }
+  /// viewKeys
+  viewKeys;
 
-  } viewKeys;
 
+  /**
+   * @struct groupKeyStruct
+   * @brief Container of keys needed to access the data of the class member
+   */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
-  {} groupKeys;
+  {}
+  /// groupKeys
+  groupKeys;
 
   ///}@
   
@@ -325,10 +342,17 @@ public:
   ///@}
 
   // TODO These should be in their own subset of edges when we add that capability.
+
   /// map from the edges to the fracture connectors index (edges that are fracture connectors)
   SortedArray< localIndex > m_recalculateFractureConnectorEdges;
+
+  /// todo
   map< localIndex, localIndex > m_edgesToFractureConnectorsEdges;
+
+  /// todo
   array1d< localIndex > m_fractureConnectorsEdgesToEdges;
+
+  /// todo
   ArrayOfArrays< localIndex > m_fractureConnectorEdgesToFaceElements;
 
 
@@ -360,12 +384,6 @@ private:
 
 };
 
-/**
- *@brief Calculate the coordinate of the center of an edge.
- *@param [in] edgeIndex index of the edge to calculate the center of
- *@param [in] X  array with node coordinates
- *@return Coordinates of the edge center
- */
 inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
                                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
@@ -375,12 +393,6 @@ inline R1Tensor EdgeManager::calculateCenter( localIndex const edgeIndex,
   return center;
 }
 
-/**
- *@brief Calculate the length of an edge.
- *@param [in] edgeIndex index of the edge to calculate the center of
- *@param [in] X array with node coordinates
- *@return Coordinates of the edge center
- */
 inline R1Tensor EdgeManager::calculateLength( localIndex const edgeIndex,
                                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {

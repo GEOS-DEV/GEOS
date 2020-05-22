@@ -33,6 +33,7 @@ class AggregateElementSubRegion : public ElementSubRegionBase
 {
 public:
 
+  /// AggregateToNode map type
   using NodeMapType=FixedOneToManyRelation;
 
   /**
@@ -138,12 +139,15 @@ public:
   ///@{
 
   /**
-   *  @struct Containing added view access key to be bound with class data member
+   *  @struct viewKeyStruct
+   *  @brief Contains added view access key to be bound with class data member.
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
+    /// @cond DO_NOT_DOCUMENT
     static constexpr auto elementVolumeString          = "elementVolume";
     static constexpr auto fineElementsListString       = "fineElements";
+    /// @endcond
   };
   ///@}
 
