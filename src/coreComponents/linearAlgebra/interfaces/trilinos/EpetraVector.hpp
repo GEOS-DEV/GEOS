@@ -49,14 +49,12 @@ public:
   /**
    * @brief Copy constructor.
    * @param src EpetraVector to be copied.
-   * @return the new vector
    */
   EpetraVector( EpetraVector const & src );
 
   /**
    * @brief Move constructor
    * @param src EpetraVector to move from
-   * @return the new vector
    */
   EpetraVector( EpetraVector && src ) noexcept;
 

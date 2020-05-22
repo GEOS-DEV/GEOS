@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "EpetraVector.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
@@ -34,9 +34,7 @@ namespace geosx
 {
 
 /**
- * \class EpetraMatrix
- * \brief This class creates and provides basic support for the Epetra_CrsMatrix
- *        matrix object type used in Trilinos.
+ * @brief Wrapper class for Epetra's CrsMatrix.
  */
 class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
   private MatrixBase< EpetraMatrix, EpetraVector >
@@ -60,11 +58,7 @@ public:
 
   /**
    * @brief Copy constructor.
-   *
-   * Create new matrix from matrix <tt>src</tt>.
-   *
    * @param[in] src the matrix to be copied
-   * @return the new matrix
    */
   EpetraMatrix( EpetraMatrix const & src );
 

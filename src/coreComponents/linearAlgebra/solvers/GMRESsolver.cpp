@@ -19,8 +19,8 @@
 #include "GMRESsolver.hpp"
 
 #include "common/Stopwatch.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/solvers/KrylovUtils.hpp"
 
 namespace geosx
 {
@@ -131,8 +131,10 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.resize( m_maxIterations + 1 );
 
+  localIndex k;
   real64 rnorm = 0.0;
-  for( localIndex k = 0; k <= m_maxIterations && m_result.status != LinearSolverResult::Status::Success; )
+
+  for( k = 0; k <= m_maxIterations && m_result.status == LinearSolverResult::Status::NotConverged; )
   {
     // Re-initialize Krylov subspace
     g = 0.0;
@@ -140,7 +142,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 
     localIndex j;
-    for( j = 0; j < m_maxRestart && k <= m_maxIterations; ++j, ++k, ++m_result.numIterations )
+    for( j = 0; j < m_maxRestart && k <= m_maxIterations; ++j, ++k )
     {
       // Record iteration progress
       rnorm = std::fabs( g[j] );
@@ -165,6 +167,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
       }
 
       H( j+1, j ) = w.norm2();
+      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j + 1, j ) );
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column
@@ -193,10 +196,12 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
     m_operator.residual( x, b, r );
   }
 
-  logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
+  m_result.numIterations = k;
   m_result.residualReduction = rnorm / absTol * m_tolerance;
   m_result.solveTime = watch.elapsedTime();
+
+  logResult();
+  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // -----------------------

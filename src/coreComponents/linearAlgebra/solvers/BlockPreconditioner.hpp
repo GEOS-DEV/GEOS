@@ -59,9 +59,10 @@ enum class BlockShapeOption
   LowerUpperTriangular //!< (LDU)^{-1}
 };
 
-/**
- * @brief General 2x2 block preconditioner.
- * @tparam LAI type of linear algebra interface providing matrix/vector types
+/*
+ * Since formulas in Doxygen are broken with 1.8.13 and certain versions of ghostscript,
+ * keeping this documentation in a separate comment block for now. Should be moved into
+ * documentation of BlockPreconditioner class.
  *
  * This class implements a 2x2 block preconditioner of the form:
  * @f$
@@ -89,13 +90,23 @@ enum class BlockShapeOption
  * The user provides individual block solvers @f$ M_{1} @f$ and @f$ M_{2} @f$ as well as
  * a description of the block split of monolithic matrix in terms of DOF components.
  */
+
+/**
+ * @brief General 2x2 block preconditioner.
+ * @tparam LAI type of linear algebra interface providing matrix/vector types
+ */
 template< typename LAI >
 class BlockPreconditioner : public PreconditionerBase< LAI >
 {
 public:
 
+  /// Alias for the base type
   using Base = PreconditionerBase< LAI >;
+
+  /// Alias for the vector type
   using Vector = typename Base::Vector;
+
+  /// Alias for the matrix type
   using Matrix = typename Base::Matrix;
 
   /**

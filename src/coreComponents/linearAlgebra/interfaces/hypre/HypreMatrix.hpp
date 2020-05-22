@@ -51,6 +51,9 @@ namespace geosx
 
 /**
  * @brief Wrapper class for hypre's ParCSRMatrix.
+ *
+ * This class creates and provides basic support for the HYPRE_ParCSRMatrix object
+ * type used in Hypre using the linear-algebraic system interface (IJ interface).
  */
 class HypreMatrix final : public virtual LinearOperator< HypreVector >,
   private MatrixBase< HypreMatrix, HypreVector >
@@ -76,9 +79,6 @@ public:
   /**
    * @brief Copy constructor.
    * @param[in] src the matrix to be copied
-   * @return the new matrix
-   *
-   * Create new matrix from matrix <tt>src</tt>.
    */
   HypreMatrix( HypreMatrix const & src );
 
@@ -106,12 +106,12 @@ public:
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
                                     localIndex const maxEntriesPerRow,
-                                    MPI_Comm const & comm = MPI_COMM_WORLD ) override;
+                                    MPI_Comm const & comm ) override;
 
   virtual void createWithGlobalSize( globalIndex const globalRows,
                                      globalIndex const globalCols,
                                      localIndex const maxEntriesPerRow,
-                                     MPI_Comm const & comm = MPI_COMM_WORLD ) override;
+                                     MPI_Comm const & comm ) override;
 
   virtual void open() override;
 

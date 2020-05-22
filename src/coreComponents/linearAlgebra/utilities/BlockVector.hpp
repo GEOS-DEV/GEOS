@@ -41,7 +41,7 @@ public:
 
   /**
    * @brief Create a vector of @p nBlocks blocks.
-   * @param nBlocks Number of blocks.
+   * @param nBlocks Number of blocks
    */
   explicit BlockVector( localIndex const nBlocks )
     : Base( nBlocks ),
@@ -52,7 +52,6 @@ public:
 
   /**
    * @brief Create a vector of @p nBlocks blocks.
-   * @param nBlocks Number of blocks.
    */
   explicit BlockVector()
     : BlockVector( 0 )
@@ -124,6 +123,13 @@ public:
    */
   virtual ~BlockVector() override = default;
 
+  /**
+   * @brief Resize to a different number of blocks.
+   * @param nBlocks the new number of blocks
+   *
+   * @note If the new number of blocks is larger than the previous, new vectors
+   *       will not be initialized. It is the user's responsibility to do that.
+   */
   void resize( localIndex const nBlocks )
   {
     m_vectorStorage.resize( nBlocks );
