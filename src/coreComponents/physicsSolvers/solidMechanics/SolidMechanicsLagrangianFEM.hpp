@@ -78,10 +78,6 @@ public:
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
-  virtual void
-  updateStress( DomainPartition * const domain );
-
-
 
   /**
    * @defgroup Solver Interface Functions
