@@ -182,13 +182,13 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
 
 
   finiteElement::FillSparsity< serialPolicy,
-                               LaplaceFEMKernel,
-                               CellElementSubRegion >( *mesh,
-                                                       targetRegionNames(),
-                                                       nullptr,
-                                                       dofIndex,
-                                                       matrix,
-                                                       rhs );
+                               CellElementSubRegion,
+                               LaplaceFEMSparsity >( *mesh,
+                                                     targetRegionNames(),
+                                                     nullptr,
+                                                     dofIndex,
+                                                     matrix,
+                                                     rhs );
 
 
   matrix.close();
@@ -225,17 +225,16 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
   finiteElement::
     RegionBasedKernelApplication< serialPolicy,
-                                  LaplaceFEMKernel,
                                   Dummy,
                                   CellElementSubRegion,
-                                  LaplaceFEMKernel::Components>( *mesh,
-                                                          targetRegionNames(),
-                                                          array1d< string >(),
-                                                          feDiscretization,
-                                                          dofIndex,
-                                                          matrix,
-                                                          rhs,
-                                                          m_fieldName );
+                                  LaplaceFEMKernel >( *mesh,
+                                                      targetRegionNames(),
+                                                      array1d< string >(),
+                                                      feDiscretization,
+                                                      dofIndex,
+                                                      matrix,
+                                                      rhs,
+                                                      m_fieldName );
 
   matrix.close();
   rhs.close();

@@ -556,18 +556,17 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   //Step 5. Calculate deformation input to constitutive model and update state to
   // Q^{n+1}
   finiteElement::RegionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain,
                                                constitutive::SolidBase,
                                                CellElementSubRegion,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::Components>( mesh,
-                                                                       targetRegionNames(),
-                                                                       m_solidMaterialNames,
-                                                                       &feDiscretization,
-                                                                       array1d< globalIndex >(),
-                                                                       m_matrix,
-                                                                       m_rhs,
-                                                                       dt,
-                                                                       string(viewKeyStruct::elemsAttachedToSendOrReceiveNodes));
+                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain >( mesh,
+                                                                                                           targetRegionNames(),
+                                                                                                           m_solidMaterialNames,
+                                                                                                           &feDiscretization,
+                                                                                                           array1d< globalIndex >(),
+                                                                                                           m_matrix,
+                                                                                                           m_rhs,
+                                                                                                           dt,
+                                                                                                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ));
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
@@ -577,18 +576,17 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   CommunicationTools::SynchronizePackSendRecv( fieldNames, &mesh, domain->getNeighbors(), m_iComm, true );
 
   finiteElement::RegionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain,
                                                constitutive::SolidBase,
                                                CellElementSubRegion,
-                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain::Components>( mesh,
-                                                                       targetRegionNames(),
-                                                                       m_solidMaterialNames,
-                                                                       &feDiscretization,
-                                                                       array1d< globalIndex >(),
-                                                                       m_matrix,
-                                                                       m_rhs,
-                                                                       dt,
-                                                                       string(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes));
+                                               SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrain >( mesh,
+                                                                                                           targetRegionNames(),
+                                                                                                           m_solidMaterialNames,
+                                                                                                           &feDiscretization,
+                                                                                                           array1d< globalIndex >(),
+                                                                                                           m_matrix,
+                                                                                                           m_rhs,
+                                                                                                           dt,
+                                                                                                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ));
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
@@ -949,24 +947,24 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
   {
     finiteElement::
       FillSparsity< serialPolicy,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStatic,
-                    FaceElementSubRegion >( mesh,
-                                            targetRegionNames(),
-                                            nullptr,
-                                            dofNumber,
-                                            matrix,
-                                            rhs );
+                    FaceElementSubRegion,
+                    SolidMechanicsLagrangianFEMKernels::Sparsity >( mesh,
+                                                                    targetRegionNames(),
+                                                                    nullptr,
+                                                                    dofNumber,
+                                                                    matrix,
+                                                                    rhs );
   }
 
   finiteElement::
     FillSparsity< serialPolicy,
-                  SolidMechanicsLagrangianFEMKernels::QuasiStatic,
-                  CellElementSubRegion >( mesh,
-                                          targetRegionNames(),
-                                          nullptr,
-                                          dofNumber,
-                                          matrix,
-                                          rhs );
+                  CellElementSubRegion,
+                  SolidMechanicsLagrangianFEMKernels::Sparsity >( mesh,
+                                                                  targetRegionNames(),
+                                                                  nullptr,
+                                                                  dofNumber,
+                                                                  matrix,
+                                                                  rhs );
 
   matrix.close();
 
@@ -1017,19 +1015,17 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
-    using Update = SolidMechanicsLagrangianFEMKernels::QuasiStatic;
     m_maxForce = finiteElement::RegionBasedKernelApplication< serialPolicy,
-                                                              Update,
                                                               constitutive::SolidBase,
                                                               CellElementSubRegion,
-                                                              Update::Components>( mesh,
-                                                                                      targetRegionNames(),
-                                                                                      m_solidMaterialNames,
-                                                                                      feDiscretization,
-                                                                                      dofNumber,
-                                                                                      matrix,
-                                                                                      rhs,
-                                                                                      gravityVector().Data() );
+                                                              SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                                                                                                                 targetRegionNames(),
+                                                                                                                 m_solidMaterialNames,
+                                                                                                                 feDiscretization,
+                                                                                                                 dofNumber,
+                                                                                                                 matrix,
+                                                                                                                 rhs,
+                                                                                                                 gravityVector().Data() );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {

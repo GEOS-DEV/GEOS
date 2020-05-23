@@ -23,173 +23,165 @@
 
 namespace geosx
 {
-
-class LaplaceFEMKernel : public finiteElement::ImplicitKernelBase
+//***************************************************************************
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          int NUM_NODES_PER_ELEM,
+          int >
+class LaplaceFEMKernel :
+  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                            CONSTITUTIVE_TYPE,
+                                            NUM_NODES_PER_ELEM,
+                                            NUM_NODES_PER_ELEM,
+                                            1,
+                                            1 >
 {
 public:
-  using BaseKernel = finiteElement::ImplicitKernelBase;
+  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                                  CONSTITUTIVE_TYPE,
+                                                  NUM_NODES_PER_ELEM,
+                                                  NUM_NODES_PER_ELEM,
+                                                  1,
+                                                  1 >;
+
+  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
   static constexpr int numTestDofPerSP = 1;
   static constexpr int numTrialDofPerSP = 1;
 
+
+
   //***************************************************************************
-  template< int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
-  struct StackVariables : BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM *numTrialDofPerSP >
+  struct StackVariables : Base::StackVariables
   {
 public:
-    using StackVariablesBase = BaseKernel::StackVariables< NUM_TEST_SUPPORT_POINTS_PER_ELEM *numTestDofPerSP,
-                                                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM *numTrialDofPerSP >;
 
-    using StackVariablesBase::numRows;
-    using StackVariablesBase::numCols;
-    static constexpr int numNodes = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
-
+    using Base::StackVariables::numRows;
+    using Base::StackVariables::numCols;
 
     GEOSX_HOST_DEVICE
     StackVariables():
-      StackVariablesBase(),
-      primaryField_local{ 0.0 }
+      Base::StackVariables(),
+            primaryField_local{ 0.0 }
     {}
 
-    real64 primaryField_local[numNodes];
+    real64 primaryField_local[numNodesPerElem];
   };
 
 
-  //***************************************************************************
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            int NUM_NODES_PER_ELEM,
-            int >
-  using SparsityComponents = BaseKernel::Components< SUBREGION_TYPE,
-                                                     CONSTITUTIVE_TYPE,
-                                                     NUM_NODES_PER_ELEM,
-                                                     NUM_NODES_PER_ELEM,
-                                                     1,
-                                                     1 >;
 
-  //***************************************************************************
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            int NUM_NODES_PER_ELEM,
-            int >
-  class Components : public BaseKernel::Components< SUBREGION_TYPE,
-                                                    CONSTITUTIVE_TYPE,
-                                                    NUM_NODES_PER_ELEM,
-                                                    NUM_NODES_PER_ELEM,
-                                                    1,
-                                                    1 >
+  using Base::m_dofNumber;
+  using Base::m_matrix;
+  using Base::m_rhs;
+  using Base::elemsToNodes;
+  using Base::elemGhostRank;
+  using Base::constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+  using Base::Launch;
+
+  LaplaceFEMKernel( arrayView1d< globalIndex const > const & inputDofNumber,
+                    ParallelMatrix & inputMatrix,
+                    ParallelVector & inputRhs,
+                    NodeManager const & nodeManager,
+                    SUBREGION_TYPE const & elementSubRegion,
+                    FiniteElementBase const * const finiteElementSpace,
+                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                    string const & fieldName ):
+    Base( inputDofNumber,
+          inputMatrix,
+          inputRhs,
+          nodeManager,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType ),
+    m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
+    dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+    detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
+  {}
+
+  arrayView1d< real64 const > const m_primaryField;
+  arrayView3d< R1Tensor const > const dNdX;
+  arrayView2d< real64 const > const detJ;
+
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              STACK_VARIABLE_TYPE & stack ) const
   {
-public:
-    using ComponentsBase = BaseKernel::Components< SUBREGION_TYPE,
-                                                   CONSTITUTIVE_TYPE,
-                                                   NUM_NODES_PER_ELEM,
-                                                   NUM_NODES_PER_ELEM,
-                                                   1,
-                                                   1 >;
-
-    static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-
-    using ComponentsBase::m_dofNumber;
-    using ComponentsBase::m_matrix;
-    using ComponentsBase::m_rhs;
-    using ComponentsBase::elemsToNodes;
-    using ComponentsBase::elemGhostRank;
-    using ComponentsBase::constitutiveUpdate;
-    using ComponentsBase::m_finiteElementSpace;
-    using ComponentsBase::Launch;
-
-    using StackVars = StackVariables< numNodesPerElem,
-                                      numNodesPerElem >;
-
-    Components( arrayView1d< globalIndex const > const & inputDofNumber,
-                ParallelMatrix & inputMatrix,
-                ParallelVector & inputRhs,
-                NodeManager const & nodeManager,
-                SUBREGION_TYPE const & elementSubRegion,
-                FiniteElementBase const * const finiteElementSpace,
-                CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                string const & fieldName ):
-      ComponentsBase( inputDofNumber,
-                      inputMatrix,
-                      inputRhs,
-                      nodeManager,
-                      elementSubRegion,
-                      finiteElementSpace,
-                      inputConstitutiveType ),
-      m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-      dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-      detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )//,
-    {}
-
-    arrayView1d< real64 const > const m_primaryField;
-    arrayView3d< R1Tensor const > const dNdX;
-    arrayView2d< real64 const > const detJ;
-
-
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void setup( localIndex const k,
-                STACK_VARIABLE_TYPE & stack ) const
+    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
-      for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-      {
-        localIndex const localNodeIndex = elemsToNodes( k, a );
+      localIndex const localNodeIndex = elemsToNodes( k, a );
 
-        stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
-        stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
-        stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
+      stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
+      stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
+      stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
+    }
+  }
+
+  template< typename STACK_VARIABLE_TYPE,
+            typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointJacobianContribution( localIndex const k,
+                                            localIndex const q,
+                                            STACK_VARIABLE_TYPE & stack ) const
+  {
+    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    {
+      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      {
+        stack.localJacobian[ a ][ b ] += Dot( dNdX( k, q, a ), dNdX( k, q, b ) ) * detJ( k, q );
+      }
+    }
+  }
+
+  template< typename STACK_VARIABLE_TYPE >
+  //GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+                   STACK_VARIABLE_TYPE & stack ) const
+  {
+    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    {
+      for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
+      {
+        stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
       }
     }
 
-    template< typename STACK_VARIABLE_TYPE,
-              typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void quadraturePointJacobianContribution( localIndex const k,
-                                              localIndex const q,
-                                              STACK_VARIABLE_TYPE & stack ) const
-    {
-      for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-      {
-        for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
-        {
-          stack.localJacobian[ a ][ b ] += Dot( dNdX( k, q, a ), dNdX( k, q, b ) ) * detJ( k, q );
-        }
-      }
-    }
+    m_matrix.add( stack.localRowDofIndex,
+                  stack.localColDofIndex,
+                  &(stack.localJacobian[0][0]),
+                  stack.numRows,
+                  stack.numCols );
 
-    template< typename STACK_VARIABLE_TYPE >
-    //GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     STACK_VARIABLE_TYPE & stack ) const
-    {
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
-        {
-          stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
-        }
-      }
+    m_rhs.add( stack.localRowDofIndex,
+               stack.localResidual,
+               stack.numRows );
 
-      m_matrix.add( stack.localRowDofIndex,
-                    stack.localColDofIndex,
-                    &(stack.localJacobian[0][0]),
-                    stack.numRows,
-                    stack.numCols );
-
-      m_rhs.add( stack.localRowDofIndex,
-                 stack.localResidual,
-                 stack.numRows );
-
-      return 1.0;
-    }
-
-  };
-
+    return 1.0;
+  }
 };
+
+
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          int NUM_NODES_PER_ELEM,
+          int >
+using LaplaceFEMSparsity = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
+                                                              CONSTITUTIVE_TYPE,
+                                                              NUM_NODES_PER_ELEM,
+                                                              NUM_NODES_PER_ELEM,
+                                                              LaplaceFEMKernel< SUBREGION_TYPE,
+                                                                                CONSTITUTIVE_TYPE,
+                                                                                NUM_NODES_PER_ELEM,
+                                                                                NUM_NODES_PER_ELEM >::numTestDofPerSP,
+                                                              LaplaceFEMKernel< SUBREGION_TYPE,
+                                                                                CONSTITUTIVE_TYPE,
+                                                                                NUM_NODES_PER_ELEM,
+                                                                                NUM_NODES_PER_ELEM >::numTestDofPerSP >;
+
 
 } // namespace geosx
 #endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_

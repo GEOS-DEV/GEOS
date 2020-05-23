@@ -77,191 +77,167 @@ discretizationLaunchSelector( localIndex NUM_NODES_PER_ELEM,
  * element method over a loop of element regions.
  *
  */
+
+//***************************************************************************
+/**
+ * @class Kernels
+ */
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          int NUM_DOF_PER_TEST_SP,
+          int NUM_DOF_PER_TRIAL_SP >
 class KernelBase
 {
 public:
+  KernelBase( SUBREGION_TYPE const & elementSubRegion,
+              FiniteElementBase const * const finiteElementSpace,
+              CONSTITUTIVE_TYPE * const inputConstitutiveType ):
+    KernelBase( elementSubRegion,
+                finiteElementSpace,
+                inputConstitutiveType,
+                typename CONSTITUTIVE_TYPE::KernelWrapper() )
+  {}
 
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
-   * @tparam NUM_COLS The number or columns to allocate for the jacobian.
-   * Contains variables that will be allocated on the stack of the main kernel.
-   * This will typically consist of local arrays to hold data mapped from the
-   * global data arrays, and local storage for the residual and jacobian
-   * contributions.
-   */
-  template< int NUM_ROWS,
-            int NUM_COLS >
-  struct StackVariables
-  {};
 
-  //***************************************************************************
-  /**
-   * @class Kernels
-   */
-  template< typename SUBREGION_TYPE,
-            typename CONSTITUTIVE_TYPE,
-            int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
-            int NUM_DOF_PER_TEST_SP,
-            int NUM_DOF_PER_TRIAL_SP >
-  class Components
+  KernelBase( SUBREGION_TYPE const & elementSubRegion,
+              FiniteElementBase const * const finiteElementSpace,
+              CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
+              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
+    elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
+    elemGhostRank( elementSubRegion.ghostRank() ),
+    constitutiveUpdate( inputConstitutiveUpdate ),
+    m_finiteElementSpace( finiteElementSpace )
+  {}
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const GEOSX_UNUSED_PARAM( k ),
+              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+  {}
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
+                                   localIndex const GEOSX_UNUSED_PARAM( q ),
+                                   STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+  {}
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
+                                            localIndex const GEOSX_UNUSED_PARAM( q ),
+                                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+  {}
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
+                                            localIndex const GEOSX_UNUSED_PARAM( q ),
+                                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+  {}
+
+  template< typename STACK_VARIABLE_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+                   STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
   {
-public:
-    Components( SUBREGION_TYPE const & elementSubRegion,
-                FiniteElementBase const * const finiteElementSpace,
-                CONSTITUTIVE_TYPE * const inputConstitutiveType ):
-      Components( elementSubRegion,
-                  finiteElementSpace,
-                  inputConstitutiveType,
-                  typename CONSTITUTIVE_TYPE::KernelWrapper() )
-    {}
+    return 0;
+  }
 
 
-    Components( SUBREGION_TYPE const & elementSubRegion,
-                FiniteElementBase const * const finiteElementSpace,
-                CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( inputConstitutiveType ),
-                typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
-      elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
-      elemGhostRank( elementSubRegion.ghostRank() ),
-      constitutiveUpdate( inputConstitutiveUpdate ),
-      m_finiteElementSpace( finiteElementSpace )
-    {}
 
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void setup( localIndex const GEOSX_UNUSED_PARAM( k ),
-                STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
-    {}
+  template< typename POLICY,
+            int NUM_QUADRATURE_POINTS,
+            typename KERNEL_TYPE >
+  static
+  typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
+                           std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
+  Launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+    RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
 
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void quadraturePointStateUpdate( localIndex const GEOSX_UNUSED_PARAM( k ),
-                                     localIndex const GEOSX_UNUSED_PARAM( q ),
-                                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
-    {}
-
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void quadraturePointJacobianContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                                              localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
-    {}
-
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                                              localIndex const GEOSX_UNUSED_PARAM( q ),
-                                              STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
-    {}
-
-    template< typename STACK_VARIABLE_TYPE >
-    GEOSX_HOST_DEVICE
-    GEOSX_FORCE_INLINE
-    real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                     STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+    forAll< POLICY >( numElems,
+                      [=] ( localIndex const k )
     {
-      return 0;
-    }
+      typename KERNEL_TYPE::StackVariables stack;
 
-
-
-    template< typename POLICY,
-              int NUM_QUADRATURE_POINTS,
-              typename STACK_VARIABLES,
-              typename COMPONENT_TYPE >
-    static
-    typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
-                             std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
-    Launch( localIndex const numElems,
-            COMPONENT_TYPE const & kernelComponent )
-    {
-      GEOSX_MARK_FUNCTION;
-      RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
-
-      forAll< POLICY >( numElems,
-                        [=] ( localIndex const k )
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
       {
-        STACK_VARIABLES stack;
+        kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
-        kernelComponent.setup( k, stack );
-        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-        {
-          kernelComponent.quadraturePointStateUpdate( k, q, stack );
+        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
-          kernelComponent.quadraturePointJacobianContribution( k, q, stack );
-
-          kernelComponent.quadraturePointResidualContribution( k, q, stack );
-        }
-        if( kernelComponent.elemGhostRank[k] < 0 )
-        {
-          maxResidual.max( kernelComponent.complete( k, stack ) );
-        }
-      } );
-      return maxResidual.get();
-    }
-
-    template< typename POLICY,
-              int NUM_QUADRATURE_POINTS,
-              typename STACK_VARIABLES,
-              typename COMPONENT_TYPE >
-    static
-    typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
-                                std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
-    Launch( localIndex const numElems,
-            COMPONENT_TYPE const & kernelComponent )
-    {
-      GEOSX_MARK_FUNCTION;
-      RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
-
-      forAll< POLICY >( numElems,
-                        [=] GEOSX_DEVICE ( localIndex const k )
+        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+      }
+      if( kernelComponent.elemGhostRank[k] < 0 )
       {
-        STACK_VARIABLES stack;
+        maxResidual.max( kernelComponent.complete( k, stack ) );
+      }
+    } );
+    return maxResidual.get();
+  }
 
-        kernelComponent.setup( k, stack );
-        for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
-        {
-          kernelComponent.quadraturePointStateUpdate( k, q, stack );
+  template< typename POLICY,
+            int NUM_QUADRATURE_POINTS,
+            typename KERNEL_TYPE >
+  static
+  typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
+                              std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
+  Launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+    RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
 
-          kernelComponent.quadraturePointJacobianContribution( k, q, stack );
+    forAll< POLICY >( numElems,
+                      [=] GEOSX_DEVICE ( localIndex const k )
+    {
+      typename KERNEL_TYPE::StackVariables stack;
 
-          kernelComponent.quadraturePointResidualContribution( k, q, stack );
-        }
-        if( kernelComponent.elemGhostRank[k] < 0 )
-        {
-          maxResidual.max( kernelComponent.complete( k, stack ) );
-        }
-      } );
-      return maxResidual.get();
-    }
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      {
+        kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
+        kernelComponent.quadraturePointJacobianContribution( k, q, stack );
 
+        kernelComponent.quadraturePointResidualContribution( k, q, stack );
+      }
+      if( kernelComponent.elemGhostRank[k] < 0 )
+      {
+        maxResidual.max( kernelComponent.complete( k, stack ) );
+      }
+    } );
+    return maxResidual.get();
+  }
 
 //protected:
-    typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
-    arrayView1d< integer const > const elemGhostRank;
-    typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
-    FiniteElementBase const * m_finiteElementSpace;
+  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
+  arrayView1d< integer const > const elemGhostRank;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
+  FiniteElementBase const * m_finiteElementSpace;
 
-  };
 };
 
 
 //***************************************************************************
 template< typename POLICY,
-          typename UPDATE_CLASS,
           typename CONSTITUTIVE_BASE,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class COMPONENTS_TYPE,
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
 real64 RegionBasedKernelApplication( MeshLevel & mesh,
@@ -316,10 +292,11 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
       {
         using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
-        using KERNEL_TYPE = COMPONENTS_TYPE< SUBREGIONTYPE,
+        using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
                                              CONSTITUTIVE_TYPE,
                                              NUM_NODES_PER_ELEM,
                                              NUM_NODES_PER_ELEM >;
+
         KERNEL_TYPE kernelComponent( inputDofNumber,
                                      inputMatrix,
                                      inputRhs,
@@ -327,13 +304,12 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      elementSubRegion,
                                      finiteElementSpace,
                                      castedConstitutiveRelation,
-                                     std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
 
         maxResidual = std::max( maxResidual,
                                 KERNEL_TYPE::template Launch< POLICY,
-                                                              NUM_QUADRATURE_POINTS,
-                                                              typename decltype(kernelComponent)::StackVars >( numElems,
-                                                                                                               kernelComponent ) );
+                                                              NUM_QUADRATURE_POINTS >( numElems,
+                                                                                       kernelComponent ) );
       } );
     } );
   } );
