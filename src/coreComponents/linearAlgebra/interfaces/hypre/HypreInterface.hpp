@@ -19,9 +19,12 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 
-#include "HypreSolver.hpp"
-#include "HypreMatrix.hpp"
-#include "HypreVector.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+
+#include <memory>
 
 namespace geosx
 {
@@ -38,16 +41,20 @@ struct HypreInterface
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
    */
-  static void initialize( int & argc, char * * & argv )
-  {
-    GEOSX_UNUSED_VAR( argc );
-    GEOSX_UNUSED_VAR( argv );
-  }
+  static void initialize( int & argc, char * * & argv );
 
   /**
    * @brief Finalizes the MPI environment for the Hypre library
    */
-  static void finalize() {}
+  static void finalize();
+
+  /**
+   * @brief Create a hypre-based preconditioner object.
+   * @param params the preconditioner parameters
+   * @return owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< HypreInterface > >
+  createPreconditioner( LinearSolverParameters params );
 
   /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;

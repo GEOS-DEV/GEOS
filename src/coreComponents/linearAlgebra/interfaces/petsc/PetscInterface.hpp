@@ -19,9 +19,12 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCINTERFACE_HPP_
 
-#include "PetscSolver.hpp"
-#include "PetscVector.hpp"
-#include "PetscMatrix.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscVector.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscMatrix.hpp"
+#include "linearAlgebra/interfaces/petsc/PetscSolver.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+
+#include <memory>
 
 namespace geosx
 {
@@ -48,6 +51,14 @@ struct PetscInterface
    * Essentially, it is a wrapper for PetscFinalize
    */
   static void finalize();
+
+  /**
+   * @brief Create a PETSc-based preconditioner object.
+   * @param params the parameters for preconditioner
+   * @return owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< PetscInterface > >
+  createPreconditioner( LinearSolverParameters params );
 
   /// Alias for PetscMatrix
   using ParallelMatrix = PetscMatrix;

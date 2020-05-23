@@ -17,6 +17,7 @@
  */
 
 #include "HypreMatrix.hpp"
+#include "codingUtilities/Utilities.hpp"
 
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
@@ -442,6 +443,9 @@ void HypreMatrix::insert( arraySlice1d< globalIndex const > const & rowIndices,
   }
 }
 
+namespace
+{
+
 template< typename T, int SRC_USD, int DST_USD >
 static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
                                 arraySlice2d< T, DST_USD > const & dst )
@@ -455,6 +459,8 @@ static void convertArrayLayout( arraySlice2d< T const, SRC_USD > const & src,
       dst( i, j ) = src( i, j );
     }
   }
+}
+
 }
 
 void HypreMatrix::add( arraySlice1d< globalIndex const > const & rowIndices,
@@ -784,6 +790,11 @@ void HypreMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
 
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   hypre_CSRMatrix * const prt_diag_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
   HYPRE_Int const diag_nnz = hypre_CSRMatrixNumNonzeros( prt_diag_CSR );
   HYPRE_Real * const ptr_diag_data = hypre_CSRMatrixData( prt_diag_CSR );
@@ -838,6 +849,50 @@ void HypreMatrix::leftScale( HypreVector const & vec )
     }
   }
 
+}
+
+void HypreMatrix::addEntries( HypreMatrix const & src, real64 const scale )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
+  GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
+
+  array1d< globalIndex > colIndices;
+  array1d< real64 > values;
+  open();
+  for( globalIndex rowIndex = src.ilower(); rowIndex < src.iupper(); ++rowIndex )
+  {
+    localIndex const numEntries = src.globalRowLength( rowIndex );
+    colIndices.resize( numEntries );
+    values.resize( numEntries );
+    src.getRowCopy( rowIndex, colIndices, values );
+    if( !isEqual( scale, 1.0 ) )
+    {
+      for( localIndex i = 0; i < numEntries; ++i )
+      {
+        values[i] *= scale;
+      }
+    }
+    add( rowIndex, colIndices, values );
+  }
+  close();
+}
+
+void HypreMatrix::addDiagonal( HypreVector const & src )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == numGlobalCols() );
+  GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
+
+  open();
+  real64 const * values = src.extractLocalVector();
+  for( globalIndex i = ilower(), ii = 0; i < iupper(); ++i, ++ii )
+  {
+    add( i, i, values[ii] );
+  }
+  close();
 }
 
 localIndex HypreMatrix::maxRowLength() const
@@ -918,10 +973,10 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
   HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( getLocalRowID( globalRow ) );
 
   // Get diagonal block
-  hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
-  HYPRE_Int const * const IA       = hypre_CSRMatrixI( prt_CSR );
-  HYPRE_Int const * const JA       = hypre_CSRMatrixJ( prt_CSR );
-  HYPRE_Real const * const ptr_data = hypre_CSRMatrixData( prt_CSR );
+  hypre_CSRMatrix const * const prt_CSR = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const * const IA            = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * const JA            = hypre_CSRMatrixJ( prt_CSR );
+  HYPRE_Real const * const ptr_data     = hypre_CSRMatrixData( prt_CSR );
 
   for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
   {
@@ -931,6 +986,32 @@ real64 HypreMatrix::getDiagValue( globalIndex globalRow ) const
     }
   }
   return 0.0;
+}
+
+void HypreMatrix::extractDiagonal( HypreVector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
+
+  dst.zero();
+  real64 * const values = dst.extractLocalVector();
+
+  hypre_CSRMatrix const * const prt_CSR  = hypre_ParCSRMatrixDiag( m_parcsr_mat );
+  HYPRE_Int const * const IA             = hypre_CSRMatrixI( prt_CSR );
+  HYPRE_Int const * const JA             = hypre_CSRMatrixJ( prt_CSR );
+  HYPRE_Real const * const ptr_data      = hypre_CSRMatrixData( prt_CSR );
+
+  for( localIndex localRow = 0; localRow < numLocalRows(); ++localRow )
+  {
+    for( HYPRE_Int j = IA[localRow]; j < IA[localRow + 1]; ++j )
+    {
+      if( JA[j] == localRow )
+      {
+        values[localRow] = ptr_data[j];
+      }
+    }
+  }
 }
 
 real64 HypreMatrix::clearRow( globalIndex const globalRow,
@@ -981,24 +1062,14 @@ real64 HypreMatrix::clearRow( globalIndex const globalRow,
   return oldDiag;
 }
 
-HYPRE_IJMatrix const & HypreMatrix::unwrapped() const
-{
-  return m_ij_mat;
-}
-
-HYPRE_IJMatrix & HypreMatrix::unwrapped()
-{
-  return m_ij_mat;
-}
-
-HYPRE_ParCSRMatrix const & HypreMatrix::unwrappedParCSR() const
+HYPRE_ParCSRMatrix const & HypreMatrix::unwrapped() const
 {
   return m_parcsr_mat;
 }
 
-HYPRE_ParCSRMatrix & HypreMatrix::unwrappedParCSR()
+HYPRE_IJMatrix const & HypreMatrix::unwrappedIJ() const
 {
-  return m_parcsr_mat;
+  return m_ij_mat;
 }
 
 localIndex HypreMatrix::getLocalRowID( globalIndex const index ) const

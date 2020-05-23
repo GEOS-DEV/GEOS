@@ -76,6 +76,8 @@ void i_g_n_o_r_e( T & ) {}
 /// Mark a debug variable and silence compiler warnings.
 #define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
 
+///@}
+
 #if defined(GEOSX_USE_OPENMP)
 /// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
   #define PRAGMA_OMP( clause ) _Pragma( clause )

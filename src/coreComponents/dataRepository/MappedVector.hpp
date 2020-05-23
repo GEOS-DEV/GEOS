@@ -341,7 +341,6 @@ public:
   /**
    * @brief  Remove element at given index
    * @param  index  index of element to remove.
-   * @return  void
    *
    * Completely remove element at given index and corresponding key lookup.
    * If pointed-to object is owned, it is deleted.
@@ -377,7 +376,6 @@ public:
   /**
    *  @brief  Remove element at given key
    *  @param  key  key of element to remove.
-   *  @return  void
    *
    *  This function will set the element at the given key to nullptr.
    */
@@ -393,7 +391,6 @@ public:
   /**
    *  @brief  Remove element at given key
    *  @param  keyIndex  key of element to remove.
-   *  @return  void
    *
    *  This function will set the element at the given key to nullptr.
    */

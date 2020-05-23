@@ -112,9 +112,9 @@ void PrintPermutedMatrix( ParallelMatrix const & matrix,
  * @param dst         the target (filtered) matrix
  * @param dofsPerNode number of degrees-of-freedom per node
  */
-template< typename LAI >
-void SeparateComponentFilter( typename LAI::ParallelMatrix const & src,
-                              typename LAI::ParallelMatrix & dst,
+template< typename MATRIX >
+void SeparateComponentFilter( MATRIX const & src,
+                              MATRIX & dst,
                               const localIndex dofsPerNode )
 {
   GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
