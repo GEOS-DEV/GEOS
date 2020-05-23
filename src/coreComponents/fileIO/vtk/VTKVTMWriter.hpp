@@ -21,6 +21,9 @@ namespace geosx
 {
 namespace vtk
 {
+/*!
+ * @brief VTM Writer class.
+ */
 class VTKVTMWriter
 {
 public:

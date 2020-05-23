@@ -21,6 +21,10 @@ namespace geosx
 {
 namespace vtk
 {
+
+/*!
+ * @brief VTK PVD Writer class.
+ */
 class VTKPVDWriter
 {
 public:

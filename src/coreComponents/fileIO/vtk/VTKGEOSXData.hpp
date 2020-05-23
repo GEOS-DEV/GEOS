@@ -24,9 +24,16 @@ namespace geosx
 namespace vtk
 {
 
+/*!
+ * @brief VTK GEOSX data class.
+ */
 class VTKGEOSXData : public vtkAOSDataArrayTemplate< real64 >
 {
 public:
+  /*!
+   * @brief Factory function
+   * @return VTK GEOSX data class
+   */
   static VTKGEOSXData *New()
   {
     VTK_STANDARD_NEW_BODY( VTKGEOSXData );
@@ -43,14 +50,21 @@ public:
   }
 };
 
+/**
+ * @brief Custom insert function for an R1Tensor.
+ * @param[in] index position index where the value \p val will be inserted
+ * @param[in] val R1Tensor to be inserted
+ */
 template<>
 void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
 
+/// @cond DO_NOT_DOCUMENT
 template<>
 void VTKGEOSXData::CustomInsertValue< R2Tensor >( localIndex index, R2Tensor const & val );
 
 template<>
 void VTKGEOSXData::CustomInsertValue< R2SymTensor >( localIndex index, R2SymTensor const & val );
+/// @endcond
 }
 }
 
