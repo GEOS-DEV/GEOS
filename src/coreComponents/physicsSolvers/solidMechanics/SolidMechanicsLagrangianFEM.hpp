@@ -164,6 +164,10 @@ public:
   /**@}*/
 
 
+
+  template< typename ... PARAMS >
+  real64 explicitKernelDispatch( PARAMS && ... params );
+
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @param NUM_NODES_PER_ELEM The number of nodes/dof per element.

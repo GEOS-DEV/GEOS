@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidMechanicsLagrangianFEMKernels.hpp
+ * @file LaplaceKernels.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
@@ -48,27 +48,6 @@ public:
   static constexpr int numTestDofPerSP = 1;
   static constexpr int numTrialDofPerSP = 1;
 
-
-
-  //***************************************************************************
-  struct StackVariables : Base::StackVariables
-  {
-public:
-
-    using Base::StackVariables::numRows;
-    using Base::StackVariables::numCols;
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            primaryField_local{ 0.0 }
-    {}
-
-    real64 primaryField_local[numNodesPerElem];
-  };
-
-
-
   using Base::m_dofNumber;
   using Base::m_matrix;
   using Base::m_rhs;
@@ -101,11 +80,6 @@ public:
     dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
   {}
-
-  arrayView1d< real64 const > const m_primaryField;
-  arrayView3d< R1Tensor const > const dNdX;
-  arrayView2d< real64 const > const detJ;
-
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -166,25 +140,33 @@ public:
 
     return 1.0;
   }
+
+
+  //***************************************************************************
+  struct StackVariables : Base::StackVariables
+  {
+public:
+
+    using Base::StackVariables::numRows;
+    using Base::StackVariables::numCols;
+
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            primaryField_local{ 0.0 }
+    {}
+
+    real64 primaryField_local[numNodesPerElem];
+  };
+
+protected:
+  arrayView1d< real64 const > const m_primaryField;
+  arrayView3d< R1Tensor const > const dNdX;
+  arrayView2d< real64 const > const detJ;
+
+
+
 };
-
-
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
-using LaplaceFEMSparsity = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              NUM_NODES_PER_ELEM,
-                                                              NUM_NODES_PER_ELEM,
-                                                              LaplaceFEMKernel< SUBREGION_TYPE,
-                                                                                CONSTITUTIVE_TYPE,
-                                                                                NUM_NODES_PER_ELEM,
-                                                                                NUM_NODES_PER_ELEM >::numTestDofPerSP,
-                                                              LaplaceFEMKernel< SUBREGION_TYPE,
-                                                                                CONSTITUTIVE_TYPE,
-                                                                                NUM_NODES_PER_ELEM,
-                                                                                NUM_NODES_PER_ELEM >::numTestDofPerSP >;
 
 
 } // namespace geosx

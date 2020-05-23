@@ -43,26 +43,9 @@ public:
                             NUM_NODES_PER_ELEM >;
 
   using Base::numNodesPerElem;
-  using Base::numDofPerNode;
-  using Base::ndof;
+  using Base::numTestDofPerSP;
+  using Base::numTrialDofPerSP;
 
-
-  struct StackVariables : Base::StackVariables
-  {
-public:
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            dRdU_InertiaMassDamping{ {0.0} },
-      vtilde_local{ { 0.0, 0.0, 0.0} },
-      uhattilde_local{ { 0.0, 0.0, 0.0} }
-    {}
-
-    real64 dRdU_InertiaMassDamping[ ndof ][ ndof ];
-    R1Tensor vtilde_local[NUM_NODES_PER_ELEM];
-    R1Tensor uhattilde_local[NUM_NODES_PER_ELEM];
-  };
 
   using Base::m_dofNumber;
   using Base::m_matrix;
@@ -112,14 +95,6 @@ public:
     m_dt( inputDt )
   {}
 
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
-  arrayView2d< real64 const > const m_density;
-  real64 const m_newmarkGamma;
-  real64 const m_newmarkBeta;
-  real64 const m_massDamping;
-  real64 const m_stiffnessDamping;
-  real64 const m_dt;
 
   template< typename STACK_VARIABLE_TYPE >
   //    GEOSX_HOST_DEVICE
@@ -127,7 +102,7 @@ public:
   void setup( localIndex const k,
               STACK_VARIABLE_TYPE & stack ) const
   {
-    for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = elemsToNodes( k, a );
 
@@ -135,13 +110,8 @@ public:
       stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
       stack.vtilde_local[ a ] = m_vtilde[ localNodeIndex ];
       stack.uhattilde_local[ a ] = m_uhattilde[ localNodeIndex ];
-
-      for( int i=0; i<3; ++i )
-      {
-        stack.elementLocalDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-      }
     }
-
+    Base::setup( k, stack );
   }
 
   template< typename STACK_VARIABLE_TYPE >
@@ -162,7 +132,7 @@ public:
       real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
                        + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
-      constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
+      constexpr int nsdof = numTestDofPerSP;
       for( int i=0; i<nsdof; ++i )
       {
         realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
@@ -179,39 +149,73 @@ public:
   template< typename STACK_VARIABLE_TYPE >
   //    GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( STACK_VARIABLE_TYPE & stack ) const
+  real64 complete( localIndex const k,
+                   STACK_VARIABLE_TYPE & stack ) const
   {
-    constexpr int nsdof = STACK_VARIABLE_TYPE::numDofPerNode;
 
-    for( localIndex a=0; a<STACK_VARIABLE_TYPE::numNodesPerElem; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<STACK_VARIABLE_TYPE::numNodesPerElem; ++b )
+      for( localIndex b=0; b<numNodesPerElem; ++b )
       {
-        for( int i=0; i<nsdof; ++i )
+        for( int i=0; i<numTestDofPerSP; ++i )
         {
-          for( int j=0; j<nsdof; ++j )
+          for( int j=0; j<numTrialDofPerSP; ++j )
           {
-            stack.localResidual[ a*nsdof+i ] += m_stiffnessDamping * stack.localJacobian[ a*nsdof+i][ b*nsdof+j ] *
-                                                ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
+            stack.localResidual[ a*numTestDofPerSP+i ] =
+              stack.localResidual[ a*numTestDofPerSP+i ] +
+              m_stiffnessDamping * stack.localJacobian[ a*numTestDofPerSP+i][ b*numTrialDofPerSP+j ] *
+              ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
 
-            stack.localJacobian[a*nsdof+i][b*nsdof+j] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
-                                                         + stack.dRdU_InertiaMassDamping[ a ][ b ];
+            stack.localJacobian[a*numTestDofPerSP+i][b*numTrialDofPerSP+j] =
+              stack.localJacobian[a*numTestDofPerSP+i][b*numTrialDofPerSP+j] +
+              stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
+              stack.dRdU_InertiaMassDamping[ a ][ b ];
           }
         }
       }
     }
 
-    for( localIndex a=0; a<STACK_VARIABLE_TYPE::ndof; ++a )
+    for( localIndex a=0; a<stack.numRows; ++a )
     {
-      for( localIndex b=0; b<STACK_VARIABLE_TYPE::ndof; ++b )
+      for( localIndex b=0; b<stack.numCols; ++b )
       {
         stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
                                      + stack.dRdU_InertiaMassDamping[ a ][ b ];
       }
     }
 
-    return Base::complete( stack );
+    return Base::complete( k, stack );
   }
+
+
+
+  struct StackVariables : Base::StackVariables
+  {
+public:
+
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            dRdU_InertiaMassDamping{ {0.0} },
+      vtilde_local{ { 0.0, 0.0, 0.0} },
+      uhattilde_local{ { 0.0, 0.0, 0.0} }
+    {}
+
+    real64 dRdU_InertiaMassDamping[ numTestDofPerSP ][ numTrialDofPerSP ];
+    R1Tensor vtilde_local[numNodesPerElem];
+    R1Tensor uhattilde_local[numNodesPerElem];
+  };
+
+protected:
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
+  arrayView2d< real64 const > const m_density;
+  real64 const m_newmarkGamma;
+  real64 const m_newmarkBeta;
+  real64 const m_massDamping;
+  real64 const m_stiffnessDamping;
+  real64 const m_dt;
+
 };
 
 } // namespace SolidMechanicsLagrangianFEMKernels

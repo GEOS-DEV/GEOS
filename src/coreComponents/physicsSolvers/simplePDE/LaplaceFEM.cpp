@@ -183,12 +183,12 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
 
   finiteElement::FillSparsity< serialPolicy,
                                CellElementSubRegion,
-                               LaplaceFEMSparsity >( *mesh,
-                                                     targetRegionNames(),
-                                                     nullptr,
-                                                     dofIndex,
-                                                     matrix,
-                                                     rhs );
+                               LaplaceFEMKernel >( *mesh,
+                                                   targetRegionNames(),
+                                                   nullptr,
+                                                   dofIndex,
+                                                   matrix,
+                                                   rhs );
 
 
   matrix.close();

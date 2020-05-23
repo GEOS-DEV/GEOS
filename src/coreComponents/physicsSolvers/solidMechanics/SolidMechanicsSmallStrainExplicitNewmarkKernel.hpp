@@ -47,30 +47,7 @@ public:
   static constexpr int numTrialDofPerSP = 3;
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
-//*****************************************************************************
-  struct StackVariables
-  {
-public:
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      fLocal{ { 0.0} },
-      varLocal{ {0.0} }
-#if defined(CALCFEMSHAPE)
-      ,
-      xLocal(),
-      dNdX(),
-      detJ()
-#endif
-    {}
 
-    real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-    real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
-#if defined(CALCFEMSHAPE)
-    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
-    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
-    real64 detJ;
-#endif
-  };
 //*****************************************************************************
 
   ExplicitSmallStrain( NodeManager & nodeManager,
@@ -96,25 +73,9 @@ public:
     m_dt( dt ),
     m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
   {
-    GEOSX_UNUSED_VAR(edgeManager);
-    GEOSX_UNUSED_VAR(faceManager);
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
   }
-
-  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
-  arrayView1d< integer const > const elemGhostRank;
-  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
-  FiniteElementBase const * m_finiteElementSpace;
-#if !defined(CALCFEMSHAPE)
-  arrayView3d< R1Tensor const > const dNdX;
-  arrayView2d< real64 const > const detJ;
-#endif
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X;
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u;
-  arrayView2d< real64 const, nodes::VELOCITY_USD > const vel;
-  arrayView2d< real64, nodes::ACCELERATION_USD > const acc;
-  real64 const m_dt;
-  SortedArrayView< localIndex const > const m_elementList;
-
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -263,6 +224,47 @@ public:
     } );
     return maxResidual.get();
   }
+
+  //*****************************************************************************
+  struct StackVariables
+  {
+public:
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      fLocal{ { 0.0} },
+      varLocal{ {0.0} }
+  #if defined(CALCFEMSHAPE)
+      ,
+      xLocal(),
+      dNdX(),
+      detJ()
+  #endif
+    {}
+
+    real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+    real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
+  #if defined(CALCFEMSHAPE)
+    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
+    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
+    real64 detJ;
+  #endif
+  };
+
+protected:
+  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
+  arrayView1d< integer const > const elemGhostRank;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
+  FiniteElementBase const * m_finiteElementSpace;
+  #if !defined(CALCFEMSHAPE)
+  arrayView3d< R1Tensor const > const dNdX;
+  arrayView2d< real64 const > const detJ;
+  #endif
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u;
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const vel;
+  arrayView2d< real64, nodes::ACCELERATION_USD > const acc;
+  real64 const m_dt;
+  SortedArrayView< localIndex const > const m_elementList;
 
 
 };

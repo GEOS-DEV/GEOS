@@ -221,12 +221,11 @@ public:
     return maxResidual.get();
   }
 
-//protected:
+protected:
   typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
   arrayView1d< integer const > const elemGhostRank;
   typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
   FiniteElementBase const * m_finiteElementSpace;
-
 };
 
 
@@ -279,8 +278,6 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                   [&]( auto constNNPE,
                                        auto constNQPPE )
     {
-      constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
-      constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
 
       constitutive::ConstitutiveBase * const
       constitutiveRelation = ( targetRegionIndex <= constitutiveNames.size()-1 ) ?
@@ -289,6 +286,9 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
       constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
                                                                         [&]( auto * const castedConstitutiveRelation )
       {
+        static constexpr int NUM_NODES_PER_ELEM = decltype( constNNPE )::value;
+        static constexpr int NUM_QUADRATURE_POINTS = decltype( constNQPPE )::value;
+
         using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
         using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,

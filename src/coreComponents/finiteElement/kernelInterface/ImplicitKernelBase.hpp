@@ -68,38 +68,6 @@ public:
   static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
   static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
   static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
-
-  //***************************************************************************
-  /**
-   * @class StackVariables
-   * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
-   * @tparam NUM_COLS The number or columns to allocate for the jacobian.
-   * Contains variables that will be allocated on the stack of the main kernel.
-   * This will typically consist of local arrays to hold data mapped from the
-   * global data arrays, and local storage for the residual and jacobian
-   * contributions.
-   */
-  struct StackVariables
-  {
-public:
-    static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
-    static constexpr int numCols = numTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      localRowDofIndex{ 0 },
-      localColDofIndex{ 0 },
-      localResidual{ 0.0 },
-      localJacobian{ {0.0} }
-    {}
-
-    globalIndex localRowDofIndex[numRows];
-    globalIndex localColDofIndex[numCols];
-    real64 localResidual[numRows];
-    real64 localJacobian[numRows][numCols];
-  };
-  //***************************************************************************
-
   using Base::elemsToNodes;
   using Base::elemGhostRank;
   using Base::constitutiveUpdate;
@@ -124,9 +92,9 @@ public:
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
   {
-    GEOSX_UNUSED_VAR(nodeManager);
-    GEOSX_UNUSED_VAR(edgeManager);
-    GEOSX_UNUSED_VAR(faceManager);
+    GEOSX_UNUSED_VAR( nodeManager );
+    GEOSX_UNUSED_VAR( edgeManager );
+    GEOSX_UNUSED_VAR( faceManager );
   }
 
 
@@ -138,17 +106,16 @@ public:
   {
     for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes[ k][ a ];
+      localIndex const localNodeIndex = elemsToNodes[k][a];
       for( int i=0; i<numDofPerTestSupportPoint; ++i )
       {
         stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
       }
     }
 
-    // TODO This is incorrect. The support points of the trial space is not necessarily the nodes.
     for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes[ k][ a];
+      localIndex const localNodeIndex = elemsToNodes[k][a];
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
         stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
@@ -195,10 +162,70 @@ public:
     return 0;
   }
 
+  //***************************************************************************
+  /**
+   * @class StackVariables
+   * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
+   * @tparam NUM_COLS The number or columns to allocate for the jacobian.
+   * Contains variables that will be allocated on the stack of the main kernel.
+   * This will typically consist of local arrays to hold data mapped from the
+   * global data arrays, and local storage for the residual and jacobian
+   * contributions.
+   */
+  struct StackVariables
+  {
+public:
+    static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
+    static constexpr int numCols = numTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
+
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      localRowDofIndex{ 0 },
+      localColDofIndex{ 0 },
+      localResidual{ 0.0 },
+      localJacobian{ {0.0} }
+    {}
+
+    globalIndex localRowDofIndex[numRows];
+    globalIndex localColDofIndex[numCols];
+    real64 localResidual[numRows];
+    real64 localJacobian[numRows][numCols];
+  };
+  //***************************************************************************
+
+
+protected:
   arrayView1d< globalIndex const > const m_dofNumber;
   ParallelMatrix & m_matrix;
   ParallelVector & m_rhs;
+
 };
+
+
+template< template< typename,
+                    typename,
+                    int,
+                    int > class KERNEL_TEMPLATE >
+struct SparsityHelper
+{
+  template< typename SUBREGION_TYPE,
+            typename CONSTITUTIVE_TYPE,
+            int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+            int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
+  using Kernel = ImplicitKernelBase< SUBREGION_TYPE,
+                                     CONSTITUTIVE_TYPE,
+                                     NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                                     NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                     KERNEL_TEMPLATE< SUBREGION_TYPE,
+                                                      CONSTITUTIVE_TYPE,
+                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numTestDofPerSP,
+                                     KERNEL_TEMPLATE< SUBREGION_TYPE,
+                                                      CONSTITUTIVE_TYPE,
+                                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numTestDofPerSP >;
+};
+
 
 //***************************************************************************
 template< typename POLICY,
@@ -215,16 +242,18 @@ real64 FillSparsity( MeshLevel & mesh,
                      ParallelMatrix & inputMatrix,
                      ParallelVector & inputRhs )
 {
+
   return RegionBasedKernelApplication< POLICY,
                                        constitutive::Dummy,
                                        REGION_TYPE,
-                                       KERNEL_TEMPLATE >( mesh,
-                                                          targetRegions,
-                                                          array1d< string >(),
-                                                          feDiscretization,
-                                                          inputDofNumber,
-                                                          inputMatrix,
-                                                          inputRhs );
+                                       SparsityHelper< KERNEL_TEMPLATE >::template Kernel
+                                       >( mesh,
+                                          targetRegions,
+                                          array1d< string >(),
+                                          feDiscretization,
+                                          inputDofNumber,
+                                          inputMatrix,
+                                          inputRhs );
 }
 
 }

@@ -70,29 +70,6 @@ public:
                                                   numTestDofPerSP,
                                                   numTrialDofPerSP >;
 
-
-//*****************************************************************************
-  struct StackVariables : Base::StackVariables
-  {
-public:
-    using Base::StackVariables::numRows;
-    using Base::StackVariables::numCols;
-
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            u_local(),
-            uhat_local(),
-            constitutiveStiffness{ {0.0} }
-    {}
-
-    R1Tensor u_local[numNodesPerElem];
-    R1Tensor uhat_local[numNodesPerElem];
-    real64 constitutiveStiffness[6][6];
-  };
-//*****************************************************************************
-
   using Base::m_dofNumber;
   using Base::m_matrix;
   using Base::m_rhs;
@@ -126,16 +103,7 @@ public:
     dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
-  {
-  }
-
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
-
-  arrayView3d< R1Tensor const > const dNdX;
-  arrayView2d< real64 const > const detJ;
-  real64 const m_gravityVector[3];
-
+  {}
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -187,17 +155,15 @@ public:
   }
 
 
-  template< typename STACK_VARIABLE_TYPE /*,
-                                            typename DYNAMICS_LAMBDA = nvstd::function< void( localIndex, localIndex)
-                                               >*/>
+  template< typename STACK_VARIABLE_TYPE,
+            typename DYNAMICS_LAMBDA = STD_FUNCTION< void( localIndex, localIndex) > >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack /*,
-                                                                           DYNAMICS_LAMBDA && dynamicsTerms = []
-                                                                              GEOSX_DEVICE ( localIndex,
-                                                                              localIndex){}*/) const
+                                            STACK_VARIABLE_TYPE & stack,
+                                            DYNAMICS_LAMBDA && dynamicsTerms = [] GEOSX_DEVICE ( localIndex,
+                                                                                                 localIndex){} ) const
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
@@ -234,20 +200,19 @@ public:
                                                    c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] +
                                                    c[2][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
 
-//          dynamicsTerms( a, b );
+        dynamicsTerms( a, b );
       }
     }
   }
 
-  template< typename STACK_VARIABLE_TYPE /*,
-                                            typename DYNAMICS_LAMBDA = STD_FUNCTION< void( real64 * ) >*/>
+  template< typename STACK_VARIABLE_TYPE,
+            typename STRESS_MODIFIER = STD_FUNCTION< void( real64 * ) > >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointResidualContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack /*,
-                                                                           DYNAMICS_LAMBDA && stressModifier = []
-                                                                              GEOSX_DEVICE ( real64 * ) {}*/) const
+                                            STACK_VARIABLE_TYPE & stack,
+                                            STRESS_MODIFIER && stressModifier = [] GEOSX_DEVICE ( real64 * ) {} ) const
   {
     real64 stress[6] = { constitutiveUpdate.m_stress( k, q, 0 ),
                          constitutiveUpdate.m_stress( k, q, 1 ),
@@ -256,7 +221,7 @@ public:
                          constitutiveUpdate.m_stress( k, q, 4 ),
                          constitutiveUpdate.m_stress( k, q, 5 ) };
 
-//      stressModifier( stress );
+    stressModifier( stress );
 
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
@@ -303,24 +268,39 @@ public:
     return meanForce;
   }
 
+  //*****************************************************************************
+  struct StackVariables : Base::StackVariables
+  {
+public:
+    using Base::StackVariables::numRows;
+    using Base::StackVariables::numCols;
+
+
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            u_local(),
+            uhat_local(),
+            constitutiveStiffness{ {0.0} }
+    {}
+
+    R1Tensor u_local[numNodesPerElem];
+    R1Tensor uhat_local[numNodesPerElem];
+    real64 constitutiveStiffness[6][6];
+  };
+  //*****************************************************************************
+
+protected:
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
+
+  arrayView3d< R1Tensor const > const dNdX;
+  arrayView2d< real64 const > const detJ;
+  real64 const m_gravityVector[3];
+
+
 };
 
-template< typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
-using Sparsity = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
-                                                    CONSTITUTIVE_TYPE,
-                                                    NUM_NODES_PER_ELEM,
-                                                    NUM_NODES_PER_ELEM,
-                                                    QuasiStatic< SUBREGION_TYPE,
-                                                                 CONSTITUTIVE_TYPE,
-                                                                 NUM_NODES_PER_ELEM,
-                                                                 NUM_NODES_PER_ELEM >::numTestDofPerSP,
-                                                    QuasiStatic< SUBREGION_TYPE,
-                                                                 CONSTITUTIVE_TYPE,
-                                                                 NUM_NODES_PER_ELEM,
-                                                                 NUM_NODES_PER_ELEM >::numTestDofPerSP >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 
