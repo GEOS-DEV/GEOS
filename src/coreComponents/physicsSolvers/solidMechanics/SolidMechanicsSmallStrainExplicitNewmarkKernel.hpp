@@ -73,10 +73,9 @@ public:
   };
 //*****************************************************************************
 
-  ExplicitSmallStrain( arrayView1d< globalIndex const > const &,
-                       ParallelMatrix &,
-                       ParallelVector &,
-                       NodeManager & nodeManager,
+  ExplicitSmallStrain( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
                        SUBREGION_TYPE const & elementSubRegion,
                        FiniteElementBase const * const finiteElementSpace,
                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
@@ -93,10 +92,13 @@ public:
     X( nodeManager.referencePosition()),
     u( nodeManager.totalDisplacement()),
     vel( nodeManager.velocity()),
-    acc( nodeManager.acceleration()),
+    acc( nodeManager.acceleration() ),
     m_dt( dt ),
     m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
-  {}
+  {
+    GEOSX_UNUSED_VAR(edgeManager);
+    GEOSX_UNUSED_VAR(faceManager);
+  }
 
   typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
   arrayView1d< integer const > const elemGhostRank;

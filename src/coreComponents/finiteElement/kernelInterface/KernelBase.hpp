@@ -244,15 +244,14 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      arrayView1d< string const > const & constitutiveNames,
                                      FiniteElementDiscretization const * const feDiscretization,
-                                     arrayView1d< globalIndex const > const & inputDofNumber,
-                                     ParallelMatrix & inputMatrix,
-                                     ParallelVector & inputRhs,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
 
   real64 maxResidual = 0;
 
   NodeManager & nodeManager = *(mesh.getNodeManager());
+  EdgeManager & edgeManager = *(mesh.getEdgeManager());
+  FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
@@ -297,10 +296,9 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                              NUM_NODES_PER_ELEM,
                                              NUM_NODES_PER_ELEM >;
 
-        KERNEL_TYPE kernelComponent( inputDofNumber,
-                                     inputMatrix,
-                                     inputRhs,
-                                     nodeManager,
+        KERNEL_TYPE kernelComponent( nodeManager,
+                                     edgeManager,
+                                     faceManager,
                                      elementSubRegion,
                                      finiteElementSpace,
                                      castedConstitutiveRelation,

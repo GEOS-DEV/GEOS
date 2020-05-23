@@ -107,13 +107,15 @@ public:
   using Base::Launch;
 
 
-  ImplicitKernelBase( arrayView1d< globalIndex const > const & inputDofNumber,
-                      ParallelMatrix & inputMatrix,
-                      ParallelVector & inputRhs,
-                      NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+  ImplicitKernelBase( NodeManager const & nodeManager,
+                      EdgeManager const & edgeManager,
+                      FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
                       FiniteElementBase const * const finiteElementSpace,
-                      CONSTITUTIVE_TYPE * const inputConstitutiveType ):
+                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      arrayView1d< globalIndex const > const & inputDofNumber,
+                      ParallelMatrix & inputMatrix,
+                      ParallelVector & inputRhs ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,
@@ -121,7 +123,12 @@ public:
     m_dofNumber( inputDofNumber ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
-  {}
+  {
+    GEOSX_UNUSED_VAR(nodeManager);
+    GEOSX_UNUSED_VAR(edgeManager);
+    GEOSX_UNUSED_VAR(faceManager);
+  }
+
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE

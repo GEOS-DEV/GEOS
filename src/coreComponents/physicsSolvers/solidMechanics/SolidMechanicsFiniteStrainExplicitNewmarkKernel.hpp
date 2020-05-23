@@ -87,19 +87,17 @@ public:
   using Base::dNdX;
   using Base::detJ;
 
-  ExplicitFiniteStrain( arrayView1d< globalIndex const > const & inputDofNumber,
-                        ParallelMatrix & inputMatrix,
-                        ParallelVector & inputRhs,
-                        NodeManager & nodeManager,
+  ExplicitFiniteStrain( NodeManager & nodeManager,
+                        EdgeManager const & edgeManager,
+                        FaceManager const & faceManager,
                         SUBREGION_TYPE const & elementSubRegion,
                         FiniteElementBase const * const finiteElementSpace,
                         CONSTITUTIVE_TYPE * const inputConstitutiveType,
                         real64 const dt,
                         string const & elementListName ):
-    Base( inputDofNumber,
-          inputMatrix,
-          inputRhs,
-          nodeManager,
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
           elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType,

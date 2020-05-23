@@ -562,9 +562,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                                                            targetRegionNames(),
                                                                                                            m_solidMaterialNames,
                                                                                                            &feDiscretization,
-                                                                                                           array1d< globalIndex >(),
-                                                                                                           m_matrix,
-                                                                                                           m_rhs,
                                                                                                            dt,
                                                                                                            string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ));
 
@@ -582,9 +579,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                                                                                                            targetRegionNames(),
                                                                                                            m_solidMaterialNames,
                                                                                                            &feDiscretization,
-                                                                                                           array1d< globalIndex >(),
-                                                                                                           m_matrix,
-                                                                                                           m_rhs,
                                                                                                            dt,
                                                                                                            string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ));
 

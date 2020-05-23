@@ -102,27 +102,32 @@ public:
 
 
 
-  QuasiStatic( arrayView1d< globalIndex const > const & inputDofNumber,
-               ParallelMatrix & inputMatrix,
-               ParallelVector & inputRhs,
-               NodeManager const & nodeManager,
+  QuasiStatic( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
                SUBREGION_TYPE const & elementSubRegion,
                FiniteElementBase const * const finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               arrayView1d< globalIndex const > const & inputDofNumber,
+               ParallelMatrix & inputMatrix,
+               ParallelVector & inputRhs,
                real64 const inputGravityVector[3] ):
-    Base( inputDofNumber,
-          inputMatrix,
-          inputRhs,
-          nodeManager,
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
           elementSubRegion,
           finiteElementSpace,
-          inputConstitutiveType ),
+          inputConstitutiveType,
+          inputDofNumber,
+          inputMatrix,
+          inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
     dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
-  {}
+  {
+  }
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
