@@ -75,7 +75,7 @@ public:
   {
     GEOSX_LAI_ASSERT_GE( blockIndex, 0 );
     GEOSX_LAI_ASSERT_GT( this->blockSize(), blockIndex );
-    setPointer( blockIndex, &vec );
+    this->setPointer( blockIndex, &vec );
   }
 };
 

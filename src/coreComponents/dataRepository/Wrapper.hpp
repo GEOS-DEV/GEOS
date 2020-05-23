@@ -254,6 +254,11 @@ public:
 
   ///@}
 
+  /**
+   * @name Packing/unpacking methods.
+   */
+  ///@{
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
   bool isPackable( bool onDevice ) const override final

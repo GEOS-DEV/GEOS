@@ -131,8 +131,10 @@ void SolidMechanicsLagrangianFEM::PostProcessInput()
 
   CheckModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString );
 
-  m_linearSolverParameters.amg.isSymmetric = true;
-  m_linearSolverParameters.dofsPerNode = 3;
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.isSymmetric = true;
+  linParams.dofsPerNode = 3;
+  linParams.amg.separateComponents = true;
 }
 
 SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()

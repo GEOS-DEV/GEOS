@@ -41,86 +41,115 @@ public:
 
   /**
    * @brief Create a vector of @p nBlocks blocks.
-   * @param nBlocks Number of blocks.
+   * @param nBlocks Number of blocks
    */
-  explicit BlockVector( localIndex const nBlocks );
+  explicit BlockVector( localIndex const nBlocks )
+    : Base( nBlocks ),
+    m_vectorStorage( nBlocks )
+  {
+    setPointers();
+  }
+
+  /**
+   * @brief Create a vector of @p nBlocks blocks.
+   */
+  explicit BlockVector()
+    : BlockVector( 0 )
+  {}
 
   /**
    * @brief Copy constructor that performs a deep copy of each sub-vector.
    * @param rhs the block vector to copy
    */
-  BlockVector( BlockVector const & rhs );
+  BlockVector( BlockVector const & rhs )
+    : Base( rhs ),
+    m_vectorStorage( rhs.m_vectorStorage )
+  {
+    setPointers();
+  }
 
   /**
    * @brief Move constructor.
    * @param rhs the block vector to move from
    */
-  BlockVector( BlockVector && rhs );
+  BlockVector( BlockVector && rhs )
+    : Base( std::move( rhs ) ),
+    m_vectorStorage( std::move( rhs.m_vectorStorage ) )
+  {
+    setPointers();
+  }
 
   /**
    * @brief Conversion constructor from a compatible view with a deep copy of each sub-vector.
    * @param rhs the block vector view to copy from
    * @note declared explicit to avoid unintended deep copying
    */
-  explicit BlockVector( BlockVectorView< VECTOR > const & rhs );
+  explicit BlockVector( BlockVectorView< VECTOR > const & rhs )
+    : Base( rhs.blockSize() )
+  {
+    for( localIndex i = 0; i < rhs.blockSize(); ++i )
+    {
+      m_vectorStorage.push_back( rhs.block( i ) );
+    }
+    setPointers();
+  }
+
+  /**
+   * @brief Copy assignment
+   * @param x the vector to copy
+   * @return reference to @p this
+   */
+  BlockVector & operator=( BlockVector const & x )
+  {
+    m_vectorStorage = x.m_vectorStorage;
+    setPointers();
+    return *this;
+  }
+
+  /**
+   * @brief Move assignment
+   * @param x the vector to move from
+   * @return reference to @p this
+   */
+  BlockVector & operator=( BlockVector && x ) noexcept
+  {
+    m_vectorStorage = std::move( x.m_vectorStorage );
+    setPointers();
+    return *this;
+  }
 
   /**
    * @brief Destructor.
    */
   virtual ~BlockVector() override = default;
 
+  /**
+   * @brief Resize to a different number of blocks.
+   * @param nBlocks the new number of blocks
+   *
+   * @note If the new number of blocks is larger than the previous, new vectors
+   *       will not be initialized. It is the user's responsibility to do that.
+   */
+  void resize( localIndex const nBlocks )
+  {
+    m_vectorStorage.resize( nBlocks );
+    setPointers();
+  }
+
 private:
 
-  void setPointers();
+  void setPointers()
+  {
+    Base::resize( m_vectorStorage.size() );
+    for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
+    {
+      this->setPointer( i, &m_vectorStorage[i] );
+    }
+  }
 
   /// Storage for actual vectors
   array1d< VECTOR > m_vectorStorage;
 };
-
-template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( localIndex const nBlocks )
-  : Base( nBlocks ),
-  m_vectorStorage( nBlocks )
-{
-  setPointers();
-}
-
-template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( BlockVector< VECTOR > const & rhs )
-  : Base( rhs ),
-  m_vectorStorage( rhs.m_vectorStorage )
-{
-  setPointers();
-}
-
-template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( BlockVector && rhs )
-  : Base( std::move( rhs ) ),
-  m_vectorStorage( std::move( rhs.m_vectorStorage ) )
-{
-  setPointers();
-}
-
-template< typename VECTOR >
-BlockVector< VECTOR >::BlockVector( BlockVectorView< VECTOR > const & rhs )
-  : Base( rhs.blockSize() )
-{
-  for( localIndex i = 0; i < rhs.blockSize(); ++i )
-  {
-    m_vectorStorage.push_back( rhs.block( i ) );
-  }
-  setPointers();
-}
-
-template< typename VECTOR >
-void BlockVector< VECTOR >::setPointers()
-{
-  GEOSX_LAI_ASSERT_EQ( this->blockSize(), m_vectorStorage.size() );
-  for( localIndex i = 0; i < m_vectorStorage.size(); ++i )
-  {
-    this->setPointer( i, &m_vectorStorage[i] );
-  }
-}
 
 } //namespace geosx
 

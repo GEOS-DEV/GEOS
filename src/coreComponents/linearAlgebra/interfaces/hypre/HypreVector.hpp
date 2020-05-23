@@ -22,36 +22,35 @@
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
 /**
- * @struct hypre_IJVector_struct
- * @brief Just a placeholder to avoid to include "HYPRE_IJ_mv.h"
+ * @name Hypre forward declarations.
+ *
+ * Forward declare hypre's vector structs and pointer aliases in order
+ * to avoid including hypre headers and leaking into the rest of GEOSX.
  */
-struct hypre_IJVector_struct;
+///@{
 
-/**
- * @var typedef struct hypre_IJVector_struct * HYPRE_IJVector
- * @brief The type definition for hypre IJ vector
- */
-typedef struct hypre_IJVector_struct * HYPRE_IJVector;
+/// IJVector struct forward declaration
+extern "C" struct hypre_IJVector_struct;
 
-/**
- * @struct hypre_ParVector_struct
- * @brief Just a placeholder to avoid to include "HYPRE_parcsr_mv.h"
- */
-struct hypre_ParVector_struct;
+/// IJVector pointer alias
+using HYPRE_IJVector = hypre_IJVector_struct *;
 
-/**
- * @var typedef struct hypre_ParVector_struct * HYPRE_ParVector
- * @brief The type definition for hypre ParVector
- */
-typedef struct hypre_ParVector_struct * HYPRE_ParVector;
+/// ParVector struct forward definition
+extern "C" struct hypre_ParVector_struct;
+
+/// ParVector pointer alias
+using HYPRE_ParVector = hypre_ParVector_struct *;
+
+///@}
 
 namespace geosx
 {
 
 /**
- * @brief This class creates and provides basic support for the HYPRE_ParVector
- *        vector object type used in Hypre using the linear-algebraic system
- *        interface (IJ interface).
+ * @brief Wrapper class for hypre's ParVector.
+ *
+ * This class creates and provides basic support for the HYPRE_ParVector object
+ * type used in Hypre using the linear-algebraic system interface (IJ interface).
  */
 class HypreVector final : private VectorBase< HypreVector >
 {
@@ -71,14 +70,12 @@ public:
   /**
    * @brief Copy constructor.
    * @param src vector to be copied
-   * @return the new vector.
    */
   HypreVector( HypreVector const & src );
 
   /**
    * @brief Move constructor.
    * @param src vector to be moved
-   * @return the new vector.
    */
   HypreVector( HypreVector && src ) noexcept;
 
@@ -156,6 +153,8 @@ public:
 
   virtual void scale( real64 const scalingFactor ) override;
 
+  virtual void reciprocal() override;
+
   virtual real64 dot( HypreVector const & vec ) const override;
 
   virtual void copy( HypreVector const & x ) override;
@@ -204,16 +203,16 @@ public:
   ///@}
 
   /**
-   * @brief Returns a const pointer to the underlying HYPRE_ParVector object.
-   * @return the const pointer to the underlying HYPRE_ParVector object
+   * @brief Returns a pointer to the implementation.
+   * @return the underlying HYPRE_ParVector object.
    */
   HYPRE_ParVector const & unwrapped() const;
 
   /**
-   * @brief Returns a non-const pointer to the underlying HYPRE_ParVector object.
-   * @return the non-const pointer to the underlying HYPRE_ParVector object
+   * @brief Returns a pointer to the implementation.
+   * @return the underlying HYPRE_IJVector object.
    */
-  HYPRE_ParVector & unwrapped();
+  HYPRE_IJVector const & unwrappedIJ() const;
 
 private:
 

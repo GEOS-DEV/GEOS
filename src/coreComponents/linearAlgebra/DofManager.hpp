@@ -324,12 +324,39 @@ public:
   localIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
-   * @brief Return the number of components in a field. If @p fieldName is empty, return
-   * total number of components across all fields.
-   * @param fieldName the name of the field
+   * @brief Get the the number of components in a field.
+   * @param fieldName name of the field
    * @return the number of dof components
    */
-  localIndex numComponents( string const & fieldName = "" ) const;
+  localIndex numComponents( string const & fieldName ) const;
+
+  /**
+   * @brief Get the local number of support points on this processor.
+   * @param [in] fieldName the name of the field
+   * @return number of local support points
+   */
+  localIndex numLocalSupport( string const & fieldName ) const;
+
+  /**
+   * @brief Get the local number of support points across all processors.
+   * @param [in] fieldName name of the field
+   * @return number of global support points
+   */
+  globalIndex numGlobalSupport( string const & fieldName ) const;
+
+  /**
+   * @brief Get the support location type of the field.
+   * @param [in] fieldName name of the field
+   * @return support location type
+   */
+  Location getLocation( string const & fieldName ) const;
+
+  /**
+   * @brief Get global offset of field's block on current processor in the system matrix.
+   * @param [in] fieldName name of the field.
+   * @return global offset of the field
+   */
+  globalIndex globalOffset( string const & fieldName ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -447,27 +474,48 @@ public:
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
+
   /**
-   * @brief Create a matrix that restricts full vectors to one field vectors
-   * @param fieldName name of the target field
+   * @brief Describes a selection of components from a DoF field.
+   *
+   * A half-open range [@p loComp, @p hiComp) is selected.
+   */
+  struct SubComponent
+  {
+    string fieldName;  //!< Name of the DOF field in DofManager
+    localIndex loComp; //!< Low component index (included in selection)
+    localIndex hiComp; //!< High component index (excluded from selection)
+  };
+
+  /**
+   * @brief Create a dof selection by filtering out excluded components
+   * @param excluded a list of dof components to exclude
+   * @return a vector of remaining dof components
+   *
+   * @note Removed components must not have repeats, and each entry must either have
+   *       loComp = 0 or hiComp = numComponents(fieldName) (or both). In other words,
+   *       filtered out components must not leave "holes" in DOFs.
+   */
+  std::vector< SubComponent >
+  filterDofs( std::vector< SubComponent > const & excluded ) const;
+
+  /**
+   * @brief Create a matrix that restricts vectors and matrices to a subset of DOFs
+   * @tparam MATRIX type of matrix used for restrictor
+   * @param selection a list of fields to select; each entry is a struct containing
+   *                  the name of the field and low and high selected component indices
+   * @param comm the MPI communicator to use in the operator
+   * @param transpose if @p true, the transpose (prolongation) operator will be created
    * @param restrictor resulting operator
-   * @param comm MPI communicator
-   * @param transpose create transposed restrictor (a prolongator)
-   * @param loCompIndex starting DOF component index (for partial restriction)
-   * @param hiCompIndex index past the ending DOF component (for partial restriction)
    *
-   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
-   *       Negative value of @p hiCompIndex means use full number of field components
-   *
-   * @note Can only be called after close()
+   * @note Can only be called after reorderByRank(), since global DOF indexing is required
+   *       for the restrictor to make sense.
    */
   template< typename MATRIX >
-  void makeRestrictor( string const & fieldName,
-                       MATRIX & restrictor,
-                       MPI_Comm const comm,
-                       bool const transpose = false,
-                       localIndex const loCompIndex = 0,
-                       localIndex const hiCompIndex = -1 ) const;
+  void makeRestrictor( std::vector< SubComponent > const & selection,
+                       MPI_Comm const & comm,
+                       bool transpose,
+                       MATRIX & restrictor ) const;
 
   /**
    * @brief Print the summary of declared fields and coupling.

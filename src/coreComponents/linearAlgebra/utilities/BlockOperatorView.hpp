@@ -19,8 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKOPERATORVIEW_HPP_
 
+#include "codingUtilities/SFINAE_Macros.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
-#include "linearAlgebra/utilities/BlockVectorView.hpp"
+#include "linearAlgebra/utilities/BlockVector.hpp"
 
 namespace geosx
 {
@@ -68,21 +69,80 @@ public:
 
   ///@}
 
+private:
+
+  HAS_MEMBER_FUNCTION( numLocalRows, localIndex, );
+  HAS_MEMBER_FUNCTION( numLocalCols, localIndex, );
+  HAS_MEMBER_FUNCTION_NO_RTYPE( applyTranspose, std::declval< Vector const & >(), std::declval< Vector & >() );
+
+public:
+
   /**
    * @name LinearOperator interface
    */
   ///@{
 
-  virtual void apply( BlockVectorView< VECTOR > const & x,
-                      BlockVectorView< VECTOR > & b ) const override;
+  virtual void apply( BlockVectorView< VECTOR > const & src,
+                      BlockVectorView< VECTOR > & dst ) const override
+  {
+    for( localIndex i = 0; i < numBlockRows(); i++ )
+    {
+      dst.block( i ).zero();
+      VECTOR temp( dst.block( i ) );
+      for( localIndex j = 0; j < numBlockCols(); j++ )
+      {
+        if( m_operators( i, j ) != nullptr )
+        {
+          m_operators( i, j )->apply( src.block( j ), temp );
+          dst.block( i ).axpy( 1.0, temp );
+        }
+      }
+    }
+  }
 
-  virtual globalIndex numGlobalRows() const override;
+  template< typename OP = OPERATOR >
+  std::enable_if_t< HasMemberFunction_applyTranspose< OP > >
+  applyTranspose( BlockVectorView< VECTOR > const & src,
+                  BlockVectorView< VECTOR > & dst ) const
+  {
+    for( localIndex j = 0; j < numBlockCols(); j++ )
+    {
+      dst.block( j ).zero();
+      VECTOR temp( dst.block( j ) );
+      for( localIndex i = 0; i < numBlockRows(); i++ )
+      {
+        if( m_operators( j, i ) != nullptr )
+        {
+          m_operators( j, i )->applyTranspose( src.block( i ), temp );
+          dst.block( j ).axpy( 1.0, temp );
+        }
+      }
+    }
+  }
 
-  virtual globalIndex numGlobalCols() const override;
+  virtual globalIndex numGlobalRows() const override
+  {
+    return computeRowSize( []( OPERATOR const & block ) { return block.numGlobalRows(); } );
+  }
 
-  virtual localIndex numLocalRows() const;
+  virtual globalIndex numGlobalCols() const override
+  {
+    return computeColSize( []( OPERATOR const & block ) { return block.numGlobalCols(); } );
+  }
 
-  virtual localIndex numLocalCols() const;
+  template< typename OP = OPERATOR >
+  std::enable_if_t< HasMemberFunction_numLocalRows< OP >, localIndex >
+  numLocalRows() const
+  {
+    return computeRowSize( []( OPERATOR const & block ) { return block.numLocalRows(); } );
+  }
+
+  template< typename OP = OPERATOR >
+  std::enable_if_t< HasMemberFunction_numLocalCols< OP >, localIndex >
+  numLocalCols() const
+  {
+    return computeColSize( []( OPERATOR const & block ) { return block.numLocalCols(); } );
+  }
 
   ///@}
 
@@ -117,6 +177,7 @@ public:
    */
   OPERATOR const & block( localIndex const blockRowIndex, localIndex const blockColIndex ) const
   {
+    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
   }
 
@@ -125,7 +186,24 @@ public:
    */
   OPERATOR & block( localIndex const blockRowIndex, localIndex const blockColIndex )
   {
+    GEOSX_LAI_ASSERT( m_operators( blockRowIndex, blockColIndex ) != nullptr );
     return *m_operators( blockRowIndex, blockColIndex );
+  }
+
+  /**
+   * @copydoc block( localIndex const, localIndex const ) const
+   */
+  OPERATOR const & operator()( localIndex const blockRowIndex, localIndex const blockColIndex = 0 ) const
+  {
+    return block( blockRowIndex, blockColIndex );
+  }
+
+  /**
+   * @copydoc block( localIndex const, localIndex const ) const
+   */
+  OPERATOR & operator()( localIndex const blockRowIndex, localIndex const blockColIndex = 0 )
+  {
+    return block( blockRowIndex, blockColIndex );
   }
 
   ///@}
@@ -173,100 +251,54 @@ protected:
 
 private:
 
+  template< typename FUNC >
+  auto computeRowSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) );
+
+  template< typename FUNC >
+  auto computeColSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) );
+
   /// Array of pointers to blocks
   array2d< OPERATOR * > m_operators;
-
 };
 
 template< typename VECTOR, typename OPERATOR >
-void BlockOperatorView< VECTOR, OPERATOR >::apply( BlockVectorView< VECTOR > const & x,
-                                                   BlockVectorView< VECTOR > & b ) const
+template< typename FUNC >
+auto BlockOperatorView< VECTOR, OPERATOR >::computeRowSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) )
 {
-  for( localIndex i = 0; i < m_operators.size( 0 ); i++ )
-  {
-    b.block( i ).zero();
-    VECTOR temp( b.block( i ) );
-    for( localIndex j = 0; j < m_operators.size( 1 ); j++ )
-    {
-      if( m_operators( i, j ) != nullptr )
-      {
-        m_operators( i, j )->apply( x.block( j ), temp );
-        b.block( i ).axpy( 1.0, temp );
-      }
-    }
-  }
-}
-
-template< typename VECTOR, typename OPERATOR >
-globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalRows() const
-{
-  globalIndex numRows = 0;
+  using sizeType = decltype( func( std::declval< OPERATOR const >() ) );
+  sizeType rowSize = 0;
   for( localIndex i = 0; i < numBlockRows(); ++i )
   {
     for( localIndex j = 0; j < numBlockCols(); ++j )
     {
       if( m_operators( i, j ) != nullptr )
       {
-        numRows += block( i, j ).numGlobalRows();
+        rowSize += func( block( i, j ) );
         break;
       }
     }
   }
-  return numRows;
+  return rowSize;
 }
 
 template< typename VECTOR, typename OPERATOR >
-globalIndex BlockOperatorView< VECTOR, OPERATOR >::numGlobalCols() const
+template< typename FUNC >
+auto BlockOperatorView< VECTOR, OPERATOR >::computeColSize( FUNC func ) const -> decltype( func( std::declval< OPERATOR const >() ) )
 {
-  globalIndex numCols = 0;
+  using sizeType = decltype( func( std::declval< OPERATOR const >() ) );
+  sizeType colSize = 0;
   for( localIndex j = 0; j < numBlockCols(); j++ )
   {
     for( localIndex i = 0; i < numBlockRows(); ++i )
     {
       if( m_operators( i, j ) != nullptr )
       {
-        numCols += block( i, j ).numGlobalCols();
+        colSize += func( block( i, j ) );
         break;
       }
     }
   }
-  return numCols;
-}
-
-template< typename VECTOR, typename OPERATOR >
-localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalRows() const
-{
-  localIndex numRows = 0;
-  for( localIndex i = 0; i < numBlockRows(); ++i )
-  {
-    for( localIndex j = 0; j < numBlockCols(); ++j )
-    {
-      if( m_operators( i, j ) != nullptr )
-      {
-        numRows += block( i, j ).numLocalRows();
-        break;
-      }
-    }
-  }
-  return numRows;
-}
-
-template< typename VECTOR, typename OPERATOR >
-localIndex BlockOperatorView< VECTOR, OPERATOR >::numLocalCols() const
-{
-  localIndex numCols = 0;
-  for( localIndex j = 0; j < numBlockCols(); j++ )
-  {
-    for( localIndex i = 0; i < numBlockRows(); ++i )
-    {
-      if( m_operators( i, j ) != nullptr )
-      {
-        numCols += block( i, j ).numLocalCols();
-        break;
-      }
-    }
-  }
-  return numCols;
+  return colSize;
 }
 
 }// end geosx namespace

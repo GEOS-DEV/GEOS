@@ -19,16 +19,17 @@
 #ifndef GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
 
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+
 namespace geosx
 {
 
 class HypreVector;
 class HypreMatrix;
-class LinearSolverParameters;
 
 /**
- * @class HypreSolver
- * @brief This class creates and provides basic support for ILUT and BoomerAMG.
+ * @brief This class creates and provides basic support for Hypre solvers.
  */
 class HypreSolver
 {
@@ -38,7 +39,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  HypreSolver( LinearSolverParameters const & parameters );
+  HypreSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
@@ -57,10 +58,19 @@ public:
               HypreVector & sol,
               HypreVector & rhs );
 
+  /**
+   * @brief Get the result of previous solve.
+   * @return struct with last solve stats
+   */
+  LinearSolverResult const & result()
+  {
+    return m_result;
+  }
 
 private:
 
   LinearSolverParameters const & m_parameters;
+  LinearSolverResult m_result;
 
   void solve_direct( HypreMatrix & mat,
                      HypreVector & sol,
