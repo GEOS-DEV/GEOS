@@ -28,11 +28,10 @@ namespace geosx
 {
 class SolverBase;
 
-  /**
-   * @class MeshManager
-   * @brief This class provides an interface for  manage the Mes
-   */
-  
+/**
+ * @class MeshManager
+ * @brief This class manages the mesh objects in GEOSX (reservoir mesh, well mesh)
+ */
 class MeshManager : public dataRepository::Group
 {
 public:
@@ -60,7 +59,7 @@ public:
   virtual void ExpandObjectCatalogs() override;
 
   /**
-   * @brief Generate the meshes of the physical DomainPartition
+   * @brief Generate the meshes of the physical DomainPartition.
    * @param[in] domain a pointer to the physical DomainPartition
    */
   void GenerateMeshes( DomainPartition * const domain );
