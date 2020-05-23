@@ -12,6 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file MeshManager.hpp
+ */
+
+
 
 #ifndef GEOSX_PHYSICSSOLVERS_MESHMANAGER_HPP_
 #define GEOSX_PHYSICSSOLVERS_MESHMANAGER_HPP_

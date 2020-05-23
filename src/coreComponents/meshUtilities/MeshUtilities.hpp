@@ -14,7 +14,6 @@
 
 /**
  * @file MeshUtilities.hpp
- *
  */
 
 #ifndef MESHUTILITIES_H_
@@ -63,7 +62,7 @@ public:
   /**
    * @brief Build all node sets from a geometric object in the DomainPartition.
    * @param[in] geometry a pointer to the group in the data repository
-   * @param[in] nodeManager manager of all noded in the DomainPartition
+   * @param[in] nodeManager manager of all nodes in the DomainPartition
    */
   static void GenerateNodesets( dataRepository::Group const * geometry,
                                 NodeManager * const nodeManager );
