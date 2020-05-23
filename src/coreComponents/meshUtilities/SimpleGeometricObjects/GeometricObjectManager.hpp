@@ -25,17 +25,36 @@
 namespace geosx
 {
 
+/**
+ * @class GeometricObjectManager
+ * @brief Manager of the simple geometric objects
+ */
 class GeometricObjectManager : public dataRepository::Group
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   GeometricObjectManager( std::string const & name,
                           Group * const parent );
 
+  /**
+   * @brief Default destructor.
+   */
   virtual ~GeometricObjectManager() override;
+
+  ///@}
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
 private:

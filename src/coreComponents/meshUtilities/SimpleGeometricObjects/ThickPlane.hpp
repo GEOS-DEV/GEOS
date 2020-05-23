@@ -24,29 +24,74 @@
 namespace geosx
 {
 
+/**
+ * @class ThickPlane
+ * @brief Class to represent a geometric thick plane  in GEOSX.
+ */
 class ThickPlane : public SimpleGeometricObjectBase
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   ThickPlane( const std::string & name,
               Group * const parent );
 
+  /**
+   * @brief Default destructor.
+   */
   virtual ~ThickPlane() override;
 
+  ///@}
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  /**
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
+   */
   static string CatalogName() { return "ThickPlane"; }
+
+  ///@}
 
   bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
-  /*
-   * Accessors
+  /**
+   * @name Getters
    */
-  // normal vector
+  ///@{
+
+  /**
+   * @brief Get the normal to the plane.
+   * @return the normal vector
+   */
   R1Tensor & getNormal() {return m_normal;}
 
+  /**
+   * @copydoc getNormal()
+   */
   R1Tensor const & getNormal() const {return m_normal;}
 
-  // origin of the plane
+  /**
+   * @brief Get the origin of the plane.
+   * @return the origin of the plane
+   */
   R1Tensor & getCenter() {return m_origin;}
 
+  /**
+   * @copydoc getCenter()
+   */
   R1Tensor const & getCenter() const {return m_origin;}
 
 protected:
@@ -54,9 +99,14 @@ protected:
 
 private:
 
+  /// Origin point (x,y,z) of the plane (basically, any point on the plane)
   R1Tensor m_origin;
+  /// Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)
   R1Tensor m_normal;
+  /// Total thickness of the plane (with half to each side)
   real64 m_thickness;
+
+  /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
   {
@@ -64,6 +114,8 @@ private:
     static constexpr auto normalString = "normal";
     static constexpr auto thicknessString = "thickness";
   };
+
+  /// @endcond
 
 };
 } /* namespace geosx */
