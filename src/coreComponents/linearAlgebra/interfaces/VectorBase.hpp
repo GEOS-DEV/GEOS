@@ -62,10 +62,31 @@ protected:
     : m_closed( true )
   {}
 
+  /**
+   * @brief Copy constructor.
+   */
   VectorBase( VectorBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
   VectorBase( VectorBase && ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase const & ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase && ) = default;
+
+  /**
+   * @brief Destructor.
+   */
   ~VectorBase() = default;
 
   ///@}
@@ -257,6 +278,12 @@ protected:
    * @param scalingFactor scaling Factor
    */
   virtual void scale( real64 const scalingFactor ) = 0;
+
+  /**
+   * @brief Replace vector elements by their reciprocals
+   * @note No guarding is done against division by zero.
+   */
+  virtual void reciprocal() = 0;
 
   /**
    * @brief Dot product with the vector vec.
