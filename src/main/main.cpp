@@ -56,42 +56,44 @@ int main( int argc, char *argv[] )
     dataRepository::loadTree( restartFileName );
   }
 
-  ProblemManager problemManager( "Problem", nullptr );
-
-  problemManager.InitializePythonInterpreter();
-  problemManager.ParseCommandLineInput();
-
-  if( !problemManager.getSchemaFileName().empty() )
   {
-    problemManager.GenerateDocumentation();
-  }
-  else
-  {
-    problemManager.ParseInputFile();
+    ProblemManager problemManager( "Problem", nullptr );
 
-    problemManager.ProblemSetup();
+    problemManager.InitializePythonInterpreter();
+    problemManager.ParseCommandLineInput();
 
-    if( restart )
+    if( !problemManager.getSchemaFileName().empty() )
     {
-      problemManager.ReadRestartOverwrite();
+      problemManager.GenerateDocumentation();
+    }
+    else
+    {
+      problemManager.ParseInputFile();
+
+      problemManager.ProblemSetup();
+
+      if( restart )
+      {
+        problemManager.ReadRestartOverwrite();
+      }
+
+      MpiWrapper::Barrier( MPI_COMM_GEOSX );
+      GEOSX_LOG_RANK_0( "Running simulation" );
+
+      gettimeofday( &tim, nullptr );
+      const real64 t_initialize = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
+
+      problemManager.RunSimulation();
+
+      gettimeofday( &tim, nullptr );
+      const real64 t_run = tim.tv_sec + ( tim.tv_usec / 1000000.0 );
+
+      GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize - t_start <<
+                        "s, run time = " << t_run - t_initialize << "s" );
     }
 
-    MpiWrapper::Barrier( MPI_COMM_GEOSX );
-    GEOSX_LOG_RANK_0( "Running simulation" );
-
-    gettimeofday( &tim, nullptr );
-    const real64 t_initialize = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
-    problemManager.RunSimulation();
-
-    gettimeofday( &tim, nullptr );
-    const real64 t_run = tim.tv_sec + (tim.tv_usec / 1000000.0);
-
-    GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize-t_start <<
-                      "s, run time = " << t_run-t_initialize << "s" );
+    problemManager.ClosePythonInterpreter();
   }
-
-  problemManager.ClosePythonInterpreter();
 
   GEOSX_MARK_FUNCTION_END;
 
