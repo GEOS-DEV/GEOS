@@ -6,6 +6,7 @@ add_subdirectory (GEOSX_PTP)
 # Specify solver headers
 #
 set( physicsSolvers_headers
+     LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
@@ -49,9 +50,10 @@ set( physicsSolvers_headers
 # Specify solver sources
 #
 set( physicsSolvers_sources
+     LinearSolverParameters.cpp
+     NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
-     NonlinearSolverParameters.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp

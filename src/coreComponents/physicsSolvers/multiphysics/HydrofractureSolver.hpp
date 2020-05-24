@@ -22,14 +22,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 
-#define Trilinos 1
-#define Hypre 2
-#define Petsc 3
-#undef USING_TRILINOS
-#if ( GEOSX_LA_INTERFACE == Trilinos )
-#define USING_TRILINOS
-#endif
-
 namespace geosx
 {
 
@@ -197,7 +189,7 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
-#ifdef USING_TRILINOS
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;
 #endif

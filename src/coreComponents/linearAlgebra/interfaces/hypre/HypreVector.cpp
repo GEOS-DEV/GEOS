@@ -17,7 +17,9 @@
  */
 
 #include "HypreVector.hpp"
-#include "HypreUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
 #include "HYPRE.h"
 #include "_hypre_IJ_mv.h"
@@ -184,7 +186,8 @@ void HypreVector::set( globalIndex const globalRow,
                        real64 const value )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_ASSERT_GE( getLocalRowID( globalRow ), 0 );
+  GEOSX_LAI_ASSERT_GE( globalRow, ilower() );
+  GEOSX_LAI_ASSERT_GT( iupper(), globalRow );
   GEOSX_LAI_CHECK_ERROR( HYPRE_IJVectorSetValues( m_ij_vector, 1, &globalRow, &value ) );
 }
 
@@ -223,7 +226,8 @@ void HypreVector::set( arraySlice1d< globalIndex const > const & globalIndices,
                        arraySlice1d< real64 const > const & values )
 {
   GEOSX_LAI_ASSERT( !closed() );
-  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(), globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
+  GEOSX_LAI_ASSERT_GE( *std::min_element( globalIndices.dataIfContiguous(),
+                                          globalIndices.dataIfContiguous() + globalIndices.size() ), ilower() );
   GEOSX_LAI_ASSERT_GT( iupper(), *std::max_element( globalIndices.dataIfContiguous(),
                                                     globalIndices.dataIfContiguous() + globalIndices.size() ) );
 
@@ -278,7 +282,23 @@ void HypreVector::close()
 void HypreVector::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( HYPRE_ParVectorScale( scalingFactor, m_par_vector ) );
+}
+
+void HypreVector::reciprocal()
+{
+  GEOSX_LAI_ASSERT( ready() );
+  real64 * const values = extractLocalVector();
+  for( localIndex i = 0; i < localSize(); ++i )
+  {
+    values[i] = 1.0 / values[i];
+  }
 }
 
 real64 HypreVector::dot( HypreVector const & vec ) const
@@ -488,9 +508,9 @@ HYPRE_ParVector const & HypreVector::unwrapped() const
   return m_par_vector;
 }
 
-HYPRE_ParVector & HypreVector::unwrapped()
+HYPRE_IJVector const & HypreVector::unwrappedIJ() const
 {
-  return m_par_vector;
+  return m_ij_vector;
 }
 
 globalIndex HypreVector::globalSize() const

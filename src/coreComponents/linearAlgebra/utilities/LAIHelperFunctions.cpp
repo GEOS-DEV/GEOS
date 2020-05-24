@@ -28,7 +28,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
                               localIndex const nRows,
                               localIndex const nCols,
                               int const nDofPerNode,
-                              string const DofKey,
+                              string const dofKey,
                               ParallelMatrix & permutationMatrix )
 {
   /* Crates a permutation matrix for a given nodal variable specified by the DofKey. It consider that nDofPerNode
@@ -42,7 +42,7 @@ void CreatePermutationMatrix( NodeManager const * const nodeManager,
   permutationMatrix.createWithLocalSize( nRows, nCols, 1, MPI_COMM_GEOSX );
   permutationMatrix.open();
 
-  arrayView1d< globalIndex const > const & DofNumber =  nodeManager->getReference< globalIndex_array >( DofKey );
+  arrayView1d< globalIndex const > const & DofNumber =  nodeManager->getReference< globalIndex_array >( dofKey );
 
   arrayView1d< globalIndex const > const & localToGlobal = nodeManager->localToGlobalMap();
 
@@ -110,13 +110,13 @@ void CreatePermutationMatrix( ElementRegionManager const * const elemManager,
 }
 
 ParallelVector PermuteVector( ParallelVector const & vector,
-                              ParallelMatrix const & permuationMatrix )
+                              ParallelMatrix const & permutationMatrix )
 {
   ParallelVector permutedVector;
 
   permutedVector.createWithLocalSize( vector.localSize(), MPI_COMM_GEOSX );
 
-  permuationMatrix.apply( vector, permutedVector );
+  permutationMatrix.apply( vector, permutedVector );
 
   return permutedVector;
 }
@@ -172,34 +172,6 @@ ParallelMatrix PermuteMatrix( ParallelMatrix const & matrix,
 
   return permutedMatrix;
 }
-
-void PrintPermutedVector( ParallelVector const & vector,
-                          ParallelMatrix const & permuationMatrix,
-                          std::ostream & os )
-{
-  ParallelVector permutedVector = PermuteVector( vector, permuationMatrix );
-  permutedVector.print( os );
-}
-
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrix,
-                          std::ostream & os )
-{
-  ParallelMatrix permutedMatrix = PermuteMatrix( matrix, permutationMatrix );
-  permutedMatrix.print( os );
-}
-
-void PrintPermutedMatrix( ParallelMatrix const & matrix,
-                          ParallelMatrix const & permutationMatrixLeft,
-                          ParallelMatrix const & permutationMatrixRight,
-                          std::ostream & os )
-
-{
-  ParallelMatrix permutedMatrix = PermuteMatrix( matrix, permutationMatrixLeft, permutationMatrixRight );
-  permutedMatrix.print( os );
-}
-
-
 
 } // namespace LAIHelperFunctions
 

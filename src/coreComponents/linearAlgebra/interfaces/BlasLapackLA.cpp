@@ -283,10 +283,8 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::abs( detA ) >
-                    std::numeric_limits< real64 >::epsilon() *
-                    matrixNorm( A, 'F' ),
-                    "Matrix is singular" );
+  GEOSX_ASSERT_MSG( std::abs( detA ) > 0, "Matrix is singular" );
+
   real64 oneOverDetA = 1. / detA;
 
   // --- Compute inverse
@@ -622,8 +620,8 @@ void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_
   detail::matrixInverse( A, Ainv );
 }
 
-void BlasLapackLA::vectorCopy( array1d< real64 > const & X,
-                               array1d< real64 > & Y )
+void BlasLapackLA::vectorCopy( arraySlice1d< real64 const > const & X,
+                               arraySlice1d< real64 > const & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for copying" );
@@ -631,7 +629,7 @@ void BlasLapackLA::vectorCopy( array1d< real64 > const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
-  GEOSX_dcopy( &N, X.data(), &INCX, Y.data(), &INCY );
+  GEOSX_dcopy( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
 void BlasLapackLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,

@@ -153,12 +153,14 @@ public:
   FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase const * >(); }
 
 protected:
+
   virtual void PostProcessInput() override final;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
-
 private:
+
+  void CreatePreconditioner();
 
   string m_solidSolverName;
   string m_flowSolverName;

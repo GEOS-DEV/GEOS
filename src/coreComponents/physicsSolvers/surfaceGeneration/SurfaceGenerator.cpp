@@ -482,11 +482,9 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 {
   DomainPartition * const domain = domain0->group_cast< DomainPartition * >();
 
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( dataRepository::keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   // repopulate the fracture stencil
   for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
@@ -508,9 +506,9 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
       fractureSubRegion->m_newFaceElements.insert( fe );
     }
 
-    for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
+    for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
+      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
         fluxApprox->addToFractureStencil( *domain,
@@ -548,11 +546,9 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     }
   }
 
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( dataRepository::keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
   {
@@ -563,9 +559,9 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
       EdgeManager * const edgeManager = meshLevel->getEdgeManager();
       FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( this->m_fractureRegionName );
 
-      for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
+      for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
       {
-        FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
+        FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
           fluxApprox->addToFractureStencil( *domain,
@@ -2948,13 +2944,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                                              arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
                                                                                                                constitutiveManager );
 
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteElementDiscretizationManager const *
-    feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< array3d< R1Tensor > > const
   dNdX = elementManager.ConstructViewAccessor< array3d< R1Tensor > >( keys::dNdX );
@@ -3777,13 +3773,13 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                                                constitutiveManager );
 
 
-  NumericalMethodsManager const * numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteElementDiscretizationManager const *
-    feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< array3d< R1Tensor > > const
   dNdX = elementManager.ConstructViewAccessor< array3d< R1Tensor > >( keys::dNdX );

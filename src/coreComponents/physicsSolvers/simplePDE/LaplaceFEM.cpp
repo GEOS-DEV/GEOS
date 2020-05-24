@@ -26,7 +26,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "dataRepository/Group.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
@@ -208,17 +208,16 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   Group * const nodeManager = mesh->getNodeManager();
 
   NumericalMethodsManager const *
-    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
 
-  FiniteElementDiscretizationManager const *
-    feDiscretizationManager = numericalMethodManager->
-                                GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
   array1d< globalIndex > const &
   dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix.open();
   rhs.open();
@@ -235,6 +234,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                                       matrix,
                                                       rhs,
                                                       m_fieldName );
+
 
   matrix.close();
   rhs.close();
