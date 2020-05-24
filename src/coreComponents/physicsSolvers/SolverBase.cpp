@@ -372,6 +372,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
+      /* TJ: in the solid solver, disp -= disp_increment, disp_increment = 0
+       *                          reset stress to beginning
+       *     in the fluid solver, delta_pressure = 0
+       *                          call updateState()
+       */
       ResetStateToBeginningOfStep( domain );
     }
 
@@ -476,6 +481,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // apply the system solution to the fields/variables
+      //TJ: in solid solver, update the displacement field and the displacement
+      //                     increment field
+      //    in flow solver, update the delta_pressure, then
+      //                    UpdateState()
+      //    then call UpdateDeformationForCoupling()
       ApplySystemSolution( dofManager, solution, scaleFactor, domain );
 
       lastResidual = residualNorm;

@@ -124,6 +124,21 @@ public:
 
   inline string const getFractureRegionName() const { return m_fractureRegionName; }
 
+  /**
+   * @brief Getter function to obtain the private member m_tipNodes
+   */
+  inline SortedArray< localIndex > const getTipNodes() const { return m_tipNodes; }
+
+  /**
+   * @brief Getter function to obtain the private member m_trailingFaces
+   */
+  inline SortedArray< localIndex > const getTrailingFaces() const { return m_trailingFaces; }
+
+  /**
+   * @brief Getter function to obtain the private member m_nodesWithAssignedDisp
+   */
+  inline SortedArray< localIndex > const getNodesWithAssignedDisp() const { return m_nodesWithAssignedDisp; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;
@@ -524,6 +539,10 @@ private:
     constexpr static auto fractureRegionNameString = "fractureRegion";
     constexpr static auto mpiCommOrderString = "mpiCommOrder";
 
+    //TJ: add the key for m_nodesWithAssignedDisp
+    constexpr static auto nodesWithAssignedDispString = "nodesWithAssignedDisp";
+
+
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
     constexpr static auto rockToughnessString = "rockToughness";
@@ -601,6 +620,13 @@ private:
   SortedArray< localIndex > m_trailingFaces;
 
   SortedArray< localIndex > m_faceElemsRupturedThisSolve;
+
+  /* TJ: add an array to store element nodes that need to be assigned
+   *     with displacement based on the fluid volume in the partially
+   *     open element
+   */
+  SortedArray< localIndex > m_nodesWithAssignedDisp;
+
 
 };
 

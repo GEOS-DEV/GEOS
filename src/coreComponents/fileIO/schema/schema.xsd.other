@@ -602,6 +602,8 @@
 		<xsd:attribute name="failCriterion" type="integer" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--nodesWithAssignedDisp => Set containing all the nodes with displacement assigned due to volume in the partially fractured element-->
+		<xsd:attribute name="nodesWithAssignedDisp" type="LvArray_SortedArray&lt;long, long&gt;" />
 		<!--tipEdges => Set containing all the tip edges-->
 		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->

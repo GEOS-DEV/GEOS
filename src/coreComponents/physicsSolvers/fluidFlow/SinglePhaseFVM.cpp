@@ -337,6 +337,7 @@ SinglePhaseFVM< BASE >::ApplyBoundaryConditions( real64 const time_n,
 
   // call the BoundaryConditionManager::ApplyField function that will check to see
   // if the boundary condition should be applied to this subregion
+  //TJ: add the source term (flux at elmt center)
   fsManager.Apply( time_n + dt, domain, "ElementRegions", FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString,
                    [&]( FieldSpecificationBase const * const fs,
                         string const &,

@@ -39,6 +39,9 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
+//TJ: access tip quantities in the SurfaceGenerator class
+#include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
 {
@@ -115,15 +118,27 @@ void HydrofractureSolver::ImplicitStepSetup( real64 const & time_n,
                                              ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
                                              ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
+  /* TJ: calculate the face element effective aperture
+   *     and deltaVolume via displacement field of the
+   *     fractured face.
+   */
   this->UpdateDeformationForCoupling( domain );
 
+  /* TJ: initialize displacement increment to zero;
+   *     set beginningOfStepStress stress_n = stress;
+   */
   m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
                                     m_solidSolver->getDofManager(),
                                     m_solidSolver->getSystemMatrix(),
                                     m_solidSolver->getSystemRhs(),
                                     m_solidSolver->getSystemSolution() );
 
-
+  /* TJ: ResetViews()
+   *     initialize m_deltaPressure and m_deltaVolume to zero;
+   *     set m_elementAperture0 = effective aperture;
+   *     set m_densityOld = m_density, m_porosityOld = m_porosity;
+   *     UpdateState()
+   */
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
                                    m_flowSolver->getDofManager(),
                                    m_flowSolver->getSystemMatrix(),
@@ -227,6 +242,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       int locallyFractured = 0;
       int globallyFractured = 0;
 
+
+      /* TJ: create the sparsity patterns for the diagonal blocks
+       *     and the off-diagonal blocks
+       */
       SetupSystem( domain,
                    m_dofManager,
                    m_matrix,
@@ -235,7 +254,75 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
       if( solveIter>0 )
       {
+	/* TJ: set stress = stress_n to reset the solid stress
+	 *     to the beginning of the step. On the other hand,
+	 *     the displacement field and the displacement increment
+	 *     field are NOT reset. That is, the displacement field and
+	 *     the displacement increment field used in the first newton
+	 *     iteration of the resolve (rewind) are based on the converged
+	 *     solution from the previous solve. Of course, the stress is
+	 *     reset to the beginning of the step (as mentioned before).
+	 *
+	 */
         m_solidSolver->ResetStressToBeginningOfStep( domain );
+      }
+
+      //TJ: print out surface aperture before newton solve
+      Group * elementSubRegions = domain->GetGroup("MeshBodies")
+                                        ->GetGroup<MeshBody>("mesh1")
+                                        ->GetGroup<MeshLevel>("Level0")
+    			          	->GetGroup<ElementRegionManager>("ElementRegions")
+    			        	->GetRegion< FaceElementRegion >( "Fracture" )
+    				        ->GetGroup("elementSubRegions");
+
+      FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+      FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
+      FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
+      FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+
+      std::cout << "Inside hydrofracture solver, "
+	           "before newton solve: "
+	        << std::endl;
+      std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+      if (subRegion->size() == 0)
+        std::cout << "No face element yet" << "\n";
+      else
+      {
+        std::cout << "Face element info: " << std::endl;
+        for(localIndex i=0; i<nodeMap.size(); i++)
+    	{
+    	  std::cout << "Face (node) " << i << ": ";
+    	  for(localIndex j=0; j<nodeMap[i].size(); j++)
+    	    std::cout << nodeMap[i][j] << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<edgeMap.size(); i++)
+    	{
+    	  std::cout << "Face (edge) " << i << ": ";
+    	  for(localIndex j=0; j<edgeMap[i].size(); j++)
+    	    std::cout << edgeMap[i][j] << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<faceMap.size(0); i++)
+    	{
+    	  std::cout << "Face (face) " << i << ": ";
+    	  for(localIndex j=0; j<faceMap.size(1); j++)
+    	    std::cout << faceMap[i][j] << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+    	{
+    	  std::cout << "Face (center) " << i << ": ";
+    	  for(auto & item : subRegion->getElementCenter()[i])
+    	    std::cout << item << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+    	{
+    	  std::cout << "Face (aperture) " << i << ": "
+    	            << subRegion->getElementAperture()[i]
+    	            << std::endl;
+    	}
       }
 
       // currently the only method is implicit time integration
@@ -248,6 +335,48 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
+      //TJ: print out surface aperture after newton solve
+      std::cout << "Inside hydrofracture solver, "
+	           "after newton solve: "
+	        << std::endl;
+      std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+      if (subRegion->size() == 0)
+        std::cout << "No face element yet" << "\n";
+      else
+      {
+        std::cout << "Face element info: " << std::endl;
+        for(localIndex i=0; i<nodeMap.size(); i++)
+    	{
+    	  std::cout << "Face (node) " << i << ": ";
+    	  for(localIndex j=0; j<nodeMap[i].size(); j++)
+    	    std::cout << nodeMap[i][j] << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<edgeMap.size(); i++)
+    	{
+    	  std::cout << "Face (edge) " << i << ": ";
+    	  for(localIndex j=0; j<edgeMap[i].size(); j++)
+    	    std::cout << edgeMap[i][j] << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+    	{
+    	  std::cout << "Face (center) " << i << ": ";
+    	  for(auto & item : subRegion->getElementCenter()[i])
+    	    std::cout << item << " ";
+    	  std::cout << "\n";
+    	}
+        for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+    	{
+    	  std::cout << "Face (aperture) " << i << ": "
+    	            << subRegion->getElementAperture()[i]
+    	            << std::endl;
+    	}
+      }
+
+      /* TJ: update the stress in solid via displacement increment
+       *     stress = stress + materialStiffness*disp_increment
+       */
       m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
@@ -255,6 +384,186 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
+          /* TJ: This is where we can prescribe the displacement boundary conditions
+           *     for the newly generated nodes due to split. We use the quantities
+           *     m_tipNodes, m_tipEdges, m_tipFaces, and m_trailingFaces defined in the
+           *     SurfaceGenerator class.
+           */
+          SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+          SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+          std::cout << "A new surface is just generated, "
+                       "we can manipulate the node displacements "
+                       "at the newly generated nodes via split. "
+                    << std::endl;
+          std::cout << "m_tipNodes: ";
+          for(auto & item : tipNodes)
+            std::cout << item << " ";
+          std::cout << std::endl;
+          SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+          std::cout << "m_trailingFaces: ";
+          for(auto & item : trailingFaces)
+            std::cout << item << " ";
+          std::cout << std::endl;
+
+          /* TJ: We manipulate the displacement fields at the newly generated
+           *     nodes via element split
+           */
+          MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+          NodeManager & nodeManager = *mesh.getNodeManager();
+          FaceManager & faceManager = *mesh.getFaceManager();
+          r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
+/*
+          std::cout << "Face to Node list: " << std::endl;
+          for(int i = 0; i<faceManager.nodeList().size(); i++)
+	  {
+	    std::cout << "Face "<< i << ": ";
+	    for(int j=0; j<faceManager.nodeList()[i].size(); j++)
+	      std::cout << faceManager.nodeList()(i,j) << " ";
+	    std::cout << std::endl;
+	  }
+          std::cout << "Face normal: " << std::endl;
+          for(int i=0; i < faceNormal.size(); i++)
+          {
+            std::cout << "Face " << i << ": " ;
+            for(auto & item : faceNormal(i))
+              std::cout << item << " ";
+            std::cout << std::endl;
+          }
+          for(localIndex i=0; i<faceMap.size(0); i++)
+       	  {
+	    std::cout << "Face (face) " << i << ": ";
+	    for(localIndex j=0; j<faceMap.size(1); j++)
+	      std::cout << faceMap[i][j] << " ";
+	    std::cout << "\n";
+      	  }
+*/
+          array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
+          array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
+/*
+          std::cout << "Node 10: "
+                    << disp(10,0) << ", "
+		    << disp(10,1) << ", "
+		    << disp(10,2) << std::endl;
+          std::cout << "Node 26: "
+                    << disp(26,0) << ", "
+		    << disp(26,1) << ", "
+		    << disp(26,2) << std::endl;
+          std::cout << "Node 8 (disp): "
+                    << disp(8,0) << ", "
+		    << disp(8,1) << ", "
+		    << disp(8,2) << std::endl;
+          std::cout << "Node 8 (disp_incre): "
+                    << dispIncre(8,0) << ", "
+		    << dispIncre(8,1) << ", "
+		    << dispIncre(8,2) << std::endl;
+*/
+
+          /* TJ: We still need to finish the following task
+           * 0. Assume we only have ONE trailingFace
+           * 1. Assign the displacement field and disp_increment field at newly splitted nodes;
+           * 2. Create a set to include these splitted nodes as essential B.C.;
+           * 3. Pass info from 1. and 2. as essential B.C. values (via getReference);
+           * 4. Update the solidSolver field such as stress (NOT necessary);
+           * 5. Update the fluidSolver field such as aperture UpdateDeformationForCoupling().
+           * 6. Should we worry about other side effects in the flow solver? Shall we call UpdateState()?
+           */
+          //1. manipulate the displacement field on the newly splitted nodes
+          //   it is important to set the displacement increment properly since
+          //   the rhs assembly relys on the the displacement increment.
+          SortedArray< localIndex > & nodesWithAssignedDisp =
+	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+          nodesWithAssignedDisp.clear();
+
+          // For the current purpose, the magnitude of the B.C. value is
+          // hard-coded. Eventually this magnitude should be calculated from
+          // the tip-asymptotic relationship
+          real64 const refValue = 0.002;
+
+          for(auto const & trailingFace : trailingFaces)
+          {
+            //Find which faceElmt the trailingFace is located at
+            localIndex faceElmt;
+            bool found = false;
+            // loop over all the face element
+            for(localIndex i=0; i<faceMap.size(0); i++)
+	    {
+              // loop over all the (TWO) faces in a face element
+	      for(localIndex j=0; j<faceMap.size(1); j++)
+	      {
+		// if the trailingFace is one of the two faces in a face element,
+		// we find it
+		if (faceMap[i][j] == trailingFace)
+		{
+		  faceElmt = i;
+		  found = true;
+		  break;
+		}
+	      } // for localIndex j
+	      if (found)
+	        break;
+	    } // for localIndex i
+            GEOSX_ASSERT_MSG( found == true,
+			  "Trailing face is not found among the fracture face elements" );
+            std::cout << "faceElmt = " << faceElmt << std::endl;
+
+            //Find which nodes' displacement need to be manipulated
+            for (auto const & node : nodeMap[faceElmt])
+            {
+              found = false;
+              std::cout << "node " << node << std::endl;
+              for (auto const & tipNode : tipNodes)
+              {
+                if (node == tipNode)
+                {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found)
+              {
+        	// Insert node to the set for B.C. manipulation
+                nodesWithAssignedDisp.insert(node);
+                for (localIndex i=0; i<faceMap[faceElmt].size(); i++)
+                {
+                  auto const & face = faceMap[faceElmt][i];
+                  for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+                  {
+                    auto const & nodeOnFace = faceManager.nodeList()(face,j);
+                    if (node == nodeOnFace)
+                    {
+                      disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
+                      dispIncre(node,0) = disp(node,0) - 0.0;
+                      std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+                    }
+                  } // for localIndex j
+                } // for localIndex i
+              } // if (!found)
+            }  // for auto node
+          } // for auto trailingFace
+
+/*
+          // Pair one
+          disp(10,0) = -refValue;
+          dispIncre(10,0) = -refValue - 0.0;
+          disp(26,0) =  refValue;
+          dispIncre(26,0) = refValue - 0.0;
+          // Pair two
+          disp(11,0) = -refValue;
+          dispIncre(11,0) = -refValue - 0.0;
+          disp(27,0) =  refValue;
+          dispIncre(27,0) = refValue - 0.0;
+
+          //2. create a set to enforce extra essential
+          //    boundary conditions at the newly splitted nodes
+          nodesWithAssignedDisp.insert(10);
+          nodesWithAssignedDisp.insert(11);
+          nodesWithAssignedDisp.insert(26);
+          nodesWithAssignedDisp.insert(27);
+*/
+
+          std::cout << "End of disp manipulation" << std::endl;
+
+
         }
         MpiWrapper::allReduce( &locallyFractured,
                                &globallyFractured,
@@ -278,17 +587,86 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                                domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                                domain->getNeighbors() );
 
+        //TJ: check the face elmt aperture due to the nodal displacement change
+        {
+	  std::cout << "Face element info (after manipulating disp, before "
+		       "UpdateDeformationForCoupling): " << std::endl;
+	  for(localIndex i=0; i<nodeMap.size(); i++)
+	  {
+	    std::cout << "Face (node) " << i << ": ";
+	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	      std::cout << nodeMap[i][j] << " ";
+	    std::cout << "\n";
+	  }
+	  for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	  {
+	    std::cout << "Face (center) " << i << ": ";
+	    for(auto & item : subRegion->getElementCenter()[i])
+	      std::cout << item << " ";
+	    std::cout << "\n";
+	  }
+	  for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	  {
+	    std::cout << "Face (aperture) " << i << ": "
+		      << subRegion->getElementAperture()[i]
+		      << std::endl;
+	  }
+        }
+
+        //TJ: 5. update the elmt aperture due to the change of disp field at the newly splitted nodes
         this->UpdateDeformationForCoupling( domain );
+
+        //TJ: check the face elmt aperture due to the nodal displacement change
+        {
+	  std::cout << "Face element info (after manipulating disp, after "
+		       "UpdateDeformationForCoupling): " << std::endl;
+	  for(localIndex i=0; i<nodeMap.size(); i++)
+	  {
+	    std::cout << "Face (node) " << i << ": ";
+	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	      std::cout << nodeMap[i][j] << " ";
+	    std::cout << "\n";
+	  }
+	  for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	  {
+	    std::cout << "Face (center) " << i << ": ";
+	    for(auto & item : subRegion->getElementCenter()[i])
+	      std::cout << item << " ";
+	    std::cout << "\n";
+	  }
+	  for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	  {
+	    std::cout << "Face (aperture) " << i << ": "
+		      << subRegion->getElementAperture()[i]
+		      << std::endl;
+	  }
+        }
 
         if( getLogLevel() >= 1 )
         {
           GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
         }
         m_flowSolver->ResetViews( domain );
+
+        //TJ: Is this step necessary?
+/*
+        MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+        forTargetSubRegions( mesh, [&] ( localIndex const targetIndex, ElementSubRegionBase & subRegion1 )
+        {
+          m_flowSolver->UpdateState( subRegion1, targetIndex );
+        } );
+*/
+
       }
     }
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
+    /* TJ: in the flowSolver, pressure += delta_pressure, volume += delta_volume
+     *                        what is creationMass?
+     *     in the solidSolver, update velocity and (acceleration) through disp_increment
+     *                         for instance, velocity = disp_incr/dt
+     */
     ImplicitStepComplete( time_n, dtReturn, domain );
     m_numResolves[1] = solveIter;
   }
@@ -349,8 +727,9 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       }
 
       // TODO this needs a proper contact based strategy for aperture
+      //TJ: How do we know aperture is positive?
       aperture[kfe] = -Dot( temp, faceNormal[kf0] ) / numNodesPerFace;
-
+      //TJ: Do we use effectiveAperture as the actual aperture?
       effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 
 
@@ -531,13 +910,13 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
-
+  //TJ: setup solidSolver sparsity pattern
   m_solidSolver->SetupSystem( domain,
                               m_solidSolver->getDofManager(),
                               m_solidSolver->getSystemMatrix(),
                               m_solidSolver->getSystemRhs(),
                               m_solidSolver->getSystemSolution() );
-
+  //TJ: setup sparsity patterns for fluidSolver and m_derivativeFluxResidual_dAperture
   m_flowSolver->SetupSystem( domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getSystemMatrix(),
@@ -562,10 +941,18 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
   // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
   // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
   // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
+
+  /* TJ: m_matrix01 and m_matrix10 are off-diagonal,
+   *     and the rest of the code is to set up the
+   *     sparsity patterns for m_matrix01 and m_matrix10
+   */
   m_matrix01.createWithLocalSize( m_solidSolver->getSystemMatrix().numLocalRows(),
                                   m_flowSolver->getSystemMatrix().numLocalCols(),
                                   9,
                                   MPI_COMM_GEOSX );
+  /* TJ: bug, m_matrix10 should be m_flowSolver  ->getSystemMatrix().numLocalRows()
+   *                            by m_solidSolver ->getSystemMatrix().numLocalCols()
+   */
   m_matrix10.createWithLocalSize( m_flowSolver->getSystemMatrix().numLocalCols(),
                                   m_solidSolver->getSystemMatrix().numLocalRows(),
                                   24,
@@ -696,6 +1083,13 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
   m_solidSolver->getSystemMatrix().zero();
   m_solidSolver->getSystemRhs().zero();
 
+
+  /* TJ: Inside the solid solver, the system stiffness matrix dRdU is assembled
+   *     in the normal way. When the RHS are assembled, the RHS uses the stress
+   *     at the beginning of the step stress_n, plus the dRdU * disp_increment,
+   *     that is, RHS = stress_n + dRdU * incrementalDisplacement. Therefore,
+   *     incrementalDisplacement is important.
+   */
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
@@ -728,6 +1122,61 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                    ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                                    ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+
+  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+
+  //TJ: test whether m_nodesWithAssignedDisp is passed here correctly
+  {
+    SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+    SortedArray< localIndex > const & nodesWithAssignedDisp =
+    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+    std::cout << "Size of nodesWithAssignedDisp: " << nodesWithAssignedDisp.size() << std::endl;
+    for(auto & item : nodesWithAssignedDisp)
+      std::cout << item << ", ";
+    std::cout << std::endl;
+  }
+
+  //TJ: test whether the displacement field at newly splitted nodes are passed correctly
+  {
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
+    disp = nodeManager->totalDisplacement();
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
+    dispIncre = nodeManager->incrementalDisplacement();
+    std::cout << "Node 8 (disp): "
+	      << disp(8,0) << ", "
+	      << disp(8,1) << ", "
+	      << disp(8,2) << std::endl;
+    std::cout << "Node 8 (disp_incre): "
+	      << dispIncre(8,0) << ", "
+	      << dispIncre(8,1) << ", "
+	      << dispIncre(8,2) << std::endl;
+
+
+    std::cout << "Node 10 (disp): "
+	      << disp(10,0) << ", "
+	      << disp(10,1) << ", "
+	      << disp(10,2) << std::endl;
+    std::cout << "Node 10 (disp_incre): "
+	      << dispIncre(10,0) << ", "
+	      << dispIncre(10,1) << ", "
+	      << dispIncre(10,2) << std::endl;
+    if (disp.size(0) >=27)
+    {
+      std::cout << "Node 26 (disp): "
+  	      << disp(26,0) << ", "
+  	      << disp(26,1) << ", "
+  	      << disp(26,2) << std::endl;
+      std::cout << "Node 26 (disp_incre): "
+  	      << dispIncre(26,0) << ", "
+  	      << dispIncre(26,1) << ", "
+  	      << dispIncre(26,2) << std::endl;
+    }
+  }
+
   GEOSX_MARK_FUNCTION;
   m_solidSolver->ApplyBoundaryConditions( time,
                                           dt,
@@ -736,11 +1185,74 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                           m_solidSolver->getSystemMatrix(),
                                           m_solidSolver->getSystemRhs() );
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  //TJ: Apply the assigned displacement field at newly generated nodes as
+  //    essential B.C.
+  SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+  SortedArray< localIndex > const & nodesWithAssignedDisp =
+          mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+  if (!nodesWithAssignedDisp.empty())
+  {
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
-  string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
+    {
+      string filename = "before_matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
+    }
+    {
+      string filename = "before_residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "residual0: written to " << filename );
+    }
+    m_solidSolver->getSystemMatrix().open();
+    m_solidSolver->getSystemRhs().open();
+    // Hard code for displacement in the x-direction
+    integer const component = 0;
+    arrayView1d< globalIndex const > const & dofMap
+                                        = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
+    real64_array rhsContribution( nodesWithAssignedDisp.size() );
+    globalIndex_array dof( nodesWithAssignedDisp.size() );
+
+    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp
+                                        = nodeManager->totalDisplacement();
+
+    integer counter = 0;
+    for(auto node : nodesWithAssignedDisp)
+    {
+      dof( counter ) = dofMap[node]+component;
+      real64 bcValue = disp(node, component);
+      real64 fieldValue = bcValue;
+
+      FieldSpecificationEqual::template SpecifyFieldValue<LAInterface>( dof( counter ),
+									m_solidSolver->getSystemMatrix(),
+				                                        rhsContribution( counter ),
+				                                        bcValue,
+				                                        fieldValue );
+
+      ++counter;
+    }
+
+    FieldSpecificationEqual::template PrescribeRhsValues< LAInterface >( m_solidSolver->getSystemRhs(),
+									 counter,
+									 dof.data(),
+									 rhsContribution.data() );
+
+    m_solidSolver->getSystemMatrix().close();
+    m_solidSolver->getSystemRhs().close();
+    {
+      string filename = "after_matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
+    }
+    {
+      string filename = "after_residual0_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "residual0: written to " << filename );
+    }
+
+  }
+
+
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
   arrayView1d< integer const > const & nodeGhostRank = nodeManager->ghostRank();
 
@@ -768,6 +1280,36 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
                                                            m_matrix01 );
   } );
   m_matrix01.close();
+
+  if (!nodesWithAssignedDisp.empty())
+  {
+    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+
+    {
+      string filename = "before_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
+    }
+
+    m_matrix01.open();
+    integer const component = 0;
+    arrayView1d< globalIndex const > const & dofMap
+                                        = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
+    for(auto a : nodesWithAssignedDisp)
+    {
+      globalIndex const dof = dofMap[a]+component;
+      m_matrix01.clearRow(dof);
+    }
+    m_matrix01.close();
+
+    {
+      string filename = "after_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+      m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
+      GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
+    }
+  }
+
+
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,

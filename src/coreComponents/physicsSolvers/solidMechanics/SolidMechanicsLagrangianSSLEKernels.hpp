@@ -535,6 +535,22 @@ struct ImplicitKernel
         rhs->add( elementLocalDofIndex.data(), R.data(), ndof );
       }
     } );
+    //TJ: investigate the rhs
+/*
+    rhs->close();
+    real64 const * myRHS = nullptr;
+    myRHS = rhs->extractLocalVector();
+
+    std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << "Solid solver assemble: " << std::endl;
+    std::cout << "stress(0,0,0) = " << stress[0][0][0] << std::endl;
+    std::cout << "disp(8,0) = " << disp(8,0) << std::endl;
+    std::cout << "rhs(8,0) = " << *(myRHS+24) << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
+    rhs->open();
+*/
 
     return maxForce.get();
   }

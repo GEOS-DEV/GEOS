@@ -411,6 +411,8 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d< real64 > const & creationMass =
       subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
+
+    //TJ: what is creationMass?
     forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
@@ -565,6 +567,18 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView2d< real64 const > const & dens           = m_density[er][esr];
   arrayView2d< real64 const > const & dDens_dPres    = m_dDens_dPres[er][esr];
   arrayView1d< real64 const > const & poroMultiplier = m_poroMultiplier[er][esr];
+
+  //TJ:
+  std::cout << "dens(0) = " << dens[0][0] << std::endl;
+  std::cout << "densOld(0) = " << densOld[0] << std::endl;
+  std::cout << "dDens_dPres(0) = " << dDens_dPres[0][0] << std::endl;
+
+  if (dens.size()>=2)
+  {
+    std::cout << "dens(1) = " << dens[1][0] << std::endl;
+    std::cout << "densOld(1) = " << densOld[1] << std::endl;
+    std::cout << "dDens_dPres(1) = " << dDens_dPres[1][0] << std::endl;
+  }
 
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );

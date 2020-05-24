@@ -218,6 +218,10 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
 
+  //TJ: register wrapper for m_nodesWithAssignedDisp
+  registerWrapper( viewKeyStruct::nodesWithAssignedDispString, &m_nodesWithAssignedDisp )->
+    setDescription( "Set containing all the nodes with displacement assigned"
+	            " due to volume in the partially fractured element" );
 
 }
 
@@ -547,6 +551,30 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                time_n + dt );
     }
   }
+
+  //TJ print-out about fracture tip state
+  std::cout << "Fracture tip after separation driver "
+                "(SurfaceGenerator::SolverStep.cpp)"
+            << std::endl;
+  std::cout << "m_tipNodes: ";
+  for(auto & item : m_tipNodes)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_tipEdges: ";
+  for(auto & item : m_tipEdges)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_tipFaces: ";
+  for(auto & item : m_tipFaces)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_trailingFaces: ";
+  for(auto & item : m_trailingFaces)
+    std::cout << item << " ";
+  std::cout << std::endl;
 
   NumericalMethodsManager * const
   numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
@@ -1962,6 +1990,28 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
     } // if( location == -1 )
   } // for( map<localIndex,int>::const_iterator iter_face
 
+  //TJ: print-out fracture tip state
+  std::cout << "Fracture state in SurfaceGenerator::PerformFracture.cpp"
+            << std::endl;
+  std::cout << "m_tipNodes: ";
+  for(auto & item : m_tipNodes)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_tipEdges: ";
+  for(auto & item : m_tipEdges)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_tipFaces: ";
+  for(auto & item : m_tipFaces)
+    std::cout << item << " ";
+  std::cout << std::endl;
+
+  std::cout << "m_trailingFaces: ";
+  for(auto & item : m_trailingFaces)
+    std::cout << item << " ";
+  std::cout << std::endl;
 
   // ***** now correct all the relations between the objects *****
 
