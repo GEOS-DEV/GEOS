@@ -30,20 +30,35 @@ namespace geosx
 {
 
 /**
- * @namespace A scope to contain the finite element implementation.
+ * @namespace finiteElement Contains the finite element implementation.
  */
 namespace finiteElement
 {
 
 
 /**
- * @brief
- * @tparam INTEGRAL_TYPE
- * @tparam LAMBDA
- * @tparam INTEGRAL_TYPE
- * @tparam LAMBDA
- * @param input
- * @param lambda
+ * @brief Call a lambda function (callback) with an integral_constant
+ *        conversion of the input integral type to allow for static
+ *        dispatch.
+ * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
+ * @tparam LAMBDA The type of @p lambda to execuute.
+ * @param input The integer to convert to an integral_constant.
+ * @param lambda The generic lambda function (takes the integral_constant as
+ *               a parameter) that will be executed.
+ *
+ * Implements a switchyard to convert the value of @p input to an
+ * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
+ * This allows a runtime @p input to be dispatched as a compile time constant.
+ * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
+ * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
+ *
+ *     int value = 1;
+ *     integralTypeDispatch( 1, [&]( auto const constValueType )
+ *     {
+ *       static constexpr int constValue = decltype( constValueType )::value;
+ *
+ *       func< constValue >(...);
+ *     };
  */
 template< typename INTEGRAL_TYPE, typename LAMBDA >
 void
@@ -99,13 +114,25 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
  * @tparam NUM_DOF_PER_TEST_SP The number of DOF per test support point.
  * @tparam NUM_DOF_PER_TRIAL_SP The number of DOF per trial support point.
  *
+ * ### General KernelBase Description
+ *
  * KernelBase defines an interface for implementing finite element kernels
  * that will be callable by the family of kernel launch functions. Specific
  * physics kernels may or may not derive from KernelBase, but must follow
  * the same interface in order to be callable from the generic launching
  * functions.
  *
- * Discuss template parameters...
+ * The template parameters of KernelBase should be duplicated as part of the
+ * interface, EXCEPT for @p NUM_DOF_PER_TEST_SP and @p NUM_DOF_PER_TRIAL_SP.
+ * These values should be set internally by the physics solver since each
+ * physics discretization will have a constant intrinsic value for these
+ * quantities. For example, when solving or the heat equation with scalar
+ * temperature as the primary variable at the support point, these will have
+ * a value of 1. In contrast, when solving a solid mechanics problem, with
+ * vector displacement as the primary variable at the support point, these
+ * will have a value of 3. Note that the interface provided by
+ * geosx::finiteElement::RegionBasedKernelApplication will construct a
+ * kernel assuming only the first 4 template arguments.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -118,8 +145,8 @@ class KernelBase
 public:
   /**
    * @brief Constructor
-   * @param elementSubRegion The elementSubRegion that will be used to extract
-   *                         data into the members of KernelBase.
+   * @param elementSubRegion Reference to the SUBREGION_TYPE(class template
+   *                         parameter) object.
    * @param inputConstitutiveUpdate The constitutive update object.
    * @param finiteElementSpace Placeholder for the finite element space object,
    *                           which currently doesn't do much.
@@ -400,7 +427,7 @@ protected:
  * @return The maximum contribution to the residual, which may be used to scale
  *         the residual.
  *
- * Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
+ * Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
  * #KernelBase::Launch.
  */
 template< typename POLICY,

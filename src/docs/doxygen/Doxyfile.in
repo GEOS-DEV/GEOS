@@ -764,7 +764,8 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
         @PROJECT_SOURCE_DIR@/coreComponents/wells \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
-        @CMAKE_BINARY_DIR@/include/common 
+        @CMAKE_BINARY_DIR@/include/common  \
+        @PROJECT_SOURCE_DIR@/coreComponents/finiteElement
 
 #        @PROJECT_SOURCE_DIR@/coreComponents/managers \
 #        @PROJECT_SOURCE_DIR@/coreComponents/mesh \

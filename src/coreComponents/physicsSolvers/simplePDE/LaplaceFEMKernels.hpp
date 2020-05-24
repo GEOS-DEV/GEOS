@@ -13,21 +13,44 @@
  */
 
 /**
- * @file LaplaceKernels.hpp
+ * @file LaplaceFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
+#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
 {
-//***************************************************************************
+//*****************************************************************************
+/**
+ * @brief Implements kernels for solving Laplace's equation.
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
+ *                            @p SUBREGION_TYPE.
+ * @tparam UNUSED An unused parameter since we are assuming that the test and
+ *                trial space have the same number of support points.
+ *
+ * ### LaplaceFEMKernel Description
+ * Implements the KernelBase interface functions required for solving Laplace's
+ * equation using on of the finite element kernel application functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
+ * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
+ * @p NUM_TRIAL_SUPPORT_POINTS_PER_ELEM, which are assumed to be equal. This
+ * results in the @p UNUSED template parameter as only the NUM_NODES_PER_ELEM
+ * is passed to the ImplicitKernelBase template to form the base class.
+ *
+ * Additionally, the number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `1` when specifying the base
+ * class.
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
-          int >
+          int UNUSED >
 class LaplaceFEMKernel :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
@@ -37,6 +60,7 @@ class LaplaceFEMKernel :
                                             1 >
 {
 public:
+  /// An alias for the base class.
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   NUM_NODES_PER_ELEM,
@@ -44,9 +68,16 @@ public:
                                                   1,
                                                   1 >;
 
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-  static constexpr int numTestDofPerSP = 1;
-  static constexpr int numTrialDofPerSP = 1;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTestSupportPoint
+  using Base::numDofPerTestSupportPoint;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTrialSupportPoint
+  using Base::numDofPerTrialSupportPoint;
+
 
   using Base::m_dofNumber;
   using Base::m_matrix;
@@ -170,4 +201,4 @@ protected:
 
 
 } // namespace geosx
-#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_KERNELS_FEM_HPP_
+#endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
