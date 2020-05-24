@@ -425,8 +425,8 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    constexpr int MAX_ELEMS_PER_NODE = 8;
-    constexpr int MAX_NODES_PER_ELEM = 8;
+    //constexpr int MAX_ELEMS_PER_NODE = 8;
+    //constexpr int MAX_NODES_PER_ELEM = 8;
     constexpr int MAX_NODE_NEIGHBORS = 27;
 
     array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodesArray( elementRegionManager.numRegions() );
@@ -467,6 +467,9 @@ public:
         if( nodeGhostRank[ nodeID ] >= 0 )
         { return; }
 
+        int constexpr MAX_ELEMS_PER_NODE = 8;
+        int constexpr MAX_NODES_PER_ELEM = 8;
+
         localIndex neighborNodes[ MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM ];
         localIndex const numNeighbors = internal::getNeighborNodes( neighborNodes,
                                                                     elemsToNodes,
@@ -492,6 +495,9 @@ public:
       {
         if( nodeGhostRank[ nodeID ] >= 0 )
         { return; }
+
+        int constexpr MAX_ELEMS_PER_NODE = 8;
+        int constexpr MAX_NODES_PER_ELEM = 8;
 
         localIndex neighborNodes[ MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM ];
         localIndex const numNeighbors = internal::getNeighborNodes( neighborNodes,
