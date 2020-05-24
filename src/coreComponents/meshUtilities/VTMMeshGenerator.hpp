@@ -38,7 +38,8 @@ namespace dataRepository
 namespace keys
 {
 ///key for file path access
-string const filePath = "file";}
+string const filePath = "file";
+}
 ///@}
 }
 
@@ -47,29 +48,36 @@ class DomainPartition;
 
 /**
  *  @class VTMMeshGenerator
- *  @brief The VTMMeshGenerator class provides a class implementation of VTK genrated meshes (.vtm)
+ *  @brief The VTMMeshGenerator class provides a class implementation of VTK genrated meshes (.vtm).
  */
 class VTMMeshGenerator : public MeshGeneratorBase
 {
 public:
-/**
- * @brief Main constructor for MeshGenerator base class
- * @param[in] name of the VTMMeshGenerator object
- * @param[in] parent the parent Group pointer for the MeshGenerator object
- */
+
+  /**
+   * @brief Main constructor for MeshGenerator base class.
+   * @param[in] name of the VTMMeshGenerator object
+   * @param[in] parent the parent Group pointer for the MeshGenerator object
+   */
   VTMMeshGenerator( const std::string & name,
                     Group * const parent );
 
   virtual ~VTMMeshGenerator() override;
 
-/**
- * @brief Return the name of the VTMMeshGenerator in object Catalog
- * @return string that contains the key name to VTMMeshGenerator in the Catalog
- */  
+  /**
+   * @brief Return the name of the VTMMeshGenerator in object Catalog
+   * @return string that contains the key name to VTMMeshGenerator in the Catalog
+   */
   static string CatalogName() { return "MeshFile"; }
 
   virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
@@ -88,6 +96,11 @@ public:
 //  int m_delayMeshDeformation;
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:
@@ -98,10 +111,10 @@ private:
   /// VTM file data structure from VTK API
   VtmFile m_vtmFile;
 
- /**
- * @brief convert ndim node spatialized index to node global index
- * @param[in] node ndim spatialized array index 
- */
+  /**
+   * @brief Convert ndim node spatialized index to node global index.
+   * @param[in] node ndim spatialized array index
+   */
   inline globalIndex NodeGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
   {
     globalIndex rval = 0;
@@ -112,10 +125,10 @@ private:
     return rval;
   }
 
-/**
- * @brief convert ndim element spatialized index to element global index
- * @param[in] element ndim spatialized array index 
- */
+  /**
+   * @brief Convert ndim element spatialized index to element global index.
+   * @param[in] element ndim spatialized array index
+   */
   inline globalIndex ElemGlobalIndex( const int GEOSX_UNUSED_PARAM( index )[3] )
   {
     globalIndex rval = 0;
@@ -127,7 +140,7 @@ private:
   }
 
   /**
-   * @brief Construct the node position for a spatially indexed node
+   * @brief Construct the node position for a spatially indexed node.
    * @param[in] a ndim spatial index for the considered node
    * @param[in] trianglePattern triangle pattern identifier
    *
@@ -198,9 +211,9 @@ private:
      */
     return X;
   }
-  
+
   /**
-   * @brief 
+   * @brief
    * @param[in]
    * @return an array of the element center coordinates
    */
@@ -219,8 +232,9 @@ private:
   }
 
 public:
-   /**
-   * @brief method to test if the mesh is a radial mesh
+
+  /**
+   * @brief Check if the mesh is a radial mesh.
    * @return true if the Internal mesh is radial, false else
    */
   inline bool isRadial()

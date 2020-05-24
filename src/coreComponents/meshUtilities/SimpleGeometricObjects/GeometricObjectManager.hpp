@@ -53,8 +53,17 @@ public:
 
   ///@}
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
+  /**
+   * @brief This function is used to expand any catalogs in the data structure.
+   */
   virtual void ExpandObjectCatalogs() override;
 
 private:

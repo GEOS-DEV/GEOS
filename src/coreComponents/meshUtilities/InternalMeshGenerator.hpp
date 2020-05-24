@@ -71,25 +71,26 @@ class NodeManager;
 class DomainPartition;
 /**
  * @class InternalMeshGenerator
- * @brief The InternalMeshGenerator class is a class handling GEOSX generated meshes
- */ 
+ * @brief The InternalMeshGenerator class is a class handling GEOSX generated meshes.
+ */
 class InternalMeshGenerator : public MeshGeneratorBase
 {
 public:
+
   /**
-   * @brief Main constructor for InternalMeshGenerator
+   * @brief Main constructor for InternalMeshGenerator.
    * @param[in] name of the InternalMeshGenerator
    * @param[in] parent point to the parent Group of the InternalMeshGenerator
    */
   InternalMeshGenerator( const std::string & name,
                          Group * const parent );
-  
+
   virtual ~InternalMeshGenerator() override;
 
-/**
- * @brief Return the name of the InternalMeshGenerator in object Catalog
- * @return string that contains the key name to InternalMeshGenerator in the Catalog
- */  
+  /**
+   * @brief Return the name of the InternalMeshGenerator in object Catalog.
+   * @return string that contains the key name to InternalMeshGenerator in the Catalog
+   */
   static string CatalogName() { return "InternalMesh"; }
 
 //  void ProcessInputFile( xmlWrapper::xmlNode const & targetNode ) override;
@@ -98,6 +99,12 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
@@ -116,35 +123,40 @@ public:
 //  int m_delayMeshDeformation;
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:
 
-  /// mesh number of dimension
+  /// Mesh number of dimension
   int m_dim;
-  /// array of vertice coordinates 
+  /// Array of vertex coordinates
   array1d< real64 > m_vertices[3];
-  /// ndim x nElem spatialized for element indexes
+  /// Ndim x nElem spatialized for element indexes
   integer_array m_nElems[3];
-  /// ndim x nElem spatialized array of element scaling factors
+  /// Ndim x nElem spatialized array of element scaling factors
   array1d< real64 > m_nElemScaling[3];
 
   //bool m_useBias = false;
-  /// ndim x nElem spatialized array of element bias
+  /// Ndim x nElem spatialized array of element bias
   array1d< real64 > m_nElemBias[3];
 
-  /// string array of region names
+  /// String array of region names
   string_array m_regionNames;
 
-  /// minimum extent of mesh dimensions
-  realT m_min[3]; 
-  // maximum extent of mesh dimensions
-  realT m_max[3]; 
+  /// Minimum extent of mesh dimensions
+  realT m_min[3];
+  /// Maximum extent of mesh dimensions
+  realT m_max[3];
 
   //int m_numElems[3];
-  /// ndim x nBlock spatialized array of first elemnt index in the cellBlock 
+  /// Ndim x nBlock spatialized array of first elemnt index in the cellBlock
   integer_array m_firstElemIndexForBlock[3];
-  /// ndim x nBlock spatialized array of last elemnt index in the cellBlock 
+  /// Ndim x nBlock spatialized array of last elemnt index in the cellBlock
   integer_array m_lastElemIndexForBlock[3];
 
 
@@ -157,36 +169,36 @@ private:
 //  realT m_extendedMax[3]; // This is the domain size after we apply n layers
 // of elements which are of the same size as the core elements.  We will move
 // these nodes to where they should be later when we finish the meshing.
-  
-/// array of number of elements per direction
+
+  /// Array of number of elements per direction
   int m_numElemsTotal[3];
 
 //  realT m_commonRatioMin[3];
 //  realT m_commonRatioMax[3];
 
-  //string array listing the element type present
+  // String array listing the element type present
   string_array m_elementType;
 
-  /// array of number of element per box
+  /// Array of number of element per box
   array1d< integer > m_numElePerBox;
 
   /**
-   * @brief meber variable for triangle pattern seletion
+   * @brief Member variable for triangle pattern seletion.
    * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
    */
-  int m_trianglePattern;   
+  int m_trianglePattern;
 
-  /// node perturbation amplitude value
+  /// Node perturbation amplitude value
   realT m_fPerturb=0.0;
-  /// random seed for generation of the node perturbation field
+  /// Random seed for generation of the node perturbation field
   int m_randSeed;
 
   /**
-   * @brief  knob to map onto a radial mesh
+   * @brief Knob to map onto a radial mesh.
    * @note if 0 mesh is not radial, if positive mesh is, it larger than 1
    */
   int m_mapToRadial = 0;
- ///@cond DO_NOT_DOCUMENT
+  ///@cond DO_NOT_DOCUMENT
   /// axis index for cartesian to radial coordinates mapping
   // internal temp var
   int m_meshAxis;
@@ -202,14 +214,14 @@ private:
   R1Tensor m_skewCenter = {0, 0, 0};
 
 
- ///@cond DO_NOT_DOCUMENT
+  ///@cond DO_NOT_DOCUMENT
   //unused
   std::string m_meshDx, m_meshDy, m_meshDz;
- ///@endcond
+  ///@endcond
 
 /**
- * @brief convert ndim node spatialized index to node global index
- * @param[in] node ndim spatialized array index 
+ * @brief Convert ndim node spatialized index to node global index.
+ * @param[in] node ndim spatialized array index
  */
   inline globalIndex NodeGlobalIndex( const int index[3] )
   {
@@ -220,8 +232,8 @@ private:
   }
 
 /**
- * @brief convert ndim element spatialized index to element global index
- * @param[in] element ndim spatialized array index 
+ * @brief Convert ndim element spatialized index to element global index.
+ * @param[in] element ndim spatialized array index
  */
   inline globalIndex ElemGlobalIndex( const int index[3] )
   {
@@ -232,7 +244,7 @@ private:
   }
 
   /**
-   * @brief Construct the node position for a spatially indexed node
+   * @brief Construct the node position for a spatially indexed node.
    * @param[in] a ndim spatial index for the considered node
    * @param[in] trianglePattern triangle pattern identifier
    * @return coordinate of the input node
@@ -307,7 +319,7 @@ private:
   }
 
   /**
-   * @brief 
+   * @brief
    * @param[in]
    * @return an array of the element center coordinates
    */
@@ -325,7 +337,7 @@ private:
 
 public:
   /**
-   * @brief method to test if the mesh is a radial mesh
+   * @brief Check if the mesh is a radial mesh.
    * @return true if the Internal mesh is radial, false else
    */
   inline bool isRadial()

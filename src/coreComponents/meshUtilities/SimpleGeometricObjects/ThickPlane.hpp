@@ -95,6 +95,11 @@ public:
   R1Tensor const & getCenter() const {return m_origin;}
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   virtual void PostProcessInput() override final;
 
 private:

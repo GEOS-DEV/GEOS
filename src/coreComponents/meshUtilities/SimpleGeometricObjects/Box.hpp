@@ -69,6 +69,11 @@ public:
   bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   virtual void PostProcessInput() override final;
 
 private:
