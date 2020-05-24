@@ -15,34 +15,29 @@
 #include "KernelBase.hpp"
 
 /**
- * @file RegionLoopSparsity.hpp
+ * @file ImplicitKernelBase.hpp
  */
 
-#ifndef GEOSX_FINITEELEMENT_REGIONLOOPSPARSITY_HPP_
-#define GEOSX_FINITEELEMENT_REGIONLOOPSPARSITY_HPP_
+#ifndef GEOSX_FINITEELEMENT_IMPLICITKERNELBASE_HPP_
+#define GEOSX_FINITEELEMENT_IMPLICITKERNELBASE_HPP_
 
 
 
 namespace geosx
 {
 
-/**
- * @namespace Contains implementations of physics loops.
- */
 namespace finiteElement
 {
 
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 /**
- * @class FiniteElementRegionLoop
- *
- * This class encapsulates base components and interface for applying a finite
- * element method over a loop of element regions.
- *
+ * @class ImplicitKernelBase
+ * @brief Define the base interface for implicit finite element kernels.
+ * @copydoc KernelBase
  */
 
-/**
- * @class Kernels
- */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
@@ -86,7 +81,6 @@ public:
                       ParallelVector & inputRhs ):
     Base( elementSubRegion,
           finiteElementSpace,
-          inputConstitutiveType,
           inputConstitutiveType->createKernelWrapper() ),
     m_dofNumber( inputDofNumber ),
     m_matrix( inputMatrix ),
@@ -261,4 +255,4 @@ real64 FillSparsity( MeshLevel & mesh,
 
 
 
-#endif /* GEOSX_FINITEELEMENT_REGIONLOOPSPARSITY_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_IMPLICITKERNELBASE_HPP_ */

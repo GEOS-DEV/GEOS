@@ -24,6 +24,7 @@
 namespace geosx
 {
 
+
 using serialPolicy = RAJA::loop_exec;
 using serialReduce = RAJA::seq_reduce;
 using serialAtomic = RAJA::seq_atomic;
@@ -58,37 +59,41 @@ using parallelDeviceAtomic = parallelHostAtomic;
 
 #endif
 
-template< typename LAUNCH_POLICY >
-struct ReducePolicy
+namespace internalRajaInterface
 {
-  using type = parallelDeviceReduce;
+template< typename, int = 0 >
+struct PolicyMap;
+
+template<>
+struct PolicyMap<serialPolicy>
+{
+  using atomic = serialAtomic;
+  using reduce = serialReduce;
 };
 
-template<> struct ReducePolicy< serialPolicy >
+template<>
+struct PolicyMap<parallelHostPolicy>
 {
-  using type = serialReduce;
+  using atomic = parallelHostAtomic;
+  using reduce = parallelHostReduce;
 };
 
-template<> struct ReducePolicy< parallelHostPolicy >
+template< int BLOCK_SIZE >
+struct PolicyMap< parallelDevicePolicy<BLOCK_SIZE>, BLOCK_SIZE >
 {
-  using type = parallelHostReduce;
+  using atomic = parallelDeviceAtomic;
+  using reduce = parallelDeviceReduce;
 };
 
-template< typename LAUNCH_POLICY >
-struct AtomicPolicy
-{
-  using type = parallelDeviceAtomic;
-};
+}
 
-template<> struct AtomicPolicy< serialPolicy >
-{
-  using type = serialAtomic;
-};
 
-template<> struct AtomicPolicy< parallelHostPolicy >
-{
-  using type = parallelHostAtomic;
-};
+template< typename POLICY >
+using ReducePolicy = typename internalRajaInterface::PolicyMap< POLICY >::reduce;
+
+template< typename POLICY >
+using AtomicPolicy = typename internalRajaInterface::PolicyMap< POLICY >::atomic;
+
 
 
 template< typename POLICY, typename LAMBDA >

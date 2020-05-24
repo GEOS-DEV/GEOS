@@ -201,7 +201,7 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-    RAJA::ReduceMax< typename ReducePolicy< POLICY >::type, real64 > maxResidual( 0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     localIndex const numElems = kernelComponent.m_elementList.size();
     forAll< POLICY >( numElems,
