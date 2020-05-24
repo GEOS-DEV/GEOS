@@ -26,13 +26,14 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
 
 namespace geosx
 {
@@ -101,6 +102,11 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
   localIndex const numLocalDof = dofManager.numLocalDofs();
   matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
@@ -108,6 +114,10 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
 
   dofManager.setSparsityPattern( m_matrix, true );
 
+  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  {
+    CreatePreconditioner();
+  }
 }
 
 void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
@@ -554,6 +564,32 @@ real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const * const d
 
   return sqrt( momementumResidualNorm*momementumResidualNorm
                + massResidualNorm*massResidualNorm );
+}
+
+void PoroelasticSolver::CreatePreconditioner()
+{
+  if( m_linearSolverParameters.get().preconditionerType == "block" )
+  {
+    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
+                                                                           SchurComplementOption::RowsumDiagonalProbing,
+                                                                           BlockScalingOption::FrobeniusNorm );
+
+    auto mechPrecond = LAInterface::createPreconditioner( m_solidSolver->getLinearSolverParameters() );
+    precond->setupBlock( 0,
+                         { { keys::TotalDisplacement, 0, 3 } },
+                         std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
+
+    auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
+    precond->setupBlock( 1,
+                         { { SinglePhaseBase::viewKeyStruct::pressureString, 0, 1 } },
+                         std::move( flowPrecond ) );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+  }
 }
 
 void PoroelasticSolver::SolveSystem( DofManager const & dofManager,
