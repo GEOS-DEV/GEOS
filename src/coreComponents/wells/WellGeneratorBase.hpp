@@ -88,7 +88,7 @@ public:
    * @brief Expand any catalogs in the data structure.
    */
   virtual void ExpandObjectCatalogs() override;
-  
+
   /// not implemented
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
@@ -206,7 +206,7 @@ public:
    * @return the global number of nodes
    */
   globalIndex GetNumNodes() const { return m_numNodes; }
-  
+
   ///@}
 
   /// @cond DO_NOT_DOCUMENT
@@ -226,7 +226,7 @@ protected:
    * @name Helper functions to construct the geometry of the well
    */
   ///@{
-  
+
   /**
    * @brief Map each polyline node to the polyline segment(s) it is connected to.
    */
@@ -257,7 +257,7 @@ protected:
    */
   globalIndex GetNextSegmentIndex( globalIndex topSegId,
                                    globalIndex currentNodeId ) const;
-  
+
   ///@}
 
 protected:
