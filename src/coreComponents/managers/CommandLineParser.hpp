@@ -23,14 +23,18 @@
 namespace geosx
 {
 
+/// @cond DO_NOT_DOCUMENT
+// TODO: remove?  not used.
+/**
+ * Command line parser
+ */
 class CommandLineParser
 {
 public:
   CommandLineParser();
   ~CommandLineParser();
-
-
 };
+/// @endcond
 
 } /* namespace geosx */
 
