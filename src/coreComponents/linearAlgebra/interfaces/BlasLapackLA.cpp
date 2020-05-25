@@ -283,10 +283,8 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::abs( detA ) >
-                    std::numeric_limits< real64 >::epsilon() *
-                    matrixNorm( A, 'F' ),
-                    "Matrix is singular" );
+  GEOSX_ASSERT_MSG( std::abs( detA ) > 0, "Matrix is singular" );
+
   real64 oneOverDetA = 1. / detA;
 
   // --- Compute inverse

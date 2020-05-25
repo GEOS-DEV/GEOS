@@ -49,14 +49,12 @@ public:
   /**
    * @brief Copy constructor.
    * @param src EpetraVector to be copied.
-   * @return the new vector
    */
   EpetraVector( EpetraVector const & src );
 
   /**
    * @brief Move constructor
    * @param src EpetraVector to move from
-   * @return the new vector
    */
   EpetraVector( EpetraVector && src ) noexcept;
 
@@ -133,6 +131,8 @@ public:
   virtual void rand( unsigned const seed = 1984 ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
+
+  virtual void reciprocal() override;
 
   virtual real64 dot( EpetraVector const & vec ) const override;
 

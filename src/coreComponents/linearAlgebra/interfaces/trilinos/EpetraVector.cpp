@@ -17,7 +17,9 @@
  */
 
 #include "EpetraVector.hpp"
-#include "EpetraUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
 #include <Epetra_FEVector.h>
 #include <Epetra_Map.h>
@@ -222,7 +224,19 @@ void EpetraVector::reset()
 void EpetraVector::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( m_vector->Scale( scalingFactor ) );
+}
+
+void EpetraVector::reciprocal()
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_CHECK_ERROR( m_vector->Reciprocal( *m_vector ) );
 }
 
 real64 EpetraVector::dot( EpetraVector const & vec ) const
