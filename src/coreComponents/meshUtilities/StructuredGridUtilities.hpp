@@ -21,27 +21,38 @@
 
 namespace StructuredGrid
 {
-/*!
- *  Given n, compute n^d, where d is the spatial dimension.
- */
 
+/**
+ * @brief Given n, compute n^d, where d is the spatial dimension.
+ * @param[in] n the input integer whose power is computed here
+ * @return the power of n
+ */
 template< int dim >
 int dimpower( int n );
+
+/// @cond DO_NOT_DOCUMENT
 
 template<> inline int dimpower< 1 >( int n ) { return n; }
 template<> inline int dimpower< 2 >( int n ) { return n*n; }
 template<> inline int dimpower< 3 >( int n ) { return n*n*n; }
 
-/*!
- * Given a lexographical index N, map back to the original
+/// @endcond
+
+/**
+ * @brief Given a lexicographical index, map back to the original
  * i,j,k indices of the point. The first variation here assumes
  * a uniform number of points nnx in all coordinate directions.
+ * @tparam dim the number of spatial dimensions
+ * @param[in] index the lexicographical index
+ * @param[in] nnx the number of points in all coordinate directions
+ * @param[out] indices the original (i,j,k) indices of the point
  */
-
 template< int dim >
 void map_index( const int index,
                 const int nnx,
                 std::vector< int > & indices );
+
+/// @cond DO_NOT_DOCUMENT
 
 template<>
 inline
@@ -76,6 +87,8 @@ void map_index< 3 >( const int index,
   indices[1] = (index / nnx) % nnx;
   indices[2] = index / (nnx*nnx);
 }
+
+/// @endcond
 
 } // end namespace
 
