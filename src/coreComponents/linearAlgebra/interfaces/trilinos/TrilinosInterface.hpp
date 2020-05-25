@@ -21,7 +21,10 @@
 
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
-#include "TrilinosSolver.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+
+#include <memory>
 
 namespace geosx
 {
@@ -38,16 +41,20 @@ struct TrilinosInterface
    * @param[in] argc standard argc as in any C main
    * @param[in] argv standard argv as in any C main
    */
-  static void initialize( int & argc, char * * & argv )
-  {
-    GEOSX_UNUSED_VAR( argc );
-    GEOSX_UNUSED_VAR( argv );
-  }
+  static void initialize( int & argc, char * * & argv );
 
   /**
    * @brief Finalizes the MPI environment for the Trilinos library
    */
-  static void finalize() {}
+  static void finalize();
+
+  /**
+   * @brief Create a Trilinos-based preconditioner object.
+   * @param params the preconditioner parameters
+   * @return an owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
+  createPreconditioner( LinearSolverParameters params );
 
   /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;

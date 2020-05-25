@@ -99,6 +99,12 @@ public:
 
   virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;

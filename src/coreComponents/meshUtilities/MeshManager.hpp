@@ -16,8 +16,6 @@
  * @file MeshManager.hpp
  */
 
-
-
 #ifndef GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
 #define GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
 
