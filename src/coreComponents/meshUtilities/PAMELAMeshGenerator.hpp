@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PAMELAMeshGenerator.cpp
+ * @file PAMELAMeshGenerator.hpp
  */
 
 #pragma once
@@ -30,16 +30,30 @@
 namespace geosx
 {
 
+/**
+ *  @class PAMELAMeshGenerator
+ *  @brief The PAMELAMeshGenerator class provides a class implementation of PAMELA generated meshes.
+ */
 class PAMELAMeshGenerator : public MeshGeneratorBase
 {
 public:
+/**
+ * @brief Main constructor for MeshGenerator base class.
+ * @param[in] name of the PAMELAMeshGenerator object
+ * @param[in] parent the parent Group pointer for the MeshGenerator object
+ */
   PAMELAMeshGenerator( const std::string & name,
                        Group * const parent );
 
   virtual ~PAMELAMeshGenerator() override;
 
+/**
+ * @brief Return the name of the PAMELAMeshGenerator in object Catalog.
+ * @return string that contains the key name to PAMELAMeshGenerator in the Catalog
+ */
   static string CatalogName() { return "PAMELAMeshGenerator"; }
 
+///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     constexpr static auto filePathString = "file";
@@ -48,9 +62,16 @@ public:
     constexpr static auto fieldNamesInGEOSXString = "fieldNamesInGEOSX";
     constexpr static auto reverseZString = "reverseZ";
   };
+/// @endcond
 
   virtual void GenerateElementRegions( DomainPartition & domain ) override;
 
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   virtual void GenerateMesh( DomainPartition * const domain ) override;
@@ -64,11 +85,16 @@ public:
   virtual void RemapMesh ( dataRepository::Group * const domain ) override;
 
 protected:
+
+  /**
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:
 
-  /// Mesh in the data structure of PAMELA.
+  /// Unique Pointer to the Mesh in the data structure of PAMELA.
   std::unique_ptr< PAMELA::Mesh >  m_pamelaMesh;
 
   /// Names of the fields to be copied from PAMELA to GEOSX data structure
@@ -80,10 +106,13 @@ private:
   /// Scale factor that will be applied to the point coordinates
   real64 m_scale;
 
+  /// String array of the GEOSX user decalred fields
   string_array m_fieldNamesInGEOSX;
 
+  /// z pointing direction flag, 0 (default) is upward, 1 is downward
   int m_isZReverse;
 
+  /// Map from PAMELA enumeration element type to string
   const std::unordered_map< PAMELA::ELEMENTS::TYPE, string, PAMELA::ELEMENTS::EnumClassHash > ElementToLabel
     =
     {
