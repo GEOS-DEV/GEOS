@@ -18,8 +18,8 @@
 
 
 
-#ifndef GEOSX_PHYSICSSOLVERS_MESHMANAGER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MESHMANAGER_HPP_
+#ifndef GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
+#define GEOSX_MESHUTILITIES_MESHMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 #include "managers/DomainPartition.hpp"

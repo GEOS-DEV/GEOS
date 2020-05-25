@@ -16,8 +16,8 @@
  * @file MeshUtilities.hpp
  */
 
-#ifndef MESHUTILITIES_H_
-#define MESHUTILITIES_H_
+#ifndef GEOSX_MESHUTILITIES_MESHUTILITIES_HPP
+#define GEOSX_MESHUTILITIES_MESHUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -82,4 +82,4 @@ public:
 
 }
 
-#endif /* MESHUTILITIES_H_ */
+#endif /* GEOSX_MESHUTILITIES_MESHUTILITIES_HPP */
