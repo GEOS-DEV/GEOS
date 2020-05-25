@@ -26,6 +26,8 @@ namespace vtk
 
 /*!
  * @brief VTK GEOSX data class.
+ * @details This class let us to deal with special types such
+ * as R1Tensor to be output.
  */
 class VTKGEOSXData : public vtkAOSDataArrayTemplate< real64 >
 {

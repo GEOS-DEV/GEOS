@@ -44,8 +44,9 @@ enum struct VTKOutputMode
   BINARY,
   ASCII
 };
+
 /*!
- * @brief Encapsulate IO methods from vtk
+ * @brief Encapsulate output methods for vtk
  */
 class VTKPolyDataWriterInterface
 {
