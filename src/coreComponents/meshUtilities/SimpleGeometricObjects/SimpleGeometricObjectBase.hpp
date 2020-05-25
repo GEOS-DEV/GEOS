@@ -36,22 +36,64 @@ string const geometricObjects( "GeometricObjects" );
 }
 }
 
-
+/**
+ * @class SimpleGeometricObjectBase
+ * @brief Base class for the geometric objects (box, plane, cylinder).
+ */
 class SimpleGeometricObjectBase : public dataRepository::Group
 {
 public:
 
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   explicit SimpleGeometricObjectBase( std::string const & name,
                                       Group * const parent );
 
+  /**
+   * @brief Default destructor.
+   */
   virtual ~SimpleGeometricObjectBase();
 
+  ///@}
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  /**
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
+   */
   static string CatalogName() { return "SimpleGeometricObjectBase"; }
 
-  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
+  /// @cond DO_NOT_DOCUMENT
 
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
+
+  /// @endcond
+
+  /**
+   * @copydoc CatalogName()
+   */
   static CatalogInterface::CatalogType & GetCatalog();
+
+  ///@}
+
+  /**
+   * @brief Check if the input coordinates are in the object.
+   * @param[in] coord the coordinates to test
+   * @return true if the coordinates are in the object, false otherwise
+   */
+  virtual bool IsCoordInObject( const R1Tensor & coord ) const = 0;
 
 };
 

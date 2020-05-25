@@ -763,6 +763,7 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
         @PROJECT_SOURCE_DIR@/coreComponents/wells \
+        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
         @CMAKE_BINARY_DIR@/include/common 
 
