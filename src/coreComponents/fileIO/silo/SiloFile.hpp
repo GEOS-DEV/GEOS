@@ -90,7 +90,7 @@ public:
    * @brief Wait for the Baton when writing using PMPIO
    * @param domainNumber domain partition number
    * @param cycleNum  cycle number of simulation
-   * @param eventCounter event progress indicator
+   * @param eventCounter Counter to indicate the event number during the current timestep. 
    * @param isRestart whether or not we are writing a restart file
    *
    * This function requests the write baton from silo PMPIO. The involves determining
@@ -140,8 +140,8 @@ public:
    * @param nnodes number of nodes
    * @param coords array[3] of pointers to x, y, and z.
    * @param globalNodeNum array to the global node numbers. This might be redundant as there is a field for this.
-   * @param ghostNodeName
-   * @param ghostZoneName
+   * @param ghostNodeName Character array for whether or not a node is a ghost. ( 0 = local, 1 = ghost )
+   * @param ghostZoneName Character array for whether or not a zone is a ghost. ( 0 = local, 1 = ghost )
    * @param numShapes number of element zone type (i.e. number of zone types with different topology)
    * @param shapecnt pointer to array that contains the number of zones per shape type
    * @param meshConnectivity pointer to array that contains the zone to element map for each  zone type
