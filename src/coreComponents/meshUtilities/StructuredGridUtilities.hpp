@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef STRUCTURED_GRID_UTILITIES_H
-#define STRUCTURED_GRID_UTILITIES_H
+#ifndef GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP
+#define GEOSX_MESHUTILITIES_STRUCTUREDGRIDUTILITIES_HPP
 
 /**
  * @file StructuredGridUtilities.hpp

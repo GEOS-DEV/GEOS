@@ -75,11 +75,10 @@ public:
    */
   static string CatalogName() { return "SimpleGeometricObjectBase"; }
 
-  /// @cond DO_NOT_DOCUMENT
-
+  /**
+   * @brief Type alias for catalog interface used by this class.
+   */
   using CatalogInterface = dataRepository::CatalogInterface< SimpleGeometricObjectBase, std::string const &, Group * const >;
-
-  /// @endcond
 
   /**
    * @copydoc CatalogName()
