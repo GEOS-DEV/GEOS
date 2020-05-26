@@ -95,7 +95,7 @@ private:
 private:
 
   /// Path to the LAS file
-  string m_fileName;
+  Path m_fileName;
 
   /// Index of the log to take to write the well geometry if
   /// the LAS file has several time the same sections
