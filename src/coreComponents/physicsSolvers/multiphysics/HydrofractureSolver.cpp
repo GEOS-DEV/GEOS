@@ -39,7 +39,6 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-
 namespace geosx
 {
 
@@ -625,13 +624,11 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
     }
   } );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
@@ -1225,8 +1222,7 @@ HydrofractureSolver::
 
 }
 
-#ifdef USING_TRILINOS
-
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
 #include "Epetra_FEVector.h"
 #include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -1256,7 +1252,6 @@ HydrofractureSolver::
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Time.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
-
 #endif
 
 namespace geosx
@@ -1269,8 +1264,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 {
   GEOSX_MARK_FUNCTION;
 
-#ifdef USING_TRILINOS
-
+#if defined( GEOSX_LA_INTERFACE_TRILINOS )
   /*
      globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
      globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
@@ -1322,8 +1316,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   //    BiCGstab sometimes shows better parallel performance.
   //    false is probably better.
 
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+
   const bool use_diagonal_prec = true;
-  const bool use_bicgstab      = (m_linearSolverParameters.solverType == "bicgstab");
+  const bool use_bicgstab      = (linParams.solverType == "bicgstab");
 
   // set initial guess to zero
 
@@ -1335,8 +1331,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   clock.start( true );
   if( newtonIter==0 )
   {
-    m_blockDiagUU.reset( new ParallelMatrix());
-    LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
+    m_blockDiagUU.reset( new ParallelMatrix() );
+    LAIHelperFunctions::SeparateComponentFilter( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
   }
 
   // create schur complement approximation matrix
@@ -1462,7 +1458,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   {
     RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "precond_list" ), true );
 
-    if( m_linearSolverParameters.preconditionerType == "amg" )
+    if( linParams.preconditionerType == "amg" )
     {
       list->set( "Preconditioner Type", "ML" );
       list->sublist( "Preconditioner Types" ).sublist( "ML" ).set( "Base Method Defaults", "SA" );
@@ -1562,15 +1558,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     list->set( "Linear Solver Type", "AztecOO" );
     list->set( "Preconditioner Type", "None" ); // will use user-defined P
     list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations",
-                                                                                                m_linearSolverParameters.krylov.maxIterations );
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", m_linearSolverParameters.krylov.relTolerance );
+                                                                                                linParams.krylov.maxIterations );
+    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", linParams.krylov.relTolerance );
 
     if( use_bicgstab )
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "BiCGStab" );
     else
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "GMRES" );
 
-    if( m_linearSolverParameters.logLevel > 1 )
+    if( linParams.logLevel > 1 )
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Output Frequency", 1 );
 
     Stratimikos::DefaultLinearSolverBuilder builder;
@@ -1599,7 +1595,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     if( getLogLevel()>=2 )
     {
       GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numKrylovIter <<
-                        " | TargetReduction " << m_linearSolverParameters.krylov.relTolerance <<
+                        " | TargetReduction " << linParams.krylov.relTolerance <<
                         " | AuxTime " << auxTime <<
                         " | SetupTime " << setupTime <<
                         " | SolveTime " << solveTime );

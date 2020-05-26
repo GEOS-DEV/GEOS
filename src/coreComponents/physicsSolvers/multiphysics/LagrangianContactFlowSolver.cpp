@@ -339,15 +339,15 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
           residualNorm = lastResidual;
         }
 
-        if( m_linearSolverParameters.solverType != "direct" && getLogLevel() >= 1 && logger::internal::rank==0 )
+        if( getLogLevel() >= 1 && logger::internal::rank==0 )
         {
           if( newtonIter!=0 )
           {
             char output[46] = {0};
             sprintf( output,
                      "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                     m_linearSolverParameters.krylov.maxIterations,  //TODO: replace with real Status info
-                     m_linearSolverParameters.krylov.relTolerance );
+                     m_linearSolverResult.numIterations,
+                     m_linearSolverResult.residualReduction );
             std::cout<<output;
           }
           std::cout<<std::endl;
@@ -361,14 +361,12 @@ real64 LagrangianContactFlowSolver::NonlinearImplicitStep( real64 const & time_n
           break;
         }
 
+
         // if using adaptive Krylov tolerance scheme, update tolerance.
-        // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-        if( m_linearSolverParameters.krylov.useAdaptiveTol )
+        LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
+        if( krylovParams.useAdaptiveTol )
         {
-          m_linearSolverParameters.krylov.relTolerance =
-            LinearSolverParameters::eisenstatWalker( residualNorm,
-                                                     lastResidual,
-                                                     m_linearSolverParameters.krylov.weakestTol );
+          krylovParams.relTolerance = EisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
         }
 
         // call the default linear solver on the system
@@ -833,9 +831,9 @@ void LagrangianContactFlowSolver::AddTransmissibilityDerivativePattern( DomainPa
   FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   // Get the finite volume method used to compute the stabilization
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteVolumeManager const * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_stabilizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_stabilizationName );
 
   // Form the SurfaceGenerator, get the fracture name and use it to retrieve the faceMap (from fracture element to face)
   SurfaceGenerator const * const
@@ -1166,9 +1164,9 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
   string const presDofKey = dofManager.getKey( m_pressureKey );
 
   // Get the finite volume method used to compute the stabilization
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteVolumeManager const * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
-  FluxApproximationBase const * const stabilizationMethod = fvManager->getFluxApproximation( m_stabilizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const * const stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager->toElementRelation();
