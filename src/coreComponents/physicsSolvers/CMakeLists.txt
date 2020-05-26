@@ -13,6 +13,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
+     fluidFlow/CompositionalMultiphaseWellKernels.hpp     
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
