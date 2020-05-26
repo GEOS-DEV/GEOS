@@ -52,6 +52,7 @@ typedef int MPI_Datatype;
   #define MPI_LONG_LONG_INT  ((MPI_Datatype)0x4c000809)
   #define MPI_UNSIGNED_LONG_LONG ((MPI_Datatype)0x4c000819)
   #define MPI_LONG_LONG      MPI_LONG_LONG_INT
+  #define MPI_CXX_BOOL       ((MPI_Datatype)0x0c000000)
 
 typedef int MPI_Op;
 
@@ -73,6 +74,7 @@ typedef int MPI_Op;
   #define MPI_SUCCESS          0      /* Successful return code */
   #define MPI_UNDEFINED (-32766)
   #define MPI_STATUS_IGNORE (MPI_Status *)1
+  #define MPI_STATUSES_IGNORE (MPI_Status *)1
   #define MPI_REQUEST_NULL  ((MPI_Request)0x2c000000)
 typedef int MPI_Request;
 
@@ -506,6 +508,8 @@ template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned int >()         
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long int >()      { return MPI_UNSIGNED_LONG; }
 template<> inline MPI_Datatype MpiWrapper::getMpiType< unsigned long long int >() { return MPI_UNSIGNED_LONG_LONG; }
 
+template<> inline MPI_Datatype MpiWrapper::getMpiType< bool >()                   { return MPI_CXX_BOOL; }
+
 inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
 {
   switch( op )
@@ -573,7 +577,7 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                            array1d< T > & allValues,
                            MPI_Comm MPI_PARAM( comm ) )
 {
-  int const sendSize = integer_conversion< int >( sendValues.size() );
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
 #ifdef GEOSX_USE_MPI
   int const mpiSize = Comm_size( comm );
   allValues.resize( mpiSize * sendSize );
@@ -806,12 +810,13 @@ int MpiWrapper::iSend( T const * const buf,
 template< typename U, typename T >
 U MpiWrapper::PrefixSum( T const value )
 {
-  U const convertedValue = value;
   U localResult;
 
+#ifdef GEOSX_USE_MPI
+  U const convertedValue = value;
   int const error = MPI_Exscan( &convertedValue, &localResult, 1, getMpiType< U >(), MPI_SUM, MPI_COMM_GEOSX );
   MPI_CHECK_ERROR( error );
-
+#endif
   if( Comm_rank() == 0 )
   {
     localResult = 0;
@@ -822,7 +827,7 @@ U MpiWrapper::PrefixSum( T const value )
 
 
 template< typename T >
-T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm comm )
 {
   T result = value;
 #ifdef GEOSX_USE_MPI
@@ -832,19 +837,19 @@ T MpiWrapper::Reduce( T const & value, Reduction const MPI_PARAM( op ), MPI_Comm
 }
 
 template< typename T >
-T MpiWrapper::Sum( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Sum( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Sum, comm );
 }
 
 template< typename T >
-T MpiWrapper::Min( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Min( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Min, comm );
 }
 
 template< typename T >
-T MpiWrapper::Max( T const & value, MPI_Comm MPI_PARAM( comm ) )
+T MpiWrapper::Max( T const & value, MPI_Comm comm )
 {
   return MpiWrapper::Reduce( value, Reduction::Max, comm );
 }

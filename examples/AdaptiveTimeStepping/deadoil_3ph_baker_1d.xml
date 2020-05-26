@@ -22,7 +22,7 @@
            maxSubSteps="100"
            dtCutIterLimit = "0.7"
            dtIncIterLimit = "0.3"/>
-      <SystemSolverParameters useDirectSolver="1"/>
+      <LinearSolverParameters solverType="direct"/>
     </CompositionalMultiphaseFlow>
   </Solvers>
 

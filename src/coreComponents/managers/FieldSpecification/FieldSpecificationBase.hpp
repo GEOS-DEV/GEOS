@@ -548,7 +548,7 @@ FieldSpecificationBase::
     else
     {
       real64_array result;
-      result.resize( integer_conversion< localIndex >( targetSet.size()));
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )
@@ -648,7 +648,7 @@ FieldSpecificationBase::
     else
     {
       real64_array result;
-      result.resize( integer_conversion< localIndex >( targetSet.size()));
+      result.resize( LvArray::integerConversion< localIndex >( targetSet.size()));
       function->Evaluate( dataGroup, time, targetSet, result );
       integer counter=0;
       for( auto a : targetSet )

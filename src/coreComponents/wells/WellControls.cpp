@@ -14,16 +14,13 @@
 
 /*
  * @file WellControls.cpp
- *
  */
 
 #include "WellControls.hpp"
-
 #include "dataRepository/InputFlags.hpp"
 
 namespace geosx
 {
-
 
 using namespace dataRepository;
 
@@ -39,31 +36,32 @@ WellControls::WellControls( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::typeString, &m_typeString, false )->
+  registerWrapper( viewKeyStruct::typeString, &m_typeString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Well type (producer/injector)" );
 
-  registerWrapper( viewKeyStruct::controlString, &m_inputControlString, false )->
+  registerWrapper( viewKeyStruct::controlString, &m_inputControlString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Well control (BHP/gasRate/oilRate/waterRate)" );
 
-  registerWrapper( viewKeyStruct::targetBHPString, &m_targetBHP, false )->
+  registerWrapper( viewKeyStruct::targetBHPString, &m_targetBHP )->
     setDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Target bottom-hole pressure" );
 
-  registerWrapper( viewKeyStruct::targetRateString, &m_targetRate, false )->
+  registerWrapper( viewKeyStruct::targetRateString, &m_targetRate )->
     setDefaultValue( -1 )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Target rate" );
 
-  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream, false )->
+  registerWrapper( viewKeyStruct::injectionStreamString, &m_injectionStream )->
     setDefaultValue( -1 )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Global component densities for the injection stream" );
 
 }
+
 
 WellControls::~WellControls()
 {}
@@ -158,6 +156,7 @@ void WellControls::PostProcessInput()
   }
 }
 
+
 void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const GEOSX_UNUSED_PARAM( rootGroup ) )
 {
   // for a producer, the solvers compute negative rates, so we adjust the input here
@@ -165,8 +164,8 @@ void WellControls::InitializePostInitialConditions_PreSubGroups( Group * const G
   {
     m_targetRate *= -1;
   }
-
 }
+
 
 void WellControls::Debug() const
 {

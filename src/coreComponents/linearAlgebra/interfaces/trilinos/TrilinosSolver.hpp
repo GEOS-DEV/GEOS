@@ -19,6 +19,9 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_TRILINOSSOLVER_HPP_
 
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+
 namespace geosx
 {
 
@@ -27,10 +30,8 @@ class EpetraMatrix;
 class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
+ * @brief This class creates and provides basic support for AztecOO, Amesos and ML libraries.
  */
-
 class TrilinosSolver
 {
 public:
@@ -38,8 +39,9 @@ public:
   /**
    * @brief Solver constructor, with parameter list reference
    *
+   * @param[in] parameters structure containing linear solver parameters
    */
-  TrilinosSolver( LinearSolverParameters const & parameters );
+  TrilinosSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
@@ -49,17 +51,29 @@ public:
 
   /**
    * @brief Solve system with an iterative solver.
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
-
   void solve( EpetraMatrix & mat,
               EpetraVector & sol,
               EpetraVector & rhs );
 
+  /**
+   * @brief Get the result of previous solve.
+   * @return struct with last solve stats
+   */
+  LinearSolverResult const & result()
+  {
+    return m_result;
+  }
+
 private:
 
-  LinearSolverParameters const & m_parameters;
+  LinearSolverParameters m_parameters;
+  LinearSolverResult m_result;
 
   void solve_direct( EpetraMatrix & mat,
                      EpetraVector & sol,

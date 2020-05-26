@@ -30,7 +30,7 @@ LagrangeBasis< dim >::LagrangeBasis( std::string const & name, Group * const par
   m_degree( 0 ),
   n_shape_functions( 0 )
 {
-  registerWrapper( viewKeyStruct::degreeString, &m_degree, 0 )->
+  registerWrapper( viewKeyStruct::degreeString, &m_degree )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Basis degree" );
 }
@@ -229,7 +229,7 @@ void LagrangeBasis< dim >::PostProcessInput()
     break;
 
     default:
-      assert( m_degree<5 );
+      GEOSX_ERROR( "Not implemented for degree" << m_degree );
   }
 
   for( int n=0; n<m_degree+1; ++n )

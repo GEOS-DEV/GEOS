@@ -24,7 +24,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -35,18 +34,18 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( std::string co
                                                                   Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Minimum volume fraction value for each phase" );
 
-  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent, false )->
+  registerWrapper( viewKeyStruct::phaseRelPermExponentString, &m_phaseRelPermExponent )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "MinimumRel perm power law exponent for each phase" );
 
 
-  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::phaseRelPermMaxValueString, &m_phaseRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for each phase" );
@@ -84,7 +83,7 @@ void BrooksCoreyRelativePermeability::PostProcessInput()
   localIndex const NP = numFluidPhases();
 
 #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( integer_conversion< localIndex >((data).size()) != integer_conversion< localIndex >( expected )) \
+  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
   { \
     GEOSX_ERROR( "BrooksCoreyRelativePermeability: invalid number of entries in " \
                  << (attr) << " attribute (" \

@@ -188,8 +188,10 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;
+#endif
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 

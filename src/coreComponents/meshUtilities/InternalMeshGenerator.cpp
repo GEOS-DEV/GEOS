@@ -60,65 +60,65 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
    */
   m_dim = 3;
 
-  registerWrapper( keys::xCoords, &(m_vertices[0]), false )->
+  registerWrapper( keys::xCoords, &(m_vertices[0]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "x-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::yCoords, &(m_vertices[1]), false )->
+  registerWrapper( keys::yCoords, &(m_vertices[1]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "y-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::zCoords, &(m_vertices[2]), false )->
+  registerWrapper( keys::zCoords, &(m_vertices[2]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "z-coordinates of each mesh block vertex" );
 
-  registerWrapper( keys::xElems, &(m_nElems[0]), false )->
+  registerWrapper( keys::xElems, &(m_nElems[0]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "number of elements in the x-direction within each mesh block" );
 
-  registerWrapper( keys::yElems, &(m_nElems[1]), false )->
+  registerWrapper( keys::yElems, &(m_nElems[1]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "number of elements in the y-direction within each mesh block" );
 
-  registerWrapper( keys::zElems, &(m_nElems[2]), false )->
+  registerWrapper( keys::zElems, &(m_nElems[2]) )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "number of elements in the z-direction within each mesh block" );
 
-  registerWrapper( keys::xBias, &(m_nElemBias[0]), false )->
+  registerWrapper( keys::xBias, &(m_nElemBias[0]) )->
     setApplyDefaultValue( 1.0 )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::yBias, &(m_nElemBias[1]), false )->
+  registerWrapper( keys::yBias, &(m_nElemBias[1]) )->
     setApplyDefaultValue( 1.0 )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "bias of element sizes in the y-direction within each mesh block (dy_left=(1+b)*L/N, dx_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::zBias, &(m_nElemBias[2]), false )->
+  registerWrapper( keys::zBias, &(m_nElemBias[2]) )->
     setApplyDefaultValue( 1.0 )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "bias of element sizes in the z-direction within each mesh block (dz_left=(1+b)*L/N, dz_right=(1-b)*L/N)" );
 
-  registerWrapper( keys::cellBlockNames, &m_regionNames, false )->
+  registerWrapper( keys::cellBlockNames, &m_regionNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "names of each mesh block" );
 
-  registerWrapper( keys::elementTypes, &m_elementType, false )->
+  registerWrapper( keys::elementTypes, &m_elementType )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "element types of each mesh block" );
 
-  registerWrapper( keys::trianglePattern, &m_trianglePattern, false )->
+  registerWrapper( keys::trianglePattern, &m_trianglePattern )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "pattern by which to decompose the hex mesh into prisms (more explanation required)" );
@@ -193,7 +193,7 @@ void InternalMeshGenerator::PostProcessInput()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( integer_conversion< long >( m_elementType.size()) != m_numElePerBox.size())
+  if( LvArray::integerConversion< long >( m_elementType.size()) != m_numElePerBox.size())
   {
     if( m_elementType.size() == 1 )
     {
@@ -210,7 +210,7 @@ void InternalMeshGenerator::PostProcessInput()
   }
 
 
-  for( localIndex i = 0; i < integer_conversion< localIndex >( m_elementType.size() ); ++i )
+  for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( m_elementType.size() ); ++i )
   {
     if( m_elementType[i] == "C3D8" )
     {
@@ -239,8 +239,6 @@ void InternalMeshGenerator::PostProcessInput()
     }
   }
 
-
-//    ExpandMultipleTokens(m_regionNames);
   {
     localIndex numBlocks = 1;
     for( int i=0; i<m_dim; ++i )
@@ -661,7 +659,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 // domain->m_feElementManager->m_ElementRegions[*iterRegion];
 
           CellBlock * elemRegion =  elementManager->GetRegion( *iterRegion );
-          int const numNodesPerElem = integer_conversion< int >( elemRegion->numNodesPerElement());
+          int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion->numNodesPerElement());
           integer_array nodeIDInBox( numNodesPerElem );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
@@ -856,7 +854,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         if( X[iN][i] > m_min[i] && X[iN][i] < m_max[i] )
         {
-          srand( integer_conversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
+          srand( LvArray::integerConversion< int >( nodeLocalToGlobal[iN] ) + m_randSeed + i ); // This
           // ensures
           // that
           // the

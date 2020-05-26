@@ -36,7 +36,7 @@ DomainPartition::DomainPartition( std::string const & name,
                                   Group * const parent ):
   Group( name, parent )
 {
-  this->registerWrapper( "Neighbors", &m_neighbors, false )->
+  this->registerWrapper( "Neighbors", &m_neighbors )->
     setRestartFlags( RestartFlags::NO_WRITE )->
     setSizedFromParent( false );
 
@@ -288,11 +288,11 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = partition.m_Partitions( integer_conversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( integer_conversion< localIndex >( idim ));
+    const int dim = partition.m_Partitions( LvArray::integerConversion< localIndex >( idim ));
+    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = partition.m_coords( integer_conversion< localIndex >( idim )) + i;
+      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
       bool ok = true;
       if( periodic )
       {
@@ -312,47 +312,5 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
     }
   }
 }
-
-
-void DomainPartition::ReadSilo( const SiloFile & siloFile,
-                                const int cycleNum,
-                                const realT problemTime,
-                                const bool isRestart )
-{
-
-  ReadFiniteElementMesh( siloFile, cycleNum, problemTime, isRestart );
-
-//  ReadCommonPlanes( siloFile, cycleNum, problemTime, isRestart );
-//  ReadCartesianGrid( siloFile, cycleNum, problemTime, isRestart );
-//  m_wellboreManager.ReadSilo( siloFile, "WellboreFields", "wellbore_mesh",
-//                              DB_NODECENT, cycleNum, problemTime, isRestart );
-
-}
-
-
-void DomainPartition::ReadFiniteElementMesh( const SiloFile & GEOSX_UNUSED_PARAM( siloFile ),
-                                             const int GEOSX_UNUSED_PARAM( cycleNum ),
-                                             const realT GEOSX_UNUSED_PARAM( problemTime ),
-                                             const bool GEOSX_UNUSED_PARAM( isRestart ) )
-{
-
-
-//  int err = m_feNodeManager->ReadSilo( siloFile, "NodalFields", "volume_mesh",
-//                                      DB_NODECENT, cycleNum, problemTime,
-// isRestart );
-////  err = m_feNodeManager->ReadSilo( siloFile, "NodalFieldsB", "face_mesh",
-////                                      DB_NODECENT, cycleNum, problemTime,
-// isRestart );
-//  if(err)
-//    return;
-//
-//  m_feElementManager->ReadSilo( siloFile, "volume_mesh",
-//                               cycleNum, problemTime, isRestart );
-//
-//  m_feNodeManager->ConstructNodeToElementMap( m_feElementManager );
-
-}
-
-
 
 } /* namespace geosx */

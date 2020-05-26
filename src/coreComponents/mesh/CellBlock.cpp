@@ -33,14 +33,14 @@ CellBlock::CellBlock( string const & name, Group * const parent ):
   m_toNodesRelation(),
   m_toFacesRelation()
 {
-  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, 0 );
-  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, 0 );
-  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation, 0 );
-  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement, 0 );
-  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement, 0 );
-  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement, 0 );
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter, 0 );
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume, 0 );
+  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
+  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement );
+  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement );
+  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement );
+  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter );
+  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume );
 }
 
 CellBlock::~CellBlock()
