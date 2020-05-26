@@ -35,9 +35,18 @@ string const geometryLogIndexInFile  = "geometryLogIndexInFile";
 class LASFile;
 class LASLine;
 
+/*!
+ * @brief Class handling the creation of the well into the GEOSX
+ * data stucture from a LAS file import
+ */
 class LASWellGenerator : public WellGeneratorBase
 {
 public:
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   LASWellGenerator( const std::string & name,
                     Group * const parent );
 
@@ -52,28 +61,31 @@ public:
    */
   static string CatalogName() { return "LASWell"; }
 
-
-  /// not implemented
-  virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
-
+  /*!
+   * @brief Generate the polyline from XML data
+   */
   virtual void GeneratePolyLine() override final;
 
-  /// not implemented
-  virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
-                                             int const * GEOSX_UNUSED_PARAM( index ),
-                                             int const & GEOSX_UNUSED_PARAM( iEle ),
-                                             int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
-                                             int const GEOSX_UNUSED_PARAM( size )) override {}
-
-  /// not implemented
-  virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
-
 protected:
+
+  /*!
+   * @brief This function provides capability to post process input values prior to
+   * any other initialization operations.
+   */
   void PostProcessInput() override final;
 
 private:
+  /*!
+   * @brief Generate the polyline if the LAS file contains XYZ information
+   * @param[in] lasFile the LASFile reader
+   */
   void GeneratePolyLineFromXYZ( LASFile const & lasFile );
 
+  /*!
+   * @brief Generate the polyline if the LAS file contains Depth information
+   * @details usually for vertical wells
+   * @param[in] lasFile the LASFile reader
+   */
   void GeneratePolyLineFromDepth( LASFile const & lasFile );
 
   /*!

@@ -34,6 +34,9 @@ string const meshBodyName     = "meshName";
 }
 }
 
+/*!
+ * @brief Base class to generate well
+ */
 class WellGeneratorBase : public MeshGeneratorBase
 {
 public:
@@ -43,7 +46,10 @@ public:
    */
   struct NodeLocation
   {
+    /// Top location
     static constexpr integer TOP = 0;
+
+    /// Bottom location
     static constexpr integer BOTTOM = 1;
   };
 
@@ -89,7 +95,9 @@ public:
    */
   virtual void ExpandObjectCatalogs() override;
 
-  /// not implemented
+  /*!
+   * @brief Not Implemented
+   */
   virtual void GenerateElementRegions( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   /**
@@ -109,15 +117,18 @@ public:
    */
   virtual void GenerateMesh( DomainPartition * const domain ) override final;
 
-  /// not implemented
+  /*!
+   * @brief not implemented
+   */
   virtual void GetElemToNodesRelationInBox ( std::string const & GEOSX_UNUSED_PARAM( elementType ),
                                              int const * GEOSX_UNUSED_PARAM( index ),
                                              int const & GEOSX_UNUSED_PARAM( iEle ),
                                              int * GEOSX_UNUSED_PARAM( nodeIDInBox ),
                                              int const GEOSX_UNUSED_PARAM( size )) override {}
 
-
-  /// not implemented
+  /*!
+   * @brief not implemented
+   */
   virtual void RemapMesh ( dataRepository::Group * const GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   ///@}
@@ -220,6 +231,9 @@ protected:
    */
   void PostProcessInput() override;
 
+  /*!
+   * @brief Generate the polyline from data
+   */
   virtual void GeneratePolyLine() = 0;
 
   /**
@@ -332,7 +346,7 @@ protected:
 
   // Other data
 
-  // Number of physical dimensions
+  /// Number of physical dimensions
   const int m_nDims;
 
   /// Coordinates of the polyline nodes in R1Tensor format

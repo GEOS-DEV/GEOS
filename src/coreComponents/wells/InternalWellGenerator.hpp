@@ -96,6 +96,9 @@ protected:
   void PostProcessInput() override final;
 
 private:
+  /*!
+   * @brief Generate the polyline from XML data
+   */
   void GeneratePolyLine() override final;
 };
 }
