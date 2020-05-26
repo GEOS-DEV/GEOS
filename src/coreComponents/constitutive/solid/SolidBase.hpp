@@ -42,7 +42,7 @@ namespace constitutive
  * of the data indicates the distinction from a parameter and a state variable,
  * with the parameters being "T const" and the state variables being "T".
  *
- * @note If an allocation occurs on  the underlying Array after a KernelWrapper
+ * @note If an allocation occurs on the underlying Array after a KernelWrapper
  * is created, then the ArrayView members of that KernelWrapper are silently
  * invalid.
  */
@@ -237,8 +237,8 @@ protected:
   array2d< real64 > m_density;
 
   /// The material stress at a quadrature point.
-
   array3d< real64, solid::STRESS_PERMUTATION > m_stress;
+  
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.
   bool m_postProcessed = false;

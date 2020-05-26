@@ -13,14 +13,13 @@
  */
 
 /**
- *  @file LinearElasticIsotropic.hpp
+ *  @file DruckerPrager.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_
+#ifndef GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
+#define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "SolidBase.hpp"
-#include "constitutive/ExponentialRelation.hpp"
 
 namespace geosx
 {
@@ -29,46 +28,42 @@ namespace constitutive
 {
 
 /**
- * @class LinearElasticIsotropicUpdates
+ * @class DruckerPragerUpdates
  *
- * Class to provide linear elastic isotropic material updates that may be
+ * Class to provide material updates that may be
  * called from a kernel function.
  */
-class LinearElasticIsotropicUpdates : public SolidBaseUpdates
+class DruckerPragerUpdates : public SolidBaseUpdates
 {
 public:
   /**
    * @brief Constructor
-   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
-   *                        element.
-   * @param[in] shearModulus The ArrayView holding the shear modulus data for each
-   *                         element.
-   * @param[in] stress The ArrayView holding the stress data for each quadrature
-   *                   point.
+   * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
+   * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
+   * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  LinearElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
-                                 arrayView1d< real64 const > const & shearModulus,
-                                 arrayView3d< real64, solid::STRESS_USD > const & stress ):
+  DruckerPragerUpdates( arrayView1d< real64 const > const & bulkModulus,
+                        arrayView1d< real64 const > const & shearModulus,
+                        arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
 
   /// Default copy constructor
-  LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates const & ) = default;
+  DruckerPragerUpdates( DruckerPragerUpdates const & ) = default;
 
   /// Default move constructor
-  LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates && ) = default;
+  DruckerPragerUpdates( DruckerPragerUpdates && ) = default;
 
   /// Deleted default constructor
-  LinearElasticIsotropicUpdates() = delete;
+  DruckerPragerUpdates() = delete;
 
   /// Deleted copy assignment operator
-  LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates const & ) = delete;
+  DruckerPragerUpdates & operator=( DruckerPragerUpdates const & ) = delete;
 
   /// Deleted move assignment operator
-  LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates && ) =  delete;
-
+  DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   /**
    * accessor to return the stiffness at a given element
@@ -140,7 +135,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
+void DruckerPragerUpdates::SmallStrainNoState( localIndex const k,
                                                         real64 const * GEOSX_RESTRICT const voigtStrain,
                                                         real64 * GEOSX_RESTRICT const stress ) const
 {
@@ -160,7 +155,7 @@ void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
+void DruckerPragerUpdates::SmallStrain( localIndex const k,
                                                  localIndex const q,
                                                  real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
 {
@@ -174,12 +169,11 @@ void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
   m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_shearModulus[k] * voigtStrainInc[3];
   m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_shearModulus[k] * voigtStrainInc[4];
   m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + m_shearModulus[k] * voigtStrainInc[5];
-
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
+void DruckerPragerUpdates::HypoElastic( localIndex const k,
                                                  localIndex const q,
                                                  real64 const * const GEOSX_RESTRICT Ddt,
                                                  R2Tensor const & Rot ) const
@@ -213,7 +207,7 @@ void LinearElasticIsotropicUpdates::HypoElastic( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
+void DruckerPragerUpdates::HyperElastic( localIndex const k,
                                                   real64 const (&FmI)[3][3],
                                                   real64 * const GEOSX_RESTRICT stress ) const
 {
@@ -252,7 +246,7 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
+void DruckerPragerUpdates::HyperElastic( localIndex const k,
                                                   localIndex const q,
                                                   real64 const (&FmI)[3][3] ) const
 {
@@ -266,28 +260,28 @@ void LinearElasticIsotropicUpdates::HyperElastic( localIndex const k,
 }
 
 /**
- * @class LinearElasticIsotropic
+ * @class DruckerPrager
  *
- * Class to provide a linear elastic isotropic material response.
+ * Drucker-Prager material model.
  */
-class LinearElasticIsotropic : public SolidBase
+class DruckerPrager : public SolidBase
 {
 public:
 
-  /// @typedef Alias for LinearElasticIsotropicUpdates
-  using KernelWrapper = LinearElasticIsotropicUpdates;
+  /// @typedef Alias for DruckerPragerUpdates
+  using KernelWrapper = DruckerPragerUpdates;
 
   /**
    * constructor
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  LinearElasticIsotropic( string const & name, Group * const parent );
+  DruckerPrager( string const & name, Group * const parent );
 
   /**
    * Default Destructor
    */
-  virtual ~LinearElasticIsotropic() override;
+  virtual ~DruckerPrager() override;
 
   virtual void
   DeliverClone( string const & name,
@@ -303,7 +297,7 @@ public:
   ///@{
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "LinearElasticIsotropic";
+  static constexpr auto m_catalogNameString = "DruckerPrager";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -354,7 +348,7 @@ public:
    * @return A const reference to arrayView1d<real64> containing the bulk
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & bulkModulus()       { return m_bulkModulus; }
+  arrayView1d< real64 > const & bulkModulus() { return m_bulkModulus; }
 
   /**
    * @brief Const accessor for bulk modulus
@@ -368,7 +362,7 @@ public:
    * @return A const reference to arrayView1d<real64> containing the shear
    *         modulus (at every element).
    */
-  arrayView1d< real64 > const & shearModulus()       { return m_shearModulus; }
+  arrayView1d< real64 > const & shearModulus() { return m_shearModulus; }
 
   /**
    * @brief Const accessor for shear modulus
@@ -378,13 +372,13 @@ public:
   arrayView1d< real64 const > const & shearModulus() const { return m_shearModulus; }
 
   /**
-   * @brief Create a instantiation of the LinearElasticIsotropicUpdate class
+   * @brief Create a instantiation of the DruckerPragerUpdate class
    *        that refers to the data in this.
-   * @return An instantiation of LinearElasticIsotropicUpdate.
+   * @return An instantiation of DruckerPragerUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelWrapper()
+  DruckerPragerUpdates createKernelWrapper()
   {
-    return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    return DruckerPragerUpdates( m_bulkModulus, m_shearModulus, m_stress );
   }
 
 protected:
@@ -403,11 +397,10 @@ private:
 
   /// The shear modulus for each upper level dimension (i.e. cell) of *this
   array1d< real64 > m_shearModulus;
-
 };
 
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICISOTROPIC_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */

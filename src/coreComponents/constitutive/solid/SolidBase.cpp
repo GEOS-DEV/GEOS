@@ -61,7 +61,6 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
 
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
-
   newConstitutiveRelation->m_stress = m_stress;
 }
 
@@ -70,11 +69,11 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   this->resize( parent->size() );
+  
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density = m_defaultDensity;
-
+  
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
 }
 

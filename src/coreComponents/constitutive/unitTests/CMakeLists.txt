@@ -3,6 +3,7 @@
 #
 
 set( gtest_geosx_tests
+     testDruckerPrager.cpp
      testLinearElasticIsotropic.cpp
      testLinearElasticAnisotropic.cpp
      testRelPerm.cpp
