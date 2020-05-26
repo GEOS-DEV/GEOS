@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singleFluidSelector.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
 #include "wells/WellElementSubRegion.hpp"
@@ -105,10 +106,13 @@ void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localI
 
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const a )
-  {
-    fluid.PointUpdate( pres[a] + dPres[a], a, 0 );
-  } );
+  bool const success =
+    constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+    {
+      typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      SinglePhaseBaseKernels::FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
+    } );
+  GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
 }
 
 void SinglePhaseWell::UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex )

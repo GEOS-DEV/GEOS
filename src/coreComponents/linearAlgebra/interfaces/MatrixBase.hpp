@@ -224,7 +224,6 @@ protected:
    * @todo Replace generic implementation with more efficient ones in each package.
    */
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
-                       globalIndex const dofRankOffset,
                        MPI_Comm const & comm )
   {
     localMatrix.move( chai::CPU, false );
@@ -240,10 +239,12 @@ protected:
                          maxEntriesPerRow,
                          comm );
 
+    globalIndex const rankOffset = ilower();
+
     open();
     for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
     {
-      insert( localRow + dofRankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
+      insert( localRow + rankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
     }
     close();
   }

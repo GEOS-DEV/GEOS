@@ -13,7 +13,6 @@ if(ENABLE_PVTPackage)
     set( gtest_geosx_tests
          ${gtest_geosx_tests}
          testCompMultiphaseFlow.cpp
-         testCompMultiphaseFlowCapPressure.cpp
          testReservoirCompositionalMultiphaseMSWells.cpp
          testReservoirSinglePhaseMSWells.cpp
        )

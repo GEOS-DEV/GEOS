@@ -154,17 +154,8 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
-  inline ParallelVector const * getSolution() const
-  {
-    return &m_solution;
-  }
-
-  inline globalIndex getSize() const
-  {
-    return m_matrix.numGlobalRows();
-  }
-
 protected:
+
   virtual void PostProcessInput() override final;
 
 private:

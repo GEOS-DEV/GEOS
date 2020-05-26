@@ -22,14 +22,12 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
-
-// Disable this for device-only assembly benchmarks with a steady-state problem
-#define DO_LIN_SOLVE 1
 
 namespace geosx
 {
@@ -144,7 +142,14 @@ void SinglePhaseBase::UpdateFluidModel( Group & dataGroup, localIndex const targ
   arrayView1d< real64 const > const & dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
-  fluid.BatchUpdate( pres, dPres );
+
+  bool const success =
+  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  {
+    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
+  } );
+  GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
 }
 
 void SinglePhaseBase::UpdateSolidModel( Group & dataGroup, localIndex const targetIndex ) const
@@ -279,27 +284,19 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  // FIXME: remove the check or replace with a better adaptive construction policy
-  static bool setupDone = false;
+  SolverBase::SetupLocalSystem( domain,
+                                dofManager,
+                                m_localMatrix,
+                                m_localRhs,
+                                m_localSolution );
 
-  if( !setupDone )
-  {
-    SolverBase::SetupLocalSystem( domain,
-                                  dofManager,
-                                  m_localMatrix,
-                                  m_localRhs,
-                                  m_localSolution );
+  // TODO: can we make the matrix not lose its callback name after stealing?
+  m_localMatrix.setName( this->getName() + "/localMatrix" );
+  m_localRhs.setName( this->getName() + "/localRhs" );
 
-    // TODO: can we make the matrix not lose its callback name after stealing?
-    m_localMatrix.setName( this->getName() + "/localMatrix" );
-    m_localRhs.setName( this->getName() + "/localRhs" );
-
-    matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
-    rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-    solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
-
-    setupDone = true;
-  }
+  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
+  solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -310,17 +307,14 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
                                          ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
-  // Only do it once!
-  //ResetViews( domain );
+  ResetViews( domain );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  if( m_pressureDofIndex.empty() )
-  {
-    string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
-    m_pressureDofIndex = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofKey );
-    m_pressureDofIndex.setName( getName() + "/accessors/pressureDofIndex" );
-  }
+  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
+  m_pressureDofIndex.clear();
+  m_pressureDofIndex = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofKey );
+  m_pressureDofIndex.setName( getName() + "/accessors/pressureDofIndex" );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -494,25 +488,36 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-  arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-  arrayView1d< real64 const > const & densityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
-  arrayView1d< real64 > const & porosity = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-  arrayView1d< real64 const > const & porosityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
-  arrayView1d< real64 const > const & porosityRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
+  arrayView1d< real64 const > const & deltaPressure =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+  arrayView1d< real64 const > const & densityOld =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
+  arrayView1d< real64 > const & porosity =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
+  arrayView1d< real64 const > const & porosityOld =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
+  arrayView1d< real64 const > const & porosityRef =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-  arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
+  arrayView1d< real64 const > const & deltaVolume =
+    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
 
-  arrayView1d< real64 const > const & totalMeanStressOld = ISPORO ? subRegion.getReference< array1d< real64 > >( "oldTotalMeanStress" ) : porosityOld;
-  arrayView1d< real64 const > const & totalMeanStress = ISPORO ? subRegion.getReference< array1d< real64 > >( "totalMeanStress" ) : porosityOld;
+  arrayView1d< real64 const > const & totalMeanStressOld =
+    ISPORO ? subRegion.getReference< array1d< real64 > >( "oldTotalMeanStress" ) : porosityOld;
+  arrayView1d< real64 const > const & totalMeanStress =
+    ISPORO ? subRegion.getReference< array1d< real64 > >( "totalMeanStress" ) : porosityOld;
 
-  SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+  SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidModelNames()[targetIndex] );
   arrayView2d< real64 const > const & density = fluid.density();
   arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
 
-  ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
-  arrayView2d< real64 const > const & pvMult = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
-  arrayView2d< real64 const > const & dPvMult_dPres = solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
-  arrayView1d< real64 const > const & bulkModulus = ISPORO ? solid.getReference< array1d< real64 > >( "BulkModulus" ) : porosityOld;
+  ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
+  arrayView2d< real64 const > const & pvMult =
+    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
+  arrayView2d< real64 const > const & dPvMult_dPres =
+    solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::dPVMult_dPresString );
+  arrayView1d< real64 const > const & bulkModulus =
+    ISPORO ? solid.getReference< array1d< real64 > >( "BulkModulus" ) : porosityOld;
   real64 const biotCoefficient = ISPORO ? solid.getReference< real64 >( "BiotCoefficient" ) : 0.0;
 
   using Kernel = AccumulationKernel< CellElementSubRegion >;
@@ -612,10 +617,13 @@ void SinglePhaseBase::ApplyBoundaryConditions( real64 time_n,
                                                real64 dt,
                                                DomainPartition * const domain,
                                                DofManager const & dofManager,
-                                               ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                               ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+                                               ParallelMatrix & matrix,
+                                               ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
+
+  GEOSX_UNUSED_VAR( matrix )
+  GEOSX_UNUSED_VAR( rhs )
 
   ApplySourceFluxBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
   ApplyDiricletBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
@@ -714,9 +722,9 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
                                                                        localMatrix,
                                                                        localRhs,
                                                                        [] GEOSX_HOST_DEVICE ( localIndex const )
-    {
-      return 0.0;
-    } );
+                                                                       {
+                                                                         return 0.0;
+                                                                       } );
 
   } );
 }
@@ -728,9 +736,7 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-#if DO_LIN_SOLVE
-
-  matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
+  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
   rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
 
   rhs.scale( -1.0 );
@@ -738,26 +744,8 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 
-  // copy the solution to local array for later application
-  real64 const * const data = solution.extractLocalVector();
-  arrayView1d< real64 > const & solView = m_localSolution.toView();
-  forAll< parallelHostPolicy >( solution.localSize(), [=] ( localIndex const k )
-  {
-    solView[k] = data[k];
-  } );
-
-#else
-
-  GEOSX_UNUSED_VAR( dofManager )
-  GEOSX_UNUSED_VAR( matrix )
-  GEOSX_UNUSED_VAR( rhs )
-  GEOSX_UNUSED_VAR( solution )
-
-  // prescribe zero solution for a steady-state problem
-  arrayView1d< real64 > const & solView = m_localSolution.toView();
-  solView.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-
-#endif
+  m_localSolution.resize( solution.localSize() );
+  solution.extract( m_localSolution );
 }
 
 void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
@@ -780,60 +768,68 @@ void SinglePhaseBase::ResetViews( DomainPartition * const domain )
 {
   FlowSolverBase::ResetViews( domain );
 
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  m_pressure = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::pressureString );
+  m_pressure.clear();
+  m_pressure = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString );
   m_pressure.setName( getName() + "/accessors/" + viewKeyStruct::pressureString );
 
-  m_deltaPressure = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::deltaPressureString );
+  m_deltaPressure.clear();
+  m_deltaPressure = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaPressureString );
   m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString );
 
-  m_volume = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+  m_volume.clear();
+  m_volume = elemManager.ConstructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
   m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString );
 
-
-  m_deltaVolume = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::deltaVolumeString );
+  m_deltaVolume.clear();
+  m_deltaVolume = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaVolumeString );
   m_deltaVolume.setName( getName() + "/accessors/" + viewKeyStruct::deltaVolumeString );
 
-  m_mobility = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::mobilityString );
+  m_mobility.clear();
+  m_mobility = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::mobilityString );
   m_mobility.setName( getName() + "/accessors/" + viewKeyStruct::mobilityString );
 
-  m_dMobility_dPres = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::dMobility_dPressureString );
-  m_mobility.setName( getName() + "/accessors/" + viewKeyStruct::dMobility_dPressureString );
+  m_dMobility_dPres.clear();
+  m_dMobility_dPres = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::dMobility_dPressureString );
+  m_dMobility_dPres.setName( getName() + "/accessors/" + viewKeyStruct::dMobility_dPressureString );
 
   ResetViewsPrivate( elemManager );
 }
 
-void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager * const elemManager )
+void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager const & elemManager )
 {
-
-  m_density = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::densityString,
-                                                                                                            targetRegionNames(),
-                                                                                                            fluidModelNames() );
+  m_density.clear();
+  m_density = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::densityString,
+                                                                           targetRegionNames(),
+                                                                           fluidModelNames() );
   m_density.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::densityString );
 
-  m_dDens_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >(
-    SingleFluidBase::viewKeyStruct::dDens_dPresString,
-    targetRegionNames(),
-    fluidModelNames() );
+  m_dDens_dPres.clear();
+  m_dDens_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dDens_dPresString,
+                                                                               targetRegionNames(),
+                                                                               fluidModelNames() );
   m_dDens_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dDens_dPresString );
 
-  m_viscosity = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( SingleFluidBase::viewKeyStruct::viscosityString,
-                                                                                                              targetRegionNames(),
-                                                                                                              fluidModelNames() );
+  m_viscosity.clear();
+  m_viscosity = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::viscosityString,
+                                                                             targetRegionNames(),
+                                                                             fluidModelNames() );
   m_viscosity.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::viscosityString );
 
-  m_dVisc_dPres = elemManager->ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >(
-    SingleFluidBase::viewKeyStruct::dVisc_dPresString,
-    targetRegionNames(),
-    fluidModelNames() );
+  m_dVisc_dPres.clear();
+  m_dVisc_dPres = elemManager.ConstructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dVisc_dPresString,
+                                                                               targetRegionNames(),
+                                                                               fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString );
 
-  m_poroMultiplier = elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::poroMultString );
+  m_poroMultiplier.clear();
+  m_poroMultiplier = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::poroMultString );
   m_poroMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::poroMultString );
 
-  m_transTMultiplier = elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( viewKeyStruct::transTMultString );
+  m_transTMultiplier.clear();
+  m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::transTMultString );
   m_transTMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::transTMultString );
 }
 

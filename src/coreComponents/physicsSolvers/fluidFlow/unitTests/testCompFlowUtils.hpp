@@ -15,9 +15,11 @@
 #ifndef GEOSX_TESTCOMPFLOWUTILS_HPP
 #define GEOSX_TESTCOMPFLOWUTILS_HPP
 
-#include "gtest/gtest.h"
-#include "common/DataTypes.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "meshUtilities/MeshManager.hpp"
+#include "managers/ProblemManager.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
 
 namespace geosx
 {
@@ -149,6 +151,185 @@ array3d< real64 > invertLayout( arraySlice3d< real64 const > const & input,
   }
 
   return output;
+}
+
+void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
+                            arrayView1d< real64 const > const & residualOrig,
+                            globalIndex const dofIndex,
+                            real64 const eps,
+                            CRSMatrixView< real64, globalIndex const > const & jacobian )
+{
+  forAll< parallelHostPolicy >( residual.size(), [=]( localIndex const row )
+  {
+    real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
+    if( std::fabs( dRdX ) > 0.0 )
+    {
+      jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
+    }
+  } );
+}
+
+template< typename LAMBDA >
+void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
+                            DomainPartition & domain,
+                            double perturbParameter,
+                            double relTol,
+                            LAMBDA assembleFunction )
+{
+  localIndex const NC = solver.numFluidComponents();
+
+  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
+  array1d< real64 > const & residual = solver.getLocalRhs();
+  DofManager const & dofManager = solver.getDofManager();
+
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  // assemble the analytical residual
+  solver.ResetStateToBeginningOfStep( &domain );
+
+  residual.setValues< parallelHostPolicy >( 0.0 );
+  jacobian.setValues< parallelHostPolicy >( 0.0 );
+
+  assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+  residual.move( chai::CPU, false );
+
+  // copy the analytical residual
+  array1d< real64 > residualOrig( residual );
+
+  // create the numerical jacobian
+  CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
+  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
+
+  string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
+
+  solver.forTargetSubRegions( mesh, [&]( localIndex const,
+                                         ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const & elemGhostRank =
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    arrayView1d< globalIndex const > const & dofNumber =
+      subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+    arrayView1d< real64 const > const pres =
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+
+    arrayView1d< real64 > const dPres =
+      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
+
+    arrayView2d< real64 const > const compDens =
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
+    compDens.move( chai::CPU );
+
+    arrayView2d< real64 > const dCompDens =
+      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
+
+    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    {
+      if( elemGhostRank[ei] >= 0 ) continue;
+
+      real64 totalDensity = 0.0;
+      for( localIndex ic = 0; ic < NC; ++ic )
+      {
+        totalDensity += compDens[ei][ic];
+      }
+
+      {
+        solver.ResetStateToBeginningOfStep( &domain );
+
+        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+        dPres.move( chai::CPU, true );
+        dPres[ei] = dP;
+
+        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
+                                               ElementSubRegionBase & subRegion2 )
+        {
+          solver.UpdateState( subRegion2, targetIndex2 );
+        } );
+
+        residual.setValues< parallelHostPolicy >( 0.0 );
+        jacobian.setValues< parallelHostPolicy >( 0.0 );
+        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+        fillNumericalJacobian( residual.toViewConst(),
+                               residualOrig.toViewConst(),
+                               dofNumber[ei],
+                               dP,
+                               jacobianFD.toViewConstSizes() );
+      }
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        solver.ResetStateToBeginningOfStep( &domain );
+
+        real64 const dRho = perturbParameter * totalDensity;
+        dCompDens.move( chai::CPU, true );
+        dCompDens[ei][jc] = dRho;
+
+        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
+                                               ElementSubRegionBase & subRegion2 )
+        {
+          solver.UpdateState( subRegion2, targetIndex2 );
+        } );
+
+        residual.setValues< parallelHostPolicy >( 0.0 );
+        jacobian.setValues< parallelHostPolicy >( 0.0 );
+        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+        fillNumericalJacobian( residual.toViewConst(),
+                               residualOrig.toViewConst(),
+                               dofNumber[ei] + jc + 1,
+                               dRho,
+                               jacobianFD.toViewConstSizes() );
+      }
+    }
+  } );
+
+  // assemble the analytical jacobian
+  solver.ResetStateToBeginningOfStep( &domain );
+
+  residual.setValues< parallelHostPolicy >( 0.0 );
+  jacobian.setValues< parallelHostPolicy >( 0.0 );
+  assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+  compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
+}
+
+void setupProblemFromXML( ProblemManager & problemManager, char const * const xmlInput )
+{
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );
+  if( !xmlResult )
+  {
+    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+  }
+
+  int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  dataRepository::Group * commandLine =
+    problemManager.GetGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+  commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
+    setApplyDefaultValue( mpiSize );
+
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
+  problemManager.InitializePythonInterpreter();
+  problemManager.ProcessInputFileRecursive( xmlProblemNode );
+
+  DomainPartition & domain  = *problemManager.getDomainPartition();
+
+  constitutive::ConstitutiveManager & constitutiveManager = *domain.getConstitutiveManager();
+  xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
+  constitutiveManager.ProcessInputFileRecursive( topLevelNode );
+
+  MeshManager & meshManager = *problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
+  meshManager.GenerateMeshLevels( &domain );
+
+  ElementRegionManager & elementManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+  topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
+  elementManager.ProcessInputFileRecursive( topLevelNode );
+
+  problemManager.ProblemSetup();
 }
 
 } // namespace testing

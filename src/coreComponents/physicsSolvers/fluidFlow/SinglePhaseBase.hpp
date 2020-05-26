@@ -289,7 +289,7 @@ protected:
 
 private:
 
-  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager );
+  virtual void ResetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
 

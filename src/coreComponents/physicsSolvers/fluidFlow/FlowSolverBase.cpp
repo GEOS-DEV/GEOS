@@ -188,9 +188,9 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( subRegion.size(), [=]( localIndex a )
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      gravityCoef[a] = Dot( elemCenter[a], gravVector );
+      gravityCoef[ei] = Dot( elemCenter[ei], gravVector );
     } );
   } );
 
@@ -201,9 +201,9 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
     arrayView1d< real64 > const & gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
-    forAll< serialPolicy >( faceManager.size(), [=] ( localIndex a )
+    forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
-      gravityCoef[a] = Dot( faceCenter[a], gravVector );
+      gravityCoef[kf] = Dot( faceCenter[kf], gravVector );
     } );
   }
 }
@@ -212,33 +212,49 @@ FlowSolverBase::~FlowSolverBase() = default;
 
 void FlowSolverBase::ResetViews( DomainPartition * const domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  m_elemGhostRank =
-    elemManager->ConstructViewAccessor< array1d< integer >, arrayView1d< integer const > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
-  m_volume =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
-  m_gravCoef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::gravityCoefString );
-  m_porosityRef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::referencePorosityString );
+  m_elemGhostRank.clear();
+  m_elemGhostRank = elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+  m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString );
 
-  m_elementArea =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
-  m_elementAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
-  m_elementAperture0 =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::aperture0String );
-  m_effectiveAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( viewKeyStruct::effectiveApertureString );
+  m_volume.clear();
+  m_volume = elemManager.ConstructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+  m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString );
+
+  m_gravCoef.clear();
+  m_gravCoef = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::gravityCoefString );
+  m_gravCoef.setName( getName() + "/accessors/" + viewKeyStruct::gravityCoefString );
+
+  m_porosityRef.clear();
+  m_porosityRef = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::referencePorosityString );
+  m_porosityRef.setName( getName() + "/accessors/" + viewKeyStruct::referencePorosityString );
+
+  m_elementArea.clear();
+  m_elementArea = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementAreaString );
+  m_elementArea.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementAreaString );
+
+  m_elementAperture.clear();
+  m_elementAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::elementApertureString );
+  m_elementAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::elementApertureString );
+
+  m_elementAperture0.clear();
+  m_elementAperture0 = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::aperture0String );
+  m_elementAperture0.setName( getName() + "/accessors/" + viewKeyStruct::aperture0String );
+
+  m_effectiveAperture.clear();
+  m_effectiveAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::effectiveApertureString );
+  m_effectiveAperture.setName( getName() + "/accessors/" + viewKeyStruct::effectiveApertureString );
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  m_elementSeparationCoefficient =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+  m_elementSeparationCoefficient.clear();
+  m_elementSeparationCoefficient = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString );
+  m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString );
 
-  m_element_dSeparationCoefficient_dAperture =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+  m_element_dSeparationCoefficient_dAperture.clear();
+  m_element_dSeparationCoefficient_dAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+  m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }
 

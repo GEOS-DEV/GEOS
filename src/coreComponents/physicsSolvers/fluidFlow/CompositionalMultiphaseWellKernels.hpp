@@ -127,9 +127,6 @@ struct FluxKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex constexpr maxNumDof  = maxNumComp + 1;
-
     localIndex const NC = numComponents;
     localIndex const resNDOF = numDofPerResElement;
 
@@ -139,6 +136,9 @@ struct FluxKernel
     // loop over the well elements to compute the fluxes between elements
     forAll< POLICY >( size, [=]( localIndex const iwelem )
     {
+      localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+      localIndex constexpr maxNumDof  = maxNumComp + 1;
+
       // create local work arrays
       stackArray1d< real64, maxNumComp > compFracUp( NC );
       stackArray1d< real64, maxNumComp > dCompFrac_dPresUp( NC );
@@ -384,9 +384,6 @@ struct PressureRelationKernel
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex constexpr maxNumDof  = maxNumComp + 1;
-
     localIndex const NC = numComponents;
     localIndex const resNDOF = numDofPerResElement;
 
@@ -399,6 +396,9 @@ struct PressureRelationKernel
     // loop over the well elements to compute the pressure relations between well elements
     forAll< serialPolicy >( size, [=] ( localIndex const iwelem )
     {
+      localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
+      localIndex constexpr maxNumDof  = maxNumComp + 1;
+
       localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
       if( iwelemNext >= 0 )   // if iwelemNext < 0, form control equation, not momentum
@@ -531,13 +531,13 @@ struct PerforationKernel
           arrayView3d< real64 > const & dCompPerfRate_dPres,
           arrayView4d< real64 > const & dCompPerfRate_dComp )
   {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
     localIndex const NC = numComponents;
     localIndex const NP = numPhases;
 
     // loop over the perforations to compute the perforation rates
     forAll< serialPolicy >( size, [=] ( localIndex const iperf )
     {
+      localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
       // local working variables and arrays
       stackArray1d< real64, maxNumComp > dPhaseCompFrac_dCompDens( NC );

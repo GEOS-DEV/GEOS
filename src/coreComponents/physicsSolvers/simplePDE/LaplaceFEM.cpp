@@ -144,13 +144,13 @@ void LaplaceFEM::sparsityGeneration( DomainPartition const & domain, DofManager 
   NodeManager const & nodeManager = *meshLevel.getNodeManager();
   ElementRegionManager const & elementRegionManager = *meshLevel.getElemManager();
 
-  dofManager.setFiniteElementSparsityPattern< 1 >( m_crsMatrix,
+  dofManager.setFiniteElementSparsityPattern< 1 >( m_localMatrix,
                                                    elementRegionManager,
                                                    nodeManager,
                                                    targetRegionNames(),
                                                    m_fieldName );
 
-  m_rhsArray.resize( m_crsMatrix.numRows() );
+  m_localRhs.resize( m_localMatrix.numRows() );
 }
 
 void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -209,8 +209,8 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
                                  ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
 {
-  m_crsMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  m_rhsArray.setValues< parallelDevicePolicy< 32 > >( 0 );
+  m_localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
+  m_localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   Group * const nodeManager = mesh->getNodeManager();
@@ -252,7 +252,7 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                         elemNodes,
                                                                         dofIndex,
                                                                         dofManager.rankOffset(),
-                                                                        m_crsMatrix.toViewConstSizes() );
+                                                                        m_localMatrix.toViewConstSizes() );
 
     } );
   }
@@ -340,12 +340,16 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
-  matrix.create( m_crsMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
-  rhs.create( m_rhsArray.toViewConst(), MPI_COMM_GEOSX );
+  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
+
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
+
+  m_localSolution.resize( solution.localSize() );
+  solution.extract( m_localSolution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
@@ -362,7 +366,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const GEOSX_UNUSED_PARAM( fieldName ) )
+                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >( targetSet,
                                                                                                time,
@@ -370,8 +374,8 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                                                                                m_fieldName,
                                                                                                dofManager.getKey( m_fieldName ),
                                                                                                dofManager.rankOffset(),
-                                                                                               m_crsMatrix.toViewConstSizes(),
-                                                                                               m_rhsArray.toView() );
+                                                                                               m_localMatrix.toViewConstSizes(),
+                                                                                               m_localRhs.toView() );
   } );
 }
 //START_SPHINX_INCLUDE_00

@@ -366,6 +366,25 @@ struct AccumulationKernel< FaceElementSubRegion >
   }
 };
 
+/******************************** FluidUpdateKernel ********************************/
+
+struct FluidUpdateKernel
+{
+  template< typename FLUID_WRAPPER >
+  static void Launch( FLUID_WRAPPER const & fluidWrapper,
+                      arrayView1d< real64 const > const & pres,
+                      arrayView1d< real64 const > const & dPres )
+  {
+    forAll< parallelDevicePolicy< 128 > >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
+      {
+        fluidWrapper.Update( k, q, pres[k] + dPres[k] );
+      }
+    } );
+  }
+};
+
 /******************************** ResidualNormKernel ********************************/
 
 struct ResidualNormKernel
@@ -380,8 +399,8 @@ struct ResidualNormKernel
                       arrayView1d< real64 const > const & densOld,
                       real64 * localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumUnscaled( 0.0 );
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
+    RAJA::ReduceSum< REDUCE_POLICY, real64 > normSum( 0.0 );
     RAJA::ReduceSum< REDUCE_POLICY, localIndex > count( 0 );
 
     forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
@@ -390,14 +409,14 @@ struct ResidualNormKernel
       {
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
-        sumUnscaled += val * val;
-        sumScaled += refPoro[a] * densOld[a] * volume[a];
+        localSum += val * val;
+        normSum += refPoro[a] * densOld[a] * volume[a];
         count += 1;
       }
     } );
 
-    localResidualNorm[0] += sumUnscaled.get();
-    localResidualNorm[1] += sumScaled.get();
+    localResidualNorm[0] += localSum.get();
+    localResidualNorm[1] += normSum.get();
     localResidualNorm[2] += count.get();
   }
 };

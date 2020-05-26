@@ -301,22 +301,15 @@ private:
 
 inline ExponentApproximationType stringToExponentType( string const & model )
 {
-  if( model == "linear" )
-  {
-    return ExponentApproximationType::Linear;
-  }
-  else if( model == "quadratic" )
-  {
-    return ExponentApproximationType::Quadratic;
-  }
-  else if( model == "exponential" )
-  {
-    return ExponentApproximationType::Full;
-  }
-  GEOSX_ERROR( "Model type not supported: " << model );
-
-  // otherwise compilers complain about reaching the end of non-void function
-  return ExponentApproximationType::Full;
+  static std::map< string, ExponentApproximationType > const approxTypes =
+    {
+      { "linear", ExponentApproximationType::Linear },
+      { "quadratic", ExponentApproximationType::Quadratic },
+      { "exponential", ExponentApproximationType::Full },
+    };
+  auto const it = approxTypes.find( model );
+  GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported: " << model );
+  return it->second;
 }
 
 template< ExponentApproximationType EAT >

@@ -635,6 +635,88 @@ void SolverBase::ApplyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time 
   GEOSX_ERROR( "SolverBase::ApplyBoundaryConditions called!. Should be overridden." );
 }
 
+namespace
+{
+
+/**
+ * @brief Helper for debug output of linear algebra objects (matrices and vectors)
+ * @tparam T type of LA object (must have stream insertion and .write() implemented)
+ * @param obj                the object to output
+ * @param cycleNumber        event cycle number
+ * @param nonlinearIteration nonlinear iteration number
+ * @param shortName          short filename prefix (e.g. "mat")
+ * @param longName           long name for screen output (e.g. "System matrix")
+ * @param toScreen           whether to print on screen
+ * @param toFile             whether to write to file
+ */
+template< typename T >
+void debugOutputLAObject( T const & obj,
+                          real64 const & GEOSX_UNUSED_PARAM( time ),
+                          integer const cycleNumber,
+                          integer const nonlinearIteration,
+                          string const & shortName,
+                          string const & longName,
+                          bool const toScreen,
+                          bool const toFile )
+{
+  if( toScreen )
+  {
+    string const frame( longName.size() + 1, '=' );
+    GEOSX_LOG_RANK_0( frame << "\n" << longName << ":\n" << frame );
+    GEOSX_LOG( obj );
+  }
+
+  if( toFile )
+  {
+    char filename[200] = { 0 };
+    snprintf( filename, 200, "%s_%06d_%02d.mtx", shortName.c_str(), cycleNumber, nonlinearIteration );
+    obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
+    GEOSX_LOG_RANK_0( longName << " written to " << filename );
+  }
+}
+
+}
+
+void SolverBase::DebugOutputSystem( real64 const & time,
+                                    integer const cycleNumber,
+                                    integer const nonlinearIteration,
+                                    ParallelMatrix const & matrix,
+                                    ParallelVector const & rhs ) const
+{
+  debugOutputLAObject( matrix,
+                       time,
+                       cycleNumber,
+                       nonlinearIteration,
+                       "mat",
+                       "System matrix",
+                       getLogLevel() == 2,
+                       getLogLevel() >= 3 );
+
+  debugOutputLAObject( rhs,
+                       time,
+                       cycleNumber,
+                       nonlinearIteration,
+                       "rhs",
+                       "System right-hand side",
+                       getLogLevel() == 2,
+                       getLogLevel() >= 3 );
+}
+
+void SolverBase::DebugOutputSolution( real64 const & time,
+                                      integer const cycleNumber,
+                                      integer const nonlinearIteration,
+                                      ParallelVector const & solution ) const
+{
+  debugOutputLAObject( solution,
+                       time,
+                       cycleNumber,
+                       nonlinearIteration,
+                       "sol",
+                       "System solution",
+                       getLogLevel() == 2,
+                       getLogLevel() >= 3 );
+}
+
 real64
 SolverBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
                                    DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
@@ -672,13 +754,6 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
   }
 
   GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
-
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolveSystem" );
-    GEOSX_LOG_RANK_0( "\nSolution\n" );
-    std::cout << solution;
-  }
 }
 
 bool SolverBase::CheckSystemSolution( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),

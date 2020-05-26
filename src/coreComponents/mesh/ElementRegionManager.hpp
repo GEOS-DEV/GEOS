@@ -749,8 +749,8 @@ public:
    * @return ElementViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
-                                                    string const & neighborName = string() ) const;
+  ElementViewAccessor< LHS >
+  ConstructViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
    * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -760,8 +760,20 @@ public:
    * @return ElementViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS > ConstructViewAccessor( string const & name,
-                                                    string const & neighborName = string() );
+  ElementViewAccessor< LHS >
+  ConstructViewAccessor( string const & name, string const & neighborName = string() );
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
+   * @tparam T data type
+   * @tparam NDIM number of array dimensions
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
+   */
+  template< typename T, int NDIM >
+  ElementViewAccessor< ArrayView< T const, NDIM > >
+  ConstructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -845,6 +857,12 @@ public:
                                  arrayView1d< string const > const & materialNames,
                                  bool const allowMissingViews = false );
 
+  template< typename T, int NDIM >
+  ElementViewAccessor< ArrayView< T const, NDIM > >
+  ConstructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
 
   /**
    * @brief Construct a ConstitutiveRelationAccessor.
@@ -1104,6 +1122,14 @@ ElementRegionManager::
   return viewAccessor;
 }
 
+template< typename T, int NDIM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+ElementRegionManager::
+  ConstructArrayViewAccessor( string const & name, string const & neighborName ) const
+{
+  return ConstructViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( name, neighborName );
+}
+
 template< typename VIEWTYPE >
 ElementRegionManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
 ElementRegionManager::
@@ -1329,6 +1355,20 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
     } );
   }
   return accessor;
+}
+
+template< typename T, int NDIM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
+ElementRegionManager::
+ConstructMaterialArrayViewAccessor( string const & viewName,
+                                    arrayView1d< string const > const & regionNames,
+                                    arrayView1d< string const > const & materialNames,
+                                    bool const allowMissingViews ) const
+{
+  return ConstructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
+                                                                                        regionNames,
+                                                                                        materialNames,
+                                                                                        allowMissingViews );
 }
 
 template< typename CONSTITUTIVE_TYPE >

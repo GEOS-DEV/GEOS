@@ -427,7 +427,7 @@ public:
 
     //constexpr int MAX_ELEMS_PER_NODE = 8;
     //constexpr int MAX_NODES_PER_ELEM = 8;
-    constexpr int MAX_NODE_NEIGHBORS = 27;
+    //constexpr int MAX_NODE_NEIGHBORS = 27;
 
     array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodesArray( elementRegionManager.numRegions() );
     elementRegionManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
@@ -498,6 +498,7 @@ public:
 
         int constexpr MAX_ELEMS_PER_NODE = 8;
         int constexpr MAX_NODES_PER_ELEM = 8;
+        int constexpr MAX_NODE_NEIGHBORS = 27;
 
         localIndex neighborNodes[ MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM ];
         localIndex const numNeighbors = internal::getNeighborNodes( neighborNodes,

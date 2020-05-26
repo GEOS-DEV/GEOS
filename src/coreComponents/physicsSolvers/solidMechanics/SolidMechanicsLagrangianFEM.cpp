@@ -412,13 +412,13 @@ void SolidMechanicsLagrangianFEM::sparsityGeneration( DomainPartition const & do
   NodeManager const & nodeManager = *meshLevel.getNodeManager();
   ElementRegionManager const & elementRegionManager = *meshLevel.getElemManager();
 
-  dofManager.setFiniteElementSparsityPattern< 3 >( m_crsMatrix,
+  dofManager.setFiniteElementSparsityPattern< 3 >( m_localMatrix,
                                                    elementRegionManager,
                                                    nodeManager,
                                                    targetRegionNames(),
                                                    keys::TotalDisplacement );
 
-  m_rhsArray.resize( m_crsMatrix.numRows() );
+  m_localRhs.resize( m_localMatrix.numRows() );
 }
 
 
@@ -674,8 +674,8 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
                                                                                                fieldName,
                                                                                                dofKey,
                                                                                                dofManager.rankOffset(),
-                                                                                               m_crsMatrix.toViewConstSizes(),
-                                                                                               m_rhsArray.toView() );
+                                                                                               m_localMatrix.toViewConstSizes(),
+                                                                                               m_localRhs.toView() );
   } );
 }
 
@@ -978,8 +978,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  m_crsMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  m_rhsArray.setValues< parallelDevicePolicy< 32 > >( 0 );
+  m_localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
+  m_localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
@@ -1067,8 +1067,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                          this->m_newmarkGamma,
                                          gravityVector(),
                                          &dofManager,
-                                         m_crsMatrix.toViewConstSizes(),
-                                         m_rhsArray );
+                                         m_localMatrix.toViewConstSizes(),
+                                         m_localRhs.toView() );
   } );
 
   // ApplyContactConstraint( dofManager, *domain, &matrix, &rhs );
@@ -1108,7 +1108,7 @@ SolidMechanicsLagrangianFEM::
                         string const &,
                         SortedArrayView< localIndex const > const & targetSet,
                         Group * const targetGroup,
-                        string const GEOSX_UNUSED_PARAM( fieldName ) )
+                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
     bc->ApplyBoundaryConditionToSystem< FieldSpecificationAdd, parallelDevicePolicy< 32 > >( targetSet,
                                                                                              time_n + dt,
@@ -1122,16 +1122,16 @@ SolidMechanicsLagrangianFEM::
                                                                                                                       // for
                                                                                              dofKey,
                                                                                              dofManager.rankOffset(),
-                                                                                             m_crsMatrix.toViewConstSizes(),
-                                                                                             m_rhsArray.toView() );
+                                                                                             m_localMatrix.toViewConstSizes(),
+                                                                                             m_localRhs.toView() );
   } );
 
-  CRSApplyTractionBC( time_n + dt, dofManager, *domain, m_rhsArray );
+  CRSApplyTractionBC( time_n + dt, dofManager, *domain, m_localRhs );
 
   if( faceManager->hasWrapper( "ChomboPressure" ) )
   {
     fsManager.ApplyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    ApplyChomboPressure( dofManager, domain, m_rhsArray );
+    ApplyChomboPressure( dofManager, domain, m_localRhs );
   }
 
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, *domain );
@@ -1157,10 +1157,10 @@ SolidMechanicsLagrangianFEM::
   real64 localResidualNorm[2] = { 0.0, this->m_maxForce };
   //real64 localResInfNorm[2] = {}
 
-  for( localIndex i = 0; i < m_rhsArray.size(); ++i )
+  for( localIndex i = 0; i < m_localRhs.size(); ++i )
   {
     // sum(rhs^2) on each rank.
-    localResidualNorm[0] += m_rhsArray[ i ] * m_rhsArray[ i ];
+    localResidualNorm[0] += m_localRhs[ i ] * m_localRhs[ i ];
   }
 
 
@@ -1241,12 +1241,15 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
                                                ParallelVector & rhs,
                                                ParallelVector & solution )
 {
-  matrix.create( m_crsMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
-  rhs.create( m_rhsArray.toViewConst(), MPI_COMM_GEOSX );
+  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
+  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
 
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
+
+  m_localSolution.resize( solution.localSize() );
+  solution.extract( m_localSolution );
 }
 
 void SolidMechanicsLagrangianFEM::ResetStateToBeginningOfStep( DomainPartition * const domain )

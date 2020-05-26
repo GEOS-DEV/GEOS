@@ -20,8 +20,10 @@ set( constitutive_headers
      fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp    
      fluid/PVTFunctions/UtilityFunctions.hpp     
      fluid/SingleFluidBase.hpp
-     fluid/singlePhaseSelector.hpp
+     fluid/singleFluidSelector.hpp
      fluid/MultiFluidBase.hpp
+     fluid/multiFluidSelector.hpp
+     fluid/MultiFluidUtils.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/SlurryFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp

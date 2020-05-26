@@ -537,7 +537,7 @@ struct FaceDirichletBCKernel
                        ElementView< arrayView1d< real64 const > > const & dMob_dPres,
                        arrayView1d< real64 const > const & presFace,
                        arrayView1d< real64 const > const & gravCoefFace,
-                       FLUID_WRAPPER const & fluidCompute,
+                       FLUID_WRAPPER const & fluidWrapper,
                        real64 const dt,
                        real64 & flux,
                        real64 & dFlux_dP )
@@ -555,7 +555,7 @@ struct FaceDirichletBCKernel
 
     // Get flow quantities on the elem/face
     real64 faceDens, faceVisc;
-    fluidCompute.Compute( presFace[kf], faceDens, faceVisc );
+    fluidWrapper.Compute( presFace[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = mob[er][esr][ei];
     SinglePhaseBaseKernels::MobilityKernel::Compute( faceDens, faceVisc, mobility[Order::FACE] );
@@ -586,59 +586,6 @@ struct FaceDirichletBCKernel
                       BoundaryStencil::IndexContainerViewConstType const & sefi,
                       BoundaryStencil::WeightContainerViewConstType const & trans,
                       ElementView< arrayView1d< globalIndex const > > const & dofNumber,
-                      ElementView< arrayView1d< real64 const > > const & pres,
-                      ElementView< arrayView1d< real64 const > > const & dPres,
-                      ElementView< arrayView1d< real64 const > > const & gravCoef,
-                      ElementView< arrayView2d< real64 const > > const & dens,
-                      ElementView< arrayView2d< real64 const > > const & dDens_dPres,
-                      ElementView< arrayView1d< real64 const > > const & mob,
-                      ElementView< arrayView1d< real64 const > > const & dMob_dPres,
-                      arrayView1d< real64 const > const & presFace,
-                      arrayView1d< real64 const > const & gravCoefFace,
-                      FLUID_WRAPPER const & fluidCompute,
-                      real64 const dt,
-                      ParallelMatrix * const matrix,
-                      ParallelVector * const rhs )
-  {
-    forAll< parallelHostPolicy >( seri.size( 0 ), [=] ( localIndex const iconn )
-    {
-      real64 flux, fluxJacobian;
-
-      FaceDirichletBCKernel::Compute( seri[iconn],
-                                      sesri[iconn],
-                                      sefi[iconn],
-                                      trans[iconn],
-                                      pres,
-                                      dPres,
-                                      gravCoef,
-                                      dens,
-                                      dDens_dPres,
-                                      mob,
-                                      dMob_dPres,
-                                      presFace,
-                                      gravCoefFace,
-                                      fluidCompute,
-                                      dt,
-                                      flux,
-                                      fluxJacobian );
-
-      localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
-      globalIndex const dofIndex = dofNumber[er][esr][ei];
-
-      // Add to global residual/jacobian
-      rhs->add( dofIndex, flux );
-      matrix->add( dofIndex, dofIndex, fluxJacobian );
-    } );
-  }
-
-  template< typename FLUID_WRAPPER >
-  static void Launch( BoundaryStencil::IndexContainerViewConstType const & seri,
-                      BoundaryStencil::IndexContainerViewConstType const & sesri,
-                      BoundaryStencil::IndexContainerViewConstType const & sefi,
-                      BoundaryStencil::WeightContainerViewConstType const & trans,
-                      ElementView< arrayView1d< globalIndex const > > const & dofNumber,
                       globalIndex const rankOffset,
                       ElementView< arrayView1d< real64 const > > const & pres,
                       ElementView< arrayView1d< real64 const > > const & dPres,
@@ -649,7 +596,7 @@ struct FaceDirichletBCKernel
                       ElementView< arrayView1d< real64 const > > const & dMob_dPres,
                       arrayView1d< real64 const > const & presFace,
                       arrayView1d< real64 const > const & gravCoefFace,
-                      FLUID_WRAPPER const & fluidCompute,
+                      FLUID_WRAPPER const & fluidWrapper,
                       real64 const dt,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
@@ -658,23 +605,23 @@ struct FaceDirichletBCKernel
     {
       real64 flux, fluxJacobian;
 
-      FaceDirichletBCKernel::Compute( seri[iconn],
-                                      sesri[iconn],
-                                      sefi[iconn],
-                                      trans[iconn],
-                                      pres,
-                                      dPres,
-                                      gravCoef,
-                                      dens,
-                                      dDens_dPres,
-                                      mob,
-                                      dMob_dPres,
-                                      presFace,
-                                      gravCoefFace,
-                                      fluidCompute,
-                                      dt,
-                                      flux,
-                                      fluxJacobian );
+      Compute( seri[iconn],
+               sesri[iconn],
+               sefi[iconn],
+               trans[iconn],
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               presFace,
+               gravCoefFace,
+               fluidWrapper,
+               dt,
+               flux,
+               fluxJacobian );
 
       localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
       localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );

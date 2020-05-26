@@ -28,12 +28,138 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @brief Base class for single-phase fluid model kernel wrappers.
+ */
+class SingleFluidBaseUpdate
+{
+public:
+
+  /**
+   * @brief Get number of elements in this wrapper.
+   * @return number of elements
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numElems() const { return m_density.size( 0 ); }
+
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_density.size( 1 ); };
+
+protected:
+
+  /**
+   * @brief Constructor.
+   * @param density     fluid density
+   * @param dDens_dPres derivative of density w.r.t. pressure
+   * @param viscosity   fluid viscosity
+   * @param dVisc_dPres derivative of viscosity w.r.t. pressure
+   */
+  SingleFluidBaseUpdate( arrayView2d< real64 > const & density,
+                         arrayView2d< real64 > const & dDens_dPres,
+                         arrayView2d< real64 > const & viscosity,
+                         arrayView2d< real64 > const & dVisc_dPres )
+    : m_density( density ),
+    m_dDens_dPres( dDens_dPres ),
+    m_viscosity( viscosity ),
+    m_dVisc_dPres( dVisc_dPres )
+  {}
+
+  /**
+   * @brief Copy constructor.
+   */
+  SingleFluidBaseUpdate( SingleFluidBaseUpdate const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
+  SingleFluidBaseUpdate( SingleFluidBaseUpdate && ) = default;
+
+  /**
+   * @brief Deleted copy assignment operator
+   * @return reference to this object
+   */
+  SingleFluidBaseUpdate & operator=( SingleFluidBaseUpdate const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment operator
+   * @return reference to this object
+   */
+  SingleFluidBaseUpdate & operator=( SingleFluidBaseUpdate && ) = delete;
+
+  /// Fluid density
+  arrayView2d< real64 > m_density;
+
+  /// Derivative of density w.r.t. pressure
+  arrayView2d< real64 > m_dDens_dPres;
+
+  /// Fluid viscosity
+  arrayView2d< real64 > m_viscosity;
+
+  /// Derivative of viscosity w.r.t. pressure
+  arrayView2d< real64 > m_dVisc_dPres;
+
+private:
+
+  /**
+   * @brief Compute fluid properties at a single point.
+   * @param[in]  pressure the target pressure value
+   * @param[out] density fluid density
+   * @param[out] viscosity fluid viscosity
+   */
+  GEOSX_HOST_DEVICE
+  virtual void Compute( real64 const pres,
+                        real64 & dens,
+                        real64 & visc ) const = 0;
+
+  /**
+   * @brief Compute fluid properties and derivatives at a single point.
+   * @param[in]  pressure the target pressure value
+   * @param[out] density fluid density
+   * @param[out] dDensity_dPressure fluid density derivative w.r.t. pressure
+   * @param[out] viscosity fluid viscosity
+   * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
+   */
+  GEOSX_HOST_DEVICE
+  virtual void Compute( real64 const pres,
+                        real64 & dens,
+                        real64 & dDens_dPres,
+                        real64 & visc,
+                        real64 & dVisc_dPres ) const = 0;
+
+  /**
+   * @brief Update fluid state at a single point.
+   * @param[in] k        element index
+   * @param[in] q        gauss point index
+   * @param[in] pressure the target pressure value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void Update( localIndex const k,
+                       localIndex const q,
+                       real64 const pres ) const = 0;
+
+};
+
+/**
+ * @brief Base class for single-phase fluid models.
+ */
 class SingleFluidBase : public ConstitutiveBase
 {
 public:
 
+  /**
+   * @brief Constructor.
+   * @param name name of the group
+   * @param parent pointer to parent group
+   */
   SingleFluidBase( std::string const & name, Group * const parent );
 
+  /**
+   * @brief Destructor.
+   */
   virtual ~SingleFluidBase() override;
 
   // *** ConstitutiveBase interface
@@ -46,42 +172,6 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
-
-  /**
-   * @brief Perform a single point constitutive update.
-   * @param[in] pressure the target pressure value
-   * @param[in] k first constitutive index (e.g. elem index)
-   * @param[in] q second constitutive index (e.g. quadrature index)
-   *
-   * @note This function should generally not be called from a kernel, use BatchUpdate instead
-   */
-  virtual void PointUpdate( real64 const pressure, localIndex const k, localIndex const q ) = 0;
-
-  /**
-   * @brief Perform a batch constitutive update (all points).
-   * @param[in] pressure array containing target pressure values
-   */
-  virtual void BatchUpdate( arrayView1d< real64 const > const & pressure,
-                            arrayView1d< real64 const > const & deltaPressure ) = 0;
-
-  /**
-   * @brief Compute constitutive values at a single point.
-   * @param[in]  pressure the target pressure value
-   * @param[out] density fluid density
-   * @param[out] dDensity_dPressure fluid density derivative w.r.t. pressure
-   * @param[out] viscosity fluid viscosity
-   * @param[out] dViscosity_dPressure fluid viscosity derivatife w.r.t. pressure
-   *
-   * @note This function should only be called in extremely rare cases, when constitutive state
-   * needs to be evaluated at a point where constitutive model does not have storage allocated.
-   * It should not be called from kernels since it is virtual.
-   */
-  virtual void Compute( real64 const pressure,
-                        real64 const deltaPressure,
-                        real64 & density,
-                        real64 & dDensity_dPressure,
-                        real64 & viscosity,
-                        real64 & dViscosity_dPressure ) const = 0;
 
   arrayView2d< real64 const > const & density() const { return m_density; }
   arrayView2d< real64 > const & density() { return m_density; }
@@ -110,115 +200,6 @@ public:
     static constexpr auto viscosityString        = "viscosity";
     static constexpr auto dVisc_dPresString      = "dViscosity_dPressure";
   } viewKeysSingleFluidBase;
-
-  /**
-   * Function to take care of launching the kernel over all constitutive points
-   * @tparam POLICY execution policy to use for the launch
-   * @tparam LAMBDA type the target function
-   * @param lambda the kernel function
-   */
-  template< typename POLICY, typename LAMBDA >
-  void LaunchKernel( LAMBDA lambda )
-  {
-    localIndex const numElem = m_density.size( 0 );
-    localIndex const numQuad = m_density.size( 1 );
-
-    forAll< POLICY >( numElem, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < numQuad; ++q )
-      {
-        lambda( k, q );
-      }
-    } );
-  }
-
-  /**
-   * @brief Function to batch process constitutive updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
-   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
-   * @param pressure array containing the pressure values,  which is input to the update.
-   * @param args arbitrary number of arbitrary types that are passed to the kernel
-   *
-   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
-   */
-  template< typename LEAFCLASS, typename POLICY, typename ARGS >
-  void BatchUpdateKernel( arrayView1d< real64 const > const & pressure,
-                          arrayView1d< real64 const > const & deltaPressure,
-                          ARGS && args )
-  {
-    arrayView2d< real64 > const & density = m_density;
-    arrayView2d< real64 > const & dDensity_dPressure = m_dDensity_dPressure;
-    arrayView2d< real64 > const & viscosity = m_viscosity;
-    arrayView2d< real64 > const & dViscosity_dPressure = m_dViscosity_dPressure;
-
-    LaunchKernel< POLICY >( [=] GEOSX_HOST_DEVICE ( localIndex const k, localIndex const q )
-    {
-      LEAFCLASS::Compute( pressure[k],
-                          deltaPressure[k],
-                          density[k][q],
-                          dDensity_dPressure[k][q],
-                          viscosity[k][q],
-                          dViscosity_dPressure[k][q],
-                          args );
-    } );
-  }
-
-  /**
-   * @brief Function to batch process density updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
-   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
-   * @param pressure array containing the pressure values,  which is input to the update.
-   * @param args arbitrary number of arbitrary types that are passed to the kernel
-   *
-   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
-   */
-  template< typename LEAFCLASS, typename POLICY, typename ARGS >
-  void BatchDensityUpdateKernel( arrayView1d< real64 const > const & pressure,
-                                 arrayView1d< real64 const > const & deltaPressure,
-                                 ARGS && args )
-  {
-    arrayView2d< real64 > const & density = m_density;
-    arrayView2d< real64 > const & dDensity_dPressure = m_dDensity_dPressure;
-
-    LaunchKernel< POLICY >( [=] GEOSX_HOST_DEVICE ( localIndex const k, localIndex const q )
-    {
-      LEAFCLASS::Compute( pressure[k],
-                          deltaPressure[k],
-                          density[k][q],
-                          dDensity_dPressure[k][q],
-                          args );
-    } );
-  }
-
-  /**
-   * @brief Function to batch process viscosity updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for use in the kernel
-   * @tparam POLICY Kernel launch policy (defaults to element policy, but can be chosen by the implementation)
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for the function parameter list
-   * @param pressure array containing the pressure values,  which is input to the update.
-   * @param args arbitrary number of arbitrary types that are passed to the kernel
-   *
-   * @note This function expects LEAFCLASS to have a public static function Compute with the appropriate signature
-   */
-  template< typename LEAFCLASS, typename POLICY, typename ARGS >
-  void BatchViscosityUpdateKernel( arrayView1d< real64 const > const & pressure,
-                                   arrayView1d< real64 const > const & deltaPressure,
-                                   ARGS && args )
-  {
-    arrayView2d< real64 > const & viscosity = m_viscosity;
-    arrayView2d< real64 > const & dViscosity_dPressure = m_dViscosity_dPressure;
-
-    LaunchKernel< POLICY >( [=] GEOSX_HOST_DEVICE ( localIndex const k, localIndex const q )
-    {
-      LEAFCLASS::Compute( pressure[k],
-                          deltaPressure[k],
-                          viscosity[k][q],
-                          dViscosity_dPressure[k][q],
-                          args );
-    } );
-  }
 
 protected:
 

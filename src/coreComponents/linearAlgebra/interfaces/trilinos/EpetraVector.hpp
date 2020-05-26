@@ -86,6 +86,7 @@ public:
 
   using VectorBase::closed;
   using VectorBase::ready;
+  using VectorBase::extract;
 
   virtual bool created() const override;
 

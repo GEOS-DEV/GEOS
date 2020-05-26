@@ -32,7 +32,7 @@ namespace testing
  * @param problemManager the target problem manager
  * @param xmlInput       the XML input string
  */
-void setupProblem( ProblemManager * const problemManager, char const * const xmlInput )
+void setupProblemFromXML( ProblemManager * const problemManager, char const * const xmlInput )
 {
   xmlWrapper::xmlDocument xmlDocument;
   xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlInput, strlen( xmlInput ) );

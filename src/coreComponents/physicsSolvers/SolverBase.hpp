@@ -95,6 +95,27 @@ public:
   DofManager const & getDofManager() const { return m_dofManager; }
 
   /**
+   * @brief Getter for local matrix
+   * @return a reference to linear system matrix of this solver
+   */
+  CRSMatrix< real64, globalIndex > & getLocalMatrix()       { return m_localMatrix; }
+  CRSMatrixView< real64 const, globalIndex const > const & getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+
+  /**
+   * @brief Getter for local rhs vector
+   * @return a reference to linear system right-hand side of this solver
+   */
+  array1d< real64 > & getLocalRhs()       { return m_localRhs; }
+  arrayView1d< real64 const > const & getLocalRhs() const { return m_localRhs.toViewConst(); }
+
+  /**
+   * @brief Getter for local solution vector
+   * @return a reference to solution vector of this solver
+   */
+  array1d< real64 > & getLocalSolution()       { return m_localSolution; }
+  arrayView1d< real64 const > const & getLocalSolution() const { return m_localSolution.toViewConst(); }
+
+  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
@@ -342,6 +363,34 @@ public:
                            DofManager const & dofManager,
                            ParallelMatrix & matrix,
                            ParallelVector & rhs );
+
+  /**
+   * @brief Output the assembled linear system for debug purposes.
+   * @param time beginning-of-step time
+   * @param cycleNumber event cycle number
+   * @param nonlinearIteration current nonlinear iteration number
+   * @param matrix system matrix
+   * @param rhs system right-hand side vector
+   */
+  void
+  DebugOutputSystem( real64 const & time,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration,
+                     ParallelMatrix const & matrix,
+                     ParallelVector const & rhs ) const;
+
+  /**
+   * @brief Output the linear system solution for debug purposes.
+   * @param time beginning-of-step time
+   * @param cycleNumber event cycle number
+   * @param nonlinearIteration current nonlinear iteration number
+   * @param solution system solution vector
+   */
+  void
+  DebugOutputSolution( real64 const & time,
+                       integer const cycleNumber,
+                       integer const nonlinearIteration,
+                       ParallelVector const & solution ) const;
 
   /**
    * @brief calculate the norm of the global system residual
@@ -670,9 +719,6 @@ protected:
 
   /// Data structure to handle degrees of freedom
   DofManager m_dofManager;
-
-  LvArray::CRSMatrix< real64, globalIndex, localIndex > m_crsMatrix;
-  array1d< real64 > m_rhsArray;
 
   /// System matrix, rhs and solution
   ParallelMatrix m_matrix;

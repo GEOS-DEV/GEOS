@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -406,6 +407,19 @@ protected:
    * @return pointer to local vector data
    */
   virtual real64 * extractLocalVector() = 0;
+
+  /**
+   * @brief Extract local solution by copying into a user-provided array
+   * @param localVector the array view to write to (must be properly sized)
+   */
+  virtual void extract( arrayView1d< real64 > const & localVector ) const
+  {
+    real64 const * const data = extractLocalVector();
+    forAll< parallelHostPolicy >( localSize(), [=] ( localIndex const k )
+    {
+      localVector[k] = data[k];
+    } );
+  }
 
   /**
    * @brief Get the communicator used by this vector

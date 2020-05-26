@@ -19,9 +19,6 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOW_HPP_
 
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
-#include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geosx
@@ -117,6 +114,13 @@ public:
   virtual void
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
+
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
   virtual void
   AssembleSystem( real64 const time_n,
@@ -236,10 +240,10 @@ public:
    */
   void AssembleAccumulationTerms( real64 const time_n,
                                   real64 const dt,
-                                  DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
+                                  MeshLevel const & mesh,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -252,10 +256,10 @@ public:
    */
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
+                          FluxApproximationBase const & discretization,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the volume balance terms for all cells
@@ -268,10 +272,10 @@ public:
    */
   void AssembleVolumeBalanceTerms( real64 const time_n,
                                    real64 const dt,
-                                   DomainPartition const * const domain,
-                                   DofManager const * const dofManager,
-                                   ParallelMatrix * const matrix,
-                                   ParallelVector * const rhs );
+                                   MeshLevel const & mesh,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
 
   /**@}*/
 
@@ -325,6 +329,54 @@ public:
   struct groupKeyStruct : SolverBase::groupKeyStruct
   {} groupKeysCompMultiphaseFlow;
 
+  /**
+   * @brief Initialize all variables from initial conditions
+   * @param domain the domain containing the mesh and fields
+   *
+   * Initialize all variables from initial conditions. This calculating primary variable values
+   * from prescribed intermediate values (i.e. global densities from global fractions)
+   * and any applicable hydrostatic equilibration of the domain
+   */
+  void InitializeFluidState( DomainPartition * const domain );
+
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param domain the domain containing the mesh and fields
+   */
+  void BackupFields( DomainPartition * const domain );
+
+  /**
+   * @brief Function to perform the Application of Dirichlet type BC's
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  void ApplyDirichletBC( real64 const time,
+                         real64 const dt,
+                         DofManager const & dofManager,
+                         DomainPartition & domain,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs );
+
+  /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  void ApplySourceFluxBC( real64 const time,
+                          real64 const dt,
+                          DofManager const & dofManager,
+                          DomainPartition & domain,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs );
+
 protected:
 
   virtual void PostProcessInput() override;
@@ -351,50 +403,9 @@ private:
   void ResizeFields( MeshLevel & meshLevel );
 
   /**
-   * @brief Initialize all variables from initial conditions
-   * @param domain the domain containing the mesh and fields
-   *
-   * Initialize all variables from initial conditions. This calculating primary variable values
-   * from prescribed intermediate values (i.e. global densities from global fractions)
-   * and any applicable hydrostatic equilibration of the domain
-   */
-  void InitializeFluidState( DomainPartition * const domain );
-
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param domain the domain containing the mesh and fields
-   */
-  void BackupFields( DomainPartition * const domain );
-
-  /**
    * @brief Setup stored views into domain data for the current step
    */
   void ResetViews( DomainPartition * const domain ) override;
-
-  /**
-   * @brief Function to perform the Application of Dirichlet type BC's
-   * @param time current time
-   * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain the domain
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   */
-  void ApplyDirichletBC_implicit( real64 const time,
-                                  real64 const dt,
-                                  DofManager const * const dofManager,
-                                  DomainPartition * const domain,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
-
-
-  void ApplySourceFluxBC( real64 const time,
-                          real64 const dt,
-                          DofManager const * const dofManager,
-                          DomainPartition * const domain,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
 
 
   /// the max number of fluid phases
@@ -418,63 +429,32 @@ private:
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
 
+  /// view into element-based arrays accessed in flux kernel
 
-  /// views into primary variable fields
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > m_compositionalDofIndex;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >      m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >      m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > >      m_globalCompDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > >      m_deltaGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dCompFrac_dCompDens;
 
-  /// views into other variable fields
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_compFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_phaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseMob_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dPhaseDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseDens_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_phaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dPhaseCompFrac_dComp;
 
-  /// views into backup fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_porosityOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseVolFracOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_phaseDensOld;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseCompFracOld;
-
-  /// views into material fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_pvMult;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dPvMult_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseVisc_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_phaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 > > m_dPhaseCompFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_totalDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseRelPerm_dPhaseVolFrac;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_phaseCapPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dPhaseCapPressure_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_phaseCapPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dPhaseCapPressure_dPhaseVolFrac;
 
 };
 

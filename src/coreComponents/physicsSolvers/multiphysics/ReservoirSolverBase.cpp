@@ -150,7 +150,7 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
     m_localMatrix.setName( this->getName() + "/localMatrix" );
     m_localRhs.setName( this->getName() + "/localRhs" );
 
-    matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
+    matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
     rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
     solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
 

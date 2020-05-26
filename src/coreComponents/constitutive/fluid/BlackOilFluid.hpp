@@ -42,8 +42,6 @@ public:
     LiveOil
   };
 
-  static FluidType stringToFluidType( string const & str );
-
   BlackOilFluid( std::string const & name, Group * const parent );
 
   virtual ~BlackOilFluid() override;
@@ -62,13 +60,6 @@ public:
     static constexpr auto surfaceDensitiesString = "surfaceDensities";
     static constexpr auto tableFilesString = "tableFiles";
     static constexpr auto fluidTypeString = "fluidType";
-
-    using ViewKey = dataRepository::ViewKey;
-
-    ViewKey surfaceDensities = { surfaceDensitiesString };
-    ViewKey tableFiles       = { tableFilesString };
-    ViewKey fluidType        = { fluidTypeString };
-
   } viewKeysBlackOilFluid;
 
 protected:

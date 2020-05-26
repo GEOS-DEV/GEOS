@@ -20,7 +20,7 @@
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/singlePhaseSelector.hpp"
+#include "constitutive/fluid/singleFluidSelector.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -381,14 +381,13 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
     //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
     //       Can we just use cell properties for an approximate flux computation?
     //       Then we can forget about capturing the fluid model.
-    SingleFluidBase const & fluidBase =
-      *constitutiveManager->GetConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
+    SingleFluidBase & fluidBase = *constitutiveManager->GetConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
 
     bool const success =
-      constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
       // create the fluid compute wrapper suitable for capturing in a kernel lambda
-      typename TYPEOFREF( fluid ) ::ComputeWrapper fluidCompute = fluid.createComputeWrapper();
+      typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       FaceDirichletBCKernel::Launch( seri, sesri, sefi, trans,
                                      m_pressureDofIndex.toViewConst(),
@@ -402,7 +401,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                                      m_dMobility_dPres.toViewConst(),
                                      presFace,
                                      gravCoefFace,
-                                     fluidCompute,
+                                     fluidWrapper,
                                      dt,
                                      localMatrix.toViewConstSizes(),
                                      localRhs.toView() );

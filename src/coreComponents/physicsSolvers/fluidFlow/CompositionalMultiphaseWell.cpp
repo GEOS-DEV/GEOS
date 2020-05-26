@@ -25,6 +25,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "wells/PerforationData.hpp"
@@ -364,16 +365,22 @@ void CompositionalMultiphaseWell::UpdateFluidModel( WellElementSubRegion & subRe
 {
   GEOSX_MARK_FUNCTION;
 
-  MultiFluidBase & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-
   arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
   arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
   arrayView2d< real64 const > const & compFrac = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompFractionString );
 
-  // TODO replace with batch update (need up-to-date pressure and temperature fields)
-  forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const a )
+  MultiFluidBase & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
+
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    fluid.PointUpdate( pres[a] + dPres[a], m_temperature, compFrac[a], a, 0 );
+    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+    CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
+                                                                                   fluidWrapper,
+                                                                                   pres,
+                                                                                   dPres,
+                                                                                   m_temperature,
+                                                                                   compFrac );
   } );
 }
 
@@ -640,15 +647,24 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
 
 
     // 4) Back calculate component densities
-    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
+    constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      fluid.PointUpdate( wellElemPressure[iwelem], m_temperature,
-                         wellElemCompFrac[iwelem], iwelem, 0 );
+      typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+      CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
+                                                                                     fluidWrapper,
+                                                                                     wellElemPressure,
+                                                                                     m_temperature,
+                                                                                     wellElemCompFrac );
+    } );
+
+    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
+    {
       for( localIndex ic = 0; ic < NC; ++ic )
       {
         wellElemCompDens[iwelem][ic] = avgCompFrac[ic] * totalDens[iwelem][0];
       }
-    }
+    } );
 
     // 5) Recompute all the pressure-dependent properties
     UpdateState( subRegion, targetIndex );

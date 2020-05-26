@@ -183,6 +183,9 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
   ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
   ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
 
+  matrix1.move( chai::CPU, false );
+  matrix2.move( chai::CPU, false );
+
   // check the accuracy across local rows
   for( localIndex i = 0; i < matrix1.numRows(); ++i )
   {
@@ -192,8 +195,8 @@ void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & mat
   }
 }
 
-}
+} // namespace testing
 
-}
+} // namespace geosx
 
 #endif //GEOSX_CODINGUTILITIES_UNITTESTUTILITIES_HPP
