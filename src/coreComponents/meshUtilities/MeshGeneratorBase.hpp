@@ -16,8 +16,8 @@
  * @file MeshGeneratorBase.hpp
  */
 
-#ifndef MESHGENERATORBASE_H_
-#define MESHGENERATORBASE_H_
+#ifndef GEOSX_MESHUTILITIES_MESHGENERATORBASE_HPP
+#define GEOSX_MESHUTILITIES_MESHGENERATORBASE_HPP
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -113,4 +113,4 @@ public:
 };
 }
 
-#endif /* MESHGENERATORBASE_H_ */
+#endif /* GEOSX_MESHUTILITIES_MESHGENERATORBASE_HPP */
