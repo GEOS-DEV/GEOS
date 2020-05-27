@@ -13,12 +13,11 @@
  */
 
 /**
- * @file MeshUtilities.h
- *
+ * @file MeshUtilities.hpp
  */
 
-#ifndef MESHUTILITIES_H_
-#define MESHUTILITIES_H_
+#ifndef GEOSX_MESHUTILITIES_MESHUTILITIES_HPP
+#define GEOSX_MESHUTILITIES_MESHUTILITIES_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -34,14 +33,38 @@ class ObjectManagerBase;
 class xmlWrapper;
 class NodeManager;
 
+
+/**
+ * @class MeshUtilities
+ * @brief This class is used to generate the utilities for the mesh.
+ */
 class MeshUtilities
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+
+  ///@{
+
+  /**
+   * @brief Constructor.
+   */
   MeshUtilities();
+
+  /**
+   * @brief Destructor.
+   */
   virtual ~MeshUtilities();
 
+  ///@}
 
-
+  /**
+   * @brief Build all the node sets from a geometric object in the DomainPartition.
+   * @param[in] geometry a pointer to the group in the data repository
+   * @param[in] nodeManager pointer to the NodeManager object in the DomainPartition
+   */
   static void GenerateNodesets( dataRepository::Group const * geometry,
                                 NodeManager * const nodeManager );
 
@@ -59,4 +82,4 @@ public:
 
 }
 
-#endif /* MESHUTILITIES_H_ */
+#endif /* GEOSX_MESHUTILITIES_MESHUTILITIES_HPP */
