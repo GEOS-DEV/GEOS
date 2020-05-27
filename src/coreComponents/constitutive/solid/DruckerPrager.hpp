@@ -77,59 +77,51 @@ public:
   /// Deleted move assignment operator
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
-  /**
-   * accessor to return the stiffness at a given element
-   * @param[in] k the element number
-   * @param[in] c the stiffness array
-   */
+  GEOSX_HOST_DEVICE
+  virtual void SmallStrain( localIndex const k,
+                            localIndex const q,
+                            arraySlice1d< real64 const > const & strainIncrement,
+                            arraySlice1d< real64 > const & stress,
+                            arraySlice2d< real64 > const & stiffness ) override final;
+  
+  // remaining interface functions not implemented for various reasons
+  // but these are all pure virtual so must be included here
+  
+  // reason: stiffness depends on quadrature point, not just element
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
   {
-    real64 const G = m_poissonRatio[k];
-    real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
-
-    memset( c, 0, sizeof( c ) );
-
-    c[0][0] = Lame + 2 * G;
-    c[0][1] = Lame;
-    c[0][2] = Lame;
-
-    c[1][0] = Lame;
-    c[1][1] = Lame + 2 * G;
-    c[1][2] = Lame;
-
-    c[2][0] = Lame;
-    c[2][1] = Lame;
-    c[2][2] = Lame + 2 * G;
-
-    c[3][3] = G;
-
-    c[4][4] = G;
-
-    c[5][5] = G;
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(c);
+    GEOSX_ERROR("Not implemented");
   }
   
+  // reason: DP-model requires state
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const * const GEOSX_RESTRICT voigtStrain,
                                    real64 * const GEOSX_RESTRICT stress ) const override final;
 
+  // this is possible to implement, but would just be a shortcut version without stiffness calculation
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
                             real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const override final;
 
+  // reason: need to fix small strain interface first
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const * const GEOSX_RESTRICT Ddt,
                             R2Tensor const & Rot ) const override final;
 
+  // reason: need to fix small strain interface first
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
                              real64 * const GEOSX_RESTRICT stress ) const override final;
 
+  // reason: need to fix small strain interface first
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
@@ -164,131 +156,87 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SmallStrainNoState( localIndex const k,
-                                                        real64 const * GEOSX_RESTRICT const voigtStrain,
-                                                        real64 * GEOSX_RESTRICT const stress ) const
+void DruckerPragerUpdates::SmallStrain( localIndex const k,
+                                        localIndex const q,
+                                        arraySlice1d< real64 const > const & strainIncrement,
+                                        arraySlice1d< real64 > const & stress,
+                                        arraySlice2d< real64 > const & stiffness )
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
-  real64 const diag = lambda * ( voigtStrain[0] + voigtStrain[1] + voigtStrain[2] );
-  real64 const TwoG = 2.0 * m_poissonRatio[k];
-
-  stress[0] = stress[0] + diag + TwoG * voigtStrain[0];
-  stress[1] = stress[1] + diag + TwoG * voigtStrain[1];
-  stress[2] = stress[2] + diag + TwoG * voigtStrain[2];
-  stress[3] = stress[3] + m_poissonRatio[k] * voigtStrain[3];
-  stress[4] = stress[4] + m_poissonRatio[k] * voigtStrain[4];
-  stress[5] = stress[5] + m_poissonRatio[k] * voigtStrain[5];
-
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(q);
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    stress[i] = strainIncrement[i];
+  }
+  
+  GEOSX_UNUSED_VAR(stiffness);
 }
+  
+// base class defines many pure virtual functions
+// TODO: revisit if this is required
 
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DruckerPragerUpdates::SmallStrainNoState( localIndex const k,
+                                               real64 const * GEOSX_RESTRICT const voigtStrain,
+                                               real64 * GEOSX_RESTRICT const stress ) const
+{
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(voigtStrain);
+  GEOSX_UNUSED_VAR(stress);
+  GEOSX_ERROR("Not implemented");
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::SmallStrain( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
+                                        localIndex const q,
+                                        real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
-  real64 const volStrain = ( voigtStrainInc[0] + voigtStrainInc[1] + voigtStrainInc[2] );
-  real64 const TwoG = 2.0 * m_poissonRatio[k];
-
-  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * voigtStrainInc[0] + lambda * volStrain;
-  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * voigtStrainInc[1] + lambda * volStrain;
-  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * voigtStrainInc[2] + lambda * volStrain;
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_poissonRatio[k] * voigtStrainInc[3];
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_poissonRatio[k] * voigtStrainInc[4];
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + m_poissonRatio[k] * voigtStrainInc[5];
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(q);
+  GEOSX_UNUSED_VAR(voigtStrainInc);
+  GEOSX_ERROR("Not implemented");
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::HypoElastic( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const * const GEOSX_RESTRICT Ddt,
-                                                 R2Tensor const & Rot ) const
+                                        localIndex const q,
+                                        real64 const * const GEOSX_RESTRICT Ddt,
+                                        R2Tensor const & Rot ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
-  real64 const volStrain = ( Ddt[0] + Ddt[2] + Ddt[5] );
-  real64 const TwoG = 2.0 * m_poissonRatio[k];
-
-
-  m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[0] + lambda * volStrain;
-  m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * Ddt[2] + lambda * volStrain;
-  m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * Ddt[5] + lambda * volStrain;
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + TwoG * Ddt[4];
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + TwoG * Ddt[3];
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + TwoG * Ddt[1];
-
-  R2SymTensor stress;
-  stress = m_stress[k][q];
-
-  R2SymTensor temp;
-  real64 const * const pTemp = temp.Data();
-  temp.QijAjkQlk( stress, Rot );
-
-  m_stress( k, q, 0 ) = pTemp[0];
-  m_stress( k, q, 1 ) = pTemp[2];
-  m_stress( k, q, 2 ) = pTemp[5];
-  m_stress( k, q, 3 ) = pTemp[4];
-  m_stress( k, q, 4 ) = pTemp[3];
-  m_stress( k, q, 5 ) = pTemp[1];
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(q);
+  GEOSX_UNUSED_VAR(Ddt);
+  GEOSX_UNUSED_VAR(Rot);
+  GEOSX_ERROR("Not implemented");
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::HyperElastic( localIndex const k,
-                                                  real64 const (&FmI)[3][3],
-                                                  real64 * const GEOSX_RESTRICT stress ) const
+                                         real64 const (&FmI)[3][3],
+                                         real64 * const GEOSX_RESTRICT stress ) const
 {
-  real64 const C1 = 0.5 * m_poissonRatio[k];
-  real64 const D1 = 0.5 * m_bulkModulus[k];
-  real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
-                        - FmI[1][2]*FmI[2][1] + FmI[1][1]*FmI[2][2]
-                        + FmI[0][2]*(-FmI[2][0] - FmI[1][1]*FmI[2][0] + FmI[1][0]*FmI[2][1])
-                        + FmI[0][1]*(-FmI[1][0] + FmI[1][2]*FmI[2][0] - FmI[1][0]*FmI[2][2])
-                        + FmI[0][0]*( FmI[1][1] - FmI[1][2]*FmI[2][1] + FmI[2][2] + FmI[1][1]*FmI[2][2]);
-
-
-  real64 const p = -2 * D1 * ( detFm1 + 1.0 ) * detFm1;
-  real64 devB[6] = { 1/3 * (2 * FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) +
-                            2 * FmI[0][1]*FmI[0][1] + 2 * FmI[0][2] * FmI[0][2] - FmI[1][0] * FmI[1][0] - FmI[1][2] * FmI[1][2] -
-                            FmI[2][0] * FmI[2][0] - FmI[2][1] * FmI[2][1]),
-                     1/3 * (-FmI[0][0] * (2 + FmI[0][0]) + 2 * FmI[1][1] * ( 2 + FmI[1][1]) - FmI[2][2] * (2 + FmI[2][2]) -
-                            FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] + 2 * FmI[1][0]*FmI[1][0] + 2 * FmI[1][2]*FmI[1][2] - FmI[2][0]*FmI[2][0] - FmI[2][1]*
-                            FmI[2][1]),
-                     1/3 *(-FmI[0][0] * (2 + FmI[0][0]) - FmI[1][1] * (2 + FmI[1][1]) + 2 * FmI[2][2] * (2 + FmI[2][2]) -
-                           FmI[0][1]*FmI[0][1] - FmI[0][2]*FmI[0][2] - FmI[1][0]*FmI[1][0] - FmI[1][2]*FmI[1][2] + 2 * FmI[2][0]*FmI[2][0] + 2 * FmI[2][1]*
-                           FmI[2][1]),
-                     FmI[1][2] + FmI[1][0]*FmI[2][0] + FmI[2][1] + FmI[1][1]*FmI[2][1] + FmI[1][2]*FmI[2][2],
-                     FmI[0][2] + FmI[2][0] + FmI[0][0]*FmI[2][0] + FmI[0][1]*FmI[2][1] + FmI[0][2]*FmI[2][2],
-                     FmI[0][1] + FmI[1][0] + FmI[0][0]*FmI[1][0] + FmI[0][1]*FmI[1][1] + FmI[0][2]*FmI[1][2]
-  };
-
-  real64 const C = 2 * C1 / pow( detFm1 + 1, 2.0/3.0 );
-  stress[0] = -p + C * devB[0];
-  stress[1] = -p + C * devB[1];
-  stress[2] = -p + C * devB[2];
-  stress[3] = C * devB[3];
-  stress[4] = C * devB[4];
-  stress[5] = C * devB[5];
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(FmI);
+  GEOSX_UNUSED_VAR(stress);
+  GEOSX_ERROR("Not implemented");
 }
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void DruckerPragerUpdates::HyperElastic( localIndex const k,
-                                                  localIndex const q,
-                                                  real64 const (&FmI)[3][3] ) const
+                                         localIndex const q,
+                                         real64 const (&FmI)[3][3] ) const
 {
-  real64 stress[6];
-  HyperElastic( k, FmI, stress );
-
-  for( localIndex i=0; i<6; ++i )
-  {
-    m_stress( k, q, i ) = stress[i];
-  }
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(q);
+  GEOSX_UNUSED_VAR(FmI);
+  GEOSX_ERROR("Not implemented");
 }
-
-
 
 /**
  * @class DruckerPrager
@@ -385,8 +333,7 @@ public:
   };
 
   /**
-   * @brief Create a instantiation of the DruckerPragerUpdate class
-   *        that refers to the data in this.
+   * @brief Create a instantiation of the DruckerPragerUpdate class that refers to the data in this.
    * @return An instantiation of DruckerPragerUpdate.
    */
   DruckerPragerUpdates createKernelWrapper()
@@ -406,6 +353,7 @@ protected:
   virtual void PostProcessInput() override;
 
 private:
+  //TODO: maybe define some helper structs for defaults, arrays, arrayViews, etc.
   
   /// Material parameter: The default value of the bulk modulus
   real64 m_defaultBulkModulus;
@@ -445,19 +393,6 @@ private:
   
   /// History variable: The previous stress for each quadrature point.
   array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
-  
-  /* TODO: maybe define helper structs for defaults, arrays, arrayViews, etc.
-  struct DefaultParameters
-  {
-    real64 bulkModulus;
-    real64 poissonRatio;
-    real64 tanFrictionAngle;
-    real64 cohesion;
-    real64 hardeningRate;
-  }
-  m_default;
-  */
-  
 };
 
 } /* namespace constitutive */

@@ -64,7 +64,14 @@ public:
   /// Deleted move assignment operator
   LinearElasticAnisotropicUpdates & operator=( LinearElasticAnisotropicUpdates && ) =  delete;
 
-
+  // for interface discussion purposes
+  GEOSX_HOST_DEVICE
+  virtual void SmallStrain( localIndex const k,
+                            localIndex const q,
+                            arraySlice1d< real64 const > const & strainIncrement,
+                            arraySlice1d< real64 > const & stress,
+                            arraySlice2d< real64 > const & stiffness ) override final;
+                            
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const * const GEOSX_RESTRICT voigtStrain,
@@ -114,6 +121,22 @@ public:
   arrayView3d< real64 const, solid::STIFFNESS_USD > const m_stiffnessView;
 };
 
+// for interface discussion purposes
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void LinearElasticAnisotropicUpdates::SmallStrain( localIndex const k,
+                                                   localIndex const q,
+                                                   arraySlice1d< real64 const > const & strainIncrement,
+                                                   arraySlice1d< real64 > const & stress,
+                                                   arraySlice2d< real64 > const & stiffness )
+{
+  GEOSX_UNUSED_VAR(k);
+  GEOSX_UNUSED_VAR(q);
+  GEOSX_UNUSED_VAR(strainIncrement);
+  GEOSX_UNUSED_VAR(stress);
+  GEOSX_UNUSED_VAR(stiffness);
+  GEOSX_ERROR("Not implemented");
+}
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE

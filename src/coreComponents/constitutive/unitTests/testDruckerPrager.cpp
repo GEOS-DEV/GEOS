@@ -22,30 +22,58 @@
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
-TEST( DruckerPragerTests, testAllocation )
+TEST( DruckerPragerTests, testModel )
 {
-  DruckerPrager cm( "model", nullptr );
+  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  DruckerPrager cm( "model", &constitutiveManager );
 
-  localIndex constexpr numElems = 2;
-  localIndex constexpr numQuadraturePoints = 4;
+  string const inputStream =
+    "<Constitutive>"
+    "   <DruckerPrager"
+    "      name=\"granite\" "
+    "      defaultDensity=\"2700\" "
+    "      defaultBulkModulus=\"5e9\" "
+    "      defaultPoissonRatio=\"0.25\" "
+    "      defaultTanFrictionAngle=\"1.0\" "
+    "      defaultHardeningRate=\"0.0\" "
+    "      defaultCohesion=\"1.0e6\"/>"
+    "</Constitutive>";
 
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
+  if( !xmlResult )
+  {
+    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
+    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
+    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
+  }
+
+  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
+  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
+  constitutiveManager.PostProcessInputRecursive();
+  
+  localIndex constexpr numElem = 2;
+  localIndex constexpr numQuad = 4;
+  
   dataRepository::Group disc( "discretization", nullptr );
-  disc.resize( numElems );
-  cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
-
-  EXPECT_EQ( cm.size(), numElems );
-  EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
-
-  //arrayView1d< real64 const > const & bulkModulus = cm.bulkModulus();
-  //arrayView1d< real64 const > const & shearModulus = cm.shearModulus();
-  arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress();
-
-  //EXPECT_EQ( bulkModulus.size(), numElems );
-  //EXPECT_EQ( shearModulus.size(), numElems );
-  EXPECT_EQ( stress.size( 0 ), numElems );
-  EXPECT_EQ( stress.size( 1 ), numQuadraturePoints );
-  EXPECT_EQ( stress.size( 2 ), 6 );
+  disc.resize( numElem );
+  cm.AllocateConstitutiveData( &disc, numQuad );
+  
+  EXPECT_EQ( cm.size(), numElem );
+  EXPECT_EQ( cm.numQuadraturePoints(), numQuad );
+  
+  DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
+  
+  array2d< real64 > strainIncrement(1,6);
+                    strainIncrement = 0;
+                    strainIncrement[0][0] = 1e-4;
+  
+  array2d< real64 > stress(1,6);
+  array3d< real64 > stiffness(1,6,6);
+  
+  cmw.SmallStrain(0,0,strainIncrement[0],stress[0],stiffness[0]);
 }
+
 
 TEST( DruckerPragerTests, testStateUpdatePoint )
 {
@@ -85,32 +113,4 @@ TEST( DruckerPragerTests, testStateUpdatePoint )
   */
 }
 
-TEST( DruckerPragerTests, testXML )
-{
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
-  DruckerPrager cm( "model", &constitutiveManager );
 
-  string const inputStream =
-    "<Constitutive>"
-    "  <DruckerPrager name=\"granite\" "
-    "  defaultDensity=\"2700\" "
-    "  defaultBulkModulus=\"5e9\" "
-    "  defaultPoissonRatio=\"0.25\" "
-    "  defaultTanFrictionAngle=\"1.0\" "
-    "  defaultHardeningRate=\"0.0\" "
-    "  defaultCohesion=\"1.0e6\"/>"
-    "</Constitutive>";
-
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-  if( !xmlResult )
-  {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
-
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
-  constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
-  constitutiveManager.PostProcessInputRecursive();
-}

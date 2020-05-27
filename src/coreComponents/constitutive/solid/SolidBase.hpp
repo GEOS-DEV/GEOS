@@ -118,6 +118,21 @@ private:
                             real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const = 0;
 
   /**
+   * @brief New interface proposal for small strain update
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   * @param[in] strainIncrement Strain increment in voight notation
+   * @param[out] stress New stress value
+   * @param[out] stiffness New tangent stiffness value
+   */
+  GEOSX_HOST_DEVICE
+  virtual void SmallStrain( localIndex const k,
+                            localIndex const q,
+                            arraySlice1d< real64 const > const & strainIncrement,
+                            arraySlice1d< real64 > const & stress,
+                            arraySlice2d< real64 > const & stiffness ) = 0;
+  
+  /**
    * @brief Hypoelastic update to the constitutive state using input generated
    *        under finite strain assumptions.
    * @param[in] k The element index.
