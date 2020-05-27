@@ -27,6 +27,35 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
+struct ImplicitNewmarkConstructorParams : QuasiStaticConstructorParams
+{
+  ImplicitNewmarkConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
+                     ParallelMatrix & inputMatrix,
+                     ParallelVector & inputRhs,
+                     real64 const inputGravityVector[3],
+                     real64 const inputNewmarkGamma,
+                     real64 const inputNewmarkBeta,
+                     real64 const inputMassDamping,
+                     real64 const inputStiffnessDamping,
+                     real64 const inputDt):
+                       QuasiStaticConstructorParams( inputDofNumber,
+                             inputMatrix,
+                             inputRhs,
+                             inputGravityVector ),
+    m_newmarkGamma(inputNewmarkGamma),
+    m_newmarkBeta(inputNewmarkBeta),
+    m_massDamping(inputMassDamping),
+    m_stiffnessDamping(inputStiffnessDamping),
+    m_dt(inputDt)
+  {}
+
+  real64 const m_newmarkGamma;
+  real64 const m_newmarkBeta;
+  real64 const m_massDamping;
+  real64 const m_stiffnessDamping;
+  real64 const m_dt;
+};
+
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
@@ -57,6 +86,7 @@ public:
   using Base::dNdX;
   using Base::detJ;
   using Base::m_finiteElementSpace;
+  using ConstructorParams = ImplicitNewmarkConstructorParams;
 
 
 
@@ -95,6 +125,29 @@ public:
     m_dt( inputDt )
   {}
 
+  ImplicitNewmark( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
+               SUBREGION_TYPE const & elementSubRegion,
+               FiniteElementBase const * const finiteElementSpace,
+               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               ConstructorParams & params ):
+    ImplicitNewmark( nodeManager,
+                     edgeManager,
+                     faceManager,
+                     elementSubRegion,
+                     finiteElementSpace,
+                     inputConstitutiveType,
+                     params.m_dofNumber,
+                     params.m_matrix,
+                     params.m_rhs,
+                     params.m_gravityVector,
+                     params.m_newmarkGamma,
+                     params.m_newmarkBeta,
+                     params.m_massDamping,
+                     params.m_stiffnessDamping,
+                     params.m_dt )
+  {}
 
   template< typename STACK_VARIABLE_TYPE >
   //    GEOSX_HOST_DEVICE
@@ -115,18 +168,17 @@ public:
   }
 
   template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+  GEOSX_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
                                             STACK_VARIABLE_TYPE & stack ) const
   {
 
-    std::vector< double > const & N = m_finiteElementSpace->values( q );
+    real64 N[numNodesPerElem];
+    FiniteElementShapeKernel::shapeFunctionValues( q, N );
 
-//      real64 N[STACK_VARIABLE_TYPE::numNodesPerElem];
-
-    Base::quadraturePointJacobianContribution( k, q, stack, [&]( localIndex const a, localIndex const b )
+    Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a, localIndex const b )
     {
       real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
       real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
@@ -197,14 +249,15 @@ public:
     StackVariables():
       Base::StackVariables(),
             dRdU_InertiaMassDamping{ {0.0} },
-      vtilde_local{ { 0.0, 0.0, 0.0} },
-      uhattilde_local{ { 0.0, 0.0, 0.0} }
+      vtilde_local(),
+      uhattilde_local()
     {}
 
     real64 dRdU_InertiaMassDamping[ numTestDofPerSP ][ numTrialDofPerSP ];
     R1Tensor vtilde_local[numNodesPerElem];
     R1Tensor uhattilde_local[numNodesPerElem];
   };
+
 
 protected:
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;

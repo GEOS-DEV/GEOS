@@ -27,6 +27,19 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
+
+struct ExplicitSmallStrainConstructorParams
+{
+  ExplicitSmallStrainConstructorParams( real64 const dt,
+                                        string const & elementListName ):
+    m_dt(dt),
+    m_elementListName(elementListName)
+  {}
+  real64 const m_dt;
+  string const & m_elementListName;
+};
+
+
 #if defined(GEOSX_USE_CUDA)
   #define CALCFEMSHAPE
 #endif
@@ -46,6 +59,7 @@ public:
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+  using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
 
 //*****************************************************************************
@@ -76,6 +90,25 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
   }
+
+
+
+  ExplicitSmallStrain( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       FiniteElementBase const * const finiteElementSpace,
+                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                       ConstructorParams & params ):
+    ExplicitSmallStrain( nodeManager,
+                         edgeManager,
+                         faceManager,
+                         elementSubRegion,
+                         finiteElementSpace,
+                         inputConstitutiveType,
+                         params.m_dt,
+                         params.m_elementListName )
+  {}
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -249,6 +282,8 @@ public:
     real64 detJ;
   #endif
   };
+
+
 
 protected:
   typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;

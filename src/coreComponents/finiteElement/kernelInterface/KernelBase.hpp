@@ -25,6 +25,11 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
+//#define USE_CAMP
+
+#if defined(USE_CAMP)
+  #include "camp/camp.hpp"
+#endif
 
 namespace geosx
 {
@@ -72,21 +77,21 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-    case 4:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-      break;
-    }
-    case 5:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-      break;
-    }
-    case 6:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
-      break;
-    }
+//    case 4:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
+//      break;
+//    }
+//    case 5:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+//      break;
+//    }
+//    case 6:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
+//      break;
+//    }
     case 8:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
@@ -168,6 +173,8 @@ public:
    * @param k The element index.
    * @param stack The StackVariable object that hold the stack variables.
    *
+   * ### KernelBase::setup() Description
+   *
    * The operations typically found in setup are thing such as the collection
    * of global data into local stack storage.
    */
@@ -190,6 +197,8 @@ public:
    * @param q The quadrature point index.
    * @param stack The StackVariable object that hold the stack variables.
    *
+   * ### KernelBase::quadraturePointStateUpdate() Description
+   *
    * The operations found here are the mapping from the support points to the
    * quadrature point, calculation of gradients, etc. From this data the
    * state of the constitutive model is updated if required by the physics
@@ -208,13 +217,15 @@ public:
   }
 
   /**
-   * @brief Performs the formation of the element local Jacobian matrix.
+   * @brief Form the element local Jacobian matrix.
    * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
    *                             variables. This is most likely a defined in a
    *                             type that derives from KernelBase.
    * @param k The element index.
    * @param q The quadrature point index.
    * @param stack The StackVariable object that hold the stack variables.
+   *
+   * ### KernelBase::quadraturePointJacobianContribution() Description
    *
    * The results of quadraturePointStateUpdate are used to form the local
    * element Jacobian matrix.
@@ -232,13 +243,15 @@ public:
   }
 
   /**
-   * @brief Calculates of the element local Residual vector.
+   * @brief Calculates the element local Residual vector.
    * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
    *                             variables. This is most likely a defined in a
    *                             type that derives from KernelBase.
    * @param k The element index.
    * @param q The quadrature point index.
    * @param stack The StackVariable object that hold the stack variables.
+   *
+   * ### KernelBase::quadraturePointResidualContribution() Description
    *
    * The results of quadraturePointStateUpdate are used to form the local
    * element residual vector.
@@ -262,6 +275,8 @@ public:
    *                             type that derives from KernelBase.
    * @param k The element index.
    * @param stack The StackVariable object that hold the stack variables.
+   *
+   * ### KernelBase::complete() Description
    *
    * The operations typically found in complete are the mapping of the local
    * Jacobian and Residual into the global Jacobian and Residual.
@@ -453,6 +468,17 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
+#if defined(USE_CAMP)
+  auto kernelConstructorParamsTuple = camp::make_tuple(kernelConstructorParams...);
+#else
+  using CONSTRUCTOR_PARAMS = typename KERNEL_TEMPLATE< CellElementSubRegion,
+                                                       constitutive::Dummy,
+                                                       1,
+                                                       1 >::ConstructorParams;
+
+  CONSTRUCTOR_PARAMS kernelParams( std::forward< KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+#endif
+
 
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
                                                             [&] ( localIndex const targetRegionIndex,
@@ -493,14 +519,37 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                              CONSTITUTIVE_TYPE,
                                              NUM_NODES_PER_ELEM,
                                              NUM_NODES_PER_ELEM >;
+#if defined(USE_CAMP)
+        auto temp = camp::make_tuple( nodeManager,
+                                      edgeManager,
+                                      faceManager,
+                                      elementSubRegion,
+                                      finiteElementSpace,
+                                      castedConstitutiveRelation );
 
-        KERNEL_TYPE kernelComponent( nodeManager,
-                                     edgeManager,
-                                     faceManager,
-                                     elementSubRegion,
-                                     finiteElementSpace,
-                                     castedConstitutiveRelation,
-                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp, kernelConstructorParamsTuple );
+
+        KERNEL_TYPE kernelComponent  = camp::invoke(fullKernelComponentConstructorArgs, KERNEL_TYPE );
+#else
+  KERNEL_TYPE kernelComponent( nodeManager,
+                               edgeManager,
+                               faceManager,
+                               elementSubRegion,
+                               finiteElementSpace,
+                               castedConstitutiveRelation,
+                               kernelParams );
+#endif
+
+  // We can replace all the shenanigans with params when we can use c++20
+  // perfect forwarding of the parameter pack in the lambda capture.
+  //        KERNEL_TYPE kernelComponent( nodeManager,
+  //                                     edgeManager,
+  //                                     faceManager,
+  //                                     elementSubRegion,
+  //                                     finiteElementSpace,
+  //                                     castedConstitutiveRelation,
+  //                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
+
 
         maxResidualContribution = std::max( maxResidualContribution,
                                             KERNEL_TYPE::template Launch< POLICY,

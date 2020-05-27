@@ -35,16 +35,27 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 
-//  template< typename SUBREGION_TYPE,
-//            typename CONSTITUTIVE_TYPE,
-//            int NUM_NODES_PER_ELEM,
-//            int >
-//  using SparsityQuasiStatic = BaseKernel::QuasiStatic< SUBREGION_TYPE,
-//                                                     CONSTITUTIVE_TYPE,
-//                                                     NUM_NODES_PER_ELEM,
-//                                                     NUM_NODES_PER_ELEM,
-//                                                     numTestDofPerSP,
-//                                                     numTrialDofPerSP >;
+/**
+ * @struct ConstructorParams
+ * @brief Temporary object to help with the delivery of the variadic
+ *        arguments through all the lambdas prior to the reaching the
+ *        constructor for the Kernel. This should not be necessary once
+ *        we are able to use the perfect forwarding capabilites of c++20.
+ */
+struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
+{
+  QuasiStaticConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
+                                ParallelMatrix & inputMatrix,
+                                ParallelVector & inputRhs,
+                                real64 const inputGravityVector[3] ):
+    finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
+                             inputMatrix,
+                             inputRhs ),
+    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
+  {}
+  real64 const m_gravityVector[3];
+};
+
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -77,6 +88,7 @@ public:
   using Base::constitutiveUpdate;
   using Base::m_finiteElementSpace;
 
+  using ConstructorParams = QuasiStaticConstructorParams;
 
 
   QuasiStatic( NodeManager const & nodeManager,
@@ -103,6 +115,25 @@ public:
     dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
+  {}
+
+  QuasiStatic( NodeManager const & nodeManager,
+               EdgeManager const & edgeManager,
+               FaceManager const & faceManager,
+               SUBREGION_TYPE const & elementSubRegion,
+               FiniteElementBase const * const finiteElementSpace,
+               CONSTITUTIVE_TYPE * const inputConstitutiveType,
+               ConstructorParams & params ):
+    QuasiStatic( nodeManager,
+                 edgeManager,
+                 faceManager,
+                 elementSubRegion,
+                 finiteElementSpace,
+                 inputConstitutiveType,
+                 params.m_dofNumber,
+                 params.m_matrix,
+                 params.m_rhs,
+                 params.m_gravityVector )
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -162,7 +193,7 @@ public:
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
                                             STACK_VARIABLE_TYPE & stack,
-                                            DYNAMICS_LAMBDA && dynamicsTerms = [] GEOSX_DEVICE ( localIndex,
+                                            DYNAMICS_LAMBDA && dynamicsTerms = [] GEOSX_HOST_DEVICE ( localIndex,
                                                                                                  localIndex){} ) const
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
@@ -290,10 +321,10 @@ public:
   };
   //*****************************************************************************
 
+
 protected:
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
-
   arrayView3d< R1Tensor const > const dNdX;
   arrayView2d< real64 const > const detJ;
   real64 const m_gravityVector[3];

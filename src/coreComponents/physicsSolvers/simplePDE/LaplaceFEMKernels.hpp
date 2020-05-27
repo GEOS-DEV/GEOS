@@ -23,6 +23,28 @@
 
 namespace geosx
 {
+
+/**
+ * @struct ConstructorParams
+ * @brief Temporary object to help with the delivery of the variadic
+ *        arguments through all the lambdas prior to the reaching the
+ *        constructor for the Kernel. This should not be necessary once
+ *        we are able to use the perfect forwarding capabilites of c++20.
+ */
+struct LaplaceFEMKernelConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
+{
+  LaplaceFEMKernelConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
+                                     ParallelMatrix & inputMatrix,
+                                     ParallelVector & inputRhs,
+                                     string const & fieldName ):
+    finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
+                                                        inputMatrix,
+                                                        inputRhs ),
+    m_fieldName(fieldName)
+  {}
+  string const & m_fieldName;
+};
+
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
@@ -78,16 +100,38 @@ public:
   /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTrialSupportPoint
   using Base::numDofPerTrialSupportPoint;
 
-
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_dofNumber
   using Base::m_dofNumber;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_matrix
   using Base::m_matrix;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_rhs
   using Base::m_rhs;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemsToNodes
   using Base::elemsToNodes;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemGhostRank
   using Base::elemGhostRank;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::constitutiveUpdate
   using Base::constitutiveUpdate;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_finiteElementSpace
   using Base::m_finiteElementSpace;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::Launch
   using Base::Launch;
 
+  using ConstructorParams = LaplaceFEMKernelConstructorParams;
+
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param fieldName The name of the primary field
+   *                  (i.e. Temperature, Pressure, etc.)
+   */
   LaplaceFEMKernel( NodeManager const & nodeManager,
                     EdgeManager const & edgeManager,
                     FaceManager const & faceManager,
@@ -112,6 +156,34 @@ public:
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
   {}
 
+  LaplaceFEMKernel( NodeManager const & nodeManager,
+                     EdgeManager const & edgeManager,
+                     FaceManager const & faceManager,
+                     SUBREGION_TYPE const & elementSubRegion,
+                     FiniteElementBase const * const finiteElementSpace,
+                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                     ConstructorParams & params ):
+    LaplaceFEMKernel( nodeManager,
+                      edgeManager,
+                      faceManager,
+                      elementSubRegion,
+                      finiteElementSpace,
+                      inputConstitutiveType,
+                      params.m_dofNumber,
+                      params.m_matrix,
+                      params.m_rhs,
+                      params.m_fieldName )
+  {}
+
+
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
+   *
+   * For the LaplaceFEMKernel implementation, global values from the
+   * primaryField, and degree of freedom numbers are placed into element local
+   * stack storage.
+   */
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -128,6 +200,9 @@ public:
     }
   }
 
+  /**
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution.
+   */
   template< typename STACK_VARIABLE_TYPE,
             typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
   GEOSX_HOST_DEVICE
@@ -145,6 +220,13 @@ public:
     }
   }
 
+  /**
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
+   *
+   * Form element residual from the fully formed element Jacobian dotted with
+   * the primary field and map the element local Jacobian/Residual to the
+   * global matrix/vector.
+   */
   template< typename STACK_VARIABLE_TYPE >
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -174,28 +256,45 @@ public:
 
 
   //***************************************************************************
+  /**
+   * @class StackVariables
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   *
+   * Adds a stack array for the primary field.
+   */
   struct StackVariables : Base::StackVariables
   {
 public:
 
+    /// @copydoc geosx::finiteElement::ImplicitKernelBase::numRows
     using Base::StackVariables::numRows;
+
+    /// @copydoc geosx::finiteElement::ImplicitKernelBase::numCols
     using Base::StackVariables::numCols;
 
+    /**
+     * @brief Constructor
+     */
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            primaryField_local{ 0.0 }
+      primaryField_local{ 0.0 }
     {}
 
+    /// C-array storage for the element local primary field variable.
     real64 primaryField_local[numNodesPerElem];
   };
 
+
 protected:
+  /// The global primary field array.
   arrayView1d< real64 const > const m_primaryField;
+
+  /// The global shape function derivatives array.
   arrayView3d< R1Tensor const > const dNdX;
+
+  /// The global determinant of the parent/physical Jacobian.
   arrayView2d< real64 const > const detJ;
-
-
 
 };
 

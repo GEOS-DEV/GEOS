@@ -32,6 +32,38 @@ namespace finiteElement
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
+
+/**
+ * @struct ConstructorParams
+ * @brief Temporary object to help with the delivery of the variadic
+ *        arguments through all the lambdas prior to the reaching the
+ *        constructor for the Kernel. This should not be necessary once
+ *        we are able to use the perfect forwarding capabilites of c++20.
+ */
+struct ImplicitKernelBaseConstructorParams
+{
+
+  ImplicitKernelBaseConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
+                                       ParallelMatrix & inputMatrix,
+                                       ParallelVector & inputRhs ):
+    m_dofNumber(inputDofNumber),
+    m_matrix(inputMatrix),
+    m_rhs(inputRhs)
+  {}
+  /// The global degree of freedom number
+  arrayView1d< globalIndex const > const m_dofNumber;
+
+  /// The global Jacobian matrix.
+  ParallelMatrix & m_matrix;
+
+  /// The global residaul vector.
+  ParallelVector & m_rhs;
+};
+
+
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 /**
  * @class ImplicitKernelBase
  * @brief Define the base interface for implicit finite element kernels.
@@ -104,6 +136,8 @@ public:
   /// @copydoc geosx::finiteElement::KernelBase::Launch
   using Base::Launch;
 
+  using ConstructorParams = ImplicitKernelBaseConstructorParams;
+
   /**
    * @brief Constructor
    * @param nodeManager Reference to the NodeManager object.
@@ -136,7 +170,33 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup.
+   * @copydoc ImplicitKernelBase
+   * @brief Constructor that holds variadic components in a struct.
+   * @param params Hold the variadic components of primary constructor.
+   */
+  ImplicitKernelBase( NodeManager const & nodeManager,
+                      EdgeManager const & edgeManager,
+                      FaceManager const & faceManager,
+                      SUBREGION_TYPE const & elementSubRegion,
+                      FiniteElementBase const * const finiteElementSpace,
+                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                      ConstructorParams & params ):
+    ImplicitKernelBase( nodeManager,
+                        edgeManager,
+                        faceManager,
+                        elementSubRegion,
+                        finiteElementSpace,
+                        inputConstitutiveType,
+                        params.m_dofNumber,
+                        params.m_matrix,
+                        params.m_rhs )
+  {}
+
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::setup
+   *
+   * ### ImplicitKernelBase::setup() Description
    *
    * In this implementation, the element local Row and Column DOF stack arrays
    * are filled for when we fill the global matrix and rhs.
@@ -170,7 +230,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::setup.
+   * @copydoc geosx::finiteElement::KernelBase::complete
    *
    * In this implementation, only the matrix values are inserted, making this
    * implementation appropriate for generating the sparsity pattern.
@@ -191,9 +251,11 @@ public:
 
   //***************************************************************************
   /**
-   * @class StackVariables
-   * @tparam NUM_ROWS The number rows to allocate for the residual/jacobian.
-   * @tparam NUM_COLS The number or columns to allocate for the jacobian.
+   * @struct StackVariables
+   * @brief Kernel variables allocated on the stack.
+   *
+   * ### ImplicitKernelBase::StackVariables Description
+   *
    * Contains variables that will be allocated on the stack of the main kernel.
    * This will typically consist of local arrays to hold data mapped from the
    * global data arrays, and local storage for the residual and jacobian
@@ -201,8 +263,6 @@ public:
    */
   struct StackVariables
   {
-public:
-
     /// The number of rows in the element local jacobian matrix.
     static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
 
@@ -247,6 +307,10 @@ protected:
 
 };
 
+
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 /**
  * @brief Helper struct to define a specialization of
  *        #geosx::finiteElement::ImplicitKernelBase that may be used to
@@ -287,6 +351,9 @@ struct SparsityHelper
 };
 
 
+//*****************************************************************************
+//*****************************************************************************
+//*****************************************************************************
 /**
  * @brief Fills matrix sparsity.
  * @tparam POLICY The RAJA launch policy to pass to the kernel launch.

@@ -45,14 +45,14 @@ using parallelHostAtomic = serialAtomic;
 
 #if defined(GEOSX_USE_CUDA)
 
-template< int BLOCK_SIZE = 256 >
+template< unsigned long BLOCK_SIZE = 256 >
 using parallelDevicePolicy = RAJA::cuda_exec< BLOCK_SIZE >;
 using parallelDeviceReduce = RAJA::cuda_reduce;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
 #else
 
-template< int BLOCK_SIZE = 0 >
+template< unsigned long BLOCK_SIZE = 0 >
 using parallelDevicePolicy = parallelHostPolicy;
 using parallelDeviceReduce = parallelHostReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
@@ -61,7 +61,7 @@ using parallelDeviceAtomic = parallelHostAtomic;
 
 namespace internalRajaInterface
 {
-template< typename, int = 0 >
+template< typename >
 struct PolicyMap;
 
 template<>
@@ -71,20 +71,23 @@ struct PolicyMap<serialPolicy>
   using reduce = serialReduce;
 };
 
+#if defined(GEOSX_USE_OPENMP)
 template<>
-struct PolicyMap<parallelHostPolicy>
+struct PolicyMap<RAJA::omp_parallel_for_exec>
 {
-  using atomic = parallelHostAtomic;
-  using reduce = parallelHostReduce;
+  using atomic = RAJA::builtin_atomic;
+  using reduce = RAJA::omp_reduce;
 };
+#endif
 
-template< int BLOCK_SIZE >
-struct PolicyMap< parallelDevicePolicy<BLOCK_SIZE>, BLOCK_SIZE >
+#if defined(GEOSX_USE_CUDA)
+template< unsigned long BLOCK_SIZE >
+struct PolicyMap< RAJA::cuda_exec<BLOCK_SIZE> >
 {
-  using atomic = parallelDeviceAtomic;
-  using reduce = parallelDeviceReduce;
+  using atomic = RAJA::cuda_atomic;
+  using reduce = RAJA::cuda_reduce;
 };
-
+#endif
 }
 
 

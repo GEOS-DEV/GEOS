@@ -53,30 +53,6 @@ public:
   using Base::numTrialDofPerSP;
   using Base::numNodesPerElem;
 
-//*****************************************************************************
-  struct StackVariables : public Base::StackVariables
-  {
-public:
-    using Base::StackVariables::fLocal;
-    using Base::StackVariables::varLocal;
-
-#if defined(CALCFEMSHAPE)
-    using Base::StackVariables::xLocal;
-    using Base::StackVariables::dNdX;
-    using Base::StackVariables::detJ;
-#endif
-
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            uLocal{ {0.0} }
-    {}
-
-    real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-  };
-//*****************************************************************************
-
   using Base::m_dt;
   using Base::elemsToNodes;
   using Base::u;
@@ -84,8 +60,11 @@ public:
   using Base::X;
   using Base::acc;
   using Base::constitutiveUpdate;
+#if !defined(CALCFEMSHAPE)
   using Base::dNdX;
   using Base::detJ;
+#endif
+  using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
@@ -103,6 +82,23 @@ public:
           inputConstitutiveType,
           dt,
           elementListName )
+  {}
+
+  ExplicitFiniteStrain( NodeManager & nodeManager,
+                       EdgeManager const & edgeManager,
+                       FaceManager const & faceManager,
+                       SUBREGION_TYPE const & elementSubRegion,
+                       FiniteElementBase const * const finiteElementSpace,
+                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                       ConstructorParams & params ):
+    ExplicitFiniteStrain( nodeManager,
+                         edgeManager,
+                         faceManager,
+                         elementSubRegion,
+                         finiteElementSpace,
+                         inputConstitutiveType,
+                         params.m_dt,
+                         params.m_elementListName )
   {}
 
   template< typename STACK_VARIABLE_TYPE >
@@ -134,7 +130,7 @@ public:
   {
 #if defined(CALCFEMSHAPE)
     real64 dNdX[ 8 ][ 3 ];
-    real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
+    real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 #define DNDX dNdX
 #define DETJ detJ
 #else
@@ -200,7 +196,7 @@ public:
 
     real64 const integrationFactor = -DETJ * detF;
 
-    real64 const * const stress = constitutiveUpdate.m_stress[k][q];
+    auto const & stress = constitutiveUpdate.m_stress[k][q];
 
     real64 P[ 3 ][ 3 ];
     P[ 0 ][ 0 ] = ( stress[ 0 ] * fInv( 0, 0 ) + stress[ 5 ] * fInv( 0, 1 ) + stress[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
@@ -228,6 +224,35 @@ public:
   using Base::quadraturePointResidualContribution;
   using Base::complete;
   using Base::Launch;
+
+
+  //*****************************************************************************
+    struct StackVariables : public Base::StackVariables
+    {
+  public:
+      using Base::StackVariables::fLocal;
+      using Base::StackVariables::varLocal;
+
+  #if defined(CALCFEMSHAPE)
+      using Base::StackVariables::xLocal;
+      using Base::StackVariables::dNdX;
+      using Base::StackVariables::detJ;
+  #endif
+
+
+      GEOSX_HOST_DEVICE
+      StackVariables():
+        Base::StackVariables(),
+        uLocal{ {0.0} }
+      {}
+
+      real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+    };
+  //*****************************************************************************
+
+
+
+
 
 };
 #undef CALCFEMSHAPE
