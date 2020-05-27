@@ -185,12 +185,13 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   {
 
     // compute the face geometry data: center, normal, vector from cell center to face center
-    computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                               faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
-                                               nodePosition,
-                                               faceCenter,
-                                               faceNormal,
-                                               areaTolerance );
+    real64 const faceArea =
+      computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+                                                 faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
+                                                 nodePosition,
+                                                 faceCenter,
+                                                 faceNormal,
+                                                 areaTolerance );
 
     cellToFaceVec  = faceCenter;
     cellToFaceVec -= elemCenter;
@@ -213,9 +214,9 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
       faceNormal *= -1;
     }
 
-    normalsMat( ifaceLoc, 0 ) = faceNormal( 0 );
-    normalsMat( ifaceLoc, 1 ) = faceNormal( 1 );
-    normalsMat( ifaceLoc, 2 ) = faceNormal( 2 );
+    normalsMat( ifaceLoc, 0 ) = faceArea*faceNormal( 0 );
+    normalsMat( ifaceLoc, 1 ) = faceArea*faceNormal( 1 );
+    normalsMat( ifaceLoc, 2 ) = faceArea*faceNormal( 2 );
 
   }
 
