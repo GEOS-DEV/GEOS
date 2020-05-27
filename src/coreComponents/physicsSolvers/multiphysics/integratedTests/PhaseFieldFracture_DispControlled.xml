@@ -57,7 +57,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="500.0">
+  <Events maxTime="5000.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
@@ -142,14 +142,14 @@
                fieldName="TotalDisplacement"
                component="1"
                scale="0.0"
-               setNames="{xneg}"/>
+               setNames="{all}"/>
 
     <FieldSpecification name="zconstraint"
                objectPath="nodeManager"
                fieldName="TotalDisplacement"
                component="2"
                scale="0.0"
-               setNames="{xneg}"/>
+               setNames="{all}"/>
 
     <FieldSpecification name="pointSource"
                         fieldName="Damage"

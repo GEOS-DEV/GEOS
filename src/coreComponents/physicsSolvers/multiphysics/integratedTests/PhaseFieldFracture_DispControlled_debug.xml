@@ -49,8 +49,8 @@
   </Mesh>
 
   <Events maxTime="885.0">
-    <SoloEvent name="siloOutput0"
-                   target="/Outputs/SiloOutput"/>
+    <!-- <SoloEvent name="siloOutput0"
+                   target="/Outputs/SiloOutput"/> -->
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
