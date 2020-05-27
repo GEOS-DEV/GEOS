@@ -122,7 +122,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="permy_channel"
                         component="1"
@@ -130,7 +130,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="permz_channel"
                         component="2"
@@ -138,7 +138,7 @@
                         setNames="{all}"
                         objectPath="ElementRegions/Channel"
                         fieldName="permeability"
-                        scale="1.0e-14"/>
+                        scale="1.0e-15"/>
 
     <FieldSpecification name="porosity_channel"
                         initialCondition="1"
