@@ -19,48 +19,58 @@
 #ifndef GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_HYPRESOLVER_HPP_
 
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+
 namespace geosx
 {
 
 class HypreVector;
 class HypreMatrix;
-class LinearSolverParameters;
 
 /**
- * \class TrilinosSolver
- * \brief This class creates and provides basic support for ... .
+ * @brief This class creates and provides basic support for Hypre solvers.
  */
-
 class HypreSolver
 {
 public:
 
   /**
    * @brief Solver constructor, with parameter list reference
-   *
+   * @param[in] parameters structure containing linear solver parameters
    */
-  HypreSolver( LinearSolverParameters const & parameters );
+  HypreSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
-   *
    */
   virtual ~HypreSolver() = default;
 
   /**
    * @brief Solve system with an iterative solver (HARD CODED PARAMETERS, GMRES).
+   * @param[in,out] mat the matrix
+   * @param[in,out] sol the solution
+   * @param[in,out] rhs the right-hand side
    *
-   * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
+   * Solve Ax=b with A an HypreMatrix, x and b HypreVector.
    */
-
   void solve( HypreMatrix & mat,
               HypreVector & sol,
               HypreVector & rhs );
 
+  /**
+   * @brief Get the result of previous solve.
+   * @return struct with last solve stats
+   */
+  LinearSolverResult const & result()
+  {
+    return m_result;
+  }
 
 private:
 
   LinearSolverParameters const & m_parameters;
+  LinearSolverResult m_result;
 
   void solve_direct( HypreMatrix & mat,
                      HypreVector & sol,

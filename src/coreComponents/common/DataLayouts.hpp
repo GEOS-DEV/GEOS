@@ -20,7 +20,7 @@
 #define GEOSX_COMMON_DATALAYOUTS_HPP_
 
 #include "RAJA/RAJA.hpp"
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 
 namespace geosx
 {
@@ -48,19 +48,19 @@ using ACCELERATION_PERM = RAJA::PERM_JI;
 #else
 
 /// Node reference position permutation when not using cuda.
-using REFERENCE_POSITION_PERM = RAJA::PERM_JI;
+using REFERENCE_POSITION_PERM = RAJA::PERM_IJ;
 
 /// Node total displacement permutation when not using cuda.
-using TOTAL_DISPLACEMENT_PERM = RAJA::PERM_JI;
+using TOTAL_DISPLACEMENT_PERM = RAJA::PERM_IJ;
 
 /// Node incremental displacement permutation when not using cuda.
-using INCR_DISPLACEMENT_PERM = RAJA::PERM_JI;
+using INCR_DISPLACEMENT_PERM = RAJA::PERM_IJ;
 
 /// Node velocity permutation when not using cuda.
-using VELOCITY_PERM = RAJA::PERM_JI;
+using VELOCITY_PERM = RAJA::PERM_IJ;
 
 /// Node acceleration permutation when not using cuda.
-using ACCELERATION_PERM = RAJA::PERM_JI;
+using ACCELERATION_PERM = RAJA::PERM_IJ;
 
 #endif
 

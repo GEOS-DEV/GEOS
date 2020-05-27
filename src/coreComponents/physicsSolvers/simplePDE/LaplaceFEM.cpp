@@ -29,6 +29,7 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
@@ -60,7 +61,7 @@ LaplaceFEM::LaplaceFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName, false )->
+  registerWrapper< string >( laplaceFEMViewKeys.fieldVarName.Key(), &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "name of field variable" );
 }
@@ -110,16 +111,6 @@ void LaplaceFEM::PostProcessInput()
   {
     GEOSX_ERROR( "invalid time integration option" );
   }
-
-  // Set basic parameters for solver
-  // m_linearSolverParameters.logLevel = 0;
-  // m_linearSolverParameters.solverType = "gmres";
-  // m_linearSolverParameters.krylov.tolerance = 1e-8;
-  // m_linearSolverParameters.krylov.maxIterations = 250;
-  // m_linearSolverParameters.krylov.maxRestart = 250;
-  // m_linearSolverParameters.preconditionerType = "amg";
-  // m_linearSolverParameters.amg.smootherType = "gaussSeidel";
-  // m_linearSolverParameters.amg.coarseType = "direct";
 }
 //END_SPHINX_INCLUDE_03
 
@@ -189,10 +180,10 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   Group * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   NumericalMethodsManager const *
-    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const *
-    feDiscretizationManager = numericalMethodManager->
-                                GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
   array1d< globalIndex > const & dofIndex =
     nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
@@ -206,7 +197,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
     ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
 
     FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
     elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
     {

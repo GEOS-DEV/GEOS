@@ -22,7 +22,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "cxx-utilities/src/ArrayUtilities.hpp"
+#include "LvArray/src/ArrayUtilities.hpp"
 
 // TPL includes
 #include <pugixml.hpp>
@@ -74,12 +74,19 @@ public:
    * @name Constructors/destructor/assignment.
    */
   ///@{
+
+  /// Deleted default constructor.
   xmlWrapper() = delete;
+
+  /// Deleted default default destructor.
   ~xmlWrapper() = delete;
+
+  /// Deleted copy constructor.
   xmlWrapper( xmlWrapper const & ) = delete;
+
+  /// Deleted move constructor.
   xmlWrapper( xmlWrapper && ) = delete;
-  xmlWrapper & operator=( xmlWrapper const & ) = delete;
-  xmlWrapper & operator=( xmlWrapper && ) = delete;
+
   ///@}
 
   /**
@@ -248,7 +255,7 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << cxx_utilities::demangleType< T >() );
+    GEOSX_ERROR( "Cannot parse the given type " << LvArray::demangleType< T >() );
     return false;
   }
 

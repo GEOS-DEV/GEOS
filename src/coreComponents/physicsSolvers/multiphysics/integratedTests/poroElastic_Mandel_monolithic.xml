@@ -11,10 +11,12 @@
                  discretization="FE1"
                  targetRegions="{Region1}">
       <NonlinearSolverParameters newtonMaxIter="2"
-	                         newtonTol="1.0e-2"
-	                         maxTimeStepCuts="1"
+	                             newtonTol="1.0e-2"
+	                             maxTimeStepCuts="1"
                                  lineSearchMaxCuts="0"/>                                 
-      <SystemSolverParameters useDirectSolver="1"
+      <LinearSolverParameters solverType="bicgstab"
+                              preconditionerType="block"
+                              krylovMaxIter="200"
                               logLevel="0"/>
     </Poroelastic>
 
@@ -24,17 +26,17 @@
                                   logLevel="1"
                                   discretization="FE1"
                                   targetRegions="{Region1}"
-                                  solidMaterialNames="{shale}"
-                                  >
+                                  solidMaterialNames="{shale}">
+      <LinearSolverParameters preconditionerType="amg"/>
     </SolidMechanicsLagrangianSSLE>
   
     <SinglePhaseFVM name="SinglePhaseFlow"
-                     logLevel="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="{Region1}"
-                     fluidNames="{water}"
-                     solidNames="{shale}"
-		     >
+                    logLevel="1"
+                    discretization="singlePhaseTPFA"
+                    targetRegions="{Region1}"
+                    fluidNames="{water}"
+                    solidNames="{shale}">
+      <LinearSolverParameters preconditionerType="amg"/>
     </SinglePhaseFVM>
   </Solvers>
   
@@ -44,7 +46,7 @@
                   xCoords="{0.0, 1.0}"
                   yCoords="{0.0, 0.1}"
                   zCoords="{0.0, 1.0}"
-		  nx="{10}"
+                  nx="{10}"
                   ny="{1}"
                   nz="{10}"
                   cellBlockNames="{cb1}"/>

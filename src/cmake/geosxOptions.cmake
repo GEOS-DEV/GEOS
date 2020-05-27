@@ -36,8 +36,9 @@ option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_VTK "Enables VTK" ON )
 
-if ( ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") OR "${CMAKE_HOST_APPLE}" )
+if ( "${CMAKE_HOST_APPLE}" )
   option( ENABLE_PETSC "Enables PETSC" OFF )
 else()
   option( ENABLE_PETSC "Enables PETSC" ON )
@@ -61,6 +62,7 @@ string( TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI )
 if( NOT ENABLE_${upper_LAI} )
   message( FATAL_ERROR "${GEOSX_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF" )
 endif()
+option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
 
 # MPI/OMP/CUDA setup
 

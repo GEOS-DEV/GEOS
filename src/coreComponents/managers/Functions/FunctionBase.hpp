@@ -119,7 +119,7 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
 
   arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
 
-  localIndex const numVars = integer_conversion< localIndex >( inputVarNames.size());
+  localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
   GEOSX_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
 
   localIndex varSize[4];

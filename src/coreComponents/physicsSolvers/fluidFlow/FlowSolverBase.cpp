@@ -47,27 +47,27 @@ FlowSolverBase::FlowSolverBase( std::string const & name,
   m_elementAperture0(),
   m_elementAperture()
 {
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of discretization object to use for this solver." );
 
-  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames, false )->
+  this->registerWrapper( viewKeyStruct::fluidNamesString, &m_fluidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of fluid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::solidNamesString, &m_solidModelNames, false )->
+  this->registerWrapper( viewKeyStruct::solidNamesString, &m_solidModelNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setSizedFromParent( 0 )->
     setDescription( "Names of solid constitutive models for each region." );
 
-  this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate, false )->
+  this->registerWrapper( viewKeyStruct::inputFluxEstimateString, &m_fluxEstimate )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial estimate of the input flux used only for residual scaling. This should be "
                     "essentially equivalent to the input flux * dt." );
 
-  this->registerWrapper( viewKeyStruct::meanPermCoeffString, &m_meanPermCoeff, false )->
+  this->registerWrapper( viewKeyStruct::meanPermCoeffString, &m_meanPermCoeff )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the "
@@ -141,13 +141,11 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   }
 
   // fill stencil targetRegions
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   array1d< string > & stencilTargetRegions = fluxApprox->targetRegions();
   std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
   for( auto const & targetRegion : targetRegionNames() )

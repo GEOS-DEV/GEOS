@@ -38,16 +38,16 @@ MeshLevel::MeshLevel( string const & name,
   m_elementManager( groupStructKeys::elemManagerString, this )
 {
 
-  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager, false );
+  RegisterGroup( groupStructKeys::nodeManagerString, &m_nodeManager );
 
-  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager, false );
+  RegisterGroup( groupStructKeys::edgeManagerString, &m_edgeManager );
 
 
-  RegisterGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager, false );
+  RegisterGroup< FaceManager >( groupStructKeys::faceManagerString, &m_faceManager );
   m_faceManager.nodeList().SetRelatedObject( &m_nodeManager );
 
 
-  RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager, false );
+  RegisterGroup< ElementRegionManager >( groupStructKeys::elemManagerString, &m_elementManager );
 
 
   registerWrapper< integer >( viewKeys.meshLevel );
@@ -74,15 +74,15 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
 {
   NodeManager * const nodeManager = getNodeManager();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager->elementRegionList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager->elementRegionList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager->elementSubRegionList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager->elementSubRegionList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager->elementList();
+  ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager->elementList().toViewConst();
 
 
   FaceManager * const faceManager = this->getFaceManager();
-  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList();
+  ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
 
   ElementRegionManager * const elemManager = this->getElemManager();
 
@@ -146,13 +146,13 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
     }
   }
 
-  nodeAdjacencyList.resize( integer_conversion< localIndex >( nodeAdjacencySet.size()));
+  nodeAdjacencyList.resize( LvArray::integerConversion< localIndex >( nodeAdjacencySet.size()));
   std::copy( nodeAdjacencySet.begin(), nodeAdjacencySet.end(), nodeAdjacencyList.begin() );
 
-  edgeAdjacencyList.resize( integer_conversion< localIndex >( edgeAdjacencySet.size()));
+  edgeAdjacencyList.resize( LvArray::integerConversion< localIndex >( edgeAdjacencySet.size()));
   std::copy( edgeAdjacencySet.begin(), edgeAdjacencySet.end(), edgeAdjacencyList.begin() );
 
-  faceAdjacencyList.resize( integer_conversion< localIndex >( faceAdjacencySet.size()));
+  faceAdjacencyList.resize( LvArray::integerConversion< localIndex >( faceAdjacencySet.size()));
   std::copy( faceAdjacencySet.begin(), faceAdjacencySet.end(), faceAdjacencyList.begin() );
 
   for( localIndex kReg=0; kReg<elemManager->numRegions(); ++kReg )
@@ -162,7 +162,7 @@ void MeshLevel::GenerateAdjacencyLists( arrayView1d< localIndex const > const & 
     for( localIndex kSubReg=0; kSubReg<elemRegion->numSubRegions(); ++kSubReg )
     {
       elementAdjacencyList[kReg][kSubReg].get().clear();
-      elementAdjacencyList[kReg][kSubReg].get().resize( integer_conversion< localIndex >( elementAdjacencySet[kReg][kSubReg].size()) );
+      elementAdjacencyList[kReg][kSubReg].get().resize( LvArray::integerConversion< localIndex >( elementAdjacencySet[kReg][kSubReg].size()) );
       std::copy( elementAdjacencySet[kReg][kSubReg].begin(),
                  elementAdjacencySet[kReg][kSubReg].end(),
                  elementAdjacencyList[kReg][kSubReg].get().begin() );

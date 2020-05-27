@@ -26,13 +26,14 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "linearAlgebra/solvers/BlockPreconditioner.hpp"
+#include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
-
 
 namespace geosx
 {
@@ -49,15 +50,15 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   m_couplingTypeOption()
 
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName, 0 )->
+  registerWrapper( viewKeyStruct::solidSolverNameString, &m_solidSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::fluidSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
 
-  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString, 0 )->
+  registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
 }
@@ -101,6 +102,11 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
+  if( m_precond )
+  {
+    m_precond->clear();
+  }
+
   localIndex const numLocalDof = dofManager.numLocalDofs();
   matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
@@ -108,6 +114,10 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
 
   dofManager.setSparsityPattern( m_matrix, true );
 
+  if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
+  {
+    CreatePreconditioner();
+  }
 }
 
 void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
@@ -276,12 +286,13 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager =
-    *domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const & feDiscretizationManager =
-    *numericalMethodManager.GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const &
+  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
@@ -405,9 +416,10 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   MeshLevel const & mesh = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
-  NumericalMethodsManager const * const numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const * const feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
-    keys::finiteElementDiscretizations );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager->getReference< globalIndex_array >( uDofKey );
@@ -417,7 +429,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
   FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix->open();
   rhs->open();
@@ -552,6 +564,32 @@ real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const * const d
 
   return sqrt( momementumResidualNorm*momementumResidualNorm
                + massResidualNorm*massResidualNorm );
+}
+
+void PoroelasticSolver::CreatePreconditioner()
+{
+  if( m_linearSolverParameters.get().preconditionerType == "block" )
+  {
+    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
+                                                                           SchurComplementOption::RowsumDiagonalProbing,
+                                                                           BlockScalingOption::FrobeniusNorm );
+
+    auto mechPrecond = LAInterface::createPreconditioner( m_solidSolver->getLinearSolverParameters() );
+    precond->setupBlock( 0,
+                         { { keys::TotalDisplacement, 0, 3 } },
+                         std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
+
+    auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
+    precond->setupBlock( 1,
+                         { { SinglePhaseBase::viewKeyStruct::pressureString, 0, 1 } },
+                         std::move( flowPrecond ) );
+
+    m_precond = std::move( precond );
+  }
+  else
+  {
+    m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+  }
 }
 
 void PoroelasticSolver::SolveSystem( DofManager const & dofManager,

@@ -99,7 +99,7 @@ public:
 //  void SetBufferSizes( const std::map<string, string_array >& fieldNames,
 //                       const CommRegistry::commID commID  );
 //
-//  int NumberOfNeighbors( ) {return integer_conversion<int>(m_neighbors.size());}
+//  int NumberOfNeighbors( ) {return LvArray::integerConversion<int>(m_neighbors.size());}
 
   int m_size;
   int m_sizeMetis;
@@ -110,9 +110,6 @@ public:
   int Color() const {return m_color;}
   int NumColor() const {return m_numColors;}
 
-//  void WriteSilo( SiloFile& siloFile );
-//
-//  void ReadSilo( const SiloFile& siloFile );
   void DeleteExcessNeighbors();
   void GraphBasedColoring();
 
@@ -156,10 +153,6 @@ private:
 // compositionObject );
 
   void CommunicateRequiredObjectIndices();
-
-//  virtual void WriteSiloDerived( SiloFile& siloFile ) = 0;
-//
-//  virtual void ReadSiloDerived( const SiloFile& siloFile ) = 0;
 
 
 };

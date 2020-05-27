@@ -22,7 +22,7 @@ declare -ar diff_array=( $(git diff --name-only origin/develop) )
 # Initialize main branches for submodules
 declare -Ar main_branches=(
   ["blt"]="origin/develop"
-  ["cxx-utilities"]="origin/develop"
+  ["LvArray"]="origin/develop"
   ["integratedTests"]="origin/develop"
   ["GEOSX_PTP"]="origin/master"
   ["hdf5_interface"]="origin/master"

@@ -27,7 +27,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 SiloOutput::SiloOutput( std::string const & name,
                         Group * const parent ):
@@ -39,32 +38,32 @@ SiloOutput::SiloOutput( std::string const & name,
   m_writeFaceElementMesh( 1 ),
   m_plotLevel()
 {
-  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot, false )->
+  registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( "plot" )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeEdgeMesh, &m_writeEdgeMesh, false )->
+  registerWrapper( viewKeysStruct::writeEdgeMesh, &m_writeEdgeMesh )->
     setDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFaceMesh, &m_writeFaceMesh, false )->
+  registerWrapper( viewKeysStruct::writeFaceMesh, &m_writeFaceMesh )->
     setDefaultValue( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeCellElementMesh, &m_writeCellElementMesh, false )->
+  registerWrapper( viewKeysStruct::writeCellElementMesh, &m_writeCellElementMesh )->
     setDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::writeFaceElementMesh, &m_writeFaceElementMesh, false )->
+  registerWrapper( viewKeysStruct::writeFaceElementMesh, &m_writeFaceElementMesh )->
     setDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );
 
-  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel, false )->
+  registerWrapper( viewKeysStruct::plotLevel, &m_plotLevel )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "" );

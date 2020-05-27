@@ -19,7 +19,7 @@
 #ifndef GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
-#include "cxx-utilities/src/SparsityPattern.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -81,7 +81,7 @@ public:
   {
     string name; //!< field name
     Location location; //!< support location
-    string_array regions; //!< list of support region names
+    std::vector< string > regions; //!< list of support region names
     localIndex numComponents; //!< number of vector components
     string key; //!< string key for index array
     string docstring; //!< documentation string
@@ -92,20 +92,20 @@ public:
     globalIndex globalOffset; //!< global offset of field's DOFs on current processor for multi-field problems
   };
 
+  /**
+   * Coupling description
+   */
   struct CouplingDescription
   {
-    Connector connector = Connector::None;
-    string_array regions;
-    FluxApproximationBase const * stencils = nullptr;
+    Connector connector = Connector::None;  //!< geometric object defining dof connections
+    std::vector< std::string > regions; //!< list of region names
+    FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
   /**
    * @brief Constructor.
    *
    * @param [in] name a unique name for this DoF manager
-   * @param [in] verbosity Optional localIndex setting the verbosity level.
-   *                       - 0: nothing (default)
-   *                       - >0: minimal info
    */
   DofManager( string name );
 
@@ -181,7 +181,7 @@ public:
    * and form a dense block. The sparsity pattern LC*CL is then interpreted as the super-node pattern, containing
    * dense sub-blocks.
    *
-   * @param [in] field string the name of the field.
+   * @param [in] fieldName string the name of the field.
    * @param [in] location Location where it is defined.
    * @param [in] components localIndex number of components (for vector fields).
    * @param [in] regions names of regions where this field is defined.
@@ -282,6 +282,9 @@ public:
 
   /**
    * @brief Check if string key is already being used
+   *
+   * @param name field key to check
+   * @return flag true if exists
    */
   bool fieldExists( string const & name ) const;
 
@@ -289,6 +292,7 @@ public:
    * @brief Return the key used to record the field in the DofManager.
    *
    * @param [in] fieldName string the name of the field.
+   * @return string indicating name of the field.
    */
   string getKey( string const & fieldName ) const;
 
@@ -297,6 +301,7 @@ public:
    * monolithic size.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     number of global dofs
    */
   globalIndex numGlobalDofs( string const & fieldName = "" ) const;
 
@@ -305,6 +310,7 @@ public:
    * monolithic size.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     number of local dofs
    */
   localIndex numLocalDofs( string const & fieldName = "" ) const;
 
@@ -313,16 +319,44 @@ public:
    * the specified field.
    *
    * @param [in] fieldName Optional string the name of the field.
+   * @return     the rank offset
    */
   localIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
-   * @brief Return the number of components in a field. If @p fieldName is empty, return
-   * total number of components across all fields.
-   * @param fieldName the name of the field
+   * @brief Get the the number of components in a field.
+   * @param fieldName name of the field
    * @return the number of dof components
    */
-  localIndex numComponents( string const & fieldName = "" ) const;
+  localIndex numComponents( string const & fieldName ) const;
+
+  /**
+   * @brief Get the local number of support points on this processor.
+   * @param [in] fieldName the name of the field
+   * @return number of local support points
+   */
+  localIndex numLocalSupport( string const & fieldName ) const;
+
+  /**
+   * @brief Get the local number of support points across all processors.
+   * @param [in] fieldName name of the field
+   * @return number of global support points
+   */
+  globalIndex numGlobalSupport( string const & fieldName ) const;
+
+  /**
+   * @brief Get the support location type of the field.
+   * @param [in] fieldName name of the field
+   * @return support location type
+   */
+  Location getLocation( string const & fieldName ) const;
+
+  /**
+   * @brief Get global offset of field's block on current processor in the system matrix.
+   * @param [in] fieldName name of the field.
+   * @return global offset of the field
+   */
+  globalIndex globalOffset( string const & fieldName ) const;
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -356,7 +390,6 @@ public:
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
    * @param scalingFactor a factor to scale vector values by
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -380,7 +413,6 @@ public:
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
    * @param scalingFactor a factor to scale vector values by
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -401,7 +433,6 @@ public:
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
    * @param vector target LA vector
@@ -425,7 +456,6 @@ public:
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
    * @tparam POLICY execution policy for the kernel
-   * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
    * @param vector target LA vector
@@ -444,28 +474,53 @@ public:
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
+
   /**
-   * @brief Create a matrix that restricts full vectors to one field vectors
-   * @param fieldName name of the target field
+   * @brief Describes a selection of components from a DoF field.
+   *
+   * A half-open range [@p loComp, @p hiComp) is selected.
+   */
+  struct SubComponent
+  {
+    string fieldName;  //!< Name of the DOF field in DofManager
+    localIndex loComp; //!< Low component index (included in selection)
+    localIndex hiComp; //!< High component index (excluded from selection)
+  };
+
+  /**
+   * @brief Create a dof selection by filtering out excluded components
+   * @param excluded a list of dof components to exclude
+   * @return a vector of remaining dof components
+   *
+   * @note Removed components must not have repeats, and each entry must either have
+   *       loComp = 0 or hiComp = numComponents(fieldName) (or both). In other words,
+   *       filtered out components must not leave "holes" in DOFs.
+   */
+  std::vector< SubComponent >
+  filterDofs( std::vector< SubComponent > const & excluded ) const;
+
+  /**
+   * @brief Create a matrix that restricts vectors and matrices to a subset of DOFs
+   * @tparam MATRIX type of matrix used for restrictor
+   * @param selection a list of fields to select; each entry is a struct containing
+   *                  the name of the field and low and high selected component indices
+   * @param comm the MPI communicator to use in the operator
+   * @param transpose if @p true, the transpose (prolongation) operator will be created
    * @param restrictor resulting operator
-   * @param loCompIndex starting DOF component index (for partial restriction)
-   * @param hiCompIndex index past the ending DOF component (for partial restriction)
    *
-   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
-   *       Negative value of @p hiCompIndex means use full number of field components
-   *
-   * @note Can only be called after close()
+   * @note Can only be called after reorderByRank(), since global DOF indexing is required
+   *       for the restrictor to make sense.
    */
   template< typename MATRIX >
-  void makeRestrictor( string const & fieldName,
-                       MATRIX & restrictor,
-                       MPI_Comm const comm,
-                       bool const transpose = false,
-                       localIndex const loCompIndex = 0,
-                       localIndex const hiCompIndex = -1 ) const;
+  void makeRestrictor( std::vector< SubComponent > const & selection,
+                       MPI_Comm const & comm,
+                       bool transpose,
+                       MATRIX & restrictor ) const;
 
   /**
    * @brief Print the summary of declared fields and coupling.
+   *
+   * @param os output stream
    */
   void printFieldInfo( std::ostream & os = std::cout ) const;
 
@@ -563,10 +618,10 @@ private:
   MeshLevel * m_mesh = nullptr;
 
   /// Array of field descriptions
-  array1d< FieldDescription > m_fields;
+  std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  array2d< CouplingDescription > m_coupling;
+  std::vector< std::vector< CouplingDescription > > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered;

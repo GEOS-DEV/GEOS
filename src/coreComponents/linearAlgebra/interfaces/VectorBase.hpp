@@ -47,6 +47,7 @@ class VectorBase
 {
 protected:
 
+  /// Alias for VECTOR
   using Vector = VECTOR;
 
   /**
@@ -61,10 +62,31 @@ protected:
     : m_closed( true )
   {}
 
+  /**
+   * @brief Copy constructor.
+   */
   VectorBase( VectorBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
   VectorBase( VectorBase && ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase const & ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @return reference to this object
+   */
   VectorBase & operator=( VectorBase && ) = default;
+
+  /**
+   * @brief Destructor.
+   */
   ~VectorBase() = default;
 
   ///@}
@@ -258,8 +280,15 @@ protected:
   virtual void scale( real64 const scalingFactor ) = 0;
 
   /**
+   * @brief Replace vector elements by their reciprocals
+   * @note No guarding is done against division by zero.
+   */
+  virtual void reciprocal() = 0;
+
+  /**
    * @brief Dot product with the vector vec.
    * @param vec vector to dot-product with
+   * @return dot product
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
@@ -354,12 +383,14 @@ protected:
 
   /**
    * @brief Map a global row index to local row index.
+   * @param[in] globalRow the global row index
    * @return global row index corresponding to @p globalRow
    */
   virtual localIndex getLocalRowID( globalIndex const globalRow ) const = 0;
 
   /**
    * @brief Map a local row index to global row index.
+   * @param[in] localRow the local row index
    * @return global row index corresponding to @p localRow
    */
   virtual globalIndex getGlobalRowID( localIndex const localRow ) const = 0;
@@ -398,6 +429,7 @@ protected:
   /**
    * @brief Write the vector to a file.
    * @param filename name of the output file
+   * @param[in] format output format
    */
   virtual void write( string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const = 0;

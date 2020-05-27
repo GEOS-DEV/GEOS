@@ -20,7 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_EPETRAMATRIX_HPP_
 
 #include "common/DataTypes.hpp"
-#include "EpetraVector.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
 #include "linearAlgebra/interfaces/MatrixBase.hpp"
 
@@ -34,14 +34,15 @@ namespace geosx
 {
 
 /**
- * \class EpetraMatrix
- * \brief This class creates and provides basic support for the Epetra_CrsMatrix
- *        matrix object type used in Trilinos.
+ * @brief Wrapper class for Epetra's CrsMatrix.
  */
 class EpetraMatrix final : public virtual LinearOperator< EpetraVector >,
   private MatrixBase< EpetraMatrix, EpetraVector >
 {
 public:
+
+  /// Compatible vector type
+  using Vector = EpetraVector;
 
   /**
    * @name Constructor/Destructor methods
@@ -57,8 +58,7 @@ public:
 
   /**
    * @brief Copy constructor.
-   *
-   * Create new matrix from matrix <tt>src</tt>.
+   * @param[in] src the matrix to be copied
    */
   EpetraMatrix( EpetraMatrix const & src );
 
@@ -81,6 +81,7 @@ public:
   using MatrixBase::insertable;
   using MatrixBase::modifiable;
   using MatrixBase::ready;
+  using MatrixBase::residual;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -188,8 +189,8 @@ public:
   virtual void apply( EpetraVector const & src,
                       EpetraVector & dst ) const override;
 
-  virtual void applyTranspose( Vector const & src,
-                               Vector & dst ) const override;
+  virtual void applyTranspose( EpetraVector const & src,
+                               EpetraVector & dst ) const override;
 
   virtual void multiply( EpetraMatrix const & src,
                          EpetraMatrix & dst ) const override;
@@ -228,6 +229,10 @@ public:
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
+  virtual void addEntries( EpetraMatrix const & src, real64 const scale = 1.0 ) override;
+
+  virtual void addDiagonal( EpetraVector const & src ) override;
+
   virtual localIndex maxRowLength() const override;
 
   virtual localIndex localRowLength( localIndex localRowIndex ) const override;
@@ -240,6 +245,8 @@ public:
 
   virtual real64 getDiagValue( globalIndex globalRow ) const override;
 
+  virtual void extractDiagonal( EpetraVector & dst ) const override;
+
   virtual globalIndex numGlobalRows() const override;
 
   virtual globalIndex numGlobalCols() const override;
@@ -251,6 +258,10 @@ public:
   virtual globalIndex ilower() const override;
 
   virtual globalIndex iupper() const override;
+
+  virtual globalIndex jlower() const override;
+
+  virtual globalIndex jupper() const override;
 
   virtual localIndex numLocalNonzeros() const override;
 
@@ -276,12 +287,14 @@ public:
   ///@}
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a const pointer to the underlying matrix.
+   * @return const pointer to the underlying matrix
    */
   Epetra_FECrsMatrix const & unwrapped() const;
 
   /**
-   * @brief Returns a pointer to the underlying matrix.
+   * @brief Returns a non-const pointer to the underlying matrix.
+   * @return non-const pointer to the underlying matrix
    */
   Epetra_FECrsMatrix & unwrapped();
 

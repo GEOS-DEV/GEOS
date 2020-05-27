@@ -45,9 +45,14 @@ public:
   static const string CatalogName()
   { return "FaceManager"; }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const override
   { return FaceManager::CatalogName(); }
 
+  static localIndex nodeMapExtraSpacePerFace()
+  { return 4; }
+
+  static localIndex edgeMapExtraSpacePerFace()
+  { return 4; }
 
   ///@}
   ///
@@ -55,8 +60,9 @@ public:
   ///
   ///
   FaceManager( string const &, Group * const parent );
-  virtual ~FaceManager() override final;
+  virtual ~FaceManager() override;
 
+  virtual void resize( localIndex const newsize ) override;
 
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
@@ -89,6 +95,8 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
+  void compressRelationMaps();
+
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices ) override;
 
   void depopulateUpMaps( std::set< localIndex > const & receivedFaces,
@@ -98,7 +106,7 @@ public:
 
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -110,6 +118,7 @@ public:
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
     constexpr static auto faceNormalString = "faceNormal";
+    constexpr static auto faceRotationMatrixString = "faceRotationMatrix";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -132,6 +141,8 @@ public:
   array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
   array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
 
+  array1d< R2Tensor > & faceRotationMatrix()       { return m_faceRotationMatrix; }
+  array1d< R2Tensor > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   NodeMapType & nodeList()                    { return m_nodeList; }
   NodeMapType const & nodeList() const { return m_nodeList; }
@@ -168,6 +179,7 @@ private:
   array1d< real64 > m_faceArea;
   array1d< R1Tensor > m_faceCenter;
   array1d< R1Tensor > m_faceNormal;
+  array1d< R2Tensor > m_faceRotationMatrix;
 
   constexpr static int MAX_FACE_NODES = 9;
 

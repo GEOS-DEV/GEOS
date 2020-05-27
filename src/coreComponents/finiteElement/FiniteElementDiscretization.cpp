@@ -42,9 +42,9 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::basis, &m_basisName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::quadrature, &m_quadratureName, false )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::parentSpace, &m_parentSpace, false )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::basis, &m_basisName )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::quadrature, &m_quadratureName )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( keys::parentSpace, &m_parentSpace )->setInputFlag( InputFlags::REQUIRED );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
@@ -84,11 +84,6 @@ void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase 
   array3d< R1Tensor > & dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >( keys::dNdX )->reference();
   dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
 
-  auto & constitutiveMap = cellBlock->getWrapper< std::pair< array2d< localIndex >, array2d< localIndex > > >(
-    CellElementSubRegion::viewKeyStruct::constitutiveMapString )->reference();
-  constitutiveMap.first.resize( cellBlock->size(), m_quadrature->size() );
-  constitutiveMap.second.resize( cellBlock->size(), m_quadrature->size() );
-
   array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >( keys::detJ )->reference();
   detJ.resize( cellBlock->size(), m_quadrature->size() );
 }
@@ -101,12 +96,12 @@ void FiniteElementDiscretization::PostProcessInput()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  Group const *  numericalMethods = this->getParent()->getParent();
-  Group const *  basisManager = numericalMethods->GetGroup( keys::basisFunctions );
-  Group const *  quadratureManager = numericalMethods->GetGroup( keys::quadratureRules );
+  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
+  Group const & basisManager = numericalMethods.getBasisFunctions();
+  Group const & quadratureManager = numericalMethods.getQuadratureRules();
 
-  m_basis = basisManager->GetGroup< BasisBase >( basisName );
-  m_quadrature = quadratureManager->GetGroup< QuadratureBase >( quadratureName );
+  m_basis = basisManager.GetGroup< BasisBase >( basisName );
+  m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
   m_finiteElement = new FiniteElement< 3 >( *m_basis, *m_quadrature, 0 );
 }
 

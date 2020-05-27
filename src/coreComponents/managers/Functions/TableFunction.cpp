@@ -56,23 +56,23 @@ TableFunction::TableFunction( const std::string & name,
   m_corners(),
   m_numCorners( 0 )
 {
-  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D, false )->
+  registerWrapper( keys::tableCoordinates, &m_tableCoordinates1D )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Coordinates inputs for 1D tables" );
 
-  registerWrapper( keys::tableValues, &m_values, false )->
+  registerWrapper( keys::tableValues, &m_values )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Values for 1D tables" );
 
-  registerWrapper( keys::coordinateFiles, &m_coordinateFiles, false )->
+  registerWrapper( keys::coordinateFiles, &m_coordinateFiles )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "List of coordinate file names for ND Table" );
 
-  registerWrapper( keys::voxelFile, &m_voxelFile, false )->
+  registerWrapper( keys::voxelFile, &m_voxelFile )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Voxel file name for ND Table" );
 
-  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString, false )->
+  registerWrapper( keys::tableInterpolation, &m_interpolationMethodString )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Interpolation method (options = linear, nearest, upper, lower)" )->
     setApplyDefaultValue( "linear" );
@@ -132,7 +132,7 @@ void TableFunction::InitializeFunction()
   else
   {
     // ND Table
-    m_dimensions = integer_conversion< localIndex >( m_coordinateFiles.size());
+    m_dimensions = LvArray::integerConversion< localIndex >( m_coordinateFiles.size());
     m_coordinates.resize( m_dimensions );
 
     parse_file( m_values, m_voxelFile, ',' );
@@ -234,7 +234,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
         // Note: lower_bound uses a binary search...  If we assume coordinates are
         // evenly spaced, we can speed things up considerably
         auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        bounds[ii][1] = integer_conversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
+        bounds[ii][1] = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
         bounds[ii][0] = bounds[ii][1] - 1;
 
         real64 dx = m_coordinates[ii][bounds[ii][1]] - m_coordinates[ii][bounds[ii][0]];
@@ -287,7 +287,7 @@ real64 TableFunction::Evaluate( real64 const * const input ) const
         // Coordinate is within the table axis
         // Note: std::distance will return the index of the upper table vertex
         auto lower = std::lower_bound( m_coordinates[ii].begin(), m_coordinates[ii].end(), input[ii] );
-        subIndex = integer_conversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
+        subIndex = LvArray::integerConversion< localIndex >( std::distance( m_coordinates[ii].begin(), lower ));
 
         // Interpolation types:
         //   - Nearest returns the value of the closest table vertex

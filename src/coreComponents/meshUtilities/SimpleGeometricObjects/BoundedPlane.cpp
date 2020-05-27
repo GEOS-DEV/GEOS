@@ -29,23 +29,23 @@ BoundedPlane::BoundedPlane( const std::string & name, Group * const parent ):
   m_lengthVector{ 0.0, 0.0, 0.0 },
   m_widthVector{ 0.0, 0.0, 0.0 }
 {
-  registerWrapper( viewKeyStruct::originString, &m_origin, false )->
+  registerWrapper( viewKeyStruct::originString, &m_origin )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Origin point (x,y,z) of the plane (basically, any point on the plane)" );
 
-  registerWrapper( viewKeyStruct::normalString, &m_normal, false )->
+  registerWrapper( viewKeyStruct::normalString, &m_normal )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)" );
 
-  registerWrapper( viewKeyStruct::mLengthVectorString, &m_lengthVector, false )->
+  registerWrapper( viewKeyStruct::mLengthVectorString, &m_lengthVector )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
-  registerWrapper( viewKeyStruct::mWidthVectorString, &m_widthVector, false )->
+  registerWrapper( viewKeyStruct::mWidthVectorString, &m_widthVector )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 
-  registerWrapper( viewKeyStruct::dimensionsString, &m_dimensions, false )->
+  registerWrapper( viewKeyStruct::dimensionsString, &m_dimensions )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Length and width of the bounded plane" );
 

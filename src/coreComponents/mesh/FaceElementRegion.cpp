@@ -32,7 +32,7 @@ FaceElementRegion::FaceElementRegion( string const & name, Group * const parent 
 {
   this->GetGroup( viewKeyStruct::elementSubRegions )->RegisterGroup< FaceElementSubRegion >( "default" );
 
-  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture, false )->
+  registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The default aperture of for new faceElements." );
 
@@ -94,7 +94,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
   FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   localIndex const kfe = subRegion->size() - 1;
   ruptureTime( kfe ) = time_np1;
@@ -176,7 +176,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   }
 
 
-  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea() );
+  subRegion->CalculateElementGeometricQuantities( kfe, faceManager->faceArea(), faceManager->faceRotationMatrix() );
 
   creationMass[kfe] *= elemArea[kfe];
 

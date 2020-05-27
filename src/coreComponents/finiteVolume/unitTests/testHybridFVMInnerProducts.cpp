@@ -349,7 +349,7 @@ TEST( testHybridFVMInnerProducts, TPFA_hexa )
                                                                     transMatrixRef.size( 1 ) );
 
   TPFACellInnerProductKernel::Compute( nodePosition,
-                                       faceToNodes,
+                                       faceToNodes.toViewConst(),
                                        elemToFaces,
                                        elemCenter,
                                        elemPerm,
@@ -389,7 +389,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_hexa )
                                                                     transMatrixRef.size( 1 ) );
 
   QTPFACellInnerProductKernel::Compute( nodePosition,
-                                        faceToNodes,
+                                        faceToNodes.toViewConst(),
                                         elemToFaces,
                                         elemCenter,
                                         elemVolume,
@@ -428,7 +428,7 @@ TEST( testHybridFVMInnerProducts, TPFA_tetra )
                                                                     transMatrixRef.size( 1 ) );
 
   TPFACellInnerProductKernel::Compute( nodePosition,
-                                       faceToNodes,
+                                       faceToNodes.toViewConst(),
                                        elemToFaces,
                                        elemCenter,
                                        elemPerm,
@@ -468,7 +468,7 @@ TEST( testHybridFVMInnerProducts, QTPFA_tetra )
                                                                     transMatrixRef.size( 1 ) );
 
   QTPFACellInnerProductKernel::Compute( nodePosition,
-                                        faceToNodes,
+                                        faceToNodes.toViewConst(),
                                         elemToFaces,
                                         elemCenter,
                                         elemVolume,

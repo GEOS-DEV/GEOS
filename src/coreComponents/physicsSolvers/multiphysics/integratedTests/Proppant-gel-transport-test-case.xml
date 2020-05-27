@@ -24,7 +24,8 @@
                 lineSearchAction="0"
                 maxTimeStepCuts="5"
                 newtonMinIter="1"/>
-            <SystemSolverParameters
+            <LinearSolverParameters
+                solverType="gmres"
                 krylovTol="1.0e-12"/>
 
     
@@ -57,7 +58,8 @@
                 newtonMaxIter="8"
                 lineSearchAction="0"
                 newtonMinIter="0"/>
-            <SystemSolverParameters
+            <LinearSolverParameters
+                solverType="gmres"
                 krylovTol="1.0e-12"/>
 
 
