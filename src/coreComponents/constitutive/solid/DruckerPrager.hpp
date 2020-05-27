@@ -43,11 +43,23 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
   DruckerPragerUpdates( arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & shearModulus,
+                        arrayView1d< real64 const > const & poissonRatio,
+                        arrayView1d< real64 const > const & tanFrictionAngle,
+                        arrayView1d< real64 const > const & hardeningRate,
+                        arrayView2d< real64 > const & newCohesion,
+                        arrayView2d< real64 > const & oldCohesion,
+                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
     m_bulkModulus( bulkModulus ),
-    m_shearModulus( shearModulus )
+    m_poissonRatio( poissonRatio ),
+    m_tanFrictionAngle( tanFrictionAngle ),
+    m_hardeningRate( hardeningRate ),
+    m_newCohesion( newCohesion ),
+    m_oldCohesion( oldCohesion ),
+    m_newStress( newStress ),
+    m_oldStress( oldStress )
   {}
 
   /// Default copy constructor
@@ -73,7 +85,7 @@ public:
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
   {
-    real64 const G = m_shearModulus[k];
+    real64 const G = m_poissonRatio[k];
     real64 const Lame = m_bulkModulus[k] - 2.0/3.0 * G;
 
     memset( c, 0, sizeof( c ) );
@@ -96,7 +108,7 @@ public:
 
     c[5][5] = G;
   }
-
+  
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const * const GEOSX_RESTRICT voigtStrain,
@@ -122,16 +134,33 @@ public:
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const override final;
-
+  
+  
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
-  arrayView1d< real64 const > const m_shearModulus;
-
+  arrayView1d< real64 const > const m_poissonRatio;
+  
+  /// A reference to the ArrayView holding the shear modulus for each element.
+  arrayView1d< real64 const > const m_tanFrictionAngle;
+  
+  /// A reference to the ArrayView holding the hardening rate for each element.
+  arrayView1d< real64 const > const m_hardeningRate;
+  
+  /// A reference to the ArrayView holding the new cohesion for each integration point
+  arrayView2d< real64 > const m_newCohesion;
+  
+  /// A reference to the ArrayView holding the old cohesion for each integration point
+  arrayView2d< real64 > const m_oldCohesion;
+  
+  /// A reference to the ArrayView holding the new stress for each integration point
+  arrayView3d< real64, solid::STRESS_USD > const m_newStress;
+  
+  /// A reference to the ArrayView holding the old stress for each integration point
+  arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
 };
-
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -139,16 +168,16 @@ void DruckerPragerUpdates::SmallStrainNoState( localIndex const k,
                                                         real64 const * GEOSX_RESTRICT const voigtStrain,
                                                         real64 * GEOSX_RESTRICT const stress ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
+  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
   real64 const diag = lambda * ( voigtStrain[0] + voigtStrain[1] + voigtStrain[2] );
-  real64 const TwoG = 2.0 * m_shearModulus[k];
+  real64 const TwoG = 2.0 * m_poissonRatio[k];
 
   stress[0] = stress[0] + diag + TwoG * voigtStrain[0];
   stress[1] = stress[1] + diag + TwoG * voigtStrain[1];
   stress[2] = stress[2] + diag + TwoG * voigtStrain[2];
-  stress[3] = stress[3] + m_shearModulus[k] * voigtStrain[3];
-  stress[4] = stress[4] + m_shearModulus[k] * voigtStrain[4];
-  stress[5] = stress[5] + m_shearModulus[k] * voigtStrain[5];
+  stress[3] = stress[3] + m_poissonRatio[k] * voigtStrain[3];
+  stress[4] = stress[4] + m_poissonRatio[k] * voigtStrain[4];
+  stress[5] = stress[5] + m_poissonRatio[k] * voigtStrain[5];
 
 }
 
@@ -159,16 +188,16 @@ void DruckerPragerUpdates::SmallStrain( localIndex const k,
                                                  localIndex const q,
                                                  real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
+  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
   real64 const volStrain = ( voigtStrainInc[0] + voigtStrainInc[1] + voigtStrainInc[2] );
-  real64 const TwoG = 2.0 * m_shearModulus[k];
+  real64 const TwoG = 2.0 * m_poissonRatio[k];
 
   m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * voigtStrainInc[0] + lambda * volStrain;
   m_stress( k, q, 1 ) =  m_stress( k, q, 1 ) + TwoG * voigtStrainInc[1] + lambda * volStrain;
   m_stress( k, q, 2 ) =  m_stress( k, q, 2 ) + TwoG * voigtStrainInc[2] + lambda * volStrain;
-  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_shearModulus[k] * voigtStrainInc[3];
-  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_shearModulus[k] * voigtStrainInc[4];
-  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + m_shearModulus[k] * voigtStrainInc[5];
+  m_stress( k, q, 3 ) =  m_stress( k, q, 3 ) + m_poissonRatio[k] * voigtStrainInc[3];
+  m_stress( k, q, 4 ) =  m_stress( k, q, 4 ) + m_poissonRatio[k] * voigtStrainInc[4];
+  m_stress( k, q, 5 ) =  m_stress( k, q, 5 ) + m_poissonRatio[k] * voigtStrainInc[5];
 }
 
 GEOSX_HOST_DEVICE
@@ -178,9 +207,9 @@ void DruckerPragerUpdates::HypoElastic( localIndex const k,
                                                  real64 const * const GEOSX_RESTRICT Ddt,
                                                  R2Tensor const & Rot ) const
 {
-  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_shearModulus[k];
+  real64 const lambda = m_bulkModulus[k] - 2.0/3.0 * m_poissonRatio[k];
   real64 const volStrain = ( Ddt[0] + Ddt[2] + Ddt[5] );
-  real64 const TwoG = 2.0 * m_shearModulus[k];
+  real64 const TwoG = 2.0 * m_poissonRatio[k];
 
 
   m_stress( k, q, 0 ) =  m_stress( k, q, 0 ) + TwoG * Ddt[0] + lambda * volStrain;
@@ -211,7 +240,7 @@ void DruckerPragerUpdates::HyperElastic( localIndex const k,
                                                   real64 const (&FmI)[3][3],
                                                   real64 * const GEOSX_RESTRICT stress ) const
 {
-  real64 const C1 = 0.5 * m_shearModulus[k];
+  real64 const C1 = 0.5 * m_poissonRatio[k];
   real64 const D1 = 0.5 * m_bulkModulus[k];
   real64 const detFm1 = FmI[0][0] + FmI[1][1] + FmI[2][2]
                         - FmI[1][2]*FmI[2][1] + FmI[1][1]*FmI[2][2]
@@ -258,6 +287,8 @@ void DruckerPragerUpdates::HyperElastic( localIndex const k,
     m_stress( k, q, i ) = stress[i];
   }
 }
+
+
 
 /**
  * @class DruckerPrager
@@ -316,60 +347,42 @@ public:
     /// string/key for default bulk modulus
     static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
 
-    /// string/key for default poisson ratio
-    static constexpr auto defaultPoissonRatioString =  "defaultPoissonRatio";
-
     /// string/key for default shear modulus
-    static constexpr auto defaultShearModulusString = "defaultShearModulus";
+    static constexpr auto defaultPoissonRatioString = "defaultPoissonRatio";
 
-    /// string/key for default youngs modulus
-    static constexpr auto defaultYoungsModulusString =  "defaultYoungsModulus";
-
+    /// string/key for default friction angle
+    static constexpr auto defaultTanFrictionAngleString = "defaultTanFrictionAngle";
+    
+    /// string/key for default hardening rate
+    static constexpr auto defaultHardeningRateString = "defaultHardeningRate";
+    
+    /// string/key for default cohesion
+    static constexpr auto defaultCohesionString = "defaultCohesion";
+    
     /// string/key for bulk modulus
     static constexpr auto bulkModulusString  = "BulkModulus";
-    /// string/key for shear modulus
-    static constexpr auto shearModulusString = "ShearModulus";
+    
+    /// string/key for poisson ratio
+    static constexpr auto poissonRatioString = "PoissonRatio";
+    
+    /// string/key for friction angle
+    static constexpr auto tanFrictionAngleString  = "TanFrictionAngle";
+    
+    /// string/key for cohesion
+    static constexpr auto hardeningRateString  = "HardeningRate";
+    
+    /// string/key for cohesion
+    static constexpr auto newCohesionString  = "NewCohesion";
+    
+        /// string/key for cohesion
+    static constexpr auto oldCohesionString  = "OldCohesion";
+    
+        /// string/key for cohesion
+    static constexpr auto newStressString  = "NewStress";
+    
+        /// string/key for cohesion
+    static constexpr auto oldStressString  = "OldStress";
   };
-
-  /**
-   * @brief Setter for the default bulk modulus.
-   * @param[in] bulkModulus The value that m_defaultBulkModulus will be set to.
-   */
-  void setDefaultBulkModulus( real64 const bulkModulus )   { m_defaultBulkModulus = bulkModulus; }
-
-  /**
-   * @brief Setter for the default shear modulus.
-   * @param[in] bulkModulus The value that m_defaultShearModulus will be set to.
-   */
-  void setDefaultShearModulus( real64 const shearModulus ) { m_defaultShearModulus = shearModulus; }
-
-  /**
-   * @brief Accessor for bulk modulus
-   * @return A const reference to arrayView1d<real64> containing the bulk
-   *         modulus (at every element).
-   */
-  arrayView1d< real64 > const & bulkModulus() { return m_bulkModulus; }
-
-  /**
-   * @brief Const accessor for bulk modulus
-   * @return A const reference to arrayView1d<real64 const> containing the bulk
-   *         modulus (at every element).
-   */
-  arrayView1d< real64 const > const & bulkModulus() const { return m_bulkModulus; }
-
-  /**
-   * @brief Accessor for shear modulus
-   * @return A const reference to arrayView1d<real64> containing the shear
-   *         modulus (at every element).
-   */
-  arrayView1d< real64 > const & shearModulus() { return m_shearModulus; }
-
-  /**
-   * @brief Const accessor for shear modulus
-   * @return A const reference to arrayView1d<real64 const> containing the
-   *         shear modulus (at every element).
-   */
-  arrayView1d< real64 const > const & shearModulus() const { return m_shearModulus; }
 
   /**
    * @brief Create a instantiation of the DruckerPragerUpdate class
@@ -378,25 +391,73 @@ public:
    */
   DruckerPragerUpdates createKernelWrapper()
   {
-    return DruckerPragerUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    return DruckerPragerUpdates( m_bulkModulus,
+                                 m_poissonRatio,
+                                 m_tanFrictionAngle,
+                                 m_hardeningRate,
+                                 m_newCohesion,
+                                 m_oldCohesion,
+                                 m_newStress,
+                                 m_oldStress,
+                                 m_stress ); // TODO: m_stress is redundant with m_newStress
   }
 
 protected:
   virtual void PostProcessInput() override;
 
 private:
-
-  /// The default value of the bulk modulus for any new allocations.
+  
+  /// Material parameter: The default value of the bulk modulus
   real64 m_defaultBulkModulus;
 
-  /// The default value of the shear modulus for any new allocations.
-  real64 m_defaultShearModulus;
-
-  /// The bulk modulus for each upper level dimension (i.e. cell) of *this
+  /// Material parameter: The default value of the Poisson ratio
+  real64 m_defaultPoissonRatio;
+  
+  /// Material parameter: The default value of yield surface slope
+  real64 m_defaultTanFrictionAngle;
+  
+  /// Material parameter: The default value of the initial cohesion
+  real64 m_defaultCohesion;
+  
+  /// Material parameter: The default value of the hardening rate
+  real64 m_defaultHardeningRate;
+  
+  /// Material parameter: The bulk modulus for each element
   array1d< real64 > m_bulkModulus;
 
-  /// The shear modulus for each upper level dimension (i.e. cell) of *this
-  array1d< real64 > m_shearModulus;
+  /// Material parameter: The shear modulus for each element
+  array1d< real64 > m_poissonRatio;
+  
+  /// Material parameter: The yield surface slope for each element
+  array1d< real64 > m_tanFrictionAngle;
+  
+  /// Material parameter: The hardening rate each element
+  array1d< real64 > m_hardeningRate;
+  
+  /// History variable: The current cohesion value for each quadrature point
+  array2d< real64 > m_newCohesion;
+  
+  /// History variable: The previous cohesion value for each quadrature point
+  array2d< real64 > m_oldCohesion;
+  
+  /// History variable: The current stress for each quadrature point
+  array3d< real64, solid::STRESS_PERMUTATION > m_newStress; //TODO: redundant storage with base m_stress
+  
+  /// History variable: The previous stress for each quadrature point.
+  array3d< real64, solid::STRESS_PERMUTATION > m_oldStress;
+  
+  /* TODO: maybe define helper structs for defaults, arrays, arrayViews, etc.
+  struct DefaultParameters
+  {
+    real64 bulkModulus;
+    real64 poissonRatio;
+    real64 tanFrictionAngle;
+    real64 cohesion;
+    real64 hardeningRate;
+  }
+  m_default;
+  */
+  
 };
 
 } /* namespace constitutive */

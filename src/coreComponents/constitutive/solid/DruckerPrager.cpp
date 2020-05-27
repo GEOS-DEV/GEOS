@@ -27,37 +27,79 @@ namespace constitutive
 DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
-  m_defaultShearModulus(),
+  m_defaultPoissonRatio(),
+  m_defaultTanFrictionAngle(),
+  m_defaultCohesion(),
+  m_defaultHardeningRate(),
   m_bulkModulus(),
-  m_shearModulus()
+  m_poissonRatio(),
+  m_tanFrictionAngle(),
+  m_hardeningRate(),
+  m_newCohesion(),
+  m_oldCohesion(),
+  m_newStress(),
+  m_oldStress()
 {
+  // register default values
+  
   registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Bulk Modulus Parameter" );
+    setDescription( "Elastic bulk modulus parameter" );
 
-  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
+  registerWrapper( viewKeyStruct::defaultPoissonRatioString, &m_defaultPoissonRatio )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Shear Modulus Parameter" );
-
-  registerWrapper< real64 >( viewKeyStruct::defaultYoungsModulusString )->
+    setDescription( "Elastic Poisson ratio parameter" );
+  
+  registerWrapper( viewKeyStruct::defaultTanFrictionAngleString, &m_defaultTanFrictionAngle )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Young's Modulus." );
-
-  registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString )->
+    setDescription( "Yield surface slope parameter tan(phi)" );
+  
+  registerWrapper( viewKeyStruct::defaultHardeningRateString, &m_defaultHardeningRate )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Poisson's ratio" );
+    setDescription( "Cohesion hardening/softening rate parameter" );
+  
+  registerWrapper( viewKeyStruct::defaultCohesionString, &m_defaultCohesion )->
+    setApplyDefaultValue( -1 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Initial cohesion parameter" );
 
+  // register fields
+  
   registerWrapper( viewKeyStruct::bulkModulusString, &m_bulkModulus )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Elastic Bulk Modulus Field" );
+    setDescription( "Elastic bulk modulus field" );
 
-  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
+  registerWrapper( viewKeyStruct::poissonRatioString, &m_poissonRatio )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Elastic Shear Modulus Field" );
+    setDescription( "Elastic Poisson ration field" );
+  
+  registerWrapper( viewKeyStruct::tanFrictionAngleString, &m_tanFrictionAngle )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Yield surface slope tan(phi) field" );
+  
+  registerWrapper( viewKeyStruct::hardeningRateString, &m_hardeningRate )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Hardening rate field" );
+  
+  registerWrapper( viewKeyStruct::newCohesionString, &m_newCohesion )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "New cohesion field" );
+  
+  registerWrapper( viewKeyStruct::oldCohesionString, &m_newCohesion )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Old cohesion field" );
+  
+  registerWrapper( viewKeyStruct::newStressString, &m_newStress )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "New stress field" );
+  
+  registerWrapper( viewKeyStruct::oldStressString, &m_oldStress )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Old stress field" );
 }
 
 
@@ -77,102 +119,51 @@ DruckerPrager::DeliverClone( string const & name,
   SolidBase::DeliverClone( name, parent, clone );
   DruckerPrager * const newConstitutiveRelation = dynamic_cast< DruckerPrager * >(clone.get());
 
-  newConstitutiveRelation->m_defaultBulkModulus = m_defaultBulkModulus;
+  newConstitutiveRelation->m_defaultBulkModulus      = m_defaultBulkModulus;
+  newConstitutiveRelation->m_defaultPoissonRatio     = m_defaultPoissonRatio;
+  newConstitutiveRelation->m_defaultTanFrictionAngle = m_defaultTanFrictionAngle;
+  newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
+  newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
+  
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
-  newConstitutiveRelation->m_density = m_density;
-  newConstitutiveRelation->m_defaultShearModulus = m_defaultShearModulus;
-  newConstitutiveRelation->m_shearModulus = m_shearModulus;
-  newConstitutiveRelation->m_stress = m_stress;
+  newConstitutiveRelation->m_poissonRatio = m_poissonRatio;
+  newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
+  newConstitutiveRelation->m_hardeningRate = m_hardeningRate;
+  newConstitutiveRelation->m_newCohesion = m_newCohesion;
+  newConstitutiveRelation->m_oldCohesion = m_oldCohesion;
+  newConstitutiveRelation->m_newStress = m_newStress;
+  newConstitutiveRelation->m_oldStress = m_oldStress;
 }
 
 void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const parent,
                                                        localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
   this->resize( parent->size() );
+  
   m_bulkModulus.resize( parent->size() );
-  m_shearModulus.resize( parent->size() );
-
+  m_poissonRatio.resize( parent->size() );
+  m_tanFrictionAngle.resize( parent->size() );
+  m_hardeningRate.resize( parent->size() );
+  
+  m_newCohesion.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  m_oldCohesion.resize( parent->size(), numConstitutivePointsPerParentIndex );
+  
+  m_newStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
+  m_oldStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
+  
+  // set arrays to default values
   m_bulkModulus = m_defaultBulkModulus;
-  m_shearModulus = m_defaultShearModulus;
+  m_poissonRatio = m_defaultPoissonRatio;
+  m_tanFrictionAngle = m_defaultTanFrictionAngle;
+  m_hardeningRate = m_defaultHardeningRate;
+  m_newCohesion = m_defaultCohesion;
+  m_oldCohesion = m_defaultCohesion;
 }
 
 void DruckerPrager::PostProcessInput()
 {
-
-  if( !m_postProcessed )
-  {
-    real64 & nu = getReference< real64 >( viewKeyStruct::defaultPoissonRatioString );
-    real64 & E  = getReference< real64 >( viewKeyStruct::defaultYoungsModulusString );
-    real64 & K  = m_defaultBulkModulus;
-    real64 & G  = m_defaultShearModulus;
-
-    string errorCheck( "( " );
-    int numConstantsSpecified = 0;
-    if( nu >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "nu, ";
-    }
-    if( E >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "E, ";
-    }
-    if( K >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "K, ";
-    }
-    if( G >= 0.0 )
-    {
-      ++numConstantsSpecified;
-      errorCheck += "G, ";
-    }
-    errorCheck += ")";
-
-    GEOSX_ERROR_IF( numConstantsSpecified != 2,
-                    "A specific pair of elastic constants is required. Either (K,G) or (E,nu). "<<
-                    "You have specified "<<errorCheck );
-
-    if( nu >= 0.0 && E >= 0.0 )
-    {
-      K = E / (3 * ( 1 - 2*nu ) );
-      G = E / (2 * ( 1 + nu ) );
-    }
-    else if( nu >= 0.0 && G >= 0.0 )
-    {
-      E = 2 * G * ( 1 + nu );
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( nu >= 0 && K >= 0.0 )
-    {
-      E = 3 * K * ( 1 - 2 * nu );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && K >=0 )
-    {
-      nu = 0.5 * ( 1 - E /  ( 3 * K ) );
-      G = E / ( 2 * ( 1 + nu ) );
-    }
-    else if( E >= 0.0 && G >= 0 )
-    {
-      nu = 0.5 * E / G - 1.0;
-      K = E / (3 * ( 1 - 2*nu ) );
-    }
-    else if( K >= 0.0 && G >= 0.0 )
-    {
-      E = 9 * K * G / ( 3 * K + G );
-      nu = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
-    }
-    else
-    {
-      GEOSX_ERROR( "invalid specification for default elastic constants. "<<errorCheck<<" has been specified." );
-    }
-  }
-  m_postProcessed = true;
+  m_postProcessed = true; // TODO: add parameter conversion helper class for more flexible input
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DruckerPrager, std::string const &, Group * const )

@@ -36,12 +36,12 @@ TEST( DruckerPragerTests, testAllocation )
   EXPECT_EQ( cm.size(), numElems );
   EXPECT_EQ( cm.numQuadraturePoints(), numQuadraturePoints );
 
-  arrayView1d< real64 const > const & bulkModulus = cm.bulkModulus();
-  arrayView1d< real64 const > const & shearModulus = cm.shearModulus();
+  //arrayView1d< real64 const > const & bulkModulus = cm.bulkModulus();
+  //arrayView1d< real64 const > const & shearModulus = cm.shearModulus();
   arrayView3d< real64 const, solid::STRESS_USD > const & stress = cm.getStress();
 
-  EXPECT_EQ( bulkModulus.size(), numElems );
-  EXPECT_EQ( shearModulus.size(), numElems );
+  //EXPECT_EQ( bulkModulus.size(), numElems );
+  //EXPECT_EQ( shearModulus.size(), numElems );
   EXPECT_EQ( stress.size( 0 ), numElems );
   EXPECT_EQ( stress.size( 1 ), numQuadraturePoints );
   EXPECT_EQ( stress.size( 2 ), 6 );
@@ -94,8 +94,11 @@ TEST( DruckerPragerTests, testXML )
     "<Constitutive>"
     "  <DruckerPrager name=\"granite\" "
     "  defaultDensity=\"2700\" "
-    "  defaultBulkModulus=\"5.5556e9\" "
-    "  defaultShearModulus=\"4.16667e9\"/>"
+    "  defaultBulkModulus=\"5e9\" "
+    "  defaultPoissonRatio=\"0.25\" "
+    "  defaultTanFrictionAngle=\"1.0\" "
+    "  defaultHardeningRate=\"0.0\" "
+    "  defaultCohesion=\"1.0e6\"/>"
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
