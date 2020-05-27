@@ -90,7 +90,7 @@ public:
    * @brief Wait for the Baton when writing using PMPIO
    * @param domainNumber domain partition number
    * @param cycleNum  cycle number of simulation
-   * @param eventCounter Counter to indicate the event number during the current timestep. 
+   * @param eventCounter Counter to indicate the event number during the current timestep.
    * @param isRestart whether or not we are writing a restart file
    *
    * This function requests the write baton from silo PMPIO. The involves determining
@@ -170,22 +170,39 @@ public:
                         int const cycleNumber,
                         real64 const problemTime );
 
-  /// @cond DO_NOT_DOCUMENT
+  /**
+   * @todo Verify: documentation missing / incomplete. The TPL version of doxygen on Travis cannot parse
+   * unnamed parameters, @p dummy parameter introduced to remove warning
+   *
+   * @param meshName name of the mesh in the silo db
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param dummy1 unused parameter
+   * @param numRegions
+   * @param shapecnt pointer to array that contains the number of zones per shape type
+   * @param meshConnectivity pointer to array that contains the zone to element map for each  zone type
+   * @param globalElementNum pointer to array of global zone numbers for each shape type
+   * @param dummy2 unused parameter
+   * @param shapetype pointer to array containing the shape types
+   * @param shapesize pointer to array containing the number of nodes in each zone in the shape types
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param lnodelist
+   */
   void WritePolygonMeshObject( const std::string & meshName,
                                const localIndex nnodes,
                                realT * coords[3],
-                               const globalIndex *,
+                               const globalIndex * dummy1,
                                const int numRegions,
                                const int * shapecnt,
                                const localIndex * const * const meshConnectivity,
                                const globalIndex * const * const globalElementNum,
-                               const int * const * const,
+                               const int * const * const dummy2,
                                const int * const shapetype,
                                const int * const shapesize,
                                const int cycleNumber,
                                const realT problemTime,
                                const int lnodelist );
-  /// @endcond
 
 /**
  * @brief write a domain parititon out to silo file
@@ -199,7 +216,20 @@ public:
                              real64 const problemTime,
                              bool const isRestart );
 
-  /// @cond DO_NOT_DOCUMENT
+  /**
+   * @todo Verify: documentation missing / incomplete.
+   *
+   * @param elementRegion the element region that holds the data to be written to the silo file
+   * @param nodeManager the NodeManager containing the nodes of the domain to be output
+   * @param meshName name of the mesh to write
+   * @param nnodes number of nodes
+   * @param coords array[3] of pointers to x, y, and z.
+   * @param globalNodeNum array to the global node numbers. This might be redundant as there is a field for this.
+   * @param ghostNodeFlag
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param writeArbitraryPolygon
+   */
   void WriteElementMesh( ElementRegionBase const & elementRegion,
                          NodeManager const * const nodeManager,
                          string const & meshName,
@@ -210,7 +240,6 @@ public:
                          int const cycleNumber,
                          real64 const problemTime,
                          bool & writeArbitraryPolygon );
-  /// @endcond
 
   /**
    * @brief write a mesh level out to the silo file
@@ -319,7 +348,7 @@ public:
                                bool const isRestart );
   /**
    * Writes the contents of a group of Wrapper objects
-   * @tparam the output varaible type
+   * @tparam the output variable type
    * @param meshname the name of the mesh attach this write to
    * @param wrappers a group of wrappers
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
@@ -395,7 +424,17 @@ public:
                        real64 const problemTime,
                        string const & multiRoot );
 
-  /// @cond DO_NOT_DOCUMENT
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param siloTensorRank <B>****** UNUSED IN THE IMPLEMENTATION ****** </B>
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   */
   template< typename OUTTYPE, typename TYPE, int NDIM, int USD >
   void WriteDataField( string const & meshName,
                        string const & fieldName,
@@ -406,6 +445,18 @@ public:
                        real64 const problemTime,
                        string const & multiRoot );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param field field data
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField( string const & meshName,
                                string const & fieldName,
@@ -417,6 +468,17 @@ public:
                                string const & multiRoot,
                                string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField2d( string const & meshName,
                                  string const & fieldName,
@@ -427,7 +489,17 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
-
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField3d( string const & meshName,
                                  string const & fieldName,
@@ -438,6 +510,17 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param meshName the name of the mesh attach this write to
+   * @param fieldName name of the field to write
+   * @param elemRegion the element region that holds the data to be written to the silo file
+   * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
+   * @param cycleNumber the current cycle number
+   * @param problemTime the current problem time
+   * @param multiRoot location to write the multivar entries
+   * @param materialNames material names
+   */
   template< typename OUTTYPE, typename TYPE >
   void WriteMaterialDataField4d( string const & meshName,
                                  string const & fieldName,
@@ -448,17 +531,31 @@ public:
                                  string const & multiRoot,
                                  string_array const & materialNames );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param subDir
+   * @param matDir
+   * @param matIndex
+   * @param fieldName
+   */
   void WriteMaterialVarDefinition( string const & subDir,
                                    string const & matDir,
                                    localIndex const matIndex,
                                    string const & fieldName );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param MatDir
+   */
   void WriteStressVarDefinition( string const & MatDir );
 
+  /**
+   * @todo Verify: documentation missing / incomplete
+   * @param fieldName vector field name
+   * @param subDirectory
+   */
   void WriteVectorVarDefinition( string const & fieldName,
                                  string const & subDirectory );
-  /// @endcond
-
 
   /**
    * find the silo mesh type that we are attempting to reference
@@ -673,64 +770,85 @@ inline real64 CastField< real64, R2SymTensor >( const R2SymTensor & field, int c
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline int CastField< int, int >( const int & field, int const )
+template<> inline int CastField< int, int >( const int & field, int const dummy )
 {
   return field;
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline long int CastField< long int, long int >( const long int & field, int const )
+template<> inline long int CastField< long int, long int >( const long int & field, int const dummy )
 {
   return field;
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline int CastField< int, long int >( const long int & field, int const )
+template<> inline int CastField< int, long int >( const long int & field, int const dummy )
 {
   return LvArray::integerConversion< int >( field );
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const )
+template<> inline long long int CastField< long long int, long long int >( const long long int & field, int const dummy )
 {
   return field;
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline int CastField< int, long long int >( const long long int & field, int const )
+template<> inline int CastField< int, long long int >( const long long int & field, int const dummy )
 {
   return LvArray::integerConversion< int >( field );
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline real64 CastField< real64, real64 >( const real64 & field, int const )
+template<> inline real64 CastField< real64, real64 >( const real64 & field, int const dummy )
 {
   return field;
 }
 
 /**
+ * @todo Verify: the TPL version of doxygen on Travis cannot parse unnamed parameters, @p dummy
+ *       parameter introduced to remove warning
  * @param field the value to cast
+ * @param dummy unused parameter
  * @return the casted value
  */
-template<> inline float CastField< float, real64 >( const real64 & field, int const )
+template<> inline float CastField< float, real64 >( const real64 & field, int const dummy )
 {
   return static_cast< float >(field);
 }
