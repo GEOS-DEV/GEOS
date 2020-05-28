@@ -44,12 +44,17 @@ enum struct VTKOutputMode
   BINARY,
   ASCII
 };
+
 /*!
- * @brief Encapsulate IO methods from vtk
+ * @brief Encapsulate output methods for vtk
  */
 class VTKPolyDataWriterInterface
 {
 public:
+  /*!
+   * @brief Constructor
+   * @param[in] outputName folder name in which all the files will be written
+   */
   VTKPolyDataWriterInterface( string const & outputName );
 
   /*!
@@ -65,7 +70,7 @@ public:
 
   /*!
    * @brief Set the binary mode
-   * @param[in] output mode to be set
+   * @param[in] mode output mode to be set
    */
   void SetOutputMode( VTKOutputMode mode )
   {

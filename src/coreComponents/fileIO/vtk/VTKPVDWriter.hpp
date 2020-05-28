@@ -21,6 +21,13 @@ namespace geosx
 {
 namespace vtk
 {
+
+/*!
+ * @brief VTK PVD Writer class.
+ * @details the PVD file is the root file, it contains the
+ * reference to all the VTM files (one VTM file per output time-step).
+ * This file is meant to be open with paraview.
+ */
 class VTKPVDWriter
 {
 public:
