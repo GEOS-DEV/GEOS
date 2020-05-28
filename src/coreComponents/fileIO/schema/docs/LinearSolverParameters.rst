@@ -11,6 +11,7 @@ iluFill            integer 0           ILU(K) fill factor
 iluThreshold       real64  0           ILU(T) threshold factor                        
 krylovAdaptiveTol  integer 0           Use Eisenstat-Walker adaptive linear tolerance 
 krylovMaxIter      integer 200         Maximum iterations allowed                     
+krylovMaxRestart   integer 200         Maximum iterations before restart (GMRES only) 
 krylovTol          real64  1e-06       Relative convergence tolerance                 
 krylovWeakestTol   real64  0.001       Weakest-allowed tolerance for adaptive method  
 logLevel           integer 0           Log level                                      
