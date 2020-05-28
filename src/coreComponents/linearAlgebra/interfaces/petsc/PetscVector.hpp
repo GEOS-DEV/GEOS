@@ -21,33 +21,18 @@
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
-/*
- * This definition of Vec is copied from <petscvec.h>.
- * Note that _p_Vec is considered a "hidden" implementation detail
- * and is not supposed to be used or referenced by user code.
- *
- * However, we have little choice. We don't want to include <petscvec.h>
- * in this header due to many unscoped names, unwanted macro definitions,
- * etc. spilling into GEOSX code. For example, PETSc headers define a macro
- * MPI_Allgather which gets used in our code instead of the actual function
- * whenever PetscVector.hpp ends up included before e.g. CommunicationTools.
- *
- * Also we can't just forward declare Vec, since it's a typedef of a pointer.
- * We have to forward declare the type it's pointing to, i.e. struct _p_Vec.
- *
- * Alternatives are:
- * - Store a "void *" and reinterpret_cast to Vec when used in cpp.
- *   This looks a bit ugly, but may be a more robust solution.
- * - Store a pointer to a forward declared "wrapper" struct containing Vec.
- *   This leads to an extra memory indirection on every use.
- */
-struct _p_Vec;
-
 /**
- * @var typedef struct _p_Vec * Vec;
- * @brief The type definition for PETSc Vec
+ * @name PETSc forward declarations.
+ *
+ * Forward declare PETSc's vector struct and pointer aliases in order
+ * to avoid including PETSc headers and leaking into the rest of GEOSX.
  */
-typedef struct _p_Vec * Vec;
+///@{
+
+/// Vec struct forward declaration
+extern "C" struct _p_Vec;
+
+///@}
 
 namespace geosx
 {
@@ -59,6 +44,9 @@ namespace geosx
 class PetscVector final : private VectorBase< PetscVector >
 {
 public:
+
+  /// Alias for PETSc vector struct pointer
+  using Vec = struct _p_Vec *;
 
   /**
    * @name Constructor/Destructor Methods
@@ -73,14 +61,12 @@ public:
   /**
    * @brief Copy constructor.
    * @param src PetscVector to be copied.
-   * @return the new vector.
    */
   PetscVector( PetscVector const & src );
 
   /**
    * @brief Move constructor
    * @param src PetscVector to move from
-   * @return the new vector.
    */
   PetscVector( PetscVector && src ) noexcept;
 
@@ -157,6 +143,8 @@ public:
   virtual void rand( unsigned const seed = 1984 ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
+
+  virtual void reciprocal() override;
 
   virtual real64 dot( PetscVector const & vec ) const override;
 

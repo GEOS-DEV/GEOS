@@ -645,6 +645,8 @@
 		<xsd:attribute name="krylovAdaptiveTol" type="integer" default="0" />
 		<!--krylovMaxIter => Maximum iterations allowed-->
 		<xsd:attribute name="krylovMaxIter" type="integer" default="200" />
+		<!--krylovMaxRestart => Maximum iterations before restart (GMRES only)-->
+		<xsd:attribute name="krylovMaxRestart" type="integer" default="200" />
 		<!--krylovTol => Relative convergence tolerance-->
 		<xsd:attribute name="krylovTol" type="real64" default="1e-06" />
 		<!--krylovWeakestTol => Weakest-allowed tolerance for adaptive method-->
@@ -897,6 +899,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
@@ -1222,6 +1226,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="WellControls" type="WellControlsType" />
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->

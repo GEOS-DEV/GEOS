@@ -17,16 +17,18 @@
  */
 
 #include "EpetraMatrix.hpp"
-#include "EpetraUtils.hpp"
+
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsGraph.h>
 #include <Epetra_FECrsMatrix.h>
 #include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
-#include <ml_epetra_utils.h>
 
 #ifdef GEOSX_USE_MPI
 #include <Epetra_MpiComm.h>
@@ -492,6 +494,12 @@ void EpetraMatrix::gemv( real64 const alpha,
 void EpetraMatrix::scale( real64 const scalingFactor )
 {
   GEOSX_LAI_ASSERT( ready() );
+
+  if( isEqual( scalingFactor, 1.0 ) )
+  {
+    return;
+  }
+
   GEOSX_LAI_CHECK_ERROR( m_matrix->Scale( scalingFactor ) );
 }
 
@@ -557,6 +565,30 @@ real64 EpetraMatrix::clearRow( globalIndex const globalRow,
     set( globalRow, globalRow, newDiag );
   }
   return oldDiag;
+}
+
+void EpetraMatrix::addEntries( EpetraMatrix const & src, real64 const scale )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == src.numGlobalRows() );
+  GEOSX_LAI_ASSERT( numGlobalCols() == src.numGlobalCols() );
+
+  GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, 1.0 ) );
+}
+
+void EpetraMatrix::addDiagonal( EpetraVector const & src )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( src.ready() );
+  GEOSX_LAI_ASSERT( numGlobalRows() == numGlobalCols() );
+  GEOSX_LAI_ASSERT( numLocalRows() == src.localSize() );
+
+  // XXX: It's not clear if this is better or worse than element-wise add()
+  Epetra_Vector diag( *m_dst_map, false );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( diag ) );
+  GEOSX_LAI_CHECK_ERROR( diag.Update( 1.0, src.unwrapped(), 1.0 ) );
+  GEOSX_LAI_CHECK_ERROR( m_matrix->ReplaceDiagonalValues( diag ) );
 }
 
 localIndex EpetraMatrix::maxRowLength() const
@@ -625,6 +657,36 @@ real64 EpetraMatrix::getDiagValue( globalIndex globalRow ) const
   return 0.0;
 }
 
+void EpetraMatrix::extractDiagonal( EpetraVector & dst ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( dst.ready() );
+  GEOSX_LAI_ASSERT_EQ( dst.localSize(), numLocalRows() );
+
+  // This doesn't work because ExtractDiagonalCopy takes an Epetra_Vector,
+  // not Epetra_FEVector which is unrelated (ugh):
+  // GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( dst.unwrapped() ) );
+
+  dst.zero();
+  real64 * const values = dst.extractLocalVector();
+
+  int length;
+  int * indices_ptr;
+  double * values_ptr;
+
+  for( localIndex localRow = 0; localRow < numLocalRows(); ++localRow )
+  {
+    GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( localRow, length, values_ptr, indices_ptr ) );
+    for( int j = 0; j < length; ++j )
+    {
+      if( indices_ptr[j] == localRow )
+      {
+        values[localRow] = values_ptr[j];
+      }
+    }
+  }
+}
+
 Epetra_FECrsMatrix const & EpetraMatrix::unwrapped() const
 {
   GEOSX_LAI_ASSERT( created() );
@@ -640,7 +702,7 @@ Epetra_FECrsMatrix & EpetraMatrix::unwrapped()
 globalIndex EpetraMatrix::numGlobalRows() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->NumGlobalRows64();
+  return m_dst_map->NumGlobalElements64();
 }
 
 globalIndex EpetraMatrix::numGlobalCols() const
@@ -652,13 +714,25 @@ globalIndex EpetraMatrix::numGlobalCols() const
 globalIndex EpetraMatrix::ilower() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->RowMap().MinMyGID64();
+  return m_dst_map->MinMyGID64();
 }
 
 globalIndex EpetraMatrix::iupper() const
 {
   GEOSX_LAI_ASSERT( created() );
-  return m_matrix->RowMap().MaxMyGID64() + 1;
+  return m_dst_map->MaxMyGID64() + 1;
+}
+
+globalIndex EpetraMatrix::jlower() const
+{
+  GEOSX_LAI_ASSERT( created() );
+  return m_src_map->MinMyGID64();
+}
+
+globalIndex EpetraMatrix::jupper() const
+{
+  GEOSX_LAI_ASSERT( created() );
+  return m_src_map->MaxMyGID64() + 1;
 }
 
 localIndex EpetraMatrix::numLocalNonzeros() const
