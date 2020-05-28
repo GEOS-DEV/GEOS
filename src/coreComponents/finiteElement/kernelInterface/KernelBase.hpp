@@ -77,30 +77,29 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-//    case 4:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-//      break;
-//    }
-//    case 5:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-//      break;
-//    }
-//    case 6:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
-//      break;
-//    }
+    case 4:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
+      break;
+    }
+    case 5:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+      break;
+    }
+    case 6:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
+      break;
+    }
     case 8:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
       break;
     }
     default:
-      GEOSX_ERROR( "integralTypeDispatch() is not implimented for value of: "<<input );
+      GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
   }
-
 }
 
 //*****************************************************************************
@@ -529,7 +528,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 
         auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp, kernelConstructorParamsTuple );
 
-        KERNEL_TYPE kernelComponent  = camp::invoke(fullKernelComponentConstructorArgs, KERNEL_TYPE );
+        KERNEL_TYPE kernelComponent  = camp::invoke(fullKernelComponentConstructorArgs, (typename KERNEL_TYPE)::KERNEL_TYPE );
 #else
   KERNEL_TYPE kernelComponent( nodeManager,
                                edgeManager,

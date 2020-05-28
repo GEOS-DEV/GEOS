@@ -1,8 +1,15 @@
 /*
- * Dummy.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Apr 14, 2020
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
 
 #ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_DUMMY_HPP_
@@ -15,13 +22,18 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @class Dummy A null constitutive relation
+ */
 class Dummy : public constitutive::ConstitutiveBase
 {
 public:
 
+  /// @copydoc geosx::dataRepository::Group::Group
   Dummy( string const & name,
          Group * const parent );
 
+  /// Destrutor
   virtual ~Dummy();
 
 
@@ -40,11 +52,17 @@ public:
   virtual string GetCatalogName() override { return CatalogName(); }
 
 
-  /// @typedef Alias for LinearElasticIsotropicUpdates
+  /// Alias the KernelWrpper to a double.
   using KernelWrapper = double;
 
-  double createKernelWrapper( bool const GEOSX_UNUSED_PARAM( includeState ) = false )
+  /**
+   * @brief Create a kernel wrapper for this constitutive relation.
+   * @param includeState Whether or not to include the state in the wrapper.
+   * @return 0
+   */
+  double createKernelWrapper( bool const includeState = false )
   {
+    GEOSX_UNUSED_VAR( includeState );
     return 0.0;
   }
 };

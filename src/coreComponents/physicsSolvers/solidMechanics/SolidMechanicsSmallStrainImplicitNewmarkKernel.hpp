@@ -16,7 +16,8 @@
  * @file SolidMechanicsSmallStrainImplicitNewmarkKernels.hpp
  */
 
-#pragma once
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_
 
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 
@@ -72,8 +73,8 @@ public:
                             NUM_NODES_PER_ELEM >;
 
   using Base::numNodesPerElem;
-  using Base::numTestDofPerSP;
-  using Base::numTrialDofPerSP;
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
 
 
   using Base::m_dofNumber;
@@ -184,7 +185,7 @@ public:
       real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
                        + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
-      constexpr int nsdof = numTestDofPerSP;
+      constexpr int nsdof = numDofPerTestSupportPoint;
       for( int i=0; i<nsdof; ++i )
       {
         realT const acc = 1.0 / ( m_newmarkBeta * m_dt * m_dt ) * ( stack.uhat_local[b][i] - stack.uhattilde_local[b][i] );
@@ -209,17 +210,17 @@ public:
     {
       for( localIndex b=0; b<numNodesPerElem; ++b )
       {
-        for( int i=0; i<numTestDofPerSP; ++i )
+        for( int i=0; i<numDofPerTestSupportPoint; ++i )
         {
-          for( int j=0; j<numTrialDofPerSP; ++j )
+          for( int j=0; j<numDofPerTrialSupportPoint; ++j )
           {
-            stack.localResidual[ a*numTestDofPerSP+i ] =
-              stack.localResidual[ a*numTestDofPerSP+i ] +
-              m_stiffnessDamping * stack.localJacobian[ a*numTestDofPerSP+i][ b*numTrialDofPerSP+j ] *
+            stack.localResidual[ a*numDofPerTestSupportPoint+i ] =
+              stack.localResidual[ a*numDofPerTestSupportPoint+i ] +
+              m_stiffnessDamping * stack.localJacobian[ a*numDofPerTestSupportPoint+i][ b*numDofPerTrialSupportPoint+j ] *
               ( stack.vtilde_local[b][j] + m_newmarkGamma/(m_newmarkBeta * m_dt)*(stack.uhat_local[b][j]-stack.uhattilde_local[b][j]) );
 
-            stack.localJacobian[a*numTestDofPerSP+i][b*numTrialDofPerSP+j] =
-              stack.localJacobian[a*numTestDofPerSP+i][b*numTrialDofPerSP+j] +
+            stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] =
+              stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] +
               stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
               stack.dRdU_InertiaMassDamping[ a ][ b ];
           }
@@ -253,7 +254,7 @@ public:
       uhattilde_local()
     {}
 
-    real64 dRdU_InertiaMassDamping[ numTestDofPerSP ][ numTrialDofPerSP ];
+    real64 dRdU_InertiaMassDamping[ numDofPerTestSupportPoint ][ numDofPerTrialSupportPoint ];
     R1Tensor vtilde_local[numNodesPerElem];
     R1Tensor uhattilde_local[numNodesPerElem];
   };
@@ -274,3 +275,5 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_

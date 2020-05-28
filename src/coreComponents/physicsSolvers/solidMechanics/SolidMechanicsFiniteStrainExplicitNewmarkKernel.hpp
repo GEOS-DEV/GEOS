@@ -16,7 +16,8 @@
  * @file SolidMechanicsSmallStrainExplicitNewmarkKernels.hpp
  */
 
-#pragma once
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
 
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
 #include "finiteElement/Kinematics.h"
@@ -110,7 +111,7 @@ public:
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = elemsToNodes( k, a );
-      for( int i=0; i<3; ++i )
+      for( int i=0; i<numTrialDofPerSP; ++i )
       {
 #if defined(CALCFEMSHAPE)
         stack.xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
@@ -264,3 +265,5 @@ public:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_

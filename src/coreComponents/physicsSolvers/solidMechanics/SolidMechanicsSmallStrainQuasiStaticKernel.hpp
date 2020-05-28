@@ -16,7 +16,8 @@
  * @file SolidMechanicsSmallStrainQuasiStaticKernels.hpp
  */
 
-#pragma once
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -36,14 +37,18 @@ namespace SolidMechanicsLagrangianFEMKernels
 
 
 /**
- * @struct ConstructorParams
- * @brief Temporary object to help with the delivery of the variadic
- *        arguments through all the lambdas prior to the reaching the
- *        constructor for the Kernel. This should not be necessary once
- *        we are able to use the perfect forwarding capabilites of c++20.
+ * @struct QuasiStaticConstructorParams
+ * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
  */
 struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
 {
+  /**
+   * @brief Constructor
+   * @param inputDofNumber The dof number for the primary field.
+   * @param inputMatrix Reference to the Jacobian matrix.
+   * @param inputRhs Reference to the RHS vector.
+   * @param inputGravityVector The gravity vector.
+   */
   QuasiStaticConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
                                 ParallelMatrix & inputMatrix,
                                 ParallelVector & inputRhs,
@@ -56,7 +61,30 @@ struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstruct
   real64 const m_gravityVector[3];
 };
 
-
+/**
+ * @brief Implements kernels for solving quasi-static equilibrium.
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
+ *                            @p SUBREGION_TYPE.
+ * @tparam UNUSED An unused parameter since we are assuming that the test and
+ *                trial space have the same number of support points.
+ *
+ * ### QuasiStatic Description
+ * Implements the KernelBase interface functions required for solving the
+ * quasi-static equilibrium equations using on of the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * In this implementation, the template parameter @p NUM_NODES_PER_ELEM is used
+ * in place of both @p NUM_TEST_SUPPORT_POINTS_PER_ELEM and
+ * @p NUM_TRIAL_SUPPORT_POINTS_PER_ELEM, which are assumed to be equal. This
+ * results in the @p UNUSED template parameter as only the NUM_NODES_PER_ELEM
+ * is passed to the ImplicitKernelBase template to form the base class.
+ *
+ * Additionally, the number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `3` when specifying the base
+ * class.
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
@@ -70,27 +98,57 @@ class QuasiStatic :
                                             3 >
 {
 public:
-  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-  static constexpr int numTestDofPerSP = 3;
-  static constexpr int numTrialDofPerSP = 3;
-
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   NUM_NODES_PER_ELEM,
                                                   NUM_NODES_PER_ELEM,
-                                                  numTestDofPerSP,
-                                                  numTrialDofPerSP >;
+                                                  3,
+                                                  3 >;
 
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
+  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTestSupportPoint
+  using Base::numDofPerTestSupportPoint;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTrialSupportPoint
+  using Base::numDofPerTrialSupportPoint;
+
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_dofNumber
   using Base::m_dofNumber;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_matrix
   using Base::m_matrix;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_rhs
   using Base::m_rhs;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemsToNodes
   using Base::elemsToNodes;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemGhostRank
+  using Base::elemGhostRank;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::constitutiveUpdate
   using Base::constitutiveUpdate;
+
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_finiteElementSpace
   using Base::m_finiteElementSpace;
 
+  /// @copydoc geosx::finiteElement::ImplicitKernelBase::Launch
+  using Base::Launch;
+
+  /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = QuasiStaticConstructorParams;
 
 
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param inputGravityVector The gravity vector.
+   */
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
@@ -117,6 +175,11 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
   {}
 
+  /**
+   * @copydoc QuasiStatic
+   * @brief Constructor that holds variadic components in a struct.
+   * @param params Hold the variadic components of primary constructor.
+   */
   QuasiStatic( NodeManager const & nodeManager,
                EdgeManager const & edgeManager,
                FaceManager const & faceManager,
@@ -135,6 +198,15 @@ public:
                  params.m_rhs,
                  params.m_gravityVector )
   {}
+
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
+   *
+   * For the QuasiStatic implementation, global values from the displacement,
+   * incremental displacement, and degree of freedom numbers are placed into
+   * element local stack storage.
+   */
 
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -158,6 +230,13 @@ public:
 
   }
 
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate.
+   *
+   * For solid mechanics kernels, the strain increment is calculated, and the
+   * constitutive update is called. In addition, the constitutive stiffness
+   * stack variable is filled by the constitutive model.
+   */
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -186,6 +265,12 @@ public:
   }
 
 
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution.
+   *
+   * For solid mechanics kernels, the derivative of the force residual wrt
+   * the incremental displacement is filled into the local element jacobian.
+   */
   template< typename STACK_VARIABLE_TYPE,
             typename DYNAMICS_LAMBDA = STD_FUNCTION< void( localIndex, localIndex) > >
   GEOSX_HOST_DEVICE
@@ -236,6 +321,12 @@ public:
     }
   }
 
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution.
+   *
+   * The divergence of the stress is integrated over the volume of the element,
+   * yielding the nodal force (residual) contributions.
+   */
   template< typename STACK_VARIABLE_TYPE,
             typename STRESS_MODIFIER = STD_FUNCTION< void( real64 * ) > >
   GEOSX_HOST_DEVICE
@@ -271,6 +362,9 @@ public:
     }
   }
 
+  /**
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
+   */
   template< typename STACK_VARIABLE_TYPE >
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -300,13 +394,18 @@ public:
   }
 
   //*****************************************************************************
+  /**
+   * @class StackVariables
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   *
+   * Adds a stack array for the displacement, incremental displacement, and the
+   * constitutive stiffness.
+   */
   struct StackVariables : Base::StackVariables
   {
 public:
-    using Base::StackVariables::numRows;
-    using Base::StackVariables::numCols;
 
-
+    /// Constructor.
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
@@ -315,18 +414,32 @@ public:
             constitutiveStiffness{ {0.0} }
     {}
 
+    /// Stack storage for the element local nodal displacement
     R1Tensor u_local[numNodesPerElem];
+
+    /// Stack storage for the element local nodal incremental displacement
     R1Tensor uhat_local[numNodesPerElem];
+
+    /// Stack storage for the constitutive stiffness at a quadrature point.
     real64 constitutiveStiffness[6][6];
   };
   //*****************************************************************************
 
 
 protected:
+  /// The rank-global displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+
+  /// The rank-global incremental displacement array.
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
+
+  /// The shape function derivative for each quadrature point.
   arrayView3d< R1Tensor const > const dNdX;
+
+  /// The parent->physical jacobian determinant for each quadrature point.
   arrayView2d< real64 const > const detJ;
+
+  /// The gravity vector.
   real64 const m_gravityVector[3];
 
 
@@ -336,3 +449,5 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_

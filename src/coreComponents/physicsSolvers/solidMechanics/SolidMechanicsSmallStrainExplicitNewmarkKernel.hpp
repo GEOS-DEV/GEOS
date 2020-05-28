@@ -16,9 +16,10 @@
  * @file SolidMechanicsSmallStrainExplicitNewmarkKernels.hpp
  */
 
-#pragma once
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_
 
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "finiteElement/kernelInterface/KernelBase.hpp"
 
 
 namespace geosx
@@ -28,14 +29,29 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 
+/**
+ * @struct ExplicitSmallStrainConstructorParams
+ * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
+ */
 struct ExplicitSmallStrainConstructorParams
 {
+  /**
+   * @brief Constructor
+   * @param dt The timestep for this update increment.
+   * @param elementListName The name of the element list that will be processed
+   *                        when the kernel is launched.
+   */
   ExplicitSmallStrainConstructorParams( real64 const dt,
                                         string const & elementListName ):
     m_dt(dt),
     m_elementListName(elementListName)
   {}
+
+  /// The delta time for this physics update increment.
   real64 const m_dt;
+
+  /// The name of the element index list that will be processed by the kernel
+  /// launch.
   string const & m_elementListName;
 };
 
@@ -48,11 +64,31 @@ struct ExplicitSmallStrainConstructorParams
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
 
-
+/**
+ * @brief Implements kernels for solving quasi-static equilibrium.
+ * @copydoc geosx::finiteElement::KernelBase
+ * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
+ *                            @p SUBREGION_TYPE.
+ * @tparam UNUSED An unused parameter since we are assuming that the test and
+ *                trial space have the same number of support points.
+ *
+ * ### Explicit Small Strain Description
+ * Implements the KernelBase interface functions required for explicit time
+ * integration of the equations of motion using the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ * In this implementation, the interface for KernelBase is used, but
+ * ExplicitSmallStrain only conforms to the interface set by KernelBase, and
+ * does not inherit from KernelBase.
+ * The number of degrees of freedom per support point for both
+ * the test and trial spaces are specified as `3` when specifying the base
+ * class.
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
-          int >
+          int UNUSED >
 class ExplicitSmallStrain
 {
 public:
@@ -119,7 +155,7 @@ public:
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = elemsToNodes( k, a );
-      for( int i=0; i<3; ++i )
+      for( int i=0; i<numTrialDofPerSP; ++i )
       {
 #if defined(CALCFEMSHAPE)
         stack.xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
@@ -216,7 +252,7 @@ public:
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = elemsToNodes( k, a );
-      for( int b = 0; b < 3; ++b )
+      for( int b = 0; b < numTestDofPerSP; ++b )
       {
         RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
       }
@@ -277,8 +313,11 @@ public:
     real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
     real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
   #if defined(CALCFEMSHAPE)
-    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
-    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
+// This needs to be returned to service when the FEM kernels are expanded properly
+//    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
+//    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
+    real64 xLocal[ 8 ][ numTestDofPerSP ];
+    real64 dNdX[ 8 ][ numTestDofPerSP ];
     real64 detJ;
   #endif
   };
@@ -311,3 +350,5 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINEXPLICITNEWMARK_HPP_

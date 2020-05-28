@@ -34,15 +34,21 @@ namespace finiteElement
 //*****************************************************************************
 
 /**
- * @struct ConstructorParams
+ * @struct ImplicitKernelBaseConstructorParams
  * @brief Temporary object to help with the delivery of the variadic
  *        arguments through all the lambdas prior to the reaching the
  *        constructor for the Kernel. This should not be necessary once
- *        we are able to use the perfect forwarding capabilites of c++20.
+ *        we are able to use the perfect forwarding capabilities of c++20.
  */
 struct ImplicitKernelBaseConstructorParams
 {
 
+  /**
+   * @brief Constructor
+   * @param inputDofNumber The dof number for the primary field.
+   * @param inputMatrix Reference to the Jacobian matrix.
+   * @param inputRhs Reference to the RHS vector.
+   */
   ImplicitKernelBaseConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
                                        ParallelMatrix & inputMatrix,
                                        ParallelVector & inputRhs ):
@@ -136,6 +142,7 @@ public:
   /// @copydoc geosx::finiteElement::KernelBase::Launch
   using Base::Launch;
 
+  /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = ImplicitKernelBaseConstructorParams;
 
   /**

@@ -25,11 +25,8 @@ namespace geosx
 {
 
 /**
- * @struct ConstructorParams
- * @brief Temporary object to help with the delivery of the variadic
- *        arguments through all the lambdas prior to the reaching the
- *        constructor for the Kernel. This should not be necessary once
- *        we are able to use the perfect forwarding capabilites of c++20.
+ * @struct LaplaceFEMKernelConstructorParams
+ * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
  */
 struct LaplaceFEMKernelConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
 {
@@ -124,6 +121,7 @@ public:
   /// @copydoc geosx::finiteElement::ImplicitKernelBase::Launch
   using Base::Launch;
 
+  /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = LaplaceFEMKernelConstructorParams;
 
   /**
@@ -156,6 +154,11 @@ public:
     detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
   {}
 
+  /**
+   * @copydoc LaplaceFEMKernel
+   * @brief Constructor that holds variadic components in a struct.
+   * @param params Hold the variadic components of primary constructor.
+   */
   LaplaceFEMKernel( NodeManager const & nodeManager,
                      EdgeManager const & edgeManager,
                      FaceManager const & faceManager,
@@ -265,12 +268,6 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
-
-    /// @copydoc geosx::finiteElement::ImplicitKernelBase::numRows
-    using Base::StackVariables::numRows;
-
-    /// @copydoc geosx::finiteElement::ImplicitKernelBase::numCols
-    using Base::StackVariables::numCols;
 
     /**
      * @brief Constructor
