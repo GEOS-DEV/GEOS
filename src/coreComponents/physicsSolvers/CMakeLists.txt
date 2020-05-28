@@ -23,6 +23,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseFVMKernels.hpp          
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/SinglePhaseWellKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/WellSolverBase.hpp
      fluidFlow/WellSolverBase.hpp

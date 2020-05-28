@@ -21,7 +21,6 @@
  *
  */
 
-
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
@@ -101,6 +100,8 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
                                         int const cycleNumber,
                                         DomainPartition * domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   real64 dt_return = dt;
 
   // setup the coupled linear system
@@ -110,11 +111,7 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   // currently the only method is implicit time integration
-  dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain,
-                                           m_dofManager,
-                                           m_matrix,
-                                           m_rhs,
-                                           m_solution );
+  dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
 
   // complete time step in reservoir and well systems
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -138,22 +135,32 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( domain, dofManager );
-  dofManager.reorderByRank();
+  // FIXME: remove the check or replace with a better adaptive construction policy
+  static bool setupDone = false;
 
-  localIndex const numLocalDof = dofManager.numLocalDofs();
+  if( !setupDone )
+  {
+    SolverBase::SetupLocalSystem( domain,
+                                  dofManager,
+                                  m_localMatrix,
+                                  m_localRhs,
+                                  m_localSolution );
 
-  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
-  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+    // TODO: can we make the matrix not lose its callback name after stealing?
+    m_localMatrix.setName( this->getName() + "/localMatrix" );
+    m_localRhs.setName( this->getName() + "/localRhs" );
 
-  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
+    matrix.create( m_localMatrix.toViewConst(), dofManager.rankOffset(), MPI_COMM_GEOSX );
+    rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
+    solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
 
-  // by hand, add sparsity pattern induced by well perforations
-  AddCouplingSparsityPattern( domain,
-                              dofManager,
-                              matrix );
+    // by hand, add sparsity pattern induced by well perforations
+    AddCouplingSparsityPattern( domain,
+                                dofManager,
+                                matrix );
+
+    setupDone = true;
+  }
 }
 
 
@@ -187,6 +194,8 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
+  m_localMatrix.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  m_localRhs.setValues< parallelDevicePolicy< 128 > >( 0.0 );
 
   // assemble J_RR (excluding perforation rates)
   m_flowSolver->AssembleSystem( time_n, dt, domain,

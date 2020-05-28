@@ -458,7 +458,7 @@ struct ResidualNormKernel
       }
     } );
 
-    *localResidualNorm = sumScaled.get();
+    *localResidualNorm = *localResidualNorm + sumScaled.get();
   }
 
 };

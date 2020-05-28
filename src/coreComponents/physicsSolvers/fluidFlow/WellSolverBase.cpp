@@ -118,7 +118,9 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
                                         ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
 {
   // bind the stored reservoir views to the current domain
-  ResetViews( domain );
+
+  // Only do it once!
+  //ResetViews( domain );
 
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )

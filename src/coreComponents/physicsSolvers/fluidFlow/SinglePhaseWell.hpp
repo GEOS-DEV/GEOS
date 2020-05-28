@@ -16,8 +16,8 @@
  * @file SinglePhaseWell.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELL_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELL_HPP_
 
 #include "WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -257,12 +257,6 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void CheckWellControlSwitch( DomainPartition * const domain ) override;
-
-  /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
-   */
-  void RecordWellData( WellElementSubRegion const & subRegion );
 
 private:
 
