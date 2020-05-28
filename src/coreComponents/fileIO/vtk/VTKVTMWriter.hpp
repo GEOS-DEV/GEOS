@@ -21,6 +21,11 @@ namespace geosx
 {
 namespace vtk
 {
+/*!
+ * @brief VTM Writer class.
+ * @details a VTM file is the root file for one time step. It will contain
+ * path to all the component of the mesh (Surfaces, Volumes, Wells etc.).
+ */
 class VTKVTMWriter
 {
 public:
