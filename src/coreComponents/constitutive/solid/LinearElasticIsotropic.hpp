@@ -148,12 +148,12 @@ void LinearElasticIsotropicUpdates::SmallStrainNoState( localIndex const k,
   real64 const diag = lambda * ( voigtStrain[0] + voigtStrain[1] + voigtStrain[2] );
   real64 const TwoG = 2.0 * m_shearModulus[k];
 
-  stress[0] = stress[0] + diag + TwoG * voigtStrain[0];
-  stress[1] = stress[1] + diag + TwoG * voigtStrain[1];
-  stress[2] = stress[2] + diag + TwoG * voigtStrain[2];
-  stress[3] = stress[3] + m_shearModulus[k] * voigtStrain[3];
-  stress[4] = stress[4] + m_shearModulus[k] * voigtStrain[4];
-  stress[5] = stress[5] + m_shearModulus[k] * voigtStrain[5];
+  stress[0] = diag + TwoG * voigtStrain[0];
+  stress[1] = diag + TwoG * voigtStrain[1];
+  stress[2] = diag + TwoG * voigtStrain[2];
+  stress[3] = m_shearModulus[k] * voigtStrain[3];
+  stress[4] = m_shearModulus[k] * voigtStrain[4];
+  stress[5] = m_shearModulus[k] * voigtStrain[5];
 
 }
 
