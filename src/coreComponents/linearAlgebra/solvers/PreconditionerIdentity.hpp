@@ -30,14 +30,16 @@ class PreconditionerIdentity : public PreconditionerBase< LAI >
 {
 public:
 
-  virtual ~PreconditionerIdentity() = default;
+  /// Alias for base type
+  using Base = PreconditionerBase< LAI >;
 
   /// Alias for vector type
-  using Vector = typename LinearOperator< typename LAI::ParallelVector >::Vector;
+  using Vector = typename Base::Vector;
 
   /// Alias for matrix type
-  using Matrix = typename LAI::ParallelMatrix;
+  using Matrix = typename Base::Matrix;
 
+  virtual ~PreconditionerIdentity() = default;
 
   /**
    * @brief Apply operator to a vector.
@@ -50,7 +52,7 @@ public:
   {
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst = src;
+    dst.copy( src );
   }
 };
 

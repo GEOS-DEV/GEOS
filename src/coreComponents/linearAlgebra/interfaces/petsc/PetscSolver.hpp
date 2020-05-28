@@ -19,15 +19,16 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_PETSCSOLVER_HPP_
 
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+
 namespace geosx
 {
 
 class PetscVector;
 class PetscMatrix;
-class LinearSolverParameters;
 
 /**
- * @class PetscSolver
  * @brief This class creates and provides basic support for PETSc solvers.
  */
 class PetscSolver
@@ -38,7 +39,7 @@ public:
    * @brief Solver constructor, with parameter list reference
    * @param[in] parameters structure containing linear solver parameters
    */
-  PetscSolver( LinearSolverParameters const & parameters );
+  PetscSolver( LinearSolverParameters parameters );
 
   /**
    * @brief Virtual destructor.
@@ -58,9 +59,19 @@ public:
               PetscVector & sol,
               PetscVector & rhs );
 
+  /**
+   * @brief Get the result of previous solve.
+   * @return struct with last solve stats
+   */
+  LinearSolverResult const & result()
+  {
+    return m_result;
+  }
+
 private:
 
-  LinearSolverParameters const & m_parameters;
+  LinearSolverParameters m_parameters;
+  LinearSolverResult m_result;
 
   void solve_direct( PetscMatrix & mat,
                      PetscVector & sol,

@@ -14,7 +14,7 @@ set( dataRepository_tests
      testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest lvarray managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
+set( dependencyList gtest geosx_core )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

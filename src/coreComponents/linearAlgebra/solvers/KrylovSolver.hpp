@@ -22,6 +22,8 @@
 #include "linearAlgebra/utilities/BlockVectorView.hpp"
 #include "linearAlgebra/utilities/BlockVector.hpp"
 #include "linearAlgebra/utilities/BlockOperatorView.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
 
 namespace geosx
 {
@@ -45,30 +47,29 @@ public:
   using Vector = typename Base::Vector;
 
   /**
-   * @brief Constructor
-   *
-   * @param [in] A reference to the system matrix.
-   * @param [in] M reference to the preconditioning operator.
+   * @brief Factory method for instantiating Krylov solver objects.
+   * @param parameters solver parameters (only .solverType, .logLevel, .isSymmetric and .krylov fields are used)
+   * @param matrix linear operator to solve (can be a matrix or a matrix-free operator)
+   * @param precond preconditioning operator (must be set up by the user prior to calling solve()/apply())
+   * @return an owning pointer to the newly instantiated solver
+   */
+  static std::unique_ptr< KrylovSolver< VECTOR > > Create( LinearSolverParameters const & parameters,
+                                                           LinearOperator< VECTOR > const & matrix,
+                                                           LinearOperator< VECTOR > const & precond );
+
+  /**
+   * @brief Constructor.
+   * @param [in] matrix reference to the system matrix.
+   * @param [in] precond reference to the preconditioning operator.
    * @param [in] tolerance relative residual norm reduction tolerance.
    * @param [in] maxIterations maximum number of Krylov iterations.
    * @param [in] verbosity solver verbosity level.
    */
-  KrylovSolver( LinearOperator< Vector > const & A,
-                LinearOperator< Vector > const & M,
+  KrylovSolver( LinearOperator< Vector > const & matrix,
+                LinearOperator< Vector > const & precond,
                 real64 const tolerance,
                 localIndex const maxIterations,
-                integer const verbosity )
-    : Base(),
-    m_operator( A ),
-    m_precond( M ),
-    m_tolerance( tolerance ),
-    m_maxIterations( maxIterations ),
-    m_verbosity( verbosity )
-  {
-    GEOSX_ERROR_IF_LT_MSG( m_maxIterations, 0, "Krylov solver: max number of iteration must be non-negative." );
-    GEOSX_LAI_ASSERT_EQ( m_operator.numGlobalRows(), m_precond.numGlobalRows() );
-    GEOSX_LAI_ASSERT_EQ( m_operator.numGlobalCols(), m_precond.numGlobalCols() );
-  }
+                integer const verbosity );
 
   /**
    * @brief Virtual destructor
@@ -77,7 +78,6 @@ public:
 
   /**
    * @brief Solve preconditioned system
-   *
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
@@ -106,45 +106,111 @@ public:
   }
 
   /**
-   * @brief Get the number of Krylov iterations.
-   *
-   * @return Number of Krylov iterations.
+   * @brief Get result of a linear solve.
+   * @return struct containing status and various statistics of the last solve
    */
-  localIndex numIterations( ) const { return m_numIterations; };
+  LinearSolverResult const & result() const
+  {
+    return m_result;
+  }
 
   /**
-   * @brief Get the residual norm at each iteration.
-   *
-   * @return View of the 1d array containing the residual norm at each iteration.
+   * @brief Get convergence history of a linear solve.
+   * @return array containing residual norms of every iteration (including initial)
    */
-  arrayView1d< const real64 > residualNormVector( ) const { return m_residualNormVector.toViewConst(); };
+  arrayView1d< real64 const > const & history() const
+  {
+    return m_residualNorms;
+  }
 
   /**
-   * @brief Get the flag indicatin if convergence has been achieved.
-   *
-   * @return Convergence flag.
+   * @brief Get log level.
+   * @return integer value of the log level
    */
-  bool convergenceFlag( ) const { return m_convergenceFlag; };
+  integer getLogLevel() const
+  {
+    return m_logLevel;
+  }
+
+  /**
+   * @brief Get name of the Krylov subspace method.
+   * @return the abbreviated name of the method
+   */
+  virtual string methodName() const = 0;
 
 private:
 
-  // Helper struct to get temporary stored vector type from vector view types
+  ///@cond DO_NOT_DOCUMENT
+
   template< typename VEC >
   struct VectorStorageHelper
   {
     using type = VEC;
+
+    static VEC createFrom( VEC const & src )
+    {
+      VEC v;
+      v.createWithLocalSize( src.localSize(), src.getComm() );
+      return v;
+    }
   };
 
   template< typename VEC >
   struct VectorStorageHelper< BlockVectorView< VEC > >
   {
     using type = BlockVector< VEC >;
+
+    static BlockVector< VEC > createFrom( BlockVectorView< VEC > const & src )
+    {
+      BlockVector< VEC > v( src.blockSize() );
+      for( localIndex i = 0; i < src.blockSize(); ++i )
+      {
+        v.block( i ).createWithLocalSize( src.block( i ).localSize(), src.block( i ).getComm() );
+      }
+      return v;
+    }
   };
+
+  ///@endcond DO_NOT_DOCUMENT
 
 protected:
 
   /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename VectorStorageHelper< VECTOR >::type;
+
+  /**
+   * @brief Helper function to create temporary vectors based on a source vector.
+   * @param src the source vector, whose size and parallel distribution will be used
+   * @return the new vector
+   *
+   * The main purpose is to deal with BlockVector/View/Wrapper hierarchy.
+   */
+  static VectorTemp createTempVector( Vector const & src )
+  {
+    return VectorStorageHelper< VECTOR >::createFrom( src );
+  }
+
+  /**
+   * @brief Output iteration progress (called by implementations).
+   * @param iter  current iteration number
+   * @param rnorm current residual norm
+   */
+  void logProgress( localIndex const iter, real64 const rnorm ) const
+  {
+    m_residualNorms[iter] = rnorm;
+    GEOSX_LOG_LEVEL_RANK_0( 2, methodName() << " iteration " << iter << ": residual = " << rnorm );
+  }
+
+  /**
+   * @brief Output convergence result (called by implementations).
+   */
+  void logResult() const
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, methodName() << ' ' <<
+                            ( m_result.success() ? "converged" : "failed to converge" ) <<
+                            " in " << m_result.numIterations << " iterations " <<
+                            "(" << m_result.solveTime << " s)" );
+  }
 
   /// reference to the operator to be solved
   LinearOperator< Vector > const & m_operator;
@@ -159,17 +225,13 @@ protected:
   localIndex m_maxIterations;
 
   /// solver verbosity level
-  integer m_verbosity;
+  integer m_logLevel;
 
-  /// actual number of Krylov iterations
-  mutable localIndex m_numIterations = 0;
+  /// results of a solve
+  mutable LinearSolverResult m_result;
 
-  /// residual norm vector
-  mutable array1d< real64 > m_residualNormVector;
-
-  /// convergence flag
-  mutable bool m_convergenceFlag;
-
+  /// Absolute residual norms at each iteration (if available)
+  mutable array1d< real64 > m_residualNorms;
 };
 
 } //namespace geosx
