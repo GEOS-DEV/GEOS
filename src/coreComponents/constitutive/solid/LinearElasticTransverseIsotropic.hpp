@@ -79,7 +79,7 @@ public:
 
   // for interface discussion purposes
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
+  virtual void SmallStrainUpdate( localIndex const k,
                             localIndex const q,
                             arraySlice1d< real64 const > const & strainIncrement,
                             arraySlice1d< real64 > const & stress,
@@ -150,7 +150,7 @@ private:
 // for interface discussion purposes
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticTransverseIsotropicUpdates::SmallStrain( localIndex const k,
+void LinearElasticTransverseIsotropicUpdates::SmallStrainUpdate( localIndex const k,
                                                            localIndex const q,
                                                            arraySlice1d< real64 const > const & strainIncrement,
                                                            arraySlice1d< real64 > const & stress,

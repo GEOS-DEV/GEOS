@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP
 
 #include "SolidBase.hpp"
+#include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 namespace geosx
 {
@@ -43,7 +44,7 @@ public:
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
   DruckerPragerUpdates( arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & poissonRatio,
+                        arrayView1d< real64 const > const & shearModulus,
                         arrayView1d< real64 const > const & tanFrictionAngle,
                         arrayView1d< real64 const > const & hardeningRate,
                         arrayView2d< real64 > const & newCohesion,
@@ -53,7 +54,7 @@ public:
                         arrayView3d< real64, solid::STRESS_USD > const & stress ):
     SolidBaseUpdates( stress ),
     m_bulkModulus( bulkModulus ),
-    m_poissonRatio( poissonRatio ),
+    m_shearModulus( shearModulus ),
     m_tanFrictionAngle( tanFrictionAngle ),
     m_hardeningRate( hardeningRate ),
     m_newCohesion( newCohesion ),
@@ -78,11 +79,15 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            arraySlice1d< real64 const > const & strainIncrement,
-                            arraySlice1d< real64 > const & stress,
-                            arraySlice2d< real64 > const & stiffness ) override final;
+  virtual void SmallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const > const & strainIncrement,
+                                  arraySlice1d< real64 > const & stress,
+                                  arraySlice2d< real64 > const & stiffness ) override final;
+  
+  GEOSX_HOST_DEVICE
+  virtual void SaveConvergedState( localIndex const k,
+                                   localIndex const q ) override final;
   
   // remaining interface functions not implemented for various reasons
   // but these are all pure virtual so must be included here
@@ -133,7 +138,7 @@ private:
   arrayView1d< real64 const > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
-  arrayView1d< real64 const > const m_poissonRatio;
+  arrayView1d< real64 const > const m_shearModulus;
   
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_tanFrictionAngle;
@@ -154,27 +159,70 @@ private:
   arrayView3d< real64, solid::STRESS_USD > const m_oldStress;
 };
 
+///////////////////////// new proposal /////////////////////////////////////////
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SmallStrain( localIndex const k,
-                                        localIndex const q,
-                                        arraySlice1d< real64 const > const & strainIncrement,
-                                        arraySlice1d< real64 > const & stress,
-                                        arraySlice2d< real64 > const & stiffness )
+void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
+                                              localIndex const q,
+                                              arraySlice1d< real64 const > const & strainIncrement,
+                                              arraySlice1d< real64 > const & stress,
+                                              arraySlice2d< real64 > const & stiffness )
 {
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
+  // lam\'e parameters
+  
+  real64 const mu = m_shearModulus[k];
+  real64 const lambda = m_bulkModulus[k] - 2.0/3.0*mu;
+  
+  // fill stiffness with elastic predictor
+  
+  BlasLapackLA::matrixScale(0,stiffness);
+  
+  stiffness[0][0] = lambda + 2*mu;
+  stiffness[0][1] = lambda;
+  stiffness[0][2] = lambda;
+
+  stiffness[1][0] = lambda;
+  stiffness[1][1] = lambda + 2*mu;
+  stiffness[1][2] = lambda;
+
+  stiffness[2][0] = lambda;
+  stiffness[2][1] = lambda;
+  stiffness[2][2] = lambda + 2*mu;
+
+  stiffness[3][3] = mu;
+  stiffness[4][4] = mu;
+  stiffness[5][5] = mu;
+
+  // elastic predictor: stress = oldStress + stiffness*strainIncrement
+  
+  BlasLapackLA::matrixVectorMultiply(stiffness, strainIncrement, stress);
+  BlasLapackLA::vectorVectorAdd(m_oldStress[k][q], stress);
+  
+  // two-invariant decomposition (p-q space)
+  
+  // remember state
   
   for(localIndex i=0; i<6; ++i)
   {
-    stress[i] = strainIncrement[i];
+    m_newStress[k][q][i] = stress[i];
   }
-  
-  GEOSX_UNUSED_VAR(stiffness);
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void DruckerPragerUpdates::SaveConvergedState( localIndex const k,
+                                               localIndex const q )
+{
+  m_oldCohesion[k][q] = m_newCohesion[k][q];
   
-// base class defines many pure virtual functions
-// TODO: revisit if this is required
+  for(localIndex i=0; i<6; ++i)
+  {
+    m_oldStress[k][q][i] = m_newStress[k][q][i];
+  }
+}
+
+///////////////////////// end new proposal /////////////////////////////////////
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -269,7 +317,7 @@ public:
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
-
+  
   /**
    * @name Static Factory Catalog members and functions
    */
@@ -296,7 +344,7 @@ public:
     static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
 
     /// string/key for default shear modulus
-    static constexpr auto defaultPoissonRatioString = "defaultPoissonRatio";
+    static constexpr auto defaultShearModulusString = "defaultShearModulus";
 
     /// string/key for default friction angle
     static constexpr auto defaultTanFrictionAngleString = "defaultTanFrictionAngle";
@@ -311,7 +359,7 @@ public:
     static constexpr auto bulkModulusString  = "BulkModulus";
     
     /// string/key for poisson ratio
-    static constexpr auto poissonRatioString = "PoissonRatio";
+    static constexpr auto shearModulusString = "ShearModulus";
     
     /// string/key for friction angle
     static constexpr auto tanFrictionAngleString  = "TanFrictionAngle";
@@ -339,7 +387,7 @@ public:
   DruckerPragerUpdates createKernelWrapper()
   {
     return DruckerPragerUpdates( m_bulkModulus,
-                                 m_poissonRatio,
+                                 m_shearModulus,
                                  m_tanFrictionAngle,
                                  m_hardeningRate,
                                  m_newCohesion,
@@ -358,8 +406,8 @@ private:
   /// Material parameter: The default value of the bulk modulus
   real64 m_defaultBulkModulus;
 
-  /// Material parameter: The default value of the Poisson ratio
-  real64 m_defaultPoissonRatio;
+  /// Material parameter: The default value of the shear modulus
+  real64 m_defaultShearModulus;
   
   /// Material parameter: The default value of yield surface slope
   real64 m_defaultTanFrictionAngle;
@@ -374,7 +422,7 @@ private:
   array1d< real64 > m_bulkModulus;
 
   /// Material parameter: The shear modulus for each element
-  array1d< real64 > m_poissonRatio;
+  array1d< real64 > m_shearModulus;
   
   /// Material parameter: The yield surface slope for each element
   array1d< real64 > m_tanFrictionAngle;

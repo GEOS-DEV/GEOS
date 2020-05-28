@@ -121,16 +121,28 @@ private:
    * @brief New interface proposal for small strain update
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
-   * @param[in] strainIncrement Strain increment in voight notation
-   * @param[out] stress New stress value
+   * @param[in] strainIncrement Strain increment in voight notation (linearized strain)
+   * @param[out] stress New stress value (Cauchy stress)
    * @param[out] stiffness New tangent stiffness value
    */
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            arraySlice1d< real64 const > const & strainIncrement,
-                            arraySlice1d< real64 > const & stress,
-                            arraySlice2d< real64 > const & stiffness ) = 0;
+  virtual void SmallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const > const & strainIncrement,
+                                  arraySlice1d< real64 > const & stress,
+                                  arraySlice2d< real64 > const & stiffness ) = 0;
+  
+  /**
+   * @brief Save history variables in preparation for next timestep
+   * @param[in] k Element index.
+   * @param[in] q Quadrature point index.
+   */
+  GEOSX_HOST_DEVICE
+  virtual void SaveConvergedState( localIndex const k, localIndex const q )
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+  };
   
   /**
    * @brief Hypoelastic update to the constitutive state using input generated
@@ -199,7 +211,7 @@ public:
 
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
-
+  
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr auto defaultDensityString  = "defaultDensity";

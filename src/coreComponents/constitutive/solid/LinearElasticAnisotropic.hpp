@@ -66,11 +66,11 @@ public:
 
   // for interface discussion purposes
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            arraySlice1d< real64 const > const & strainIncrement,
-                            arraySlice1d< real64 > const & stress,
-                            arraySlice2d< real64 > const & stiffness ) override final;
+  virtual void SmallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const > const & strainIncrement,
+                                  arraySlice1d< real64 > const & stress,
+                                  arraySlice2d< real64 > const & stiffness ) override final;
                             
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
@@ -124,7 +124,7 @@ public:
 // for interface discussion purposes
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticAnisotropicUpdates::SmallStrain( localIndex const k,
+void LinearElasticAnisotropicUpdates::SmallStrainUpdate( localIndex const k,
                                                    localIndex const q,
                                                    arraySlice1d< real64 const > const & strainIncrement,
                                                    arraySlice1d< real64 > const & stress,

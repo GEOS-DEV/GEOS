@@ -33,7 +33,7 @@ TEST( DruckerPragerTests, testModel )
     "      name=\"granite\" "
     "      defaultDensity=\"2700\" "
     "      defaultBulkModulus=\"5e9\" "
-    "      defaultPoissonRatio=\"0.25\" "
+    "      defaultShearModulus=\"5e9\" "
     "      defaultTanFrictionAngle=\"1.0\" "
     "      defaultHardeningRate=\"0.0\" "
     "      defaultCohesion=\"1.0e6\"/>"
@@ -71,46 +71,13 @@ TEST( DruckerPragerTests, testModel )
   array2d< real64 > stress(1,6);
   array3d< real64 > stiffness(1,6,6);
   
-  cmw.SmallStrain(0,0,strainIncrement[0],stress[0],stiffness[0]);
-}
-
-
-TEST( DruckerPragerTests, testStateUpdatePoint )
-{
-/*
-  DruckerPrager cm( "model", nullptr );
-  real64 constexpr K = 2e10;
-  real64 constexpr G = 1e10;
-  cm.setDefaultBulkModulus( K );
-  cm.setDefaultShearModulus( G );
-
-  dataRepository::Group disc( "discretization", nullptr );
-  disc.resize( 2 );
-  cm.AllocateConstitutiveData( &disc, 2 );
-  DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
-
-  arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
-
-  real64 const strain = 0.1;
-  R2SymTensor Ddt;
-  R2Tensor Rot;
-
+  for(localIndex loadstep=0; loadstep < 10; ++loadstep)
   {
-    Ddt( 0, 0 ) = strain;
-    Rot( 0, 0 ) = 1;
-    Rot( 1, 1 ) = 1;
-    Rot( 2, 2 ) = 1;
-
-    //cmw.SmallStrain(0, 0, Ddt);
-
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 0 ), (2.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 1 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 2 ), (-1.0/3.0*strain)*2*G + strain*K );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 3 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 4 ), 0.0 );
-    ASSERT_DOUBLE_EQ( stress( 0, 0, 5 ), 0.0 );
+    cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
+    cmw.SaveConvergedState(0,0);
   }
-  */
+
 }
+
 
 

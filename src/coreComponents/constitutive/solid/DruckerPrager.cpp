@@ -27,12 +27,12 @@ namespace constitutive
 DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultBulkModulus(),
-  m_defaultPoissonRatio(),
+  m_defaultShearModulus(),
   m_defaultTanFrictionAngle(),
   m_defaultCohesion(),
   m_defaultHardeningRate(),
   m_bulkModulus(),
-  m_poissonRatio(),
+  m_shearModulus(),
   m_tanFrictionAngle(),
   m_hardeningRate(),
   m_newCohesion(),
@@ -47,10 +47,10 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic bulk modulus parameter" );
 
-  registerWrapper( viewKeyStruct::defaultPoissonRatioString, &m_defaultPoissonRatio )->
+  registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
     setApplyDefaultValue( -1 )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Elastic Poisson ratio parameter" );
+    setDescription( "Elastic shear modulus parameter" );
   
   registerWrapper( viewKeyStruct::defaultTanFrictionAngleString, &m_defaultTanFrictionAngle )->
     setApplyDefaultValue( -1 )->
@@ -73,9 +73,9 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setApplyDefaultValue( -1 )->
     setDescription( "Elastic bulk modulus field" );
 
-  registerWrapper( viewKeyStruct::poissonRatioString, &m_poissonRatio )->
+  registerWrapper( viewKeyStruct::shearModulusString, &m_shearModulus )->
     setApplyDefaultValue( -1 )->
-    setDescription( "Elastic Poisson ration field" );
+    setDescription( "Elastic shear modulus field" );
   
   registerWrapper( viewKeyStruct::tanFrictionAngleString, &m_tanFrictionAngle )->
     setApplyDefaultValue( -1 )->
@@ -120,13 +120,13 @@ DruckerPrager::DeliverClone( string const & name,
   DruckerPrager * const newConstitutiveRelation = dynamic_cast< DruckerPrager * >(clone.get());
 
   newConstitutiveRelation->m_defaultBulkModulus      = m_defaultBulkModulus;
-  newConstitutiveRelation->m_defaultPoissonRatio     = m_defaultPoissonRatio;
+  newConstitutiveRelation->m_defaultShearModulus     = m_defaultShearModulus;
   newConstitutiveRelation->m_defaultTanFrictionAngle = m_defaultTanFrictionAngle;
   newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
   newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
   
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
-  newConstitutiveRelation->m_poissonRatio = m_poissonRatio;
+  newConstitutiveRelation->m_shearModulus = m_shearModulus;
   newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
   newConstitutiveRelation->m_hardeningRate = m_hardeningRate;
   newConstitutiveRelation->m_newCohesion = m_newCohesion;
@@ -142,7 +142,7 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   this->resize( parent->size() );
   
   m_bulkModulus.resize( parent->size() );
-  m_poissonRatio.resize( parent->size() );
+  m_shearModulus.resize( parent->size() );
   m_tanFrictionAngle.resize( parent->size() );
   m_hardeningRate.resize( parent->size() );
   
@@ -154,7 +154,7 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   
   // set arrays to default values
   m_bulkModulus = m_defaultBulkModulus;
-  m_poissonRatio = m_defaultPoissonRatio;
+  m_shearModulus = m_defaultShearModulus;
   m_tanFrictionAngle = m_defaultTanFrictionAngle;
   m_hardeningRate = m_defaultHardeningRate;
   m_newCohesion = m_defaultCohesion;

@@ -71,11 +71,11 @@ public:
 
   // for interface discussion purposes
   GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            arraySlice1d< real64 const > const & strainIncrement,
-                            arraySlice1d< real64 > const & stress,
-                            arraySlice2d< real64 > const & stiffness ) override final;
+  virtual void SmallStrainUpdate( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const > const & strainIncrement,
+                                  arraySlice1d< real64 > const & stress,
+                                  arraySlice2d< real64 > const & stiffness ) override final;
 
   /**
    * accessor to return the stiffness at a given element
@@ -147,7 +147,7 @@ private:
 // for interface discussion purposes
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrain( localIndex const k,
+void LinearElasticIsotropicUpdates::SmallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  arraySlice1d< real64 const > const & strainIncrement,
                                                  arraySlice1d< real64 > const & stress,
