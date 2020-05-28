@@ -17,20 +17,6 @@ public:
   constexpr static real64 weight = 8.0 / numNodes;
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
 
-
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords( localIndex const i, localIndex const a )
-  {
-    constexpr real64 pCoords[3][8] = {
-      { -1, 1, -1, 1, -1, 1, -1, 1 },
-      { -1, -1, 1, 1, -1, -1, 1, 1 },
-      { -1, -1, -1, -1, 1, 1, 1, 1 } };
-    return pCoords[i][a];
-  }
-
-
   template< typename T >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -39,41 +25,25 @@ public:
     return i + 2 * j + 4 * k;
   }
 
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static bool isOdd( T const a )
-  {
-    return a % 2;
-  }
-
-  template< typename T >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static bool isEven( T const a )
-  {
-    return !(a % 2);
-  }
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords0( localIndex const a )
   {
-    return isEven( a ) ? -1 : 1;
+    return -1.0 + 2.0 * (a & 1);
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords1( localIndex const a )
   {
-    return isEven( a/2 ) ? -1 : 1;
+    return -1.0 + ( a & 2 );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords2( localIndex const a )
   {
-    return isEven( a/4 ) ? -1 : 1;
+    return -1.0 + 0.5 * ( a & 4 );
   }
 
 
@@ -103,9 +73,24 @@ public:
                             real64 const xi2 )
   {
     return 0.125 *
-           ( 1 + xi0*parentCoords( 0, a ) ) *
-           ( 1 + xi1*parentCoords( 1, a ) ) *
-           ( 1 + xi2*parentCoords( 2, a ) );
+           ( 1 + xi0*parentCoords0( a ) ) *
+           ( 1 + xi1*parentCoords1( a ) ) *
+           ( 1 + xi2*parentCoords2( a ) );
+  }
+
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void shapeFunctionValues( localIndex const q,
+                                   real64 N[numNodes] )
+  {
+    for( localIndex a=0; a<numNodes; ++a )
+    {
+      N[a] = 0.125 *
+             ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
+             ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
+             ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
+    }
   }
 
   GEOSX_HOST_DEVICE
@@ -129,76 +114,6 @@ public:
                parentCoords2( a );
   }
 
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static void
-  parentShapeFunctionDerivatives( localIndex const q,
-                                  localIndex const xi,
-                                  localIndex const eta,
-                                  localIndex const zeta,
-                                  real64 (& dNdXi)[3] )
-  {
-    dNdXi[0] = 0.125 *
-               xi *
-               ( 1 + quadratureFactor*parentCoords1( q )*eta ) *
-               ( 1 + quadratureFactor*parentCoords2( q )*zeta );
-    dNdXi[1] = 0.125 *
-               ( 1 + quadratureFactor*parentCoords0( q )*xi ) *
-               eta *
-               ( 1 + quadratureFactor*parentCoords2( q )*zeta );
-    dNdXi[2] = 0.125 *
-               ( 1 + quadratureFactor*parentCoords0( q )*xi ) *
-               ( 1 + quadratureFactor*parentCoords1( q )*eta ) *
-               zeta;
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi0( localIndex const q, localIndex const a )
-  {
-    return 0.125 *
-           parentCoords0( a ) *
-           ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a )) *
-           ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi1( localIndex const q, localIndex const a )
-  {
-    return 0.125 *
-           ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-           parentCoords1( a ) *
-           ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-  }
-
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 dNdXi2( localIndex const q, localIndex const a )
-  {
-    return 0.125 *
-           ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-           ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
-           parentCoords2( a );
-  }
-
-
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void shapeFunctionValues( localIndex const q,
-                                   real64 N[numNodes] )
-  {
-    for( localIndex a=0; a<numNodes; ++a )
-    {
-      N[a] = 0.125 *
-             ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-             ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
-             ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-    }
-  }
 
 
 #define SUM_FACTORIZATION
@@ -247,7 +162,7 @@ public:
       }
     }
 
-    real64 const invDetJ = inverse( J, &(dNdX[0][0]) );
+    real64 const detJ = inverse( J, &(dNdX[0][0]) );
 
 
     for( localIndex a=0; a<2; ++a )
@@ -272,7 +187,7 @@ public:
       }
     }
 
-    return 1.0 / invDetJ;
+    return detJ;
   }
 
 #else
@@ -330,13 +245,14 @@ public:
     scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
     scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
 
-    scratch[9] = 1 / ( J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2] );
+    scratch[9] =  J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2];
+    scratch[10] = 1.0 / scratch[9];
 
     for( int i=0; i<3; ++i )
     {
       for( int j=0; j<3; ++j )
       {
-        J[i][j] = scratch[3*i+j] * scratch[9];
+        J[i][j] = scratch[3*i+j] * scratch[10];
       }
     }
 
