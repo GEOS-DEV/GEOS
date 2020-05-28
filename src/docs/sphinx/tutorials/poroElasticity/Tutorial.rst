@@ -31,7 +31,7 @@ The xml input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi.xml
+  src/coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml
 
 
 
@@ -102,12 +102,12 @@ For instance, we must point this solver to the correct fluid solver (here: ``Sin
 Now that these two solvers are tied together inside the coupling solver,
 we have a coupled multiphysics problem defined.
 More parameters are required to characterize a coupling.
-Here, we specify the coupling type (``SIM_FixedStress``, a choice among several possible options),
+Here, we specify the coupling type (``FIM``, fully implicit method; a choice among several possible options),
 the discretization method (``FE1``, defined further in the input file),
 and the target regions (here, we only have one, ``Region2``).
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -131,7 +131,7 @@ please see the dedicated :ref:`FiniteElement` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
@@ -149,7 +149,7 @@ All the elements are hexahedral elements (C3D8) of the same dimension (2x1x1 met
 We also define a pair of geometric boxes that will help us
 locate and specify our boundary conditions. These boundary conditions are defined under the ``FieldSpecifications`` tag.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
@@ -175,7 +175,7 @@ Running the case
 
 To run the case, use the following command:
 
-``path/to/geosx -i src/coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi.xml``
+``path/to/geosx -i src/coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml``
 
 When it is finished, if successful, you should see something like this:
 
@@ -184,9 +184,8 @@ When it is finished, if successful, you should see something like this:
   Cleaning up events
   Rank 0: Writing out restart file at poroElastic_Terzaghi_restart_000000014/rank_0000000.hdf5
 
-  init time = 0.013321s, run time = 0.61892s
+  init time = 0.015293s, run time = 0.44605s
   Umpire            HOST high water mark:  540.6 KB
-
 
 
 Inspecting the console output
