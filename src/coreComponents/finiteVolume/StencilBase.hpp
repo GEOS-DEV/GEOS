@@ -43,17 +43,29 @@ public:
     m_connectorIndices()
   {}
 
-  virtual ~StencilBase() = default;
-  StencilBase( StencilBase const & ) = default;
-  StencilBase( StencilBase && ) = default;
   /**
-   * @brief reserve the size of the stencil
+   * @brief Destructor.
+   */
+  virtual ~StencilBase() = default;
+
+  /**
+   * @brief Constructor.
+   */
+  StencilBase( StencilBase const & ) = default;
+
+  /**
+   * @brief Move constructor.
+   */
+  StencilBase( StencilBase && ) = default;
+
+  /**
+   * @brief Reserve the size of the stencil.
    * @param[in] size the size of the stencil to reserve
    */
   virtual void reserve( localIndex const size );
 
   /**
-   * @brief Add an entry to the stencil
+   * @brief Add an entry to the stencil.
    * @param[in] numPts The number of points in the stencil entry
    * @param[in] elementRegionIndices The element region indices for each point in the stencil entry
    * @param[in] elementSubRegionIndices The element sub-region indices for each point in the stencil entry
@@ -69,7 +81,7 @@ public:
                     localIndex const connectorIndex ) = 0;
 
   /**
-   * @brief Zero weights for a stencil entry
+   * @brief Zero weights for a stencil entry.
    * @param[in] connectorIndex The index of the connector element that the stencil acts across for which the weights are
    *                           to be zero.
    * @return True if a valid connectorIndex was found, and had its corresponding weights set to zero.
@@ -77,32 +89,32 @@ public:
   virtual bool zero( localIndex const connectorIndex );
 
   /**
-   * @brief Give the number of stencil entries
+   * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
   virtual localIndex size() const = 0;
 
 
   /**
-   * @brief Const access to the element regions indices
+   * @brief Const access to the element regions indices.
    * @return A view to const
    */
   typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementRegionIndices() const { return m_elementRegionIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the element subregions indices
+   * @brief Const access to the element subregions indices.
    * @return A view to const
    */
   typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementSubRegionIndices() const { return m_elementSubRegionIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the element indices
+   * @brief Const access to the element indices.
    * @return A view to const
    */
   typename LEAFCLASSTRAITS::IndexContainerViewConstType const & getElementIndices() const { return m_elementIndices.toViewConst(); }
 
   /**
-   * @brief Const access to the stencil weights
+   * @brief Const access to the stencil weights.
    * @return A view to const
    */
   typename LEAFCLASSTRAITS::WeightContainerViewConstType const & getWeights() const { return m_weights.toViewConst(); }

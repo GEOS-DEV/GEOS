@@ -766,6 +766,7 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/wells \
         @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
+        @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @CMAKE_BINARY_DIR@/include/common 
 
 #        @PROJECT_SOURCE_DIR@/coreComponents/managers \

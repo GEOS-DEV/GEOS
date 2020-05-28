@@ -14,7 +14,6 @@
 
 /**
  * @file TwoPointFluxApproximation.hpp
- *
  */
 
 #ifndef GEOSX_FINITEVOLUME_TWOPOINTFLUXAPPROXIMATION_HPP_
@@ -25,14 +24,28 @@
 namespace geosx
 {
 
+/**
+ * @class TwoPointFluxApproximation
+ *
+ * Provides management of the interior stencil points when using a two-point flux approximation.
+ */
 class TwoPointFluxApproximation : public FluxApproximationBase
 {
 public:
 
+  /**
+   * @brief Static Factory Catalog Functions.
+   * @return the catalog name
+   */
   static std::string CatalogName() { return "TwoPointFluxApproximation"; }
 
   TwoPointFluxApproximation() = delete;
 
+  /**
+   * @brief Constructor.
+   * @param name the name of the TwoPointFluxApproximation in the data repository
+   * @param parent the parent group of this group.
+   */
   TwoPointFluxApproximation( std::string const & name, dataRepository::Group * const parent );
 
 protected:
