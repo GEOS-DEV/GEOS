@@ -504,6 +504,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
+			<xsd:element name="LASWell" type="LASWellType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -561,6 +562,27 @@
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
 		<!--transmissibility => Perforation transmissibility-->
 		<xsd:attribute name="transmissibility" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LASWellType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Perforation" type="PerforationType" />
+		</xsd:choice>
+		<!--fileName => Path to the las file-->
+		<xsd:attribute name="fileName" type="path" use="required" />
+		<!--geometryLogIndexInFile => Position of the log to take if there are several log sections defined in the LAS file -->
+		<xsd:attribute name="geometryLogIndexInFile" type="integer" default="-1" />
+		<!--meshName => Name of the reservoir mesh associated with this well-->
+		<xsd:attribute name="meshName" type="string" use="required" />
+		<!--numElementsPerSegment => Number of well elements per polyline segment-->
+		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
+		<!--radius => Radius of the well-->
+		<xsd:attribute name="radius" type="real64" use="required" />
+		<!--wellControlsName => Name of the set of constraints associated with this well-->
+		<xsd:attribute name="wellControlsName" type="string" use="required" />
+		<!--wellRegionName => Name of the well element region-->
+		<xsd:attribute name="wellRegionName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
