@@ -38,37 +38,28 @@ class FiniteVolumeManager : public dataRepository::Group
 public:
 
   /**
-   * @brief constructor
+   * @brief Deleted default constructor.
    */
   FiniteVolumeManager() = delete;
 
   /**
-   * @brief constructor
+   * @brief Constructor.
    * @param name the name of the FiniteVolumeManager in the data repository
    * @param parent the parent group of this group.
    */
   FiniteVolumeManager( string const & name, Group * const parent );
 
   /**
-   * @brief constructor
+   * @brief Destructor.
    */
   virtual ~FiniteVolumeManager() override;
 
-  /**
-   * @brief Create a new FiniteVolumeManager object as a child of this group.
-   * @param childKey the catalog key of the new FiniteVolumeManager derived type to create
-   * @param childName the name of the new FiniteVolumeManager object in the repository
-   * @return the group child
-   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  /**
-   * @brief This function is used to expand any catalogs in the data structure
-   */
   virtual void ExpandObjectCatalogs() override;
 
   /**
-   * @brief return the FluxApproximation associated with the provided name
+   * @brief Return the FluxApproximation associated with the provided name.
    * @param[in] name the provided name
    * @return the FluxApproximation associated with the provided name
    */

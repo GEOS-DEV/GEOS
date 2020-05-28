@@ -37,12 +37,12 @@ class FluxStencil
 public:
 
   /**
-   * @brief Number of points the flux is between (normally 2)
+   * @brief Number of points the flux is between (normally 2).
    */
   static localIndex constexpr NUM_POINT_IN_FLUX = 2;
 
   /**
-   * @brief Maximum number of points in a stencil (required to use static arrays in kernels)
+   * @brief Maximum number of points in a stencil (required to use static arrays in kernels).
    */
   static localIndex constexpr MAX_STENCIL_SIZE = 18;
 
@@ -54,7 +54,7 @@ public:
   explicit FluxStencil();
 
   /**
-   * @brief constructor
+   * @brief Constructor.
    * @param[in] numConn number of connections
    * @param[in] avgStencilSize average stencil size
    */
@@ -62,13 +62,13 @@ public:
                         localIndex const avgStencilSize );
 
   /**
-   * @brief return the size of the stencil collection (i.e. number of connections)
+   * @brief Return the size of the stencil collection (i.e. number of connections).
    * @return the size of the stencil collection (i.e. number of connections)
    */
   localIndex numConnections() const;
 
   /**
-   * @brief resize the collection
+   * @brief Resize the collection.
    * @param[in] numConn number of connections
    * @param[in] avgStencilSize average stencil size
    */
@@ -76,7 +76,7 @@ public:
                 localIndex const avgStencilSize );
 
   /**
-   * @brief add data for one connection
+   * @brief Add data for one connection.
    * @param[in] numPts number of points to be added
    * @param[in] indices the INDEX array
    * @param[in] weights the WEIGHT array
@@ -88,20 +88,20 @@ public:
             localIndex const connectorIndex );
 
   /**
-   * @brief zero out connections
+   * @brief Zero out connections.
    * @param[in] connectorIndex the connector index
    * @return true if the stencil is zeroed out
    */
   bool zero( localIndex const connectorIndex );
 
   /**
-   * @brief called after adding connections is done to compress the data.
+   * @brief Called after adding connections is done to compress the data.
    */
   void compress();
 
   /**
    * @struct Entry
-   * @brief Structure containing the index and the weight of the single edge in the stencil graph
+   * @brief Structure containing the index and the weight of the single edge in the stencil graph.
    */
   struct Entry
   {
@@ -110,7 +110,7 @@ public:
   };
 
   /**
-   * @brief return the connections
+   * @brief Return the connections.
    * @return the connections
    */
   ArrayOfArraysView< Entry const, true > getConnections() const { return m_connections.toViewConst(); }

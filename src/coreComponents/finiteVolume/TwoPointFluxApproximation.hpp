@@ -34,7 +34,7 @@ class TwoPointFluxApproximation : public FluxApproximationBase
 public:
 
   /**
-   * @brief Static Factory Catalog Functions
+   * @brief Static Factory Catalog Functions.
    * @return the catalog name
    */
   static std::string CatalogName() { return "TwoPointFluxApproximation"; }
@@ -42,7 +42,7 @@ public:
   TwoPointFluxApproximation() = delete;
 
   /**
-   * @brief constructor
+   * @brief Constructor.
    * @param name the name of the TwoPointFluxApproximation in the data repository
    * @param parent the parent group of this group.
    */

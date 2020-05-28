@@ -31,7 +31,7 @@ namespace geosx
 
 /**
  * @struct CellDescriptor
- * @brief A structure containing a single cell (element) identifier triplet
+ * @brief A structure containing a single cell (element) identifier triplet.
  */
 struct CellDescriptor
 {
@@ -43,7 +43,7 @@ struct CellDescriptor
   localIndex index;
 
   /**
-   * @brief Comparison operator between two CellDescriptors
+   * @brief Comparison operator between two CellDescriptors.
    * @param[in] other the CellDescriptor to compare with
    * @return true if they represent the same mesh element
    */
@@ -55,7 +55,7 @@ struct CellDescriptor
 
 /**
  * @struct PointDescriptor
- * @brief A structure describing an arbitrary point participating in a stencil
+ * @brief A structure describing an arbitrary point participating in a stencil.
  *
  * Nodal and face center points are identified by local mesh index.
  * Cell center points are identified by a triplet <region,subregion,index>.
@@ -98,7 +98,7 @@ public:
   /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
   using CatalogInterface = dataRepository::CatalogInterface< FluxApproximationBase, string const &, Group * const >;
   /**
-   * @brief return the data type in the data repository
+   * @brief Return the data type in the data repository.
    * @return the data type in the data repository
    */
   static typename CatalogInterface::CatalogType & GetCatalog();
@@ -109,14 +109,14 @@ public:
   FluxApproximationBase() = delete;
 
   /**
-   * @brief constructor
+   * @brief Constructor.
    * @param name the name of the FluxApproximationBase in the data repository
    * @param parent the parent group of this group.
    */
   FluxApproximationBase( string const & name, dataRepository::Group * const parent );
 
   /**
-   * @brief return a boundary stencil by face set name
+   * @brief Return a boundary stencil by face set name.
    * @param[in] setName the face set name
    * @return the boundary stencil by face set name
    */
@@ -128,14 +128,14 @@ public:
   BoundaryStencil & getBoundaryStencil( string const & setName );
 
   /**
-   * @brief check if a stencil exists
+   * @brief Check if a stencil exists.
    * @param[in] setName the face set name
    * @return true if a stencil exists
    */
   bool hasBoundaryStencil( string const & setName ) const;
 
   /**
-   * @brief Call a user-provided function for each stencil
+   * @brief Call a user-provided function for each stencil.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] lambda The LAMBDA function
    */
@@ -143,7 +143,7 @@ public:
   void forAllStencils( LAMBDA && lambda ) const;
 
   /**
-   * @brief Call a user-provided function for the each stencil according to the provided TYPE
+   * @brief Call a user-provided function for the each stencil according to the provided TYPE.
    * @tparam TYPE The type to be passed to forWrappers
    * @tparam TYPES Other types to be passed to forWrappers
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
@@ -153,7 +153,7 @@ public:
   void forStencils( LAMBDA && lambda ) const;
 
   /**
-   * @brief Call a user-provided function for each boundary stencil
+   * @brief Call a user-provided function for each boundary stencil.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] lambda The LAMBDA function
    */
@@ -161,13 +161,13 @@ public:
   void forBoundaryStencils( LAMBDA && lambda ) const;
 
   /**
-   * @brief Triggers computation of the stencil, implemented in derived classes
+   * @brief Triggers computation of the stencil, implemented in derived classes.
    * @param[in,out] domain The domain on which to perform the stencil computation
    */
   void compute( DomainPartition & domain );
 
   /**
-   * @brief Add a new fracture stencil
+   * @brief Add a new fracture stencil.
    * @param[in,out] domain The domain on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
    * @param[in] initFlag if true initialize physical fields, like pressure
@@ -182,7 +182,7 @@ public:
   }
 
   /**
-   * @brief View keys
+   * @brief View keys.
    */
   struct viewKeyStruct
   {
@@ -206,7 +206,7 @@ public:
   {};
 
   /**
-   * @brief Returns the target region name
+   * @brief Returns the target region name.
    * @return the target region name
    */
   string_array const & targetRegions() const { return m_targetRegions; }
@@ -225,13 +225,13 @@ protected:
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
   /**
-   * @brief actual computation of the cell-to-cell stencil, to be overridden by implementations
+   * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
    * @param[in] domain the domain on which to perform the computation
    */
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
 
   /**
-   * @brief actual computation of the boundary stencil, to be overridden by implementations
+   * @brief Actual computation of the boundary stencil, to be overridden by implementations.
    * @param[in] domain the domain on which to perform the computation
    * @param[in] faceSet set of faces
    * @param[out] stencil the boundary stencil

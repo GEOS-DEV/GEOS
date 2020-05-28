@@ -34,7 +34,7 @@ static constexpr localIndex MAX_NUM_FACES = 15;
 
 /**
  * @struct HybridFVMInnerProductType
- * @brief struct describing the possible types of inner product
+ * @brief Struct describing the possible types of inner product.
  */
 struct HybridFVMInnerProductType
 {
@@ -46,13 +46,13 @@ struct HybridFVMInnerProductType
 
 /**
  * @struct HybridFVMInnerProductHelper
- * @brief helper struct handling inner product for hybrid finite volume schemes
+ * @brief Helper struct handling inner product for hybrid finite volume schemes.
  */
 struct HybridFVMInnerProductHelper
 {
 
   /**
-   * @brief Create a full tensor from an array
+   * @brief Create a full tensor from an array.
    * @param[in] values the input array
    * @param[out] result the full tensor
    */
@@ -66,12 +66,12 @@ struct HybridFVMInnerProductHelper
 
 /**
  * @struct TPFAFaceInnerProductKernel
- * @brief struct handling face inner product in the quasi TPFA scheme
+ * @brief Struct handling face inner product in the quasi TPFA scheme.
  */
 struct TPFAFaceInnerProductKernel
 {
   /**
-   * @brief In a given element, recompute the transmissibility matrix in a face using TPFA
+   * @brief In a given element, recompute the transmissibility matrix in a face using TPFA.
    * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
@@ -102,13 +102,13 @@ struct TPFAFaceInnerProductKernel
 
 /**
  * @struct TPFACellInnerProductKernel
- * @brief struct handling cell inner product in the TPFA scheme
+ * @brief Struct handling cell inner product in the TPFA scheme.
  */
 struct TPFACellInnerProductKernel
 {
 
   /**
-   * @brief In a given element, recompute the transmissibility matrix in a cell using TPFA
+   * @brief In a given element, recompute the transmissibility matrix in a cell using TPFA.
    * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
@@ -132,13 +132,13 @@ struct TPFACellInnerProductKernel
 
 /**
  * @struct QTPFACellInnerProductKernel
- * @brief struct handling cell inner product in the quasi TPFA scheme
+ * @brief Struct handling cell inner product in the quasi TPFA scheme.
  */
 struct QTPFACellInnerProductKernel
 {
 
   /**
-   * @brief In a given element, recompute the transmissibility matrix using a consistent inner product
+   * @brief In a given element, recompute the transmissibility matrix using a consistent inner product.
    * @param[in] nodePosition the position of the nodes
    * @param[in] faceToNodes the map from the face to their nodes
    * @param[in] elemToFaces the maps from the one-sided face to the corresponding face

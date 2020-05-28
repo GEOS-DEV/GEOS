@@ -27,7 +27,7 @@ namespace geosx
 
 /**
  * @struct CellElementStencilMPFA_Traits
- * Struct to predeclare the types and consexpr values of CellElementStencilMPFA so that they may be used in
+ * Struct to predeclare the types and constexpr values of CellElementStencilMPFA so that they may be used in
  * StencilBase.
  */
 struct CellElementStencilMPFA_Traits
@@ -68,7 +68,9 @@ class CellElementStencilMPFA : public StencilBase< CellElementStencilMPFA_Traits
 {
 public:
 
-  /// default constructor
+  /**
+   * @brief Default constructor.
+   */
   CellElementStencilMPFA();
 
   virtual void reserve( localIndex const size ) override final;
@@ -81,14 +83,14 @@ public:
                     localIndex const connectorIndex ) override final;
 
   /**
-   * @brief Returns the stencil size
+   * @brief Return the stencil size.
    * @return the stencil size
    */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
 
   /**
-   * @brief Gives the number of points in a stencil entry.
+   * @brief Give the number of points in a stencil entry.
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */

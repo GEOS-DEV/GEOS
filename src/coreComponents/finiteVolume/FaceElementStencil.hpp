@@ -45,7 +45,7 @@ namespace geosx
 
 /**
  * @struct FaceElementStencil_Traits
- * Struct to predeclare the types and consexpr values of FaceElementStencil so that they may be used in
+ * Struct to predeclare the types and constexpr values of FaceElementStencil so that they may be used in
  * StencilBase.
  */
 struct FaceElementStencil_Traits
@@ -86,7 +86,7 @@ class FaceElementStencil : public StencilBase< FaceElementStencil_Traits, FaceEl
 public:
 
   /**
-   * @brief default constructor
+   * @brief Default constructor.
    */
   FaceElementStencil();
 
@@ -98,7 +98,7 @@ public:
                     localIndex const connectorIndex ) override final;
 
   /**
-   * @brief Add an entry to the stencil
+   * @brief Add an entry to the stencil.
    * @param[in] numPts The number of points in the stencil entry
    * @param[in] cellCenterToEdgeCenter vectors pointing from the cell center to the edge center
    * @param[in] isGhostConnector flag to identify ghost connectors
@@ -110,14 +110,14 @@ public:
             localIndex const connectorIndex );
 
   /**
-   * @brief Returns the stencil size
+   * @brief Return the stencil size.
    * @return the stencil size
    */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size(); }
 
   /**
-   * @brief Give the number of stencil entries for the provided index
+   * @brief Give the number of stencil entries for the provided index.
    * @param[in] index the index of which the stencil size is request
    * @return The number of stencil entries for the provided index
    */
@@ -125,15 +125,15 @@ public:
   { return m_elementRegionIndices.sizeOfArray( index ); }
 
   /**
-   * @brief Give the array of vectors pointing from the cell center to the edge center
+   * @brief Give the array of vectors pointing from the cell center to the edge center.
    * @return The array of vectors pointing from the cell center to the edge center
    */
   ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
   /**
-   * @brief Give the array of flags identifing ghost connectors
-   * @return The array of flags identifing ghost connectors
+   * @brief Give the array of flags identifying ghost connectors.
+   * @return The array of flags identifying ghost connectors
    */
   ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
   { return m_isGhostConnectors.toViewConst(); }
