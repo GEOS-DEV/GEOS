@@ -6,7 +6,7 @@
     <Poroelastic name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="SIM_FixedStress"
+      couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
       targetRegions="{Region2}">
