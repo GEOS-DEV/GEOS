@@ -149,13 +149,14 @@ LinearElasticTransverseIsotropicUpdates::
                       real64 const * GEOSX_RESTRICT const voigtStrain,
                       real64 * GEOSX_RESTRICT const stress ) const
 {
-  real64 const temp = m_c11[k]*(voigtStrain[0] + voigtStrain[1]) + m_c13[k]*voigtStrain[2];
-  stress[0] = stress[0] + temp - 2.0 * m_c66[k] * voigtStrain[1];
-  stress[1] = stress[1] + temp - 2.0 * m_c66[k] * voigtStrain[0];
-  stress[2] = stress[2] + m_c13[k]*(voigtStrain[0] + voigtStrain[1]) + m_c33[k]*voigtStrain[2];
-  stress[3] = stress[3] + m_c44[k]*voigtStrain[3];
-  stress[4] = stress[4] + m_c44[k]*voigtStrain[4];
-  stress[5] = stress[5] + m_c66[k]*voigtStrain[5];
+  real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
+  stress[0] = m_c11[k] * voigtStrain[0] +  c12temp * voigtStrain[1] + m_c13[k]*voigtStrain[2];
+  stress[1] =  c12temp * voigtStrain[0] + m_c11[k] * voigtStrain[1] + m_c13[k]*voigtStrain[2];
+  stress[2] = m_c13[k] * voigtStrain[0] + m_c13[k] * voigtStrain[1] + m_c33[k]*voigtStrain[2];
+
+  stress[3] = m_c44[k]*voigtStrain[3];
+  stress[4] = m_c44[k]*voigtStrain[4];
+  stress[5] = m_c66[k]*voigtStrain[5];
 }
 
 

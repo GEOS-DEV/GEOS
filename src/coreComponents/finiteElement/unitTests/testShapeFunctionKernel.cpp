@@ -84,8 +84,21 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      real64 dNdX[numNodes][3] = {{0}};
       FiniteElementShapeKernel::shapeFunctionValues( q, N );
+      for( localIndex a=0; a<numNodes; ++a )
+      {
+        viewN( q, a ) = N[a];
+      }
+    }
+  } );
+
+  forAll< POLICY >( 1,
+                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+  {
+
+    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    {
+      real64 dNdX[numNodes][3] = {{0}};
       viewDetJ[q] = FiniteElementShapeKernel::shapeFunctionDerivatives( q,
                                                                         xCoords,
                                                                         dNdX );
@@ -93,7 +106,6 @@ void testKernelDriver()
 
       for( localIndex a=0; a<numNodes; ++a )
       {
-        viewN( q, a ) = N[a];
         for( int i = 0; i < 3; ++i )
         {
           viewdNdX( q, a, i ) = dNdX[a][i];
