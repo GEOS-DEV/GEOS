@@ -26,7 +26,7 @@ namespace geosx
 
 /**
  * @struct CellElementStencilTPFA_Traits
- * Struct to predeclare the types and consexpr values of CellElementStencilTPFA so that they may be used in
+ * Struct to predeclare the types and constexpr values of CellElementStencilTPFA so that they may be used in
  * StencilBase.
  */
 struct CellElementStencilTPFA_Traits
@@ -67,7 +67,9 @@ class CellElementStencilTPFA : public StencilBase< CellElementStencilTPFA_Traits
 {
 public:
 
-  /// default constructor
+  /**
+   * @brief Default constructor.
+   */
   CellElementStencilTPFA();
 
   virtual void add( localIndex const numPts,
@@ -77,16 +79,23 @@ public:
                     real64 const * const weights,
                     localIndex const connectorIndex ) override final;
 
+  /**
+   * @brief Return the stencil size.
+   * @return the stencil size
+   */
   virtual localIndex size() const override final
   { return m_elementRegionIndices.size( 0 ); }
 
   /**
-   * @brief Gives the number of points in a stencil entry.
+   * @brief Give the number of points in a stencil entry.
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_PARAM( index ) ) const
-  { return MAX_STENCIL_SIZE; }
+  constexpr localIndex stencilSize( localIndex index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return MAX_STENCIL_SIZE;
+  }
 
 };
 
