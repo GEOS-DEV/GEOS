@@ -109,7 +109,7 @@ endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON ${geosx_core_libs_full} ${geosx_core_libs_full} ${geosx_core_libs_full}
+                   DEPENDS_ON ${geosx_core_libs_full}
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
