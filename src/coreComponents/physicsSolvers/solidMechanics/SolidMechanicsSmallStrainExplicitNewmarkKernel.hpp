@@ -164,11 +164,42 @@ public:
                          params.m_elementListName )
   {}
 
-  template< typename STACK_VARIABLE_TYPE >
+
+
+  //*****************************************************************************
+  struct StackVariables
+  {
+public:
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      fLocal{ { 0.0} },
+      varLocal{ {0.0} }
+  #if defined(CALCFEMSHAPE)
+      ,
+      xLocal(),
+      dNdX(),
+      detJ()
+  #endif
+    {}
+
+    real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+    real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
+  #if defined(CALCFEMSHAPE)
+// This needs to be returned to service when the FEM kernels are expanded properly
+//    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
+//    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
+    real64 xLocal[ 8 ][ numTestDofPerSP ];
+    real64 dNdX[ 8 ][ numTestDofPerSP ];
+    real64 detJ;
+  #endif
+  };
+
+
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
+              StackVariables & stack ) const
   {
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
@@ -188,12 +219,11 @@ public:
     }
   }
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,
                                    localIndex const q,
-                                   STACK_VARIABLE_TYPE & stack ) const
+                                   StackVariables & stack ) const
   {
 
 #if defined(CALCFEMSHAPE)
@@ -243,27 +273,24 @@ public:
     }
   }
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const,
                                             localIndex const,
-                                            STACK_VARIABLE_TYPE & ) const
+                                            StackVariables & ) const
   {}
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
                                             localIndex const GEOSX_UNUSED_PARAM( q ),
-                                            STACK_VARIABLE_TYPE & GEOSX_UNUSED_PARAM( stack ) ) const
+                                            StackVariables & GEOSX_UNUSED_PARAM( stack ) ) const
   {}
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
-                   STACK_VARIABLE_TYPE const & stack ) const
+                   StackVariables const & stack ) const
   {
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
@@ -307,35 +334,6 @@ public:
     } );
     return 0;
   }
-
-  //*****************************************************************************
-  struct StackVariables
-  {
-public:
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      fLocal{ { 0.0} },
-      varLocal{ {0.0} }
-  #if defined(CALCFEMSHAPE)
-      ,
-      xLocal(),
-      dNdX(),
-      detJ()
-  #endif
-    {}
-
-    real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-    real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
-  #if defined(CALCFEMSHAPE)
-// This needs to be returned to service when the FEM kernels are expanded properly
-//    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
-//    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
-    real64 xLocal[ 8 ][ numTestDofPerSP ];
-    real64 dNdX[ 8 ][ numTestDofPerSP ];
-    real64 detJ;
-  #endif
-  };
-
 
 
 protected:

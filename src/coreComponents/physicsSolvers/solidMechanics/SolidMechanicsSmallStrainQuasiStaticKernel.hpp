@@ -175,6 +175,41 @@ public:
                  params.m_gravityVector )
   {}
 
+
+
+  //*****************************************************************************
+  /**
+   * @class StackVariables
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
+   *
+   * Adds a stack array for the displacement, incremental displacement, and the
+   * constitutive stiffness.
+   */
+  struct StackVariables : public Base::StackVariables
+  {
+public:
+
+    /// Constructor.
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            u_local(),
+            uhat_local(),
+            constitutiveStiffness{ {0.0} }
+    {}
+
+    /// Stack storage for the element local nodal displacement
+    R1Tensor u_local[numNodesPerElem];
+
+    /// Stack storage for the element local nodal incremental displacement
+    R1Tensor uhat_local[numNodesPerElem];
+
+    /// Stack storage for the constitutive stiffness at a quadrature point.
+    real64 constitutiveStiffness[6][6];
+  };
+  //*****************************************************************************
+
+
   /**
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
@@ -184,11 +219,10 @@ public:
    * element local stack storage.
    */
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
+              StackVariables & stack ) const
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
@@ -213,12 +247,11 @@ public:
    * constitutive update is called. In addition, the constitutive stiffness
    * stack variable is filled by the constitutive model.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,
                                    localIndex const q,
-                                   STACK_VARIABLE_TYPE & stack ) const
+                                   StackVariables & stack ) const
   {
     real64 strainInc[6] = {0};
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
@@ -241,21 +274,30 @@ public:
   }
 
 
+
+  struct NoOpFunctors
+  {
+    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    void operator() ( localIndex, localIndex )
+    {}
+    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
+    void operator() ( real64 * )
+    {}
+  };
+
   /**
    * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution.
    *
    * For solid mechanics kernels, the derivative of the force residual wrt
    * the incremental displacement is filled into the local element jacobian.
    */
-  template< typename STACK_VARIABLE_TYPE,
-            typename DYNAMICS_LAMBDA = STD_FUNCTION< void( localIndex, localIndex) > >
+  template< typename DYNAMICS_LAMBDA = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack,
-                                            DYNAMICS_LAMBDA && dynamicsTerms = [] GEOSX_HOST_DEVICE ( localIndex,
-                                                                                                 localIndex){} ) const
+                                            StackVariables & stack,
+                                            DYNAMICS_LAMBDA && dynamicsTerms = NoOpFunctors{} ) const
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
@@ -303,14 +345,13 @@ public:
    * The divergence of the stress is integrated over the volume of the element,
    * yielding the nodal force (residual) contributions.
    */
-  template< typename STACK_VARIABLE_TYPE,
-            typename STRESS_MODIFIER = STD_FUNCTION< void( real64 * ) > >
+  template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointResidualContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack,
-                                            STRESS_MODIFIER && stressModifier = [] GEOSX_DEVICE ( real64 * ) {} ) const
+                                            StackVariables & stack,
+                                            STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
     real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
                          m_constitutiveUpdate.m_stress( k, q, 1 ),
@@ -341,11 +382,10 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
    */
-  template< typename STACK_VARIABLE_TYPE >
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                   STACK_VARIABLE_TYPE & stack ) const
+                   StackVariables & stack ) const
   {
     real64 meanForce = 0;
     for( localIndex a=0; a<stack.numRows; ++a )
@@ -369,37 +409,6 @@ public:
     return meanForce;
   }
 
-  //*****************************************************************************
-  /**
-   * @class StackVariables
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::StackVariables
-   *
-   * Adds a stack array for the displacement, incremental displacement, and the
-   * constitutive stiffness.
-   */
-  struct StackVariables : public Base::StackVariables
-  {
-public:
-
-    /// Constructor.
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            u_local(),
-            uhat_local(),
-            constitutiveStiffness{ {0.0} }
-    {}
-
-    /// Stack storage for the element local nodal displacement
-    R1Tensor u_local[numNodesPerElem];
-
-    /// Stack storage for the element local nodal incremental displacement
-    R1Tensor uhat_local[numNodesPerElem];
-
-    /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[6][6];
-  };
-  //*****************************************************************************
 
 
 protected:

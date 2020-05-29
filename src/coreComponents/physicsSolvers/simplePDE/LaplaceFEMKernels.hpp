@@ -150,85 +150,6 @@ public:
   {}
 
 
-  /**
-   * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
-   *
-   * For the LaplaceFEMKernel implementation, global values from the
-   * primaryField, and degree of freedom numbers are placed into element local
-   * stack storage.
-   */
-  template< typename STACK_VARIABLE_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
-  {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-    {
-      localIndex const localNodeIndex = m_elemsToNodes( k, a );
-
-      stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
-      stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
-      stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
-    }
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution.
-   */
-  template< typename STACK_VARIABLE_TYPE,
-            typename DYNAMICS_LAMBDA = std::function< void( localIndex, localIndex) > >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const k,
-                                            localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack ) const
-  {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-    {
-      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
-      {
-        stack.localJacobian[ a ][ b ] += Dot( m_dNdX( k, q, a ), m_dNdX( k, q, b ) ) * m_detJ( k, q );
-      }
-    }
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
-   *
-   * Form element residual from the fully formed element Jacobian dotted with
-   * the primary field and map the element local Jacobian/Residual to the
-   * global matrix/vector.
-   */
-  template< typename STACK_VARIABLE_TYPE >
-  //GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                   STACK_VARIABLE_TYPE & stack ) const
-  {
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-    {
-      for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
-      {
-        stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
-      }
-    }
-
-    m_matrix.add( stack.localRowDofIndex,
-                  stack.localColDofIndex,
-                  &(stack.localJacobian[0][0]),
-                  stack.numRows,
-                  stack.numCols );
-
-    m_rhs.add( stack.localRowDofIndex,
-               stack.localResidual,
-               stack.numRows );
-
-    return 1.0;
-  }
-
-
   //***************************************************************************
   /**
    * @class StackVariables
@@ -252,6 +173,83 @@ public:
     /// C-array storage for the element local primary field variable.
     real64 primaryField_local[NUM_NODES_PER_ELEM];
   };
+
+
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
+   *
+   * For the LaplaceFEMKernel implementation, global values from the
+   * primaryField, and degree of freedom numbers are placed into element local
+   * stack storage.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    {
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
+
+      stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
+      stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
+      stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void quadraturePointJacobianContribution( localIndex const k,
+                                            localIndex const q,
+                                            StackVariables & stack ) const
+  {
+    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    {
+      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      {
+        stack.localJacobian[ a ][ b ] += Dot( m_dNdX( k, q, a ), m_dNdX( k, q, b ) ) * m_detJ( k, q );
+      }
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
+   *
+   * Form element residual from the fully formed element Jacobian dotted with
+   * the primary field and map the element local Jacobian/Residual to the
+   * global matrix/vector.
+   */
+  //GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+                   StackVariables & stack ) const
+  {
+    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    {
+      for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
+      {
+        stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
+      }
+    }
+
+    m_matrix.add( stack.localRowDofIndex,
+                  stack.localColDofIndex,
+                  &(stack.localJacobian[0][0]),
+                  stack.numRows,
+                  stack.numCols );
+
+    m_rhs.add( stack.localRowDofIndex,
+               stack.localResidual,
+               stack.numRows );
+
+    return 1.0;
+  }
+
+
 
 
 protected:

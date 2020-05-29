@@ -148,11 +148,30 @@ public:
                      params.m_dt )
   {}
 
-  template< typename STACK_VARIABLE_TYPE >
+
+  struct StackVariables : public Base::StackVariables
+  {
+  public:
+    using Base::StackVariables::numRows;
+    using Base::StackVariables::numCols;
+
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            dRdU_InertiaMassDamping{ {0.0} },
+      vtilde_local(),
+      uhattilde_local()
+    {}
+
+    real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
+    R1Tensor vtilde_local[numNodesPerElem];
+    R1Tensor uhattilde_local[numNodesPerElem];
+  };
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
+              StackVariables & stack ) const
   {
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
@@ -166,12 +185,11 @@ public:
     Base::setup( k, stack );
   }
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack ) const
+                                            StackVariables & stack ) const
   {
 
     real64 N[numNodesPerElem];
@@ -198,11 +216,10 @@ public:
     } );
   }
 
-  template< typename STACK_VARIABLE_TYPE >
   //    GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
-                   STACK_VARIABLE_TYPE & stack ) const
+                   StackVariables & stack ) const
   {
 
     for( int a=0; a<numNodesPerElem; ++a )
@@ -241,24 +258,6 @@ public:
 
 
 
-  struct StackVariables : public Base::StackVariables
-  {
-public:
-    using Base::StackVariables::numRows;
-    using Base::StackVariables::numCols;
-
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            dRdU_InertiaMassDamping{ {0.0} },
-      vtilde_local(),
-      uhattilde_local()
-    {}
-
-    real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
-    R1Tensor vtilde_local[numNodesPerElem];
-    R1Tensor uhattilde_local[numNodesPerElem];
-  };
 
 
 protected:

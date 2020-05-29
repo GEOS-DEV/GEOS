@@ -229,6 +229,11 @@ public:
     m_finiteElementSpace( finiteElementSpace )
   {}
 
+
+
+  struct StackVariables
+  {};
+
   /**
    * @brief Performs the setup phase for the kernel.
    * @tparam STACK_VARIABLE_TYPE The type of StackVariable that holds the stack
@@ -242,11 +247,10 @@ public:
    * The operations typically found in setup are thing such as the collection
    * of global data into local stack storage.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
+              StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(stack);
@@ -268,12 +272,11 @@ public:
    * state of the constitutive model is updated if required by the physics
    * package.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,
                                    localIndex const q,
-                                   STACK_VARIABLE_TYPE & stack ) const
+                                   StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -294,12 +297,11 @@ public:
    * The results of quadraturePointStateUpdate are used to form the local
    * element Jacobian matrix.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack ) const
+                                            StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -320,12 +322,11 @@ public:
    * The results of quadraturePointStateUpdate are used to form the local
    * element residual vector.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointResidualContribution( localIndex const k,
                                             localIndex const q,
-                                            STACK_VARIABLE_TYPE & stack ) const
+                                            StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
@@ -345,11 +346,10 @@ public:
    * The operations typically found in complete are the mapping of the local
    * Jacobian and Residual into the global Jacobian and Residual.
    */
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
-                   STACK_VARIABLE_TYPE & stack ) const
+                   StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(stack);

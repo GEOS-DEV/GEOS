@@ -166,62 +166,6 @@ public:
   {}
 
 
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::setup
-   *
-   * ### ImplicitKernelBase::setup() Description
-   *
-   * In this implementation, the element local Row and Column DOF stack arrays
-   * are filled for when we fill the global matrix and rhs.
-   *
-   * @note This seems like a waste of register space. We should do this in
-   *       complete() unless we actually need these dof somewhere else in the kernel.
-   */
-  template< typename STACK_VARIABLE_TYPE >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
-  {
-    for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
-    {
-      localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for( int i=0; i<numDofPerTestSupportPoint; ++i )
-      {
-        stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
-      }
-    }
-
-    for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
-    {
-      localIndex const localNodeIndex = m_elemsToNodes[k][a];
-      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
-      {
-        stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
-      }
-    }
-  }
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::complete
-   *
-   * In this implementation, only the matrix values are inserted, making this
-   * implementation appropriate for generating the sparsity pattern.
-   */
-  template< typename STACK_VARIABLE_TYPE >
-//    GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
-                   STACK_VARIABLE_TYPE & stack ) const
-  {
-    m_matrix.insert( stack.localRowDofIndex,
-                     stack.localColDofIndex,
-                     &(stack.localJacobian[0][0]),
-                     stack.numRows,
-                     stack.numCols );
-    return 0;
-  }
-
   //***************************************************************************
   /**
    * @struct StackVariables
@@ -234,7 +178,7 @@ public:
    * global data arrays, and local storage for the residual and jacobian
    * contributions.
    */
-  struct StackVariables
+  struct StackVariables : public Base::StackVariables
   {
     /// The number of rows in the element local jacobian matrix.
     static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
@@ -266,6 +210,62 @@ public:
     real64 localJacobian[numRows][numCols];
   };
   //***************************************************************************
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::setup
+   *
+   * ### ImplicitKernelBase::setup() Description
+   *
+   * In this implementation, the element local Row and Column DOF stack arrays
+   * are filled for when we fill the global matrix and rhs.
+   *
+   * @note This seems like a waste of register space. We should do this in
+   *       complete() unless we actually need these dof somewhere else in the kernel.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void setup( localIndex const k,
+              StackVariables & stack ) const
+  {
+    for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
+    {
+      localIndex const localNodeIndex = m_elemsToNodes[k][a];
+      for( int i=0; i<numDofPerTestSupportPoint; ++i )
+      {
+        stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
+      }
+    }
+
+    for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
+    {
+      localIndex const localNodeIndex = m_elemsToNodes[k][a];
+      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
+      {
+        stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
+      }
+    }
+  }
+
+  /**
+   * @copydoc geosx::finiteElement::KernelBase::complete
+   *
+   * In this implementation, only the matrix values are inserted, making this
+   * implementation appropriate for generating the sparsity pattern.
+   */
+//    GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+                   StackVariables & stack ) const
+  {
+    m_matrix.insert( stack.localRowDofIndex,
+                     stack.localColDofIndex,
+                     &(stack.localJacobian[0][0]),
+                     stack.numRows,
+                     stack.numCols );
+    return 0;
+  }
+
+
 
 
 protected:

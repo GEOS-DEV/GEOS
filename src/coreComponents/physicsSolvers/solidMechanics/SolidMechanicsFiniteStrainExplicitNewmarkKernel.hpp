@@ -104,11 +104,35 @@ public:
                          params.m_elementListName )
   {}
 
-  template< typename STACK_VARIABLE_TYPE >
+  //*****************************************************************************
+    struct StackVariables : public Base::StackVariables
+    {
+  public:
+      using Base::StackVariables::fLocal;
+      using Base::StackVariables::varLocal;
+
+  #if defined(CALCFEMSHAPE)
+      using Base::StackVariables::xLocal;
+      using Base::StackVariables::dNdX;
+      using Base::StackVariables::detJ;
+  #endif
+
+
+      GEOSX_HOST_DEVICE
+      StackVariables():
+        Base::StackVariables(),
+        uLocal{ {0.0} }
+      {}
+
+      real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+    };
+  //*****************************************************************************
+
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
-              STACK_VARIABLE_TYPE & stack ) const
+              StackVariables & stack ) const
   {
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
@@ -124,12 +148,11 @@ public:
     }
   }
 
-  template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,
                                    localIndex const q,
-                                   STACK_VARIABLE_TYPE & stack ) const
+                                   StackVariables & stack ) const
   {
 #if defined(CALCFEMSHAPE)
     real64 dNdX[ 8 ][ 3 ];
@@ -222,29 +245,6 @@ public:
     }
   }
 
-  //*****************************************************************************
-    struct StackVariables : public Base::StackVariables
-    {
-  public:
-      using Base::StackVariables::fLocal;
-      using Base::StackVariables::varLocal;
-
-  #if defined(CALCFEMSHAPE)
-      using Base::StackVariables::xLocal;
-      using Base::StackVariables::dNdX;
-      using Base::StackVariables::detJ;
-  #endif
-
-
-      GEOSX_HOST_DEVICE
-      StackVariables():
-        Base::StackVariables(),
-        uLocal{ {0.0} }
-      {}
-
-      real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-    };
-  //*****************************************************************************
 
 
 
