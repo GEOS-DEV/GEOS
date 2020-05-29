@@ -156,13 +156,6 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
-.. _XML_Dummy:
-
-Element: Dummy
-==============
-.. include:: ../../coreComponents/fileIO/schema/docs/Dummy.rst
-
-
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -406,6 +399,13 @@ Element: MultiPhaseMultiComponentFluid
 Element: NonlinearSolverParameters
 ==================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+
+
+.. _XML_NullModel:
+
+Element: NullModel
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel.rst
 
 
 .. _XML_NumericalMethods:
@@ -860,13 +860,6 @@ Datastructure: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
 
 
-.. _DATASTRUCTURE_Dummy:
-
-Datastructure: Dummy
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/Dummy_other.rst
-
-
 .. _DATASTRUCTURE_ElementRegions:
 
 Datastructure: ElementRegions
@@ -1131,6 +1124,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 Datastructure: NonlinearSolverParameters
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_NullModel:
+
+Datastructure: NullModel
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel_other.rst
 
 
 .. _DATASTRUCTURE_NumericalMethods:

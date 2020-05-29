@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_DUMMY_HPP_
-#define SRC_CORECOMPONENTS_CONSTITUTIVE_DUMMY_HPP_
+#ifndef SRC_CORECOMPONENTS_CONSTITUTIVE_NULLMODEL_HPP_
+#define SRC_CORECOMPONENTS_CONSTITUTIVE_NULLMODEL_HPP_
 
 #include "ConstitutiveBase.hpp"
 
@@ -23,18 +23,18 @@ namespace constitutive
 {
 
 /**
- * @class Dummy A null constitutive relation
+ * @class NullModel A null constitutive relation
  */
-class Dummy : public constitutive::ConstitutiveBase
+class NullModel : public constitutive::ConstitutiveBase
 {
 public:
 
   /// @copydoc geosx::dataRepository::Group::Group
-  Dummy( string const & name,
-         Group * const parent );
+  NullModel( string const & name,
+             Group * const parent );
 
   /// Destrutor
-  virtual ~Dummy();
+  virtual ~NullModel();
 
 
   virtual void DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
@@ -42,7 +42,7 @@ public:
                              std::unique_ptr< ConstitutiveBase > & GEOSX_UNUSED_PARAM( clone ) ) const override final;
 
   /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "Dummy";
+  static constexpr auto m_catalogNameString = "NullModel";
 
   /**
    * @return A string that is used to register/lookup this class in the registry
@@ -51,23 +51,24 @@ public:
 
   virtual string GetCatalogName() override { return CatalogName(); }
 
-
-  /// Alias the KernelWrpper to a double.
-  using KernelWrapper = double;
+  /**
+   * Empty struct to serve as a KernelWrapper for the constitutive model.
+   */
+  struct KernelWrapper {};
 
   /**
    * @brief Create a kernel wrapper for this constitutive relation.
    * @param includeState Whether or not to include the state in the wrapper.
    * @return 0
    */
-  double createKernelWrapper( bool const includeState = false )
+  KernelWrapper createKernelWrapper( bool const includeState = false )
   {
     GEOSX_UNUSED_VAR( includeState );
-    return 0.0;
+    return KernelWrapper();
   }
 };
 
 } // constitutive
 } /* namespace geosx */
 
-#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_DUMMY_HPP_ */
+#endif /* SRC_CORECOMPONENTS_CONSTITUTIVE_NULLMODEL_HPP_ */

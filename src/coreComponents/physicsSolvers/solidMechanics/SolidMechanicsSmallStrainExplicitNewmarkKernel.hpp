@@ -129,7 +129,7 @@ public:
                        string const & elementListName ):
     Base( elementSubRegion,
           finiteElementSpace,
-          inputConstitutiveType->createKernelWrapper() ),
+          inputConstitutiveType ),
 #if !defined(CALCFEMSHAPE)
     m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),

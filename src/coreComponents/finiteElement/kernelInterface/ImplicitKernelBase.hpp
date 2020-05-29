@@ -132,7 +132,7 @@ public:
                       ParallelVector & inputRhs ):
     Base( elementSubRegion,
           finiteElementSpace,
-          inputConstitutiveType->createKernelWrapper() ),
+          inputConstitutiveType ),
     m_dofNumber( inputDofNumber ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
@@ -364,9 +364,10 @@ real64 FillSparsity( MeshLevel & mesh,
                      ParallelMatrix & inputMatrix,
                      ParallelVector & inputRhs )
 {
+  real64 rval = 0;
 
-  return RegionBasedKernelApplication< POLICY,
-                                       constitutive::Dummy,
+  rval = RegionBasedKernelApplication< POLICY,
+                                       constitutive::NullModel,
                                        REGION_TYPE,
                                        SparsityHelper< KERNEL_TEMPLATE >::template Kernel
                                        >( mesh,
@@ -376,6 +377,8 @@ real64 FillSparsity( MeshLevel & mesh,
                                           inputDofNumber,
                                           inputMatrix,
                                           inputRhs );
+
+  return rval;
 }
 
 }

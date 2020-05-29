@@ -224,7 +224,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
   finiteElement::
     RegionBasedKernelApplication< serialPolicy,
-                                  Dummy,
+                                  NullModel,
                                   CellElementSubRegion,
                                   LaplaceFEMKernel >( *mesh,
                                                       targetRegionNames(),

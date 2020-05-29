@@ -20,7 +20,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
 
-#include "Dummy.hpp"
+#include "NullModel.hpp"
 #include "solid/LinearElasticIsotropic.hpp"
 #include "solid/LinearElasticAnisotropic.hpp"
 #include "solid/LinearElasticTransverseIsotropic.hpp"
@@ -29,6 +29,9 @@ namespace geosx
 {
 namespace constitutive
 {
+
+
+
 
 template< typename BASETYPE >
 struct ConstitutivePassThru;
@@ -39,11 +42,10 @@ struct ConstitutivePassThru< SolidBase >
 {
   template< typename LAMBDA >
   static
-  inline
-  bool Execute( ConstitutiveBase * const constitutiveRelation,
+  GEOSX_FORCE_INLINE
+  void Execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
-    bool rval = true;
     if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
@@ -58,57 +60,70 @@ struct ConstitutivePassThru< SolidBase >
     }
     else
     {
-      rval = false;
+      string name;
+      if( constitutiveRelation !=nullptr )
+      {
+        name = constitutiveRelation->getName();
+      }
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+                   constitutiveRelation<<" ) failed. ( "<<
+                   constitutiveRelation<<" ) is named "<<name);
     }
-    return rval;
   }
 };
 
 
 template<>
-struct ConstitutivePassThru< Dummy >
+struct ConstitutivePassThru< NullModel >
 {
   template< typename LAMBDA >
   static
-  inline
-  bool Execute( ConstitutiveBase * const constitutiveRelation,
+  GEOSX_FORCE_INLINE
+  void Execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
-    bool rval = true;
-    if( dynamic_cast< Dummy * >( constitutiveRelation ) )
+    if( dynamic_cast< NullModel * >( constitutiveRelation ) )
     {
-      lambda( static_cast< Dummy * >( constitutiveRelation ) );
+      lambda( static_cast< NullModel * >( constitutiveRelation ) );
     }
     else
     {
-      lambda( static_cast< ConstitutiveBase * >( constitutiveRelation ) );
-      rval = false;
+//      lambda( constitutiveRelation );
+
+      string name;
+      if( constitutiveRelation !=nullptr )
+      {
+        name = constitutiveRelation->getName();
+      }
+      GEOSX_ERROR( "ConstitutivePassThru<NullModel>::Execute( "<<
+                   constitutiveRelation<<" ) failed. ( "<<
+                   constitutiveRelation<<" ) is named "<<name);
+
     }
-    return rval;
   }
 };
 
 
 
-template< typename LAMBDA >
-static
-inline
-bool ConstitutiveBasePassThru( ConstitutiveBase * const constitutiveRelation,
-                               LAMBDA && lambda )
-{
-  bool rval = true;
-  if( dynamic_cast< SolidBase * >( constitutiveRelation ) )
-  {
-    ConstitutivePassThru< SolidBase >::Execute( static_cast< SolidBase * >(constitutiveRelation),
-                                                std::forward< LAMBDA&& >( lambda ) );
-  }
-  else if( dynamic_cast< Dummy * >( constitutiveRelation ) )
-  {
-    ConstitutivePassThru< Dummy >::Execute( static_cast< Dummy * >(constitutiveRelation),
-                                            std::forward< LAMBDA&& >( lambda ) );
-  }
-  return rval;
-}
+//template< typename LAMBDA >
+//static
+//GEOSX_FORCE_INLINE
+//bool ConstitutiveBasePassThru( ConstitutiveBase * const constitutiveRelation,
+//                               LAMBDA && lambda )
+//{
+//  bool rval = true;
+//  if( dynamic_cast< SolidBase * >( constitutiveRelation ) )
+//  {
+//    ConstitutivePassThru< SolidBase >::Execute( static_cast< SolidBase * >(constitutiveRelation),
+//                                                std::forward< LAMBDA&& >( lambda ) );
+//  }
+//  else if( dynamic_cast< NullModel * >( constitutiveRelation ) )
+//  {
+//    ConstitutivePassThru< NullModel >::Execute( static_cast< NullModel * >(constitutiveRelation),
+//                                            std::forward< LAMBDA&& >( lambda ) );
+//  }
+//  return rval;
+//}
 
 }
 }

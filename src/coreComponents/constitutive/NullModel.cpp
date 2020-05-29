@@ -12,32 +12,32 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "Dummy.hpp"
+#include "NullModel.hpp"
 
 namespace geosx
 {
 namespace constitutive
 {
 
-Dummy::Dummy( string const & name,
+NullModel::NullModel( string const & name,
               Group * const parent ):
   ConstitutiveBase( name, parent )
 {}
 
-Dummy::~Dummy()
+NullModel::~NullModel()
 {}
 
-void Dummy::DeliverClone( string const & name,
+void NullModel::DeliverClone( string const & name,
                           Group * const parent,
                           std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   if( !clone )
   {
-    clone = std::make_unique< Dummy >( name, parent );
+    clone = std::make_unique< NullModel >( name, parent );
   }
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, Dummy, std::string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, std::string const &, dataRepository::Group * const )
 
 } // constitutive
 } /* namespace geosx */

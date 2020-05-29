@@ -222,10 +222,10 @@ public:
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
               FiniteElementBase const * const finiteElementSpace,
-              typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
+              CONSTITUTIVE_TYPE * const inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
-    m_constitutiveUpdate( inputConstitutiveUpdate ),
+    m_constitutiveUpdate( inputConstitutiveType->createKernelWrapper() ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -535,7 +535,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 
 #if CONSTRUCTOR_PARAM_OPTION==0
   using CONSTRUCTOR_PARAMS = typename KERNEL_TEMPLATE< CellElementSubRegion,
-                                                       constitutive::Dummy,
+                                                       constitutive::NullModel,
                                                        1,
                                                        1 >::ConstructorParams;
 
@@ -567,9 +567,17 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                  1 :
                                  finiteElementSpace->n_quadrature_points();
 
-    constitutive::ConstitutiveBase * const
-    constitutiveRelation = ( targetRegionIndex <= constitutiveNames.size()-1 ) ?
-                             elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] ) : nullptr;
+    constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
+    constitutive::NullModel * nullConstitutiveModel = nullptr;
+    if ( targetRegionIndex <= constitutiveNames.size()-1 )
+    {
+      constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+    }
+    else
+    {
+      nullConstitutiveModel = elementSubRegion.template RegisterGroup<constitutive::NullModel>( "nullModelGroup" );
+      constitutiveRelation = nullConstitutiveModel;
+    }
 
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
                                                                       [&]( auto * const castedConstitutiveRelation )
@@ -643,6 +651,12 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
         } );
       } );
     } );
+
+    if( nullConstitutiveModel )
+    {
+      elementSubRegion.deregisterGroup( "nullModelGroup" );
+    }
+
   } );
 
   return maxResidualContribution;
