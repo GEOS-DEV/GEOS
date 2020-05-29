@@ -774,7 +774,7 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
   NodeManager * const nodeManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
 
   arrayView1d< real64 const > const & faceArea  = faceManager->faceArea();
-  arrayView1d< R1Tensor const > const & faceNormal  = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal  = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -794,8 +794,8 @@ void SolidMechanicsLagrangianFEM::ApplyChomboPressure( DofManager const & dofMan
     {
       for( int component=0; component<3; ++component )
       {
-        nodeDOF[3*a+component] = blockLocalDofNumber[faceToNodeMap( kf, a )] + component;
-        nodeRHS[3*a+component] = -facePressure[kf] * faceNormal[kf][component] * faceArea[kf] / numNodes;
+        nodeDOF[ 3 * a + component ] = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] + component;
+        nodeRHS[ 3 * a + component ] = -facePressure[ kf ] * faceNormal( kf, component ) * faceArea[kf] / numNodes;
       }
     }
     rhs.add( nodeDOF, nodeRHS, numNodes*3 );
@@ -1318,7 +1318,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
     arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
     fc = {0, 0, 0};
 
-    arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+    arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();
 
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );

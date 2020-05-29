@@ -31,16 +31,13 @@ using namespace dataRepository;
 CellBlock::CellBlock( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent ),
   m_toNodesRelation(),
-  m_toFacesRelation()
+  m_toEdgesRelation(),
+  m_toFacesRelation(),
+  m_externalPropertyNames()
 {
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation );
   registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
   registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
-  registerWrapper( viewKeyStruct::numNodesPerElementString, &m_numNodesPerElement );
-  registerWrapper( viewKeyStruct::numEdgesPerElementString, &m_numEdgesPerElement );
-  registerWrapper( viewKeyStruct::numFacesPerElementString, &m_numFacesPerElement );
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter );
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume );
 }
 
 CellBlock::~CellBlock()
