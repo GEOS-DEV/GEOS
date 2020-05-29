@@ -152,17 +152,16 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   // First loop which iterate on the regions
   array1d< globalIndex > globalIndexRegionOffset( polyhedronPartMap.size() +1 );
-  for( auto regionItr = polyhedronPartMap.begin(); regionItr != polyhedronPartMap.end(); ++regionItr )
+  for( auto const & polyhedronPart : polyhedronPartMap )
   {
-    auto regionPtr = regionItr->second;
+    auto const regionPtr = polyhedronPart.second;
     string_array labelTokenized = stringutilities::Tokenize( regionPtr->Label, "_" );
     string regionName = labelTokenized[ labelTokenized.size() - 2 ];
 
     // Iterate on cell types
-    for( auto cellBlockIterator = regionPtr->SubParts.begin();
-         cellBlockIterator != regionPtr->SubParts.end(); cellBlockIterator++ )
+    for( auto const & subPart : regionPtr->SubParts )
     {
-      auto cellBlockPAMELA = cellBlockIterator->second;
+      auto cellBlockPAMELA = subPart.second;
       auto cellBlockType = cellBlockPAMELA->ElementType;
       auto cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
@@ -364,17 +363,16 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
   /// Import surfaces
   auto polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
-  for( auto surfaceItr = polygonPartMap.begin(); surfaceItr != polygonPartMap.end(); ++surfaceItr )
+  for( auto const & polygonPart : polygonPartMap )
   {
-    auto surfacePtr = surfaceItr->second;
+    auto surfacePtr = polygonPart.second;
     auto splitLabel = stringutilities::Tokenize( surfacePtr->Label, "_" );
     string surfaceName = splitLabel[splitLabel.size() -2 ];
 
     SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
-    for( auto cellBlockIterator = surfacePtr->SubParts.begin();
-         cellBlockIterator != surfacePtr->SubParts.end(); cellBlockIterator++ )
+    for( auto const & subPart : surfacePtr->SubParts )
     {
-      auto cellBlockPAMELA = cellBlockIterator->second;
+      auto cellBlockPAMELA = subPart.second;
       auto cellBlockType = cellBlockPAMELA->ElementType;
       auto cellBlockName = ElementToLabel.at( cellBlockType );
       if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
