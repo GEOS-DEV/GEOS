@@ -59,11 +59,9 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   arrayView2d< localIndex const > const & elemList = faceManager->elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
-                                                   arrayView1d< R1Tensor const > >( CellBlock::
-                                                                                      viewKeyStruct::
-                                                                                      elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
+  elemCenter = elemManager->ConstructViewAccessor< array2d< real64 >,
+                                                   arrayView2d< real64 const > >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
   coefficient = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
@@ -82,9 +80,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   }
 
   constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-
-  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  real64 faceArea, faceWeight, faceWeightInv;
 
   stackArray1d< localIndex, numElems > stencilCellsRegionIndex( numElems );
   stackArray1d< localIndex, numElems > stencilCellsSubRegionIndex( numElems );
@@ -106,12 +101,13 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     if( !(regionFilter.contains( elemRegionList[kf][0] ) && regionFilter.contains( elemRegionList[kf][1] )) )
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
       continue;
 
-    faceWeightInv = 0.0;
+    real64 faceWeightInv = 0.0;
 
     for( localIndex ke = 0; ke < numElems; ++ke )
     {
@@ -121,30 +117,30 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         localIndex const esr = elemSubRegionList[kf][ke];
         localIndex const ei  = elemList[kf][ke];
 
-        cellToFaceVec = faceCenter;
-        cellToFaceVec -= elemCenter[er][esr][ei];
+        LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+        LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
 
-        // ensure normal orientation outward of first cell
-        if( ke == 0 && Dot( cellToFaceVec, faceNormal ) < 0.0 )
+        if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
         {
-          faceNormal *= -1;
+          LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
         }
 
-        if( ke == 1 )
-        {
-          cellToFaceVec *= -1.0;
-        }
+        real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-        real64 const c2fDistance = cellToFaceVec.Normalize();
-
-        faceConormal.AiBi( coefficient[er][esr][ei], faceNormal );
-        real64 halfWeight = Dot( cellToFaceVec, faceConormal );
+        // TODO Use LvArray::tensorOps::elementWiseMultiplication
+        faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * faceNormal[ 0 ];
+        faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * faceNormal[ 1 ];
+        faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * faceNormal[ 2 ];
+        real64 halfWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
 
         // correct negative weight issue arising from non-K-orthogonal grids
         if( halfWeight < 0.0 )
         {
-          faceConormal.AiBi( coefficient[er][esr][ei], cellToFaceVec );
-          halfWeight = Dot( cellToFaceVec, faceConormal );
+          // TODO Use LvArray::tensorOps::elementWiseMultiplication
+          faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * cellToFaceVec[ 0 ];
+          faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * cellToFaceVec[ 1 ];
+          faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * cellToFaceVec[ 2 ];
+          halfWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
         }
 
         halfWeight *= faceArea / c2fDistance;
@@ -155,7 +151,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     }
 
     GEOSX_ASSERT( faceWeightInv > 0.0 );
-    faceWeight = 1.0 / faceWeightInv;
+    real64 const faceWeight = 1.0 / faceWeightInv;
 
     for( localIndex ke = 0; ke < numElems; ++ke )
     {
@@ -185,17 +181,16 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   FaceManager const * const faceManager = mesh->getFaceManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > const
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( CellBlock::
-                                                                                                     viewKeyStruct::
-                                                                                                     elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
+  elemCenter = elemManager->ConstructViewAccessor< array2d< real64 >,
+                                                   arrayView2d< real64 const > >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > const
   coefficient = elemManager->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( m_coeffName );
 
   arrayView1d< real64 const >   const & faceArea = faceManager->faceArea();
-  arrayView1d< R1Tensor const > const & faceCenter = faceManager->faceCenter();
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   FaceElementStencil & fractureStencil = getReference< FaceElementStencil >( viewKeyStruct::fractureStencilString );
@@ -559,11 +554,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   arrayView2d< localIndex const > const & elemList           = faceManager->elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
-                                                   arrayView1d< R1Tensor const > >( CellBlock::
-                                                                                      viewKeyStruct::
-                                                                                      elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
+  elemCenter = elemManager->ConstructViewAccessor< array2d< real64 >,
+                                                   arrayView2d< real64 const > >( CellBlock::viewKeyStruct::elementCenterString );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
   coefficient = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
@@ -584,9 +577,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
   constexpr localIndex numElems = BoundaryStencil::NUM_POINT_IN_FLUX;
 
-  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  real64 faceArea, faceWeight;
-
   stackArray1d< PointDescriptor, numElems > stencilPoints( numElems );
   stackArray1d< real64, numElems > stencilWeights( numElems );
 
@@ -601,7 +591,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
     if( faceGhostRank[kf] >= 0 )
       continue;
 
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
+    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     for( localIndex ke = 0; ke < numElems; ++ke )
     {
@@ -615,25 +606,30 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       localIndex const esr = elemSubRegionList[kf][ke];
       localIndex const ei  = elemList[kf][ke];
 
-      cellToFaceVec = faceCenter;
-      cellToFaceVec -= elemCenter[er][esr][ei];
+      LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+      LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
 
-      // ensure normal orientation outward of the cell
-      if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
+      if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
       {
-        faceNormal *= -1;
+        LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
       }
 
-      real64 const c2fDistance = cellToFaceVec.Normalize();
+      real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      faceConormal.AiBi( coefficient[er][esr][ei], faceNormal );
-      faceWeight = Dot( cellToFaceVec, faceConormal );
+      // TODO Use LvArray::tensorOps::elementWiseMultiplication
+      faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * faceNormal[ 0 ];
+      faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * faceNormal[ 1 ];
+      faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * faceNormal[ 2 ];
+      real64 faceWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
       {
-        faceConormal.AiBi( coefficient[er][esr][ei], cellToFaceVec );
-        faceWeight = Dot( cellToFaceVec, faceConormal );
+        // TODO Use LvArray::tensorOps::elementWiseMultiplication
+        faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * cellToFaceVec[ 0 ];
+        faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * cellToFaceVec[ 1 ];
+        faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * cellToFaceVec[ 2 ];
+        faceWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
       }
 
       faceWeight *= faceArea / c2fDistance;

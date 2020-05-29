@@ -105,10 +105,10 @@ void FluxKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
   }
 }
 
-void FluxKernelHelper::UpdateUpwindedCoefficients( array2d< localIndex > const & elemRegionList,
-                                                   array2d< localIndex > const & elemSubRegionList,
-                                                   array2d< localIndex > const & elemList,
-                                                   SortedArray< localIndex > const & regionFilter,
+void FluxKernelHelper::UpdateUpwindedCoefficients( arrayView2d< localIndex const > const & elemRegionList,
+                                                   arrayView2d< localIndex const > const & elemSubRegionList,
+                                                   arrayView2d< localIndex const > const & elemList,
+                                                   SortedArrayView< localIndex const > const & regionFilter,
                                                    arraySlice1d< localIndex const > const elemToFaces,
                                                    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & mob,
                                                    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >::ViewTypeConst const & dMob_dp,

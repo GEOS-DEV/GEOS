@@ -447,8 +447,8 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   ElementRegionManager & elemManager = *mesh.getElemManager();
   FaceManager & faceManager = *mesh.getFaceManager();
 
-  arrayView2d< localIndex > const & elemRegionList     = faceManager.elementRegionList();
-  arrayView2d< localIndex > const & elemSubRegionList  = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager.elementSubRegionList();
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
