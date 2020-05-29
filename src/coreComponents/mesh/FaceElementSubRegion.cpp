@@ -76,16 +76,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "The rotation matrix of each FaceElement." )->
     reference().resizeDimension< 1, 2 >( 3, 3 );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setApplyDefaultValue( {0.0, 0.0, 0.0} )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The center of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The volume of each FaceElement." );
-
   registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
     setApplyDefaultValue( -1 )->
     setPlotLevel( PlotLevel::NOPLOT )->
