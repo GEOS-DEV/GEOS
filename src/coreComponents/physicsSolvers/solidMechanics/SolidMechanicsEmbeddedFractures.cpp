@@ -318,7 +318,44 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                                       constitutiveManager );
 
   constexpr int dim = 3;
-  static constexpr int nUdof = dim * 8; // this is hard-coded for now.
+  static constexpr int maxNumUdof = dim * 8; // this is hard-coded for now.
+
+  // Initialise local matrices and vectors
+  array1d< globalIndex >             elementLocalDofIndex ( maxNumUdof );
+  array1d< globalIndex >             jumpLocalDofIndex    ( 3 );
+
+  array2d< real64 >            Kwu_elem( 3, maxNumUdof );
+  array2d< real64 >            Kuw_elem( maxNumUdof, 3 );
+  array2d< real64 >            Kww_elem( 3, 3 );
+  array1d< real64 >            R1( 3 );
+  array1d< real64 >            R0( maxNumUdof );
+  array1d< real64 >            tractionVec( 3 );
+  array2d< real64 >            dTdw( 3, 3 );
+
+  // Equilibrium and compatibility operators for the element
+  // number of strain components x number of jump enrichments. The comp operator is different
+  // at each Gauss point.
+  array2d< real64 >       eqMatrix( 3, 6 );
+  array2d< real64 >       compMatrix( 6, 3 );
+  array2d< real64 >       strainMatrix( 6, maxNumUdof );
+
+  // local storage of contribution of each gauss point
+  array2d< real64 >            Kwu_gauss( 3, maxNumUdof );
+  array2d< real64 >            Kuw_gauss( maxNumUdof, 3 );
+  array2d< real64 >            Kww_gauss( 3, 3 );
+
+  // intermediate objects to do BDC, EDB, EDC
+  array2d< real64 >            matBD( maxNumUdof * dim, 6 );
+  array2d< real64 >            matED( 3, 6 );
+
+  array1d < R1Tensor > u_local(8);
+  array1d < R1Tensor > du_local(8);
+
+  array1d< real64 >       u( maxNumUdof );
+  array1d< real64 >       w( 3 );
+
+  array2d< real64 > dMatrix( 6, 6 );
+
   // begin region loop
   elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion & embeddedRegion )->void
   {
@@ -352,40 +389,29 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         std::unique_ptr< FiniteElementBase >
         fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
-        // Initialise local matrices and vectors
-        array1d< globalIndex >             elementLocalDofIndex ( nUdof );
-        array1d< globalIndex >             jumpLocalDofIndex    ( 3 );
+        // Resize based on numbe of dof of the subregion
+        int nUdof = numNodesPerElement * 3;
+        elementLocalDofIndex.resize( nUdof );
+        Kwu_elem.resizeDimension<1>( nUdof );
+        Kuw_elem.resizeDimension<0>( nUdof );
+        R0.resize( nUdof );
+        u.resize( nUdof );
 
-        array2d< real64 >            Kwu_elem( 3, nUdof );
-        array2d< real64 >            Kuw_elem( nUdof, 3 );
-        array2d< real64 >            Kww_elem( 3, 3 );
-        array1d< real64 >            R1( 3 );
-        array1d< real64 >            R0( nUdof );
-        array1d< real64 >            tractionVec( 3 );
-        array2d< real64 >            dTdw( 3, 3 );
-
+        // Initialize
         Kwu_elem = 0.0;
         Kuw_elem = 0.0;
         Kww_elem = 0.0;
         R0 = 0.0;
         R1 = 0.0;
         dTdw = 0.0;
+        eqMatrix = 0.0;
+		compMatrix = 0.0;
+		strainMatrix = 0.0;
 
-        // Equilibrium and compatibility operators for the element
-        // number of strain components x number of jump enrichments. The comp operator is different
-        // at each Gauss point.
-        array2d< real64 >       eqMatrix( 3, 6 );
-        array2d< real64 >       compMatrix( 6, 3 );
-        array2d< real64 >       strainMatrix( 6, numNodesPerElement * dim );
-
-        R1Tensor u_local[8];
-        R1Tensor du_local[8];
-
-        array1d< real64 >       u( numNodesPerElement * dim );
-        array1d< real64 >       w( 3 );
+        u_local.resize( numNodesPerElement );
+        du_local.resize( numNodesPerElement );
 
         // Get mechanical moduli tensor
-        array2d< real64 > dMatrix( 6, 6 );
         LinearElasticIsotropic::KernelWrapper const & solidConstitutive =
           Group::group_cast< LinearElasticIsotropic * const >( constitutiveRelations[embeddedSurfaceToRegion[k]][embeddedSurfaceToSubRegion[k]][0] )->
             createKernelWrapper();
@@ -440,17 +466,13 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         }
 
         // 1. Assembly of element matrices
-        // local storage of contribution of each gauss point
-        array2d< real64 >            Kwu_gauss( 3, nUdof );
-        array2d< real64 >            Kuw_gauss( nUdof, 3 );
-        array2d< real64 >            Kww_gauss( 3, 3 );
 
+        // Resize local storages.
+        Kwu_gauss.resizeDimension<1>( nUdof );
+        Kuw_gauss.resizeDimension<0>(nUdof );
+        matBD.resizeDimension<0>( nUdof );
+        strainMatrix.resizeDimension<1>( nUdof );
 
-        // intermediate objects to do BDC, EDB, EDC
-        array2d< real64 >            matBD( numNodesPerElement * dim, 6 );
-        array2d< real64 >            matED( 3, 6 );
-
-        BlasLapackLA::matrixScale( 0, matED );
         BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
 
         // Compute traction
@@ -458,11 +480,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
         for( integer q=0; q<fe->n_quadrature_points(); ++q )
         {
-          BlasLapackLA::matrixScale( 0, Kwu_gauss );
-          BlasLapackLA::matrixScale( 0, Kuw_gauss );
-          BlasLapackLA::matrixScale( 0, Kww_gauss );
-
-
           const realT detJq = detJ[embeddedSurfaceToCell[k]][q];
           AssembleCompatibilityOperator( compMatrix,
                                          embeddedSurfaceSubRegion,
@@ -666,7 +683,7 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
                                                               arrayView3d< R1Tensor const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
-  BlasLapackLA::matrixScale( 0, strainMatrix ); // make 0
+  strainMatrix = 0.0; // make 0
 
   R1Tensor dNdXa;
 

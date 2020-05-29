@@ -308,7 +308,7 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
         }
       }
 
-      if( isNew == true )
+      if( isNew )
       {
         intersectionPoints.push_back( point );
         //pointIndex = intersectionPoints.size() - 1;

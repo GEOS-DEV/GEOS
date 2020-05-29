@@ -163,7 +163,7 @@
 		<VTK name="vtkOutput"
 		plotFileRoot="Sneddon"
 		plotLevel="2"
-		writeBinaryData = "1"/>
+		writeBinaryData = "0"/>
 		<Restart name="restartOutput"/>
 	</Outputs>
 
