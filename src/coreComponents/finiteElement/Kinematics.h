@@ -25,52 +25,6 @@
 
 namespace geosx
 {
-void IncrementalKinematics( const R2Tensor & A,
-                            R2SymTensor & Dadt,
-                            R2Tensor & Rhat );
-
-void IncrementalRotation( const R2Tensor & A,
-                          R2TensorT< 3 > & Rot );
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CalculateGradient( R2Tensor & Gradient,
-                        const int * bConnectivity,
-                        arraySlice1d< R1Tensor > const & disp,
-                        arraySlice1d< R1Tensor > const & dNdX )
-{
-  Gradient = 0.0;
-  for( localIndex a=0; a<8; ++a )
-    Gradient.plus_dyadic_ab( disp[bConnectivity[a]], dNdX[a] );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CalculateGradient( R2Tensor & Gradient,
-                        arraySlice1d< R1Tensor const > const & disp,
-                        arraySlice1d< R1Tensor const > const & dNdX,
-                        localIndex numNodes )
-{
-  Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( localIndex a=1; a<numNodes; ++a )
-  {
-    Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
-  }
-}
-
-template< int N >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void CalculateGradient( R2Tensor & Gradient,
-                        arraySlice1d< R1Tensor const > const & disp,
-                        arraySlice1d< R1Tensor const > const & dNdX )
-{
-  Gradient.dyadic_ab( disp[0], dNdX[0] );
-  for( auto a=1; a<N; ++a )
-  {
-    Gradient.plus_dyadic_ab( disp[a], dNdX[a] );
-  }
-}
 
 template< int N, typename ARRAY_2D >
 GEOSX_HOST_DEVICE
