@@ -390,7 +390,9 @@ public:
     }
     else
     {
-      return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, decltype(m_stress)() );
+      return LinearElasticIsotropicUpdates( m_bulkModulus,
+                                            m_shearModulus,
+                                            typename decltype(m_stress)::ViewType{} );
     }
   }
 

@@ -43,7 +43,6 @@ namespace keys
 }
 
 using namespace dataRepository;
-using namespace constitutive;
 
 
 //START_SPHINX_INCLUDE_01
@@ -224,7 +223,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
 
   finiteElement::
     RegionBasedKernelApplication< serialPolicy,
-                                  NullModel,
+                                  constitutive::NullModel,
                                   CellElementSubRegion,
                                   LaplaceFEMKernel >( *mesh,
                                                       targetRegionNames(),
