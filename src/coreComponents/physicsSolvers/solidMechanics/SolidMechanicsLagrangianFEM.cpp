@@ -1222,11 +1222,9 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                                   DomainPartition * const domain )
 {
   dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::IncrementalDisplacement, -scalingFactor );
-  dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::TotalDisplacement, -scalingFactor );
 
   std::map< string, string_array > fieldNames;
   fieldNames["node"].push_back( keys::IncrementalDisplacement );
-  fieldNames["node"].push_back( keys::TotalDisplacement );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
