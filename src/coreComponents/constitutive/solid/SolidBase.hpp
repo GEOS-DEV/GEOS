@@ -85,39 +85,6 @@ public:
 
 private:
   /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
-   */
-  GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const = 0;
-
-  /**
-   * @brief Calculate stress using input generated under small strain
-   *        assumptions.
-   * @param[in] k The element index.
-   * @param[in] voigtStrain The total strain tensor in Voigt notation.
-   * @param[out] stress Pointer to the stress data in Voigt notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const = 0;
-
-  /**
-   * @brief Update the constitutive state using input generated under small
-   *        strain assumptions.
-   * @param[in] k The element index.
-   * @param[in] q The quadrature point index.
-   * @param[in] voigtStrainIncrement The increment in strain expressed in Voigt
-   *                                 notation.
-   */
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const = 0;
-
-  /**
    * @brief New interface proposal for small strain update
    * @param[in] k Element index.
    * @param[in] q Quadrature point index.
@@ -130,7 +97,15 @@ private:
                                   localIndex const q,
                                   arraySlice1d< real64 const > const & strainIncrement,
                                   arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness ) = 0;
+                                  arraySlice2d< real64 > const & stiffness )
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(strainIncrement);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_UNUSED_VAR(stiffness);
+    GEOSX_ERROR("SolidBase::SmallStrainUpdate() not implemented");
+  }
   
   /**
    * @brief Save history variables in preparation for next timestep
@@ -142,8 +117,58 @@ private:
   {
     GEOSX_UNUSED_VAR(k);
     GEOSX_UNUSED_VAR(q);
-  };
+  }
   
+  /**
+   * accessor to return the stiffness at a given element
+   * @param k the element number
+   * @param c the stiffness array
+   */
+  GEOSX_HOST_DEVICE
+  virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(c);
+    GEOSX_ERROR("SolidBase::GetStiffness() not implemented");
+  }
+
+  /**
+   * @brief Calculate stress using input generated under small strain
+   *        assumptions.
+   * @param[in] k The element index.
+   * @param[in] voigtStrain The total strain tensor in Voigt notation.
+   * @param[out] stress Pointer to the stress data in Voigt notation.
+   */
+  GEOSX_HOST_DEVICE
+  virtual void SmallStrainNoState( localIndex const k,
+                                   real64 const * const GEOSX_RESTRICT voigtStrain,
+                                   real64 * const GEOSX_RESTRICT stress ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(voigtStrain);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR("SolidBase::SmallStrainNoState() not implemented");
+  }
+
+  /**
+   * @brief Update the constitutive state using input generated under small
+   *        strain assumptions.
+   * @param[in] k The element index.
+   * @param[in] q The quadrature point index.
+   * @param[in] voigtStrainIncrement The increment in strain expressed in Voigt
+   *                                 notation.
+   */
+  GEOSX_HOST_DEVICE
+  virtual void SmallStrain( localIndex const k,
+                            localIndex const q,
+                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(voigtStrainIncrement);
+    GEOSX_ERROR("SolidBase::SmallStrain() not implemented");
+  }
+
   /**
    * @brief Hypoelastic update to the constitutive state using input generated
    *        under finite strain assumptions.
@@ -157,7 +182,14 @@ private:
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const = 0;
+                            R2Tensor const & Rot ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(Ddt);
+    GEOSX_UNUSED_VAR(Rot);
+    GEOSX_ERROR("SolidBase::HypoElastic() not implemented");
+  }
 
   /**
    * @brief Hyper-elastic stress update
@@ -168,7 +200,13 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const = 0;
+                             real64 * const GEOSX_RESTRICT stress ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(FmI);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
+  }
 
   /**
    * @brief Hyper-elastic state update
@@ -179,8 +217,13 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              localIndex const q,
-                             real64 const (&FmI)[3][3] ) const = 0;
-
+                             real64 const (&FmI)[3][3] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(FmI);
+    GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
+  }
 
 };
 
@@ -243,16 +286,28 @@ public:
   }
 
   /// Non-const/Mutable accessor for density.
-  arrayView2d< real64 >       const & getDensity()       { return m_density; }
+  arrayView2d< real64 > const & getDensity()
+  {
+    return m_density;
+  }
 
   /// Const/non-mutable accessor for density
-  arrayView2d< real64 const > const & getDensity() const { return m_density; }
+  arrayView2d< real64 const > const & getDensity() const
+  {
+    return m_density;
+  }
 
   /// Non-const/mutable accessor for stress
-  arrayView3d< real64, solid::STRESS_USD >       const & getStress()       { return m_stress; }
+  arrayView3d< real64, solid::STRESS_USD > const & getStress()
+  {
+    return m_stress;
+  }
 
   /// Const/non-mutable accessor for stress
-  arrayView3d< real64 const, solid::STRESS_USD > const & getStress() const { return m_stress; }
+  arrayView3d< real64 const, solid::STRESS_USD > const & getStress() const
+  {
+    return m_stress;
+  }
 
   ///@}
 

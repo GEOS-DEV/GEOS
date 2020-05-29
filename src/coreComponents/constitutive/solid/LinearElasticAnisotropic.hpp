@@ -63,14 +63,6 @@ public:
 
   /// Deleted move assignment operator
   LinearElasticAnisotropicUpdates & operator=( LinearElasticAnisotropicUpdates && ) =  delete;
-
-  // for interface discussion purposes
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness ) override final;
                             
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
@@ -87,17 +79,6 @@ public:
                             localIndex const q,
                             real64 const * const GEOSX_RESTRICT Ddt,
                             R2Tensor const & Rot ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
-
 
   /**
    * accessor to return the stiffness at a given element
@@ -120,23 +101,6 @@ public:
   /// element.
   arrayView3d< real64 const, solid::STIFFNESS_USD > const m_stiffnessView;
 };
-
-// for interface discussion purposes
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void LinearElasticAnisotropicUpdates::SmallStrainUpdate( localIndex const k,
-                                                   localIndex const q,
-                                                   arraySlice1d< real64 const > const & strainIncrement,
-                                                   arraySlice1d< real64 > const & stress,
-                                                   arraySlice2d< real64 > const & stiffness )
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(strainIncrement);
-  GEOSX_UNUSED_VAR(stress);
-  GEOSX_UNUSED_VAR(stiffness);
-  GEOSX_ERROR("Not implemented");
-}
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
@@ -182,18 +146,6 @@ LinearElasticAnisotropicUpdates::
                real64 const * const GEOSX_RESTRICT Ddt,
                R2Tensor const & Rot ) const
 {
-//  for( localIndex i=0 ; i<6 ; ++i )
-//  {
-//    for( localIndex j=0 ; j<3 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * Ddt[j];
-//    }
-//    for( localIndex j=3 ; j<6 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * 2 * Ddt[j];
-//    }
-//  }
-
   constexpr localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
 
   for( localIndex j=0; j<3; ++j )
@@ -228,28 +180,6 @@ LinearElasticAnisotropicUpdates::
   m_stress( k, q, 3 ) = pTemp[4];
   m_stress( k, q, 4 ) = pTemp[3];
   m_stress( k, q, 5 ) = pTemp[1];
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 * const GEOSX_RESTRICT GEOSX_UNUSED_PARAM( stress ) ) const
-{
-  GEOSX_ERROR( "LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!" );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-LinearElasticAnisotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
-{
-  GEOSX_ERROR( "LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
 
 /**

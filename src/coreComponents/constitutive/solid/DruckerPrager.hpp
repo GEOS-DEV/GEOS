@@ -88,51 +88,7 @@ public:
   GEOSX_HOST_DEVICE
   virtual void SaveConvergedState( localIndex const k,
                                    localIndex const q ) override final;
-  
-  // remaining interface functions not implemented for various reasons
-  // but these are all pure virtual so must be included here
-  
-  // reason: stiffness depends on quadrature point, not just element
-  GEOSX_HOST_DEVICE inline
-  virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
-  {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(c);
-    GEOSX_ERROR("Not implemented");
-  }
-  
-  // reason: DP-model requires state
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const override final;
-
-  // this is possible to implement, but would just be a shortcut version without stiffness calculation
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrain( localIndex const k,
-                            localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const override final;
-
-  // reason: need to fix small strain interface first
-  GEOSX_HOST_DEVICE
-  virtual void HypoElastic( localIndex const k,
-                            localIndex const q,
-                            real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const override final;
-
-  // reason: need to fix small strain interface first
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
-
-  // reason: need to fix small strain interface first
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
-  
-  
+    
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
@@ -197,8 +153,13 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
   // elastic predictor: stress = oldStress + stiffness*strainIncrement
   
   BlasLapackLA::matrixVectorMultiply(stiffness, strainIncrement, stress);
-  BlasLapackLA::vectorVectorAdd(m_oldStress[k][q], stress);
+  //BlasLapackLA::vectorVectorAdd(m_oldStress[k][q], stress);
   
+  for(localIndex i=0; i<6; ++i)
+  {
+    stress[i] += m_oldStress[k][q][i];
+  }
+
   // two-invariant decomposition (p-q space)
   
   // remember state
@@ -208,6 +169,7 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     m_newStress[k][q][i] = stress[i];
   }
 }
+
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -222,69 +184,6 @@ void DruckerPragerUpdates::SaveConvergedState( localIndex const k,
   }
 }
 
-///////////////////////// end new proposal /////////////////////////////////////
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SmallStrainNoState( localIndex const k,
-                                               real64 const * GEOSX_RESTRICT const voigtStrain,
-                                               real64 * GEOSX_RESTRICT const stress ) const
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(voigtStrain);
-  GEOSX_UNUSED_VAR(stress);
-  GEOSX_ERROR("Not implemented");
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::SmallStrain( localIndex const k,
-                                        localIndex const q,
-                                        real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(voigtStrainInc);
-  GEOSX_ERROR("Not implemented");
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::HypoElastic( localIndex const k,
-                                        localIndex const q,
-                                        real64 const * const GEOSX_RESTRICT Ddt,
-                                        R2Tensor const & Rot ) const
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(Ddt);
-  GEOSX_UNUSED_VAR(Rot);
-  GEOSX_ERROR("Not implemented");
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::HyperElastic( localIndex const k,
-                                         real64 const (&FmI)[3][3],
-                                         real64 * const GEOSX_RESTRICT stress ) const
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(FmI);
-  GEOSX_UNUSED_VAR(stress);
-  GEOSX_ERROR("Not implemented");
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void DruckerPragerUpdates::HyperElastic( localIndex const k,
-                                         localIndex const q,
-                                         real64 const (&FmI)[3][3] ) const
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(FmI);
-  GEOSX_ERROR("Not implemented");
-}
 
 /**
  * @class DruckerPrager

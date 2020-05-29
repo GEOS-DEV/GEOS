@@ -21,13 +21,11 @@
 
 namespace geosx
 {
-
 using namespace dataRepository;
-
 
 namespace constitutive
 {
-
+  
 SolidBase::SolidBase( string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent ),
@@ -49,13 +47,14 @@ SolidBase::SolidBase( string const & name,
     setDescription( "Material Stress" );
 }
 
+
 SolidBase::~SolidBase()
 {}
 
-void
-SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
-                         Group * const GEOSX_UNUSED_PARAM( parent ),
-                         std::unique_ptr< ConstitutiveBase > & clone ) const
+
+void SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
+                              Group * const GEOSX_UNUSED_PARAM( parent ),
+                              std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast< SolidBase * >(clone.get());
 
@@ -77,5 +76,6 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
 }
 
-}
+
+} /* namespace constitutive */
 } /* namespace geosx */

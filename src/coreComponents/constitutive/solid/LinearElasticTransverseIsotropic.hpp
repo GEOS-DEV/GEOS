@@ -76,14 +76,6 @@ public:
 
   /// Deleted move assignment operator
   LinearElasticTransverseIsotropicUpdates & operator=( LinearElasticTransverseIsotropicUpdates && ) =  delete;
-
-  // for interface discussion purposes
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainUpdate( localIndex const k,
-                            localIndex const q,
-                            arraySlice1d< real64 const > const & strainIncrement,
-                            arraySlice1d< real64 > const & stress,
-                            arraySlice2d< real64 > const & stiffness ) override final;
   
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
@@ -100,16 +92,6 @@ public:
                             localIndex const q,
                             real64 const * const GEOSX_RESTRICT Ddt,
                             R2Tensor const & Rot ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
-
-  GEOSX_HOST_DEVICE
-  virtual void HyperElastic( localIndex const k,
-                             localIndex const q,
-                             real64 const (&FmI)[3][3] ) const override final;
 
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
@@ -146,23 +128,6 @@ private:
   /// A reference to the ArrayView holding c66 for each element.
   arrayView1d< real64 const > const m_c66;
 };
-
-// for interface discussion purposes
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void LinearElasticTransverseIsotropicUpdates::SmallStrainUpdate( localIndex const k,
-                                                           localIndex const q,
-                                                           arraySlice1d< real64 const > const & strainIncrement,
-                                                           arraySlice1d< real64 > const & stress,
-                                                           arraySlice2d< real64 > const & stiffness )
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(strainIncrement);
-  GEOSX_UNUSED_VAR(stress);
-  GEOSX_UNUSED_VAR(stiffness);
-  GEOSX_ERROR("Not implemented");
-}
 
 GEOSX_FORCE_INLINE
 GEOSX_HOST_DEVICE
@@ -219,30 +184,6 @@ LinearElasticTransverseIsotropicUpdates::
     m_stress( k, q, i ) = pTemp[i];
   }
 }
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-LinearElasticTransverseIsotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 * const GEOSX_RESTRICT GEOSX_UNUSED_PARAM( stress ) ) const
-{
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
-}
-
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void
-LinearElasticTransverseIsotropicUpdates::
-  HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
-                localIndex const GEOSX_UNUSED_PARAM( q ),
-                real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3] ) const
-{
-  GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
-}
-
-
 
 /**
  * @class LinearElasticTransverseIsotropic

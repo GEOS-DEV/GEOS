@@ -69,14 +69,6 @@ public:
   /// Deleted move assignment operator
   LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates && ) =  delete;
 
-  // for interface discussion purposes
-  GEOSX_HOST_DEVICE
-  virtual void SmallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & stress,
-                                  arraySlice2d< real64 > const & stiffness ) override final;
-
   /**
    * accessor to return the stiffness at a given element
    * @param[in] k the element number
@@ -143,23 +135,6 @@ private:
   arrayView1d< real64 const > const m_shearModulus;
 
 };
-
-// for interface discussion purposes
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void LinearElasticIsotropicUpdates::SmallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 arraySlice1d< real64 const > const & strainIncrement,
-                                                 arraySlice1d< real64 > const & stress,
-                                                 arraySlice2d< real64 > const & stiffness )
-{
-  GEOSX_UNUSED_VAR(k);
-  GEOSX_UNUSED_VAR(q);
-  GEOSX_UNUSED_VAR(strainIncrement);
-  GEOSX_UNUSED_VAR(stress);
-  GEOSX_UNUSED_VAR(stiffness);
-  GEOSX_ERROR("Not implemented");
-}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
