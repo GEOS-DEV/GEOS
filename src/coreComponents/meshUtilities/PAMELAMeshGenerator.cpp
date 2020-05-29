@@ -101,7 +101,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
 
   // Use the PartMap of PAMELA to get the mesh
-  auto polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
+  auto const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ));
 
   // Vertices are written first
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
@@ -161,13 +161,13 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
     // Iterate on cell types
     for( auto const & subPart : regionPtr->SubParts )
     {
-      auto cellBlockPAMELA = subPart.second;
-      auto cellBlockType = cellBlockPAMELA->ElementType;
-      auto cellBlockName = ElementToLabel.at( cellBlockType );
+      auto const cellBlockPAMELA = subPart.second;
+      auto const cellBlockType = cellBlockPAMELA->ElementType;
+      auto const cellBlockName = ElementToLabel.at( cellBlockType );
       CellBlock * cellBlock = nullptr;
       if( cellBlockName == "HEX" )
       {
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         if( nbCells == 0 )
           continue;
         cellBlock =
@@ -186,7 +186,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
-          auto cornerList = (*cellItr)->get_vertexList();
+          auto const cornerList = (*cellItr)->get_vertexList();
 
           cellToVertex[cellLocalIndex][0] =
             cornerList[0]->get_localIndex();
@@ -210,7 +210,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "TETRA" )
       {
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         if( nbCells == 0 )
           continue;
         cellBlock =
@@ -229,7 +229,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
-          auto cornerList = (*cellItr)->get_vertexList();
+          auto const cornerList = (*cellItr)->get_vertexList();
 
           cellToVertex[cellLocalIndex][0] =
             cornerList[0]->get_localIndex();
@@ -245,7 +245,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "WEDGE" )
       {
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         if( nbCells == 0 )
           continue;
         cellBlock =
@@ -264,7 +264,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
-          auto cornerList = (*cellItr)->get_vertexList();
+          auto const cornerList = (*cellItr)->get_vertexList();
 
           cellToVertex[cellLocalIndex][0] =
             cornerList[0]->get_localIndex();
@@ -284,7 +284,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
       else if( cellBlockName == "PYRAMID" )
       {
-        auto nbCells = cellBlockPAMELA->SubCollection.size_owned();
+        auto const nbCells = cellBlockPAMELA->SubCollection.size_owned();
         if( nbCells == 0 )
           continue;
         cellBlock =
@@ -303,7 +303,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         {
           localIndex cellLocalIndex = (*cellItr)->get_localIndex();
           globalIndex cellGlobalIndex = (*cellItr)->get_globalIndex();
-          auto cornerList = (*cellItr)->get_vertexList();
+          auto const cornerList = (*cellItr)->get_vertexList();
 
           cellToVertex[cellLocalIndex][0] =
             cornerList[0]->get_localIndex();
@@ -325,8 +325,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       {
         for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
-          auto meshProperty = regionPtr->FindVariableByName( m_fieldsToImport[fieldIndex] );
-          auto dimension = meshProperty->Dimension;
+          auto const meshProperty = regionPtr->FindVariableByName( m_fieldsToImport[fieldIndex] );
+          auto const dimension = meshProperty->Dimension;
           if( dimension == PAMELA::VARIABLE_DIMENSION::SCALAR )
           {
             real64_array & property = cellBlock->AddProperty< real64_array >( m_fieldNamesInGEOSX[fieldIndex] );
@@ -362,26 +362,26 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   }
 
   /// Import surfaces
-  auto polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
+  auto const polygonPartMap = std::get< 0 >( PAMELA::getPolygonPartMap( m_pamelaMesh.get(), 0 ));
   for( auto const & polygonPart : polygonPartMap )
   {
-    auto surfacePtr = polygonPart.second;
-    auto splitLabel = stringutilities::Tokenize( surfacePtr->Label, "_" );
+    auto const surfacePtr = polygonPart.second;
+    auto const splitLabel = stringutilities::Tokenize( surfacePtr->Label, "_" );
     string surfaceName = splitLabel[splitLabel.size() -2 ];
 
     SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
     for( auto const & subPart : surfacePtr->SubParts )
     {
-      auto cellBlockPAMELA = subPart.second;
-      auto cellBlockType = cellBlockPAMELA->ElementType;
-      auto cellBlockName = ElementToLabel.at( cellBlockType );
+      auto const cellBlockPAMELA = subPart.second;
+      auto const cellBlockType = cellBlockPAMELA->ElementType;
+      auto const cellBlockName = ElementToLabel.at( cellBlockType );
       if( cellBlockName == "TRIANGLE"  || cellBlockName == "QUAD" )
       {
         for( auto cellItr = cellBlockPAMELA->SubCollection.begin_owned();
              cellItr != cellBlockPAMELA->SubCollection.end_owned();
              cellItr++ )
         {
-          auto cornerList = (*cellItr)->get_vertexList();
+          auto const cornerList = (*cellItr)->get_vertexList();
           for( auto corner :cornerList )
           {
             curNodeSet.insert( corner->get_localIndex() );
