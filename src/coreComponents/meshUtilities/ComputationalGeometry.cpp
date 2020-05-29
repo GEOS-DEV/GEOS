@@ -163,421 +163,73 @@ array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
   return orderedPoints;
 }
 
-
-/**
- * Calculates the centroid of a convex 3D polygon as well as the normal
- * @param[in] pointIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] points 3D point list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal Normal to the face
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           real64 areaTolerance )
-{
-  R1Tensor v1, v2, vc;
-  real64 area = 0.0;
-  center = 0.0;
-  normal=0.;
-
-  if( numPoints > 2 )
-  {
-    R1Tensor const x0 = points[pointsIndices[0]];
-    for( localIndex a=0; a<(numPoints-2); ++a )
-    {
-      v1  = points[pointsIndices[a+1]];
-      v2  = points[pointsIndices[a+2]];
-
-      vc  = x0;
-      vc += v1;
-      vc += v2;
-
-      v1 -= x0;
-      v2 -= x0;
-
-      R1Tensor triangleNormal;
-      triangleNormal.Cross( v1, v2 );
-      const real64 triangleArea = triangleNormal.Normalize();
-      triangleNormal *= triangleArea;
-      normal += triangleNormal;
-      area += triangleArea;
-      vc *= triangleArea;
-      center += vc;
-    }
-    if( area > areaTolerance )
-    {
-      center /= (area * 3.0);
-      normal.Normalize();
-      area *= 0.5;
-    }
-    else if( area < -areaTolerance )
-    {
-      for( localIndex a=0; a<numPoints; ++a )
-      {
-        GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
-                                   << points[pointsIndices[a]]( 1 ) << " "
-                                   << points[pointsIndices[a]]( 2 ) << " "
-                                   << pointsIndices[a] );
-      }
-
-      GEOSX_ERROR( "Negative area found : " << area );
-    }
-    else
-    {
-      return 0.;
-    }
-  }
-  else if( numPoints == 1 )
-  {
-    center = points[pointsIndices[0]];
-  }
-  else if( numPoints == 2 )
-  {
-    center  = points[pointsIndices[0]];
-
-    //For 2D elements, a face is actually an edge with two nodes. We treat the
-    // length of this edge as the surface area and use it in the calculation of
-    // tractions.
-    R1Tensor x1_x0;
-    x1_x0 = points[pointsIndices[1]];
-    center += x1_x0;
-    center *= 0.5;
-
-    x1_x0 -= points[pointsIndices[0]];
-    area = Dot( x1_x0, x1_x0 );
-    area = sqrt( area );
-  }
-  return area;
-}
-
-/**
- * Calculates the centroid of a convex 3D polygon as well as the normal
- * @param[in] pointIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] points 3D point list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal Normal to the face
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           arraySlice2d< real64 > const rotationMatrix,
-                           real64 const areaTolerance )
-{
-  R1Tensor v1, v2, vc;
-  real64 area = 0.0;
-  center = 0.0;
-  normal=0.0;
-
-  LvArray::tensorOps::fill< 3, 3 >( rotationMatrix, 0.0 );
-
-  if( numPoints > 2 )
-  {
-    R1Tensor const x0 = points[pointsIndices[0]];
-    for( localIndex a=0; a<(numPoints-2); ++a )
-    {
-      v1  = points[pointsIndices[a+1]];
-      v2  = points[pointsIndices[a+2]];
-
-      vc  = x0;
-      vc += v1;
-      vc += v2;
-
-      v1 -= x0;
-      v2 -= x0;
-
-      R1Tensor triangleNormal;
-      triangleNormal.Cross( v1, v2 );
-      const real64 triangleArea = triangleNormal.Normalize();
-      triangleNormal *= triangleArea;
-      normal += triangleNormal;
-      area += triangleArea;
-      vc *= triangleArea;
-      center += vc;
-    }
-    if( area > areaTolerance )
-    {
-      center /= (area * 3.0);
-      normal.Normalize();
-      area *= 0.5;
-
-      // Set normal orientation according to a global criterion
-      FixNormalOrientation_3D( normal );
-
-      // Compute the local rotation matrix according to the normal vector
-      RotationMatrix_3D( normal, rotationMatrix );
-    }
-    else if( area < -areaTolerance )
-    {
-      for( localIndex a=0; a<numPoints; ++a )
-      {
-        GEOSX_LOG_RANK( "Points: " << points[pointsIndices[a]]( 0 ) << " "
-                                   << points[pointsIndices[a]]( 1 ) << " "
-                                   << points[pointsIndices[a]]( 2 ) << " "
-                                   << pointsIndices[a] );
-      }
-
-      GEOSX_ERROR( "Negative area found : " << area );
-    }
-    else
-    {
-      return 0.;
-    }
-  }
-  else if( numPoints == 1 )
-  {
-    center = points[pointsIndices[0]];
-  }
-  else if( numPoints == 2 )
-  {
-    center  = points[pointsIndices[0]];
-
-    //For 2D elements, a face is actually an edge with two nodes. We treat the
-    // length of this edge as the surface area and use it in the calculation of
-    // tractions.
-    R1Tensor x1_x0;
-    x1_x0 = points[pointsIndices[1]];
-    center += x1_x0;
-    center *= 0.5;
-
-    x1_x0 -= points[pointsIndices[0]];
-    area = Dot( x1_x0, x1_x0 );
-    area = sqrt( area );
-  }
-  return area;
-}
-
 static real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
-void FixNormalOrientation_3D( R1Tensor & normal )
+void FixNormalOrientation_3D( arraySlice1d< real64 > const normal )
 {
   real64 const orientationTolerance = 1.e+1*machinePrecision;
 
   // Orient local normal in global sense.
   // First check: align with z direction
-  if( normal( 2 ) <= -orientationTolerance )
+  if( normal[ 2 ] <= -orientationTolerance )
   {
-    normal *= -1.0;
+    LvArray::tensorOps::scale< 3 >( normal, -1.0 );
   }
-  else if( std::fabs( normal( 2 ) ) < orientationTolerance )
+  else if( std::fabs( normal[ 2 ] ) < orientationTolerance )
   {
     // If needed, second check: align with y direction
-    if( normal( 1 ) <= -orientationTolerance )
+    if( normal[ 1 ] <= -orientationTolerance )
     {
-      normal *= -1.0;
+      LvArray::tensorOps::scale< 3 >( normal, -1.0 );
     }
-    else if( std::fabs( normal( 1 ) ) < orientationTolerance )
+    else if( std::fabs( normal[ 1 ] ) < orientationTolerance )
     {
       // If needed, third check: align with x direction
-      if( normal( 0 ) <= -orientationTolerance )
+      if( normal[ 0 ] <= -orientationTolerance )
       {
-        normal *= -1.0;
+        LvArray::tensorOps::scale< 3 >( normal, -1.0 );
       }
     }
   }
 }
 
-void RotationMatrix_3D( R1Tensor const & normal,
+void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
                         arraySlice2d< real64 > const rotationMatrix )
 {
-  R1Tensor m1( normal( 2 ), 0.0, -normal( 0 ) );
-  R1Tensor m2( 0.0, normal( 2 ), -normal( 1 ) );
-  real64 const norm_m1 = m1.Normalize();
-  real64 const norm_m2 = m2.Normalize();
+  real64 m1[ 3 ] = { normal[ 2 ], 0.0, -normal[ 0 ] };
+  real64 m2[ 3 ] = { 0.0, normal[ 2 ], -normal[ 1 ] };
+  real64 const norm_m1 = LvArray::tensorOps::normalize< 3 >( m1 );
+  real64 const norm_m2 = LvArray::tensorOps::normalize< 3 >( m2 );
+
   // If present, looks for a vector with 0 norm
   // Fix the uncertain case of norm_m1 very close to norm_m2
   if( norm_m1+1.e+2*machinePrecision > norm_m2 )
   {
-    m2.Cross( normal, m1 );
-    m2.Normalize();
+    LvArray::tensorOps::crossProduct( m2, normal, m1 );
+    LvArray::tensorOps::normalize< 3 >( m2 );
   }
   else
   {
-    m1.Cross( normal, m2 );
-    m1 *= -1.0;
-    m1.Normalize();
+    LvArray::tensorOps::crossProduct( m1, normal, m2 );
+    LvArray::tensorOps::scale< 3 >( m1, -1 );
+    LvArray::tensorOps::normalize< 3 >( m1 );
   }
 
   // Save everything in the standard form (3x3 rotation matrix)
-  rotationMatrix( 0, 0 ) = normal( 0 );
-  rotationMatrix( 1, 0 ) = normal( 1 );
-  rotationMatrix( 2, 0 ) = normal( 2 );
-  rotationMatrix( 0, 1 ) = m1( 0 );
-  rotationMatrix( 1, 1 ) = m1( 1 );
-  rotationMatrix( 2, 1 ) = m1( 2 );
-  rotationMatrix( 0, 2 ) = m2( 0 );
-  rotationMatrix( 1, 2 ) = m2( 1 );
-  rotationMatrix( 2, 2 ) = m2( 2 );
+  rotationMatrix( 0, 0 ) = normal[ 0 ];
+  rotationMatrix( 1, 0 ) = normal[ 1 ];
+  rotationMatrix( 2, 0 ) = normal[ 2 ];
+  rotationMatrix( 0, 1 ) = m1[ 0 ];
+  rotationMatrix( 1, 1 ) = m1[ 1 ];
+  rotationMatrix( 2, 1 ) = m1[ 2 ];
+  rotationMatrix( 0, 2 ) = m2[ 0 ];
+  rotationMatrix( 1, 2 ) = m2[ 1 ];
+  rotationMatrix( 2, 2 ) = m2[ 2 ];
 
   GEOSX_ERROR_IF( std::fabs( LvArray::tensorOps::determinant< 3 >( rotationMatrix ) - 1.0 ) > 1.e+1*machinePrecision,
                   "Rotation matrix with determinant different from +1.0" );
 
   return;
-}
-
-real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           real64 areaTolerance )
-{ return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), points, center, normal, areaTolerance ); }
-
-/**
- * Calculates the centroid of a convex 3D polygon as well as the normal
- * @param[in] pointIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] pointReferences 3D reference point list
- * @param[in] pointDisplacements 3D displacement list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal Normal to the face
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView1d< R1Tensor const > const & pointReferences,
-                           arrayView1d< R1Tensor const > const & pointDisplacements,
-                           R1Tensor & center,
-                           R1Tensor & normal )
-{
-  R1Tensor v1, v2, vc;
-  real64 area = 0.0;
-  center = 0.0;
-
-  if( numPoints==3 )
-  {
-    const localIndex a0 = pointsIndices[0];
-    const localIndex a1 = pointsIndices[1];
-    const localIndex a2 = pointsIndices[2];
-
-    v1  = pointReferences[a1];
-    v1 += pointDisplacements[a1];
-    v2  = pointReferences[a2];
-    v2 += pointDisplacements[a2];
-
-    vc  = pointReferences[a0];
-    vc += pointDisplacements[a0];
-    vc += v1;
-    vc += v2;
-
-    v1 -= pointReferences[a0];
-    v1 -= pointDisplacements[a0];
-    v2 -= pointReferences[a0];
-    v2 -= pointDisplacements[a0];
-
-    normal.Cross( v1, v2 );
-    const real64 triangleArea = normal.Normalize();
-    area += triangleArea;
-    area *= 0.5;
-    vc /= 3.0;
-    center += vc;
-  }
-  else if( numPoints==4 )
-  {
-    v1  = pointReferences[pointsIndices[3]];
-    v1 += pointDisplacements[pointsIndices[3]];
-    R1Tensor x3_x1( v1 );
-    center += v1;
-
-    v1  = pointReferences[pointsIndices[1]];
-    v1 += pointDisplacements[pointsIndices[1]];
-    x3_x1 -= v1;
-    center += v1;
-
-    v1  = pointReferences[pointsIndices[2]];
-    v1 += pointDisplacements[pointsIndices[2]];
-    R1Tensor x2_x0( v1 );
-    center += v1;
-
-    v1  = pointReferences[pointsIndices[0]];
-    v1 += pointDisplacements[pointsIndices[0]];
-    x2_x0 -= v1;
-    center += v1;
-
-    normal.Cross( x2_x0, x3_x1 );
-
-    area = 0.5 * normal.Normalize();
-    center *= 0.25;
-  }
-  else if( numPoints>4 )
-  {
-    const localIndex a0 = pointsIndices[0];
-    for( localIndex a=0; a<(numPoints-2); ++a )
-    {
-      const localIndex a1 = pointsIndices[a+1];
-      const localIndex a2 = pointsIndices[a+2];
-
-      v1  = pointReferences[a1];
-      v1 += pointDisplacements[a1];
-      v2  = pointReferences[a2];
-      v2 += pointDisplacements[a2];
-
-      vc  = pointReferences[a0];
-      vc += pointDisplacements[a0];
-      vc += v1;
-      vc += v2;
-
-      v1 -= pointReferences[a0];
-      v1 -= pointDisplacements[a0];
-      v2 -= pointReferences[a0];
-      v2 -= pointDisplacements[a0];
-
-      normal.Cross( v1, v2 );
-      const real64 triangleArea = normal.Normalize();
-      area += triangleArea;
-      vc *= triangleArea;
-      center += vc;
-    }
-    if( area > 0.0 )
-    {
-      center /= (area * 3.0);
-      area *= 0.5;
-    }
-    else
-    {
-      GEOSX_ERROR( "Zero area calculated!" );
-    }
-  }
-  else if( numPoints==1 )
-  {
-    center = pointReferences[0];
-    center += pointDisplacements[0];
-  }
-  else if( numPoints==2 )
-  {
-    center  = pointReferences[pointsIndices[0]];
-    center += pointDisplacements[pointsIndices[0]];
-
-    //For 2D elements, a face is actually an edge with two nodes. We treat the
-    // length of this edge as the surface area and use it in the calculation of
-    // tractions.
-    R1Tensor x1_x0;
-    x1_x0 = pointReferences[pointsIndices[1]];
-    x1_x0 += pointDisplacements[pointsIndices[1]];
-    center += x1_x0;
-    center *= 0.5;
-
-    x1_x0 -= pointReferences[pointsIndices[0]];
-    x1_x0 -= pointDisplacements[pointsIndices[0]];
-    area = Dot( x1_x0, x1_x0 );
-    area = sqrt( area );
-
-    x1_x0[2] = 0.0;
-    x1_x0.Normalize();
-
-    normal[0] = -x1_x0[1];
-    normal[1] = x1_x0[0];
-    normal[2] = 0.0;
-  }
-
-  return area;
 }
 
 template< typename T >
@@ -592,14 +244,21 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
                               real64 const areaTolerance )
 {
   localIndex const numFaces = faceNodeIndicies.size( 0 );
-  R1Tensor faceCenter, faceNormal;
+  real64 faceCenter[ 3 ], faceNormal[ 3 ];
   int sign = 0;
 
   for( localIndex kf = 0; kf < numFaces; ++kf )
   {
     Centroid_3DPolygon( faceNodeIndicies[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
-    faceCenter -= point;
-    int const s = sgn( Dot( faceNormal, faceCenter ) );
+
+    faceCenter[ 0 ] -= point[ 0 ];
+    faceCenter[ 1 ] -= point[ 1 ];
+    faceCenter[ 2 ] -= point[ 2 ];
+    int const s = sgn( faceNormal[ 0 ] * faceCenter[ 0 ] + faceNormal[ 1 ] * faceCenter[ 1 ] + faceNormal[ 2 ] * faceCenter[ 2 ] );
+
+    // TODO: Replace the above with
+    // LvArray::tensorOps::subtract< 3 >( faceCenter, point );
+    // int const s = sgn( LvArray::tensorOps::innerProduct< 3 >( faceNormal, faceCenter ) );
 
     // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
     if( sign * s < 0 )
@@ -611,13 +270,6 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
   return true;
 }
-
-real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
-                           arrayView1d< R1Tensor const > const & pointReferences,
-                           arrayView1d< R1Tensor const > const & pointDisplacements,
-                           R1Tensor & center,
-                           R1Tensor & normal )
-{ return Centroid_3DPolygon( pointsIndices.data(), pointsIndices.size(), pointReferences, pointDisplacements, center, normal ); }
 
 //GEOSX_HOST_DEVICE
 //real64 HexVolume( R1Tensor const * const X )

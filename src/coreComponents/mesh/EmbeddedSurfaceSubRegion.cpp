@@ -69,14 +69,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( -1.0 )->
     setDescription( "The area of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setDescription( "The center of each EmbeddedSurface element." );
-
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The volume of each EmbeddedSurface element." );
-
   m_numNodesPerElement = 4; // Let s assume it's a plane for now
 }
 
@@ -204,11 +196,15 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1T
 {
   for( localIndex p = 0; p < intersectionPoints.size(); p++ )
   {
-    m_elementCenter[k] += intersectionPoints[p];
+    // TODO change to LvArray::tensorOps::add
+    m_elementCenter( k, 0 ) += intersectionPoints[ p ][ 0 ];
+    m_elementCenter( k, 1 ) += intersectionPoints[ p ][ 1 ];
+    m_elementCenter( k, 2 ) += intersectionPoints[ p ][ 2 ];
   }
 
-  m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
-  m_elementCenter[k] /= intersectionPoints.size();
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
+
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
   this->CalculateElementGeometricQuantities( k );
 }
 

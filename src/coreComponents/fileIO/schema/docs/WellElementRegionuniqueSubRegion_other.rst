@@ -4,7 +4,7 @@
 Name                       Type                                                                                                             Description                                               
 ========================== ================================================================================================================ ========================================================= 
 domainBoundaryIndicator    integer_array                                                                                                    (no description available)                                
-elementCenter              r1_array                                                                                                         (no description available)                                
+elementCenter              real64_array2d                                                                                                   (no description available)                                
 elementVolume              real64_array                                                                                                     (no description available)                                
 ghostRank                  integer_array                                                                                                    (no description available)                                
 globalToLocalMap           geosx_mapBase< long long, long, std_integral_constant< bool, false > >                                           (no description available)                                
@@ -13,6 +13,9 @@ localToGlobalMap           globalIndex_array                                    
 nextWellElementIndex       localIndex_array                                                                                                 (no description available)                                
 nextWellElementIndexGlobal localIndex_array                                                                                                 (no description available)                                
 nodeList                   geosx_InterObjectRelation< LvArray_Array< long, 2, camp_int_seq< long, 0l, 1l >, long, LvArray_NewChaiBuffer > > (no description available)                                
+numEdgesPerElement         localIndex                                                                                                       (no description available)                                
+numFacesPerElement         localIndex                                                                                                       (no description available)                                
+numNodesPerElement         localIndex                                                                                                       (no description available)                                
 radius                     real64_array                                                                                                     (no description available)                                
 topRank                    integer                                                                                                          (no description available)                                
 topWellElementIndex        localIndex                                                                                                       (no description available)                                

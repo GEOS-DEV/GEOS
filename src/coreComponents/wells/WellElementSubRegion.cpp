@@ -43,9 +43,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::topRankString, &m_topRank );
   registerWrapper( viewKeyStruct::radiusString, &m_radius );
 
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter );
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume );
-
   RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData );
 
   this->setNumNodesPerElement( 2 );
@@ -277,10 +274,9 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                             localIndex & esrInit,
                             localIndex & eiInit )
 {
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > >
-  resElemCenter = mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ElementSubRegionBase::
-                                                                                                                        viewKeyStruct::
-                                                                                                                        elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
+  resElemCenter = mesh.getElemManager()->ConstructViewAccessor< array2d< real64 >,
+                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
   auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
@@ -716,7 +712,12 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
         m_nextWellElementIndex[iwelemLocal] = -2; // remote elem
       }
     }
-    m_elementCenter[iwelemLocal] = elemCoordsGlobal[iwelemGlobal];
+
+    // TODO Change to LvArray::tensorOps::copy
+    m_elementCenter[ iwelemLocal ][ 0 ] = elemCoordsGlobal[ iwelemGlobal ][ 0 ];
+    m_elementCenter[ iwelemLocal ][ 1 ] = elemCoordsGlobal[ iwelemGlobal ][ 1 ];
+    m_elementCenter[ iwelemLocal ][ 2 ] = elemCoordsGlobal[ iwelemGlobal ][ 2 ];
+
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
     m_radius[iwelemLocal] = wellGeometry.GetElementRadius();
 
