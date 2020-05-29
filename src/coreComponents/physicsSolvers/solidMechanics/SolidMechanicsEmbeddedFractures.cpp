@@ -348,8 +348,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 >            matBD( maxNumUdof * dim, 6 );
   array2d< real64 >            matED( 3, 6 );
 
-  array1d < R1Tensor > u_local(8);
-  array1d < R1Tensor > du_local(8);
+  array1d< R1Tensor > u_local( 8 );
+  array1d< R1Tensor > du_local( 8 );
 
   array1d< real64 >       u( maxNumUdof );
   array1d< real64 >       w( 3 );
@@ -392,8 +392,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         // Resize based on numbe of dof of the subregion
         int nUdof = numNodesPerElement * 3;
         elementLocalDofIndex.resize( nUdof );
-        Kwu_elem.resizeDimension<1>( nUdof );
-        Kuw_elem.resizeDimension<0>( nUdof );
+        Kwu_elem.resizeDimension< 1 >( nUdof );
+        Kuw_elem.resizeDimension< 0 >( nUdof );
         R0.resize( nUdof );
         u.resize( nUdof );
 
@@ -405,8 +405,8 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         R1 = 0.0;
         dTdw = 0.0;
         eqMatrix = 0.0;
-		compMatrix = 0.0;
-		strainMatrix = 0.0;
+        compMatrix = 0.0;
+        strainMatrix = 0.0;
 
         u_local.resize( numNodesPerElement );
         du_local.resize( numNodesPerElement );
@@ -468,10 +468,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         // 1. Assembly of element matrices
 
         // Resize local storages.
-        Kwu_gauss.resizeDimension<1>( nUdof );
-        Kuw_gauss.resizeDimension<0>(nUdof );
-        matBD.resizeDimension<0>( nUdof );
-        strainMatrix.resizeDimension<1>( nUdof );
+        Kwu_gauss.resizeDimension< 1 >( nUdof );
+        Kuw_gauss.resizeDimension< 0 >( nUdof );
+        matBD.resizeDimension< 0 >( nUdof );
+        strainMatrix.resizeDimension< 1 >( nUdof );
 
         BlasLapackLA::matrixMatrixMultiply( eqMatrix, dMatrix, matED );
 
