@@ -18,46 +18,32 @@
 
 #include "NumericalMethodsManager.hpp"
 
-#include "finiteElement/basis/BasisFunctionManager.hpp"
-#include "finiteElement/quadrature/QuadratureRuleManager.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
-  Group( name, parent )
+  Group( name, parent ),
+  m_basisFunctions( groupKeysStruct::basisFunctions, this ),
+  m_quadratureRules( groupKeysStruct::quadratureRules, this ),
+  m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizations, this ),
+  m_finiteVolumeManager( groupKeysStruct::finiteVolumeManager, this )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  this->RegisterGroup< BasisFunctionManager >( keys::basisFunctions );
-  this->RegisterGroup< QuadratureRuleManager >( keys::quadratureRules );
-  this->RegisterGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
-  this->RegisterGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  this->RegisterGroup( groupKeysStruct::basisFunctions, &m_basisFunctions );
+  this->RegisterGroup( groupKeysStruct::quadratureRules, &m_quadratureRules );
+  this->RegisterGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
+  this->RegisterGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()
-{
-  // TODO Auto-generated destructor stub
-}
+{}
 
-Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * NumericalMethodsManager::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ),
+                                              string const & GEOSX_UNUSED_PARAM( childName ) )
 {
-  return nullptr;
-}
-
-dataRepository::Group const * NumericalMethodsManager::FindNumericalMethodByName( string const & name ) const
-{
-  for( auto & iterNumericalMethod : this->GetSubGroups() )
-  {
-    if( iterNumericalMethod.second->getName() == name )
-    {
-      return iterNumericalMethod.second;
-    }
-  }
-  GEOSX_ERROR( "Can't find subgroup named " + name + " in " + this->getName());
   return nullptr;
 }
 

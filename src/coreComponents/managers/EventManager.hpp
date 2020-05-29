@@ -38,28 +38,48 @@ string const Events( "Events" );
 class EventManager : public dataRepository::Group
 {
 public:
-  /// Main constructor
+  /**
+   * @brief Constructor for the EventManager
+   * @param[in] name the name of the EventManager
+   * @param[in] parent group this EventManager
+   */
   EventManager( std::string const & name,
                 Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief Default destructor for the EventManager
+   */
   virtual ~EventManager() override;
 
-  /// A method to add child events
+  /**
+   * @brief Create a child EventManager
+   * @param[in] childKey the key of the Event to be added
+   * @param[in] childName the name of the child to be added
+   * @return the Event
+   */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  /// This function is used to expand any catalogs in the data structure
+  /**
+   * @brief This method is used to expand any catalogs in the data structure
+   */
   virtual void ExpandObjectCatalogs() override;
 
   /**
-   * The main execution loop for the code.  During each cycle, it will:
+   * @brief The main execution loop for the code.
+   * @details During each cycle, it will:
    *   - Calculate the event forecast (number of cycles until its expected execution)
    *   - Signal an event to prepare (forecast == 1)
    *   - Execute an event (forecast == 0)
    *   - Determine dt for the next cycle
    *   - Advance time, cycle, etc.
+   * @param[in] domain the current DomainPartition on which the Event will be ran
    */
   void Run( dataRepository::Group * domain );
+
+  /**
+   * @name viewKeyStruct/groupKeyStruct
+   */
+  ///@{
 
   struct viewKeyStruct
   {
@@ -79,18 +99,31 @@ public:
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
 
+  ///@}
+
   /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
+
+  /// Catalog interface
   static CatalogInterface::CatalogType & GetCatalog();
 
 private:
-
+  /// Max time for a simulation
   real64 m_maxTime;
+
+  /// Maximum number of cycles for a simulation
   integer m_maxCycle;
 
+  /// Simulation timestamp at the beginning of the cycle
   real64 m_time;
+
+  /// Current timestep request
   real64 m_dt;
+
+  /// Current cycle
   integer m_cycle;
+
+  /// Current subevent index
   integer m_currentSubEvent;
 };
 

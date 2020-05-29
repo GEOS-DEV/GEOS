@@ -15,33 +15,24 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
-#include <string>
-#include <limits>
-
-#include "dataRepository/Group.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/DofManager.hpp"
+#include "physicsSolvers/LinearSolverParameters.hpp"
+
+#include <string>
+#include <limits>
 
 namespace geosx
 {
 
 class DomainPartition;
-
-namespace dataRepository
-{
-namespace keys
-{
-string const courant = "courant";
-string const maxDt   = "maxDt";
-}
-}
 
 class SolverBase : public ExecutableGroup
 {
@@ -485,7 +476,6 @@ public:
   {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
@@ -523,7 +513,7 @@ public:
    */
   LinearSolverParameters & getLinearSolverParameters()
   {
-    return m_linearSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
   /**
@@ -532,7 +522,7 @@ public:
    */
   LinearSolverParameters const & getLinearSolverParameters() const
   {
-    return m_linearSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
   /**
@@ -622,6 +612,10 @@ public:
 
 protected:
 
+  static real64 EisenstatWalker( real64 const newNewtonNorm,
+                                 real64 const oldNewtonNorm,
+                                 real64 const weakestTol );
+
   string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
@@ -675,9 +669,14 @@ protected:
   ParallelVector m_rhs;
   ParallelVector m_solution;
 
+  /// Custom preconditioner for the "native" iterative solver
+  std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
+
   /// Linear solver parameters
-  //LinearSolverParameters m_linearSolverParameters;
-  LinearSolverParametersGroup m_linearSolverParameters;
+  LinearSolverParametersInput m_linearSolverParameters;
+
+  /// Result of the last linear solve
+  LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
