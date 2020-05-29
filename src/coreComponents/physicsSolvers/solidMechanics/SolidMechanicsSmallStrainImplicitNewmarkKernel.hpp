@@ -73,9 +73,10 @@ public:
                             NUM_NODES_PER_ELEM >;
 
   using Base::numNodesPerElem;
+  using Base::numTestSupportPointsPerElem;
+  using Base::numTrialSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
-
 
   using Base::m_dofNumber;
   using Base::m_matrix;
@@ -179,10 +180,11 @@ public:
     real64 N[numNodesPerElem];
     FiniteElementShapeKernel::shapeFunctionValues( q, N );
 
-    Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a, localIndex const b )
+    Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
+                                                                               localIndex const b ) mutable
     {
-      real64 integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
-      real64 temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
+      real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
+      real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
                        + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
       constexpr int nsdof = numDofPerTestSupportPoint;
@@ -206,9 +208,9 @@ public:
                    STACK_VARIABLE_TYPE & stack ) const
   {
 
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    for( int a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<numNodesPerElem; ++b )
+      for( int b=0; b<numNodesPerElem; ++b )
       {
         for( int i=0; i<numDofPerTestSupportPoint; ++i )
         {
@@ -222,15 +224,15 @@ public:
             stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] =
               stack.localJacobian[a*numDofPerTestSupportPoint+i][b*numDofPerTrialSupportPoint+j] +
               stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) ) +
-              stack.dRdU_InertiaMassDamping[ a ][ b ];
+              stack.dRdU_InertiaMassDamping[ a*numDofPerTestSupportPoint+i ][ b*numDofPerTrialSupportPoint+j ];
           }
         }
       }
     }
 
-    for( localIndex a=0; a<stack.numRows; ++a )
+    for( int a=0; a<stack.numRows; ++a )
     {
-      for( localIndex b=0; b<stack.numCols; ++b )
+      for( int b=0; b<stack.numCols; ++b )
       {
         stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
                                      + stack.dRdU_InertiaMassDamping[ a ][ b ];
@@ -245,6 +247,11 @@ public:
   struct StackVariables : Base::StackVariables
   {
 public:
+    /// The number of rows in the element local jacobian matrix.
+    static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
+
+    /// The number of columns in the element local jacobian matrix.
+    static constexpr int numCols = numTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
 
     GEOSX_HOST_DEVICE
     StackVariables():
@@ -254,7 +261,7 @@ public:
       uhattilde_local()
     {}
 
-    real64 dRdU_InertiaMassDamping[ numDofPerTestSupportPoint ][ numDofPerTrialSupportPoint ];
+    real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
     R1Tensor vtilde_local[numNodesPerElem];
     R1Tensor uhattilde_local[numNodesPerElem];
   };

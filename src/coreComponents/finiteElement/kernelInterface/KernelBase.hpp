@@ -25,10 +25,59 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
-//#define USE_CAMP
 
-#if defined(USE_CAMP)
+// 0 is the parameter classes
+// 1 is std::tuple
+// 2 is camp
+#define CONSTRUCTOR_PARAM_OPTION 0
+
+#if CONSTRUCTOR_PARAM_OPTION==1
+namespace std
+{
+
+namespace detail {
+template <class T, class Tuple, std::size_t... I>
+constexpr T make_from_tuple_impl( Tuple&& t, std::index_sequence<I...> )
+{
+  return T(std::get<I>(std::forward<Tuple>(t))...);
+}
+} // namespace detail
+
+template <class T, class Tuple>
+constexpr T make_from_tuple( Tuple&& t )
+{
+    return detail::make_from_tuple_impl<T>(std::forward<Tuple>(t),
+        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple> >::value>{});
+}
+
+}
+#elif CONSTRUCTOR_PARAM_OPTION==2
   #include "camp/camp.hpp"
+
+
+namespace camp
+{
+namespace detail
+ {
+   template <class T, class Tuple, idx_t... I>
+   constexpr T make_from_tuple_impl(Tuple&& t, idx_seq<I...>)
+   {
+     return T(get<I>(std::forward<Tuple>(t))...);
+   }
+ }  // namespace detail
+
+  /// Instantiate T from tuple contents, like camp::invoke(tuple,constructor) but
+ /// functional
+ template <class T, class Tuple>
+ constexpr T make_from_tuple(Tuple&& tt)
+ {
+   return
+       detail::
+       make_from_tuple_impl<T>( std::forward<Tuple>(tt),
+                                make_idx_seq_t<tuple_size<type::ref::rem<Tuple>>::value>{});
+ }
+}
+
 #endif
 
 namespace geosx
@@ -77,21 +126,21 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-    case 4:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-      break;
-    }
-    case 5:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-      break;
-    }
-    case 6:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
-      break;
-    }
+//    case 4:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
+//      break;
+//    }
+//    case 5:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+//      break;
+//    }
+//    case 6:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
+//      break;
+//    }
     case 8:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
@@ -467,15 +516,19 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
   FaceManager & faceManager = *(mesh.getFaceManager());
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
-#if defined(USE_CAMP)
-  auto kernelConstructorParamsTuple = camp::make_tuple(kernelConstructorParams...);
-#else
+
+#if CONSTRUCTOR_PARAM_OPTION==0
   using CONSTRUCTOR_PARAMS = typename KERNEL_TEMPLATE< CellElementSubRegion,
                                                        constitutive::Dummy,
                                                        1,
                                                        1 >::ConstructorParams;
 
   CONSTRUCTOR_PARAMS kernelParams( std::forward< KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+
+#elif CONSTRUCTOR_PARAM_OPTION==1
+  auto kernelConstructorParamsTuple = std::forward_as_tuple( std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+#elif CONSTRUCTOR_PARAM_OPTION==2
+  auto kernelConstructorParamsTuple = camp::forward_as_tuple( std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
 #endif
 
 
@@ -518,25 +571,41 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                              CONSTITUTIVE_TYPE,
                                              NUM_NODES_PER_ELEM,
                                              NUM_NODES_PER_ELEM >;
-#if defined(USE_CAMP)
-        auto temp = camp::make_tuple( nodeManager,
-                                      edgeManager,
-                                      faceManager,
-                                      elementSubRegion,
-                                      finiteElementSpace,
-                                      castedConstitutiveRelation );
 
-        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp, kernelConstructorParamsTuple );
+#if CONSTRUCTOR_PARAM_OPTION==0
+        KERNEL_TYPE kernelComponent( nodeManager,
+                                     edgeManager,
+                                     faceManager,
+                                     elementSubRegion,
+                                     finiteElementSpace,
+                                     castedConstitutiveRelation,
+                                     kernelParams );
 
-        KERNEL_TYPE kernelComponent  = camp::invoke(fullKernelComponentConstructorArgs, (typename KERNEL_TYPE)::KERNEL_TYPE );
-#else
-  KERNEL_TYPE kernelComponent( nodeManager,
-                               edgeManager,
-                               faceManager,
-                               elementSubRegion,
-                               finiteElementSpace,
-                               castedConstitutiveRelation,
-                               kernelParams );
+#elif CONSTRUCTOR_PARAM_OPTION==1
+
+        auto temp = std::forward_as_tuple( nodeManager,
+                                           edgeManager,
+                                           faceManager,
+                                           elementSubRegion,
+                                           finiteElementSpace,
+                                           castedConstitutiveRelation );
+
+        auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
+                                                                  kernelConstructorParamsTuple );
+
+        KERNEL_TYPE kernelComponent  = std::make_from_tuple<KERNEL_TYPE>(fullKernelComponentConstructorArgs);
+
+#elif CONSTRUCTOR_PARAM_OPTION==2
+        auto temp = camp::forward_as_tuple( nodeManager,
+                                            edgeManager,
+                                            faceManager,
+                                            elementSubRegion,
+                                            finiteElementSpace,
+                                            castedConstitutiveRelation );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
+                                                                        kernelConstructorParamsTuple );
+        KERNEL_TYPE kernelComponent  = camp::make_from_tuple<KERNEL_TYPE>(fullKernelComponentConstructorArgs);
+
 #endif
 
   // We can replace all the shenanigans with params when we can use c++20

@@ -51,6 +51,9 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /// Allow for partial overload of Base::compute()
+  using Base::compute;
+
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
