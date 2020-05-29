@@ -95,7 +95,7 @@ namespace finiteElement
  *        conversion of the input integral type to allow for static
  *        dispatch.
  * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
- * @tparam LAMBDA The type of @p lambda to execuute.
+ * @tparam LAMBDA The type of @p lambda to execute.
  * @param input The integer to convert to an integral_constant.
  * @param lambda The generic lambda function (takes the integral_constant as
  *               a parameter) that will be executed.
@@ -196,6 +196,22 @@ template< typename SUBREGION_TYPE,
 class KernelBase
 {
 public:
+  /// Compile time value for the number of test function support points per
+  /// element.
+  static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
+
+  /// Compile time value for the number of trial function support points per
+  /// element.
+  static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
+
+  /// Compile time value for the number of degrees of freedom per test function
+  /// support point.
+  static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
+
+  /// Compile time value for the number of degrees of freedom per trial
+  /// function support point.
+  static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
+
   /**
    * @brief Constructor
    * @param elementSubRegion Reference to the SUBREGION_TYPE(class template
@@ -207,9 +223,9 @@ public:
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
               FiniteElementBase const * const finiteElementSpace,
               typename CONSTITUTIVE_TYPE::KernelWrapper const & inputConstitutiveUpdate ):
-    elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
-    elemGhostRank( elementSubRegion.ghostRank() ),
-    constitutiveUpdate( inputConstitutiveUpdate ),
+    m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
+    m_elemGhostRank( elementSubRegion.ghostRank() ),
+    m_constitutiveUpdate( inputConstitutiveUpdate ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -379,7 +395,7 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.elemGhostRank[k] < 0 )
+      if( kernelComponent.m_elemGhostRank[k] < 0 )
       {
         maxResidual.max( kernelComponent.complete( k, stack ) );
       }
@@ -425,7 +441,7 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.elemGhostRank[k] < 0 )
+      if( kernelComponent.m_elemGhostRank[k] < 0 )
       {
         maxResidual.max( kernelComponent.complete( k, stack ) );
       }
@@ -435,14 +451,14 @@ public:
 
 protected:
   /// The element to nodes map.
-  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
+  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const m_elemsToNodes;
 
   /// The element ghost rank array.
-  arrayView1d< integer const > const elemGhostRank;
+  arrayView1d< integer const > const m_elemGhostRank;
 
   /// The constitutive update object used to update the constitutive state,
   /// and extract constitutive data.
-  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
+  typename CONSTITUTIVE_TYPE::KernelWrapper const m_constitutiveUpdate;
 
   /// The finite element space/discretization object for the element type in
   /// the SUBREGION_TYPE.

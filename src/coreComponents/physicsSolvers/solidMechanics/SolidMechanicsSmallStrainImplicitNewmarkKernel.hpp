@@ -81,16 +81,13 @@ public:
   using Base::m_dofNumber;
   using Base::m_matrix;
   using Base::m_rhs;
-  using Base::elemsToNodes;
-  using Base::constitutiveUpdate;
+  using Base::m_elemsToNodes;
   using Base::m_disp;
   using Base::m_uhat;
-  using Base::dNdX;
-  using Base::detJ;
-  using Base::m_finiteElementSpace;
+  using Base::m_detJ;
+
+  /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = ImplicitNewmarkConstructorParams;
-
-
 
   ImplicitNewmark( NodeManager const & nodeManager,
                    EdgeManager const & edgeManager,
@@ -152,14 +149,14 @@ public:
   {}
 
   template< typename STACK_VARIABLE_TYPE >
-  //    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
               STACK_VARIABLE_TYPE & stack ) const
   {
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
       stack.u_local[ a ] = m_disp[ localNodeIndex ];
       stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
@@ -183,7 +180,7 @@ public:
     Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
                                                                                localIndex const b ) mutable
     {
-      real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * detJ( k, q );
+      real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
       real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
                        + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
@@ -244,14 +241,11 @@ public:
 
 
 
-  struct StackVariables : Base::StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 public:
-    /// The number of rows in the element local jacobian matrix.
-    static constexpr int numRows = numTestSupportPointsPerElem *numDofPerTestSupportPoint;
-
-    /// The number of columns in the element local jacobian matrix.
-    static constexpr int numCols = numTrialSupportPointsPerElem *numDofPerTrialSupportPoint;
+    using Base::StackVariables::numRows;
+    using Base::StackVariables::numCols;
 
     GEOSX_HOST_DEVICE
     StackVariables():

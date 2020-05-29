@@ -59,8 +59,9 @@ struct ExplicitSmallStrainConstructorParams
 #if defined(GEOSX_USE_CUDA)
   #define CALCFEMSHAPE
 #endif
-// If UPDATE_STRESS is undef, then stress is not updated at all.
-//  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
+// If UPDATE_STRESS is undef, uses total displacement and stress is not updated at all.
+//  #define UPDATE_STRESS 1 // uses total displacement to and adds material
+                            // stress state to integral for nodalforces.
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
 
@@ -82,19 +83,37 @@ struct ExplicitSmallStrainConstructorParams
  * ExplicitSmallStrain only conforms to the interface set by KernelBase, and
  * does not inherit from KernelBase.
  * The number of degrees of freedom per support point for both
- * the test and trial spaces are specified as `3` when specifying the base
- * class.
+ * the test and trial spaces are specified as `3`.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
           int UNUSED >
-class ExplicitSmallStrain
+class ExplicitSmallStrain : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                              CONSTITUTIVE_TYPE,
+                                                              NUM_NODES_PER_ELEM,
+                                                              NUM_NODES_PER_ELEM,
+                                                              3,
+                                                              3 >
 {
 public:
+  using Base = finiteElement::KernelBase< SUBREGION_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          NUM_NODES_PER_ELEM,
+                                          NUM_NODES_PER_ELEM,
+                                          3,
+                                          3 >;
+
   static constexpr int numTestDofPerSP = 3;
   static constexpr int numTrialDofPerSP = 3;
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
+
+
   using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
 
@@ -108,18 +127,17 @@ public:
                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
                        real64 const dt,
                        string const & elementListName ):
-    elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
-    elemGhostRank( elementSubRegion.ghostRank() ),
-    constitutiveUpdate( inputConstitutiveType->createKernelWrapper() ),
-    m_finiteElementSpace( finiteElementSpace ),
+    Base( elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType->createKernelWrapper() ),
 #if !defined(CALCFEMSHAPE)
-    dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
+    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
 #endif
-    X( nodeManager.referencePosition()),
-    u( nodeManager.totalDisplacement()),
-    vel( nodeManager.velocity()),
-    acc( nodeManager.acceleration() ),
+    m_X( nodeManager.referencePosition()),
+    m_u( nodeManager.totalDisplacement()),
+    m_vel( nodeManager.velocity()),
+    m_acc( nodeManager.acceleration() ),
     m_dt( dt ),
     m_elementList( elementSubRegion.template getReference< SortedArray< localIndex > >( elementListName ).toViewConst() )
   {
@@ -154,17 +172,17 @@ public:
   {
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
-      localIndex const nodeIndex = elemsToNodes( k, a );
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numTrialDofPerSP; ++i )
       {
 #if defined(CALCFEMSHAPE)
-        stack.xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
 #endif
 
 #if UPDATE_STRESS==2
-        stack.varLocal[ a ][ i ] = vel[ nodeIndex ][ i ] * m_dt;
+        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ] * m_dt;
 #else
-        stack.varLocal[ a ][ i ] = u[ nodeIndex ][ i ];
+        stack.varLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
 #endif
       }
     }
@@ -184,8 +202,8 @@ public:
 #define DNDX dNdX
   #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
-  #define DNDX dNdX[k][q]
-  #define DETJ detJ( k, q )
+  #define DNDX m_dNdX[k][q]
+  #define DETJ m_detJ( k, q )
 #endif //defined(CALCFEMSHAPE)
 
     real64 stressLocal[ 6 ] = {0};
@@ -201,17 +219,17 @@ public:
     }
 
 #if UPDATE_STRESS == 2
-    constitutiveUpdate.SmallStrain( k, q, strain );
+    m_constitutiveUpdate.SmallStrain( k, q, strain );
 #else
-    constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
+    m_constitutiveUpdate.SmallStrainNoState( k, strain, stressLocal );
 #endif
 
     for( localIndex c = 0; c < 6; ++c )
     {
 #if UPDATE_STRESS == 2
-      stressLocal[ c ] =  constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
+      stressLocal[ c ] =  m_constitutiveUpdate.m_stress( k, q, c ) * (-DETJ);
 #elif UPDATE_STRESS == 1
-      stressLocal[ c ] = ( stressLocal[ c ] + constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
+      stressLocal[ c ] = ( stressLocal[ c ] + m_constitutiveUpdate.m_stress( k, q, c ) ) *(-DETJ);
 #else
       stressLocal[ c ] *= -DETJ;
 #endif
@@ -247,18 +265,15 @@ public:
   real64 complete( localIndex const k,
                    STACK_VARIABLE_TYPE const & stack ) const
   {
-    real64 meanForce = 0;
-
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      localIndex const nodeIndex = elemsToNodes( k, a );
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int b = 0; b < numTestDofPerSP; ++b )
       {
-        RAJA::atomicAdd< parallelDeviceAtomic >( &acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
       }
     }
-
-    return meanForce;
+    return 0;
   }
 
 
@@ -270,7 +285,6 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
-    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     localIndex const numElems = kernelComponent.m_elementList.size();
     forAll< POLICY >( numElems,
@@ -289,9 +303,9 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      maxResidual.max( kernelComponent.complete( k, stack ) );
+      kernelComponent.complete( k, stack );
     } );
-    return maxResidual.get();
+    return 0;
   }
 
   //*****************************************************************************
@@ -325,18 +339,14 @@ public:
 
 
 protected:
-  typename SUBREGION_TYPE::NodeMapType::base_type::ViewTypeConst const elemsToNodes;
-  arrayView1d< integer const > const elemGhostRank;
-  typename CONSTITUTIVE_TYPE::KernelWrapper const constitutiveUpdate;
-  FiniteElementBase const * m_finiteElementSpace;
   #if !defined(CALCFEMSHAPE)
-  arrayView3d< R1Tensor const > const dNdX;
-  arrayView2d< real64 const > const detJ;
+  arrayView3d< R1Tensor const > const m_dNdX;
+  arrayView2d< real64 const > const m_detJ;
   #endif
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X;
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u;
-  arrayView2d< real64 const, nodes::VELOCITY_USD > const vel;
-  arrayView2d< real64, nodes::ACCELERATION_USD > const acc;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_u;
+  arrayView2d< real64 const, nodes::VELOCITY_USD > const m_vel;
+  arrayView2d< real64, nodes::ACCELERATION_USD > const m_acc;
   real64 const m_dt;
   SortedArrayView< localIndex const > const m_elementList;
 

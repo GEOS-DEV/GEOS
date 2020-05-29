@@ -108,37 +108,13 @@ public:
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTestSupportPoint
   using Base::numDofPerTestSupportPoint;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTrialSupportPoint
   using Base::numDofPerTrialSupportPoint;
-
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_dofNumber
   using Base::m_dofNumber;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_matrix
   using Base::m_matrix;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_rhs
   using Base::m_rhs;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemsToNodes
-  using Base::elemsToNodes;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemGhostRank
-  using Base::elemGhostRank;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::constitutiveUpdate
-  using Base::constitutiveUpdate;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_finiteElementSpace
-  using Base::m_finiteElementSpace;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::Launch
-  using Base::Launch;
+  using Base::m_elemsToNodes;
+  using Base::m_constitutiveUpdate;
 
   /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = QuasiStaticConstructorParams;
@@ -170,8 +146,8 @@ public:
           inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
-    dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
+    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
   {}
 
@@ -216,7 +192,7 @@ public:
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
       stack.u_local[ a ] = m_disp[ localNodeIndex ];
       stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
@@ -247,21 +223,21 @@ public:
     real64 strainInc[6] = {0};
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      strainInc[0] = strainInc[0] + dNdX( k, q, a )[0] * stack.uhat_local[a][0];
-      strainInc[1] = strainInc[1] + dNdX( k, q, a )[1] * stack.uhat_local[a][1];
-      strainInc[2] = strainInc[2] + dNdX( k, q, a )[2] * stack.uhat_local[a][2];
-      strainInc[3] = strainInc[3] + dNdX( k, q, a )[2] * stack.uhat_local[a][1] +
-                     dNdX( k, q, a )[1] * stack.uhat_local[a][2];
-      strainInc[4] = strainInc[4] + dNdX( k, q, a )[2] * stack.uhat_local[a][0] +
-                     dNdX( k, q, a )[0] * stack.uhat_local[a][2];
-      strainInc[5] = strainInc[5] + dNdX( k, q, a )[1] * stack.uhat_local[a][0] +
-                     dNdX( k, q, a )[0] * stack.uhat_local[a][1];
+      strainInc[0] = strainInc[0] + m_dNdX( k, q, a )[0] * stack.uhat_local[a][0];
+      strainInc[1] = strainInc[1] + m_dNdX( k, q, a )[1] * stack.uhat_local[a][1];
+      strainInc[2] = strainInc[2] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][2];
+      strainInc[3] = strainInc[3] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][1] +
+                     m_dNdX( k, q, a )[1] * stack.uhat_local[a][2];
+      strainInc[4] = strainInc[4] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][0] +
+                     m_dNdX( k, q, a )[0] * stack.uhat_local[a][2];
+      strainInc[5] = strainInc[5] + m_dNdX( k, q, a )[1] * stack.uhat_local[a][0] +
+                     m_dNdX( k, q, a )[0] * stack.uhat_local[a][1];
     }
 
-    constitutiveUpdate.SmallStrain( k, q, strainInc );
+    m_constitutiveUpdate.SmallStrain( k, q, strainInc );
 
     GEOSX_UNUSED_VAR( q )
-    constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.GetStiffness( k, stack.constitutiveStiffness );
   }
 
 
@@ -286,35 +262,35 @@ public:
       for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
-        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] +
-                                                   c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] +
-                                                   c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
+                                                   c[5][5]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
+                                                   c[4][4]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] +
-                                                   c[0][1]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[0] +
+                                                   c[0][1]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[1] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] +
-                                                   c[0][2]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[0] +
+                                                   c[0][2]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] +
-                                                   c[1][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] +
-                                                   c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
+                                                   c[1][1]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
+                                                   c[3][3]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*dNdX( k, q, a )[1]*dNdX( k, q, b )[0] +
-                                                   c[5][5]*dNdX( k, q, a )[0]*dNdX( k, q, b )[1] ) * detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[0] +
+                                                   c[5][5]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[1] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] +
-                                                   c[1][2]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[1] +
+                                                   c[1][2]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[0] +
-                                                   c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[0] +
+                                                   c[4][4]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[1] +
-                                                   c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[1] +
+                                                   c[3][3]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*dNdX( k, q, a )[0]*dNdX( k, q, b )[0] +
-                                                   c[3][3]*dNdX( k, q, a )[1]*dNdX( k, q, b )[1] +
-                                                   c[2][2]*dNdX( k, q, a )[2]*dNdX( k, q, b )[2] ) * detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
+                                                   c[3][3]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
+                                                   c[2][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
 
         dynamicsTerms( a, b );
       }
@@ -336,29 +312,29 @@ public:
                                             STACK_VARIABLE_TYPE & stack,
                                             STRESS_MODIFIER && stressModifier = [] GEOSX_DEVICE ( real64 * ) {} ) const
   {
-    real64 stress[6] = { constitutiveUpdate.m_stress( k, q, 0 ),
-                         constitutiveUpdate.m_stress( k, q, 1 ),
-                         constitutiveUpdate.m_stress( k, q, 2 ),
-                         constitutiveUpdate.m_stress( k, q, 3 ),
-                         constitutiveUpdate.m_stress( k, q, 4 ),
-                         constitutiveUpdate.m_stress( k, q, 5 ) };
+    real64 stress[6] = { m_constitutiveUpdate.m_stress( k, q, 0 ),
+                         m_constitutiveUpdate.m_stress( k, q, 1 ),
+                         m_constitutiveUpdate.m_stress( k, q, 2 ),
+                         m_constitutiveUpdate.m_stress( k, q, 3 ),
+                         m_constitutiveUpdate.m_stress( k, q, 4 ),
+                         m_constitutiveUpdate.m_stress( k, q, 5 ) };
 
     stressModifier( stress );
 
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * dNdX( k, q, a )[ 0 ] +
-                                            stress[ 5 ] * dNdX( k, q, a )[ 1 ] +
-                                            stress[ 4 ] * dNdX( k, q, a )[ 2 ] -
-                                            m_gravityVector[0] ) * detJ( k, q );
-      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * dNdX( k, q, a )[ 0 ] +
-                                            stress[ 1 ] * dNdX( k, q, a )[ 1 ] +
-                                            stress[ 3 ] * dNdX( k, q, a )[ 2 ] -
-                                            m_gravityVector[1] ) * detJ( k, q );
-      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * dNdX( k, q, a )[ 0 ] +
-                                            stress[ 3 ] * dNdX( k, q, a )[ 1 ] +
-                                            stress[ 2 ] * dNdX( k, q, a )[ 2 ] -
-                                            m_gravityVector[2] ) * detJ( k, q );
+      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a )[ 0 ] +
+                                            stress[ 5 ] * m_dNdX( k, q, a )[ 1 ] +
+                                            stress[ 4 ] * m_dNdX( k, q, a )[ 2 ] -
+                                            m_gravityVector[0] ) * m_detJ( k, q );
+      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a )[ 0 ] +
+                                            stress[ 1 ] * m_dNdX( k, q, a )[ 1 ] +
+                                            stress[ 3 ] * m_dNdX( k, q, a )[ 2 ] -
+                                            m_gravityVector[1] ) * m_detJ( k, q );
+      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a )[ 0 ] +
+                                            stress[ 3 ] * m_dNdX( k, q, a )[ 1 ] +
+                                            stress[ 2 ] * m_dNdX( k, q, a )[ 2 ] -
+                                            m_gravityVector[2] ) * m_detJ( k, q );
     }
   }
 
@@ -401,7 +377,7 @@ public:
    * Adds a stack array for the displacement, incremental displacement, and the
    * constitutive stiffness.
    */
-  struct StackVariables : Base::StackVariables
+  struct StackVariables : public Base::StackVariables
   {
 public:
 
@@ -434,10 +410,10 @@ protected:
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
 
   /// The shape function derivative for each quadrature point.
-  arrayView3d< R1Tensor const > const dNdX;
+  arrayView3d< R1Tensor const > const m_dNdX;
 
   /// The parent->physical jacobian determinant for each quadrature point.
-  arrayView2d< real64 const > const detJ;
+  arrayView2d< real64 const > const m_detJ;
 
   /// The gravity vector.
   real64 const m_gravityVector[3];

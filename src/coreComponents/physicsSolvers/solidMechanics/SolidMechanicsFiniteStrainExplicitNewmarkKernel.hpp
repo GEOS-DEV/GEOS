@@ -55,16 +55,18 @@ public:
   using Base::numNodesPerElem;
 
   using Base::m_dt;
-  using Base::elemsToNodes;
-  using Base::u;
-  using Base::vel;
-  using Base::X;
-  using Base::acc;
-  using Base::constitutiveUpdate;
+  using Base::m_elemsToNodes;
+  using Base::m_u;
+  using Base::m_vel;
+  using Base::m_acc;
+  using Base::m_constitutiveUpdate;
 #if !defined(CALCFEMSHAPE)
-  using Base::dNdX;
-  using Base::detJ;
+  using Base::m_dNdX;
+  using Base::m_detJ;
+#else
+  using Base::m_X;
 #endif
+
   using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
   ExplicitFiniteStrain( NodeManager & nodeManager,
@@ -110,14 +112,14 @@ public:
   {
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
-      localIndex const nodeIndex = elemsToNodes( k, a );
+      localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numTrialDofPerSP; ++i )
       {
 #if defined(CALCFEMSHAPE)
-        stack.xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
 #endif
-        stack.uLocal[ a ][ i ] = u[ nodeIndex ][ i ];
-        stack.varLocal[ a ][ i ] = vel[ nodeIndex ][ i ];
+        stack.uLocal[ a ][ i ] = m_u[ nodeIndex ][ i ];
+        stack.varLocal[ a ][ i ] = m_vel[ nodeIndex ][ i ];
       }
     }
   }
@@ -135,8 +137,8 @@ public:
 #define DNDX dNdX
 #define DETJ detJ
 #else
-#define DNDX dNdX[k][q]
-#define DETJ detJ( k, q )
+#define DNDX m_dNdX[k][q]
+#define DETJ m_detJ( k, q )
 #endif
     R2Tensor dUhatdX, dUdX;
     real64 * const GEOSX_RESTRICT g0 = dUhatdX.Data();
@@ -193,11 +195,11 @@ public:
     R2SymTensor Dadt;
     HughesWinget( Rot, Dadt, Ldt );
 
-    constitutiveUpdate.HypoElastic( k, q, Dadt.Data(), Rot );
+    m_constitutiveUpdate.HypoElastic( k, q, Dadt.Data(), Rot );
 
     real64 const integrationFactor = -DETJ * detF;
 
-    auto const & stress = constitutiveUpdate.m_stress[k][q];
+    auto const & stress = m_constitutiveUpdate.m_stress[k][q];
 
     real64 P[ 3 ][ 3 ];
     P[ 0 ][ 0 ] = ( stress[ 0 ] * fInv( 0, 0 ) + stress[ 5 ] * fInv( 0, 1 ) + stress[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
@@ -218,14 +220,7 @@ public:
       stack.fLocal[a][1] = stack.fLocal[a][1] + P[ 1 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 1 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 1 ][ 2 ] * DNDX[ a ][ 2 ];
       stack.fLocal[a][2] = stack.fLocal[a][2] + P[ 2 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 2 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 2 ][ 2 ] * DNDX[ a ][ 2 ];
     }
-
   }
-
-  using Base::quadraturePointJacobianContribution;
-  using Base::quadraturePointResidualContribution;
-  using Base::complete;
-  using Base::Launch;
-
 
   //*****************************************************************************
     struct StackVariables : public Base::StackVariables

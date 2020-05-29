@@ -87,39 +87,10 @@ public:
                                                   1,
                                                   1 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTestSupportPoint
-  using Base::numDofPerTestSupportPoint;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::numDofPerTrialSupportPoint
-  using Base::numDofPerTrialSupportPoint;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_dofNumber
   using Base::m_dofNumber;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_matrix
   using Base::m_matrix;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_rhs
   using Base::m_rhs;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemsToNodes
-  using Base::elemsToNodes;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::elemGhostRank
-  using Base::elemGhostRank;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::constitutiveUpdate
-  using Base::constitutiveUpdate;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::m_finiteElementSpace
-  using Base::m_finiteElementSpace;
-
-  /// @copydoc geosx::finiteElement::ImplicitKernelBase::Launch
-  using Base::Launch;
+  using Base::m_elemsToNodes;
 
   /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = LaplaceFEMKernelConstructorParams;
@@ -150,8 +121,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
+    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
+    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
   {}
 
   /**
@@ -195,7 +166,7 @@ public:
   {
     for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes( k, a );
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
       stack.primaryField_local[ a ] = m_primaryField[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -218,7 +189,7 @@ public:
     {
       for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
       {
-        stack.localJacobian[ a ][ b ] += Dot( dNdX( k, q, a ), dNdX( k, q, b ) ) * detJ( k, q );
+        stack.localJacobian[ a ][ b ] += Dot( m_dNdX( k, q, a ), m_dNdX( k, q, b ) ) * m_detJ( k, q );
       }
     }
   }
@@ -279,7 +250,7 @@ public:
     {}
 
     /// C-array storage for the element local primary field variable.
-    real64 primaryField_local[numNodesPerElem];
+    real64 primaryField_local[NUM_NODES_PER_ELEM];
   };
 
 
@@ -288,10 +259,10 @@ protected:
   arrayView1d< real64 const > const m_primaryField;
 
   /// The global shape function derivatives array.
-  arrayView3d< R1Tensor const > const dNdX;
+  arrayView3d< R1Tensor const > const m_dNdX;
 
   /// The global determinant of the parent/physical Jacobian.
-  arrayView2d< real64 const > const detJ;
+  arrayView2d< real64 const > const m_detJ;
 
 };
 

@@ -406,10 +406,6 @@ protected:
   integer m_strainTheory;
   array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-
-
-//  array1d< array1d< SortedArray< localIndex > > > m_elemsAttachedToSendOrReceiveNodes;
-//  array1d< array1d< SortedArray< localIndex > > > m_elemsNotAttachedToSendOrReceiveNodes;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;

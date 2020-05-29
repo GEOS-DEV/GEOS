@@ -86,12 +86,12 @@ template< typename SUBREGION_TYPE,
           int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
-class ImplicitKernelBase : KernelBase< SUBREGION_TYPE,
-                                       CONSTITUTIVE_TYPE,
-                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
-                                       NUM_DOF_PER_TEST_SP,
-                                       NUM_DOF_PER_TRIAL_SP >
+class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
+                                              CONSTITUTIVE_TYPE,
+                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                              NUM_DOF_PER_TEST_SP,
+                                              NUM_DOF_PER_TRIAL_SP >
 {
 public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
@@ -102,45 +102,11 @@ public:
                            NUM_DOF_PER_TEST_SP,
                            NUM_DOF_PER_TRIAL_SP >;
 
-  /// Compile time value for the number of test function support points per
-  /// element.
-  static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
-
-  /// Compile time value for the number of trial function support points per
-  /// element.
-  static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
-
-  /// Compile time value for the number of degrees of freedom per test function
-  /// support point.
-  static constexpr int numDofPerTestSupportPoint    = NUM_DOF_PER_TEST_SP;
-
-  /// Compile time value for the number of degrees of freedom per trial
-  /// function support point.
-  static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
-
-  /// @copydoc geosx::finiteElement::KernelBase::elemsToNodes
-  using Base::elemsToNodes;
-
-  /// @copydoc geosx::finiteElement::KernelBase::elemGhostRank
-  using Base::elemGhostRank;
-
-  /// @copydoc geosx::finiteElement::KernelBase::constitutiveUpdate
-  using Base::constitutiveUpdate;
-
-  /// @copydoc geosx::finiteElement::KernelBase::m_finiteElementSpace
-  using Base::m_finiteElementSpace;
-
-  /// @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
-  using Base::quadraturePointStateUpdate;
-
-  /// @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
-  using Base::quadraturePointJacobianContribution;
-
-  /// @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
-  using Base::quadraturePointResidualContribution;
-
-  /// @copydoc geosx::finiteElement::KernelBase::Launch
-  using Base::Launch;
+  using Base::numTestSupportPointsPerElem;
+  using Base::numTrialSupportPointsPerElem;
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
 
   /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = ImplicitKernelBaseConstructorParams;
@@ -209,7 +175,7 @@ public:
    * are filled for when we fill the global matrix and rhs.
    *
    * @note This seems like a waste of register space. We should do this in
-   *       close() unless we actually need these dof somewhere else in the kernel.
+   *       complete() unless we actually need these dof somewhere else in the kernel.
    */
   template< typename STACK_VARIABLE_TYPE >
   GEOSX_HOST_DEVICE
@@ -219,7 +185,7 @@ public:
   {
     for( localIndex a=0; a<numTestSupportPointsPerElem; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes[k][a];
+      localIndex const localNodeIndex = m_elemsToNodes[k][a];
       for( int i=0; i<numDofPerTestSupportPoint; ++i )
       {
         stack.localRowDofIndex[a*numDofPerTestSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
@@ -228,7 +194,7 @@ public:
 
     for( localIndex a=0; a<numTrialSupportPointsPerElem; ++a )
     {
-      localIndex const localNodeIndex = elemsToNodes[k][a];
+      localIndex const localNodeIndex = m_elemsToNodes[k][a];
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
         stack.localColDofIndex[a*numDofPerTrialSupportPoint+i] = m_dofNumber[localNodeIndex]+i;
