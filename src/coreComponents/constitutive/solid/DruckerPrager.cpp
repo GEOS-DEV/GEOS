@@ -29,11 +29,13 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   m_defaultBulkModulus(),
   m_defaultShearModulus(),
   m_defaultTanFrictionAngle(),
+  m_defaultTanDilationAngle(),
   m_defaultCohesion(),
   m_defaultHardeningRate(),
   m_bulkModulus(),
   m_shearModulus(),
   m_tanFrictionAngle(),
+  m_tanDilationAngle(),
   m_hardeningRate(),
   m_newCohesion(),
   m_oldCohesion(),
@@ -43,27 +45,32 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   // register default values
   
   registerWrapper( viewKeyStruct::defaultBulkModulusString, &m_defaultBulkModulus )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 1e9 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic bulk modulus parameter" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusString, &m_defaultShearModulus )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 0.6e9 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Elastic shear modulus parameter" );
   
   registerWrapper( viewKeyStruct::defaultTanFrictionAngleString, &m_defaultTanFrictionAngle )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Yield surface slope parameter tan(phi)" );
   
+    registerWrapper( viewKeyStruct::defaultTanDilationAngleString, &m_defaultTanDilationAngle )->
+    setApplyDefaultValue( 0.5 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Plastic potential slope parameter tan(psi)" );
+  
   registerWrapper( viewKeyStruct::defaultHardeningRateString, &m_defaultHardeningRate )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 1e8 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Cohesion hardening/softening rate parameter" );
   
   registerWrapper( viewKeyStruct::defaultCohesionString, &m_defaultCohesion )->
-    setApplyDefaultValue( -1 )->
+    setApplyDefaultValue( 5e6 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial cohesion parameter" );
 
@@ -80,6 +87,10 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::tanFrictionAngleString, &m_tanFrictionAngle )->
     setApplyDefaultValue( -1 )->
     setDescription( "Yield surface slope tan(phi) field" );
+  
+  registerWrapper( viewKeyStruct::tanDilationAngleString, &m_tanDilationAngle )->
+    setApplyDefaultValue( -1 )->
+    setDescription( "Plastic potential slope tan(psi) field" );
   
   registerWrapper( viewKeyStruct::hardeningRateString, &m_hardeningRate )->
     setApplyDefaultValue( -1 )->
@@ -122,12 +133,14 @@ DruckerPrager::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultBulkModulus      = m_defaultBulkModulus;
   newConstitutiveRelation->m_defaultShearModulus     = m_defaultShearModulus;
   newConstitutiveRelation->m_defaultTanFrictionAngle = m_defaultTanFrictionAngle;
+  newConstitutiveRelation->m_defaultTanDilationAngle = m_defaultTanDilationAngle;
   newConstitutiveRelation->m_defaultCohesion         = m_defaultCohesion;
   newConstitutiveRelation->m_defaultHardeningRate    = m_defaultHardeningRate;
   
   newConstitutiveRelation->m_bulkModulus = m_bulkModulus;
   newConstitutiveRelation->m_shearModulus = m_shearModulus;
   newConstitutiveRelation->m_tanFrictionAngle = m_tanFrictionAngle;
+  newConstitutiveRelation->m_tanDilationAngle = m_tanDilationAngle;
   newConstitutiveRelation->m_hardeningRate = m_hardeningRate;
   newConstitutiveRelation->m_newCohesion = m_newCohesion;
   newConstitutiveRelation->m_oldCohesion = m_oldCohesion;
@@ -144,6 +157,7 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
   m_tanFrictionAngle.resize( parent->size() );
+  m_tanDilationAngle.resize( parent->size() );
   m_hardeningRate.resize( parent->size() );
   
   m_newCohesion.resize( parent->size(), numConstitutivePointsPerParentIndex );
@@ -156,6 +170,7 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
   m_bulkModulus = m_defaultBulkModulus;
   m_shearModulus = m_defaultShearModulus;
   m_tanFrictionAngle = m_defaultTanFrictionAngle;
+  m_tanDilationAngle = m_defaultTanDilationAngle;
   m_hardeningRate = m_defaultHardeningRate;
   m_newCohesion = m_defaultCohesion;
   m_oldCohesion = m_defaultCohesion;
@@ -163,6 +178,11 @@ void DruckerPrager::AllocateConstitutiveData( dataRepository::Group * const pare
 
 void DruckerPrager::PostProcessInput()
 {
+  GEOSX_ASSERT_MSG(m_defaultCohesion >= 0, "Negative cohesion value detected");
+  GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= 0, "Negative friction angle detected");
+  GEOSX_ASSERT_MSG(m_defaultTanDilationAngle >= 0, "Negative dilation angle detected");
+  GEOSX_ASSERT_MSG(m_defaultTanFrictionAngle >= m_defaultTanDilationAngle, "Friction angle should exceed dilation angle");
+  
   m_postProcessed = true; // TODO: add parameter conversion helper class for more flexible input
 }
 

@@ -22,6 +22,9 @@
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
+
+// NOTE: using this for debugging, will set up proper unit tests later
+
 TEST( DruckerPragerTests, testModel )
 {
   ConstitutiveManager constitutiveManager( "constitutive", nullptr );
@@ -34,6 +37,7 @@ TEST( DruckerPragerTests, testModel )
     "      defaultBulkModulus=\"1.0\" "
     "      defaultShearModulus=\"1.0\" "
     "      defaultTanFrictionAngle=\"1.0\" "
+    "      defaultTanDilationAngle=\"0.5\" "
     "      defaultHardeningRate=\"0.0\" "
     "      defaultCohesion=\"1.0\"/>"
     "</Constitutive>";
@@ -65,21 +69,74 @@ TEST( DruckerPragerTests, testModel )
   
   DruckerPrager::KernelWrapper cmw = cm.createKernelWrapper();
   
+  real64 inc = 1e-4; // tension
+  real64 total = 0;
+  
   array2d< real64 > strainIncrement(1,6);
                     strainIncrement = 0;
-                    strainIncrement[0][0] = 1.0e-4;
+                    strainIncrement[0][0] = inc;
   
   array2d< real64 > stress(1,6);
   array3d< real64 > stiffness(1,6,6);
   
-  for(localIndex loadstep=0; loadstep < 10; ++loadstep)
+  for(localIndex loadstep=0; loadstep < 40; ++loadstep)
   {
     cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
     cmw.SaveConvergedState(0,0);
     
-    std::cout << stress[0][0] << std::endl;
+    total += inc;
+    
+    real64 mean = (stress[0][0]+stress[0][1]+stress[0][2])/3;
+    real64 deviator = stress[0][0]-stress[0][1];
+    
+    std::cout << mean << " " << deviator << " " << total << std::endl;
   }
-
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    for(localIndex j=0; j<6; ++j)
+    {
+      std::cout << stiffness[0][i][j] << " ";
+    }
+    std::cout << "\n";
+  }
+  
+  // finite-difference check of tangent stiffness
+  
+  array2d< real64 > fd_stiffness(6,6);
+  array2d< real64 > pstress(1,6);
+  array3d< real64 > pstiffness(1,6,6);
+  
+  real64 eps = 1e-12;
+  
+  cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    strainIncrement[0][i] += eps;
+    
+    if(i>0)
+    {
+      strainIncrement[0][i-1] -= eps;
+    }
+    
+    cmw.SmallStrainUpdate(0,0,strainIncrement[0],pstress[0],pstiffness[0]);
+    
+    for(localIndex j=0; j<6; ++j)
+    {
+      fd_stiffness[j][i] = (pstress[0][j]-stress[0][j])/eps;
+    }
+  }
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    for(localIndex j=0; j<6; ++j)
+    {
+      std::cout << fd_stiffness[i][j] << " ";
+    }
+    std::cout << "\n";
+  }
+  
 }
 
 
