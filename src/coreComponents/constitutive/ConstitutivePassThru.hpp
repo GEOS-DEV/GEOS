@@ -32,7 +32,6 @@ namespace constitutive
 
 
 
-
 template< typename BASETYPE >
 struct ConstitutivePassThru;
 
@@ -67,7 +66,7 @@ struct ConstitutivePassThru< SolidBase >
       }
       GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name);
+                   constitutiveRelation<<" ) is named "<<name );
     }
   }
 };
@@ -97,7 +96,7 @@ struct ConstitutivePassThru< NullModel >
       }
       GEOSX_ERROR( "ConstitutivePassThru<NullModel>::Execute( "<<
                    constitutiveRelation<<" ) failed. ( "<<
-                   constitutiveRelation<<" ) is named "<<name);
+                   constitutiveRelation<<" ) is named "<<name );
 
     }
   }

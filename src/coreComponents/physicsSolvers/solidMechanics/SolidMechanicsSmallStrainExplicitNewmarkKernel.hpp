@@ -43,8 +43,8 @@ struct ExplicitSmallStrainConstructorParams
    */
   ExplicitSmallStrainConstructorParams( real64 const dt,
                                         string const & elementListName ):
-    m_dt(dt),
-    m_elementListName(elementListName)
+    m_dt( dt ),
+    m_elementListName( elementListName )
   {}
 
   /// The delta time for this physics update increment.
@@ -61,7 +61,7 @@ struct ExplicitSmallStrainConstructorParams
 #endif
 // If UPDATE_STRESS is undef, uses total displacement and stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material
-                            // stress state to integral for nodalforces.
+// stress state to integral for nodalforces.
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
 

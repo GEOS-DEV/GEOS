@@ -216,7 +216,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   FiniteElementDiscretization const *
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix.open();
   rhs.open();

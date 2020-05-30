@@ -37,7 +37,7 @@ struct LaplaceFEMKernelConstructorParams : finiteElement::ImplicitKernelBaseCons
     finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
                                                         inputMatrix,
                                                         inputRhs ),
-    m_fieldName(fieldName)
+    m_fieldName( fieldName )
   {}
   string const & m_fieldName;
 };
@@ -131,12 +131,12 @@ public:
    * @param params Hold the variadic components of primary constructor.
    */
   LaplaceFEMKernel( NodeManager const & nodeManager,
-                     EdgeManager const & edgeManager,
-                     FaceManager const & faceManager,
-                     SUBREGION_TYPE const & elementSubRegion,
-                     FiniteElementBase const * const finiteElementSpace,
-                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                     ConstructorParams & params ):
+                    EdgeManager const & edgeManager,
+                    FaceManager const & faceManager,
+                    SUBREGION_TYPE const & elementSubRegion,
+                    FiniteElementBase const * const finiteElementSpace,
+                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                    ConstructorParams & params ):
     LaplaceFEMKernel( nodeManager,
                       edgeManager,
                       faceManager,
@@ -167,7 +167,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      primaryField_local{ 0.0 }
+            primaryField_local{ 0.0 }
     {}
 
     /// C-array storage for the element local primary field variable.
@@ -248,7 +248,6 @@ public:
 
     return 1.0;
   }
-
 
 
 

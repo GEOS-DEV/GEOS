@@ -65,7 +65,7 @@ template< typename >
 struct PolicyMap;
 
 template<>
-struct PolicyMap<serialPolicy>
+struct PolicyMap< serialPolicy >
 {
   using atomic = serialAtomic;
   using reduce = serialReduce;
@@ -73,7 +73,7 @@ struct PolicyMap<serialPolicy>
 
 #if defined(GEOSX_USE_OPENMP)
 template<>
-struct PolicyMap<RAJA::omp_parallel_for_exec>
+struct PolicyMap< RAJA::omp_parallel_for_exec >
 {
   using atomic = RAJA::builtin_atomic;
   using reduce = RAJA::omp_reduce;
@@ -82,7 +82,7 @@ struct PolicyMap<RAJA::omp_parallel_for_exec>
 
 #if defined(GEOSX_USE_CUDA)
 template< unsigned long BLOCK_SIZE >
-struct PolicyMap< RAJA::cuda_exec<BLOCK_SIZE> >
+struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;

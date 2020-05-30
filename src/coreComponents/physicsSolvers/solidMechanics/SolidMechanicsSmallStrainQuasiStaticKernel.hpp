@@ -44,9 +44,7 @@ struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstruct
 {
   /**
    * @brief Constructor
-   * @param inputDofNumber The dof number for the primary field.
-   * @param inputMatrix Reference to the Jacobian matrix.
-   * @param inputRhs Reference to the RHS vector.
+   * @copydoc ImplicitKernelBaseConstructorParams
    * @param inputGravityVector The gravity vector.
    */
   QuasiStaticConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
@@ -54,10 +52,12 @@ struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstruct
                                 ParallelVector & inputRhs,
                                 real64 const inputGravityVector[3] ):
     finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
-                             inputMatrix,
-                             inputRhs ),
+                                                        inputMatrix,
+                                                        inputRhs ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
   {}
+
+  /// gravity vector
   real64 const m_gravityVector[3];
 };
 
@@ -88,7 +88,7 @@ struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstruct
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
-          int >
+          int UNUSED >
 class QuasiStatic :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
@@ -118,6 +118,7 @@ public:
 
   /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = QuasiStaticConstructorParams;
+
 
 
   /**
@@ -193,9 +194,9 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            u_local(),
-            uhat_local(),
-            constitutiveStiffness{ {0.0} }
+                                       u_local(),
+                                       uhat_local(),
+                                       constitutiveStiffness{ {0.0} }
     {}
 
     /// Stack storage for the element local nodal displacement
@@ -209,7 +210,6 @@ public:
   };
   //*****************************************************************************
 
-
   /**
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
@@ -218,7 +218,6 @@ public:
    * incremental displacement, and degree of freedom numbers are placed into
    * element local stack storage.
    */
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
@@ -228,11 +227,10 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-      stack.u_local[ a ] = m_disp[ localNodeIndex ];
-      stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
-
       for( int i=0; i<3; ++i )
       {
+        stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
+        stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
         stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
         stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
       }

@@ -28,26 +28,40 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
+/**
+ * @struct ImplicitNewmarkConstructorParams
+ * @copydoc geosx::finiteElement::QuasiStaticConstructorParams
+ */
 struct ImplicitNewmarkConstructorParams : QuasiStaticConstructorParams
 {
+
+  /**
+   * @brief Constructor
+   * @copydoc QuasiStaticConstructorParams
+   * @param inputNewmarkGamma The Gamma parameter of the Newmark method.
+   * @param inputNewmarkBeta The Beta parameter for the Newmark method.
+   * @param inputMassDamping The mass damping coefficient.
+   * @param inputStiffnessDamping The stiffness damping coefficient.
+   * @param inputDt The timestep for the physics update.
+   */
   ImplicitNewmarkConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
-                     ParallelMatrix & inputMatrix,
-                     ParallelVector & inputRhs,
-                     real64 const inputGravityVector[3],
-                     real64 const inputNewmarkGamma,
-                     real64 const inputNewmarkBeta,
-                     real64 const inputMassDamping,
-                     real64 const inputStiffnessDamping,
-                     real64 const inputDt):
-                       QuasiStaticConstructorParams( inputDofNumber,
-                             inputMatrix,
-                             inputRhs,
-                             inputGravityVector ),
-    m_newmarkGamma(inputNewmarkGamma),
-    m_newmarkBeta(inputNewmarkBeta),
-    m_massDamping(inputMassDamping),
-    m_stiffnessDamping(inputStiffnessDamping),
-    m_dt(inputDt)
+                                    ParallelMatrix & inputMatrix,
+                                    ParallelVector & inputRhs,
+                                    real64 const inputGravityVector[3],
+                                    real64 const inputNewmarkGamma,
+                                    real64 const inputNewmarkBeta,
+                                    real64 const inputMassDamping,
+                                    real64 const inputStiffnessDamping,
+                                    real64 const inputDt ):
+    QuasiStaticConstructorParams( inputDofNumber,
+                                  inputMatrix,
+                                  inputRhs,
+                                  inputGravityVector ),
+    m_newmarkGamma( inputNewmarkGamma ),
+    m_newmarkBeta( inputNewmarkBeta ),
+    m_massDamping( inputMassDamping ),
+    m_stiffnessDamping( inputStiffnessDamping ),
+    m_dt( inputDt )
   {}
 
   real64 const m_newmarkGamma;
@@ -89,6 +103,15 @@ public:
   /// Alias for the struct that holds the constructor parameters
   using ConstructorParams = ImplicitNewmarkConstructorParams;
 
+  /**
+   * @brief Constructor
+   * @copydoc QuasiStatic
+   * @param inputNewmarkGamma The Gamma parameter of the Newmark method.
+   * @param inputNewmarkBeta The Beta parameter for the Newmark method.
+   * @param inputMassDamping The mass damping coefficient.
+   * @param inputStiffnessDamping The stiffness damping coefficient.
+   * @param inputDt The timestep for the physics update.
+   */
   ImplicitNewmark( NodeManager const & nodeManager,
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
@@ -124,13 +147,18 @@ public:
     m_dt( inputDt )
   {}
 
+  /**
+   * @copydoc ImplicitNewmark
+   * @brief Constructor that holds variadic components in a struct.
+   * @param params Hold the variadic components of primary constructor.
+   */
   ImplicitNewmark( NodeManager const & nodeManager,
-               EdgeManager const & edgeManager,
-               FaceManager const & faceManager,
-               SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
-               ConstructorParams & params ):
+                   EdgeManager const & edgeManager,
+                   FaceManager const & faceManager,
+                   SUBREGION_TYPE const & elementSubRegion,
+                   FiniteElementBase const * const finiteElementSpace,
+                   CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                   ConstructorParams & params ):
     ImplicitNewmark( nodeManager,
                      edgeManager,
                      faceManager,
@@ -149,9 +177,17 @@ public:
   {}
 
 
+  //***************************************************************************
+  /**
+   * @class StackVariables
+   * @copydoc geosx::finiteElement::QuasiStatic::StackVariables
+   *
+   * Adds a stack array for the vtilde, uhattilde, and the
+   * Inertial mass damping.
+   */
   struct StackVariables : public Base::StackVariables
   {
-  public:
+public:
     using Base::StackVariables::numRows;
     using Base::StackVariables::numCols;
 
@@ -164,10 +200,19 @@ public:
     {}
 
     real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
-    R1Tensor vtilde_local[numNodesPerElem];
-    R1Tensor uhattilde_local[numNodesPerElem];
+    real64 vtilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
+    real64 uhattilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
   };
+  //***************************************************************************
 
+  /**
+   * @brief Copy global values from primary field to a local stack array.
+   * @copydoc geosx::finiteElement::QuasiStatic::setup.
+   *
+   * For the ImplicitNewmark implementation, global values from the velocity
+   * predictor, and the incremental displacement predictor are placed into
+   * element local stack storage.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
@@ -176,15 +221,21 @@ public:
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
-
-      stack.u_local[ a ] = m_disp[ localNodeIndex ];
-      stack.uhat_local[ a ] = m_uhat[ localNodeIndex ];
-      stack.vtilde_local[ a ] = m_vtilde[ localNodeIndex ];
-      stack.uhattilde_local[ a ] = m_uhattilde[ localNodeIndex ];
+      for( localIndex i=0; i<numDofPerTrialSupportPoint; ++i )
+      {
+        stack.vtilde_local[ a ][ i ] = m_vtilde[ localNodeIndex ][ i ];
+        stack.uhattilde_local[ a ][ i ] = m_uhattilde[ localNodeIndex ][ i ];
+      }
     }
     Base::setup( k, stack );
   }
 
+  /**
+   * @copydoc geosx::finiteElement::QuasiStatic::quadraturePointJacobianContribution.
+   *
+   * The ImplcitNewmark kernel adds the calculation of the inertial damping,
+   * jacobian and residual contributions.
+   */
   GEOSX_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointJacobianContribution( localIndex const k,
@@ -200,7 +251,7 @@ public:
     {
       real64 const integrationFactor = m_density( k, q ) * N[a] * N[b] * m_detJ( k, q );
       real64 const temp1 = ( m_massDamping * m_newmarkGamma/( m_newmarkBeta * m_dt )
-                       + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
+                             + 1.0 / ( m_newmarkBeta * m_dt * m_dt ) )* integrationFactor;
 
       constexpr int nsdof = numDofPerTestSupportPoint;
       for( int i=0; i<nsdof; ++i )
@@ -216,6 +267,12 @@ public:
     } );
   }
 
+  /**
+   * @copydoc geosx::finiteElement::QuasiStatic::complete.
+   *
+   * The ImplicitNewmark implementation adds residual and jacobian
+   * contributions from  stiffness based damping.
+   */
   //    GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
@@ -258,16 +315,29 @@ public:
 
 
 
-
-
 protected:
+  /// The rank-global velocity predictor
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_vtilde;
+
+  /// The rank-global incremental displacement predictor
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
+
+  /// The rank global density
   arrayView2d< real64 const > const m_density;
+
+  /// The Gamma parameter for Newmark's method.
   real64 const m_newmarkGamma;
+
+  /// The Beta parameter for Newmark's method.
   real64 const m_newmarkBeta;
+
+  /// The mass damping coefficient.
   real64 const m_massDamping;
+
+  /// The stiffness damping coefficient.
   real64 const m_stiffnessDamping;
+
+  /// The timestep for the update.
   real64 const m_dt;
 
 };

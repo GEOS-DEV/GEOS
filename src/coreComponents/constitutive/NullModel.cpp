@@ -20,7 +20,7 @@ namespace constitutive
 {
 
 NullModel::NullModel( string const & name,
-              Group * const parent ):
+                      Group * const parent ):
   ConstitutiveBase( name, parent )
 {}
 
@@ -28,8 +28,8 @@ NullModel::~NullModel()
 {}
 
 void NullModel::DeliverClone( string const & name,
-                          Group * const parent,
-                          std::unique_ptr< ConstitutiveBase > & clone ) const
+                              Group * const parent,
+                              std::unique_ptr< ConstitutiveBase > & clone ) const
 {
   if( !clone )
   {

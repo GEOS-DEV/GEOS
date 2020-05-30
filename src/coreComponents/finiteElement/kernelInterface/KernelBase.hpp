@@ -35,19 +35,20 @@
 namespace std
 {
 
-namespace detail {
-template <class T, class Tuple, std::size_t... I>
-constexpr T make_from_tuple_impl( Tuple&& t, std::index_sequence<I...> )
+namespace detail
 {
-  return T(std::get<I>(std::forward<Tuple>(t))...);
+template< class T, class Tuple, std::size_t... I >
+constexpr T make_from_tuple_impl( Tuple && t, std::index_sequence< I... > )
+{
+  return T( std::get< I >( std::forward< Tuple >( t ))... );
 }
 } // namespace detail
 
-template <class T, class Tuple>
-constexpr T make_from_tuple( Tuple&& t )
+template< class T, class Tuple >
+constexpr T make_from_tuple( Tuple && t )
 {
-    return detail::make_from_tuple_impl<T>(std::forward<Tuple>(t),
-        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple> >::value>{});
+  return detail::make_from_tuple_impl< T >( std::forward< Tuple >( t ),
+                                            std::make_index_sequence< std::tuple_size< std::remove_reference_t< Tuple > >::value >{} );
 }
 
 }
@@ -58,24 +59,24 @@ constexpr T make_from_tuple( Tuple&& t )
 namespace camp
 {
 namespace detail
- {
-   template <class T, class Tuple, idx_t... I>
-   constexpr T make_from_tuple_impl(Tuple&& t, idx_seq<I...>)
-   {
-     return T(get<I>(std::forward<Tuple>(t))...);
-   }
- }  // namespace detail
+{
+template< class T, class Tuple, idx_t... I >
+constexpr T make_from_tuple_impl( Tuple && t, idx_seq< I... > )
+{
+  return T( get< I >( camp::forward< Tuple >( t ))... );
+}
+}   // namespace detail
 
-  /// Instantiate T from tuple contents, like camp::invoke(tuple,constructor) but
- /// functional
- template <class T, class Tuple>
- constexpr T make_from_tuple(Tuple&& tt)
- {
-   return
-       detail::
-       make_from_tuple_impl<T>( std::forward<Tuple>(tt),
-                                make_idx_seq_t<tuple_size<type::ref::rem<Tuple>>::value>{});
- }
+/// Instantiate T from tuple contents, like camp::invoke(tuple,constructor) but
+/// functional
+template< class T, class Tuple >
+constexpr T make_from_tuple( Tuple && tt )
+{
+  return
+    detail::
+      make_from_tuple_impl< T >( camp::forward< Tuple >( tt ),
+                                 make_idx_seq_t< tuple_size< type::ref::rem< Tuple > >::value >{} );
+}
 }
 
 #endif
@@ -252,8 +253,8 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(stack);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( stack );
   }
 
   /**
@@ -278,9 +279,9 @@ public:
                                    localIndex const q,
                                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(stack);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( stack );
   }
 
   /**
@@ -303,9 +304,9 @@ public:
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(stack);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( stack );
   }
 
   /**
@@ -328,9 +329,9 @@ public:
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(q);
-    GEOSX_UNUSED_VAR(stack);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( q );
+    GEOSX_UNUSED_VAR( stack );
   }
 
   /**
@@ -351,8 +352,8 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
-    GEOSX_UNUSED_VAR(stack);
+    GEOSX_UNUSED_VAR( k );
+    GEOSX_UNUSED_VAR( stack );
     return 0;
   }
 
@@ -539,12 +540,12 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                                        1,
                                                        1 >::ConstructorParams;
 
-  CONSTRUCTOR_PARAMS kernelParams( std::forward< KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+  CONSTRUCTOR_PARAMS kernelParams( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
 
 #elif CONSTRUCTOR_PARAM_OPTION==1
-  auto kernelConstructorParamsTuple = std::forward_as_tuple( std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+  auto kernelConstructorParamsTuple = std::forward_as_tuple( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
 #elif CONSTRUCTOR_PARAM_OPTION==2
-  auto kernelConstructorParamsTuple = camp::forward_as_tuple( std::forward<KERNEL_CONSTRUCTOR_PARAMS>(kernelConstructorParams)... );
+  auto kernelConstructorParamsTuple = camp::forward_as_tuple( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
 #endif
 
 
@@ -569,13 +570,13 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
-    if ( targetRegionIndex <= constitutiveNames.size()-1 )
+    if( targetRegionIndex <= constitutiveNames.size()-1 )
     {
       constitutiveRelation = elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
     }
     else
     {
-      nullConstitutiveModel = elementSubRegion.template RegisterGroup<constitutive::NullModel>( "nullModelGroup" );
+      nullConstitutiveModel = elementSubRegion.template RegisterGroup< constitutive::NullModel >( "nullModelGroup" );
       constitutiveRelation = nullConstitutiveModel;
     }
 
@@ -587,67 +588,68 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
       {
         integralTypeDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
         {
-        static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
-        static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
+          static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
+          static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
 
 
-        using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
-                                             CONSTITUTIVE_TYPE,
-                                             NUM_NODES_PER_ELEM,
-                                             NUM_NODES_PER_ELEM >;
+          using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
+                                               CONSTITUTIVE_TYPE,
+                                               NUM_NODES_PER_ELEM,
+                                               NUM_NODES_PER_ELEM >;
 
 #if CONSTRUCTOR_PARAM_OPTION==0
-        KERNEL_TYPE kernelComponent( nodeManager,
-                                     edgeManager,
-                                     faceManager,
-                                     elementSubRegion,
-                                     finiteElementSpace,
-                                     castedConstitutiveRelation,
-                                     kernelParams );
+          KERNEL_TYPE kernelComponent( nodeManager,
+                                       edgeManager,
+                                       faceManager,
+                                       elementSubRegion,
+                                       finiteElementSpace,
+                                       castedConstitutiveRelation,
+                                       kernelParams );
 
 #elif CONSTRUCTOR_PARAM_OPTION==1
 
-        auto temp = std::forward_as_tuple( nodeManager,
-                                           edgeManager,
-                                           faceManager,
-                                           elementSubRegion,
-                                           finiteElementSpace,
-                                           castedConstitutiveRelation );
+          auto temp = std::forward_as_tuple( nodeManager,
+                                             edgeManager,
+                                             faceManager,
+                                             elementSubRegion,
+                                             finiteElementSpace,
+                                             castedConstitutiveRelation );
 
-        auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
-                                                                  kernelConstructorParamsTuple );
+          auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
+                                                                    kernelConstructorParamsTuple );
 
-        KERNEL_TYPE kernelComponent  = std::make_from_tuple<KERNEL_TYPE>(fullKernelComponentConstructorArgs);
+          KERNEL_TYPE kernelComponent  = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #elif CONSTRUCTOR_PARAM_OPTION==2
-        auto temp = camp::forward_as_tuple( nodeManager,
-                                            edgeManager,
-                                            faceManager,
-                                            elementSubRegion,
-                                            finiteElementSpace,
-                                            castedConstitutiveRelation );
-        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
-                                                                        kernelConstructorParamsTuple );
-        KERNEL_TYPE kernelComponent  = camp::make_from_tuple<KERNEL_TYPE>(fullKernelComponentConstructorArgs);
+          auto temp = camp::forward_as_tuple( nodeManager,
+                                              edgeManager,
+                                              faceManager,
+                                              elementSubRegion,
+                                              finiteElementSpace,
+                                              castedConstitutiveRelation );
+          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
+                                                                          kernelConstructorParamsTuple );
+          KERNEL_TYPE kernelComponent  = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
 
-  // We can replace all the shenanigans with params when we can use c++20
-  // perfect forwarding of the parameter pack in the lambda capture.
-  //        KERNEL_TYPE kernelComponent( nodeManager,
-  //                                     edgeManager,
-  //                                     faceManager,
-  //                                     elementSubRegion,
-  //                                     finiteElementSpace,
-  //                                     castedConstitutiveRelation,
-  //                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
+          // We can replace all the shenanigans with params when we can use c++20
+          // perfect forwarding of the parameter pack in the lambda capture.
+          //        KERNEL_TYPE kernelComponent( nodeManager,
+          //                                     edgeManager,
+          //                                     faceManager,
+          //                                     elementSubRegion,
+          //                                     finiteElementSpace,
+          //                                     castedConstitutiveRelation,
+          //                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )...
+          // );
 
 
-        maxResidualContribution = std::max( maxResidualContribution,
-                                            KERNEL_TYPE::template Launch< POLICY,
-                                                                          NUM_QUADRATURE_POINTS
-                                                                          >( numElems,
-                                                                             kernelComponent ) );
+          maxResidualContribution = std::max( maxResidualContribution,
+                                              KERNEL_TYPE::template Launch< POLICY,
+                                                                            NUM_QUADRATURE_POINTS
+                                                                            >( numElems,
+                                                                               kernelComponent ) );
         } );
       } );
     } );

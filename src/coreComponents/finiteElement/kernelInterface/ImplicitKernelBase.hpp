@@ -52,9 +52,9 @@ struct ImplicitKernelBaseConstructorParams
   ImplicitKernelBaseConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
                                        ParallelMatrix & inputMatrix,
                                        ParallelVector & inputRhs ):
-    m_dofNumber(inputDofNumber),
-    m_matrix(inputMatrix),
-    m_rhs(inputRhs)
+    m_dofNumber( inputDofNumber ),
+    m_matrix( inputMatrix ),
+    m_rhs( inputRhs )
   {}
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_dofNumber;
@@ -264,7 +264,6 @@ public:
                      stack.numCols );
     return 0;
   }
-
 
 
 

@@ -88,44 +88,44 @@ public:
   {}
 
   ExplicitFiniteStrain( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FiniteElementBase const * const finiteElementSpace,
-                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                       ConstructorParams & params ):
+                        EdgeManager const & edgeManager,
+                        FaceManager const & faceManager,
+                        SUBREGION_TYPE const & elementSubRegion,
+                        FiniteElementBase const * const finiteElementSpace,
+                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
+                        ConstructorParams & params ):
     ExplicitFiniteStrain( nodeManager,
-                         edgeManager,
-                         faceManager,
-                         elementSubRegion,
-                         finiteElementSpace,
-                         inputConstitutiveType,
-                         params.m_dt,
-                         params.m_elementListName )
+                          edgeManager,
+                          faceManager,
+                          elementSubRegion,
+                          finiteElementSpace,
+                          inputConstitutiveType,
+                          params.m_dt,
+                          params.m_elementListName )
   {}
 
   //*****************************************************************************
-    struct StackVariables : public Base::StackVariables
-    {
-  public:
-      using Base::StackVariables::fLocal;
-      using Base::StackVariables::varLocal;
+  struct StackVariables : public Base::StackVariables
+  {
+public:
+    using Base::StackVariables::fLocal;
+    using Base::StackVariables::varLocal;
 
   #if defined(CALCFEMSHAPE)
-      using Base::StackVariables::xLocal;
-      using Base::StackVariables::dNdX;
-      using Base::StackVariables::detJ;
+    using Base::StackVariables::xLocal;
+    using Base::StackVariables::dNdX;
+    using Base::StackVariables::detJ;
   #endif
 
 
-      GEOSX_HOST_DEVICE
-      StackVariables():
-        Base::StackVariables(),
-        uLocal{ {0.0} }
-      {}
+    GEOSX_HOST_DEVICE
+    StackVariables():
+      Base::StackVariables(),
+            uLocal{ {0.0} }
+    {}
 
-      real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-    };
+    real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+  };
   //*****************************************************************************
 
 
@@ -244,9 +244,6 @@ public:
       stack.fLocal[a][2] = stack.fLocal[a][2] + P[ 2 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 2 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 2 ][ 2 ] * DNDX[ a ][ 2 ];
     }
   }
-
-
-
 
 
 
