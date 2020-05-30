@@ -196,6 +196,27 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
+  //TJ: a flag to indicate of finding the tip location
+  //    through fixed-pointer iterations
+  bool m_tipIterationFlag;
+
+  //TJ: old tip location
+  real64 m_oldTipLocation;
+
+  //TJ: new tip location
+  real64 m_newTipLocation;
+
+  //TJ: an array to store the tip locations during the iteration
+  array1d<real64> m_tipLocationHistory;
+
+  //TJ: tip element, the element that is partially opened
+  localIndex m_tipElement;
+
+  //TJ: element on the boundary of the channel region. The element
+  //    itself is fully opened, and its aperture is used to locate
+  //    the tip
+  localIndex m_channelElement;
+
 #ifdef USING_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;

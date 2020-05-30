@@ -237,6 +237,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     int const maxIter = m_maxNumResolves + 1;
     m_numResolves[1] = m_numResolves[0];
     int solveIter;
+
+    //TJ: initialize the tip iteration flag
+    m_tipIterationFlag = false;
+
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
       int locallyFractured = 0;
@@ -252,127 +256,374 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                    m_rhs,
                    m_solution );
 
-      if( solveIter>0 )
-      {
-	/* TJ: set stress = stress_n to reset the solid stress
-	 *     to the beginning of the step. On the other hand,
-	 *     the displacement field and the displacement increment
-	 *     field are NOT reset. That is, the displacement field and
-	 *     the displacement increment field used in the first newton
-	 *     iteration of the resolve (rewind) are based on the converged
-	 *     solution from the previous solve. Of course, the stress is
-	 *     reset to the beginning of the step (as mentioned before).
-	 *
-	 */
-        m_solidSolver->ResetStressToBeginningOfStep( domain );
-      }
-
-      //TJ: print out surface aperture before newton solve
+      //TJ: some variables used for print statements
       Group * elementSubRegions = domain->GetGroup("MeshBodies")
-                                        ->GetGroup<MeshBody>("mesh1")
-                                        ->GetGroup<MeshLevel>("Level0")
-    			          	->GetGroup<ElementRegionManager>("ElementRegions")
-    			        	->GetRegion< FaceElementRegion >( "Fracture" )
-    				        ->GetGroup("elementSubRegions");
+					->GetGroup<MeshBody>("mesh1")
+					->GetGroup<MeshLevel>("Level0")
+					->GetGroup<ElementRegionManager>("ElementRegions")
+					->GetRegion< FaceElementRegion >( "Fracture" )
+					->GetGroup("elementSubRegions");
 
       FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
       FaceElementSubRegion::NodeMapType & nodeMap = subRegion->nodeList();
       FaceElementSubRegion::EdgeMapType & edgeMap = subRegion->edgeList();
       FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
 
-      std::cout << "Inside hydrofracture solver, "
-	           "before newton solve: "
-	        << std::endl;
-      std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
-      if (subRegion->size() == 0)
-        std::cout << "No face element yet" << "\n";
+      //TJ: original solve without tip iteration
+      if (m_tipIterationFlag == false)
+      {
+	if( solveIter>0 )
+	{
+	  /* TJ: set stress = stress_n to reset the solid stress
+	   *     to the beginning of the step. On the other hand,
+	   *     the displacement field and the displacement increment
+	   *     field are NOT reset. That is, the displacement field and
+	   *     the displacement increment field used in the first newton
+	   *     iteration of the resolve (rewind) are based on the converged
+	   *     solution from the previous solve. Of course, the stress is
+	   *     reset to the beginning of the step (as mentioned before).
+	   *
+	   */
+	  m_solidSolver->ResetStressToBeginningOfStep( domain );
+	}
+
+	//TJ: print out surface aperture before newton solve
+	{
+	  std::cout << "Inside hydrofracture solver, "
+		       "before newton solve: "
+		    << std::endl;
+	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  if (subRegion->size() == 0)
+	    std::cout << "No face element yet" << "\n";
+	  else
+	  {
+	    std::cout << "Face element info: " << std::endl;
+	    for(localIndex i=0; i<nodeMap.size(); i++)
+	    {
+	      std::cout << "Face (node) " << i << ": ";
+	      for(localIndex j=0; j<nodeMap[i].size(); j++)
+		std::cout << nodeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<edgeMap.size(); i++)
+	    {
+	      std::cout << "Face (edge) " << i << ": ";
+	      for(localIndex j=0; j<edgeMap[i].size(); j++)
+		std::cout << edgeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<faceMap.size(0); i++)
+	    {
+	      std::cout << "Face (face) " << i << ": ";
+	      for(localIndex j=0; j<faceMap.size(1); j++)
+		std::cout << faceMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	    {
+	      std::cout << "Face (center) " << i << ": ";
+	      for(auto & item : subRegion->getElementCenter()[i])
+		std::cout << item << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	    {
+	      std::cout << "Face (aperture) " << i << ": "
+			<< subRegion->getElementAperture()[i]
+			<< std::endl;
+	    }
+	  }
+	} // print statements
+
+	// currently the only method is implicit time integration
+	dtReturn = this->NonlinearImplicitStep( time_n,
+						dt,
+						cycleNumber,
+						domain,
+						m_dofManager,
+						m_matrix,
+						m_rhs,
+						m_solution );
+
+	//TJ: print out surface aperture after newton solve
+	{
+	  std::cout << "Inside hydrofracture solver, "
+		       "after newton solve: "
+		    << std::endl;
+	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  if (subRegion->size() == 0)
+	    std::cout << "No face element yet" << "\n";
+	  else
+	  {
+	    std::cout << "Face element info: " << std::endl;
+	    for(localIndex i=0; i<nodeMap.size(); i++)
+	    {
+	      std::cout << "Face (node) " << i << ": ";
+	      for(localIndex j=0; j<nodeMap[i].size(); j++)
+		std::cout << nodeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<edgeMap.size(); i++)
+	    {
+	      std::cout << "Face (edge) " << i << ": ";
+	      for(localIndex j=0; j<edgeMap[i].size(); j++)
+		std::cout << edgeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	    {
+	      std::cout << "Face (center) " << i << ": ";
+	      for(auto & item : subRegion->getElementCenter()[i])
+		std::cout << item << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	    {
+	      std::cout << "Face (aperture) " << i << ": "
+			<< subRegion->getElementAperture()[i]
+			<< std::endl;
+	    }
+	  }
+	} // print statements
+      }
+      //TJ: solve with tip iteration, m_tipIterationFlag=false
       else
       {
-        std::cout << "Face element info: " << std::endl;
-        for(localIndex i=0; i<nodeMap.size(); i++)
-    	{
-    	  std::cout << "Face (node) " << i << ": ";
-    	  for(localIndex j=0; j<nodeMap[i].size(); j++)
-    	    std::cout << nodeMap[i][j] << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<edgeMap.size(); i++)
-    	{
-    	  std::cout << "Face (edge) " << i << ": ";
-    	  for(localIndex j=0; j<edgeMap[i].size(); j++)
-    	    std::cout << edgeMap[i][j] << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<faceMap.size(0); i++)
-    	{
-    	  std::cout << "Face (face) " << i << ": ";
-    	  for(localIndex j=0; j<faceMap.size(1); j++)
-    	    std::cout << faceMap[i][j] << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
-    	{
-    	  std::cout << "Face (center) " << i << ": ";
-    	  for(auto & item : subRegion->getElementCenter()[i])
-    	    std::cout << item << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
-    	{
-    	  std::cout << "Face (aperture) " << i << ": "
-    	            << subRegion->getElementAperture()[i]
-    	            << std::endl;
-    	}
-      }
+        std::cout << "Solve with tip iteration, ";
+        integer const maxTipIteration = 50;
+        std::cout << "maximum " << maxTipIteration << " allowed."
+                  << std::endl;
+	m_solidSolver->ResetStressToBeginningOfStep( domain );
 
-      // currently the only method is implicit time integration
-      dtReturn = this->NonlinearImplicitStep( time_n,
-                                              dt,
-                                              cycleNumber,
-                                              domain,
-                                              m_dofManager,
-                                              m_matrix,
-                                              m_rhs,
-                                              m_solution );
+        SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+        SortedArray< localIndex > const & nodesWithAssignedDisp =
+  	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
 
-      //TJ: print out surface aperture after newton solve
-      std::cout << "Inside hydrofracture solver, "
-	           "after newton solve: "
-	        << std::endl;
-      std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
-      if (subRegion->size() == 0)
-        std::cout << "No face element yet" << "\n";
-      else
-      {
-        std::cout << "Face element info: " << std::endl;
-        for(localIndex i=0; i<nodeMap.size(); i++)
-    	{
-    	  std::cout << "Face (node) " << i << ": ";
-    	  for(localIndex j=0; j<nodeMap[i].size(); j++)
-    	    std::cout << nodeMap[i][j] << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<edgeMap.size(); i++)
-    	{
-    	  std::cout << "Face (edge) " << i << ": ";
-    	  for(localIndex j=0; j<edgeMap[i].size(); j++)
-    	    std::cout << edgeMap[i][j] << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
-    	{
-    	  std::cout << "Face (center) " << i << ": ";
-    	  for(auto & item : subRegion->getElementCenter()[i])
-    	    std::cout << item << " ";
-    	  std::cout << "\n";
-    	}
-        for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
-    	{
-    	  std::cout << "Face (aperture) " << i << ": "
-    	            << subRegion->getElementAperture()[i]
-    	            << std::endl;
-    	}
-      }
+        MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+        NodeManager & nodeManager = *mesh.getNodeManager();
+        array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
+        array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
+
+	//TJ: calculate some material parameters
+	real64 const shearModulus = domain->GetGroup("Constitutive")
+			                  ->GetGroup("rock")
+			                  ->getReference<real64>("defaultShearModulus");
+	real64 const bulkModulus = domain->GetGroup("Constitutive")
+		                         ->GetGroup("rock")
+				         ->getReference<real64>("defaultBulkModulus");
+        real64 const toughness = mySurface->getReference<real64>("rockToughness");
+
+	real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
+	real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
+        real64 const Eprime = E/(1.0-nu*nu);
+        real64 const PI = 2 * acos(0.0);
+        real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+
+        //TJ: tolerance for the tip iteration,
+        //    convergence is achieved when || m_newTipLocation - m_oldTipLocation || < tipTol
+	real64 const tipTol = 1.0e-2;
+
+	//TJ: temporary variables for binary search
+	real64 minTipLocation = 0.0;
+	real64 maxTipLocation = 0.0;
+
+	//TJ: find the location of the channel boundary
+        real64 const channelElmtArea = subRegion->getElementArea()[m_channelElement];
+        real64 const channelElmtSize = sqrt(channelElmtArea);
+        R1Tensor const channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
+        // Tip propagates in the y-direction (hard coded)
+        real64 const channelBCLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
+
+	localIndex_array myChildIndex = nodeManager.getReference<localIndex_array>("childIndex");
+        localIndex refNodeIndex;
+	for(localIndex i=0; i<nodeMap[m_channelElement].size(); i++)
+	{
+	  localIndex node = nodeMap[m_channelElement][i];
+	  if (   std::find( nodesWithAssignedDisp.begin(), nodesWithAssignedDisp.end(), node )
+	      == nodesWithAssignedDisp.end()
+	      && myChildIndex[node] >= 0)
+	  {
+	    refNodeIndex = node;
+	    break;
+	  }
+	}
+
+        //TJ: tip iterations
+        for(localIndex tipIterCount = 0; tipIterCount < maxTipIteration; tipIterCount++)
+        {
+          //TJ: print out surface aperture before newton solve
+	  {
+	    std::cout << "Inside hydrofracture solver, "
+			 "before newton solve: "
+		      << std::endl;
+	    std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	    if (subRegion->size() == 0)
+	      std::cout << "No face element yet" << "\n";
+	    else
+	    {
+	      std::cout << "Face element info: " << std::endl;
+	      for(localIndex i=0; i<nodeMap.size(); i++)
+	      {
+		std::cout << "Face (node) " << i << ": ";
+		for(localIndex j=0; j<nodeMap[i].size(); j++)
+		  std::cout << nodeMap[i][j] << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<edgeMap.size(); i++)
+	      {
+		std::cout << "Face (edge) " << i << ": ";
+		for(localIndex j=0; j<edgeMap[i].size(); j++)
+		  std::cout << edgeMap[i][j] << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<faceMap.size(0); i++)
+	      {
+		std::cout << "Face (face) " << i << ": ";
+		for(localIndex j=0; j<faceMap.size(1); j++)
+		  std::cout << faceMap[i][j] << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	      {
+		std::cout << "Face (center) " << i << ": ";
+		for(auto & item : subRegion->getElementCenter()[i])
+		  std::cout << item << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	      {
+		std::cout << "Face (aperture) " << i << ": "
+			  << subRegion->getElementAperture()[i]
+			  << std::endl;
+	      }
+	    }
+	  } // print statements
+
+          //TJ: nonlinear solver
+	  dtReturn = this->NonlinearImplicitStep( time_n,
+						  dt,
+						  cycleNumber,
+						  domain,
+						  m_dofManager,
+						  m_matrix,
+						  m_rhs,
+						  m_solution );
+	  //TJ: print out surface aperture after newton solve
+	  {
+	    std::cout << "Inside hydrofracture solver, "
+			 "after newton solve: "
+		      << std::endl;
+	    std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	    if (subRegion->size() == 0)
+	      std::cout << "No face element yet" << "\n";
+	    else
+	    {
+	      std::cout << "Face element info: " << std::endl;
+	      for(localIndex i=0; i<nodeMap.size(); i++)
+	      {
+		std::cout << "Face (node) " << i << ": ";
+		for(localIndex j=0; j<nodeMap[i].size(); j++)
+		  std::cout << nodeMap[i][j] << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<edgeMap.size(); i++)
+	      {
+		std::cout << "Face (edge) " << i << ": ";
+		for(localIndex j=0; j<edgeMap[i].size(); j++)
+		  std::cout << edgeMap[i][j] << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	      {
+		std::cout << "Face (center) " << i << ": ";
+		for(auto & item : subRegion->getElementCenter()[i])
+		  std::cout << item << " ";
+		std::cout << "\n";
+	      }
+	      for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	      {
+		std::cout << "Face (aperture) " << i << ": "
+			  << subRegion->getElementAperture()[i]
+			  << std::endl;
+	      }
+	    }
+	  } // print statements
+
+          //TJ: obtain new tip location
+	  std::cout << "The face element on the boundary of the channel is "
+	            << m_channelElement << std::endl;
+	  real64 const refAper = subRegion->getElementAperture()[m_channelElement];
+	  std::cout << "The aperture of the face element at the channel boundary is "
+	            << refAper << std::endl;
+
+	  //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+          //TJ: use the displacement gap at the node pair other than the newly split one
+          //    on the face element at the channel boundary for the tip asymptotic relation
+          real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
+	  real64 tipX = (refDisp * Eprime / Kprime) * (refDisp * Eprime / Kprime);
+	  m_newTipLocation = tipX;
+
+	  //TJ: find the upper bound of the tip location inside the partially opened element
+	  //    the upper bound is obtained at the first tip iteration, since the gap at the
+	  //    newly split node pair is almost zero
+	  if (tipIterCount == 0)
+	  {
+	    maxTipLocation = m_newTipLocation;
+	    //Safe guard for the corner case
+            GEOSX_ASSERT_MSG( m_newTipLocation > m_oldTipLocation,
+			  "Corner case: the initial gap (0.0001) is too large!" );
+	  }
+
+	  //TJ: update the lower and upper bounds for the binary search
+	  if (m_newTipLocation > m_oldTipLocation)
+	    minTipLocation = m_oldTipLocation;
+	  else
+	    maxTipLocation = m_oldTipLocation;
+
+	  m_newTipLocation = (minTipLocation + maxTipLocation) / 2.0;
+
+          //TJ: compare old tip location with the new one
+	  if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
+	  {
+	    m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	    for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
+	      std::cout << "Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
+	    std::cout << "Tip iteration converges in " << tipIterCount+1 << " steps."
+		      << std::endl;
+	    break;
+	  }
+
+	  m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	  for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
+	    std::cout << "Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
+
+	  m_oldTipLocation = m_newTipLocation;
+
+          //TJ: reset essential B.C. at the newly split nodes
+          //TJ: w = K'/E'*x^(1/2)
+	  real64 relativeDist = m_newTipLocation - channelBCLocation;
+          GEOSX_ASSERT_MSG( relativeDist > 0.0,
+			  "Tip location falls behind the edge of the newly generated face element!" );
+          // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+          // based on symmetry
+	  real64 refValue = 0.5 * Kprime/Eprime * sqrt(relativeDist);
+
+          for(auto node : nodesWithAssignedDisp)
+	  {
+            // the sign of the displacement at the newly split nodes are always the same
+            disp(node, 0) = disp(node,0) > 0 ? refValue : -refValue;
+            dispIncre(node, 0) = disp(node, 0) - 0.0;
+            std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+	  }
+
+          this->UpdateDeformationForCoupling( domain );
+
+          m_flowSolver->ResetViews( domain );
+
+
+        } // for tipIterCount
+
+      } // else, solve with tip iteration
 
       /* TJ: update the stress in solid via displacement increment
        *     stress = stress + materialStiffness*disp_increment
@@ -391,19 +642,23 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
            */
           SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
           SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
-          std::cout << "A new surface is just generated, "
-                       "we can manipulate the node displacements "
-                       "at the newly generated nodes via split. "
-                    << std::endl;
-          std::cout << "m_tipNodes: ";
-          for(auto & item : tipNodes)
-            std::cout << item << " ";
-          std::cout << std::endl;
-          SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
-          std::cout << "m_trailingFaces: ";
-          for(auto & item : trailingFaces)
-            std::cout << item << " ";
-          std::cout << std::endl;
+          {
+	    std::cout << "A new surface is just generated, "
+			 "we can manipulate the node displacements "
+			 "at the newly generated nodes via split. "
+		      << std::endl;
+	    std::cout << "m_tipNodes: ";
+	    for(auto & item : tipNodes)
+	      std::cout << item << " ";
+	    std::cout << std::endl;
+          }
+	  SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+	  {
+	    std::cout << "m_trailingFaces: ";
+	    for(auto & item : trailingFaces)
+	      std::cout << item << " ";
+	    std::cout << std::endl;
+          }
 
           /* TJ: We manipulate the displacement fields at the newly generated
            *     nodes via element split
@@ -474,15 +729,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
           nodesWithAssignedDisp.clear();
 
-          // For the current purpose, the magnitude of the B.C. value is
-          // hard-coded. Eventually this magnitude should be calculated from
-          // the tip-asymptotic relationship
-          real64 const refValue = 0.002;
+          // initial magnitude of the essential B.C. at the newly splited nodes
+          // this initial value can not be zero, since the sign of the displacement
+          // will be used in the later update.
+          real64 const refValue = 1.0e-4;
 
           for(auto const & trailingFace : trailingFaces)
           {
-            //Find which faceElmt the trailingFace is located at
-            localIndex faceElmt;
             bool found = false;
             // loop over all the face element
             for(localIndex i=0; i<faceMap.size(0); i++)
@@ -494,7 +747,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		// we find it
 		if (faceMap[i][j] == trailingFace)
 		{
-		  faceElmt = i;
+		  m_tipElement = i;
 		  found = true;
 		  break;
 		}
@@ -504,28 +757,18 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    } // for localIndex i
             GEOSX_ASSERT_MSG( found == true,
 			  "Trailing face is not found among the fracture face elements" );
-            std::cout << "faceElmt = " << faceElmt << std::endl;
+            std::cout << "m_tipElement = " << m_tipElement << std::endl;
 
             //Find which nodes' displacement need to be manipulated
-            for (auto const & node : nodeMap[faceElmt])
+            for (auto const & node : nodeMap[m_tipElement])
             {
-              found = false;
-              std::cout << "node " << node << std::endl;
-              for (auto const & tipNode : tipNodes)
-              {
-                if (node == tipNode)
-                {
-                  found = true;
-                  break;
-                }
-              }
-              if (!found)
+              if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
               {
         	// Insert node to the set for B.C. manipulation
                 nodesWithAssignedDisp.insert(node);
-                for (localIndex i=0; i<faceMap[faceElmt].size(); i++)
+                for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
                 {
-                  auto const & face = faceMap[faceElmt][i];
+                  auto const & face = faceMap[m_tipElement][i];
                   for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
                   {
                     auto const & nodeOnFace = faceManager.nodeList()(face,j);
@@ -537,10 +780,43 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                     }
                   } // for localIndex j
                 } // for localIndex i
-              } // if (!found)
+              } // if (not found)
             }  // for auto node
           } // for auto trailingFace
 
+          //TJ: find the element on the boundary of the channel region
+          m_channelElement = -1;
+	  for(localIndex i=0; i<nodeMap.size(); i++)
+	  {
+	    integer nodeCount = 0;
+	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	    {
+	      if ( std::find( nodesWithAssignedDisp.begin(),
+			     nodesWithAssignedDisp.end(),
+			     nodeMap[i][j] )
+	           != nodesWithAssignedDisp.end() )
+		++nodeCount;
+	    }
+	    if (nodeCount==4 && i != m_tipElement)
+	    {
+	      m_channelElement = i;
+	      break;
+	    }
+	  }
+	  GEOSX_ASSERT_MSG( m_channelElement != -1,
+		"Face elmt on the channel boundary is not found!" );
+          std::cout << "m_channelElement = " << m_channelElement << std::endl;
+
+
+          //TJ: assume that the tip location overlap with the tip element boundary
+          real64 const channelElmtArea = subRegion->getElementArea()[m_channelElement];
+          real64 const channelElmtSize = sqrt(channelElmtArea);
+          R1Tensor const channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
+
+          // Tip propagates in the y-direction (hard coded)
+          m_oldTipLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
+          // Record the tip location
+          m_tipLocationHistory.insert(0, m_oldTipLocation);
 /*
           // Pair one
           disp(10,0) = -refValue;
@@ -561,6 +837,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
           nodesWithAssignedDisp.insert(27);
 */
 
+          //TJ: set the tip iteration flag to get ready for finding
+          //    the tip location through fixed-point iteration
+          m_tipIterationFlag = true;
           std::cout << "End of disp manipulation" << std::endl;
 
 
@@ -2220,3 +2499,64 @@ void HydrofractureSolver::initializeNewFaceElements( DomainPartition const & )
 
 REGISTER_CATALOG_ENTRY( SolverBase, HydrofractureSolver, std::string const &, Group * const )
 } /* namespace geosx */
+/*
+for(auto const & trailingFace : trailingFaces)
+{
+  bool found = false;
+  // loop over all the face element
+  for(localIndex i=0; i<faceMap.size(0); i++)
+  {
+    // loop over all the (TWO) faces in a face element
+    for(localIndex j=0; j<faceMap.size(1); j++)
+    {
+	// if the trailingFace is one of the two faces in a face element,
+	// we find it
+	if (faceMap[i][j] == trailingFace)
+	{
+	  m_tipElement = i;
+	  found = true;
+	  break;
+	}
+    } // for localIndex j
+    if (found)
+      break;
+  } // for localIndex i
+  GEOSX_ASSERT_MSG( found == true,
+		  "Trailing face is not found among the fracture face elements" );
+  std::cout << "m_tipElement = " << m_tipElement << std::endl;
+
+  //Find which nodes' displacement need to be manipulated
+  for (auto const & node : nodeMap[m_tipElement])
+  {
+    found = false;
+    std::cout << "node " << node << std::endl;
+    for (auto const & tipNode : tipNodes)
+    {
+      if (node == tipNode)
+      {
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+    {
+	// Insert node to the set for B.C. manipulation
+      nodesWithAssignedDisp.insert(node);
+      for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+      {
+        auto const & face = faceMap[m_tipElement][i];
+        for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+        {
+          auto const & nodeOnFace = faceManager.nodeList()(face,j);
+          if (node == nodeOnFace)
+          {
+            disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
+            dispIncre(node,0) = disp(node,0) - 0.0;
+            std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+          }
+        } // for localIndex j
+      } // for localIndex i
+    } // if (!found)
+  }  // for auto node
+} // for auto trailingFace
+*/
