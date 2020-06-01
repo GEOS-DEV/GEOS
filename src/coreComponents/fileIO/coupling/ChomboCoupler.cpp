@@ -67,16 +67,19 @@ void ChomboCoupler::write( double dt )
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
-  real64 * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
+  real64 const * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
   face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
   /* Build the node FieldMap. */
-  r1_array const & reference_pos = nodes->getReference< r1_array >( nodes->viewKeys.referencePosition );
-  localIndex const n_nodes = reference_pos.size();
-  R1Tensor const * const reference_pos_ptr = reference_pos.data();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes->referencePosition();
+  localIndex const n_nodes = reference_pos.size( 0 );
+  real64 const * const reference_pos_ptr = reference_pos.data();
 
-  R1Tensor const * const displacement_ptr = nodes->getReference< r1_array >( nodes->viewKeys.totalDisplacement ).data();
-  R1Tensor const * const velocity_ptr = nodes->getReference< r1_array >( "Velocity" ).data();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodes->totalDisplacement();
+  real64 const * const displacement_ptr = displacement.data();
+
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & velocity = nodes->velocity();
+  real64 const * const velocity_ptr = velocity.data();
 
   FieldMap_in node_fields;
   node_fields["position"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, reference_pos_ptr );
@@ -102,8 +105,8 @@ void ChomboCoupler::read( bool usePressures )
   {
     GEOSX_LOG_RANK_0( "Reading pressures..." );
 
-    FaceManager* const faces = m_mesh.getFaceManager();
-    NodeManager* const nodes = m_mesh.getNodeManager();
+    FaceManager * const faces = m_mesh.getFaceManager();
+    NodeManager * const nodes = m_mesh.getNodeManager();
 
     const localIndex n_faces = faces->size();
     const localIndex n_nodes = m_mesh.getNodeManager()->size();
@@ -113,10 +116,11 @@ void ChomboCoupler::read( bool usePressures )
     real64 * pressure_ptr = faces->getReference< real64_array >( "ChomboPressure" ).data();
     face_fields["Pressure"] = std::make_tuple( H5T_NATIVE_DOUBLE, 1, pressure_ptr );
 
-    r1_array const& reference_pos = nodes->getReference<r1_array>(nodes->viewKeys.referencePosition);
-    R1Tensor * const reference_pos_ptr = reference_pos.data();
+    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & reference_pos = nodes->referencePosition();
+    real64 * const reference_pos_ptr = reference_pos.data();
+
     FieldMap_out node_fields;
-    node_fields["position"] = std::make_tuple(H5T_NATIVE_DOUBLE, 3, reference_pos_ptr);
+    node_fields["position"] = std::make_tuple( H5T_NATIVE_DOUBLE, 3, reference_pos_ptr );
 
     readBoundaryFile( m_comm, m_inputPath.data(),
                       m_face_offset, m_n_faces_written, n_faces, face_fields,

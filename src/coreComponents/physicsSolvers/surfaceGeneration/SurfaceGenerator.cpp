@@ -197,9 +197,9 @@ SurfaceGenerator::SurfaceGenerator( const std::string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Flag to enable MPI consistent communication ordering" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, 0 )->
-      setInputFlag(dataRepository::InputFlags::OPTIONAL)->
-      setApplyDefaultValue("Fracture");
+  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
+    setInputFlag( dataRepository::InputFlags::OPTIONAL )->
+    setApplyDefaultValue( "Fracture" );
 
   registerWrapper( viewKeyStruct::tipNodesString, &m_tipNodes )->
     setDescription( "Set containing all the nodes at the fracture tip" );
