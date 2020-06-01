@@ -15,38 +15,24 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLVERBASE_HPP_
 
-
-
-#include <string>
-#include <limits>
-
-#include "dataRepository/Group.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "linearAlgebra/utilities/LinearSolverResult.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "physicsSolvers/SystemSolverParameters.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
+#include "physicsSolvers/LinearSolverParameters.hpp"
 
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
-#include "linearAlgebra/DofManager.hpp"
+#include <string>
+#include <limits>
 
 namespace geosx
 {
 
 class DomainPartition;
-class SystemSolverParameters;
-
-namespace dataRepository
-{
-namespace keys
-{
-string const courant = "courant";
-string const maxDt   = "maxDt";
-}
-}
 
 class SolverBase : public ExecutableGroup
 {
@@ -184,7 +170,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
@@ -211,7 +197,7 @@ public:
    * This function implements a nonlinear newton method for implicit problems. It requires that the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual bool
   LineSearch( real64 const & time_n,
@@ -241,7 +227,7 @@ public:
    * assumes that the solution is achieved in a iteration. The use of this function requires that
    * the other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in systemSolverParameters member.
+   * convergence is not achieved according to the parameters in linearSolverParameters member.
    */
   virtual real64 LinearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
@@ -490,7 +476,6 @@ public:
   {return m_nextDt;};
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
-  virtual void ExpandObjectCatalogs() override;
 
   using CatalogInterface = dataRepository::CatalogInterface< SolverBase, std::string const &, Group * const >;
   static CatalogInterface::CatalogType & GetCatalog();
@@ -507,7 +492,7 @@ public:
 
   struct groupKeyStruct
   {
-    constexpr static auto systemSolverParametersString = "SystemSolverParameters";
+    constexpr static auto linearSolverParametersString = "LinearSolverParameters";
     constexpr static auto nonlinearSolverParametersString = "NonlinearSolverParameters";
   } groupKeys;
 
@@ -523,26 +508,36 @@ public:
   R1Tensor const gravityVector() const;
 
   /**
-   * accessor for the system solver parameters.
-   * @return
+   * @brief accessor for the linear solver parameters.
+   * @return the linear solver parameter list
    */
-
-  SystemSolverParameters * getSystemSolverParameters()
+  LinearSolverParameters & getLinearSolverParameters()
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
-  SystemSolverParameters const * getSystemSolverParameters() const
+  /**
+   * @brief const accessor for the linear solver parameters.
+   * @return the linear solver parameter list
+   */
+  LinearSolverParameters const & getLinearSolverParameters() const
   {
-    return &m_systemSolverParameters;
+    return m_linearSolverParameters.get();
   }
 
-
+  /**
+   * @brief accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters & getNonlinearSolverParameters()
   {
     return m_nonlinearSolverParameters;
   }
 
+  /**
+   * @brief const accessor for the nonlinear solver parameters.
+   * @return the nonlinear solver parameter list
+   */
   NonlinearSolverParameters const & getNonlinearSolverParameters() const
   {
     return m_nonlinearSolverParameters;
@@ -617,9 +612,9 @@ public:
 
 protected:
 
-  virtual void PostProcessInput() override;
-
-  void SetLinearSolverParameters();
+  static real64 EisenstatWalker( real64 const newNewtonNorm,
+                                 real64 const oldNewtonNorm,
+                                 real64 const weakestTol );
 
   string getDiscretizationName() const {return m_discretizationName;}
 
@@ -659,8 +654,6 @@ protected:
   void ValidateModelMapping( ElementRegionManager const & elemRegionManager,
                              arrayView1d< string const > const & modelNames ) const;
 
-  SystemSolverParameters m_systemSolverParameters;
-
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
@@ -676,8 +669,14 @@ protected:
   ParallelVector m_rhs;
   ParallelVector m_solution;
 
+  /// Custom preconditioner for the "native" iterative solver
+  std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
+
   /// Linear solver parameters
-  LinearSolverParameters m_linearSolverParameters;
+  LinearSolverParametersInput m_linearSolverParameters;
+
+  /// Result of the last linear solve
+  LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;

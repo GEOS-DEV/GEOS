@@ -38,13 +38,24 @@ class CGsolver : public KrylovSolver< VECTOR >
 {
 public:
 
-  using Vector = typename KrylovSolver< VECTOR >::Vector;
+  /// Alias for base type
+  using Base = KrylovSolver< VECTOR >;
 
-  //! @name Constructor/Destructor Methods
-  //@{
+  /// Alias for template parameter
+  using Vector = typename Base::Vector;
+
+  /**
+   * @name Constructor/Destructor Methods
+   */
+  ///@{
 
   /**
    * @brief Constructor.
+   * @param [in] A reference to the system matrix.
+   * @param [in] M reference to the preconditioning operator.
+   * @param [in] tolerance relative residual norm reduction tolerance.
+   * @param [in] maxIterations maximum number of Krylov iterations.
+   * @param [in] verbosity solver verbosity level.
    */
   CGsolver( LinearOperator< Vector > const & A,
             LinearOperator< Vector > const & M,
@@ -57,27 +68,42 @@ public:
    */
   virtual ~CGsolver() override;
 
-  //@}
+  ///@}
 
-  //! @name KrylovSolver interface
-  //@{
+  /**
+   * @name KrylovSolver interface
+   */
+  ///@{
 
+  /**
+   * @brief Solve preconditioned system
+   * @param [in] b system right hand side.
+   * @param [inout] x system solution (input = initial guess, output = solution).
+   */
   virtual void solve( Vector const & b, Vector & x ) const override final;
 
-  //@}
+  virtual string methodName() const override final
+  {
+    return "CG";
+  };
+
+  ///@}
 
 protected:
 
+  /// Alias for vector type that can be used for temporaries
   using VectorTemp = typename KrylovSolver< VECTOR >::VectorTemp;
 
-  using KrylovSolver< VECTOR >::m_operator;
-  using KrylovSolver< VECTOR >::m_precond;
-  using KrylovSolver< VECTOR >::m_tolerance;
-  using KrylovSolver< VECTOR >::m_maxIterations;
-  using KrylovSolver< VECTOR >::m_verbosity;
-  using KrylovSolver< VECTOR >::m_numIterations;
-  using KrylovSolver< VECTOR >::m_residualNormVector;
-  using KrylovSolver< VECTOR >::m_convergenceFlag;
+  using Base::m_operator;
+  using Base::m_precond;
+  using Base::m_tolerance;
+  using Base::m_maxIterations;
+  using Base::m_logLevel;
+  using Base::m_result;
+  using Base::m_residualNorms;
+  using Base::createTempVector;
+  using Base::logProgress;
+  using Base::logResult;
 
 };
 

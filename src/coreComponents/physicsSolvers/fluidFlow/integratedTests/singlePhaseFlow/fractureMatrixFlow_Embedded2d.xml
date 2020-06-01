@@ -15,7 +15,8 @@
             <NonlinearSolverParameters
                 newtonTol="1.0e-8"
                 newtonMaxIter="8"/>
-            <SystemSolverParameters
+            <LinearSolverParameters
+                solverType="gmres"
                 krylovTol="1.0e-12"/>
         </SinglePhaseFVM>
         <EmbeddedSurfaceGenerator

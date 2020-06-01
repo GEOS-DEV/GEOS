@@ -30,21 +30,32 @@ namespace geosx
 {
 
 /**
- * @struct A structure containing a single cell (element) identifier triplet
+ * @struct CellDescriptor
+ * @brief A structure containing a single cell (element) identifier triplet.
  */
 struct CellDescriptor
 {
+  /// region index
   localIndex region;
+  /// subregion index
   localIndex subRegion;
+  /// cell index
   localIndex index;
 
+  /**
+   * @brief Comparison operator between two CellDescriptors.
+   * @param[in] other the CellDescriptor to compare with
+   * @return true if they represent the same mesh element
+   */
   bool operator==( CellDescriptor const & other )
   {
     return( region==other.region && subRegion==other.subRegion && index==other.index );
   }
 };
+
 /**
- * @struct A structure describing an arbitrary point participating in a stencil
+ * @struct PointDescriptor
+ * @brief A structure describing an arbitrary point participating in a stencil.
  *
  * Nodal and face center points are identified by local mesh index.
  * Cell center points are identified by a triplet <region,subregion,index>.
@@ -54,14 +65,20 @@ struct CellDescriptor
  */
 struct PointDescriptor
 {
+  /// Enum to classify the variable location
   enum class Tag { CELL, FACE, NODE };
 
+  /// The tag
   Tag tag;
 
+  /// union to characterize a PointDescriptor
   union
   {
+    /// node index
     localIndex nodeIndex;
+    /// face index
     localIndex faceIndex;
+    /// CellDescriptor index
     CellDescriptor cellIndex;
   };
 };
@@ -78,77 +95,150 @@ class FluxApproximationBase : public dataRepository::Group
 {
 public:
 
-  // necessary declarations for factory instantiation of derived classes
+  /// Alias for CatalogInterface, necessary declarations for factory instantiation of derived classes
   using CatalogInterface = dataRepository::CatalogInterface< FluxApproximationBase, string const &, Group * const >;
+  /**
+   * @brief Return the data type in the data repository.
+   * @return the data type in the data repository
+   */
   static typename CatalogInterface::CatalogType & GetCatalog();
 
-  // typedefs for stored stencil types
+  /// Alias for stored stencil types
   using BoundaryStencil = FluxStencil< PointDescriptor, real64 >;
 
   FluxApproximationBase() = delete;
 
+  /**
+   * @brief Constructor.
+   * @param name the name of the FluxApproximationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   FluxApproximationBase( string const & name, dataRepository::Group * const parent );
 
-  /// return a boundary stencil by face set name
+  /**
+   * @brief Return a boundary stencil by face set name.
+   * @param[in] setName the face set name
+   * @return the boundary stencil by face set name
+   */
   BoundaryStencil const & getBoundaryStencil( string const & setName ) const;
 
-  /// return a boundary stencil by face set name
+  /**
+   * @copydoc getBoundaryStencil( string const & ) const
+   */
   BoundaryStencil & getBoundaryStencil( string const & setName );
 
-  /// check if a stencil exists
+  /**
+   * @brief Check if a stencil exists.
+   * @param[in] setName the face set name
+   * @return true if a stencil exists
+   */
   bool hasBoundaryStencil( string const & setName ) const;
 
-  /// call a user-provided function for each boundary stencil
+  /**
+   * @brief Call a user-provided function for each stencil.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] lambda The LAMBDA function
+   */
   template< typename LAMBDA >
   void forAllStencils( LAMBDA && lambda ) const;
 
-
+  /**
+   * @brief Call a user-provided function for the each stencil according to the provided TYPE.
+   * @tparam TYPE The type to be passed to forWrappers
+   * @tparam TYPES Other types to be passed to forWrappers
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] lambda The LAMBDA function
+   */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
   void forStencils( LAMBDA && lambda ) const;
 
-  /// call a user-provided function for each boundary stencil
+  /**
+   * @brief Call a user-provided function for each boundary stencil.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] lambda The LAMBDA function
+   */
   template< typename LAMBDA >
   void forBoundaryStencils( LAMBDA && lambda ) const;
 
-  /// triggers computation of the stencil, implemented in derived classes
+  /**
+   * @brief Triggers computation of the stencil, implemented in derived classes.
+   * @param[in,out] domain The domain on which to perform the stencil computation
+   */
   void compute( DomainPartition & domain );
 
-  virtual void addToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                     string const & GEOSX_UNUSED_PARAM( faceElementRegionName ),
-                                     bool const GEOSX_UNUSED_PARAM( initFlag ) ) {}
-
+  /**
+   * @brief Add a new fracture stencil.
+   * @param[in,out] domain The domain on which to add the fracture stencil
+   * @param[in] faceElementRegionName the face element region name
+   * @param[in] initFlag if true initialize physical fields, like pressure
+   */
+  virtual void addToFractureStencil( DomainPartition & domain,
+                                     string const & faceElementRegionName,
+                                     bool const initFlag )
+  {
+    GEOSX_UNUSED_VAR( domain );
+    GEOSX_UNUSED_VAR( faceElementRegionName );
+    GEOSX_UNUSED_VAR( initFlag );
+  }
 
   virtual void addEDFracToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
                                            string const & GEOSX_UNUSED_PARAM( embeddedSurfaceRegionName ) ) {}
 
-
-
+  /**
+   * @brief View keys.
+   */
   struct viewKeyStruct
   {
+    /// The key for fieldName
     static constexpr auto fieldNameString             = "fieldName";
+    /// The key for boundaryFieldName
     static constexpr auto boundaryFieldNameString     = "boundaryFieldName";
+    /// The key for coefficientName
     static constexpr auto coeffNameString             = "coefficientName";
+    /// The key for targetRegions
     static constexpr auto targetRegionsString         = "targetRegions";
+    /// The key for areaRelTol
     static constexpr auto areaRelativeToleranceString = "areaRelTol";
-
+    /// The key for cellStencil
     static constexpr auto cellStencilString           = "cellStencil";
+    /// The key for fractureStencil
     static constexpr auto fractureStencilString       = "fractureStencil";
   };
 
   struct groupKeyStruct
   {};
 
+  /**
+   * @brief Returns the target region name.
+   * @return the target region name
+   */
   string_array const & targetRegions() const { return m_targetRegions; }
+  /**
+   * @copydoc targetRegions() const
+   */
   string_array & targetRegions()       { return m_targetRegions; }
 
 protected:
 
+  /**
+   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
+   * @param[in] rootGroup A group that is passed in to the initialization functions
+   *            in order to facilitate the initialization.
+   */
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const rootGroup ) override;
 
-  /// actual computation of the cell-to-cell stencil, to be overridden by implementations
+  /**
+   * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
+   * @param[in] domain the domain on which to perform the computation
+   */
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
 
-  /// actual computation of the boundary stencil, to be overridden by implementations
+  /**
+   * @brief Actual computation of the boundary stencil, to be overridden by implementations.
+   * @param[in] domain the domain on which to perform the computation
+   * @param[in] faceSet set of faces
+   * @param[out] stencil the boundary stencil
+   */
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        SortedArrayView< localIndex const > const & faceSet,
                                        BoundaryStencil & stencil ) = 0;

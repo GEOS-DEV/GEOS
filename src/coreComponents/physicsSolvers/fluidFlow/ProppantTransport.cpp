@@ -876,13 +876,11 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::proppantConcentrationString );
 
@@ -1472,13 +1470,11 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres               = m_pressure.toViewConst();
   //FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dPres               =
@@ -1524,13 +1520,11 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc       = m_proppantConcentration.toView();
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();

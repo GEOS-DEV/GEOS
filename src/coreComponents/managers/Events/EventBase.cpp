@@ -143,7 +143,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath( m_eventTarget );
     m_target = Group::group_cast< ExecutableGroup * >( tmp );
-    GEOSX_ERROR_IF( m_target == nullptr, "The target of an event must be executable! " << m_target );
+    GEOSX_ERROR_IF( m_target == nullptr, "The event " << m_eventTarget << " does not exist or it is not executable." );
   }
 
   this->forSubGroups< EventBase >( []( EventBase & subEvent )

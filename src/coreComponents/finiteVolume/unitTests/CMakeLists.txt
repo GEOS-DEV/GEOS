@@ -10,7 +10,7 @@ if( BUILD_OBJ_LIBS )
   message(FATAL_ERROR "BUILDING OBJECT_LIBS")
   set( dependencyList geosx_core gtest )
 else()
-  set( dependencyList finiteVolume gtest managers )
+  set( dependencyList gtest geosx_core )
 endif()
 
 
