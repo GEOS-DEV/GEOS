@@ -128,6 +128,7 @@ public:
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
     static constexpr auto referencePositionString       = "ReferencePosition";
+    static constexpr auto EmbSurfNodesRefPositionString = "EmbSurfNodesRefPosition";
     static constexpr auto totalDisplacementString       = "TotalDisplacement";
     static constexpr auto incrementalDisplacementString = "IncrementalDisplacement";
     static constexpr auto edgeListString                = "edgeList";
@@ -208,6 +209,18 @@ public:
   { return m_referencePosition; }
 
   /**
+    * @brief Return the reference position array.
+    */
+   array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPosition()
+   { return m_embeddedSurfNodesPosition; }
+
+   /**
+    * @brief Return an immutable arrayView of the reference position.
+    */
+   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & embSurfNodesPosition() const
+   { return m_embeddedSurfNodesPosition; }
+
+  /**
    * @brief Return the total displacement array if it exists, if not an error is thrown.
    */
   array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
@@ -270,6 +283,9 @@ private:
 
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
+
+  /// reference position of the nodes defining the embedded surfaces
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_embeddedSurfNodesPosition;
 
   /// nodeToEdge relation
   EdgeMapType m_toEdgesRelation;

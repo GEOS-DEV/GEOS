@@ -180,6 +180,34 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
   if( addEmbeddedElem )
   {
+	// Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
+	intersectionPoints = computationalGeometry::orderPointsCCW( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
+	array2d< real64, nodes::REFERENCE_POSITION_USD > & embSurfNodes = nodeManager.embSurfNodesPosition();
+	bool isNew;
+	localIndex indexNewNode;
+
+	for( localIndex j=0; j < intersectionPoints.size(); j++ )
+	{
+		isNew = true;
+		for( localIndex h=0; h < embSurfNodes.size(); h++ )
+		{
+			distance  = intersectionPoints[j];
+			distance -= embSurfNodes[h];
+			if( distance.L2_Norm() < 1e-9 )
+			{
+				isNew = false;
+				break;
+			}
+		}
+		if ( isNew )
+		{
+			// Add the point to the
+			indexNewNode = embSurfNodes.size();
+			embSurfNodes.resize(indexNewNode + 1);
+			embSurfNodes[indexNewNode] = intersectionPoints[j];
+		}
+	}
+
     m_embeddedSurfaceToCell.push_back( cellIndex );
     m_embeddedSurfaceToRegion.push_back( regionIndex );
     m_embeddedSurfaceToSubRegion.push_back( subRegionIndex );
@@ -189,8 +217,6 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     // resize
     this->resize( this->size() + 1 );
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
-
-
   }
 
   return addEmbeddedElem;

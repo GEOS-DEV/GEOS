@@ -65,15 +65,15 @@ void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
   }
 }
 
-//void averageTensorComponent(R1Tensor const & values, real64 & avCoeff)
-//{
-//  avCoeff = 0;
-//  for( unsigned icoord = 0; icoord < 3; ++icoord )
-//  {
-//    avCoeff += values[icoord];
-//  }
-//  avCoeff/=3;
-//}
+void averageTensorComponent(R1Tensor const & values, real64 & avCoeff)
+{
+  avCoeff = 0;
+  for( unsigned icoord = 0; icoord < 3; ++icoord )
+  {
+    avCoeff += values[icoord];
+  }
+  avCoeff/=3;
+}
 
 } // close namespace
 
@@ -590,7 +590,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
 void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
                                                             string const & GEOSX_UNUSED_PARAM ( embeddedSurfaceRegionName ) )
-{/*
+{
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
@@ -738,7 +738,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & GE
                          kes );
       }
     }
-  }*/
+  }
 }
 
 

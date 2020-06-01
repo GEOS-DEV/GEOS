@@ -462,7 +462,7 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
                               ArrayOfArrays< localIndex > & faceToEdgeMap )
 {
   ArrayOfArrays< EdgeBuilder > edgesByLowestNode( numNodes, 2 * maxEdgesPerNode() );
-  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode );
+  createEdgesByLowestNode( faceToNodeMap, edgesByLowestNode.toView() );
 
 //  for (localIndex nodeId=0; nodeId<edgesByLowestNode.size(); ++nodeId)
 //  {
@@ -474,15 +474,15 @@ void EdgeManager::BuildEdges( localIndex const numNodes,
 //  }
 
   array1d< localIndex > uniqueEdgeOffsets( numNodes + 1 );
-  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode, uniqueEdgeOffsets );
+  localIndex const numEdges = calculateTotalNumberOfEdges( edgesByLowestNode.toViewConst(), uniqueEdgeOffsets );
 
-  resizeEdgeToFaceMap( edgesByLowestNode,
+  resizeEdgeToFaceMap( edgesByLowestNode.toViewConst(),
                        uniqueEdgeOffsets,
                        m_toFacesRelation );
 
   resize( numEdges );
 
-  populateMaps( edgesByLowestNode,
+  populateMaps( edgesByLowestNode.toViewConst(),
                 uniqueEdgeOffsets,
                 faceToNodeMap,
                 faceToEdgeMap,

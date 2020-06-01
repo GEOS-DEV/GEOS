@@ -164,7 +164,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   // resize embSurfToEdgeMap
   embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
-  embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap, embSurfToEdgeMap );
+  embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
   //Usefull for debugging
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();

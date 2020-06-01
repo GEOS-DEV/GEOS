@@ -35,9 +35,12 @@ using namespace dataRepository;
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_referencePosition( 0, 3 )
+  m_referencePosition( 0, 3 ),
+  m_embeddedSufNodesRefPosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
+
+  registerWrapper( viewKeyStruct::EmbSurfNodesRefPositionString, &m_embeddedSufNodesRefPosition )->setSizedFromParent(0);
 
   this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
 
