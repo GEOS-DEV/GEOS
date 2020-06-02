@@ -70,7 +70,8 @@ public:
    * @brief Constructor.
    * @param params preconditioner parameters
    */
-  explicit HyprePreconditioner( LinearSolverParameters params );
+  explicit HyprePreconditioner( LinearSolverParameters params,
+                                DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Destructor.
@@ -82,6 +83,8 @@ public:
    * @param mat the matrix to precondition.
    */
   virtual void compute( Matrix const & mat ) override;
+
+  using PreconditionerBase< HypreInterface >::compute;
 
   /**
    * @brief Apply operator to a vector
@@ -111,6 +114,8 @@ public:
 private:
 
   void createAMG();
+
+  void createMGR( DofManager const * const dofManager );
 
   void createILU();
 

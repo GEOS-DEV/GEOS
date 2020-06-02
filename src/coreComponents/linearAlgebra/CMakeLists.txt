@@ -81,6 +81,7 @@ endif()
 if( ENABLE_HYPRE )
 
     list( APPEND linearAlgebra_headers
+          interfaces/hypre/HypreMGRStrategies.hpp
           interfaces/hypre/HypreMatrix.hpp
           interfaces/hypre/HypreVector.hpp
           interfaces/hypre/HyprePreconditioner.hpp
