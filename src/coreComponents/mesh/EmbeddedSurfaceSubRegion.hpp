@@ -40,7 +40,7 @@ class EmbeddedSurfaceSubRegion : public ElementSubRegionBase
 public:
 
   /// Embedded surface element to nodes map type
-  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  using NodeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
 
   /// Embedded surface element to edges map type
   using EdgeMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
@@ -156,9 +156,7 @@ public:
 
   void populateToFracturesNodesMap( NodeManager const & nodeManager,
                                     EdgeManager const & edgeManager,
-                                    ElementRegionManager const & elemManager,
-                                    ArrayOfArrays< localIndex > & embSurfToNodeMap,
-                                    localIndex & totalNumNodes );
+                                    ElementRegionManager const & elemManager);
 
 
   /**
@@ -184,6 +182,8 @@ public:
 
     /// Embedded surface element normal vector string
     static constexpr auto normalVectorString           = "normalVector";
+
+    static constexpr auto numNodesString               = "numNodes";
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -346,6 +346,8 @@ public:
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
   ///@}
 
+  int totalNumberOfNodes();
+
 private:
 
   /// normal vector to the embedded surface element
@@ -367,14 +369,18 @@ private:
   array1d< localIndex > m_embeddedSurfaceToCell;
 
   /// list of nodes
-  NodeMapType m_toNodesRelation;    // Not used for now. Will need for Flow?
+  NodeMapType m_toNodesRelation;
 
   /// The member level field for the element center
   array1d< real64 > m_elementAperture;
 
   /// The member level field for the element center
   array1d< real64 > m_elementArea;
+
+  // The number of nodes of each embedded surface
+  array1d< int > m_numNodesPerSurface;
 };
+
 
 } /* namespace geosx */
 

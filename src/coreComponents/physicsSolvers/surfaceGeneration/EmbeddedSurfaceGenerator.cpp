@@ -140,7 +140,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
                                                                         cellToEdges,
                                                                         &fracture );
           if( added )
+          {
             GEOSX_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+          }
         }
       } // end loop over cells
     } );// end loop over subregions
@@ -153,18 +155,12 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   // Populate EdgeManager for embedded surfaces.
   EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
 
-  ArrayOfArrays< localIndex >  embSurfToNodeMap, embSurfToEdgeMap;
-  localIndex numFractureNodes;
-
-  embeddedSurfaceSubRegion->populateToFracturesNodesMap( *nodeManager,
-                                                         *edgeManager,
-                                                         *elemManager,
-                                                         embSurfToNodeMap,
-                                                         numFractureNodes );
-
   // resize embSurfToEdgeMap
   embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
-  embSurfEdgeManager->BuildEdges( numFractureNodes, embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
+
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+
+  embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
   //Usefull for debugging
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();

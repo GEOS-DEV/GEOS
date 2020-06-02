@@ -39,7 +39,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_embeddedSurfaceToCell(),
   m_toNodesRelation(),
   m_elementAperture(),
-  m_elementArea()
+  m_elementArea(),
+  m_numNodesPerSurface()
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion )->
     setDescription( "Map to the region cut by each EmbeddedSurface." );
@@ -47,8 +48,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::subregionListString, &m_embeddedSurfaceToSubRegion )->
     setDescription( "Map to the subregion cut by each EmbeddedSurface." );
 
-////  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation, false )->
-////    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
+  registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
+		  setDescription( "Map to the nodes attached to each EmbeddedSurface." );
 //
 //  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
 //    setDescription( "Map to the edges." );
@@ -76,7 +77,9 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
     setDescription( "The volume of each EmbeddedSurface element." );
 
-  m_numNodesPerElement = 4; // Let s assume it's a plane for now
+  registerWrapper( viewKeyStruct::numNodesString, &m_numNodesPerSurface )->
+      setApplyDefaultValue( 0 )->
+	    setDescription( "Number of nodes of each EmbeddedSurface." );
 }
 
 
@@ -180,43 +183,55 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
   if( addEmbeddedElem )
   {
+	// resize
+	localIndex surfaceIndex = this->size();
+	this->resize( surfaceIndex + 1 );
+	m_numNodesPerSurface[surfaceIndex] = intersectionPoints.size();
+
 	// Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
 	intersectionPoints = computationalGeometry::orderPointsCCW( intersectionPoints, intersectionPoints.size(), normalVector );
-	array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodes = nodeManager.embSurfNodesPosition();
+	array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
 
 	bool isNew;
-	localIndex indexNewNode;
+	localIndex NodeIndex;
+	array1d< localIndex > elemNodes;
+	elemNodes.size(m_numNodesPerSurface[surfaceIndex]);
 
-	for( localIndex j=0; j < intersectionPoints.size(); j++ )
+	for( localIndex j=0; j < m_numNodesPerSurface[surfaceIndex]; j++ )
 	{
 		isNew = true;
-		for( localIndex h=0; h < embSurfNodes.size(); h++ )
+		for( localIndex h=0; h < embSurfNodesPos.size(); h++ )
 		{
 			distance  = intersectionPoints[j];
-			distance -= embSurfNodes.toViewConst()[h];
+			distance -= embSurfNodesPos.toViewConst()[h];
 			if( distance.L2_Norm() < 1e-9 )
 			{
 				isNew = false;
+				NodeIndex = h;
 				break;
 			}
 		}
 		if ( isNew )
 		{
 			// Add the point to the
-			indexNewNode = embSurfNodes.size();
-			embSurfNodes.resize(indexNewNode + 1);
-			embSurfNodes[indexNewNode] = intersectionPoints[j];
+			NodeIndex = embSurfNodesPos.size();
+			embSurfNodesPos.resize(NodeIndex + 1);
+			embSurfNodesPos( NodeIndex, 0 ) = intersectionPoints[ j ][ 0 ];
+			embSurfNodesPos( NodeIndex, 1 ) = intersectionPoints[ j ][ 1 ];
+			embSurfNodesPos( NodeIndex, 2 ) = intersectionPoints[ j ][ 2 ];
 		}
+		elemNodes.push_back( NodeIndex );
 	}
 
-    m_embeddedSurfaceToCell.push_back( cellIndex );
-    m_embeddedSurfaceToRegion.push_back( regionIndex );
-    m_embeddedSurfaceToSubRegion.push_back( subRegionIndex );
-    m_normalVector.push_back( normalVector );
-    m_tangentVector1.push_back( fracture->getWidthVector());
-    m_tangentVector2.push_back( fracture->getLengthVector());
-    // resize
-    this->resize( this->size() + 1 );
+	m_toNodesRelation.appendArray( elemNodes, m_numNodesPerSurface[surfaceIndex] );
+
+    m_embeddedSurfaceToCell[ surfaceIndex ]      = cellIndex;
+    m_embeddedSurfaceToRegion[ surfaceIndex ]    =  regionIndex;
+    m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex ;
+    m_normalVector[ surfaceIndex ]   =  normalVector ;
+    m_tangentVector1[ surfaceIndex ] = fracture->getWidthVector();
+    m_tangentVector2[ surfaceIndex ] =  fracture->getLengthVector();
+
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
   }
 
@@ -241,145 +256,15 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeManager,
-                                                      EdgeManager const & edgeManager,
-                                                      ElementRegionManager const & elemManager,
-                                                      array1d< R1Tensor > & intersectionPoints,
-                                                      array1d< localIndex > & connectivityList,
-                                                      array1d< int > & offSet ) const
+
+int EmbeddedSurfaceSubRegion::totalNumberOfNodes()
 {
-
-  offSet.resize( size() );
-  offSet = 0;
-  for( localIndex k =0; k < size(); k++ )
-  {
-    ComputeIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k );
-  }
-}
-
-void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & nodeManager,
-                                                          EdgeManager const & edgeManager,
-                                                          ElementRegionManager const & elemManager,
-                                                          array1d< R1Tensor > & intersectionPoints,
-                                                          array1d< localIndex > & connectivityList,
-                                                          array1d< int > & offSet,
-                                                          localIndex const k ) const
-{
-
-  // I ll use this for plotting
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
-  EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
-
-  FixedOneToManyRelation const & cellToEdges = elemManager.GetRegion( m_embeddedSurfaceToRegion[k] )
-                                                 ->GetSubRegion< CellElementSubRegion >( m_embeddedSurfaceToSubRegion[k] )->edgeList();
-
-  // Initialize variables
-  localIndex edgeIndex;
-  R1Tensor lineDir, dist, point;
-  real64 prodScalarProd;
-  bool isNew;
-  R1Tensor distance;
-  array1d< R1Tensor > localPoints;
-
-  int count = 0;
-  if( k > 0 )
-  {
-    count = offSet[k-1];
-  }
-
-  for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
-  {
-    edgeIndex = cellToEdges[m_embeddedSurfaceToCell[k]][ke];
-    dist = nodesCoord[edgeToNodes[edgeIndex][0]];
-    dist -= m_elementCenter[k];
-    prodScalarProd = Dot( dist, m_normalVector[k] );
-    dist = nodesCoord[edgeToNodes[edgeIndex][1]];
-    dist -= m_elementCenter[k];
-    prodScalarProd *= Dot( dist, m_normalVector[k] );
-
-    if( prodScalarProd < 0 )
-    {
-      count += 1;
-
-      lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
-      lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
-      lineDir.Normalize();
-      point = computationalGeometry::LinePlaneIntersection( lineDir,
-                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
-                                                            m_normalVector[k],
-                                                            m_elementCenter[k] );
-
-      localPoints.push_back( point );
-
-      isNew = true;
-      for( int i=0; i < intersectionPoints.size(); i++ )
-      {
-        distance = point;
-        distance-=intersectionPoints[i];
-        if( distance.L2_Norm() < 1e-9 )
-        {
-          isNew = false;
-          //pointIndex = i;
-          break;
-        }
-      }
-
-      if( isNew == true )
-      {
-        intersectionPoints.push_back( point );
-        //pointIndex = intersectionPoints.size() - 1;
-      }
-    }
-  } //end of edge loop
-
-  // Reorder the points CCW and then add the correct index to the connectivity list
-  localPoints = computationalGeometry::orderPointsCCW( localPoints, localPoints.size(), m_normalVector[k] );
-  for( localIndex j=0; j < localPoints.size(); j++ )
-  {
-    for( localIndex h=0; h < intersectionPoints.size(); h++ )
-    {
-      distance = localPoints[j];
-      distance-=intersectionPoints[h];
-      if( distance.L2_Norm() < 1e-9 )
-      {
-        connectivityList.push_back( h );
-      }
-    }
-  }
-  offSet[k] = count;
-}
-
-void EmbeddedSurfaceSubRegion::populateToFracturesNodesMap( NodeManager const & nodeManager,
-                                                            EdgeManager const & edgeManager,
-                                                            ElementRegionManager const & elemManager,
-                                                            ArrayOfArrays< localIndex > & embSurfToNodeMap,
-                                                            localIndex & totalNumNodes )
-{
-  array1d< R1Tensor > intersectionPoints;
-  array1d< localIndex > connectivityList;
-  array1d< int > offSet;
-  getIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet );
-
-  totalNumNodes = intersectionPoints.size();
-
-  int maxNodePerElem = 6;
-  embSurfToNodeMap.reserve( size() * maxNodePerElem );
-  int numNodes, firstInd = 0;
-
-  for( localIndex esi = 0; esi < size(); ++esi )
-  {
-    array1d< localIndex > elemNodes;
-    numNodes = offSet[esi] - firstInd;
-    for( int j=firstInd; j < offSet[esi]; j++ )
-    {
-      elemNodes.push_back( connectivityList( j ));
-    }
-
-    firstInd = offSet[esi];
-    embSurfToNodeMap.appendArray( elemNodes, numNodes );
-  }
-
-  embSurfToNodeMap.compress();
+	int totalNumNodes = 0;
+	for (localIndex esi=0; esi<size(); esi++)
+	{
+		totalNumNodes += m_numNodesPerSurface[esi];
+	}
+	return totalNumNodes;
 }
 
 } /* namespace geosx */
