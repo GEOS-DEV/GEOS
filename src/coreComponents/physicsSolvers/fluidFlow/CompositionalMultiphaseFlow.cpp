@@ -74,6 +74,9 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the capillary pressure constitutive model to use" );
+
+  m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFlow";
+
 }
 
 void CompositionalMultiphaseFlow::PostProcessInput()
