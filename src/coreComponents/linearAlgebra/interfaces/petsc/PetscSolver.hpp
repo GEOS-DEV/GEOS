@@ -25,6 +25,7 @@
 namespace geosx
 {
 
+class DofManager;
 class PetscVector;
 class PetscMatrix;
 
@@ -57,7 +58,8 @@ public:
    */
   void solve( PetscMatrix & mat,
               PetscVector & sol,
-              PetscVector & rhs );
+              PetscVector & rhs,
+              DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.

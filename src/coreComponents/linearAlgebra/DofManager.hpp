@@ -315,20 +315,47 @@ public:
   localIndex numLocalDofs( string const & fieldName = "" ) const;
 
   /**
+   * @brief Return an array of local number of dofs on this processor
+   * sorted by field registration order.
+   *
+   * @return     array of number of local dofs
+   */
+  array1d< localIndex > numLocalDofsPerField() const;
+
+
+  /**
+   * @brief Computes an array of size equal to sum of all field local number of dofs containing
+   * unique integer labels associated to components stored in the field descriptions.
+   *
+   * @return array1d of localIndex labels
+   */
+  array1d< localIndex > getLocalDofComponentLabels() const;
+
+  /**
    * @brief Return the sum of local dofs across all previous processors w.r.t. to the calling one for
    * the specified field.
    *
    * @param [in] fieldName Optional string the name of the field.
    * @return     the rank offset
    */
-  localIndex rankOffset( string const & fieldName = "" ) const;
+  globalIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
-   * @brief Get the the number of components in a field.
-   * @param fieldName name of the field
-   * @return the number of dof components
+   * @brief Get the number of components in a field. If field argument is empty, return
+   * the total number of components across fields.
+   *
+   * @param [in] fieldName Optional string the name of the field.
+   * @return     the number of dof components
    */
-  localIndex numComponents( string const & fieldName ) const;
+  localIndex numComponents( string const & fieldName = "" ) const;
+
+  /**
+   * @brief Return an array of number of components per field, sorted by field
+   * registration order.
+   *
+   * @return     array of number of components
+   */
+  array1d< localIndex > numComponentsPerField() const;
 
   /**
    * @brief Get the local number of support points on this processor.
