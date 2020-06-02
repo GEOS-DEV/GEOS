@@ -25,6 +25,7 @@
 namespace geosx
 {
 
+class DofManager;
 class EpetraVector;
 class EpetraMatrix;
 class LinearSolverParameters;
@@ -59,7 +60,8 @@ public:
    */
   void solve( EpetraMatrix & mat,
               EpetraVector & sol,
-              EpetraVector & rhs );
+              EpetraVector & rhs,
+              DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.

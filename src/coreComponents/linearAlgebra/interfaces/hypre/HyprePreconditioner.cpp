@@ -17,7 +17,9 @@
  */
 
 #include "HyprePreconditioner.hpp"
+#include "HypreMGRStrategies.hpp"
 
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -30,7 +32,8 @@
 namespace geosx
 {
 
-HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params )
+HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params,
+                                          DofManager const * const dofManager )
   : Base{},
   m_parameters( std::move( params ) ),
   m_precond{},
@@ -48,9 +51,13 @@ HyprePreconditioner::HyprePreconditioner( LinearSolverParameters params )
       m_functions->setup = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScaleSetup;
       m_functions->apply = (HYPRE_PtrToParSolverFcn) HYPRE_ParCSRDiagScale;
     }
-    if( m_parameters.preconditionerType == "amg" )
+    else if( m_parameters.preconditionerType == "amg" )
     {
       createAMG();
+    }
+    else if( m_parameters.preconditionerType == "mgr" )
+    {
+      createMGR( dofManager );
     }
     else if( m_parameters.preconditionerType == "iluk" )
     {
@@ -199,6 +206,148 @@ void HyprePreconditioner::createILU()
   m_functions->setup = HYPRE_ILUSetup;
   m_functions->apply = HYPRE_ILUSolve;
   m_functions->destroy = HYPRE_ILUDestroy;
+}
+
+void HyprePreconditioner::createMGR( DofManager const * const dofManager )
+{
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &m_precond ) );
+
+  // Hypre's parameters to use MGR as a preconditioner
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( m_precond, 0.0 ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( m_precond, 1 ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( m_precond, toHYPRE_Int( m_parameters.logLevel ) ) );;
+
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &m_precond ) );
+
+  array1d< localIndex > numComponentsPerField = dofManager->numComponentsPerField();
+  array1d< localIndex > numLocalDofsPerField = dofManager->numLocalDofsPerField();
+  array1d< HYPRE_Int > point_marker_array = computeLocalDofComponentLabels( numComponentsPerField,
+                                                                            numLocalDofsPerField );
+
+  HYPRE_Int mgr_bsize;
+  HYPRE_Int mgr_nlevels;
+
+  std::vector< HYPRE_Int > num_block_coarse_points;
+  std::vector< HYPRE_Int * > lvl_block_coarse_indexes;
+  std::vector< std::vector< HYPRE_Int > > lvl_block_coarse_indexes_data;
+  std::vector< HYPRE_Int > coarseGridMethod;
+  std::vector< HYPRE_Int > interpolationType;
+  bool withPointMarkerArray = false;
+
+
+  if( m_parameters.mgr.strategy == "Poroelastic" )
+  {
+    // Note: at the moment we assume single-phase flow poroelasticity
+    //
+    // dofLabel: 0 = displacement, x-component
+    // dofLabel: 1 = displacement, y-component
+    // dofLabel: 2 = displacement, z-component
+    // dofLabel: 3 = pressure
+    //
+    // Ingredients
+    //
+    // 1. F-points displacement (0,1,2), C-points pressure (3)
+    // 2. F-points smoother: AMG, single V-cycle, separate displacemente components
+    // 3. C-points coarse-grid/Schur complement solver: boomer AMG
+    // 4. Global smoother: none
+
+	if( withPointMarkerArray )
+	{
+		mgr_bsize = 4;
+		mgr_nlevels = 1;
+
+		coarseGridMethod.resize( mgr_nlevels );
+		coarseGridMethod[0] = 1; //diagonal sparsification
+		interpolationType.resize( mgr_nlevels );
+		interpolationType[0] = 2;
+
+		num_block_coarse_points.resize( mgr_nlevels );
+		num_block_coarse_points[0];
+
+		lvl_block_coarse_indexes_data.resize( mgr_nlevels );
+		lvl_block_coarse_indexes_data[0].resize( 1 );
+		lvl_block_coarse_indexes_data[0][0] = 3;
+
+		lvl_block_coarse_indexes.resize( mgr_nlevels );
+		for( HYPRE_Int i = 0; i < mgr_nlevels; ++i )
+		{
+		  lvl_block_coarse_indexes[i] = lvl_block_coarse_indexes_data[i].data();
+		}
+		GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond,
+																	  mgr_bsize,
+																	  mgr_nlevels,
+																	  num_block_coarse_points.data(),
+																	  lvl_block_coarse_indexes.data(),
+																	  point_marker_array.data() ) );
+	}
+	else
+	{
+      mgr_bsize = 2;
+      mgr_nlevels = 1;
+
+      HYPRE_Int * *mgr_cindices = hypre_CTAlloc( HYPRE_Int *, mgr_nlevels, HYPRE_MEMORY_HOST );
+      HYPRE_Int *lv1 = hypre_CTAlloc( HYPRE_Int, mgr_bsize, HYPRE_MEMORY_HOST );
+      lv1[0] = 1;
+      mgr_cindices[0] = lv1;
+
+      HYPRE_Int *mgr_num_cindices = hypre_CTAlloc( HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST );
+      mgr_num_cindices[0] = 1;
+
+      std::vector< HYPRE_BigInt > idx_array;
+      idx_array.resize( mgr_bsize );
+      idx_array[0] = LvArray::integerConversion< HYPRE_BigInt >( dofManager->rankOffset() );
+      idx_array[1] = idx_array[0] + LvArray::integerConversion< HYPRE_BigInt >( numLocalDofsPerField[0] );
+
+      HYPRE_MGRSetCpointsByContiguousBlock( m_precond, mgr_bsize, mgr_nlevels, idx_array.data(), mgr_num_cindices, mgr_cindices );
+
+	  coarseGridMethod.resize( mgr_nlevels );
+	  coarseGridMethod[0] = 1; //diagonal sparsification
+      interpolationType.resize( mgr_nlevels );
+      interpolationType[0] = 2;
+    }
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( m_precond, 99 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, interpolationType.data() ) );
+//    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, coarseGridMethod.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, 0 ) );
+  }
+  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFlow" )
+  {
+	// Labels description stored in point_marker_array
+	//             0 = pressure
+	//             1 = density
+	//           ... = densities
+	// numLabels - 1 = density
+	HYPRE_Int numLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+	GEOSX_LOG_RANK_VAR( numLabels );
+    GEOSX_ERROR( "To be implemented" );
+  }
+  else if( m_parameters.mgr.strategy == "CompositionalMultiphaseReservoir" )
+  {
+    // Labels description stored in point_marker_array
+	//                0 = reservoir pressure
+	//                1 = reservoir density
+	//              ... = ... (reservoir densities)
+	// numResLabels - 1 = reservoir density
+    //     numResLabels = well pressure
+	// numResLabels + 1 = well density
+	//              ... = ... (well densities)
+	// numResLabels + numWellLabels - 2 = well density
+	// numResLabels + numWellLabels - 1 = well rate
+	HYPRE_Int numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+	HYPRE_Int numWellLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+	GEOSX_LOG_RANK_VAR( numResLabels );
+	GEOSX_LOG_RANK_VAR( numWellLabels );
+    GEOSX_ERROR( "To be implemented" );
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported MGR strategy: " << m_parameters.mgr.strategy );
+  }
+  m_functions->setup = HYPRE_MGRSetup;
+  m_functions->apply = HYPRE_MGRSolve;
+  m_functions->destroy = HYPRE_MGRDestroy;
 }
 
 void HyprePreconditioner::createILUT()
