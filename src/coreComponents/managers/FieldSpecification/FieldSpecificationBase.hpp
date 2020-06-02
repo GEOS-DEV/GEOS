@@ -781,8 +781,15 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  return ApplyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, 1.0, dataGroup, dofMap, dofRankOffset, matrix, rhs, std::forward< LAMBDA >(
-                                                               lambda ) );
+  return ApplyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet,
+                                                             time,
+                                                             1.0,
+                                                             dataGroup,
+                                                             dofMap,
+                                                             dofRankOffset,
+                                                             matrix,
+                                                             rhs,
+                                                             std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >

@@ -373,7 +373,7 @@ void CompositionalMultiphaseWell::UpdateFluidModel( WellElementSubRegion & subRe
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
                                                                                    fluidWrapper,
@@ -649,7 +649,7 @@ void CompositionalMultiphaseWell::InitializeWells( DomainPartition * const domai
     // 4) Back calculate component densities
     constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       CompositionalMultiphaseFlowKernels::FluidUpdateKernel::Launch< serialPolicy >( subRegion.size(),
                                                                                      fluidWrapper,

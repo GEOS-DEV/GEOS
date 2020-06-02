@@ -16,10 +16,8 @@
 #include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
+#include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
@@ -182,14 +180,14 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   // set the original fluid state to current
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     fluidWrapper.Update( 0, 0, P, T, composition );
   } );
 
   // now perturb variables and update the copied fluid's state
   constitutive::constitutiveUpdatePassThru( fluidCopy, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // update pressure and check derivatives
     {
@@ -258,8 +256,8 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
         compNew[ic] /= sum;
 
       fluidWrapper.Update( 0, 0, P, T, compNew );
-      string var = "compFrac[" + components[jc] + "]";
 
+      string const var = "compFrac[" + components[jc] + "]";
       checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
       checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
       checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );

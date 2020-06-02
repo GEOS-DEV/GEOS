@@ -97,16 +97,6 @@ struct FluxKernel
   using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewType;
 
   /**
-   * @brief The type for element-based constitutive data parameters.
-   * Consists entirely of ArrayView's.
-   *
-   * Can be converted from ElementRegionManager::MaterialViewAccessor
-   * by calling .toView() or .toViewConst() on an accessor instance
-   */
-  template< typename VIEWTYPE >
-  using MaterialView = typename ElementRegionManager::MaterialViewAccessor< VIEWTYPE >::ViewTypeConst;
-
-  /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
    * @param[in] stencil The stencil object.
@@ -129,10 +119,12 @@ struct FluxKernel
   Launch( STENCIL_TYPE const & stencil,
           localIndex const numDofPerCell,
           real64 const dt,
+          globalIndex const rankOffset,
           ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
           integer const updateProppantPacking,
           R1Tensor const & unitGravityVector,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
@@ -163,8 +155,8 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
           ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
           ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
-          ParallelMatrix * const jacobian,
-          ParallelVector * const residual );
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 
   template< typename STENCIL_TYPE >

@@ -1025,7 +1025,7 @@ struct SolutionCheckKernel
   {
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
 
-    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    forAll< POLICY >( wellElemDofNumber.size(), [=] ( localIndex const iwelem )
     {
       if( wellElemGhostRank[iwelem] < 0 )
       {

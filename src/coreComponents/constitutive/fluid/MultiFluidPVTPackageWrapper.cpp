@@ -47,11 +47,11 @@ namespace
 PVTPackage::PHASE_TYPE getPVTPackagePhaseType( string const & name )
 {
   static std::map< string, PVTPackage::PHASE_TYPE > const phaseTypes =
-    {
-      { "gas",   PVTPackage::PHASE_TYPE::GAS },
-      { "oil",   PVTPackage::PHASE_TYPE::OIL },
-      { "water", PVTPackage::PHASE_TYPE::LIQUID_WATER_RICH }
-    };
+  {
+    { "gas", PVTPackage::PHASE_TYPE::GAS },
+    { "oil", PVTPackage::PHASE_TYPE::OIL },
+    { "water", PVTPackage::PHASE_TYPE::LIQUID_WATER_RICH }
+  };
   auto const it = phaseTypes.find( name );
   GEOSX_ERROR_IF( it == phaseTypes.end(), "Fluid phase not supported by PVTPackage: " << name );
   return it->second;

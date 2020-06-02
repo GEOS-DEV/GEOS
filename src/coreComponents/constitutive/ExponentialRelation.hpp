@@ -302,11 +302,11 @@ private:
 inline ExponentApproximationType stringToExponentType( string const & model )
 {
   static std::map< string, ExponentApproximationType > const approxTypes =
-    {
-      { "linear", ExponentApproximationType::Linear },
-      { "quadratic", ExponentApproximationType::Quadratic },
-      { "exponential", ExponentApproximationType::Full },
-    };
+  {
+    { "linear", ExponentApproximationType::Linear },
+    { "quadratic", ExponentApproximationType::Quadratic },
+    { "exponential", ExponentApproximationType::Full },
+  };
   auto const it = approxTypes.find( model );
   GEOSX_ERROR_IF( it == approxTypes.end(), "Model type not supported: " << model );
   return it->second;

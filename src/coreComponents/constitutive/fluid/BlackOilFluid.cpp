@@ -42,10 +42,10 @@ namespace
 BlackOilFluid::FluidType getBlackOilFluidType( string const & name )
 {
   static std::map< string, BlackOilFluid::FluidType > const fluidTypes =
-    {
-      { "LiveOil",   BlackOilFluid::FluidType::LiveOil },
-      { "DeadOil",   BlackOilFluid::FluidType::DeadOil },
-    };
+  {
+    { "LiveOil", BlackOilFluid::FluidType::LiveOil },
+    { "DeadOil", BlackOilFluid::FluidType::DeadOil },
+  };
   auto const it = fluidTypes.find( name );
   GEOSX_ERROR_IF( it == fluidTypes.end(), "Black-oil fluid type not supported by PVTPackage: " << name );
   return it->second;

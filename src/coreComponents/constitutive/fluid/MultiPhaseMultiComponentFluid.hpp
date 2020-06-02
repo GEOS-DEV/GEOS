@@ -99,9 +99,9 @@ public:
                             dTotalDensity_dPressure,
                             dTotalDensity_dTemperature,
                             dTotalDensity_dGlobalCompFraction ),
-      m_phaseDensityFuns( phaseDensityFuns ),
-      m_phaseViscosityFuns( phaseViscosityFuns ),
-      m_flashModel( flashModel )
+    m_phaseDensityFuns( phaseDensityFuns ),
+    m_phaseViscosityFuns( phaseViscosityFuns ),
+    m_flashModel( flashModel )
   {}
 
   /// Default copy constructor

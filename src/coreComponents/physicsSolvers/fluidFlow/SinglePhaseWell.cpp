@@ -108,10 +108,10 @@ void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localI
 
   bool const success =
     constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
-    {
-      typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-      SinglePhaseBaseKernels::FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
-    } );
+  {
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    SinglePhaseBaseKernels::FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
+  } );
   GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
 }
 
@@ -658,7 +658,7 @@ bool SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
 
     // here we can reuse the flow solver kernel checking that pressures are positive
     localIndex const subRegionSolutionCheck =
-      SinglePhaseBaseKernels::SolutionCheckKernel::Launch< serialPolicy,
+      SinglePhaseWellKernels::SolutionCheckKernel::Launch< serialPolicy,
                                                            serialReduce >( m_localSolution.toViewConst(), // <--------------------
                                                                            dofManager.rankOffset(),
                                                                            wellElemDofNumber,

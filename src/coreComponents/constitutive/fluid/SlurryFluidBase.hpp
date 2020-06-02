@@ -91,6 +91,16 @@ public:
   arrayView3d< real64 > const & dFluidDensity_dComponentConcentration()       { return m_dFluidDens_dCompConc; }
 
 
+  arrayView3d< real64 const > const & componentDensity() const { return m_componentDensity; }
+  arrayView3d< real64 > const & componentDensity()       { return m_componentDensity; }
+
+  arrayView3d< real64 const > const & dComponentDensity_dPressure() const { return m_dCompDens_dPres; }
+  arrayView3d< real64 > const & dComponentDensity_dPressure()       { return m_dCompDens_dPres; }
+
+  arrayView4d< real64 const > const & dComponentDensity_dComponentConcentration() const { return m_dCompDens_dCompConc; }
+  arrayView4d< real64 > const & dComponentDensity_dComponentConcentration()       { return m_dCompDens_dCompConc; }
+
+
   arrayView2d< real64 const > const & fluidViscosity() const { return m_fluidViscosity; }
   arrayView2d< real64 > const & fluidViscosity()       { return m_fluidViscosity; }
 

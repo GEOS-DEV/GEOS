@@ -600,13 +600,12 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    NumericalMethodsManager const & numericalMethodManager =
-      domain->getParent()->GetGroupReference< NumericalMethodsManager >( keys::numericalMethodsManager );
-    FiniteVolumeManager const & fvManager =
-      numericalMethodManager.GetGroupReference< FiniteVolumeManager >( keys::finiteVolumeManager );
+    MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+    NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( solver->getDiscretization() );
 
-    solver->AssembleFluxTerms( time, dt, fluxApprox, solver->getDofManager(), localMatrix, localRhs );
+    solver->AssembleFluxTerms( time, dt, mesh, fluxApprox, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

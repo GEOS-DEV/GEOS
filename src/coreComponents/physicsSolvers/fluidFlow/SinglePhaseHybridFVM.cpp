@@ -124,7 +124,7 @@ void SinglePhaseHybridFVM::ImplicitStepSetup( real64 const & time_n,
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
 
 }
 
@@ -151,7 +151,7 @@ void SinglePhaseHybridFVM::ImplicitStepComplete( real64 const & time_n,
   arrayView1d< real64 > const & dFacePres =
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
-  forAll< parallelDevicePolicy< 128 > >( faceManager->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
+  forAll< parallelDevicePolicy<> >( faceManager->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
   {
     // update if face is in target region
     if( faceDofNumber[iface] >= 0 )
@@ -337,7 +337,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
 
     GEOSX_UNUSED_VAR( rhs );
-    SinglePhaseBaseKernels::ResidualNormKernel::Launch< parallelDevicePolicy< 128 >,
+    SinglePhaseBaseKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
                                                         parallelDeviceReduce >( m_localRhs.toViewConst(),
                                                                                 rankOffset,
                                                                                 elemDofNumber,
@@ -366,7 +366,7 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
   defaultViscosity /= subRegionCounter;
 
   // 2. Compute the residual for the face-based constraints
-  SinglePhaseHybridFVMKernels::ResidualNormKernel::Launch< parallelDevicePolicy< 128 >,
+  SinglePhaseHybridFVMKernels::ResidualNormKernel::Launch< parallelDevicePolicy<>,
                                                            parallelDeviceReduce >( m_localRhs.toViewConst(),
                                                                                    rankOffset,
                                                                                    faceDofNumber.toViewConst(),
@@ -441,7 +441,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const * const domain,
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
     localIndex const subRegionSolutionCheck =
-      SinglePhaseBaseKernels::SolutionCheckKernel::Launch< parallelDevicePolicy< 128 >,
+      SinglePhaseBaseKernels::SolutionCheckKernel::Launch< parallelDevicePolicy<>,
                                                            parallelDeviceReduce >( m_localSolution.toViewConst(),
                                                                                    rankOffset,
                                                                                    elemDofNumber,
@@ -468,7 +468,7 @@ SinglePhaseHybridFVM::CheckSystemSolution( DomainPartition const * const domain,
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   localIndex const faceSolutionCheck =
-    SinglePhaseBaseKernels::SolutionCheckKernel::Launch< parallelDevicePolicy< 128 >,
+    SinglePhaseBaseKernels::SolutionCheckKernel::Launch< parallelDevicePolicy<>,
                                                          parallelDeviceReduce >( m_localSolution.toViewConst(),
                                                                                  rankOffset,
                                                                                  faceDofNumber,
@@ -543,7 +543,7 @@ void SinglePhaseHybridFVM::ResetStateToBeginningOfStep( DomainPartition * const 
     faceManager->getReference< array1d< real64 > >( viewKeyStruct::deltaFacePressureString );
 
   // zero out the face pressures
-  dFacePres.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  dFacePres.setValues< parallelDevicePolicy<> >( 0.0 );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, SinglePhaseHybridFVM, std::string const &, Group * const )

@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/solid/solidSelector.hpp"
-#include "finiteElement/ElementLibrary/FiniteElementBase.h"
+#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"

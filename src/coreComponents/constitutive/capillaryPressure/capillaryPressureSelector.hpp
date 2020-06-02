@@ -13,14 +13,14 @@
  */
 
 /**
- * @file multiFluidSelector.hpp
+ * @file capillaryPressureSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
 
-#include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP
+
+#include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 
 namespace geosx
 {
@@ -30,29 +30,27 @@ namespace constitutive
 
 #ifndef PASSTHROUGH_HANDLE_CASE
 #define PASSTHROUGH_HANDLE_CASE( MODEL ) \
-  if( dynamicCast< MODEL * >( &fluid ) ) \
+  if( dynamicCast< MODEL * >( &capPres ) ) \
   { \
-    lambda( static_cast< MODEL & >( fluid ) ); \
+    lambda( static_cast< MODEL & >( capPres ) ); \
     return true; \
   }
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( MultiFluidBase const & fluid,
+bool constitutiveUpdatePassThru( CapillaryPressureBase const & capPres,
                                  LAMBDA && lambda )
 {
-  PASSTHROUGH_HANDLE_CASE( BlackOilFluid const )
-  PASSTHROUGH_HANDLE_CASE( CompositionalMultiphaseFluid const )
-  PASSTHROUGH_HANDLE_CASE( MultiPhaseMultiComponentFluid const )
+  PASSTHROUGH_HANDLE_CASE( BrooksCoreyCapillaryPressure const )
+  PASSTHROUGH_HANDLE_CASE( VanGenuchtenCapillaryPressure const )
   return false;
 }
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( MultiFluidBase & fluid,
+bool constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
                                  LAMBDA && lambda )
 {
-  PASSTHROUGH_HANDLE_CASE( BlackOilFluid )
-  PASSTHROUGH_HANDLE_CASE( CompositionalMultiphaseFluid )
-  PASSTHROUGH_HANDLE_CASE( MultiPhaseMultiComponentFluid )
+  PASSTHROUGH_HANDLE_CASE( BrooksCoreyCapillaryPressure )
+  PASSTHROUGH_HANDLE_CASE( VanGenuchtenCapillaryPressure )
   return false;
 }
 
@@ -63,4 +61,4 @@ bool constitutiveUpdatePassThru( MultiFluidBase & fluid,
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#endif //GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_CAPILLARYPRESSURESELECTOR_HPP

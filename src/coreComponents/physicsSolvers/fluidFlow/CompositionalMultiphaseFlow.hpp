@@ -195,15 +195,15 @@ public:
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
+   * @param castedRelPerm the group storing the required fields
    */
-  void UpdateRelPermModel( Group & dataGroup, localIndex const targetIndex );
+  void UpdateRelPermModel( Group & castedRelPerm, localIndex const targetIndex );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
-   * @param dataGroup the group storing the required fields
+   * @param castedCapPres the group storing the required fields
    */
-  void UpdateCapPressureModel( Group & dataGroup, localIndex const targetIndex );
+  void UpdateCapPressureModel( Group & castedCapPres, localIndex const targetIndex );
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
@@ -256,6 +256,7 @@ public:
    */
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
+                          MeshLevel const & mesh,
                           FluxApproximationBase const & discretization,
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,

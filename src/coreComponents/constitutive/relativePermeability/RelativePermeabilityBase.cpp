@@ -109,6 +109,18 @@ void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group *
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
+void RelativePermeabilityBase::DeliverClone( string const & name,
+                                             Group * const parent,
+                                             std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  ConstitutiveBase::DeliverClone( name, parent, clone );
+  RelativePermeabilityBase & relPerm = dynamicCast< RelativePermeabilityBase & >( *clone );
+
+  relPerm.m_phaseNames = m_phaseNames;
+  relPerm.m_phaseTypes = m_phaseTypes;
+  relPerm.m_phaseOrder = m_phaseOrder;
+}
+
 } // namespace constitutive
 
 } // namespace geosx

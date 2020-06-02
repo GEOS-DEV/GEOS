@@ -1360,10 +1360,10 @@ ElementRegionManager::ConstructMaterialViewAccessor( string const & viewName,
 template< typename T, int NDIM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM > >
 ElementRegionManager::
-ConstructMaterialArrayViewAccessor( string const & viewName,
-                                    arrayView1d< string const > const & regionNames,
-                                    arrayView1d< string const > const & materialNames,
-                                    bool const allowMissingViews ) const
+  ConstructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
 {
   return ConstructMaterialViewAccessor< Array< T, NDIM >, ArrayView< T const, NDIM > >( viewName,
                                                                                         regionNames,

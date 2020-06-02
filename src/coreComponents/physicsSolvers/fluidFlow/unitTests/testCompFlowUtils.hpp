@@ -159,10 +159,10 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             real64 const eps,
                             CRSMatrixView< real64, globalIndex const > const & jacobian )
 {
-  forAll< parallelHostPolicy >( residual.size(), [=]( localIndex const row )
+  forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOSX_HOST_DEVICE ( localIndex const row )
   {
     real64 const dRdX = ( residual[row] - residualOrig[row] ) / eps;
-    if( std::fabs( dRdX ) > 0.0 )
+    if( fabs( dRdX ) > 0.0 )
     {
       jacobian.addToRow< serialAtomic >( row, &dofIndex, &dRdX, 1 );
     }
@@ -187,8 +187,8 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   // assemble the analytical residual
   solver.ResetStateToBeginningOfStep( &domain );
 
-  residual.setValues< parallelHostPolicy >( 0.0 );
-  jacobian.setValues< parallelHostPolicy >( 0.0 );
+  residual.setValues< parallelDevicePolicy<> >( 0.0 );
+  jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
   residual.move( chai::CPU, false );
@@ -198,7 +198,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
 
   // create the numerical jacobian
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
-  jacobianFD.setValues< parallelHostPolicy >( 0.0 );
+  jacobianFD.setValues< parallelDevicePolicy<> >( 0.0 );
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFlow::viewKeyStruct::dofFieldString );
 
@@ -211,22 +211,24 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
     arrayView1d< globalIndex const > const & dofNumber =
       subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-    arrayView1d< real64 const > const pres =
+    arrayView1d< real64 const > const & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
+    pres.move( chai::CPU, false );
 
-    arrayView1d< real64 > const dPres =
+    arrayView1d< real64 > const & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
-    arrayView2d< real64 const > const compDens =
+    arrayView2d< real64 const > const & compDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-    compDens.move( chai::CPU );
+    compDens.move( chai::CPU, false );
 
-    arrayView2d< real64 > const dCompDens =
+    arrayView2d< real64 > const & dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
 
     for( localIndex ei = 0; ei < subRegion.size(); ++ei )
     {
-      if( elemGhostRank[ei] >= 0 ) continue;
+      if( elemGhostRank[ei] >= 0 )
+        continue;
 
       real64 totalDensity = 0.0;
       for( localIndex ic = 0; ic < NC; ++ic )
@@ -247,8 +249,8 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
           solver.UpdateState( subRegion2, targetIndex2 );
         } );
 
-        residual.setValues< parallelHostPolicy >( 0.0 );
-        jacobian.setValues< parallelHostPolicy >( 0.0 );
+        residual.setValues< parallelDevicePolicy<> >( 0.0 );
+        jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
         fillNumericalJacobian( residual.toViewConst(),
@@ -272,8 +274,8 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
           solver.UpdateState( subRegion2, targetIndex2 );
         } );
 
-        residual.setValues< parallelHostPolicy >( 0.0 );
-        jacobian.setValues< parallelHostPolicy >( 0.0 );
+        residual.setValues< parallelDevicePolicy<> >( 0.0 );
+        jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
         assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
         fillNumericalJacobian( residual.toViewConst(),
@@ -288,8 +290,8 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   // assemble the analytical jacobian
   solver.ResetStateToBeginningOfStep( &domain );
 
-  residual.setValues< parallelHostPolicy >( 0.0 );
-  jacobian.setValues< parallelHostPolicy >( 0.0 );
+  residual.setValues< parallelDevicePolicy<> >( 0.0 );
+  jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );

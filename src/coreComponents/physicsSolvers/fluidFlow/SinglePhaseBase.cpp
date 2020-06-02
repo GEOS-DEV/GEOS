@@ -144,9 +144,9 @@ void SinglePhaseBase::UpdateFluidModel( Group & dataGroup, localIndex const targ
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   bool const success =
-  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+    constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
   } );
   GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
@@ -214,7 +214,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
 
     if( pvmult.size() == poro.size() )
     {
-      forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         densOld[ei] = dens[ei][0];
         poro[ei] = poroRef[ei] * pvmult[ei][0];
@@ -223,7 +223,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
     }
     else
     {
-      forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         densOld[ei] = dens[ei][0];
         poro[ei] = poroRef[ei];
@@ -326,8 +326,8 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
     arrayView1d< real64 > const & poroOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
 
-    dPres.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-    dVol.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
+    dVol.setValues< parallelDevicePolicy<> >( 0.0 );
 
     // This should fix NaN density in newly created fracture elements
     UpdateState( subRegion, targetIndex );
@@ -335,7 +335,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & dens = fluid.density();
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       densOld[ei] = dens[ei][0];
       poroOld[ei] = poro[ei];
@@ -348,7 +348,7 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     arrayView1d< real64 const > const & aper  = subRegion.getReference< array1d< real64 > >( viewKeyStruct::effectiveApertureString );
     arrayView1d< real64 > const & aper0 = subRegion.getReference< array1d< real64 > >( viewKeyStruct::aperture0String );
 
-    aper0.setValues< parallelDevicePolicy< 128 > >( aper );
+    aper0.setValues< parallelDevicePolicy<> >( aper );
 
     // UpdateMobility( &subRegion );
     UpdateState( subRegion, targetIndex );
@@ -371,9 +371,9 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d< real64 const > const & dVol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
 
     arrayView1d< real64 > const & pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-    arrayView1d< real64 > const & vol = subRegion.getElementVolume();
+    arrayView1d< real64 > const & vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       vol[ei] += dVol[ei];
@@ -388,7 +388,7 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d< real64 const > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
     arrayView1d< real64 > const & creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
@@ -418,22 +418,22 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
   GEOSX_UNUSED_VAR( matrix )
   GEOSX_UNUSED_VAR( rhs )
 
-  m_localMatrix.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
 
   if( m_poroElasticFlag )
   {
-    AssembleAccumulationTerms< true, parallelDevicePolicy< 128 > >( *domain,
-                                                                    dofManager,
-                                                                    m_localMatrix.toViewConstSizes(),
-                                                                    m_localRhs.toView() );
+    AssembleAccumulationTerms< true, parallelDevicePolicy<> >( *domain,
+                                                               dofManager,
+                                                               m_localMatrix.toViewConstSizes(),
+                                                               m_localRhs.toView() );
   }
   else
   {
-    AssembleAccumulationTerms< false, parallelDevicePolicy< 128 > >( *domain,
-                                                                     dofManager,
-                                                                     m_localMatrix.toViewConstSizes(),
-                                                                     m_localRhs.toView() );
+    AssembleAccumulationTerms< false, parallelDevicePolicy<> >( *domain,
+                                                                dofManager,
+                                                                m_localMatrix.toViewConstSizes(),
+                                                                m_localRhs.toView() );
   }
 
   AssembleFluxTerms( time_n,
@@ -442,38 +442,6 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
                      dofManager,
                      m_localMatrix.toViewConstSizes(),
                      m_localRhs.toView() );
-
-#if 0 // TODO: debug output should be done in NonlinearImplicitStep()
-
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs, MPI_COMM_GEOSX );
-
-  if( getLogLevel() == 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SinglePhaseFlow::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
-  }
-
-
-  if( getLogLevel() >= 3 )
-  {
-
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
-
-    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
-
-    GEOSX_LOG_RANK_0( "After SinglePhaseBase::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
-#endif
 }
 
 template< bool ISPORO, typename POLICY >
@@ -662,14 +630,14 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
 
     // call the application of the boundary condition to alter the matrix and rhs
     fs->ApplyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                        parallelDevicePolicy< 128 > >( lset,
-                                                                       time_n + dt,
-                                                                       subRegion,
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                        parallelDevicePolicy<> >( lset,
+                                                                  time_n + dt,
+                                                                  subRegion,
+                                                                  dofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       return pres[a] + dPres[a];
     } );
@@ -713,18 +681,18 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
     }
 
     fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                        parallelDevicePolicy< 128 > >( localSet.toViewConst(),
-                                                                       time_n + dt,
-                                                                       dt,
-                                                                       subRegion,
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       [] GEOSX_HOST_DEVICE ( localIndex const )
-                                                                       {
-                                                                         return 0.0;
-                                                                       } );
+                                        parallelDevicePolicy<> >( localSet.toViewConst(),
+                                                                  time_n + dt,
+                                                                  dt,
+                                                                  subRegion,
+                                                                  dofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  [] GEOSX_HOST_DEVICE ( localIndex const )
+    {
+      return 0.0;
+    } );
 
   } );
 }
@@ -758,7 +726,7 @@ void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domai
     arrayView1d< real64 > const & dPres =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
-    dPres.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
 
     UpdateState( subRegion, targetIndex );
   } );

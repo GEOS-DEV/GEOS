@@ -253,7 +253,8 @@ void FlowSolverBase::ResetViews( DomainPartition * const domain )
   m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString );
 
   m_element_dSeparationCoefficient_dAperture.clear();
-  m_element_dSeparationCoefficient_dAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
+  m_element_dSeparationCoefficient_dAperture = elemManager.ConstructArrayViewAccessor< real64, 1 >(
+    FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
   m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString );
 #endif
 }

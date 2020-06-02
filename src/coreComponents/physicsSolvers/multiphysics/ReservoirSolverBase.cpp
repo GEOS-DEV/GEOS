@@ -194,8 +194,8 @@ void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs )
 {
-  m_localMatrix.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
 
   // assemble J_RR (excluding perforation rates)
   m_flowSolver->AssembleSystem( time_n, dt, domain,

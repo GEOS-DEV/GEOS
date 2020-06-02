@@ -21,15 +21,12 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
+#include "finiteElement/Kinematics.h"
+#include "managers/NumericalMethodsManager.hpp"
+#include "managers/DomainPartition.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
-#include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/Kinematics.h"
-#include "managers/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
-#include "meshUtilities/ComputationalGeometry.hpp"
-
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geosx
 {

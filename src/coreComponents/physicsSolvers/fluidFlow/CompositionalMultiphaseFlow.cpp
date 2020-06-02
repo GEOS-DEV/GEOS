@@ -21,10 +21,9 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "dataRepository/Group.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -410,7 +409,7 @@ void CompositionalMultiphaseFlow::UpdateFluidModel( Group & dataGroup, localInde
 
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
     // MultiFluid models are not thread-safe or device-capable yet
     FluidUpdateKernel::Launch< serialPolicy >( dataGroup.size(),
@@ -438,26 +437,40 @@ void CompositionalMultiphaseFlow::UpdateRelPermModel( Group & dataGroup, localIn
 {
   GEOSX_MARK_FUNCTION;
 
+  arrayView2d< real64 const > const & phaseVolFrac =
+    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+
   RelativePermeabilityBase & relPerm =
     GetConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  arrayView2d< real64 > const & phaseVolFrac =
-    dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+  constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
+  {
+    typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-  relPerm.BatchUpdate( phaseVolFrac );
+    RelativePermeabilityUpdateKernel::Launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                        relPermWrapper,
+                                                                        phaseVolFrac );
+  } );
 }
 
 void CompositionalMultiphaseFlow::UpdateCapPressureModel( Group & dataGroup, localIndex const targetIndex )
 {
   if( m_capPressureFlag )
   {
+    arrayView2d< real64 const > const & phaseVolFrac =
+      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+
     CapillaryPressureBase & capPressure =
       GetConstitutiveModel< CapillaryPressureBase >( dataGroup, m_capPressureModelNames[targetIndex] );
 
-    arrayView2d< real64 > const & phaseVolFrac =
-      dataGroup.getReference< array2d< real64 > >( viewKeyStruct::phaseVolumeFractionString );
+    constitutive::constitutiveUpdatePassThru( capPressure, [&] ( auto & castedCapPres )
+    {
+      typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-    capPressure.BatchUpdate( phaseVolFrac );
+      CapillaryPressureUpdateKernel::Launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                       capPresWrapper,
+                                                                       phaseVolFrac );
+    } );
   }
 }
 
@@ -496,9 +509,9 @@ void CompositionalMultiphaseFlow::InitializeFluidState( DomainPartition * const 
     arrayView2d< real64 const > const & compFrac =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompFractionString );
     arrayView2d< real64 > const &
-      compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       for( localIndex ic = 0; ic < NC; ++ic )
       {
@@ -596,9 +609,10 @@ void CompositionalMultiphaseFlow::BackupFields( DomainPartition * const domain )
     localIndex const NC = m_numComponents;
     localIndex const NP = m_numPhases;
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( elemGhostRank[ei] >= 0 ) return;
+      if( elemGhostRank[ei] >= 0 )
+        return;
 
       for( localIndex ip = 0; ip < NP; ++ip )
       {
@@ -699,15 +713,13 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
   GEOSX_UNUSED_VAR( matrix )
   GEOSX_UNUSED_VAR( rhs )
 
-  m_localMatrix.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
 
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const & numericalMethodManager =
-    domain->getParent()->GetGroupReference< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteVolumeManager const & fvManager =
-    numericalMethodManager.GetGroupReference< FiniteVolumeManager >( keys::finiteVolumeManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
 
   AssembleAccumulationTerms( time_n,
@@ -719,6 +731,7 @@ void CompositionalMultiphaseFlow::AssembleSystem( real64 const time_n,
 
   AssembleFluxTerms( time_n,
                      dt,
+                     mesh,
                      fluxApprox,
                      dofManager,
                      m_localMatrix.toViewConstSizes(),
@@ -811,7 +824,8 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_
     arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
     arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-    KernelLaunchSelector2< AccumulationKernel >( m_numComponents, m_numPhases,
+    KernelLaunchSelector1< AccumulationKernel >( m_numComponents,
+                                                 m_numPhases,
                                                  subRegion.size(),
                                                  dofManager.rankOffset(),
                                                  dofNumber,
@@ -841,6 +855,7 @@ void CompositionalMultiphaseFlow::AssembleAccumulationTerms( real64 const GEOSX_
 
 void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                      real64 const dt,
+                                                     MeshLevel const & mesh,
                                                      FluxApproximationBase const & discretization,
                                                      DofManager const & dofManager,
                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -848,9 +863,44 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
 {
   GEOSX_MARK_FUNCTION;
 
+  /*
+   * Force phase compositions to be moved to device.
+   *
+   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
+   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
+   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
+   * Here we force the move by launching a dummy kernel.
+   *
+   * This is not a problem in normal solver execution, as these arrays get moved by AccumulationKernel.
+   * But it fails unit tests, which test flux assembly separately.
+   *
+   * TODO: See if this can be fixed in NewChaiBuffer (I have not found a way - Sergey).
+   *       Alternatively, stop using ElementViewAccessors altogether and just roll with
+   *       accessors' outer arrays being moved on every jacobian assembly (maybe disable output).
+   *       Or stop testing through the solver interface and test separate kernels instead.
+   *       Finally, the problem should go away when fluid updates are executed on device.
+   */
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  {
+    MultiFluidBase const & fluid = GetConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
+    arrayView4d< real64 const > const & phaseCompFrac = fluid.phaseCompFraction();
+    arrayView4d< real64 const > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
+    arrayView5d< real64 const > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp]
+                                      GEOSX_HOST_DEVICE ( localIndex const )
+    {
+      GEOSX_UNUSED_VAR( phaseCompFrac )
+      GEOSX_UNUSED_VAR( dPhaseCompFrac_dPres )
+      GEOSX_UNUSED_VAR( dPhaseCompFrac_dComp )
+    } );
+  } );
+
   discretization.forAllStencils( [&] ( auto const & stencil )
   {
-    KernelLaunchSelector2< FluxKernel >( m_numComponents, m_numPhases,
+    KernelLaunchSelector1< FluxKernel >( m_numComponents,
+                                         m_numPhases,
                                          stencil,
                                          dofManager.rankOffset(),
                                          m_compositionalDofIndex.toViewConst(),
@@ -1011,18 +1061,18 @@ CompositionalMultiphaseFlow::ApplySourceFluxBC( real64 const time,
     }
 
     fs->ApplyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                        parallelDevicePolicy< 128 > >( localSet.toViewConst(),
-                                                                       time + dt,
-                                                                       dt,
-                                                                       subRegion,
-                                                                       dofNumber,
-                                                                       dofManager.rankOffset(),
-                                                                       localMatrix,
-                                                                       localRhs,
-                                                                       [] GEOSX_HOST_DEVICE ( localIndex const )
-                                                                       {
-                                                                         return 0.0;
-                                                                       } );
+                                        parallelDevicePolicy<> >( localSet.toViewConst(),
+                                                                  time + dt,
+                                                                  dt,
+                                                                  subRegion,
+                                                                  dofNumber,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  [] GEOSX_HOST_DEVICE ( localIndex const )
+    {
+      return 0.0;
+    } );
 
   } );
 }
@@ -1114,9 +1164,6 @@ CompositionalMultiphaseFlow::ApplyDirichletBC( real64 const time,
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
 
-  localMatrix.move( chai::CPU );
-  localRhs.move( chai::CPU );
-
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
   fsManager.Apply( time + dt,
                    &domain,
@@ -1147,7 +1194,7 @@ CompositionalMultiphaseFlow::ApplyDirichletBC( real64 const time,
 
     constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
     {
-      typename TYPEOFREF( castedFluid )::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+      typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // MultiFluid models are not thread-safe or device-capable yet
       FluidUpdateKernel::Launch< serialPolicy >( targetSet,
@@ -1157,10 +1204,11 @@ CompositionalMultiphaseFlow::ApplyDirichletBC( real64 const time,
                                                  compFrac );
     } );
 
-    forAll< parallelDevicePolicy< 128 > >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       localIndex const ei = targetSet[a];
-      if( ghostRank[ei] >= 0 ) return;
+      if( ghostRank[ei] >= 0 )
+        return;
 
       globalIndex const dofIndex = dofNumber[ei];
       localIndex const localRow = dofIndex - rankOffset;
@@ -1220,7 +1268,7 @@ CompositionalMultiphaseFlow::CalculateResidualNorm( DomainPartition const * cons
 
     RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
@@ -1303,7 +1351,7 @@ CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const * const 
 
     RAJA::ReduceMin< parallelDeviceReduce, integer > check( 1 );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
@@ -1351,7 +1399,7 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -1370,8 +1418,8 @@ void CompositionalMultiphaseFlow::ResetStateToBeginningOfStep( DomainPartition *
     arrayView2d< real64 > const & dCompDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
-    dPres.setValues< parallelDevicePolicy< 128 > >( 0.0 );
-    dCompDens.setValues< parallelDevicePolicy< 128 > >( 0.0 );
+    dPres.setValues< parallelDevicePolicy<> >( 0.0 );
+    dCompDens.setValues< parallelDevicePolicy<> >( 0.0 );
 
     UpdateState( subRegion, targetIndex );
   } );
@@ -1397,7 +1445,7 @@ void CompositionalMultiphaseFlow::ImplicitStepComplete( real64 const & GEOSX_UNU
     arrayView2d< real64 > const & compDens =
       subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
 
-    forAll< parallelDevicePolicy< 128 > >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for( localIndex ic = 0; ic < NC; ++ic )

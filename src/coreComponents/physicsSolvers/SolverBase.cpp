@@ -609,7 +609,7 @@ SolverBase::SetupLocalSystem( DomainPartition * const domain,
 
   SparsityPattern< globalIndex > pattern;
   dofManager.setSparsityPattern( pattern );
-  localMatrix.stealFrom< parallelDevicePolicy< 128 > >( std::move( pattern ) );
+  localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
 
   localRhs.resize( localMatrix.numRows() );
   localSolution.resize( localMatrix.numRows() );

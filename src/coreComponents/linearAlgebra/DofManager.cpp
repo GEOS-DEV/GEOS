@@ -862,8 +862,8 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
     {
       // This weirdness is because of fracture stencils, which don't have separate
       // getters for num flux elems vs stencil size... it won't work for MPFA though
-      localIndex const numFluxElems = stencil.stencilSize( iconn );
-      localIndex const stencilSize = numFluxElems;
+      localIndex const stencilSize = stencil.stencilSize( iconn );
+      localIndex const numFluxElems = stencilSize;
 
       for( localIndex i = 0; i < numFluxElems; ++i )
       {
@@ -986,7 +986,7 @@ void DofManager::setSparsityPattern( SparsityPattern< globalIndex > & pattern ) 
   }
 
   // Step 2. Allocate enough capacity for all nonzero entries in each row
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows, numLocalRows, rowSizes.data() );
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows, numGlobalDofs(), rowSizes.data() );
 
   // Step 3. Fill the sparsity block-by-block
   for( localIndex blockRow = 0; blockRow < numFields; ++blockRow )
@@ -1208,12 +1208,12 @@ void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVec
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
 {
-  vectorToField< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( localVector,
-                                                                         srcFieldName,
-                                                                         dstFieldName,
-                                                                         scalingFactor,
-                                                                         loCompIndex,
-                                                                         hiCompIndex );
+  vectorToField< FieldSpecificationEqual, parallelDevicePolicy<> >( localVector,
+                                                                    srcFieldName,
+                                                                    dstFieldName,
+                                                                    scalingFactor,
+                                                                    loCompIndex,
+                                                                    hiCompIndex );
 }
 
 // Copy values from DOFs to nodes
@@ -1240,12 +1240,12 @@ void DofManager::addVectorToField( arrayView1d< real64 const > const & localVect
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
 {
-  vectorToField< FieldSpecificationAdd, parallelDevicePolicy< 128 > >( localVector,
-                                                                       srcFieldName,
-                                                                       dstFieldName,
-                                                                       scalingFactor,
-                                                                       loCompIndex,
-                                                                       hiCompIndex );
+  vectorToField< FieldSpecificationAdd, parallelDevicePolicy<> >( localVector,
+                                                                  srcFieldName,
+                                                                  dstFieldName,
+                                                                  scalingFactor,
+                                                                  loCompIndex,
+                                                                  hiCompIndex );
 }
 
 template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
@@ -1315,12 +1315,12 @@ void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
                                     localIndex const loCompIndex,
                                     localIndex const hiCompIndex ) const
 {
-  fieldToVector< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( localVector,
-                                                                         srcFieldName,
-                                                                         dstFieldName,
-                                                                         scalingFactor,
-                                                                         loCompIndex,
-                                                                         hiCompIndex );
+  fieldToVector< FieldSpecificationEqual, parallelDevicePolicy<> >( localVector,
+                                                                    srcFieldName,
+                                                                    dstFieldName,
+                                                                    scalingFactor,
+                                                                    loCompIndex,
+                                                                    hiCompIndex );
 }
 
 // Copy values from nodes to DOFs
@@ -1347,12 +1347,12 @@ void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
                                    localIndex const loCompIndex,
                                    localIndex const hiCompIndex ) const
 {
-  fieldToVector< FieldSpecificationAdd, parallelDevicePolicy< 128 > >( localVector,
-                                                                       srcFieldName,
-                                                                       dstFieldName,
-                                                                       scalingFactor,
-                                                                       loCompIndex,
-                                                                       hiCompIndex );
+  fieldToVector< FieldSpecificationAdd, parallelDevicePolicy<> >( localVector,
+                                                                  srcFieldName,
+                                                                  dstFieldName,
+                                                                  scalingFactor,
+                                                                  loCompIndex,
+                                                                  hiCompIndex );
 }
 
 // Just an interface to allow only three parameters

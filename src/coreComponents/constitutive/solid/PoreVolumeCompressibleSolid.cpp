@@ -104,7 +104,7 @@ void PoreVolumeCompressibleSolid::StateUpdateBatchPressure( arrayView1d< real64 
   arrayView2d< real64 > const & pvmult = m_poreVolumeMultiplier;
   arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
 
-  forAll< parallelDevicePolicy< 128 > >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {

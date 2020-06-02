@@ -6,6 +6,7 @@ set( constitutive_headers
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      contact/ContactRelationBase.hpp
@@ -38,6 +39,7 @@ set( constitutive_headers
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
+     relativePermeability/relativePermeabilitySelector.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp

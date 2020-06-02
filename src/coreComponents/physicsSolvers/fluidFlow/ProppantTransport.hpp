@@ -80,6 +80,12 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
 
+  virtual void SetupSystem( DomainPartition * const domain,
+                            DofManager & dofManager,
+                            ParallelMatrix & matrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution ) override;
+
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
@@ -158,10 +164,10 @@ public:
    * @param dt time step
    */
 
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs );
+  void AssembleAccumulationTerms( DomainPartition const & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief assembles the flux terms for all cells
@@ -172,10 +178,10 @@ public:
    */
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs );
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs );
 
   /**@}*/
 
@@ -279,11 +285,6 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantConcentration;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaProppantConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_updatedComponentConcentration;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_cellBasedFlux;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantLiftFlux;
@@ -298,14 +299,7 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantMobile;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_poroMultiplier;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_transTMultiplier;
-
-  /// views into backup fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantConcentrationOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentDensityOld;
 
   /// views into material fields
 

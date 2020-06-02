@@ -20,8 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FINITEVOLUME_COMPOSITIONALMULTIPHASEFLOWKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -47,18 +46,20 @@ struct ComponentFractionKernel
            arraySlice2d< real64 > dCompFrac_dCompDens );
 
   template< localIndex NC >
-  static void Launch( localIndex const size,
-                      arrayView2d< real64 const > const & compDens,
-                      arrayView2d< real64 const > const & dCompDens,
-                      arrayView2d< real64 > const & compFrac,
-                      arrayView3d< real64 > const & dCompFrac_dCompDens );
+  static void
+  Launch( localIndex const size,
+          arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & dCompDens,
+          arrayView2d< real64 > const & compFrac,
+          arrayView3d< real64 > const & dCompFrac_dCompDens );
 
   template< localIndex NC >
-  static void Launch( SortedArrayView< localIndex const > const & targetSet,
-                      arrayView2d< real64 const > const & compDens,
-                      arrayView2d< real64 const > const & dCompDens,
-                      arrayView2d< real64 > const & compFrac,
-                      arrayView3d< real64 > const & dCompFrac_dCompDens );
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & dCompDens,
+          arrayView2d< real64 > const & compFrac,
+          arrayView3d< real64 > const & dCompFrac_dCompDens );
 };
 
 /******************************** PhaseVolumeFractionKernel ********************************/
@@ -72,48 +73,50 @@ struct PhaseVolumeFractionKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice1d< real64 const > compDens,
-           arraySlice1d< real64 const > dCompDens,
-           arraySlice2d< real64 const > dCompFrac_dCompDens,
-           arraySlice1d< real64 const > phaseDens,
-           arraySlice1d< real64 const > dPhaseDens_dPres,
-           arraySlice2d< real64 const > dPhaseDens_dComp,
-           arraySlice1d< real64 const > phaseFrac,
-           arraySlice1d< real64 const > dPhaseFrac_dPres,
-           arraySlice2d< real64 const > dPhaseFrac_dComp,
-           arraySlice1d< real64 > phaseVolFrac,
-           arraySlice1d< real64 > dPhaseVolFrac_dPres,
-           arraySlice2d< real64 > dPhaseVolFrac_dComp );
+  Compute( arraySlice1d< real64 const > const & compDens,
+           arraySlice1d< real64 const > const & dCompDens,
+           arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const > const & phaseDens,
+           arraySlice1d< real64 const > const & dPhaseDens_dPres,
+           arraySlice2d< real64 const > const & dPhaseDens_dComp,
+           arraySlice1d< real64 const > const & phaseFrac,
+           arraySlice1d< real64 const > const & dPhaseFrac_dPres,
+           arraySlice2d< real64 const > const & dPhaseFrac_dComp,
+           arraySlice1d< real64 > const & phaseVolFrac,
+           arraySlice1d< real64 > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
-  static void Launch( localIndex const size,
-                      arrayView2d< real64 const > const & compDens,
-                      arrayView2d< real64 const > const & dCompDens,
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens,
-                      arrayView3d< real64 const > const & phaseDens,
-                      arrayView3d< real64 const > const & dPhaseDens_dPres,
-                      arrayView4d< real64 const > const & dPhaseDens_dComp,
-                      arrayView3d< real64 const > const & phaseFrac,
-                      arrayView3d< real64 const > const & dPhaseFrac_dPres,
-                      arrayView4d< real64 const > const & dPhaseFrac_dComp,
-                      arrayView2d< real64 > const & phaseVolFrac,
-                      arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-                      arrayView3d< real64 > const & dPhaseVolFrac_dComp );
+  static void
+  Launch( localIndex const size,
+          arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & dCompDens,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseDens,
+          arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView4d< real64 const > const & dPhaseDens_dComp,
+          arrayView3d< real64 const > const & phaseFrac,
+          arrayView3d< real64 const > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const > const & dPhaseFrac_dComp,
+          arrayView2d< real64 > const & phaseVolFrac,
+          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 
   template< localIndex NC, localIndex NP >
-  static void Launch( SortedArrayView< localIndex const > const & targetSet,
-                      arrayView2d< real64 const > const & compDens,
-                      arrayView2d< real64 const > const & dCompDens,
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens,
-                      arrayView3d< real64 const > const & phaseDens,
-                      arrayView3d< real64 const > const & dPhaseDens_dPres,
-                      arrayView4d< real64 const > const & dPhaseDens_dComp,
-                      arrayView3d< real64 const > const & phaseFrac,
-                      arrayView3d< real64 const > const & dPhaseFrac_dPres,
-                      arrayView4d< real64 const > const & dPhaseFrac_dComp,
-                      arrayView2d< real64 > const & phaseVolFrac,
-                      arrayView2d< real64 > const & dPhaseVolFrac_dPres,
-                      arrayView3d< real64 > const & dPhaseVolFrac_dComp );
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          arrayView2d< real64 const > const & compDens,
+          arrayView2d< real64 const > const & dCompDens,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseDens,
+          arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView4d< real64 const > const & dPhaseDens_dComp,
+          arrayView3d< real64 const > const & phaseFrac,
+          arrayView3d< real64 const > const & dPhaseFrac_dPres,
+          arrayView4d< real64 const > const & dPhaseFrac_dComp,
+          arrayView2d< real64 > const & phaseVolFrac,
+          arrayView2d< real64 > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 > const & dPhaseVolFrac_dComp );
 };
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -127,54 +130,56 @@ struct PhaseMobilityKernel
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( arraySlice2d< real64 const > dCompFrac_dCompDens,
-           arraySlice1d< real64 const > phaseDens,
-           arraySlice1d< real64 const > dPhaseDens_dPres,
-           arraySlice2d< real64 const > dPhaseDens_dComp,
-           arraySlice1d< real64 const > phaseVisc,
-           arraySlice1d< real64 const > dPhaseVisc_dPres,
-           arraySlice2d< real64 const > dPhaseVisc_dComp,
-           arraySlice1d< real64 const > phaseRelPerm,
-           arraySlice2d< real64 const > dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d< real64 const > dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > dPhaseVolFrac_dComp,
-           arraySlice1d< real64 > phaseMob,
-           arraySlice1d< real64 > dPhaseMob_dPres,
-           arraySlice2d< real64 > dPhaseMob_dComp );
+  Compute( arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+           arraySlice1d< real64 const > const & phaseDens,
+           arraySlice1d< real64 const > const & dPhaseDens_dPres,
+           arraySlice2d< real64 const > const & dPhaseDens_dComp,
+           arraySlice1d< real64 const > const & phaseVisc,
+           arraySlice1d< real64 const > const & dPhaseVisc_dPres,
+           arraySlice2d< real64 const > const & dPhaseVisc_dComp,
+           arraySlice1d< real64 const > const & phaseRelPerm,
+           arraySlice2d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const > const & dPhaseVolFrac_dComp,
+           arraySlice1d< real64 > const & phaseMob,
+           arraySlice1d< real64 > const & dPhaseMob_dPres,
+           arraySlice2d< real64 > const & dPhaseMob_dComp );
 
   template< localIndex NC, localIndex NP >
-  static void Launch( localIndex const size,
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens,
-                      arrayView3d< real64 const > const & phaseDens,
-                      arrayView3d< real64 const > const & dPhaseDens_dPres,
-                      arrayView4d< real64 const > const & dPhaseDens_dComp,
-                      arrayView3d< real64 const > const & phaseVisc,
-                      arrayView3d< real64 const > const & dPhaseVisc_dPres,
-                      arrayView4d< real64 const > const & dPhaseVisc_dComp,
-                      arrayView3d< real64 const > const & phaseRelPerm,
-                      arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-                      arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-                      arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
-                      arrayView2d< real64 > const & phaseMob,
-                      arrayView2d< real64 > const & dPhaseMob_dPres,
-                      arrayView3d< real64 > const & dPhaseMob_dComp );
+  static void
+  Launch( localIndex const size,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseDens,
+          arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView4d< real64 const > const & dPhaseDens_dComp,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp );
 
   template< localIndex NC, localIndex NP >
-  static void Launch( SortedArrayView< localIndex const > const & targetSet,
-                      arrayView3d< real64 const > const & dCompFrac_dCompDens,
-                      arrayView3d< real64 const > const & phaseDens,
-                      arrayView3d< real64 const > const & dPhaseDens_dPres,
-                      arrayView4d< real64 const > const & dPhaseDens_dComp,
-                      arrayView3d< real64 const > const & phaseVisc,
-                      arrayView3d< real64 const > const & dPhaseVisc_dPres,
-                      arrayView4d< real64 const > const & dPhaseVisc_dComp,
-                      arrayView3d< real64 const > const & phaseRelPerm,
-                      arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
-                      arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
-                      arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
-                      arrayView2d< real64 > const & phaseMob,
-                      arrayView2d< real64 > const & dPhaseMob_dPres,
-                      arrayView3d< real64 > const & dPhaseMob_dComp );
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          arrayView3d< real64 const > const & dCompFrac_dCompDens,
+          arrayView3d< real64 const > const & phaseDens,
+          arrayView3d< real64 const > const & dPhaseDens_dPres,
+          arrayView4d< real64 const > const & dPhaseDens_dComp,
+          arrayView3d< real64 const > const & phaseVisc,
+          arrayView3d< real64 const > const & dPhaseVisc_dPres,
+          arrayView4d< real64 const > const & dPhaseVisc_dComp,
+          arrayView3d< real64 const > const & phaseRelPerm,
+          arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dComp,
+          arrayView2d< real64 > const & phaseMob,
+          arrayView2d< real64 > const & dPhaseMob_dPres,
+          arrayView3d< real64 > const & dPhaseMob_dComp );
 };
 
 /******************************** FluidUpdateKernel ********************************/
@@ -182,11 +187,12 @@ struct PhaseMobilityKernel
 struct FluidUpdateKernel
 {
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void Launch( localIndex const size,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      real64 const temp,
-                      arrayView2d< real64 const > const & compFrac )
+  static void
+  Launch( localIndex const size,
+          FLUID_WRAPPER const & fluidWrapper,
+          arrayView1d< real64 const > const & pres,
+          real64 const temp,
+          arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( size, [=] ( localIndex const k )
     {
@@ -198,12 +204,13 @@ struct FluidUpdateKernel
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void Launch( localIndex const size,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres,
-                      real64 const temp,
-                      arrayView2d< real64 const > const & compFrac )
+  static void
+  Launch( localIndex const size,
+          FLUID_WRAPPER const & fluidWrapper,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & dPres,
+          real64 const temp,
+          arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( size, [=] ( localIndex const k )
     {
@@ -215,12 +222,13 @@ struct FluidUpdateKernel
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void Launch( SortedArrayView< localIndex const > const & targetSet,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres,
-                      real64 const temp,
-                      arrayView2d< real64 const > const & compFrac )
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          FLUID_WRAPPER const & fluidWrapper,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & dPres,
+          real64 const temp,
+          arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
     {
@@ -233,11 +241,12 @@ struct FluidUpdateKernel
   }
 
   template< typename POLICY, typename FLUID_WRAPPER >
-  static void Launch( SortedArrayView< localIndex const > const & targetSet,
-                      FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      real64 const temp,
-                      arrayView2d< real64 const > const & compFrac )
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          FLUID_WRAPPER const & fluidWrapper,
+          arrayView1d< real64 const > const & pres,
+          real64 const temp,
+          arrayView2d< real64 const > const & compFrac )
   {
     forAll< POLICY >( targetSet.size(), [=] ( localIndex const a )
     {
@@ -245,6 +254,78 @@ struct FluidUpdateKernel
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
         fluidWrapper.Update( k, q, pres[k], temp, compFrac[k] );
+      }
+    } );
+  }
+};
+
+/******************************** RelativePermeabilityUpdateKernel ********************************/
+
+struct RelativePermeabilityUpdateKernel
+{
+  template< typename POLICY, typename RELPERM_WRAPPER >
+  static void
+  Launch( localIndex const size,
+          RELPERM_WRAPPER const & relPermWrapper,
+          arrayView2d< real64 const > const & phaseVolFrac )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
+      {
+        relPermWrapper.Update( k, q, phaseVolFrac[k] );
+      }
+    } );
+  }
+
+  template< typename POLICY, typename RELPERM_WRAPPER >
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          RELPERM_WRAPPER const & relPermWrapper,
+          arrayView2d< real64 const > const & phaseVolFrac )
+  {
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      localIndex const k = targetSet[a];
+      for( localIndex q = 0; q < relPermWrapper.numGauss(); ++q )
+      {
+        relPermWrapper.Update( k, q, phaseVolFrac[k] );
+      }
+    } );
+  }
+};
+
+/******************************** CapillaryPressureUpdateKernel ********************************/
+
+struct CapillaryPressureUpdateKernel
+{
+  template< typename POLICY, typename CAPPRES_WRAPPER >
+  static void
+  Launch( localIndex const size,
+          CAPPRES_WRAPPER const & capPresWrapper,
+          arrayView2d< real64 const > const & phaseVolFrac )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
+      {
+        capPresWrapper.Update( k, q, phaseVolFrac[k] );
+      }
+    } );
+  }
+
+  template< typename POLICY, typename CAPPRES_WRAPPER >
+  static void
+  Launch( SortedArrayView< localIndex const > const & targetSet,
+          CAPPRES_WRAPPER const & capPresWrapper,
+          arrayView2d< real64 const > const & phaseVolFrac )
+  {
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      localIndex const k = targetSet[a];
+      for( localIndex q = 0; q < capPresWrapper.numGauss(); ++q )
+      {
+        capPresWrapper.Update( k, q, phaseVolFrac[k] );
       }
     } );
   }
@@ -257,110 +338,36 @@ struct FluidUpdateKernel
  */
 struct AccumulationKernel
 {
-  template< localIndex NC, localIndex NP >
+  template< localIndex NC >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  Compute( real64 const & volume,
-           real64 const & porosityOld,
-           real64 const & porosityRef,
-           real64 const & pvMult,
-           real64 const & dPvMult_dPres,
-           arraySlice2d< real64 const > const dCompFrac_dCompDens,
-           arraySlice1d< real64 const > const phaseVolFracOld,
-           arraySlice1d< real64 const > const phaseVolFrac,
-           arraySlice1d< real64 const > const dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const dPhaseVolFrac_dCompDens,
-           arraySlice1d< real64 const > const phaseDensOld,
-           arraySlice1d< real64 const > const phaseDens,
-           arraySlice1d< real64 const > const dPhaseDens_dPres,
-           arraySlice2d< real64 const > const dPhaseDens_dComp,
-           arraySlice2d< real64 const > const phaseCompFracOld,
-           arraySlice2d< real64 const > const phaseCompFrac,
-           arraySlice2d< real64 const > const dPhaseCompFrac_dPres,
-           arraySlice3d< real64 const > const dPhaseCompFrac_dComp,
-           real64 ( & localAccum )[NC],
-           real64 ( & localAccumJacobian )[NC][NC+1] )
-  {
-    localIndex constexpr NDOF = NC + 1;
+    Compute( localIndex const numPhases,
+             real64 const & volume,
+             real64 const & porosityOld,
+             real64 const & porosityRef,
+             real64 const & pvMult,
+             real64 const & dPvMult_dPres,
+             arraySlice2d< real64 const > const & dCompFrac_dCompDens,
+             arraySlice1d< real64 const > const & phaseVolFracOld,
+             arraySlice1d< real64 const > const & phaseVolFrac,
+             arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
+             arraySlice1d< real64 const > const & phaseDensOld,
+             arraySlice1d< real64 const > const & phaseDens,
+             arraySlice1d< real64 const > const & dPhaseDens_dPres,
+             arraySlice2d< real64 const > const & dPhaseDens_dComp,
+             arraySlice2d< real64 const > const & phaseCompFracOld,
+             arraySlice2d< real64 const > const & phaseCompFrac,
+             arraySlice2d< real64 const > const & dPhaseCompFrac_dPres,
+             arraySlice3d< real64 const > const & dPhaseCompFrac_dComp,
+             real64 ( &localAccum )[NC],
+             real64 ( &localAccumJacobian )[NC][NC+1] );
 
-    // temporary work arrays
-    real64 dPhaseAmount_dC[NC];
-    real64 dPhaseCompFrac_dC[NC];
-
-    // reset the local values
-    for( localIndex i = 0; i < NC; ++i )
-    {
-      localAccum[i] = 0.0;
-      for( localIndex j = 0; j < NDOF; ++j )
-      {
-        localAccumJacobian[i][j] = 0.0;
-      }
-    }
-
-    // compute fluid-independent (pore volume) part
-    real64 const volNew = volume;
-    real64 const volOld = volume;
-    real64 const dVol_dP = 0.0; // used in poroelastic solver
-
-    real64 const poroNew = porosityRef * pvMult;
-    real64 const poroOld = porosityOld;
-    real64 const dPoro_dP = porosityRef * dPvMult_dPres;
-
-    real64 const poreVolNew = volNew * poroNew;
-    real64 const poreVolOld = volOld * poroOld;
-    real64 const dPoreVol_dP = dVol_dP * poroNew + volNew * dPoro_dP;
-
-    // sum contributions to component accumulation from each phase
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      real64 const phaseAmountNew = poreVolNew * phaseVolFrac[ip] * phaseDens[ip];
-      real64 const phaseAmountOld = poreVolOld * phaseVolFracOld[ip] * phaseDensOld[ip];
-
-      real64 const dPhaseAmount_dP = dPoreVol_dP * phaseVolFrac[ip] * phaseDens[ip]
-                                     + poreVolNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                     + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
-
-      // assemble density dependence
-      applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
-        dPhaseAmount_dC[jc] *= poreVolNew;
-      }
-
-      // ic - index of component whose conservation equation is assembled
-      // (i.e. row number in local matrix)
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
-        real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
-
-        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                           + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
-
-        localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
-        localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
-
-        // jc - index of component w.r.t. whose compositional var the derivative is being taken
-        // (i.e. col number in local matrix)
-
-        // assemble phase composition dependence
-        applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
-                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
-          localAccumJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
-        }
-      }
-    }
-  }
-
-  template< localIndex NC, localIndex NP >
-  static inline void
-  Launch( localIndex const size,
+  template< localIndex NC >
+  static void
+  Launch( localIndex const numPhases,
+          localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
@@ -383,60 +390,7 @@ struct AccumulationKernel
           arrayView4d< real64 const > const & dPhaseCompFrac_dPres,
           arrayView5d< real64 const > const & dPhaseCompFrac_dComp,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    forAll< parallelDevicePolicy< 128 > >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] >= 0 ) return;
-
-      localIndex constexpr NDOF = NC + 1;
-
-      real64 localAccum[NC];
-      real64 localAccumJacobian[NC][NDOF];
-
-      Compute< NC, NP >( volume[ei],
-                         porosityOld[ei],
-                         porosityRef[ei],
-                         pvMult[ei][0],
-                         dPvMult_dPres[ei][0],
-                         dCompFrac_dCompDens[ei],
-                         phaseVolFracOld[ei],
-                         phaseVolFrac[ei],
-                         dPhaseVolFrac_dPres[ei],
-                         dPhaseVolFrac_dCompDens[ei],
-                         phaseDensOld[ei],
-                         phaseDens[ei][0],
-                         dPhaseDens_dPres[ei][0],
-                         dPhaseDens_dComp[ei][0],
-                         phaseCompFracOld[ei],
-                         phaseCompFrac[ei][0],
-                         dPhaseCompFrac_dPres[ei][0],
-                         dPhaseCompFrac_dComp[ei][0],
-                         localAccum,
-                         localAccumJacobian );
-
-      // set DOF indices for this block
-      localIndex const localRow = dofNumber[ei] - rankOffset;
-      globalIndex dofIndices[NDOF];
-      for( localIndex idof = 0; idof < NDOF; ++idof )
-      {
-        dofIndices[idof] = dofNumber[ei] + idof;
-      }
-
-      // TODO: apply equation/variable change transformation(s)
-
-      // add contribution to residual and jacobian
-      for( localIndex i = 0; i < NC; ++i )
-      {
-        localRhs[localRow + i] += localAccum[i];
-        localMatrix.addToRow< serialAtomic >( localRow + i,
-                                              dofIndices,
-                                              localAccumJacobian[i],
-                                              NDOF );
-      }
-    } );
-  }
-
+          arrayView1d< real64 > const & localRhs );
 };
 
 /******************************** FluxKernel ********************************/
@@ -448,8 +402,7 @@ struct FluxKernel
 {
 
   /**
-   * @brief The type for element-based non-constitutive data parameters.
-   * Consists entirely of ArrayView's.
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
    * Can be converted from ElementRegionManager::ElementViewAccessor
    * by calling .toView() or .toViewConst() on an accessor instance
@@ -457,11 +410,12 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
 
-  template< localIndex NC, localIndex NP, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
+  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
   Compute( localIndex const stencilSize,
+           localIndex const numPhases,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
@@ -486,247 +440,12 @@ struct FluxKernel
            integer const capPressureFlag,
            real64 const dt,
            arraySlice1d< real64 > const & localFlux,
-           arraySlice2d< real64 > const & localFluxJacobian )
-  {
-    localIndex constexpr NDOF = NC + 1;
+           arraySlice2d< real64 > const & localFluxJacobian );
 
-    real64 compFlux[NC]{};
-    real64 dCompFlux_dP[MAX_STENCIL][NC]{};
-    real64 dCompFlux_dC[MAX_STENCIL][NC][NC]{};
-
-    // loop over phases, compute and upwind phase flux and sum contributions to each component's flux
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      // clear working arrays
-      real64 densMean{};
-      real64 dDensMean_dP[NUM_ELEMS]{};
-      real64 dDensMean_dC[NUM_ELEMS][NC]{};
-
-      // create local work arrays
-      real64 phaseFlux{};
-      real64 dPhaseFlux_dP[MAX_STENCIL]{};
-      real64 dPhaseFlux_dC[MAX_STENCIL][NC]{};
-
-      real64 presGrad{};
-      real64 dPresGrad_dP[MAX_STENCIL]{};
-      real64 dPresGrad_dC[MAX_STENCIL][NC]{};
-
-      real64 gravHead{};
-      real64 dGravHead_dP[NUM_ELEMS]{};
-      real64 dGravHead_dC[NUM_ELEMS][NC]{};
-
-      real64 dCapPressure_dC[NC]{};
-
-      // Working array
-      real64 dProp_dC[NC]{};
-
-      // calculate quantities on primary connected cells
-      for( localIndex i = 0; i < NUM_ELEMS; ++i )
-      {
-        localIndex const er  = seri[i];
-        localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
-
-        // density
-        real64 const density  = phaseDens[er][esr][ei][0][ip];
-        real64 const dDens_dP = dPhaseDens_dPres[er][esr][ei][0][ip];
-
-        applyChainRule( NC,
-                        dCompFrac_dCompDens[er][esr][ei],
-                        dPhaseDens_dComp[er][esr][ei][0][ip],
-                        dProp_dC );
-
-        // average density and derivatives
-        densMean += 0.5 * density;
-        dDensMean_dP[i] = 0.5 * dDens_dP;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dDensMean_dC[i][jc] = 0.5 * dProp_dC[jc];
-        }
-      }
-
-      //***** calculation of flux *****
-
-      // compute potential difference MPFA-style
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-        localIndex const er  = seri[i];
-        localIndex const esr = sesri[i];
-        localIndex const ei  = sei[i];
-        real64 const weight  = stencilWeights[i];
-
-        // capillary pressure
-        real64 capPressure     = 0.0;
-        real64 dCapPressure_dP = 0.0;
-
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dCapPressure_dC[ic] = 0.0;
-        }
-
-        if( capPressureFlag )
-        {
-          capPressure = phaseCapPressure[er][esr][ei][0][ip];
-
-          for( localIndex jp = 0; jp < NP; ++jp )
-          {
-            real64 const dCapPressure_dS = dPhaseCapPressure_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dCapPressure_dP += dCapPressure_dS * dPhaseVolFrac_dPres[er][esr][ei][jp];
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dCapPressure_dC[jc] += dCapPressure_dS * dPhaseVolFrac_dComp[er][esr][ei][jp][jc];
-            }
-          }
-        }
-
-        presGrad += weight * (pres[er][esr][ei] + dPres[er][esr][ei] - capPressure);
-        dPresGrad_dP[i] += weight * (1 - dCapPressure_dP);
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPresGrad_dC[i][jc] += -weight * dCapPressure_dC[jc];
-        }
-
-        real64 const gravD = weight * gravCoef[er][esr][ei];
-        gravHead += densMean * gravD;
-
-        // need to add contributions from both cells the mean density depends on
-        for( localIndex j = 0; j < NUM_ELEMS; ++j )
-        {
-          dGravHead_dP[j] += dDensMean_dP[j] * gravD;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dGravHead_dC[j][jc] += dDensMean_dC[j][jc] * gravD;
-          }
-        }
-      }
-
-      // *** upwinding ***
-
-      // use PPU currently; advanced stuff like IHU would go here
-      // TODO isolate into a kernel?
-
-      // compute phase potential gradient
-      real64 const potGrad = presGrad - gravHead;
-
-      // choose upstream cell
-      localIndex const k_up = (potGrad >= 0) ? 0 : 1;
-
-      localIndex er_up  = seri[k_up];
-      localIndex esr_up = sesri[k_up];
-      localIndex ei_up  = sei[k_up];
-
-      real64 const mobility = phaseMob[er_up][esr_up][ei_up][ip];
-
-      // skip the phase flux if phase not present or immobile upstream
-      if( std::fabs( mobility ) < 1e-20 ) // TODO better constant
-      {
-        continue;
-      }
-
-      // pressure gradient depends on all points in the stencil
-      for( localIndex ke = 0; ke < stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] += dPresGrad_dP[ke];
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] += dPresGrad_dC[ke][jc];
-        }
-
-      }
-
-      // gravitational head depends only on the two cells connected (same as mean density)
-      for( localIndex ke = 0; ke < NUM_ELEMS; ++ke )
-      {
-        dPhaseFlux_dP[ke] -= dGravHead_dP[ke];
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] -= dGravHead_dC[ke][jc];
-        }
-      }
-
-      // compute the phase flux and derivatives using upstream cell mobility
-      phaseFlux = mobility * potGrad;
-      for( localIndex ke = 0; ke < stencilSize; ++ke )
-      {
-        dPhaseFlux_dP[ke] *= mobility;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dPhaseFlux_dC[ke][jc] *= mobility;
-        }
-      }
-
-      real64 const dMob_dP  = dPhaseMob_dPres[er_up][esr_up][ei_up][ip];
-      arraySlice1d< real64 const > dPhaseMob_dCompSub = dPhaseMob_dComp[er_up][esr_up][ei_up][ip];
-
-      // add contribution from upstream cell mobility derivatives
-      dPhaseFlux_dP[k_up] += dMob_dP * potGrad;
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dPhaseFlux_dC[k_up][jc] += dPhaseMob_dCompSub[jc] * potGrad;
-      }
-
-      // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const > phaseCompFracSub = phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-      arraySlice1d< real64 const > dPhaseCompFrac_dPresSub = dPhaseCompFrac_dPres[er_up][esr_up][ei_up][0][ip];
-      arraySlice2d< real64 const > dPhaseCompFrac_dCompSub = dPhaseCompFrac_dComp[er_up][esr_up][ei_up][0][ip];
-
-      // compute component fluxes and derivatives using upstream cell composition
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        real64 const ycp = phaseCompFracSub[ic];
-        compFlux[ic] += phaseFlux * ycp;
-
-        // derivatives stemming from phase flux
-        for( localIndex ke = 0; ke < stencilSize; ++ke )
-        {
-          dCompFlux_dP[ke][ic] += dPhaseFlux_dP[ke] * ycp;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompFlux_dC[ke][ic][jc] += dPhaseFlux_dC[ke][jc] * ycp;
-          }
-        }
-
-        // additional derivatives stemming from upstream cell phase composition
-        dCompFlux_dP[k_up][ic] += phaseFlux * dPhaseCompFrac_dPresSub[ic];
-
-        // convert derivatives of component fraction w.r.t. component fractions to derivatives w.r.t. component
-        // densities
-        applyChainRule( NC, dCompFrac_dCompDens[er_up][esr_up][ei_up], dPhaseCompFrac_dCompSub[ic], dProp_dC );
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dCompFlux_dC[k_up][ic][jc] += phaseFlux * dProp_dC[jc];
-        }
-      }
-    }
-
-    // *** end of upwinding
-
-    // populate local flux vector and derivatives
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      localFlux[ic]      =  dt * compFlux[ic];
-      localFlux[NC + ic] = -dt * compFlux[ic];
-
-      for( localIndex ke = 0; ke < stencilSize; ++ke )
-      {
-        localIndex const localDofIndexPres = ke * NDOF;
-        localFluxJacobian[ic][localDofIndexPres] = dt * dCompFlux_dP[ke][ic];
-        localFluxJacobian[NC + ic][localDofIndexPres] = -dt * dCompFlux_dP[ke][ic];
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          localFluxJacobian[ic][localDofIndexComp] = dt * dCompFlux_dC[ke][ic][jc];
-          localFluxJacobian[NC + ic][localDofIndexComp] = -dt * dCompFlux_dC[ke][ic][jc];
-        }
-      }
-    }
-  }
-
-  template< localIndex NC, localIndex NP, typename STENCIL_TYPE >
+  template< localIndex NC, typename STENCIL_TYPE >
   static void
-  Launch( STENCIL_TYPE const & stencil,
+  Launch( localIndex const numPhases,
+          STENCIL_TYPE const & stencil,
           globalIndex const rankOffset,
           ElementView< arrayView1d< globalIndex const > > const & dofNumber,
           ElementView< arrayView1d< integer const > > const & ghostRank,
@@ -750,88 +469,7 @@ struct FluxKernel
           integer const capPressureFlag,
           real64 const dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    typename STENCIL_TYPE::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-    typename STENCIL_TYPE::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-    typename STENCIL_TYPE::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-    typename STENCIL_TYPE::WeightContainerViewConstType const & weights = stencil.getWeights();
-
-    localIndex constexpr NUM_ELEMS   = STENCIL_TYPE::NUM_POINT_IN_FLUX;
-    localIndex constexpr MAX_STENCIL = STENCIL_TYPE::MAX_STENCIL_SIZE;
-    localIndex constexpr NDOF = NC + 1;
-
-    forAll< parallelDevicePolicy< 128 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
-    {
-      // TODO: hack! for MPFA, etc. must obtain proper size from e.g. seri
-      localIndex const stencilSize = MAX_STENCIL;
-
-      stackArray1d< real64, NUM_ELEMS * NC >                      localFlux( NUM_ELEMS * NC );
-      stackArray2d< real64, NUM_ELEMS * NC * MAX_STENCIL * NDOF > localFluxJacobian( NUM_ELEMS * NC, stencilSize * NDOF );
-
-      FluxKernel::Compute< NC, NP, NUM_ELEMS, MAX_STENCIL >( stencilSize,
-                                                             seri[iconn],
-                                                             sesri[iconn],
-                                                             sei[iconn],
-                                                             weights[iconn],
-                                                             pres,
-                                                             dPres,
-                                                             gravCoef,
-                                                             phaseMob,
-                                                             dPhaseMob_dPres,
-                                                             dPhaseMob_dComp,
-                                                             dPhaseVolFrac_dPres,
-                                                             dPhaseVolFrac_dComp,
-                                                             dCompFrac_dCompDens,
-                                                             phaseDens,
-                                                             dPhaseDens_dPres,
-                                                             dPhaseDens_dComp,
-                                                             phaseCompFrac,
-                                                             dPhaseCompFrac_dPres,
-                                                             dPhaseCompFrac_dComp,
-                                                             phaseCapPressure,
-                                                             dPhaseCapPressure_dPhaseVolFrac,
-                                                             capPressureFlag,
-                                                             dt,
-                                                             localFlux,
-                                                             localFluxJacobian );
-
-      // populate dof indices
-      globalIndex dofColIndices[ MAX_STENCIL * NDOF ];
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-        globalIndex const offset = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-
-        for( localIndex jdof = 0; jdof < NDOF; ++jdof )
-        {
-          dofColIndices[i * NDOF + jdof] = offset + jdof;
-        }
-      }
-
-      // TODO: apply equation/variable change transformation(s)
-
-      // Add to residual/jacobian
-      for( localIndex i = 0; i < NUM_ELEMS; ++i )
-      {
-        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
-        {
-          globalIndex const localRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] - rankOffset;
-          GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow + NC );
-
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[i * NC + ic] );
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                              dofColIndices,
-                                                                              localFluxJacobian[i * NC + ic].dataIfContiguous(),
-                                                                              stencilSize * NDOF );
-          }
-        }
-      }
-    } );
-  }
-
+          arrayView1d< real64 > const & localRhs );
 };
 
 /******************************** VolumeBalanceKernel ********************************/
@@ -849,49 +487,14 @@ struct VolumeBalanceKernel
            real64 const & porosityRef,
            real64 const & pvMult,
            real64 const & dPvMult_dPres,
-           arraySlice1d< real64 const > const phaseVolFrac,
-           arraySlice1d< real64 const > const dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const > const dPhaseVolFrac_dCompDens,
+           arraySlice1d< real64 const > const & phaseVolFrac,
+           arraySlice1d< real64 const > const & dPhaseVolFrac_dPres,
+           arraySlice2d< real64 const > const & dPhaseVolFrac_dCompDens,
            real64 & localVolBalance,
-           real64 * const localVolBalanceJacobian )
-  {
-    localIndex constexpr NDOF = NC + 1;
-
-    real64 const poro     = porosityRef * pvMult;
-    real64 const dPoro_dP = porosityRef * dPvMult_dPres;
-
-    real64 const poreVol     = volume * poro;
-    real64 const dPoreVol_dP = volume * dPoro_dP;
-
-    localVolBalance = 1.0;
-    for( localIndex i = 0; i < NDOF; ++i )
-    {
-      localVolBalanceJacobian[i] = 0.0;
-    }
-
-    // sum contributions to component accumulation from each phase
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      localVolBalance -= phaseVolFrac[ip];
-      localVolBalanceJacobian[0] -= dPhaseVolFrac_dPres[ip];
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        localVolBalanceJacobian[jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
-      }
-    }
-
-    // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    for( localIndex idof = 0; idof < NDOF; ++idof )
-    {
-      localVolBalanceJacobian[idof] *= poreVol;
-    }
-    localVolBalanceJacobian[0] += dPoreVol_dP * localVolBalance;
-    localVolBalance *= poreVol;
-  }
+           real64 * const localVolBalanceJacobian );
 
   template< localIndex NC, localIndex NP >
-  static inline void
+  static void
   Launch( localIndex const size,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
@@ -900,55 +503,16 @@ struct VolumeBalanceKernel
           arrayView1d< real64 const > const & porosityRef,
           arrayView2d< real64 const > const & pvMult,
           arrayView2d< real64 const > const & dPvMult_dPres,
-          arrayView2d< real64 const > const phaseVolFrac,
-          arrayView2d< real64 const > const dPhaseVolFrac_dPres,
-          arrayView3d< real64 const > const dPhaseVolFrac_dCompDens,
+          arrayView2d< real64 const > const & phaseVolFrac,
+          arrayView2d< real64 const > const & dPhaseVolFrac_dPres,
+          arrayView3d< real64 const > const & dPhaseVolFrac_dCompDens,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    forAll< parallelDevicePolicy< 128 > >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] >= 0 ) return;
-
-      localIndex constexpr NDOF = NC + 1;
-
-      real64 localVolBalance;
-      real64 localVolBalanceJacobian[NDOF];
-
-      Compute< NC, NP >( volume[ei],
-                         porosityRef[ei],
-                         pvMult[ei][0],
-                         dPvMult_dPres[ei][0],
-                         phaseVolFrac[ei],
-                         dPhaseVolFrac_dPres[ei],
-                         dPhaseVolFrac_dCompDens[ei],
-                         localVolBalance,
-                         localVolBalanceJacobian );
-
-      // get equation/dof indices
-      localIndex const localRow = dofNumber[ei] + NC - rankOffset;
-      globalIndex dofIndices[NDOF];
-      for( localIndex jdof = 0; jdof < NDOF; ++jdof )
-      {
-        dofIndices[jdof] = dofNumber[ei] + jdof;
-      }
-
-      // TODO: apply equation/variable change transformation(s)
-
-      // add contribution to residual and jacobian
-      localRhs[localRow] += localVolBalance;
-      localMatrix.addToRow< serialAtomic >( localRow,
-                                            dofIndices,
-                                            localVolBalanceJacobian,
-                                            NDOF );
-    } );
-  }
-
+          arrayView1d< real64 > const & localRhs );
 };
 
 /******************************** Kernel launch machinery ********************************/
 
-namespace helpers
+namespace internal
 {
 
 template< typename T, typename LAMBDA >
@@ -978,7 +542,7 @@ void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
 template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 {
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
     KERNELWRAPPER::template Launch< NC() >( std::forward< ARGS >( args )... );
   } );
@@ -987,7 +551,7 @@ void KernelLaunchSelector1( localIndex numComp, ARGS && ... args )
 template< typename KERNELWRAPPER, typename ... ARGS >
 void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ... args )
 {
-  helpers::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
     switch( numPhase )
     {
@@ -995,7 +559,8 @@ void KernelLaunchSelector2( localIndex numComp, localIndex numPhase, ARGS && ...
         { KERNELWRAPPER::template Launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
       case 3:
         { KERNELWRAPPER::template Launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
-        { default: GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
+      default:
+        { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
     }
   } );
 }

@@ -375,7 +375,7 @@ struct FluidUpdateKernel
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & dPres )
   {
-    forAll< parallelDevicePolicy< 128 > >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {

@@ -68,44 +68,39 @@ void makeFullTensor( R1Tensor const & values, R2SymTensor & result )
 
 void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain )
 {
-  MeshBody const * const meshBody = domain.getMeshBody( 0 );
-  MeshLevel const * const mesh = meshBody->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh->getNodeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  ElementRegionManager const * const elemManager = mesh->getElemManager();
+  MeshBody const & meshBody = *domain.getMeshBody( 0 );
+  MeshLevel const & mesh = *meshBody.getMeshLevel( 0 );
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
 
   CellElementStencilTPFA & stencil = this->getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
 
-  arrayView2d< localIndex const > const & elemRegionList = faceManager->elementRegionList();
-  arrayView2d< localIndex const > const & elemSubRegionList = faceManager->elementSubRegionList();
-  arrayView2d< localIndex const > const & elemList = faceManager->elementList();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
+  arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList = faceManager.elementList();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
-  elemCenter = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
-                                                   arrayView1d< R1Tensor const > >( CellBlock::
-                                                                                      viewKeyStruct::
-                                                                                      elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const elemCenter =
+    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( CellBlock::viewKeyStruct::elementCenterString );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const
-  coefficient = elemManager->ConstructViewAccessor< array1d< R1Tensor >,
-                                                    arrayView1d< R1Tensor const > >( m_coeffName );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
+    elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager->nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
   for( string const & regionName : m_targetRegions )
   {
-    regionFilter.insert( elemManager->GetRegions().getIndex( regionName ) );
+    regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
 
   constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
 
   R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
   R2SymTensor coefTensor;
-  real64 faceArea, faceWeight, faceWeightInv;
 
   stackArray1d< localIndex, numElems > stencilCellsRegionIndex( numElems );
   stackArray1d< localIndex, numElems > stencilCellsSubRegionIndex( numElems );
@@ -113,73 +108,80 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   stackArray1d< real64, numElems > stencilWeights( numElems );
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  stencil.reserve( faceManager->size() );
+  stencil.reserve( faceManager.size() );
 
-  real64 const lengthTolerance = meshBody->getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const lengthTolerance = meshBody.getGlobalLengthScale() * this->m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
-  for( localIndex kf = 0; kf < faceManager->size(); ++kf )
+  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {
-    if( elemRegionList[kf][0] == -1 || elemRegionList[kf][1] == -1 )
+    // Filter out boundary (global and rank) faces as well as those
+    // where one of the cells does not belong to target regions
+    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 ||
+        !regionFilter.contains( elemRegionList[kf][0] ) ||
+        !regionFilter.contains( elemRegionList[kf][1] ) )
+    {
       continue;
+    }
 
-    if( !(regionFilter.contains( elemRegionList[kf][0] ) && regionFilter.contains( elemRegionList[kf][1] )) )
-      continue;
-
-    faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], faceToNodes.sizeOfArray( kf ), X, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf],
+                                                                       faceToNodes.sizeOfArray( kf ),
+                                                                       X,
+                                                                       faceCenter,
+                                                                       faceNormal,
+                                                                       areaTolerance );
 
     if( faceArea < areaTolerance )
+    {
       continue;
+    }
 
-    faceWeightInv = 0.0;
+    real64 faceWeight = 0.0;
 
     for( localIndex ke = 0; ke < numElems; ++ke )
     {
-      if( elemRegionList[kf][ke] != -1 )
+      localIndex const er  = elemRegionList[kf][ke];
+      localIndex const esr = elemSubRegionList[kf][ke];
+      localIndex const ei  = elemList[kf][ke];
+
+      cellToFaceVec = faceCenter;
+      cellToFaceVec -= elemCenter[er][esr][ei];
+
+      // ensure normal orientation outward of first cell
+      if( ke == 0 && Dot( cellToFaceVec, faceNormal ) < 0.0 )
       {
-        localIndex const er  = elemRegionList[kf][ke];
-        localIndex const esr = elemSubRegionList[kf][ke];
-        localIndex const ei  = elemList[kf][ke];
-
-        cellToFaceVec = faceCenter;
-        cellToFaceVec -= elemCenter[er][esr][ei];
-
-        // ensure normal orientation outward of first cell
-        if( ke == 0 && Dot( cellToFaceVec, faceNormal ) < 0.0 )
-        {
-          faceNormal *= -1;
-        }
-
-        if( ke == 1 )
-        {
-          cellToFaceVec *= -1.0;
-        }
-
-        real64 const c2fDistance = cellToFaceVec.Normalize();
-
-        // assemble full coefficient tensor from principal axis/components
-        makeFullTensor( coefficient[er][esr][ei], coefTensor );
-
-        faceConormal.AijBj( coefTensor, faceNormal );
-        real64 halfWeight = Dot( cellToFaceVec, faceConormal );
-
-        // correct negative weight issue arising from non-K-orthogonal grids
-        if( halfWeight < 0.0 )
-        {
-          faceConormal.AijBj( coefTensor, cellToFaceVec );
-          halfWeight = Dot( cellToFaceVec, faceConormal );
-        }
-
-        halfWeight *= faceArea / c2fDistance;
-        halfWeight = std::max( halfWeight, weightTolerance );
-
-        faceWeightInv += 1.0 / halfWeight;
+        faceNormal *= -1.0;
       }
+
+      if( ke == 1 )
+      {
+        cellToFaceVec *= -1.0;
+      }
+
+      real64 const c2fDistance = cellToFaceVec.Normalize();
+
+      // assemble full coefficient tensor from principal axis/components
+      makeFullTensor( coefficient[er][esr][ei], coefTensor );
+
+      faceConormal.AijBj( coefTensor, faceNormal );
+      real64 halfWeight = Dot( cellToFaceVec, faceConormal );
+
+      // correct negative weight issue arising from non-K-orthogonal grids
+      if( halfWeight < 0.0 )
+      {
+        faceConormal.AijBj( coefTensor, cellToFaceVec );
+        halfWeight = Dot( cellToFaceVec, faceConormal );
+      }
+
+      halfWeight *= faceArea / c2fDistance;
+      halfWeight = std::fmax( halfWeight, weightTolerance );
+
+      faceWeight += 1.0 / halfWeight;
     }
 
-    GEOSX_ASSERT( faceWeightInv > 0.0 );
-    faceWeight = 1.0 / faceWeightInv;
+    GEOSX_ASSERT( faceWeight > 0.0 );
+    faceWeight = 1.0 / faceWeight;
 
     for( localIndex ke = 0; ke < numElems; ++ke )
     {

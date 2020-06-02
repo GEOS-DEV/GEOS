@@ -144,8 +144,10 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
 template< typename BASE >
 real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * const domain,
                                                       DofManager const & dofManager,
-                                                      ParallelVector const & GEOSX_UNUSED_PARAM( rhs ) )
+                                                      ParallelVector const & rhs )
 {
+  GEOSX_UNUSED_VAR( rhs )
+
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
@@ -162,14 +164,14 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
     arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
     arrayView1d< real64 const > const & densOld        = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
 
-    ResidualNormKernel::Launch< parallelDevicePolicy< 128 >, parallelDeviceReduce >( m_localRhs.toViewConst(),
-                                                                                     rankOffset,
-                                                                                     dofNumber,
-                                                                                     elemGhostRank,
-                                                                                     refPoro,
-                                                                                     volume,
-                                                                                     densOld,
-                                                                                     localResidualNorm );
+    ResidualNormKernel::Launch< parallelDevicePolicy<>, parallelDeviceReduce >( m_localRhs.toViewConst(),
+                                                                                rankOffset,
+                                                                                dofNumber,
+                                                                                elemGhostRank,
+                                                                                refPoro,
+                                                                                volume,
+                                                                                densOld,
+                                                                                localResidualNorm );
   } );
 
   // compute global residual norm
@@ -197,10 +199,12 @@ real64 SinglePhaseFVM< BASE >::CalculateResidualNorm( DomainPartition const * co
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
-                                                  ParallelVector const & GEOSX_UNUSED_PARAM( solution ),
+                                                  ParallelVector const & solution,
                                                   real64 const scalingFactor,
                                                   DomainPartition * const domain )
 {
+  GEOSX_UNUSED_VAR( solution )
+
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   dofManager.addVectorToField( m_localSolution.toViewConst(),
@@ -211,7 +215,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&] ( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
@@ -252,6 +256,7 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
                         dt,
                         dofManager.rankOffset(),
                         m_pressureDofIndex.toViewConst(),
+                        m_elemGhostRank.toViewConst(),
                         m_pressure.toViewConst(),
                         m_deltaPressure.toViewConst(),
                         m_gravCoef.toViewConst(),
@@ -359,19 +364,20 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                          Group * const targetGroup,
                          string const & fieldName )
   {
-    if( fluxApprox->getWrapper< BoundaryStencil >( setName ) == nullptr )
+    Wrapper< BoundaryStencil > const * const wrapper = fluxApprox->getWrapper< BoundaryStencil >( setName );
+    if( wrapper == nullptr || wrapper->reference().size() == 0 )
     {
       return;
     }
+    BoundaryStencil const & stencil = wrapper->reference();
 
     // first, evaluate BC to get primary field values (pressure)
-    fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy< 128 > >( targetSet,
-                                                                                 time_n + dt,
-                                                                                 targetGroup,
-                                                                                 fieldName );
+    fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                            time_n + dt,
+                                                                            targetGroup,
+                                                                            fieldName );
 
     // Now run the actual kernel
-    BoundaryStencil const & stencil = fluxApprox->getWrapper< BoundaryStencil >( setName )->reference();
     BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
     BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
     BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
@@ -384,7 +390,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
     SingleFluidBase & fluidBase = *constitutiveManager->GetConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
 
     bool const success =
-    constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+      constitutive::constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
       // create the fluid compute wrapper suitable for capturing in a kernel lambda
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();

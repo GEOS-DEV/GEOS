@@ -25,114 +25,96 @@ namespace geosx
 namespace ProppantTransportKernels
 {
 
-inline void addLocalContributionsToGlobalSystem( localIndex const numFluxElems,
-                                                 localIndex const stencilSize,
-                                                 globalIndex const * const eqnRowIndices,
-                                                 globalIndex const * const dofColIndices,
-                                                 real64 const * const localFluxJacobian,
-                                                 real64 const * const localFlux,
-                                                 ParallelMatrix * const jacobian,
-                                                 ParallelVector * const residual )
-{
-
-  // Add to global residual/jacobian
-  jacobian->add( eqnRowIndices,
-                 dofColIndices,
-                 localFluxJacobian,
-                 numFluxElems,
-                 stencilSize );
-
-  residual->add( eqnRowIndices,
-                 localFlux,
-                 numFluxElems );
-
-}
-
-
 template<>
 void FluxKernel::
   Launch< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                     localIndex const GEOSX_UNUSED_PARAM( numDofPerCell ),
                                     real64 const GEOSX_UNUSED_PARAM( dt ),
-                                    FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
+                                    globalIndex const GEOSX_UNUSED_PARAM( rankOffset ),
+                                    ElementViewConst< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                     integer const GEOSX_UNUSED_PARAM( updateProppantPacking ),
                                     R1Tensor const & GEOSX_UNUSED_PARAM( unitGravityVector ),
-                                    FluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & GEOSX_UNUSED_PARAM( dofNumber ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dProppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( componentDens ),
-                                    FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dPres ),
-                                    FluxKernel::ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dComponentConc ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dPres ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dProppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dComponentConc ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dPres ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dProppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dComponentConc ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
-                                    FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dProppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( collisionFactor ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dCollisionFactor_dProppantConc ),
-                                    FluxKernel::ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ),
-                                    FluxKernel::ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isInterfaceElement ),
-                                    ParallelMatrix * const GEOSX_UNUSED_PARAM( jacobian ),
-                                    ParallelVector * const GEOSX_UNUSED_PARAM( residual ) )
-{}
+                                    ElementViewConst< arrayView1d< globalIndex const > > const & GEOSX_UNUSED_PARAM( dofNumber ),
+                                    ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( ghostRank ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( pres ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dPres ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantConc ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dProppantConc ),
+                                    ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( componentDens ),
+                                    ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dPres ),
+                                    ElementViewConst< arrayView4d< real64 const > > const & GEOSX_UNUSED_PARAM( dComponentDens_dComponentConc ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( gravDepth ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dens ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dPres ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dProppantConc ),
+                                    ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dDens_dComponentConc ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( visc ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dPres ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dProppantConc ),
+                                    ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dVisc_dComponentConc ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
+                                    ElementViewConst< arrayView3d< real64 const > > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dProppantConc ),
+                                    ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( collisionFactor ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( dCollisionFactor_dProppantConc ),
+                                    ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
+                                    ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ),
+                                    ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isInterfaceElement ),
+                                    CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                    arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
+{
+  GEOSX_ERROR( "Not implemented" );
+}
 
 template<>
 void FluxKernel::
   Launch< FaceElementStencil >( FaceElementStencil const & stencil,
                                 localIndex const numDofPerCell,
                                 real64 const dt,
-                                FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
+                                globalIndex const rankOffset,
+                                ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier,
                                 integer const updateProppantPacking,
                                 R1Tensor const & unitGravityVector,
-                                FluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dPres,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
-                                FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & componentDens,
-                                FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
-                                FluxKernel::ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dens,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc,
-                                FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & visc,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dVisc_dPres,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc,
-                                FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidDensity,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres,
-                                FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & settlingFactor,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dPres,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc,
-                                FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & collisionFactor,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc,
-                                FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
-                                FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
-                                ParallelMatrix * const jacobian,
-                                ParallelVector * const residual )
+                                ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+                                ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+                                ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                                ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
+                                ElementViewConst< arrayView1d< real64 const > > const & dProppantConc,
+                                ElementViewConst< arrayView3d< real64 const > > const & componentDens,
+                                ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
+                                ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
+                                ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
+                                ElementViewConst< arrayView2d< real64 const > > const & dens,
+                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                                ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc,
+                                ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc,
+                                ElementViewConst< arrayView2d< real64 const > > const & visc,
+                                ElementViewConst< arrayView2d< real64 const > > const & dVisc_dPres,
+                                ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc,
+                                ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc,
+                                ElementViewConst< arrayView2d< real64 const > > const & fluidDensity,
+                                ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres,
+                                ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc,
+                                ElementViewConst< arrayView1d< real64 const > > const & settlingFactor,
+                                ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dPres,
+                                ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc,
+                                ElementViewConst< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc,
+                                ElementViewConst< arrayView1d< real64 const > > const & collisionFactor,
+                                ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc,
+                                ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
+                                ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
+                                ElementViewConst< arrayView1d< real64 const > > const & aperture,
+                                ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
+                                ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )
 {
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
@@ -144,25 +126,21 @@ void FluxKernel::
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
 
-  ArrayOfArraysView< integer const > const & isGhostConnectors = stencil.getIsGhostConnectors();
+  //ArrayOfArraysView< integer const > const & isGhostConnectors = stencil.getIsGhostConnectors();
 
   constexpr localIndex DOF1 = maxNumFluxElems * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
   constexpr localIndex DOF2 = maxStencilSize * constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
 
-  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
+  forAll< parallelHostPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
-
     localIndex const numFluxElems = stencil.stencilSize( iconn );
 
-    if( isGhostConnectors[iconn][0] < 0 && !(updateProppantPacking == 0 && numFluxElems <= 1) )
+    if( ( numFluxElems > 1 || updateProppantPacking != 0 ) ) //isGhostConnectors[iconn][0] < 0 )
     {
-
       localIndex const stencilSize  = numFluxElems;
-
       localIndex const DOF = numFluxElems * numDofPerCell;
 
       // working arrays
-      stackArray1d< globalIndex, DOF1 > eqnRowIndices( DOF );
       stackArray1d< globalIndex, DOF2 > dofColIndices( DOF );
 
       stackArray1d< real64, DOF1 > localFlux( DOF );
@@ -212,41 +190,33 @@ void FluxKernel::
                                    localFlux,
                                    localFluxJacobian );
 
+      for( localIndex i = 0; i < stencilSize; ++i )
+      {
+        for( localIndex j = 0; j < numDofPerCell; ++j )
+        {
+          dofColIndices[i * numDofPerCell + j] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + j;
+        }
+      }
 
       for( localIndex i = 0; i < numFluxElems; ++i )
       {
-
-        for( localIndex j = 0; j < numDofPerCell; ++j )
+        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
         {
+          globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow + numDofPerCell );
 
-          eqnRowIndices[i * numDofPerCell + j] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + j;
-
+          for( localIndex idof = 0; idof < numDofPerCell; ++idof )
+          {
+            RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow + idof], localFlux[i * numDofPerCell + idof] );
+            localMatrix.addToRowBinarySearchUnsorted< parallelHostAtomic >( localRow + idof,
+                                                                            dofColIndices,
+                                                                            localFluxJacobian[i * numDofPerCell + idof].dataIfContiguous(),
+                                                                            stencilSize * numDofPerCell );
+          }
         }
-
       }
-
-      for( localIndex i = 0; i < stencilSize; ++i )
-      {
-
-        for( localIndex j = 0; j < numDofPerCell; ++j )
-        {
-
-          dofColIndices[i * numDofPerCell + j] = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + j;
-
-        }
-
-
-      }
-
-      addLocalContributionsToGlobalSystem( numFluxElems * numDofPerCell,
-                                           stencilSize * numDofPerCell,
-                                           eqnRowIndices.data(),
-                                           dofColIndices.data(),
-                                           localFluxJacobian.data(),
-                                           localFlux.data(),
-                                           jacobian,
-                                           residual );
-
     }
   } );
 }

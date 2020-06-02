@@ -52,8 +52,8 @@ public:
                              dDens_dPres,
                              viscosity,
                              dVisc_dPres ),
-      m_densRelation( densRelation ),
-      m_viscRelation( viscRelation )
+    m_densRelation( densRelation ),
+    m_viscRelation( viscRelation )
   {}
 
   /// Default copy constructor
@@ -96,7 +96,11 @@ public:
                        localIndex const q,
                        real64 const pres ) const override
   {
-    Compute( pres, m_density[k][q], m_dDens_dPres[k][q], m_viscosity[k][q], m_dVisc_dPres[k][q] );
+    Compute( pres,
+             m_density[k][q],
+             m_dDens_dPres[k][q],
+             m_viscosity[k][q],
+             m_dVisc_dPres[k][q] );
   }
 
 private:
