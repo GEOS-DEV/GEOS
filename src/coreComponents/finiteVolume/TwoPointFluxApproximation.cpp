@@ -588,11 +588,11 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   }
 }
 
-void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & GEOSX_UNUSED_PARAM( domain ),
-                                                            string const & GEOSX_UNUSED_PARAM ( embeddedSurfaceRegionName ) )
+void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & domain,
+                                                            string const &  embeddedSurfaceRegionName )
 {
   MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
+  EdgeManager * const embSurfEdgeManager = mesh->getEmbdSurfEdgeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > const
@@ -605,7 +605,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( DomainPartition & GE
   EmbeddedSurfaceRegion * const fractureRegion = elemManager->GetRegion< EmbeddedSurfaceRegion >( embeddedSurfaceRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
 
-  EmbeddedSurfaceSubRegion * const fractureSubRegion = embeddedSurfaceRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( "default" );
+  EmbeddedSurfaceSubRegion * const fractureSubRegion = fractureRegion->GetSubRegion< EmbeddedSurfaceSubRegion >( "default" );
 
   arrayView1d< real64 const >   const & fractureElemArea   = fractureSubRegion->getElementArea();
   arrayView1d< R1Tensor const > const & fractureElemCenter = fractureSubRegion->getElementCenter();

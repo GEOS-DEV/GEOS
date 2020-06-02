@@ -132,7 +132,7 @@ public:
   bool AddNewEmbeddedSurface( localIndex const cellIndex,
                               localIndex const regionIndex,
                               localIndex const subRegionIndex,
-                              NodeManager const & nodeManager,
+                              NodeManager & nodeManager,
                               EdgeManager const & edgeManager,
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * plane );

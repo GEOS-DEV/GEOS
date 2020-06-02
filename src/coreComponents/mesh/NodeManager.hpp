@@ -180,12 +180,11 @@ public:
   {
     /// String to access the reference position
     static constexpr auto referencePositionString       = "ReferencePosition";
-<<<<<<< HEAD
-    static constexpr auto EmbSurfNodesRefPositionString = "EmbSurfNodesRefPosition";
-=======
+
+    /// String to access the location of the nodes
+    static constexpr auto EmbSurfNodesPositionString = "EmbSurfNodesPosition";
 
     /// String to access the displacement
->>>>>>> origin/develop
     static constexpr auto totalDisplacementString       = "TotalDisplacement";
 
     /// String to access the incremental displacement
