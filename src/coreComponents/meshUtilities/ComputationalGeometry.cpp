@@ -258,7 +258,7 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
     // TODO: Replace the above with
     // LvArray::tensorOps::subtract< 3 >( faceCenter, point );
-    // int const s = sgn( LvArray::tensorOps::innerProduct< 3 >( faceNormal, faceCenter ) );
+    // int const s = sgn( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
 
     // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
     if( sign * s < 0 )
