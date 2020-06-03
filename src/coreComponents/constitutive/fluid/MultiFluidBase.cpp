@@ -162,14 +162,14 @@ void MultiFluidBase::PostProcessInput()
   GEOSX_ERROR_IF( NP > MAX_NUM_PHASES,
                   "MultiFluidBase: Number of fluid phases exceeds the maximum of " << MAX_NUM_PHASES );
 
-#define MULTIFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "MultiFluidBase: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << "given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define MULTIFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "MultiFluidBase: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << "given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   MULTIFLUID_CHECK_INPUT_LENGTH( m_componentMolarWeight, NC,
                                  viewKeyStruct::componentMolarWeightString )
