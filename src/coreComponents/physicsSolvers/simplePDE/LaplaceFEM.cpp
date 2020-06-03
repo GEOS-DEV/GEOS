@@ -233,7 +233,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
               {
                 element_matrix( a, b ) += detJ[k][q] *
                                           diffusion *
-                                          LvArray::tensorOps::innerProduct< 3 >( dNdX[k][q][a], dNdX[k][q][b] );
+                                          LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] );
               }
 
             }

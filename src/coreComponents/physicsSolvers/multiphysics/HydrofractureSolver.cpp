@@ -348,7 +348,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -LvArray::tensorOps::innerProduct< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
+      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 

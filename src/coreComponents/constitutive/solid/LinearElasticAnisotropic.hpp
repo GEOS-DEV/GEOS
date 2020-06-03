@@ -136,7 +136,7 @@ LinearElasticAnisotropicUpdates::
                localIndex const q,
                real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
-  LvArray::tensorOps::plusMatrixVector< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
+  LvArray::tensorOps::plusAijBj< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
 }
 
 GEOSX_HOST_DEVICE
@@ -169,7 +169,7 @@ LinearElasticAnisotropicUpdates::
   }
 
   real64 temp[ 6 ];
-  LvArray::tensorOps::matrixSymmetricMatrixMatrixTranspose< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
   LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
