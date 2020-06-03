@@ -58,7 +58,7 @@
 
   <Events maxTime="2.0">
     <SoloEvent name="siloOutput0"
-               target="/Outputs/DamageOnly_SiloOutput"/>
+               target="/Outputs/SiloOutput"/>
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
