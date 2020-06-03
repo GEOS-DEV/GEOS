@@ -593,7 +593,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           m_solidMaterialNames,
                           &feDiscretization,
                           dt,
-                          string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
+                          string(viewKeyStruct::elemsAttachedToSendOrReceiveNodes) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
@@ -607,7 +607,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           m_solidMaterialNames,
                           &feDiscretization,
                           dt,
-                          string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
+                          string(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
@@ -1033,6 +1033,9 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 
   GEOSX_UNUSED_VAR( dt );
 
+  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
+                                        gravityVector().Data()[1],
+                                        gravityVector().Data()[2] };
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
     m_maxForce = finiteElement::
@@ -1046,7 +1049,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                                     dofNumber,
                                                                                                     matrix,
                                                                                                     rhs,
-                                                                                                    gravityVector().Data() );
+                                                                                                    gravityVectorData );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
@@ -1061,7 +1064,7 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                                         dofNumber,
                                                                                                         matrix,
                                                                                                         rhs,
-                                                                                                        gravityVector().Data(),
+                                                                                                        gravityVectorData,
                                                                                                         m_newmarkGamma,
                                                                                                         m_newmarkBeta,
                                                                                                         m_massDamping,

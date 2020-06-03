@@ -28,49 +28,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-/**
- * @struct ImplicitNewmarkConstructorParams
- * @copydoc geosx::finiteElement::QuasiStaticConstructorParams
- */
-struct ImplicitNewmarkConstructorParams : QuasiStaticConstructorParams
-{
-
-  /**
-   * @brief Constructor
-   * @copydoc QuasiStaticConstructorParams
-   * @param inputNewmarkGamma The Gamma parameter of the Newmark method.
-   * @param inputNewmarkBeta The Beta parameter for the Newmark method.
-   * @param inputMassDamping The mass damping coefficient.
-   * @param inputStiffnessDamping The stiffness damping coefficient.
-   * @param inputDt The timestep for the physics update.
-   */
-  ImplicitNewmarkConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
-                                    ParallelMatrix & inputMatrix,
-                                    ParallelVector & inputRhs,
-                                    real64 const inputGravityVector[3],
-                                    real64 const inputNewmarkGamma,
-                                    real64 const inputNewmarkBeta,
-                                    real64 const inputMassDamping,
-                                    real64 const inputStiffnessDamping,
-                                    real64 const inputDt ):
-    QuasiStaticConstructorParams( inputDofNumber,
-                                  inputMatrix,
-                                  inputRhs,
-                                  inputGravityVector ),
-    m_newmarkGamma( inputNewmarkGamma ),
-    m_newmarkBeta( inputNewmarkBeta ),
-    m_massDamping( inputMassDamping ),
-    m_stiffnessDamping( inputStiffnessDamping ),
-    m_dt( inputDt )
-  {}
-
-  real64 const m_newmarkGamma;
-  real64 const m_newmarkBeta;
-  real64 const m_massDamping;
-  real64 const m_stiffnessDamping;
-  real64 const m_dt;
-};
-
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
@@ -100,9 +57,6 @@ public:
   using Base::m_uhat;
   using Base::m_detJ;
 
-  /// Alias for the struct that holds the constructor parameters
-  using ConstructorParams = ImplicitNewmarkConstructorParams;
-
   /**
    * @brief Constructor
    * @copydoc QuasiStatic
@@ -121,7 +75,7 @@ public:
                    arrayView1d< globalIndex const > const & inputDofNumber,
                    ParallelMatrix & inputMatrix,
                    ParallelVector & inputRhs,
-                   real64 const inputGravityVector[3],
+                   real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
                    real64 const inputMassDamping,
@@ -145,35 +99,6 @@ public:
     m_massDamping( inputMassDamping ),
     m_stiffnessDamping( inputStiffnessDamping ),
     m_dt( inputDt )
-  {}
-
-  /**
-   * @copydoc ImplicitNewmark
-   * @brief Constructor that holds variadic components in a struct.
-   * @param params Hold the variadic components of primary constructor.
-   */
-  ImplicitNewmark( NodeManager const & nodeManager,
-                   EdgeManager const & edgeManager,
-                   FaceManager const & faceManager,
-                   SUBREGION_TYPE const & elementSubRegion,
-                   FiniteElementBase const * const finiteElementSpace,
-                   CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                   ConstructorParams & params ):
-    ImplicitNewmark( nodeManager,
-                     edgeManager,
-                     faceManager,
-                     elementSubRegion,
-                     finiteElementSpace,
-                     inputConstitutiveType,
-                     params.m_dofNumber,
-                     params.m_matrix,
-                     params.m_rhs,
-                     params.m_gravityVector,
-                     params.m_newmarkGamma,
-                     params.m_newmarkBeta,
-                     params.m_massDamping,
-                     params.m_stiffnessDamping,
-                     params.m_dt )
   {}
 
 

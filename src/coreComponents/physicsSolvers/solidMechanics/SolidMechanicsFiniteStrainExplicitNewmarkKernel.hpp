@@ -67,7 +67,6 @@ public:
   using Base::m_X;
 #endif
 
-  using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
@@ -87,22 +86,6 @@ public:
           elementListName )
   {}
 
-  ExplicitFiniteStrain( NodeManager & nodeManager,
-                        EdgeManager const & edgeManager,
-                        FaceManager const & faceManager,
-                        SUBREGION_TYPE const & elementSubRegion,
-                        FiniteElementBase const * const finiteElementSpace,
-                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                        ConstructorParams & params ):
-    ExplicitFiniteStrain( nodeManager,
-                          edgeManager,
-                          faceManager,
-                          elementSubRegion,
-                          finiteElementSpace,
-                          inputConstitutiveType,
-                          params.m_dt,
-                          params.m_elementListName )
-  {}
 
   //*****************************************************************************
   struct StackVariables : public Base::StackVariables

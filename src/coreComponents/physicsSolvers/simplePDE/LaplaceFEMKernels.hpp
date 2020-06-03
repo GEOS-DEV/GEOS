@@ -23,25 +23,6 @@
 
 namespace geosx
 {
-
-/**
- * @struct LaplaceFEMKernelConstructorParams
- * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
- */
-struct LaplaceFEMKernelConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
-{
-  LaplaceFEMKernelConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
-                                     ParallelMatrix & inputMatrix,
-                                     ParallelVector & inputRhs,
-                                     string const & fieldName ):
-    finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
-                                                        inputMatrix,
-                                                        inputRhs ),
-    m_fieldName( fieldName )
-  {}
-  string const & m_fieldName;
-};
-
 //*****************************************************************************
 /**
  * @brief Implements kernels for solving Laplace's equation.
@@ -92,9 +73,6 @@ public:
   using Base::m_rhs;
   using Base::m_elemsToNodes;
 
-  /// Alias for the struct that holds the constructor parameters
-  using ConstructorParams = LaplaceFEMKernelConstructorParams;
-
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
@@ -124,31 +102,6 @@ public:
     m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
     m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
   {}
-
-  /**
-   * @copydoc LaplaceFEMKernel
-   * @brief Constructor that holds variadic components in a struct.
-   * @param params Hold the variadic components of primary constructor.
-   */
-  LaplaceFEMKernel( NodeManager const & nodeManager,
-                    EdgeManager const & edgeManager,
-                    FaceManager const & faceManager,
-                    SUBREGION_TYPE const & elementSubRegion,
-                    FiniteElementBase const * const finiteElementSpace,
-                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                    ConstructorParams & params ):
-    LaplaceFEMKernel( nodeManager,
-                      edgeManager,
-                      faceManager,
-                      elementSubRegion,
-                      finiteElementSpace,
-                      inputConstitutiveType,
-                      params.m_dofNumber,
-                      params.m_matrix,
-                      params.m_rhs,
-                      params.m_fieldName )
-  {}
-
 
   //***************************************************************************
   /**

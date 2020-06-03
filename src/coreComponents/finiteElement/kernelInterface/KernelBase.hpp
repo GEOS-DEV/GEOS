@@ -21,15 +21,17 @@
 #define GEOSX_FINITEELEMENT_KERNELBASE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-// 0 is the parameter classes
+// 0 forward parameter pack
 // 1 is std::tuple
 // 2 is camp
-#define CONSTRUCTOR_PARAM_OPTION 0
+#define CONSTRUCTOR_PARAM_OPTION 1
 
 #if CONSTRUCTOR_PARAM_OPTION==1
 namespace std
@@ -77,6 +79,36 @@ constexpr T make_from_tuple( Tuple && tt )
       make_from_tuple_impl< T >( camp::forward< Tuple >( tt ),
                                  make_idx_seq_t< tuple_size< type::ref::rem< Tuple > >::value >{} );
 }
+
+
+template <typename... Lelem,
+          typename... Relem,
+          camp::idx_t... Lidx,
+          camp::idx_t... Ridx>
+CAMP_HOST_DEVICE constexpr auto tuple_cat_pair_forward(tuple<Lelem...> const& l,
+                                               camp::idx_seq<Lidx...>,
+                                               tuple<Relem...> const& r,
+                                               camp::idx_seq<Ridx...>) noexcept
+    -> tuple<camp::at_v<camp::list<Lelem...>, Lidx>...,
+             camp::at_v<camp::list<Relem...>, Ridx>...>
+{
+  return camp::forward_as_tuple(get<Lidx>(l)..., get<Ridx>(r)...);
+}
+
+template <typename L, typename R>
+CAMP_HOST_DEVICE constexpr auto tuple_cat_pair_forward(L const& l, R const& r) noexcept
+    -> decltype(tuple_cat_pair_forward(l,
+                               camp::idx_seq_from_t<L>{},
+                               r,
+                               camp::idx_seq_from_t<R>{}))
+{
+  return tuple_cat_pair_forward(l,
+                        camp::idx_seq_from_t<L>{},
+                        r,
+                        camp::idx_seq_from_t<R>{});
+}
+
+
 }
 
 #endif
@@ -534,18 +566,10 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
-#if CONSTRUCTOR_PARAM_OPTION==0
-  using CONSTRUCTOR_PARAMS = typename KERNEL_TEMPLATE< CellElementSubRegion,
-                                                       constitutive::NullModel,
-                                                       1,
-                                                       1 >::ConstructorParams;
-
-  CONSTRUCTOR_PARAMS kernelParams( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
-
-#elif CONSTRUCTOR_PARAM_OPTION==1
-  auto kernelConstructorParamsTuple = std::forward_as_tuple( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
+#if CONSTRUCTOR_PARAM_OPTION==1
+  std::tuple<KERNEL_CONSTRUCTOR_PARAMS &...> kernelConstructorParamsTuple = std::forward_as_tuple( kernelConstructorParams... );
 #elif CONSTRUCTOR_PARAM_OPTION==2
-  auto kernelConstructorParamsTuple = camp::forward_as_tuple( std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
+  camp::tuple<KERNEL_CONSTRUCTOR_PARAMS &...> kernelConstructorParamsTuple = camp::forward_as_tuple( kernelConstructorParams... );
 #endif
 
 
@@ -598,13 +622,15 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                                NUM_NODES_PER_ELEM >;
 
 #if CONSTRUCTOR_PARAM_OPTION==0
+          // We can replace all the shenanigans with tuples when we can use c++20
+          // perfect forwarding of the parameter pack in the lambda capture.
           KERNEL_TYPE kernelComponent( nodeManager,
                                        edgeManager,
                                        faceManager,
                                        elementSubRegion,
                                        finiteElementSpace,
                                        castedConstitutiveRelation,
-                                       kernelParams );
+                                       std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
 
 #elif CONSTRUCTOR_PARAM_OPTION==1
 
@@ -632,19 +658,6 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
           KERNEL_TYPE kernelComponent  = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
-
-          // We can replace all the shenanigans with params when we can use c++20
-          // perfect forwarding of the parameter pack in the lambda capture.
-          //        KERNEL_TYPE kernelComponent( nodeManager,
-          //                                     edgeManager,
-          //                                     faceManager,
-          //                                     elementSubRegion,
-          //                                     finiteElementSpace,
-          //                                     castedConstitutiveRelation,
-          //                                     std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )...
-          // );
-
-
           maxResidualContribution = std::max( maxResidualContribution,
                                               KERNEL_TYPE::template Launch< POLICY,
                                                                             NUM_QUADRATURE_POINTS

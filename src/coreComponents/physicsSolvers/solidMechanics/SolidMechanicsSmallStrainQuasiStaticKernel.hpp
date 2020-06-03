@@ -19,47 +19,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 #define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
 
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "finiteElement/ElementLibrary/FiniteElementBase.h"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
-#include "finiteElement/Kinematics.h"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
-#include "TimeIntegrationOption.hpp"
 
 namespace geosx
 {
 
 namespace SolidMechanicsLagrangianFEMKernels
 {
-
-
-/**
- * @struct QuasiStaticConstructorParams
- * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
- */
-struct QuasiStaticConstructorParams : finiteElement::ImplicitKernelBaseConstructorParams
-{
-  /**
-   * @brief Constructor
-   * @copydoc ImplicitKernelBaseConstructorParams
-   * @param inputGravityVector The gravity vector.
-   */
-  QuasiStaticConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
-                                ParallelMatrix & inputMatrix,
-                                ParallelVector & inputRhs,
-                                real64 const inputGravityVector[3] ):
-    finiteElement::ImplicitKernelBaseConstructorParams( inputDofNumber,
-                                                        inputMatrix,
-                                                        inputRhs ),
-    m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
-  {}
-
-  /// gravity vector
-  real64 const m_gravityVector[3];
-};
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
@@ -116,10 +82,6 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
 
-  /// Alias for the struct that holds the constructor parameters
-  using ConstructorParams = QuasiStaticConstructorParams;
-
-
 
   /**
    * @brief Constructor
@@ -135,7 +97,7 @@ public:
                arrayView1d< globalIndex const > const & inputDofNumber,
                ParallelMatrix & inputMatrix,
                ParallelVector & inputRhs,
-               real64 const inputGravityVector[3] ):
+               real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -151,31 +113,6 @@ public:
     m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
   {}
-
-  /**
-   * @copydoc QuasiStatic
-   * @brief Constructor that holds variadic components in a struct.
-   * @param params Hold the variadic components of primary constructor.
-   */
-  QuasiStatic( NodeManager const & nodeManager,
-               EdgeManager const & edgeManager,
-               FaceManager const & faceManager,
-               SUBREGION_TYPE const & elementSubRegion,
-               FiniteElementBase const * const finiteElementSpace,
-               CONSTITUTIVE_TYPE * const inputConstitutiveType,
-               ConstructorParams & params ):
-    QuasiStatic( nodeManager,
-                 edgeManager,
-                 faceManager,
-                 elementSubRegion,
-                 finiteElementSpace,
-                 inputConstitutiveType,
-                 params.m_dofNumber,
-                 params.m_matrix,
-                 params.m_rhs,
-                 params.m_gravityVector )
-  {}
-
 
 
   //*****************************************************************************

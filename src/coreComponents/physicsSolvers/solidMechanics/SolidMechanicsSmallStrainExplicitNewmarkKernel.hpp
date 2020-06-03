@@ -28,34 +28,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-
-/**
- * @struct ExplicitSmallStrainConstructorParams
- * @copydoc geosx::finiteElement::ImplicitKernelBaseConstructorParams
- */
-struct ExplicitSmallStrainConstructorParams
-{
-  /**
-   * @brief Constructor
-   * @param dt The timestep for this update increment.
-   * @param elementListName The name of the element list that will be processed
-   *                        when the kernel is launched.
-   */
-  ExplicitSmallStrainConstructorParams( real64 const dt,
-                                        string const & elementListName ):
-    m_dt( dt ),
-    m_elementListName( elementListName )
-  {}
-
-  /// The delta time for this physics update increment.
-  real64 const m_dt;
-
-  /// The name of the element index list that will be processed by the kernel
-  /// launch.
-  string const & m_elementListName;
-};
-
-
 #if defined(GEOSX_USE_CUDA)
   #define CALCFEMSHAPE
 #endif
@@ -114,7 +86,6 @@ public:
   using Base::m_finiteElementSpace;
 
 
-  using ConstructorParams = ExplicitSmallStrainConstructorParams;
 
 
 //*****************************************************************************
@@ -144,27 +115,6 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
   }
-
-
-
-  ExplicitSmallStrain( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FiniteElementBase const * const finiteElementSpace,
-                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                       ConstructorParams & params ):
-    ExplicitSmallStrain( nodeManager,
-                         edgeManager,
-                         faceManager,
-                         elementSubRegion,
-                         finiteElementSpace,
-                         inputConstitutiveType,
-                         params.m_dt,
-                         params.m_elementListName )
-  {}
-
-
 
   //*****************************************************************************
   struct StackVariables

@@ -32,44 +32,6 @@ namespace finiteElement
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
-
-/**
- * @struct ImplicitKernelBaseConstructorParams
- * @brief Temporary object to help with the delivery of the variadic
- *        arguments through all the lambdas prior to the reaching the
- *        constructor for the Kernel. This should not be necessary once
- *        we are able to use the perfect forwarding capabilities of c++20.
- */
-struct ImplicitKernelBaseConstructorParams
-{
-
-  /**
-   * @brief Constructor
-   * @param inputDofNumber The dof number for the primary field.
-   * @param inputMatrix Reference to the Jacobian matrix.
-   * @param inputRhs Reference to the RHS vector.
-   */
-  ImplicitKernelBaseConstructorParams( arrayView1d< globalIndex const > const & inputDofNumber,
-                                       ParallelMatrix & inputMatrix,
-                                       ParallelVector & inputRhs ):
-    m_dofNumber( inputDofNumber ),
-    m_matrix( inputMatrix ),
-    m_rhs( inputRhs )
-  {}
-  /// The global degree of freedom number
-  arrayView1d< globalIndex const > const m_dofNumber;
-
-  /// The global Jacobian matrix.
-  ParallelMatrix & m_matrix;
-
-  /// The global residaul vector.
-  ParallelVector & m_rhs;
-};
-
-
-//*****************************************************************************
-//*****************************************************************************
-//*****************************************************************************
 /**
  * @class ImplicitKernelBase
  * @brief Define the base interface for implicit finite element kernels.
@@ -108,8 +70,6 @@ public:
   using Base::numDofPerTrialSupportPoint;
   using Base::m_elemsToNodes;
 
-  /// Alias for the struct that holds the constructor parameters
-  using ConstructorParams = ImplicitKernelBaseConstructorParams;
 
   /**
    * @brief Constructor
@@ -141,29 +101,6 @@ public:
     GEOSX_UNUSED_VAR( edgeManager );
     GEOSX_UNUSED_VAR( faceManager );
   }
-
-  /**
-   * @copydoc ImplicitKernelBase
-   * @brief Constructor that holds variadic components in a struct.
-   * @param params Hold the variadic components of primary constructor.
-   */
-  ImplicitKernelBase( NodeManager const & nodeManager,
-                      EdgeManager const & edgeManager,
-                      FaceManager const & faceManager,
-                      SUBREGION_TYPE const & elementSubRegion,
-                      FiniteElementBase const * const finiteElementSpace,
-                      CONSTITUTIVE_TYPE * const inputConstitutiveType,
-                      ConstructorParams & params ):
-    ImplicitKernelBase( nodeManager,
-                        edgeManager,
-                        faceManager,
-                        elementSubRegion,
-                        finiteElementSpace,
-                        inputConstitutiveType,
-                        params.m_dofNumber,
-                        params.m_matrix,
-                        params.m_rhs )
-  {}
 
 
   //***************************************************************************
