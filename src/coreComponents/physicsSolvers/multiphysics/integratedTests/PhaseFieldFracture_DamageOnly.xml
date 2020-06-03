@@ -31,6 +31,8 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
+                lenghtScale = "0.2"
+                criticalFractureEnergy = "2.7"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
@@ -55,7 +57,7 @@
 
   <Events maxTime="1.0">
     <SoloEvent name="siloOutput0"
-               target="/Outputs/SiloOutput"/>
+               target="/Outputs/DamageOnly_SiloOutput"/>
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"
