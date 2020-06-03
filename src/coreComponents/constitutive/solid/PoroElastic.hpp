@@ -29,6 +29,12 @@ namespace geosx
 namespace constitutive
 {
 
+//template< typename UPDATE_BASE >
+//class PoroElasticUpdates : public UPDATE_BASE
+//{
+//  template< PARAMS ... params >
+//};
+
 template< typename BASE >
 class PoroElastic : public BASE
 {

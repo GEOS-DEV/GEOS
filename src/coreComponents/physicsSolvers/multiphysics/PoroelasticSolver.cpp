@@ -19,6 +19,7 @@
 
 
 #include "PoroelasticSolver.hpp"
+//#include "PoroelasticSolverKernel.hpp"
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -395,6 +396,8 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                  dofManager,
                                  matrix,
                                  rhs );
+
+//  m_solidSolver->AssemblyLaunch<PoroelasticFEMKernels::QuasiStatic>( *domain, dofManager, matrix, rhs );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt, domain,

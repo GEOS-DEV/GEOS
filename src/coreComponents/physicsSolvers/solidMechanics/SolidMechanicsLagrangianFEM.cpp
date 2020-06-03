@@ -1012,74 +1012,27 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
                                                   ParallelVector & rhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = *(domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
-  NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
-  matrix.open();
-  rhs.open();
-
-  string const dofKey = dofManager.getKey( keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  ResetStressToBeginningOfStep( domain );
-
-  GEOSX_UNUSED_VAR( dt );
-
-  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
-                                        gravityVector().Data()[1],
-                                        gravityVector().Data()[2] };
   if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
   {
-    m_maxForce = finiteElement::
-                   RegionBasedKernelApplication< serialPolicy,
-                                                 constitutive::SolidBase,
-                                                 CellElementSubRegion,
-                                                 SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                                                    targetRegionNames(),
-                                                                                                    m_solidMaterialNames,
-                                                                                                    feDiscretization,
-                                                                                                    dofNumber,
-                                                                                                    matrix,
-                                                                                                    rhs,
-                                                                                                    gravityVectorData );
+    GEOSX_UNUSED_VAR( dt );
+    AssemblyLaunch< SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *domain,
+                                                                       dofManager,
+                                                                       matrix,
+                                                                       rhs );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
-    m_maxForce = finiteElement::
-                   RegionBasedKernelApplication< serialPolicy,
-                                                 constitutive::SolidBase,
-                                                 CellElementSubRegion,
-                                                 SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( mesh,
-                                                                                                        targetRegionNames(),
-                                                                                                        m_solidMaterialNames,
-                                                                                                        feDiscretization,
-                                                                                                        dofNumber,
-                                                                                                        matrix,
-                                                                                                        rhs,
-                                                                                                        gravityVectorData,
-                                                                                                        m_newmarkGamma,
-                                                                                                        m_newmarkBeta,
-                                                                                                        m_massDamping,
-                                                                                                        m_stiffnessDamping,
-                                                                                                        dt );
+    AssemblyLaunch< SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( *domain,
+                                                                           dofManager,
+                                                                           matrix,
+                                                                           rhs,
+                                                                           m_newmarkGamma,
+                                                                           m_newmarkBeta,
+                                                                           m_massDamping,
+                                                                           m_stiffnessDamping,
+                                                                           dt );
   }
-
-
-  ApplyContactConstraint( dofManager,
-                          *domain,
-                          &matrix,
-                          &rhs );
-
-  matrix.close();
-  rhs.close();
 
   if( getLogLevel() >= 2 )
   {
