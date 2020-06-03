@@ -201,7 +201,7 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 
     forAll< serialPolicy >( faceManager.size(), [=] ( localIndex a )
     {
-      // TODO change to LvArray::tensorOps::innerProduct once gravVector is a c-array.
+      // TODO change to LvArray::tensorOps::AiBi once gravVector is a c-array.
       gravityCoef[ a ] = faceCenter[ a ][ 0 ] * gravVector[ 0 ];
       gravityCoef[ a ] += faceCenter[ a ][ 1 ] * gravVector[ 1 ];
       gravityCoef[ a ] += faceCenter[ a ][ 2 ] * gravVector[ 2 ];

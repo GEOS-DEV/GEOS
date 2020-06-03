@@ -120,7 +120,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
         LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
 
-        if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+        if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
         {
           LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
         }
@@ -131,7 +131,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
         faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * faceNormal[ 0 ];
         faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * faceNormal[ 1 ];
         faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * faceNormal[ 2 ];
-        real64 halfWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
+        real64 halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
         // correct negative weight issue arising from non-K-orthogonal grids
         if( halfWeight < 0.0 )
@@ -140,7 +140,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
           faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * cellToFaceVec[ 0 ];
           faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * cellToFaceVec[ 1 ];
           faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * cellToFaceVec[ 2 ];
-          halfWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
+          halfWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
         }
 
         halfWeight *= faceArea / c2fDistance;
@@ -609,7 +609,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
 
-      if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+      if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
       {
         LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
       }
@@ -620,7 +620,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
       faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * faceNormal[ 0 ];
       faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * faceNormal[ 1 ];
       faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * faceNormal[ 2 ];
-      real64 faceWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
+      real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
@@ -629,7 +629,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
         faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * cellToFaceVec[ 0 ];
         faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * cellToFaceVec[ 1 ];
         faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * cellToFaceVec[ 2 ];
-        faceWeight = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
+        faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 
       faceWeight *= faceArea / c2fDistance;
