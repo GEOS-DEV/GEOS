@@ -89,6 +89,8 @@ public:
 
     constexpr static auto solidSolverNameString = "solidSolverName";
     constexpr static auto damageSolverNameString = "damageSolverName";
+    constexpr static auto subcyclingOptionString = "subcycling";
+
   } PhaseFieldFractureSolverViewKeys;
 
 protected:
@@ -102,6 +104,7 @@ private:
   string m_damageSolverName;
   string m_couplingTypeOptionString;
   couplingTypeOption m_couplingTypeOption;
+  int m_subcyclingOption;
 
 };
 

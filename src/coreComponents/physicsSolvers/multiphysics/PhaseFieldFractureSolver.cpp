@@ -57,6 +57,10 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Coupling option: (FixedStress, TightlyCoupled)" );
 
+  registerWrapper(viewKeyStruct::subcyclingOptionString, &m_subcyclingOption)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("turn on subcycling on each load step");
+
 }
 
 void PhaseFieldFractureSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -261,10 +265,16 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
       continue;
     }
 
-    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations >= 0 && iter > 0 ) //edited to make 1 pass
-                                                                                            // method
+    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
+
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter << " iterations! *****\n" );
+      isConverged = true;
+      break;
+    }
+    else if (m_subcyclingOption == 0 && iter > 0)
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, "***** Single Pass solver, no subcycling *****\n" );
       isConverged = true;
       break;
     }
