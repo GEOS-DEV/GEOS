@@ -56,7 +56,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="1.0">
+  <Events maxTime="2.0">
     <SoloEvent name="siloOutput0"
                target="/Outputs/DamageOnly_SiloOutput"/>
     <!-- This event is applied every cycle, and overrides the
@@ -71,18 +71,17 @@
     <PeriodicEvent name="vtkOutput"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/DamageOnly_VTKOutput" />
+                   target="/Outputs/VTKOutput" />
 
     <PeriodicEvent name="siloOutputs"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
-                   target="/Outputs/DamageOnly_SiloOutput"/>
+                   target="/Outputs/SiloOutput"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
+                   timeFrequency="1.0"
                    targetExactTimestep="0"
-                   target="/Outputs/restartOutput"
-                   endTime="-1" />
+                   target="/Outputs/restartOutput" />
   </Events>
 
   <NumericalMethods>
@@ -151,8 +150,8 @@
 
   </Functions>
   <Outputs>
-    <Silo name="DamageOnly_SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
-    <VTK name="DamageOnly_VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <Silo name="SiloOutput" parallelThreads="1" plotFileRoot="plot"/>
+    <VTK name="VTKOutput" parallelThreads="1" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
   </Outputs>
 
