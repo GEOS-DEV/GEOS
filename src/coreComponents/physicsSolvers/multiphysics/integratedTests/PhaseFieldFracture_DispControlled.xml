@@ -31,6 +31,8 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
+                lenghtScale = "0.2"
+                criticalFractureEnergy = "2.7"
                 logLevel="1"
                 targetRegions="{Region1}">
       <NonlinearSolverParameters newtonMaxIter="5"
@@ -57,7 +59,7 @@
                   cellBlockNames="{cb1}"/>
   </Mesh>
 
-  <Events maxTime="5000.0">
+  <Events maxTime="500.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
     <PeriodicEvent name="solverApplications"

@@ -31,6 +31,8 @@
                 fieldName="Damage"
                 solidMaterialName="shale"
                 localDissipation = "Quadratic"
+                lenghtScale = "0.2"
+                criticalFractureEnergy = "2.7"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
@@ -47,9 +49,9 @@
                   xCoords="{-1, 1}"
                   yCoords="{-1, 1}"
                   zCoords="{-1, 1}"
-                  nx="{4}"
-                  ny="{4}"
-                  nz="{4}"
+                  nx="{8}"
+                  ny="{8}"
+                  nz="{8}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
 

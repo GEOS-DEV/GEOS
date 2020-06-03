@@ -81,8 +81,15 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
 
   registerWrapper( viewKeyStruct::localDissipationOption, &m_localDissipationOption )->
     setInputFlag( InputFlags::REQUIRED )->
-    setDescription(
-    "Type of local dissipation function. Can be Linear or Quadratic" );
+    setDescription("Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper(viewKeyStruct::lenghtScale, &m_lenghtScale)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("lenght scale l in the phase-field equation");
+
+  registerWrapper(viewKeyStruct::criticalFractureEnergy, &m_criticalFractureEnergy)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("critical fracture energy");
 
   registerWrapper< string >( viewKeyStruct::solidModelNameString, &m_solidModelName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -298,8 +305,8 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
-      real64 ell = 0.2;                                 //phase-field length scale
-      real64 Gc = 2.7;                                  //energy release rate
+      real64 ell = m_lenghtScale;                                 //phase-field length scale
+      real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
       double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
                                                                                                                                                                                       // Linear
       arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
