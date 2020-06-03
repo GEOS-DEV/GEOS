@@ -148,12 +148,12 @@ struct ExplicitKernel
     real64 const integrationFactor = -detJ * detF;
 
     real64 P[ 3 ][ 3 ];
-    LvArray::tensorOps::symmetricMatrixMatrixTranspose< 3 >( P, fieldVar, fInv );
+    LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
 
     for( int a = 0; a < N; ++a )    // loop through all shape functions in element
     {
-      LvArray::tensorOps::plusMatrixVector< 3, 3 >( result[ a ], P, dNdX[ a ] );
+      LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
     }
   }
 
@@ -248,7 +248,7 @@ struct ExplicitKernel
         LvArray::tensorOps::invert< 3 >( fInv, F );
 
         // chain rule: calculate dv/du = dv/dX * dX/du
-        LvArray::tensorOps::matrixMatrix< 3, 3, 3 >( Ldt, dUhatdX, fInv );
+        LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
         // calculate gradient (end of step)
         LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );

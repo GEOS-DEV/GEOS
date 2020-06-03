@@ -108,11 +108,11 @@ private:
     {
       arrayView2d< real64 const > const & parentGradients = data[ q ].parent_gradients;
 
-      LvArray::tensorOps::outerProduct< 3, 3 >( jacobian, X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
+      LvArray::tensorOps::AiBj< 3, 3 >( jacobian, X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
 
       for( int i=1; i<n_dofs; ++i )
       {
-        LvArray::tensorOps::plusOuterProduct< 3, 3 >( jacobian, X[ mapped_support_points[ i ] ], parentGradients[ i ] );
+        LvArray::tensorOps::plusAiBj< 3, 3 >( jacobian, X[ mapped_support_points[ i ] ], parentGradients[ i ] );
       }
 
       if( dim == 2 )
@@ -124,7 +124,7 @@ private:
 
       for( int i=0; i<n_dofs; ++i )
       {
-        LvArray::tensorOps::matrixTransposeVector< 3, 3 >( data[ q ].mapped_gradients[ i ], jacobian, parentGradients[ i ] );
+        LvArray::tensorOps::AjiBj< 3, 3 >( data[ q ].mapped_gradients[ i ], jacobian, parentGradients[ i ] );
       }
     }
   }

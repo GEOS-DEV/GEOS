@@ -75,7 +75,7 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
         cellToFaceVec[ 1 ] -= elemCenter[ 1 ];
         cellToFaceVec[ 2 ] -= elemCenter[ 2 ];
 
-        if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+        if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
         {
           LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
         }
@@ -83,13 +83,13 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
         real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
         // TODO: take symmetry into account to optimize this
-        // TODO: Change to LvArray::tensorOps::innerProduct
+        // TODO: Change to LvArray::tensorOps::AiBi
         faceConormal[ 0 ] = elemPerm[ 0 ] * faceNormal[ 0 ];
         faceConormal[ 1 ] = elemPerm[ 1 ] * faceNormal[ 1 ];
         faceConormal[ 2 ] = elemPerm[ 2 ] * faceNormal[ 2 ];
 
         // 3) compute the one-sided face transmissibility
-        transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceConormal );
+        transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
         transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
         transMatrix[ifaceLoc][jfaceLoc]  = std::max( transMatrix[ifaceLoc][jfaceLoc],
                                                      weightTolerance );
@@ -165,7 +165,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
       q2( ifaceLoc ) = cellToFaceVec[ 2 ];
     }
 
-    if( LvArray::tensorOps::innerProduct< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
       LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }

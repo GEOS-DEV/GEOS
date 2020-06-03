@@ -218,7 +218,7 @@ struct ExplicitKernel
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          LvArray::tensorOps::plusSymmetricMatrixVector< 3 >( fLocal[ a ], strain, DNDX[ a ] );
+          LvArray::tensorOps::plusSymAijBj< 3 >( fLocal[ a ], strain, DNDX[ a ] );
         }
       }    //quadrature loop
 
@@ -448,7 +448,7 @@ struct ImplicitKernel
           for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
           {
             real64 temp[ 3 ];
-            LvArray::tensorOps::symmetricMatrixVector< 3 >( temp, stress0, dNdX[ k ][ q ][ a ] );
+            LvArray::tensorOps::symAijBj< 3 >( temp, stress0, dNdX[ k ][ q ][ a ] );
 
             maxForce.max( LvArray::tensorOps::maxAbsoluteEntry< 3 >( temp ) );
 
