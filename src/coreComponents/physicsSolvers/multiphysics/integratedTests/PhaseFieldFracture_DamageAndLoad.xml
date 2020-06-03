@@ -76,10 +76,9 @@
                    target="/Outputs/DamageAndLoad_SiloOutput"/>
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
+                   timeFrequency="65.0"
                    targetExactTimestep="0"
-                   target="/Outputs/restartOutput"
-                   endTime="-1" />
+                   target="/Outputs/restartOutput" />
   </Events>
 
   <NumericalMethods>
