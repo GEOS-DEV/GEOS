@@ -20,7 +20,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
-#include "LvArray/src/ArrayUtilities.hpp"
+#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
