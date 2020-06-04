@@ -3,7 +3,14 @@ import os
 from xml.etree import ElementTree
 
 
-def format_xml_level(output, node, level, indent='  ', modify_attribute_indent=True, sort_attributes=False):
+def format_xml_level(output,
+                     node,
+                     level,
+                     indent=' '*2,
+                     block_separation_max_depth=2,
+                     modify_attribute_indent=False,
+                     sort_attributes=False,
+                     close_tag_newline=False):
   # Handle comments
   if node.tag is ElementTree.Comment:
     output.write('\n%s<!--%s-->' % (indent*level, node.text))
@@ -35,11 +42,29 @@ def format_xml_level(output, node, level, indent='  ', modify_attribute_indent=T
     # Write children
     if len(node):
       output.write('>')
-      for child in node:
+      Nc = len(node)
+      for ii, child in zip(range(Nc), node):
         format_xml_level(output, child, level+1)
+
+        # Add space between blocks
+        if ((level < block_separation_max_depth) & (ii < Nc-1)):
+          output.write('\n')
+
+      # Write the end tag
       output.write('\n%s</%s>' % (indent*level, node.tag))
     else:
-      output.write('/>')
+      if close_tag_newline:
+        output.write('\n%s/>' % (indent*level))
+      else:
+        output.write('/>')
+
+
+# Class to handle commented xml structure
+class CommentedTreeBuilder(ElementTree.TreeBuilder):
+    def comment(self, data):
+        self.start(ElementTree.Comment, {})
+        self.data(data)
+        self.end(ElementTree.Comment)
 
 
 def main():
@@ -56,7 +81,8 @@ def main():
   # Process the xml file
   fname = os.path.expanduser(args.input)
   try:
-    tree = ElementTree.parse(fname)
+    xml_parser = parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
+    tree = ElementTree.parse(fname, xml_parser)
     root = tree.getroot()
 
     with open(fname, 'w') as f:
