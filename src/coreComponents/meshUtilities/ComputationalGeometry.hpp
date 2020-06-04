@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "mesh/InterObjectRelation.hpp"
+#include "LvArray/src/streamIO.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
@@ -171,16 +171,16 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
 /**
  * @brief Compute the dimensions of the bounding box containing the element
-          defined here by the coordinates of its vertices
- * @param[in] elemIndex index of the element in pointIndices
- * @param[in] pointIndices the indices of the vertices in pointCoordinates
- * @param[in] pointCoordinates the vertices coordinates
- * @return an R1Tensor containing the dimensions of the box
+ *   defined here by the coordinates of its vertices.
+ * @param[in] elemIndex index of the element in pointIndices.
+ * @param[in] pointIndices the indices of the vertices in pointCoordinates.
+ * @param[in] pointCoordinates the vertices coordinates.
+ * @param[out] boxDims The dimensions of the bounding box.
  */
-template< typename NODEMAP >
-R1Tensor GetBoundingBox( localIndex elemIndex,
-                         NODEMAP const & pointIndices,
-                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+void GetBoundingBox( localIndex elemIndex,
+                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
+                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
+                     real64 ( &boxDims )[ 3 ] );
 
 /**
  * @brief Compute the volume of an hexahedron
@@ -244,19 +244,7 @@ real64 WedgeVolume( R1Tensor const * const points );
  */
 real64 PyramidVolume( R1Tensor const * const points );
 
-}
-
-/// @cond DO_NOT_DOCUMENT
-
-extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
-                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_IJ > > const & pointIndices,
-                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
-extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
-                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_JI > > const & pointIndices,
-                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
-
-/// @endcond
-
-} /* namespace geosx */
+} // namespace computationalGeometry
+} // namespace geosx
 
 #endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */
