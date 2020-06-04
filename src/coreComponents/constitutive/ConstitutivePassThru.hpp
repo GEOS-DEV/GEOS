@@ -36,6 +36,11 @@ namespace constitutive
 template< typename BASETYPE >
 struct ConstitutivePassThru;
 
+//template< template< typename BASE > class DERIVED >
+//struct ConstitutivePassThru;
+
+
+
 
 template<>
 struct ConstitutivePassThru< SolidBase >
@@ -58,18 +63,6 @@ struct ConstitutivePassThru< SolidBase >
     {
       lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
     }
-//    else if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
-//    {
-//      lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
-//    }
-//    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation ) )
-//    {
-//      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation) );
-//    }
-//    else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
-//    {
-//      lambda( static_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation) );
-//    }
     else
     {
       string name;
@@ -83,6 +76,7 @@ struct ConstitutivePassThru< SolidBase >
     }
   }
 };
+
 
 
 template<>
@@ -117,25 +111,41 @@ struct ConstitutivePassThru< NullModel >
 
 
 
-//template< typename LAMBDA >
-//static
-//GEOSX_FORCE_INLINE
-//bool ConstitutiveBasePassThru( ConstitutiveBase * const constitutiveRelation,
-//                               LAMBDA && lambda )
-//{
-//  bool rval = true;
-//  if( dynamic_cast< SolidBase * >( constitutiveRelation ) )
-//  {
-//    ConstitutivePassThru< SolidBase >::Execute( static_cast< SolidBase * >(constitutiveRelation),
-//                                                std::forward< LAMBDA&& >( lambda ) );
-//  }
-//  else if( dynamic_cast< NullModel * >( constitutiveRelation ) )
-//  {
-//    ConstitutivePassThru< NullModel >::Execute( static_cast< NullModel * >(constitutiveRelation),
-//                                            std::forward< LAMBDA&& >( lambda ) );
-//  }
-//  return rval;
-//}
+template<>
+struct ConstitutivePassThru< PoroElasticBase >
+{
+  template< typename LAMBDA >
+  static
+  GEOSX_FORCE_INLINE
+  void Execute( ConstitutiveBase * const constitutiveRelation,
+                LAMBDA && lambda )
+  {
+    if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation) );
+    }
+    else
+    {
+      string name;
+      if( constitutiveRelation !=nullptr )
+      {
+        name = constitutiveRelation->getName();
+      }
+      GEOSX_ERROR( "ConstitutivePassThru<SolidBase>::Execute( "<<
+                   constitutiveRelation<<" ) failed. ( "<<
+                   constitutiveRelation<<" ) is named "<<name );
+    }
+  }
+};
+
 
 }
 }

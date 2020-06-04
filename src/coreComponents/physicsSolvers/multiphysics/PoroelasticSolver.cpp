@@ -19,8 +19,8 @@
 
 
 #include "PoroelasticSolver.hpp"
-//#include "PoroelasticSolverKernel.hpp"
 
+#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -189,6 +189,8 @@ void PoroelasticSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
+
+  m_solidSolver->setEffectiveStress( 1 );
 
   if( ctOption == "SIM_FixedStress" )
   {
@@ -392,12 +394,13 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-  m_solidSolver->AssembleSystem( time_n, dt, domain,
-                                 dofManager,
-                                 matrix,
-                                 rhs );
+//  m_solidSolver->AssembleSystem( time_n, dt, domain,
+//                                 dofManager,
+//                                 matrix,
+//                                 rhs );
 
-//  m_solidSolver->AssemblyLaunch<PoroelasticFEMKernels::QuasiStatic>( *domain, dofManager, matrix, rhs );
+  m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
+                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic>( *domain, dofManager, matrix, rhs );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt, domain,

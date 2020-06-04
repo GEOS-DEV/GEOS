@@ -478,6 +478,17 @@ public:
                                                     m_stress );
   }
 
+  template< typename UPDATE_KERNEL, typename LAMBDA >
+  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  {
+    return lambda( m_c11,
+                   m_c13,
+                   m_c33,
+                   m_c44,
+                   m_c66,
+                   m_stress );
+  }
+
 protected:
   virtual void PostProcessInput() override;
 

@@ -29,7 +29,7 @@ namespace SolidMechanicsLagrangianFEMKernels
 
 /**
  * @brief Implements kernels for solving quasi-static equilibrium.
- * @copydoc geosx::finiteElement::KernelBase
+ * @copydoc geosx::finiteElement::ImplicitKernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
  *                            @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
@@ -37,7 +37,7 @@ namespace SolidMechanicsLagrangianFEMKernels
  *
  * ### QuasiStatic Description
  * Implements the KernelBase interface functions required for solving the
- * quasi-static equilibrium equations using on of the
+ * quasi-static equilibrium equations using one of the
  * "finite element kernel application" functions such as
  * geosx::finiteElement::RegionBasedKernelApplication.
  *
@@ -64,6 +64,7 @@ class QuasiStatic :
                                             3 >
 {
 public:
+  /// Alias for the base class;
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   NUM_NODES_PER_ELEM,
@@ -131,9 +132,9 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-                                       u_local(),
-                                       uhat_local(),
-                                       constitutiveStiffness{ {0.0} }
+      u_local(),
+      uhat_local(),
+      constitutiveStiffness{ {0.0} }
     {}
 
     /// Stack storage for the element local nodal displacement
@@ -209,14 +210,30 @@ public:
   }
 
 
-
+  /**
+   * @brief Internal struct to provide no-op defaults used in the inclusion
+   *   of lambda functions into kernel component functions.
+   * @struct NoOpFunctors
+   */
   struct NoOpFunctors
   {
+    /**
+     * @brief operator() no-op used for adding an additional dynamics term
+     *   inside the jacobian assembly loop.
+     * @param a Node index for the row.
+     * @param b Node index for the col.
+     */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex, localIndex )
+    void operator() ( localIndex const a , localIndex const b )
     {}
+
+    /**
+     * @brief operator() no-op used for modifying the stress tensor prior to
+     *   integrating the divergence to produce nodal forces.
+     * @param stress The stress array.
+     */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 * )
+    void operator() ( real64 (&stress)[6] )
     {}
   };
 

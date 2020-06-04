@@ -28,6 +28,18 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
+/**
+ * @brief Implements kernels for solving the equations of motion using an
+ *   implicit Newmark's method..
+ * @copydoc QuasiStatic
+ *
+ * ### Implicit Newmark Description
+ * Implements the KernelBase interface functions required for solving the
+ * equations of motion using with an Implicit Newmark's Method with one of the
+ * "finite element kernel application" functions such as
+ * geosx::finiteElement::RegionBasedKernelApplication.
+ *
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
@@ -38,6 +50,7 @@ class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             NUM_NODES_PER_ELEM >
 {
 public:
+  /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
                             NUM_NODES_PER_ELEM,
@@ -116,16 +129,22 @@ public:
     using Base::StackVariables::numRows;
     using Base::StackVariables::numCols;
 
+    /// Constructor.
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-            dRdU_InertiaMassDamping{ {0.0} },
+      dRdU_InertiaMassDamping{ {0.0} },
       vtilde_local(),
       uhattilde_local()
     {}
 
+    /// Stack storage for the Inertial damping contributions to the Jacobian
     real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
+
+    /// Stack storage for the velocity predictor.
     real64 vtilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
+
+    /// Stack storage for the incremental displacement predictor.
     real64 uhattilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
   };
   //***************************************************************************

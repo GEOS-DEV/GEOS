@@ -160,7 +160,8 @@ public:
   /**@}*/
 
 
-  template< template< typename SUBREGION_TYPE,
+  template< typename  CONSTITUTIVE_BASE,
+            template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
                       int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                       int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
@@ -374,6 +375,7 @@ public:
     static constexpr auto maxForce = "maxForce";
     static constexpr auto elemsAttachedToSendOrReceiveNodes = "elemsAttachedToSendOrReceiveNodes";
     static constexpr auto elemsNotAttachedToSendOrReceiveNodes = "elemsNotAttachedToSendOrReceiveNodes";
+    static constexpr auto effectiveStress = "effectiveStress";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
@@ -400,6 +402,11 @@ public:
     return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes );
   }
 
+  void setEffectiveStress( integer const input )
+  {
+    m_effectiveStress = input;
+  }
+
 
 protected:
   virtual void PostProcessInput() override final;
@@ -421,6 +428,11 @@ protected:
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
 
+  /// Indicates whether or not to use effective stress when integrating the
+  /// stress divergence in the kernels. This means calling the poroelastic
+  /// variant of the solid mechanics kernels.
+  integer m_effectiveStress;
+
   SolidMechanicsLagrangianFEM();
 
 };
@@ -430,7 +442,8 @@ protected:
 //**********************************************************************************************************************
 
 
-template< template< typename SUBREGION_TYPE,
+template< typename  CONSTITUTIVE_BASE,
+          template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
@@ -469,7 +482,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   m_maxForce = finiteElement::
                  RegionBasedKernelApplication< serialPolicy,
-                                               constitutive::SolidBase,
+                                               CONSTITUTIVE_BASE,
                                                CellElementSubRegion,
                                                KERNEL_TEMPLATE >( mesh,
                                                                   targetRegionNames(),

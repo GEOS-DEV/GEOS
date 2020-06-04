@@ -17,6 +17,7 @@
  */
 
 #include "SolidMechanicsLagrangianFEM.hpp"
+#include "SolidMechanicsPoroElasticKernel.hpp"
 #include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp"
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
@@ -61,7 +62,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
 //  m_elemsNotAttachedToSendOrReceiveNodes(),
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
-  m_iComm()
+  m_iComm(),
+  m_effectiveStress(0)
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
@@ -127,6 +129,12 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   registerWrapper( viewKeyStruct::maxForce, &m_maxForce )->
     setInputFlag( InputFlags::FALSE )->
     setDescription( "The maximum force contribution in the problem domain." );
+
+  registerWrapper( viewKeyStruct::effectiveStress, &m_effectiveStress )->
+    setApplyDefaultValue( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setDescription( "Apply fluid pressure to produce effective stress when integrating stress." );
+
 }
 
 void SolidMechanicsLagrangianFEM::PostProcessInput()
@@ -1013,25 +1021,40 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+  if( m_effectiveStress==1 )
   {
     GEOSX_UNUSED_VAR( dt );
-    AssemblyLaunch< SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *domain,
-                                                                       dofManager,
-                                                                       matrix,
-                                                                       rhs );
+    AssemblyLaunch< constitutive::PoroElasticBase,
+                    SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( *domain,
+                                                                                  dofManager,
+                                                                                  matrix,
+                                                                                  rhs );
+
   }
-  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+  else
   {
-    AssemblyLaunch< SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( *domain,
-                                                                           dofManager,
-                                                                           matrix,
-                                                                           rhs,
-                                                                           m_newmarkGamma,
-                                                                           m_newmarkBeta,
-                                                                           m_massDamping,
-                                                                           m_stiffnessDamping,
-                                                                           dt );
+    if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
+    {
+      GEOSX_UNUSED_VAR( dt );
+      AssemblyLaunch< constitutive::SolidBase,
+                      SolidMechanicsLagrangianFEMKernels::QuasiStatic >( *domain,
+                                                                         dofManager,
+                                                                         matrix,
+                                                                         rhs );
+    }
+    else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
+    {
+      AssemblyLaunch< constitutive::SolidBase,
+                      SolidMechanicsLagrangianFEMKernels::ImplicitNewmark >( *domain,
+                                                                             dofManager,
+                                                                             matrix,
+                                                                             rhs,
+                                                                             m_newmarkGamma,
+                                                                             m_newmarkBeta,
+                                                                             m_massDamping,
+                                                                             m_stiffnessDamping,
+                                                                             dt );
+    }
   }
 
   if( getLogLevel() >= 2 )

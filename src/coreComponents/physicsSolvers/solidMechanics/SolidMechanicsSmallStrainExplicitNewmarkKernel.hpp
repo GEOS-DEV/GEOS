@@ -69,6 +69,8 @@ class ExplicitSmallStrain : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                               3 >
 {
 public:
+
+  /// Alias for the base class;
   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
                                           CONSTITUTIVE_TYPE,
                                           NUM_NODES_PER_ELEM,

@@ -304,6 +304,15 @@ public:
                                             m_stress.toView() );
   }
 
+
+  template< typename UPDATE_KERNEL, typename LAMBDA >
+  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  {
+    return lambda( m_stiffness.toViewConst(),
+                   m_stress.toView() );
+  }
+
+
   /**
    * @brief Const Getter for stiffness tensor
    * @return ArrayView to the stiffness tensor

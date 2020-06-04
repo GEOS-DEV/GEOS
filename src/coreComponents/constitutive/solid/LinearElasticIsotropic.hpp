@@ -396,6 +396,13 @@ public:
     }
   }
 
+  template< typename UPDATE_KERNEL, typename LAMBDA >
+  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  {
+    return lambda( m_bulkModulus, m_shearModulus, m_stress );
+  }
+
+
 protected:
   virtual void PostProcessInput() override;
 
