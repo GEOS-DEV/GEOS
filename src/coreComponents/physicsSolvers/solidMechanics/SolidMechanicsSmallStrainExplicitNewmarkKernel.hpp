@@ -38,12 +38,13 @@ namespace SolidMechanicsLagrangianFEMKernels
 
 
 /**
- * @brief Implements kernels for solving quasi-static equilibrium.
+ * @brief Implements kernels for solving the equations of motion using the
+ *   explicit Newmark method under the small strain assumption.
  * @copydoc geosx::finiteElement::KernelBase
  * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *                            @p SUBREGION_TYPE.
+ *   @p SUBREGION_TYPE.
  * @tparam UNUSED An unused parameter since we are assuming that the test and
- *                trial space have the same number of support points.
+ *   trial space have the same number of support points.
  *
  * ### Explicit Small Strain Description
  * Implements the KernelBase interface functions required for explicit time
@@ -78,20 +79,25 @@ public:
                                           3,
                                           3 >;
 
-  static constexpr int numTestDofPerSP = 3;
-  static constexpr int numTrialDofPerSP = 3;
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
 
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
   using Base::m_elemsToNodes;
   using Base::m_elemGhostRank;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
 
-
-
-
 //*****************************************************************************
-
+  /**
+   * @brief Constructor
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @param dt The time interval for the step.
+   * @param elementListName The name of the entry that holds the list of
+   *   elements to be processed during this kernel launch.
+   */
   ExplicitSmallStrain( NodeManager & nodeManager,
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
@@ -119,7 +125,13 @@ public:
   }
 
   //*****************************************************************************
-  struct StackVariables
+  /**
+   * @copydoc KernelBase::StackVariables
+   *
+   * ### ExplicitSmallStrain Description
+   * Adds a stack arrays for the nodal force, primary displacement variable, etc.
+   */
+  struct StackVariables : Base::StackVariables
   {
 public:
     GEOSX_HOST_DEVICE
@@ -134,20 +146,25 @@ public:
   #endif
     {}
 
-    real64 fLocal[ numNodesPerElem ][ numTrialDofPerSP ];
-    real64 varLocal[ numNodesPerElem ][ numTestDofPerSP ];
+    real64 fLocal[ numNodesPerElem ][ numDofPerTrialSupportPoint ];
+    real64 varLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
   #if defined(CALCFEMSHAPE)
 // This needs to be returned to service when the FEM kernels are expanded properly
 //    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
 //    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
-    real64 xLocal[ 8 ][ numTestDofPerSP ];
-    real64 dNdX[ 8 ][ numTestDofPerSP ];
+    real64 xLocal[ 8 ][ numDofPerTestSupportPoint ];
+    real64 dNdX[ 8 ][ numDofPerTestSupportPoint ];
     real64 detJ;
   #endif
   };
+  //***************************************************************************
 
 
-
+  /**
+   * @copydoc KernelBase::setup
+   *
+   * Copies the primary variable, and position into the local stack array.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
@@ -156,7 +173,7 @@ public:
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numTrialDofPerSP; ++i )
+      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
 #if defined(CALCFEMSHAPE)
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
@@ -171,6 +188,15 @@ public:
     }
   }
 
+  /**
+   * @copydoc KernelBase::quadraturePointStateUpdate
+   *
+   * ### ExplicitSmallStrain Description
+   * Calculates the shape function derivatives, and the strain tensor. Then
+   * calls the constitutive update, and also performs the integration of
+   * the stress divergence, rather than using the dedicated component function
+   * to allow for some variable reuse.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,
@@ -225,20 +251,12 @@ public:
     }
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointJacobianContribution( localIndex const,
-                                            localIndex const,
-                                            StackVariables & ) const
-  {}
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointResidualContribution( localIndex const GEOSX_UNUSED_PARAM( k ),
-                                            localIndex const GEOSX_UNUSED_PARAM( q ),
-                                            StackVariables & GEOSX_UNUSED_PARAM( stack ) ) const
-  {}
-
+  /**
+   * @copydoc KernelBase::complete
+   *
+   * ### ExplicitSmallStrain Description
+   * Performs the distribution of the nodal force out to the rank local arrays.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
@@ -247,7 +265,7 @@ public:
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int b = 0; b < numTestDofPerSP; ++b )
+      for( int b = 0; b < numDofPerTestSupportPoint; ++b )
       {
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_acc( nodeIndex, b ), stack.fLocal[ a ][ b ] );
       }
@@ -255,7 +273,13 @@ public:
     return 0;
   }
 
-
+  /**
+   * @copydoc KernelBase::Launch
+   *
+   * ### ExplicitSmallStrain Description
+   * Copy of the KernelBase::Launch function without the exclusion of ghost
+   * elements.
+   */
   template< typename POLICY,
             int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
@@ -290,14 +314,28 @@ public:
 
 protected:
   #if !defined(CALCFEMSHAPE)
+  /// The shape function derivative for each quadrature point.
   arrayView3d< R1Tensor const > const m_dNdX;
+  /// The parent->physical jacobian determinant for each quadrature point.
   arrayView2d< real64 const > const m_detJ;
   #endif
+  /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The array containing the nodal displacement array.
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_u;
+
+  /// The array containing the nodal velocity array.
   arrayView2d< real64 const, nodes::VELOCITY_USD > const m_vel;
+
+  /// The array containing the nodal acceleration array, which is used to store
+  /// the force.
   arrayView2d< real64, nodes::ACCELERATION_USD > const m_acc;
+
+  /// The time increment for this time integration step.
   real64 const m_dt;
+
+  /// The list of elements to process for the kernel launch.
   SortedArrayView< localIndex const > const m_elementList;
 
 

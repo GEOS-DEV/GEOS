@@ -132,9 +132,9 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      u_local(),
-      uhat_local(),
-      constitutiveStiffness{ {0.0} }
+                                       u_local(),
+                                       uhat_local(),
+                                       constitutiveStiffness{ {0.0} }
     {}
 
     /// Stack storage for the element local nodal displacement
@@ -224,8 +224,11 @@ public:
      * @param b Node index for the col.
      */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex const a , localIndex const b )
-    {}
+    void operator() ( localIndex const a, localIndex const b )
+    {
+      GEOSX_UNUSED_VAR( a );
+      GEOSX_UNUSED_VAR( b );
+    }
 
     /**
      * @brief operator() no-op used for modifying the stress tensor prior to
@@ -233,8 +236,10 @@ public:
      * @param stress The stress array.
      */
     GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 (&stress)[6] )
-    {}
+    void operator() ( real64 (& stress)[6] )
+    {
+      GEOSX_UNUSED_VAR( stress );
+    }
   };
 
   /**

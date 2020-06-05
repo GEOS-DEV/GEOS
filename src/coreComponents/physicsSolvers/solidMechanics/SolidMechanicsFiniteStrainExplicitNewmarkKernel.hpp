@@ -36,6 +36,14 @@ namespace SolidMechanicsLagrangianFEMKernels
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
 
+/**
+ * @brief Implements kernels for solving the equations of motion using the
+ *   explicit Newmark method under the finite strain assumption.
+ * @copydoc geosx::finiteElement::ExplicitSmallStrain
+ *
+ * ### Explicit Small Strain Description
+ * Finite strain implementation.
+ */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           int NUM_NODES_PER_ELEM,
@@ -46,20 +54,24 @@ class ExplicitFiniteStrain : public ExplicitSmallStrain< SUBREGION_TYPE,
                                                          NUM_NODES_PER_ELEM >
 {
 public:
+  /// Alias for the base class;
   using Base = ExplicitSmallStrain< SUBREGION_TYPE,
                                     CONSTITUTIVE_TYPE,
                                     NUM_NODES_PER_ELEM,
                                     NUM_NODES_PER_ELEM >;
-  using Base::numTestDofPerSP;
-  using Base::numTrialDofPerSP;
+
   using Base::numNodesPerElem;
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
+  using Base::m_elemsToNodes;
+  using Base::m_elemGhostRank;
+  using Base::m_constitutiveUpdate;
+  using Base::m_finiteElementSpace;
 
   using Base::m_dt;
-  using Base::m_elemsToNodes;
   using Base::m_u;
   using Base::m_vel;
   using Base::m_acc;
-  using Base::m_constitutiveUpdate;
 #if !defined(CALCFEMSHAPE)
   using Base::m_dNdX;
   using Base::m_detJ;
@@ -67,7 +79,9 @@ public:
   using Base::m_X;
 #endif
 
-
+  /**
+   * @copydoc ExplcitSmallStrain
+   */
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
@@ -88,9 +102,11 @@ public:
 
 
   //*****************************************************************************
+  /**
+   * @copydoc ExplicitSmallStrain::StackVariables
+   */
   struct StackVariables : public Base::StackVariables
   {
-public:
     using Base::StackVariables::fLocal;
     using Base::StackVariables::varLocal;
 
@@ -101,17 +117,24 @@ public:
   #endif
 
 
+    /**
+     * @brief constructor
+     */
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
             uLocal{ {0.0} }
     {}
 
-    real64 uLocal[ numNodesPerElem ][ numTrialDofPerSP ];
+    /// Local stack storage for nodal displacements.
+    real64 uLocal[ numNodesPerElem ][ numDofPerTrialSupportPoint ];
   };
   //*****************************************************************************
 
 
+  /**
+   * @copydoc ExplicitSmallStrain::setup
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void setup( localIndex const k,
@@ -120,7 +143,7 @@ public:
     for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
-      for( int i=0; i<numTrialDofPerSP; ++i )
+      for( int i=0; i<numDofPerTrialSupportPoint; ++i )
       {
 #if defined(CALCFEMSHAPE)
         stack.xLocal[ a ][ i ] = m_X[ nodeIndex ][ i ];
@@ -131,6 +154,9 @@ public:
     }
   }
 
+  /**
+   * @copydoc ExplicitSmallStrain::quadraturePointStateUpdate
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointStateUpdate( localIndex const k,

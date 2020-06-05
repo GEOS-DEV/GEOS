@@ -36,8 +36,8 @@ public:
   template< typename ... PARAMS >
   PoroElasticUpdates( real64 const & inputBiotCoefficient,
                       PARAMS && ... baseParams ):
-    UPDATE_BASE( std::forward<PARAMS>(baseParams)... ),
-    m_biotCoefficient(inputBiotCoefficient)
+    UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
+    m_biotCoefficient( inputBiotCoefficient )
   {}
 
 
@@ -47,6 +47,7 @@ public:
   using UPDATE_BASE::HypoElastic;
   using UPDATE_BASE::HyperElastic;
 
+  GEOSX_HOST_DEVICE
   real64 getBiotCoefficient() const
   {
     return m_biotCoefficient;
@@ -67,7 +68,7 @@ class PoroElastic : public BASE
 public:
 
   /// @typedef Alias for LinearElasticIsotropicUpdates
-  using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper>;
+  using KernelWrapper = PoroElasticUpdates< typename BASE::KernelWrapper >;
 
   PoroElastic( string const & name, dataRepository::Group * const parent );
   virtual ~PoroElastic() override;
@@ -96,10 +97,10 @@ public:
 
   KernelWrapper createKernelWrapper()
   {
-    return BASE::template createDerivedUpdateKernel<KernelWrapper>( [&]( auto&& ... baseParams ) -> KernelWrapper
+    return BASE::template createDerivedUpdateKernel< KernelWrapper >( [&]( auto && ... baseParams ) -> KernelWrapper
     {
-      return KernelWrapper( m_biotCoefficient, std::forward<decltype(baseParams)>(baseParams)... );
-    });
+      return KernelWrapper( m_biotCoefficient, std::forward< decltype(baseParams) >( baseParams )... );
+    } );
   }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

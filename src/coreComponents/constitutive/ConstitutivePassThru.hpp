@@ -41,7 +41,6 @@ struct ConstitutivePassThru;
 
 
 
-
 template<>
 struct ConstitutivePassThru< SolidBase >
 {
@@ -124,9 +123,9 @@ struct ConstitutivePassThru< PoroElasticBase >
     {
       lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
     }
-    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation ) )
+    else if( dynamic_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation ) )
     {
-      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic >  * >( constitutiveRelation) );
+      lambda( static_cast< PoroElastic< LinearElasticTransverseIsotropic > * >( constitutiveRelation) );
     }
     else if( dynamic_cast< PoroElastic< LinearElasticAnisotropic > * >( constitutiveRelation ) )
     {

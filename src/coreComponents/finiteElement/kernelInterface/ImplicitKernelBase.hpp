@@ -105,15 +105,7 @@ public:
 
   //***************************************************************************
   /**
-   * @struct StackVariables
-   * @brief Kernel variables allocated on the stack.
-   *
-   * ### ImplicitKernelBase::StackVariables Description
-   *
-   * Contains variables that will be allocated on the stack of the main kernel.
-   * This will typically consist of local arrays to hold data mapped from the
-   * global data arrays, and local storage for the residual and jacobian
-   * contributions.
+   * @copydoc KernelBase::StackVariables
    */
   struct StackVariables : public Base::StackVariables
   {

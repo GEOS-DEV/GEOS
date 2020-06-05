@@ -160,7 +160,7 @@ public:
   /**@}*/
 
 
-  template< typename  CONSTITUTIVE_BASE,
+  template< typename CONSTITUTIVE_BASE,
             template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
                       int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
@@ -442,7 +442,7 @@ protected:
 //**********************************************************************************************************************
 
 
-template< typename  CONSTITUTIVE_BASE,
+template< typename CONSTITUTIVE_BASE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
@@ -492,7 +492,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                                   matrix,
                                                                   rhs,
                                                                   gravityVectorData,
-                                                                  std::forward<PARAMS>(params)...);
+                                                                  std::forward< PARAMS >( params )... );
 
 
   ApplyContactConstraint( dofManager,

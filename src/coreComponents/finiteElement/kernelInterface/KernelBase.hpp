@@ -56,61 +56,6 @@ constexpr T make_from_tuple( Tuple && t )
 }
 #elif CONSTRUCTOR_PARAM_OPTION==2
   #include "camp/camp.hpp"
-
-
-namespace camp
-{
-namespace detail
-{
-template< class T, class Tuple, idx_t... I >
-constexpr T make_from_tuple_impl( Tuple && t, idx_seq< I... > )
-{
-  return T( get< I >( camp::forward< Tuple >( t ))... );
-}
-}   // namespace detail
-
-/// Instantiate T from tuple contents, like camp::invoke(tuple,constructor) but
-/// functional
-template< class T, class Tuple >
-constexpr T make_from_tuple( Tuple && tt )
-{
-  return
-    detail::
-      make_from_tuple_impl< T >( camp::forward< Tuple >( tt ),
-                                 make_idx_seq_t< tuple_size< type::ref::rem< Tuple > >::value >{} );
-}
-
-
-template <typename... Lelem,
-          typename... Relem,
-          camp::idx_t... Lidx,
-          camp::idx_t... Ridx>
-CAMP_HOST_DEVICE constexpr auto tuple_cat_pair_forward(tuple<Lelem...> const& l,
-                                               camp::idx_seq<Lidx...>,
-                                               tuple<Relem...> const& r,
-                                               camp::idx_seq<Ridx...>) noexcept
-    -> tuple<camp::at_v<camp::list<Lelem...>, Lidx>...,
-             camp::at_v<camp::list<Relem...>, Ridx>...>
-{
-  return camp::forward_as_tuple(get<Lidx>(l)..., get<Ridx>(r)...);
-}
-
-template <typename L, typename R>
-CAMP_HOST_DEVICE constexpr auto tuple_cat_pair_forward(L const& l, R const& r) noexcept
-    -> decltype(tuple_cat_pair_forward(l,
-                               camp::idx_seq_from_t<L>{},
-                               r,
-                               camp::idx_seq_from_t<R>{}))
-{
-  return tuple_cat_pair_forward(l,
-                        camp::idx_seq_from_t<L>{},
-                        r,
-                        camp::idx_seq_from_t<R>{});
-}
-
-
-}
-
 #endif
 
 namespace geosx
@@ -262,8 +207,17 @@ public:
     m_finiteElementSpace( finiteElementSpace )
   {}
 
-
-
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables allocated on the stack.
+   *
+   * ### ImplicitKernelBase::StackVariables Description
+   *
+   * Contains variables that will be allocated on the stack of the main kernel.
+   * This will typically consist of local arrays to hold data mapped from the
+   * global data arrays, and/or local storage for the residual and jacobian
+   * contributions.
+   */
   struct StackVariables
   {};
 
@@ -397,7 +351,7 @@ public:
    * @tparam KERNEL_TYPE The type of Kernel to execute.
    * @param numElems The number of elements to process in this launch.
    * @param kernelComponent The instantiation of KERNEL_TYPE to execute.
-   * @return The maximum residual.
+   * @return The maximum residual contribution.
    *
    * This is a generic launching function for all of the finite element kernels
    * that follow the interface set by KernelBase.
@@ -567,9 +521,9 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 
 
 #if CONSTRUCTOR_PARAM_OPTION==1
-  std::tuple<KERNEL_CONSTRUCTOR_PARAMS &...> kernelConstructorParamsTuple = std::forward_as_tuple( kernelConstructorParams... );
+  std::tuple< KERNEL_CONSTRUCTOR_PARAMS &... > kernelConstructorParamsTuple = std::forward_as_tuple( kernelConstructorParams ... );
 #elif CONSTRUCTOR_PARAM_OPTION==2
-  camp::tuple<KERNEL_CONSTRUCTOR_PARAMS &...> kernelConstructorParamsTuple = camp::forward_as_tuple( kernelConstructorParams... );
+  camp::tuple< KERNEL_CONSTRUCTOR_PARAMS &... > kernelConstructorParamsTuple = camp::forward_as_tuple( kernelConstructorParams ... );
 #endif
 
 

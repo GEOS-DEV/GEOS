@@ -133,7 +133,7 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables():
       Base::StackVariables(),
-      dRdU_InertiaMassDamping{ {0.0} },
+            dRdU_InertiaMassDamping{ {0.0} },
       vtilde_local(),
       uhattilde_local()
     {}

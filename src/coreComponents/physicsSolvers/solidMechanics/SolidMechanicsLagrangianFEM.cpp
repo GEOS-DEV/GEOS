@@ -63,7 +63,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const std::string & na
   m_sendOrReceiveNodes(),
   m_nonSendOrReceiveNodes(),
   m_iComm(),
-  m_effectiveStress(0)
+  m_effectiveStress( 0 )
 {
   m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
   m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
@@ -601,7 +601,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           m_solidMaterialNames,
                           &feDiscretization,
                           dt,
-                          string(viewKeyStruct::elemsAttachedToSendOrReceiveNodes) );
+                          string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
@@ -615,7 +615,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
                           m_solidMaterialNames,
                           &feDiscretization,
                           dt,
-                          string(viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes) );
+                          string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
