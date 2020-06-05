@@ -28,9 +28,8 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-// 0 forward parameter pack
 // 1 is std::tuple
-// 2 is camp
+// 2 is camp...TODO Try this out once the camp makes some changes.
 #define CONSTRUCTOR_PARAM_OPTION 1
 
 #if CONSTRUCTOR_PARAM_OPTION==1
@@ -575,18 +574,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                                NUM_NODES_PER_ELEM,
                                                NUM_NODES_PER_ELEM >;
 
-#if CONSTRUCTOR_PARAM_OPTION==0
-          // We can replace all the shenanigans with tuples when we can use c++20
-          // perfect forwarding of the parameter pack in the lambda capture.
-          KERNEL_TYPE kernelComponent( nodeManager,
-                                       edgeManager,
-                                       faceManager,
-                                       elementSubRegion,
-                                       finiteElementSpace,
-                                       castedConstitutiveRelation,
-                                       std::forward< KERNEL_CONSTRUCTOR_PARAMS >( kernelConstructorParams )... );
-
-#elif CONSTRUCTOR_PARAM_OPTION==1
+#if CONSTRUCTOR_PARAM_OPTION==1
 
           auto temp = std::forward_as_tuple( nodeManager,
                                              edgeManager,
