@@ -31,25 +31,19 @@ namespace geosx
 namespace constitutive
 {
 
-
-
 template< typename BASETYPE >
 struct ConstitutivePassThru;
-
-//template< template< typename BASE > class DERIVED >
-//struct ConstitutivePassThru;
-
-
 
 template<>
 struct ConstitutivePassThru< SolidBase >
 {
   template< typename LAMBDA >
   static
-  GEOSX_FORCE_INLINE
   void Execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
+    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+
     if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
@@ -83,18 +77,17 @@ struct ConstitutivePassThru< NullModel >
 {
   template< typename LAMBDA >
   static
-  GEOSX_FORCE_INLINE
   void Execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
+    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+
     if( dynamic_cast< NullModel * >( constitutiveRelation ) )
     {
       lambda( static_cast< NullModel * >( constitutiveRelation ) );
     }
     else
     {
-//      lambda( constitutiveRelation );
-
       string name;
       if( constitutiveRelation !=nullptr )
       {
@@ -115,10 +108,11 @@ struct ConstitutivePassThru< PoroElasticBase >
 {
   template< typename LAMBDA >
   static
-  GEOSX_FORCE_INLINE
   void Execute( ConstitutiveBase * const constitutiveRelation,
                 LAMBDA && lambda )
   {
+    GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
+
     if( dynamic_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation ) )
     {
       lambda( static_cast< PoroElastic< LinearElasticIsotropic > * >( constitutiveRelation) );
