@@ -149,6 +149,9 @@ public:
                             integer const cycleNumber,
                             DomainPartition * const domain );
 
+  //TJ: getter for the tip location after each time step
+  inline real64 getConvergedTipLoc() const {return m_convergedTipLoc;}
+
   void initializeNewFaceElements( DomainPartition const & domain );
 
   enum class couplingTypeOption : int
@@ -205,6 +208,9 @@ private:
 
   //TJ: new tip location
   real64 m_newTipLocation;
+
+  //TJ: tip location after each time step
+  real64 m_convergedTipLoc;
 
   //TJ: an array to store the tip locations during the iteration
   array1d<real64> m_tipLocationHistory;

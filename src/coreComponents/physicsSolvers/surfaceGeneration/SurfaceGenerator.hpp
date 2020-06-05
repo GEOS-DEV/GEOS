@@ -249,6 +249,18 @@ private:
                                  ModifiedObjectLists & modifiedObjects,
                                  const int edgeMode );
 
+  //TJ
+  void MarkRuptureTipTreatment (FaceManager & faceManager);
+
+  //TJ
+  void IdentifyRupturedFacesTipTreatment( DomainPartition * domain,
+		                          NodeManager & nodeManager,
+		                          EdgeManager & edgeManager,
+		                          FaceManager & faceManager,
+		                          ElementRegionManager & elementManager,
+					  const bool prefrac,
+					  real64 const time_np1);
+
   /**
    * @brief
    *    * @param nodeManager

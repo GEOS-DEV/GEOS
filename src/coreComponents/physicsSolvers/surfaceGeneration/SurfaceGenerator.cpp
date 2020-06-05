@@ -30,6 +30,9 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
+//TJ
+#include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
+
 
 #ifdef USE_GEOSX_PTP
 #include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
@@ -645,13 +648,38 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   {
     if( m_failCriterion >0 )  // Stress intensity factor based criterion and mixed criterion.
     {
+      Group * elementSubRegions = domain->GetGroup("MeshBodies")
+					->GetGroup<MeshBody>("mesh1")
+					->GetGroup<MeshLevel>("Level0")
+					->GetGroup<ElementRegionManager>("ElementRegions")
+					->GetRegion< FaceElementRegion >( "Fracture" )
+					->GetGroup("elementSubRegions");
 
-      IdentifyRupturedFaces( domain,
-                             nodeManager,
-                             edgeManager,
-                             faceManager,
-                             elementManager,
-                             prefrac );
+      FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+
+      // when there is only one fractured element, we use
+      // the original SIF-based approach to identify new fracture elmt
+      if (subRegion->size() <=1 )
+      {
+	IdentifyRupturedFaces( domain,
+			       nodeManager,
+			       edgeManager,
+			       faceManager,
+			       elementManager,
+			       prefrac );
+      }
+      // when there are more than one fracture element, we can use
+      // tip location-based approach to detect new fracture elmt
+      else
+      {
+	IdentifyRupturedFacesTipTreatment( domain,
+			       nodeManager,
+			       edgeManager,
+			       faceManager,
+			       elementManager,
+			       prefrac,
+			       time_np1 );
+      }
 
     }
   }
@@ -1991,28 +2019,31 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   } // for( map<localIndex,int>::const_iterator iter_face
 
   //TJ: print-out fracture tip state
-  std::cout << "Fracture state in SurfaceGenerator::PerformFracture.cpp"
-            << std::endl;
-  std::cout << "m_tipNodes: ";
-  for(auto & item : m_tipNodes)
-    std::cout << item << " ";
-  std::cout << std::endl;
+/*
+  {
+    std::cout << "Fracture state in SurfaceGenerator::PerformFracture.cpp"
+	      << std::endl;
+    std::cout << "m_tipNodes: ";
+    for(auto & item : m_tipNodes)
+      std::cout << item << " ";
+    std::cout << std::endl;
 
-  std::cout << "m_tipEdges: ";
-  for(auto & item : m_tipEdges)
-    std::cout << item << " ";
-  std::cout << std::endl;
+    std::cout << "m_tipEdges: ";
+    for(auto & item : m_tipEdges)
+      std::cout << item << " ";
+    std::cout << std::endl;
 
-  std::cout << "m_tipFaces: ";
-  for(auto & item : m_tipFaces)
-    std::cout << item << " ";
-  std::cout << std::endl;
+    std::cout << "m_tipFaces: ";
+    for(auto & item : m_tipFaces)
+      std::cout << item << " ";
+    std::cout << std::endl;
 
-  std::cout << "m_trailingFaces: ";
-  for(auto & item : m_trailingFaces)
-    std::cout << item << " ";
-  std::cout << std::endl;
-
+    std::cout << "m_trailingFaces: ";
+    for(auto & item : m_trailingFaces)
+      std::cout << item << " ";
+    std::cout << std::endl;
+  }
+*/
   // ***** now correct all the relations between the objects *****
 
   /* To accomplish this annoying yet exceedingly important task, we will take a "top down"
@@ -2836,7 +2867,95 @@ void SurfaceGenerator::CalculateKinkAngles ( FaceManager & faceManager,
   }
 }
 
+void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX_UNUSED_PARAM (domain),
+                                                         NodeManager & nodeManager,
+                                                         EdgeManager & edgeManager,
+                                                         FaceManager & faceManager,
+                                                         ElementRegionManager & elementManager,
+							 const bool prefrac,
+							 real64 const time_np1)
+{
+  arrayView1d< integer > const & isEdgeGhost = edgeManager.ghostRank();
+  ModifiedObjectLists modifiedObjects;
+  arrayView1d< R1Tensor > const & faceCenter = faceManager.faceCenter();
+  array1d< real64 > const & faceArea = faceManager.faceArea();
 
+
+  HydrofractureSolver * const myHydroSolver = this->getParent()->GetGroup< HydrofractureSolver >( "hydrofracture" );
+  real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
+  std::cout << "tipLoc = " << tipLoc << std::endl;
+
+
+  for( localIndex iEdge = 0; iEdge != edgeManager.size(); ++iEdge )
+  {
+
+    if( isEdgeGhost[iEdge] < 0 )
+    {
+      int edgeMode = CheckEdgeSplitability( iEdge,
+					    nodeManager,
+					    faceManager,
+					    edgeManager,
+					    prefrac );
+      if( edgeMode == 0 || edgeMode == 1 ) // We need to calculate SIF
+      {
+	ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
+	arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
+	arrayView1d< integer > & ruptureState = faceManager.getReference< integer_array >( "ruptureState" );
+	integer_array & isFaceSeparable = faceManager.getReference< integer_array >( "isFaceSeparable" );
+	arrayView2d< localIndex > const & faceToElementMap = faceManager.elementList();
+
+/*
+        localIndex trailFaceID = 0;
+        localIndex_array faceInvolved;
+	localIndex_array const & faceParentIndex = faceManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+
+        for( localIndex const iface : edgeToFaceMap.getIterableSet( iEdge ) )
+        {
+          if( faceIsExternal[iface] >= 1 )
+          {
+            faceInvolved.push_back( iface );
+          }
+        }
+        trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
+        std::cout << "trailFaceID = " << trailFaceID << std::endl;
+*/
+
+	localIndex_array eligibleFaces;
+	for( localIndex const iface : edgeToFaceMap.getIterableSet( iEdge ) )
+	{
+	  if( faceToElementMap.size( 1 ) == 2  &&
+	      faceIsExternal[iface] < 1 &&
+	      CheckOrphanElement( elementManager, faceManager, iface ) == 0 &&
+	      isFaceSeparable[iface] == 1 )
+	  {
+	    eligibleFaces.push_back( iface );
+	  }
+	}
+
+	for( localIndex i = 0; i < eligibleFaces.size(); ++i )
+	{
+	  localIndex pickedFace = eligibleFaces[i];
+	  // Tip propagates along y-direction
+	  integer const component = 1;
+	  real64 tipElmtBC = faceCenter[pickedFace][component]
+			   - 0.5*sqrt(faceArea[pickedFace]);
+	  std::cout << "tipElmtBC = " << tipElmtBC << std::endl;
+	  if( tipLoc > tipElmtBC && time_np1 > 0.0 && edgeMode == 1 && isFaceSeparable[pickedFace] == 1 )
+	  {
+	    ruptureState[pickedFace] = 1;
+	    modifiedObjects.modifiedFaces.insert( pickedFace );
+	  }
+	}
+/*
+	localIndex pickedFace = 17;
+	ruptureState[pickedFace] = 1;
+	modifiedObjects.modifiedFaces.insert( pickedFace );
+*/
+      } // if edgeMode == 0 or 1
+    } // if isEdgeGhost
+  } // for iEdge
+
+}
 
 void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
                                               NodeManager & nodeManager,
@@ -4141,6 +4260,12 @@ void SurfaceGenerator::MarkRuptureFaceFromNode ( const localIndex nodeIndex,
     }
   }
 }
+void SurfaceGenerator::MarkRuptureTipTreatment (FaceManager & GEOSX_UNUSED_PARAM( faceManager ) )
+{
+  //arrayView1d< integer > & ruptureState = faceManager.getReference< integer_array >( "ruptureState" );
+  return;
+}
+
 
 void SurfaceGenerator::MarkRuptureFaceFromEdge ( localIndex const edgeID,
                                                  localIndex & GEOSX_UNUSED_PARAM( trailFaceID ),

@@ -238,9 +238,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     m_numResolves[1] = m_numResolves[0];
     int solveIter;
 
-    //TJ: initialize the tip iteration flag
-    m_tipIterationFlag = false;
-
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
       int locallyFractured = 0;
@@ -421,7 +418,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         //TJ: tolerance for the tip iteration,
         //    convergence is achieved when || m_newTipLocation - m_oldTipLocation || < tipTol
-	real64 const tipTol = 1.0e-2;
+	real64 const tipTol = 1.0e-4;
 
 	//TJ: temporary variables for binary search
 	real64 minTipLocation = 0.0;
@@ -448,6 +445,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  }
 	}
 
+	m_tipLocationHistory.clear();
         //TJ: tip iterations
         for(localIndex tipIterCount = 0; tipIterCount < maxTipIteration; tipIterCount++)
         {
@@ -560,15 +558,22 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
           //TJ: use the displacement gap at the node pair other than the newly split one
           //    on the face element at the channel boundary for the tip asymptotic relation
           real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
-	  real64 tipX = (refDisp * Eprime / Kprime) * (refDisp * Eprime / Kprime);
-	  m_newTipLocation = tipX;
+          GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
+			  "Node crosses the symmetric plane." );
+          std::cout << "refNodeIndex = " << refNodeIndex << ", childIndex = "
+                                         << myChildIndex[refNodeIndex] << std::endl;
+	  real64 tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
+	  m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
 
 	  //TJ: find the upper bound of the tip location inside the partially opened element
 	  //    the upper bound is obtained at the first tip iteration, since the gap at the
 	  //    newly split node pair is almost zero
 	  if (tipIterCount == 0)
 	  {
+	    m_tipLocationHistory.insert(tipIterCount, m_oldTipLocation);
 	    maxTipLocation = m_newTipLocation;
+	    if (m_newTipLocation <= m_oldTipLocation)
+	      break;
 	    //Safe guard for the corner case
             GEOSX_ASSERT_MSG( m_newTipLocation > m_oldTipLocation,
 			  "Corner case: the initial gap (0.0001) is too large!" );
@@ -586,6 +591,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
 	  {
 	    m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	    m_convergedTipLoc = m_newTipLocation;
+	    m_oldTipLocation = m_newTipLocation;
 	    for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
 	      std::cout << "Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
 	    std::cout << "Tip iteration converges in " << tipIterCount+1 << " steps."
@@ -606,7 +613,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			  "Tip location falls behind the edge of the newly generated face element!" );
           // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
           // based on symmetry
-	  real64 refValue = 0.5 * Kprime/Eprime * sqrt(relativeDist);
+	  real64 refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
 
           for(auto node : nodesWithAssignedDisp)
 	  {
@@ -635,214 +642,220 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         {
           locallyFractured = 1;
-          /* TJ: This is where we can prescribe the displacement boundary conditions
-           *     for the newly generated nodes due to split. We use the quantities
-           *     m_tipNodes, m_tipEdges, m_tipFaces, and m_trailingFaces defined in the
-           *     SurfaceGenerator class.
-           */
-          SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
-          SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+          // when there is more than one fracture face element, we use tip-based method
+          if (subRegion->size() >= 2)
           {
-	    std::cout << "A new surface is just generated, "
-			 "we can manipulate the node displacements "
-			 "at the newly generated nodes via split. "
-		      << std::endl;
-	    std::cout << "m_tipNodes: ";
-	    for(auto & item : tipNodes)
-	      std::cout << item << " ";
-	    std::cout << std::endl;
-          }
-	  SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
-	  {
-	    std::cout << "m_trailingFaces: ";
-	    for(auto & item : trailingFaces)
-	      std::cout << item << " ";
-	    std::cout << std::endl;
-          }
-
-          /* TJ: We manipulate the displacement fields at the newly generated
-           *     nodes via element split
-           */
-          MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-          NodeManager & nodeManager = *mesh.getNodeManager();
-          FaceManager & faceManager = *mesh.getFaceManager();
-          r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
-/*
-          std::cout << "Face to Node list: " << std::endl;
-          for(int i = 0; i<faceManager.nodeList().size(); i++)
-	  {
-	    std::cout << "Face "<< i << ": ";
-	    for(int j=0; j<faceManager.nodeList()[i].size(); j++)
-	      std::cout << faceManager.nodeList()(i,j) << " ";
-	    std::cout << std::endl;
-	  }
-          std::cout << "Face normal: " << std::endl;
-          for(int i=0; i < faceNormal.size(); i++)
-          {
-            std::cout << "Face " << i << ": " ;
-            for(auto & item : faceNormal(i))
-              std::cout << item << " ";
-            std::cout << std::endl;
-          }
-          for(localIndex i=0; i<faceMap.size(0); i++)
-       	  {
-	    std::cout << "Face (face) " << i << ": ";
-	    for(localIndex j=0; j<faceMap.size(1); j++)
-	      std::cout << faceMap[i][j] << " ";
-	    std::cout << "\n";
-      	  }
-*/
-          array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
-          array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
-/*
-          std::cout << "Node 10: "
-                    << disp(10,0) << ", "
-		    << disp(10,1) << ", "
-		    << disp(10,2) << std::endl;
-          std::cout << "Node 26: "
-                    << disp(26,0) << ", "
-		    << disp(26,1) << ", "
-		    << disp(26,2) << std::endl;
-          std::cout << "Node 8 (disp): "
-                    << disp(8,0) << ", "
-		    << disp(8,1) << ", "
-		    << disp(8,2) << std::endl;
-          std::cout << "Node 8 (disp_incre): "
-                    << dispIncre(8,0) << ", "
-		    << dispIncre(8,1) << ", "
-		    << dispIncre(8,2) << std::endl;
-*/
-
-          /* TJ: We still need to finish the following task
-           * 0. Assume we only have ONE trailingFace
-           * 1. Assign the displacement field and disp_increment field at newly splitted nodes;
-           * 2. Create a set to include these splitted nodes as essential B.C.;
-           * 3. Pass info from 1. and 2. as essential B.C. values (via getReference);
-           * 4. Update the solidSolver field such as stress (NOT necessary);
-           * 5. Update the fluidSolver field such as aperture UpdateDeformationForCoupling().
-           * 6. Should we worry about other side effects in the flow solver? Shall we call UpdateState()?
-           */
-          //1. manipulate the displacement field on the newly splitted nodes
-          //   it is important to set the displacement increment properly since
-          //   the rhs assembly relys on the the displacement increment.
-          SortedArray< localIndex > & nodesWithAssignedDisp =
-	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
-          nodesWithAssignedDisp.clear();
-
-          // initial magnitude of the essential B.C. at the newly splited nodes
-          // this initial value can not be zero, since the sign of the displacement
-          // will be used in the later update.
-          real64 const refValue = 1.0e-4;
-
-          for(auto const & trailingFace : trailingFaces)
-          {
-            bool found = false;
-            // loop over all the face element
-            for(localIndex i=0; i<faceMap.size(0); i++)
+	    /* TJ: This is where we can prescribe the displacement boundary conditions
+	     *     for the newly generated nodes due to split. We use the quantities
+	     *     m_tipNodes, m_tipEdges, m_tipFaces, and m_trailingFaces defined in the
+	     *     SurfaceGenerator class.
+	     */
+	    SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+	    SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
 	    {
-              // loop over all the (TWO) faces in a face element
+	      std::cout << "A new surface is just generated, "
+			   "we can manipulate the node displacements "
+			   "at the newly generated nodes via split. "
+			<< std::endl;
+	      std::cout << "m_tipNodes: ";
+	      for(auto & item : tipNodes)
+		std::cout << item << " ";
+	      std::cout << std::endl;
+	    }
+	    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+	    {
+	      std::cout << "m_trailingFaces: ";
+	      for(auto & item : trailingFaces)
+		std::cout << item << " ";
+	      std::cout << std::endl;
+	    }
+
+	    /* TJ: We manipulate the displacement fields at the newly generated
+	     *     nodes via element split
+	     */
+	    MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+	    NodeManager & nodeManager = *mesh.getNodeManager();
+	    FaceManager & faceManager = *mesh.getFaceManager();
+	    r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
+    /*
+	    std::cout << "Face to Node list: " << std::endl;
+	    for(int i = 0; i<faceManager.nodeList().size(); i++)
+	    {
+	      std::cout << "Face "<< i << ": ";
+	      for(int j=0; j<faceManager.nodeList()[i].size(); j++)
+		std::cout << faceManager.nodeList()(i,j) << " ";
+	      std::cout << std::endl;
+	    }
+	    std::cout << "Face normal: " << std::endl;
+	    for(int i=0; i < faceNormal.size(); i++)
+	    {
+	      std::cout << "Face " << i << ": " ;
+	      for(auto & item : faceNormal(i))
+		std::cout << item << " ";
+	      std::cout << std::endl;
+	    }
+	    for(localIndex i=0; i<faceMap.size(0); i++)
+	    {
+	      std::cout << "Face (face) " << i << ": ";
 	      for(localIndex j=0; j<faceMap.size(1); j++)
+		std::cout << faceMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+    */
+	    array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
+	    array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
+    /*
+	    std::cout << "Node 10: "
+		      << disp(10,0) << ", "
+		      << disp(10,1) << ", "
+		      << disp(10,2) << std::endl;
+	    std::cout << "Node 26: "
+		      << disp(26,0) << ", "
+		      << disp(26,1) << ", "
+		      << disp(26,2) << std::endl;
+	    std::cout << "Node 8 (disp): "
+		      << disp(8,0) << ", "
+		      << disp(8,1) << ", "
+		      << disp(8,2) << std::endl;
+	    std::cout << "Node 8 (disp_incre): "
+		      << dispIncre(8,0) << ", "
+		      << dispIncre(8,1) << ", "
+		      << dispIncre(8,2) << std::endl;
+    */
+
+	    /* TJ: We still need to finish the following task
+	     * 0. Assume we only have ONE trailingFace
+	     * 1. Assign the displacement field and disp_increment field at newly splitted nodes;
+	     * 2. Create a set to include these splitted nodes as essential B.C.;
+	     * 3. Pass info from 1. and 2. as essential B.C. values (via getReference);
+	     * 4. Update the solidSolver field such as stress (NOT necessary);
+	     * 5. Update the fluidSolver field such as aperture UpdateDeformationForCoupling().
+	     * 6. Should we worry about other side effects in the flow solver? Shall we call UpdateState()?
+	     */
+	    //1. manipulate the displacement field on the newly splitted nodes
+	    //   it is important to set the displacement increment properly since
+	    //   the rhs assembly relys on the the displacement increment.
+	    SortedArray< localIndex > & nodesWithAssignedDisp =
+	      mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+	    nodesWithAssignedDisp.clear();
+
+	    // initial magnitude of the essential B.C. at the newly splited nodes
+	    // this initial value can not be zero, since the sign of the displacement
+	    // will be used in the later update.
+	    real64 refValue;
+	    if (subRegion->size() <= 2)
+	      refValue = 1.0e-6;
+	    else
+	      refValue = 1.0e-4;
+
+	    for(auto const & trailingFace : trailingFaces)
+	    {
+	      bool found = false;
+	      // loop over all the face element
+	      for(localIndex i=0; i<faceMap.size(0); i++)
 	      {
-		// if the trailingFace is one of the two faces in a face element,
-		// we find it
-		if (faceMap[i][j] == trailingFace)
+		// loop over all the (TWO) faces in a face element
+		for(localIndex j=0; j<faceMap.size(1); j++)
 		{
-		  m_tipElement = i;
-		  found = true;
+		  // if the trailingFace is one of the two faces in a face element,
+		  // we find it
+		  if (faceMap[i][j] == trailingFace)
+		  {
+		    m_tipElement = i;
+		    found = true;
+		    break;
+		  }
+		} // for localIndex j
+		if (found)
 		  break;
-		}
-	      } // for localIndex j
-	      if (found)
-	        break;
-	    } // for localIndex i
-            GEOSX_ASSERT_MSG( found == true,
-			  "Trailing face is not found among the fracture face elements" );
-            std::cout << "m_tipElement = " << m_tipElement << std::endl;
+	      } // for localIndex i
+	      GEOSX_ASSERT_MSG( found == true,
+			    "Trailing face is not found among the fracture face elements" );
+	      std::cout << "m_tipElement = " << m_tipElement << std::endl;
 
-            //Find which nodes' displacement need to be manipulated
-            for (auto const & node : nodeMap[m_tipElement])
-            {
-              if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
-              {
-        	// Insert node to the set for B.C. manipulation
-                nodesWithAssignedDisp.insert(node);
-                for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
-                {
-                  auto const & face = faceMap[m_tipElement][i];
-                  for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
-                  {
-                    auto const & nodeOnFace = faceManager.nodeList()(face,j);
-                    if (node == nodeOnFace)
-                    {
-                      disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
-                      dispIncre(node,0) = disp(node,0) - 0.0;
-                      std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
-                    }
-                  } // for localIndex j
-                } // for localIndex i
-              } // if (not found)
-            }  // for auto node
-          } // for auto trailingFace
+	      //Find which nodes' displacement need to be manipulated
+	      for (auto const & node : nodeMap[m_tipElement])
+	      {
+		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		{
+		  // Insert node to the set for B.C. manipulation
+		  nodesWithAssignedDisp.insert(node);
+		  for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+		  {
+		    auto const & face = faceMap[m_tipElement][i];
+		    for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+		    {
+		      auto const & nodeOnFace = faceManager.nodeList()(face,j);
+		      if (node == nodeOnFace)
+		      {
+			disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
+			dispIncre(node,0) = disp(node,0) - 0.0;
+			std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+		      }
+		    } // for localIndex j
+		  } // for localIndex i
+		} // if (not found)
+	      }  // for auto node
+	    } // for auto trailingFace
 
-          //TJ: find the element on the boundary of the channel region
-          m_channelElement = -1;
-	  for(localIndex i=0; i<nodeMap.size(); i++)
-	  {
-	    integer nodeCount = 0;
-	    for(localIndex j=0; j<nodeMap[i].size(); j++)
+	    //TJ: find the element on the boundary of the channel region
+	    m_channelElement = -1;
+	    for(localIndex i=0; i<nodeMap.size(); i++)
 	    {
-	      if ( std::find( nodesWithAssignedDisp.begin(),
-			     nodesWithAssignedDisp.end(),
-			     nodeMap[i][j] )
-	           != nodesWithAssignedDisp.end() )
-		++nodeCount;
+	      integer nodeCount = 0;
+	      for(localIndex j=0; j<nodeMap[i].size(); j++)
+	      {
+		if ( std::find( nodesWithAssignedDisp.begin(),
+			       nodesWithAssignedDisp.end(),
+			       nodeMap[i][j] )
+		     != nodesWithAssignedDisp.end() )
+		  ++nodeCount;
+	      }
+	      if (nodeCount==4 && i != m_tipElement)
+	      {
+		m_channelElement = i;
+		break;
+	      }
 	    }
-	    if (nodeCount==4 && i != m_tipElement)
-	    {
-	      m_channelElement = i;
-	      break;
-	    }
-	  }
-	  GEOSX_ASSERT_MSG( m_channelElement != -1,
-		"Face elmt on the channel boundary is not found!" );
-          std::cout << "m_channelElement = " << m_channelElement << std::endl;
+	    GEOSX_ASSERT_MSG( m_channelElement != -1,
+		  "Face elmt on the channel boundary is not found!" );
+	    std::cout << "m_channelElement = " << m_channelElement << std::endl;
 
 
-          //TJ: assume that the tip location overlap with the tip element boundary
-          real64 const channelElmtArea = subRegion->getElementArea()[m_channelElement];
-          real64 const channelElmtSize = sqrt(channelElmtArea);
-          R1Tensor const channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
+	    //TJ: assume that the tip location overlap with the tip element boundary
+	    real64 const channelElmtArea = subRegion->getElementArea()[m_channelElement];
+	    real64 const channelElmtSize = sqrt(channelElmtArea);
+	    R1Tensor const channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
 
-          // Tip propagates in the y-direction (hard coded)
-          m_oldTipLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
-          // Record the tip location
-          m_tipLocationHistory.insert(0, m_oldTipLocation);
-/*
-          // Pair one
-          disp(10,0) = -refValue;
-          dispIncre(10,0) = -refValue - 0.0;
-          disp(26,0) =  refValue;
-          dispIncre(26,0) = refValue - 0.0;
-          // Pair two
-          disp(11,0) = -refValue;
-          dispIncre(11,0) = -refValue - 0.0;
-          disp(27,0) =  refValue;
-          dispIncre(27,0) = refValue - 0.0;
+	    // Tip propagates in the y-direction (hard coded)
+	    m_oldTipLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
 
-          //2. create a set to enforce extra essential
-          //    boundary conditions at the newly splitted nodes
-          nodesWithAssignedDisp.insert(10);
-          nodesWithAssignedDisp.insert(11);
-          nodesWithAssignedDisp.insert(26);
-          nodesWithAssignedDisp.insert(27);
-*/
+    /*
+	    // Pair one
+	    disp(10,0) = -refValue;
+	    dispIncre(10,0) = -refValue - 0.0;
+	    disp(26,0) =  refValue;
+	    dispIncre(26,0) = refValue - 0.0;
+	    // Pair two
+	    disp(11,0) = -refValue;
+	    dispIncre(11,0) = -refValue - 0.0;
+	    disp(27,0) =  refValue;
+	    dispIncre(27,0) = refValue - 0.0;
 
-          //TJ: set the tip iteration flag to get ready for finding
-          //    the tip location through fixed-point iteration
-          m_tipIterationFlag = true;
-          std::cout << "End of disp manipulation" << std::endl;
+	    //2. create a set to enforce extra essential
+	    //    boundary conditions at the newly splitted nodes
+	    nodesWithAssignedDisp.insert(10);
+	    nodesWithAssignedDisp.insert(11);
+	    nodesWithAssignedDisp.insert(26);
+	    nodesWithAssignedDisp.insert(27);
+    */
 
-
+	    //TJ: set the tip iteration flag to get ready for finding
+	    //    the tip location through fixed-point iteration
+	    m_tipIterationFlag = true;
+	    std::cout << "End of disp manipulation" << std::endl;
+          } // if subRegion->size() >= 2
         }
         MpiWrapper::allReduce( &locallyFractured,
                                &globallyFractured,
@@ -1421,7 +1434,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   //TJ: test whether the displacement field at newly splitted nodes are passed correctly
   {
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
+/*    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
     disp = nodeManager->totalDisplacement();
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
     dispIncre = nodeManager->incrementalDisplacement();
@@ -1454,6 +1467,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   	      << dispIncre(26,1) << ", "
   	      << dispIncre(26,2) << std::endl;
     }
+*/
   }
 
   GEOSX_MARK_FUNCTION;
@@ -1471,7 +1485,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
           mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
   if (!nodesWithAssignedDisp.empty())
   {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+/*    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "before_matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
@@ -1483,6 +1497,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
+*/
     m_solidSolver->getSystemMatrix().open();
     m_solidSolver->getSystemRhs().open();
     // Hard code for displacement in the x-direction
@@ -1518,7 +1533,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
     m_solidSolver->getSystemMatrix().close();
     m_solidSolver->getSystemRhs().close();
-    {
+/*    {
       string filename = "after_matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix00: written to " << filename );
@@ -1528,7 +1543,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       m_solidSolver->getSystemRhs().write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
-
+*/
   }
 
 
@@ -1562,14 +1577,14 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   if (!nodesWithAssignedDisp.empty())
   {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+/*    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
 
     {
       string filename = "before_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
-
+*/
     m_matrix01.open();
     integer const component = 0;
     arrayView1d< globalIndex const > const & dofMap
@@ -1582,9 +1597,10 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     m_matrix01.close();
 
     {
-      string filename = "after_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
+/*      string filename = "after_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_matrix01.write( filename, LAIOutputFormat::MATRIX_MARKET );
       GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
+*/
     }
   }
 

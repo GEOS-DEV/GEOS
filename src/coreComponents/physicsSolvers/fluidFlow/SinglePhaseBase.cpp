@@ -569,7 +569,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
   arrayView1d< real64 const > const & poroMultiplier = m_poroMultiplier[er][esr];
 
   //TJ:
-  std::cout << "dens(0) = " << dens[0][0] << std::endl;
+/*  std::cout << "dens(0) = " << dens[0][0] << std::endl;
   std::cout << "densOld(0) = " << densOld[0] << std::endl;
   std::cout << "dDens_dPres(0) = " << dDens_dPres[0][0] << std::endl;
 
@@ -579,6 +579,7 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const er,
     std::cout << "densOld(1) = " << densOld[1] << std::endl;
     std::cout << "dDens_dPres(1) = " << dDens_dPres[1][0] << std::endl;
   }
+*/
 
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
