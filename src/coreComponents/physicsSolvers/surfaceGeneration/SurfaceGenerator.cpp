@@ -659,7 +659,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
       // when there is only one fractured element, we use
       // the original SIF-based approach to identify new fracture elmt
-      if (subRegion->size() <=1 )
+      if (subRegion->size() < 0 )
       {
 	IdentifyRupturedFaces( domain,
 			       nodeManager,

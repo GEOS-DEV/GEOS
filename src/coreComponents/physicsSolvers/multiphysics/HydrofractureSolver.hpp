@@ -121,6 +121,13 @@ public:
                              int const cycleNumber,
                              DomainPartition * const domain ) override;
 
+  //TJ
+  real64 SolverStepManipulateBC( real64 const & time_n,
+                                          real64 const & dt,
+                                          int const cycleNumber,
+                                          DomainPartition * const domain );
+
+
   virtual void SetNextDt( real64 const & currentDt,
                           real64 & nextDt ) override;
 

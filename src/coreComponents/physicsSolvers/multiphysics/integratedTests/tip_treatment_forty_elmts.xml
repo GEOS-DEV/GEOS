@@ -93,7 +93,7 @@
   </Geometry>
 
 
-  <Events maxTime="100.0"
+  <Events maxTime="50.0"
           logLevel="1">
   
     <SoloEvent 
@@ -116,15 +116,22 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="100.0"
-      forceDt="1.0"
+      endTime="2.0"
+      forceDt="0.5"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="2.0"
+      endTime="50.0"
+      forceDt="4.0"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
-                   timeFrequency="1.0"
+                   timeFrequency="2.0"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" />
 

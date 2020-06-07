@@ -8,7 +8,7 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
-      logLevel="10"
+      logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
       >
@@ -93,7 +93,7 @@
   </Geometry>
 
 
-  <Events maxTime="1.5"
+  <Events maxTime="5.0"
           logLevel="1">
   
     <SoloEvent 
@@ -116,7 +116,7 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="1.5"
+      endTime="5.0"
       forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
