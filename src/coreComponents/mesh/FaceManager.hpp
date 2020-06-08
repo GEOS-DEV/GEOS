@@ -74,7 +74,7 @@ public:
                          ElementRegionManager const * const elemManager );
 
   void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-                      R1Tensor const & elemCenter,
+                      arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
@@ -131,14 +131,12 @@ public:
 
   constexpr int maxFacesPerNode() const { return 100; }
 
-  array1d< real64 > & faceArea()       { return m_faceArea; }
-  array1d< real64 > const & faceArea() const { return m_faceArea; }
+  arrayView1d< real64 const > const & faceArea() const { return m_faceArea; }
 
-  array1d< R1Tensor > & faceCenter()       { return m_faceCenter; }
-  array1d< R1Tensor > const & faceCenter() const { return m_faceCenter; }
+  arrayView2d< real64 const > const & faceCenter() const { return m_faceCenter; }
 
-  array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
-  array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
+  arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
+  arrayView2d< real64 const > const & faceNormal() const { return m_faceNormal; }
 
   NodeMapType & nodeList()                    { return m_nodeList; }
   NodeMapType const & nodeList() const { return m_nodeList; }
@@ -146,14 +144,14 @@ public:
   EdgeMapType & edgeList()       { return m_edgeList; }
   EdgeMapType const & edgeList() const { return m_edgeList; }
 
-  array2d< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
-  array2d< localIndex > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+  arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+  arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  array2d< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
-  array2d< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  array2d< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
-  array2d< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
+  arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
+  arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   ElemMapType & toElementRelation()       { return m_toElements; }
   ElemMapType const & toElementRelation() const { return m_toElements; }
@@ -173,8 +171,8 @@ private:
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   array1d< real64 > m_faceArea;
-  array1d< R1Tensor > m_faceCenter;
-  array1d< R1Tensor > m_faceNormal;
+  array2d< real64 > m_faceCenter;
+  array2d< real64 > m_faceNormal;
 
   constexpr static int MAX_FACE_NODES = 9;
 

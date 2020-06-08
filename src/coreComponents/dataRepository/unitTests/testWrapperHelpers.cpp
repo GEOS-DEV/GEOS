@@ -129,7 +129,6 @@ TEST( wrapperHelpers, size )
 using ArrayTypes = ::testing::Types<
   array2d< int, RAJA::PERM_IJ >
   , array2d< double, RAJA::PERM_JI >
-  , array2d< R2Tensor, RAJA::PERM_IJ >
   , array3d< double, RAJA::PERM_IJK >
   , array3d< int, RAJA::PERM_KJI >
   , array3d< R1Tensor, RAJA::PERM_JIK >
