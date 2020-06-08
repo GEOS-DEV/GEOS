@@ -1694,9 +1694,9 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
 
   ArrayOfArrays< localIndex > & faceToNodeMap = faceManager.nodeList();
   ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
-  arrayView2d< localIndex > const & faceToRegionMap = faceManager.mutableElementRegionList();
-  arrayView2d< localIndex > const & faceToSubRegionMap = faceManager.mutableElementSubRegionList();
-  arrayView2d< localIndex > const & faceToElementMap = faceManager.mutableElementList();
+  arrayView2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
+  arrayView2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
+  arrayView2d< localIndex > const & faceToElementMap = faceManager.elementList();
 
   arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
   arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
@@ -1705,7 +1705,7 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   FaceElementRegion * const fractureElementRegion = elementManager.GetRegion< FaceElementRegion >( "Fracture" );
   integer_array & isFaceSeparable = faceManager.getReference< integer_array >( "isFaceSeparable" );
 
-  arrayView2d< real64 > const & faceNormals = faceManager.mutableFaceNormal();
+  arrayView2d< real64 > const & faceNormals = faceManager.faceNormal();
 
   arrayView1d< localIndex const > const &
   parentEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
@@ -3034,18 +3034,19 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             CellElementSubRegion * const elementSubRegion = elementManager.GetRegion( er )->GetSubRegion< CellElementSubRegion >( esr );
 
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion->nodeList();
-
+            arrayView2d< real64 const > const & elementCenter = elementSubRegion->getElementCenter().toViewConst();
             realT K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
             realT G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
             realT youngsModulus = 9 * K * G / ( 3 * K + G );
             realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
+
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
             {
               if( elementsToNodes( ei, n ) == nodeIndex )
               {
                 R1Tensor temp;
-                R1Tensor xEle = elementSubRegion->getElementCenter()[ei];
+                R1Tensor xEle = elementCenter[ei];
 
                 SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
                   CalculateSingleNodalForce( ei,
