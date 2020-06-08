@@ -282,7 +282,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const &
@@ -297,8 +297,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
-          R2Tensor const & rotationMatrix = faceRotationMatrix[kfe];
-          array1d< R1Tensor > stiffApprox( 2 );
+          R1Tensor stiffApprox[ 2 ];
           real64 averageYoungModulus = 0.0;
           real64 averageConstrainedModulus = 0.0;
           real64 averageBoxSize0 = 0.0;
@@ -332,7 +331,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
                 minSize[j] = std::min( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
               }
             }
-            real64_array boxSize( 3 );
+
+            real64 boxSize[ 3 ];
             for( localIndex j = 0; j < 3; ++j )
             {
               boxSize[j] = maxSize[j] - minSize[j];
@@ -355,30 +355,22 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
             averageBoxSize0 += 0.5*boxSize[0];
           }
 
-          R2Tensor invStiffApprox;
-          invStiffApprox = 0.0;
+          real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
           for( localIndex j = 0; j < 3; ++j )
           {
-            invStiffApprox( j, j ) = ( stiffApprox[0]( j ) + stiffApprox[1]( j ) ) / ( stiffApprox[0]( j ) * stiffApprox[1]( j ) );
+            invStiffApprox[ j ][ j ] = ( stiffApprox[0]( j ) + stiffApprox[1]( j ) ) / ( stiffApprox[0]( j ) * stiffApprox[1]( j ) );
           }
 
           // Compute R^T * (invK) * R
-          R2Tensor tmpTensor;
-          tmpTensor.AjiBjk( rotationMatrix, invStiffApprox );
-          R2Tensor rotatedInvStiffApprox;
-          rotatedInvStiffApprox.AijBjk( tmpTensor, rotationMatrix );
+          real64 temp[ 3 ][ 3 ];
+          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ kfe ], invStiffApprox );
+          real64 rotatedInvStiffApprox[ 3 ][ 3 ];
+          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
+          LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              rotatedInvStiffApprox( i, j ) *= area;
-            }
-          }
-
-          normalDisplacementTolerance[kfe] = rotatedInvStiffApprox( 0, 0 ) * averageYoungModulus / 2.e+7;
-          slidingTolerance[kfe] = std::sqrt( rotatedInvStiffApprox( 1, 1 )*rotatedInvStiffApprox( 1, 1 ) +
-                                             rotatedInvStiffApprox( 2, 2 )*rotatedInvStiffApprox( 2, 2 ) ) * averageYoungModulus / 2.e+7;
+          normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus / 2.e+7;
+          slidingTolerance[kfe] = std::sqrt( rotatedInvStiffApprox[ 1 ][ 1 ] * rotatedInvStiffApprox[ 1 ][ 1 ] +
+                                             rotatedInvStiffApprox[ 2 ][ 2 ] * rotatedInvStiffApprox[ 2 ][ 2 ] ) * averageYoungModulus / 2.e+7;
 
           normalTractionTolerance[kfe] = 1.0 / 2.0 * averageConstrainedModulus / averageBoxSize0 * normalDisplacementTolerance[kfe];
         }
@@ -481,7 +473,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
@@ -491,21 +483,21 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
         if( ghostRank[kfe] < 0 )
         {
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          R1Tensor globalJumpTemp( 0.0, 0.0, 0.0 );
+          real64 globalJumpTemp[ 3 ] = { 0 };
           for( localIndex a=0; a<numNodesPerFace; ++a )
           {
             for( localIndex i=0; i<3; ++i )
             {
-              globalJumpTemp( i ) +=
+              globalJumpTemp[ i ] +=
                 ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
-                  + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / static_cast< real64 >(numNodesPerFace);
+                  + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / numNodesPerFace;
             }
           }
-          R1Tensor localJumpTemp;
-          localJumpTemp.AijBi( rotationMatrix[kfe], globalJumpTemp );
-          localJump[kfe][0] = localJumpTemp( 0 );
-          localJump[kfe][1] = localJumpTemp( 1 );
-          localJump[kfe][2] = localJumpTemp( 2 );
+
+          real64 localJumpTemp[ 3 ];
+          LvArray::tensorOps::AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+          LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
+
         }
       } );
     }
@@ -532,58 +524,6 @@ real64 LagrangianContactSolver::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM(
   GEOSX_ERROR( "ExplicitStep non available for LagrangianContactSolver!" );
   return dt;
 }
-
-//real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
-//                                                       real64 const & dt,
-//                                                       integer const cycleNumber,
-//                                                       DomainPartition * const domain,
-//                                                       DofManager const & dofManager,
-//                                                       ParallelMatrix & matrix,
-//                                                       ParallelVector & rhs,
-//                                                       ParallelVector & solution )
-//{
-//  real64 stepDt = dt;
-//
-//  bool converged = false;
-//  integer & activeSetIter = m_activeSetIter;
-//  for( activeSetIter = 0 ; activeSetIter < m_activeSetMaxIter ; ++activeSetIter )
-//  {
-//    stepDt = SolverBase::NonlinearImplicitStep( time_n,
-//                                                dt,
-//                                                cycleNumber,
-//                                                domain,
-//                                                dofManager,
-//                                                matrix,
-//                                                rhs,
-//                                                solution );
-//
-//    bool const isPreviousFractureStateValid = UpdateFractureState( domain );
-//    GEOSX_LOG_RANK_0( "active set flag ---> " << isPreviousFractureStateValid );
-//
-//    globalIndex numStick, numSlip, numOpen;
-//    ComputeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
-//
-//    if( isPreviousFractureStateValid )
-//    {
-//      converged = true;
-//      break;
-//    }
-//    else
-//    {
-//      GEOSX_LOG_RANK_0( "**** NonlinearImplicitStep: done! ****" );
-//    }
-//  }
-//  if( !converged )
-//  {
-//    GEOSX_ERROR( "Active set did not reached a solution. Terminating..." );
-//  }
-//  else
-//  {
-//    GEOSX_LOG_RANK_0( "Number of active set iterations: " << activeSetIter );
-//  }
-//
-//  return stepDt;
-//}
 
 real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
                                                        real64 const & dt,
@@ -1156,7 +1096,7 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1177,13 +1117,10 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
           }
 
           real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
-          real64_array nodalForceVec( 3 );
-          nodalForceVec[0] = ( traction[kfe][0] ) * nodalArea;
-          nodalForceVec[1] = ( traction[kfe][1] ) * nodalArea;
-          nodalForceVec[2] = ( traction[kfe][2] ) * nodalArea;
-          R1Tensor localNodalForce( nodalForceVec[0], nodalForceVec[1], nodalForceVec[2] );
-          R1Tensor globalNodalForce;
-          globalNodalForce.AijBj( rotationMatrix[kfe], localNodalForce );
+          real64 const localNodalForce[ 3 ] = { traction( kfe, 0 ) * nodalArea, traction( kfe, 1 ) * nodalArea, traction( kfe, 2 ) * nodalArea };
+
+          real64 globalNodalForce[ 3 ];
+          LvArray::tensorOps::AijBj< 3, 3 >( globalNodalForce, rotationMatrix[ kfe ], localNodalForce );
 
           for( localIndex kf=0; kf<2; ++kf )
           {
@@ -1199,9 +1136,9 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
                 fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
 
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-                dRdT( 3*a+i, 0 ) = +nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
-                dRdT( 3*a+i, 1 ) = +nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
-                dRdT( 3*a+i, 2 ) = +nodalArea * rotationMatrix[kfe]( i, 2 ) * pow( -1, kf );
+                dRdT( 3*a+i, 0 ) = +nodalArea * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
+                dRdT( 3*a+i, 1 ) = +nodalArea * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
+                dRdT( 3*a+i, 2 ) = +nodalArea * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
               }
             }
 
@@ -1260,7 +1197,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
       tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 const > const &
       traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
@@ -1319,9 +1256,9 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
                                                                 LvArray::integerConversion< globalIndex >( i );
 
-                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
-                      dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 1 ) * pow( -1, kf );
-                      dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 2 ) * pow( -1, kf );
+                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
+                      dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix( kfe, i, 1 ) * pow( -1, kf );
+                      dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix( kfe, i, 2 ) * pow( -1, kf );
                     }
                   }
                 }
@@ -1340,7 +1277,7 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     {
                       nodeDOF[ kf*3*numNodesPerFace + 3*a+i ] = dispDofNumber[faceToNodeMap( elemsToFaces[kfe][kf], a )] +
                                                                 LvArray::integerConversion< globalIndex >( i );
-                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix[kfe]( i, 0 ) * pow( -1, kf );
+                      dRdU( 0, kf*3*numNodesPerFace + 3*a+i ) = -nodalArea * rotationMatrix( kfe, i, 0 ) * pow( -1, kf );
                     }
                   }
                 }
@@ -1359,12 +1296,11 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding( i-1 ) / slidingNorm );
                   }
 
-                  R2TensorT< 2 > dUdgT;
-                  dUdgT.dyadic_aa( sliding );
-                  dUdgT( 0, 0 ) = (slidingNorm*slidingNorm - dUdgT( 0, 0 )) * limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT( 0, 1 ) *= -limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT( 1, 0 ) *= -limitTau / std::pow( slidingNorm, 3 );
-                  dUdgT( 1, 1 ) = (slidingNorm*slidingNorm - dUdgT( 1, 1 )) * limitTau / std::pow( slidingNorm, 3 );
+                  // A symmetric 2x2 matrix.
+                  real64 dUdgT[ 3 ];
+                  dUdgT[ 0 ] = (slidingNorm * slidingNorm - sliding[ 0 ] * sliding[ 0 ]) * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 1 ] = (slidingNorm * slidingNorm - sliding[ 1 ] * sliding[ 1 ]) * limitTau / std::pow( slidingNorm, 3 );
+                  dUdgT[ 2 ] = -sliding[ 0 ] * sliding[ 1 ] * limitTau / std::pow( slidingNorm, 3 );
 
                   for( localIndex kf=0; kf<2; ++kf )
                   {
@@ -1372,12 +1308,12 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                     {
                       for( localIndex i=0; i<3; ++i )
                       {
-                        R1TensorT< 2 > localRowB( rotationMatrix[kfe]( i, 1 ), rotationMatrix[kfe]( i, 2 ) );
-                        R1TensorT< 2 > localRowE;
-                        localRowE.AijBj( dUdgT, localRowB );
+                        real64 const localRowB[ 2 ] = { rotationMatrix( kfe, i, 1 ), rotationMatrix( kfe, i, 2 ) };
+                        real64 localRowE[ 2 ];
+                        LvArray::tensorOps::symAijBj< 2 >( localRowE, dUdgT, localRowB );
 
-                        dRdU( 1, kf*3*numNodesPerFace + 3*a+i ) = nodalArea * localRowE( 0 ) * pow( -1, kf );
-                        dRdU( 2, kf*3*numNodesPerFace + 3*a+i ) = nodalArea * localRowE( 1 ) * pow( -1, kf );
+                        dRdU( 1, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea * localRowE[ 0 ] * pow( -1, kf );
+                        dRdU( 2, kf * 3 * numNodesPerFace + 3 * a + i ) = nodalArea * localRowE[ 1 ] * pow( -1, kf );
                       }
                     }
                   }
@@ -1514,7 +1450,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
   // Get area and rotation matrix for all faces
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
-  arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
+  arrayView3d< real64 const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1548,7 +1484,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
         // First index: face element. Second index: node
         real64_array2d nodalArea( 2, 2 );
-        array1d< R2Tensor > rotatedInvStiffApprox( 2 );
+        real64 rotatedInvStiffApprox[ 2 ][ 3 ][ 3 ];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1556,12 +1492,11 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
           localIndex faceIndexRef = faceMap[fractureIndex][0];
           real64 const area = faceArea[faceIndexRef];
-          R2Tensor const & rotationMatrix = faceRotationMatrix[faceIndexRef];
           // TODO: use higher order integration scheme
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
 
-          real64_array2d invStiffApprox( 2, 3 );
+          real64 invStiffApprox[ 2 ][ 3 ];
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
@@ -1607,23 +1542,23 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[i][j] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              invStiffApprox[ i ][ j ] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
             }
           }
 
-          R2Tensor invStiffApproxTotal;
-          invStiffApproxTotal = 0.0;
+          real64 invStiffApproxTotal[ 3 ][ 3 ] = { { 0 } };
           for( localIndex i = 0; i < 2; ++i )
           {
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApproxTotal( j, j ) += invStiffApprox[i][j];
+              invStiffApproxTotal[ j ][ j ] += invStiffApprox[ i ][ j ];
             }
           }
+
           // Compute R^T * (invK) * R
-          R2Tensor tmpTensor;
-          tmpTensor.AjiBjk( rotationMatrix, invStiffApproxTotal );
-          rotatedInvStiffApprox[kf].AijBjk( tmpTensor, rotationMatrix );
+          real64 temp[ 3 ][ 3 ];
+          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ faceIndexRef ], invStiffApproxTotal );
+          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ faceIndexRef ] );
         }
 
         // Compose local nodal-based local stiffness matrices
@@ -1634,7 +1569,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           {
             for( localIndex j = 0; j < 3; ++j )
             {
-              rotatedInvStiffApprox[kf]( i, j ) *= nodalArea[0][kf] * nodalArea[1][kf];
+              rotatedInvStiffApprox[ kf ][ i ][ j ] *= nodalArea[0][kf] * nodalArea[1][kf];
             }
           }
         }
@@ -1643,7 +1578,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
         {
           for( localIndex j = 0; j < 3; ++j )
           {
-            totalInvStiffApprox( i, j ) = -( rotatedInvStiffApprox[0]( i, j ) + rotatedInvStiffApprox[1]( i, j ) );
+            totalInvStiffApprox( i, j ) = -( rotatedInvStiffApprox[ 0 ][ i ][ j ] + rotatedInvStiffApprox[ 1 ][ i ][ j ] );
           }
         }
 

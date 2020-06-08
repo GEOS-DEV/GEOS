@@ -220,9 +220,9 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
   // get the face-to-nodes connectivity for the transmissibility calculation
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
-  array2d< localIndex > const & elemRegionList    = faceManager.elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = faceManager.elementSubRegionList();
-  array2d< localIndex > const & elemList          = faceManager.elementList();
+  arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = domain->getMeshBody( 0 )->getGlobalLengthScale() * m_areaRelTol;
@@ -239,7 +239,7 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
     FluxLaunch( er,
                 esr,
                 &subRegion,
-                regionFilter,
+                regionFilter.toViewConst(),
                 &mesh,
                 nodePosition,
                 elemRegionList,
@@ -262,12 +262,12 @@ void SinglePhaseHybridFVM::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
                                        localIndex GEOSX_UNUSED_PARAM( esr ),
                                        FaceElementSubRegion const * const GEOSX_UNUSED_PARAM( subRegion ),
-                                       SortedArray< localIndex > GEOSX_UNUSED_PARAM( regionFilter ),
+                                       SortedArrayView< localIndex const > const & GEOSX_UNUSED_PARAM( regionFilter ),
                                        MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ),
                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( nodePosition ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemRegionList ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemSubRegionList ),
-                                       array2d< localIndex > const & GEOSX_UNUSED_PARAM( elemList ),
+                                       arrayView2d< localIndex const > const & GEOSX_UNUSED_PARAM( elemRegionList ),
+                                       arrayView2d< localIndex const > const & GEOSX_UNUSED_PARAM( elemSubRegionList ),
+                                       arrayView2d< localIndex const > const & GEOSX_UNUSED_PARAM( elemList ),
                                        ArrayOfArraysView< localIndex const > const & GEOSX_UNUSED_PARAM( faceToNodes ),
                                        arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( faceDofNumber ),
                                        arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( facePres ),
@@ -285,12 +285,12 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex GEOSX_UNUSED_PARAM( er ),
 void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
                                        localIndex esr,
                                        CellElementSubRegion const * const subRegion,
-                                       SortedArray< localIndex > regionFilter,
+                                       SortedArrayView< localIndex const > const & regionFilter,
                                        MeshLevel const * const mesh,
                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                       array2d< localIndex > const & elemRegionList,
-                                       array2d< localIndex > const & elemSubRegionList,
-                                       array2d< localIndex > const & elemList,
+                                       arrayView2d< localIndex const > const & elemRegionList,
+                                       arrayView2d< localIndex const > const & elemSubRegionList,
+                                       arrayView2d< localIndex const > const & elemList,
                                        ArrayOfArraysView< localIndex const > const & faceToNodes,
                                        arrayView1d< globalIndex const > const & faceDofNumber,
                                        arrayView1d< real64 const > const & facePres,
@@ -326,10 +326,8 @@ void SinglePhaseHybridFVM::FluxLaunch( localIndex er,
   arrayView2d< real64 const > const & dElemDens_dp = m_dDens_dPres[er][esr];
 
   // get the element data needed for transmissibility computation
-  arrayView1d< R1Tensor const > const & elemCenter =
-    subRegion->template getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
-  arrayView1d< real64 const > const & elemVolume =
-    subRegion->template getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+  arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter();
+  arrayView1d< real64 const > const & elemVolume = subRegion->getElementVolume();
   arrayView1d< R1Tensor const > const & elemPerm =
     subRegion->template getReference< array1d< R1Tensor > >( viewKeyStruct::permeabilityString );
 
@@ -470,9 +468,9 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const * cons
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager->getReference< array1d< globalIndex > >( faceDofKey );
 
-  array2d< localIndex > const & elemRegionList    = faceManager->elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = faceManager->elementSubRegionList();
-  array2d< localIndex > const & elemList          = faceManager->elementList();
+  arrayView2d< localIndex const > const & elemRegionList    = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList          = faceManager->elementList();
 
   for( localIndex iface = 0; iface < faceManager->size(); ++iface )
   {

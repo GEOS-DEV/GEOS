@@ -447,12 +447,11 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
     string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
     SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
 
-    arrayView3d< R1Tensor const > const &
-    dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
+    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
     arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
 
-    arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
+    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
     arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
 
@@ -504,7 +503,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
 
           for( integer a = 0; a < numNodesPerElement; ++a )
           {
-            R1Tensor const & dNdXa = dNdX[k][q][a];
+            R1Tensor const dNdXa = dNdX[k][q][a];
 
             dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdXa[0] * detJq;
             dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdXa[1] * detJq;

@@ -230,8 +230,7 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
   {
     PerforationData * const perforationData = subRegion.GetPerforationData();
 
-    arrayView1d< R1Tensor const > const & wellElemLocation =
-      subRegion.getReference< array1d< R1Tensor > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
+    arrayView2d< real64 const > const & wellElemLocation = subRegion.getElementCenter();
 
     arrayView1d< real64 > const & wellElemGravCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
@@ -245,7 +244,9 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
     for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
     {
       // precompute the depth of the well elements
-      wellElemGravCoef[iwelem] = Dot( wellElemLocation[iwelem], gravVector );
+      wellElemGravCoef[iwelem] = wellElemLocation( iwelem, 0 ) * gravVector[ 0 ] + wellElemLocation( iwelem, 1 ) * gravVector[ 1 ] + wellElemLocation( iwelem,
+                                                                                                                                                       2 ) *
+                                 gravVector[ 2 ];
     }
 
     forAll< serialPolicy >( perforationData->size(), [=]( localIndex const iperf )
