@@ -87,9 +87,8 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
         subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString )->
           setPlotLevel( PlotLevel::NOPLOT )->
           setRegisteringObjects( this->getName())->
-          setDescription( "An array that holds the rotation matrices on the fracture." );
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString ).resizeDimension< 1 >( 3 );
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString ).resizeDimension< 2 >( 3 );
+          setDescription( "An array that holds the rotation matrices on the fracture." )->
+          reference().resizeDimension< 1, 2 >( 3, 3 );
 
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString )->
           setApplyDefaultValue( 0.0 )->
