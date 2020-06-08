@@ -99,14 +99,14 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
 
-#define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << " given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << " given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
 

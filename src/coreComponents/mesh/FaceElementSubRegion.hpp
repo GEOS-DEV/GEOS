@@ -104,7 +104,7 @@ public:
 
   void CalculateElementGeometricQuantities( localIndex const k,
                                             arrayView1d< real64 const > const & faceArea,
-                                            arrayView1d< R2Tensor const > const & faceRotationMatrix );
+                                            arrayView3d< real64 const > const & faceRotationMatrix );
 
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -136,7 +136,12 @@ public:
    */
   struct viewKeyStruct : ElementSubRegionBase::viewKeyStruct
   {
-    /// Face element aperture string.
+    /// String key for the derivatives of the shape functions with respect to the reference configuration
+    static constexpr auto dNdXString = "dNdX";
+
+    /// String key for the derivative of the jacobian.
+    static constexpr auto detJString = "detJ";
+
     static constexpr auto elementApertureString        = "elementAperture";
 
     /// Face element area string.
@@ -264,8 +269,8 @@ public:
    */
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
-  arrayView1d< R2Tensor > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
-  arrayView1d< R2Tensor const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
+  arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView3d< real64 const > const & getElementRotationMatrix() const { return m_elementRotationMatrix; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /**
@@ -296,6 +301,30 @@ public:
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
 
+  /**
+   * @brief @return The array of shape function derivatives.
+   */
+  array4d< real64 > & dNdX()
+  { return m_dNdX; }
+
+  /**
+   * @brief @return The array of shape function derivatives.
+   */
+  arrayView4d< real64 const > const & dNdX() const
+  { return m_dNdX.toViewConst(); }
+
+  /**
+   * @brief @return The array of jacobian determinantes.
+   */
+  array2d< real64 > & detJ()
+  { return m_detJ; }
+
+  /**
+   * @brief @return The array of jacobian determinantes.
+   */
+  arrayView2d< real64 const > const & detJ() const
+  { return m_detJ.toViewConst(); }
+
 private:
 
   /**
@@ -308,6 +337,12 @@ private:
   template< bool DOPACK >
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
+
+  /// The array of shape function derivaties.
+  array4d< real64 > m_dNdX;
+
+  /// The array of jacobian determinantes.
+  array2d< real64 > m_detJ;
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;
@@ -325,7 +360,7 @@ private:
   array1d< real64 > m_elementArea;
 
   /// The member level field for the element rotation matrix
-  array1d< R2Tensor > m_elementRotationMatrix;
+  array3d< real64 > m_elementRotationMatrix;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   /// Separation coefficient

@@ -16,7 +16,6 @@
  * @file StringUtilities.cpp
  */
 
-#include "math/TensorT/TensorT.h"
 #include "codingUtilities/StringUtilities.hpp"
 //#include "codingUtilities/UnitManager.h"
 

@@ -24,6 +24,7 @@
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "common/Logger.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -50,9 +51,15 @@ FaceManager::FaceManager( string const &, Group * const parent ):
     setApplyDefaultValue( -1 );
 
   this->registerWrapper( viewKeyStruct::faceAreaString, &m_faceArea );
-  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter );
-  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal );
-  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix );
+
+  this->registerWrapper( viewKeyStruct::faceCenterString, &m_faceCenter )->
+    reference().resizeDimension< 1 >( 3 );
+
+  this->registerWrapper( viewKeyStruct::faceNormalString, &m_faceNormal )->
+    reference().resizeDimension< 1 >( 3 );
+
+  this->registerWrapper( viewKeyStruct::faceRotationMatrixString, &m_faceRotationMatrix )->
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   m_toElements.resize( 0, 2 );
 
@@ -552,9 +559,9 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
   populateMaps( *elementManager,
                 facesByLowestNode.toViewConst(),
                 uniqueFaceOffsets,
-                elementRegionList(),
-                elementSubRegionList(),
-                elementList(),
+                m_toElements.m_toElementRegion,
+                m_toElements.m_toElementSubRegion,
+                m_toElements.m_toElementIndex,
                 nodeList() );
 
   // First create the sets
@@ -583,21 +590,22 @@ void FaceManager::BuildFaces( NodeManager * const nodeManager, ElementRegionMana
 
 void FaceManager::computeGeometry( NodeManager const * const nodeManager )
 {
-  real64_array & faceArea  = getReference< real64_array >( viewKeyStruct::faceAreaString );
-  r1_array & faceNormal = getReference< r1_array >( viewKeyStruct::faceNormalString );
-  r1_array & faceCenter = getReference< r1_array >( viewKeyStruct::faceCenterString );
-  r2_array & rotationMatrix = getReference< r2_array >( viewKeyStruct::faceRotationMatrixString );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceID )
   {
-    faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
-                                                                    m_nodeList.sizeOfArray( faceID ),
-                                                                    X,
-                                                                    faceCenter[ faceID ],
-                                                                    faceNormal[ faceID ],
-                                                                    rotationMatrix[ faceID ] );
+    m_faceArea[ faceID ] = computationalGeometry::Centroid_3DPolygon( m_nodeList[ faceID ],
+                                                                      X,
+                                                                      m_faceCenter[ faceID ],
+                                                                      m_faceNormal[ faceID ] );
+
+    // This needs to be done somewhere else, also we probably shouldn't be orienting the normals like this.
+    // Set normal orientation according to a global criterion
+    computationalGeometry::FixNormalOrientation_3D( m_faceNormal[ faceID ] );
+
+    // Compute the local rotation matrix according to the normal vector
+    computationalGeometry::RotationMatrix_3D( m_faceNormal[ faceID ], m_faceRotationMatrix[ faceID ] );
   } );
 }
 
@@ -670,9 +678,9 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  array2d< localIndex > const & elemRegionList = elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = elementSubRegionList();
-  array2d< localIndex > const & elemList = elementList();
+  arrayView2d< localIndex const > const & elemRegionList = elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList = elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
   const indexType max_face_nodes = getMaxFaceNodes();
@@ -687,14 +695,13 @@ void FaceManager::SortAllFaceNodes( NodeManager const * const nodeManager,
   {
     ElementRegionBase const * const elemRegion = elemManager->GetRegion( elemRegionList[kf][0] );
     CellElementSubRegion const * const subRegion = elemRegion->GetSubRegion< CellElementSubRegion >( elemSubRegionList[kf][0] );
-    R1Tensor const elementCenter = subRegion->getElementCenter()( elemList[kf][0] );
     const localIndex numFaceNodes = faceToNodeMap.sizeOfArray( kf );
-    SortFaceNodes( X, elementCenter, faceToNodeMap[kf], numFaceNodes );
+    SortFaceNodes( X, subRegion->getElementCenter()[ elemList( kf, 0 ) ], faceToNodeMap[ kf ], numFaceNodes );
   } );
 }
 
 void FaceManager::SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-                                 R1Tensor const & elementCenter,
+                                 arraySlice1d< real64 const > const elementCenter,
                                  localIndex * const faceNodes,
                                  localIndex const numFaceNodes )
 {
@@ -956,8 +963,7 @@ void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< loca
     localIndex const childIndex = childFaceIndices[targetIndex];
     if( childIndex != -1 )
     {
-      m_faceNormal[targetIndex] =  m_faceNormal[childIndex];
-      m_faceNormal[targetIndex] *= -1;
+      LvArray::tensorOps::scaledCopy< 3 >( m_faceNormal[ targetIndex ], m_faceNormal[ childIndex ], -1 );
     }
   }
 }
