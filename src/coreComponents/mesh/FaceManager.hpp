@@ -136,7 +136,7 @@ public:
 
   arrayView2d< real64 const > const & faceCenter() const { return m_faceCenter; }
 
-  arrayView2d< real64 > const & mutableFaceNormal() { return m_faceNormal; }
+  arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
   arrayView2d< real64 const > const & faceNormal() const { return m_faceNormal; }
 
   arrayView3d< real64 const > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
@@ -147,13 +147,13 @@ public:
   EdgeMapType & edgeList()       { return m_edgeList; }
   EdgeMapType const & edgeList() const { return m_edgeList; }
 
-  arrayView2d< localIndex > const & mutableElementRegionList() const { return m_toElements.m_toElementRegion; }
+  arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
   arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
 
-  arrayView2d< localIndex > const & mutableElementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
   arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
-  arrayView2d< localIndex > const & mutableElementList() const { return m_toElements.m_toElementIndex; }
+  arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
   arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   ElemMapType & toElementRelation()       { return m_toElements; }
