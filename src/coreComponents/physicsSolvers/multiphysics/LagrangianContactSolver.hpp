@@ -165,6 +165,8 @@ public:
     constexpr static auto contactRelationNameString = "contactRelationName";
     constexpr static auto activeSetMaxIterString = "activeSetMaxIter";
 
+    constexpr static auto rotationMatrixString = "rotationMatrix";
+
     constexpr static auto tractionString = "traction";
     constexpr static auto deltaTractionString = "deltaTraction";
     constexpr static auto fractureStateString = "fractureState";
@@ -270,6 +272,8 @@ private:
     }
     return false;
   }
+
+  void ComputeRotationMatrices( DomainPartition * const domain ) const;
 
   void ComputeTolerances( DomainPartition * const domain ) const;
 

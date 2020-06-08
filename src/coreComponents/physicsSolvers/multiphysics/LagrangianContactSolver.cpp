@@ -84,6 +84,11 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        subRegion.registerWrapper< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString )->
+          setPlotLevel( PlotLevel::NOPLOT )->
+          setRegisteringObjects( this->getName())->
+          setDescription( "An array that holds the rotation matrices on the fracture." );
+
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString )->
           setApplyDefaultValue( 0.0 )->
           setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -169,6 +174,7 @@ void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
                                                  ParallelVector & rhs,
                                                  ParallelVector & solution )
 {
+  ComputeRotationMatrices( domain );
   ComputeTolerances( domain );
 
   this->UpdateDeformationForCoupling( domain );
@@ -282,7 +288,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< R2Tensor const > const &
+      faceRotationMatrix = subRegion.getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const &
@@ -481,7 +488,8 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< R2Tensor const > const &
+      rotationMatrix = subRegion.getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
@@ -1120,6 +1128,40 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const * c
   return globalResidualNorm[2];
 }
 
+void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition * const domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  {
+    if( subRegion.hasWrapper( m_tractionKey ) )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+      arrayView1d< R2Tensor > const &
+      rotationMatrix = subRegion.getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
+
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
+          Nbar -= faceNormal[elemsToFaces[kfe][1]];
+          Nbar.Normalize();
+
+          computationalGeometry::RotationMatrix_3D( Nbar, rotationMatrix[kfe] );
+        }
+      } );
+    }
+  } );
+}
+
 void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
                                                                           DofManager const & dofManager,
                                                                           ParallelMatrix * const matrix,
@@ -1156,7 +1198,8 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< R2Tensor const > const &
+      rotationMatrix = subRegion.getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1260,7 +1303,8 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
       tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView1d< R2Tensor const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView1d< R2Tensor const > const &
+      rotationMatrix = subRegion.getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 const > const &
       traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
@@ -1514,7 +1558,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
   // Get area and rotation matrix for all faces
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
-  arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
+  arrayView1d< R2Tensor const > const &
+  faceRotationMatrix = fractureSubRegion->getReference< array1d< R2Tensor > >( viewKeyStruct::rotationMatrixString );
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1556,12 +1601,12 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
           localIndex faceIndexRef = faceMap[fractureIndex][0];
           real64 const area = faceArea[faceIndexRef];
-          R2Tensor const & rotationMatrix = faceRotationMatrix[faceIndexRef];
+          R2Tensor const & rotationMatrix = faceRotationMatrix[sei[iconn][0]];
           // TODO: use higher order integration scheme
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
 
-          real64_array2d invStiffApprox( 2, 3 );
+          real64_array2d stiffApprox( 2, 3 );
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
@@ -1607,7 +1652,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[i][j] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              stiffApprox[i][j] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
 
@@ -1617,8 +1662,12 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           {
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApproxTotal( j, j ) += invStiffApprox[i][j];
+              invStiffApproxTotal( j, j ) += stiffApprox[i][j];
             }
+          }
+          for( localIndex j = 0; j < 3; ++j )
+          {
+            invStiffApproxTotal( j, j ) = 1.0 / invStiffApproxTotal( j, j );
           }
           // Compute R^T * (invK) * R
           R2Tensor tmpTensor;
