@@ -174,7 +174,7 @@ public:
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView2d< real64 > const & getMutableElementCenter()
+  arrayView2d< real64 > const & getElementCenter()
   { return m_elementCenter; }
 
   /**
