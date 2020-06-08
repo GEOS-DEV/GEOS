@@ -468,7 +468,7 @@ public:
    *        data in this.
    * @return An instantiation of LinearElasticTransverseIsotropicUpdates.
    */
-  LinearElasticTransverseIsotropicUpdates createKernelWrapper()
+  LinearElasticTransverseIsotropicUpdates createKernelUpdates()
   {
     return LinearElasticTransverseIsotropicUpdates( m_c11,
                                                     m_c13,
@@ -478,8 +478,15 @@ public:
                                                     m_stress );
   }
 
+  /**
+   * @brief Executes a lambda that will return a KernelUpdate for the calling
+   *   class.
+   * @param lambda A lambda function that takes the parameters for the
+   *   constructor of the KernelUpdates class.
+   * @return
+   */
   template< typename UPDATE_KERNEL, typename LAMBDA >
-  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  UPDATE_KERNEL createDerivedKernelUpdates( LAMBDA && lambda )
   {
     return lambda( m_c11,
                    m_c13,

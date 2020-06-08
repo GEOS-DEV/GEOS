@@ -221,7 +221,7 @@ struct ExplicitKernel
 
 
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelUpdates();
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),

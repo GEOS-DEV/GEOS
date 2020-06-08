@@ -162,18 +162,6 @@ LinearElasticAnisotropicUpdates::
                real64 const * const GEOSX_RESTRICT Ddt,
                R2Tensor const & Rot ) const
 {
-//  for( localIndex i=0 ; i<6 ; ++i )
-//  {
-//    for( localIndex j=0 ; j<3 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * Ddt[j];
-//    }
-//    for( localIndex j=3 ; j<6 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * 2 * Ddt[j];
-//    }
-//  }
-
   constexpr localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
 
   for( localIndex j=0; j<3; ++j )
@@ -298,15 +286,28 @@ public:
    */
   void setDefaultStiffness( real64 const c[6][6] );
 
-  LinearElasticAnisotropicUpdates createKernelWrapper() const
+
+  /**
+   * @brief Create a instantiation of the LinearElasticAnisotropicUpdate class
+   *        that refers to the data in this.
+   * @return An instantiation of LinearElasticAnisotropicUpdate.
+   */
+  LinearElasticAnisotropicUpdates createKernelUpdates() const
   {
     return LinearElasticAnisotropicUpdates( m_stiffness.toViewConst(),
                                             m_stress.toView() );
   }
 
 
+  /**
+   * @brief Executes a lambda that will return a KernelUpdate for the calling
+   *   class.
+   * @param lambda A lambda function that takes the parameters for the
+   *   constructor of the KernelUpdates class.
+   * @return
+   */
   template< typename UPDATE_KERNEL, typename LAMBDA >
-  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  UPDATE_KERNEL createDerivedKernelUpdates( LAMBDA && lambda )
   {
     return lambda( m_stiffness.toViewConst(),
                    m_stress.toView() );

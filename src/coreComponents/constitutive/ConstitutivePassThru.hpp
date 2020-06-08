@@ -14,11 +14,11 @@
 
 
 /**
- * @file solidSelector.hpp
+ * @file ConstitutivePassThru.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_
+#ifndef GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
+#define GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "NullModel.hpp"
 #include "solid/LinearElasticIsotropic.hpp"
@@ -31,12 +31,25 @@ namespace geosx
 namespace constitutive
 {
 
+/**
+ * @struct ConstitutivePassThru
+ * @brief Struct to facilitate launching of lambda functions with a compile
+ *   time knowledge of what constitutive model is used.
+ *
+ * This struct works by implementing an if-else or switch-case block for a
+ * specific constitutive base type, and executing the lambda passing it a
+ * casted pointer to the constitutive relation.
+ */
 template< typename BASETYPE >
 struct ConstitutivePassThru;
 
+/**
+ * Specialization for models that derive from SolidBase.
+ */
 template<>
 struct ConstitutivePassThru< SolidBase >
 {
+
   template< typename LAMBDA >
   static
   void Execute( ConstitutiveBase * const constitutiveRelation,
@@ -71,7 +84,9 @@ struct ConstitutivePassThru< SolidBase >
 };
 
 
-
+/**
+ * Specialization for the NullModel.
+ */
 template<>
 struct ConstitutivePassThru< NullModel >
 {
@@ -102,7 +117,9 @@ struct ConstitutivePassThru< NullModel >
 };
 
 
-
+/**
+ * Specialization for the PoroElastic models.
+ */
 template<>
 struct ConstitutivePassThru< PoroElasticBase >
 {
@@ -143,4 +160,4 @@ struct ConstitutivePassThru< PoroElasticBase >
 }
 }
 
-#endif /* GEOSX_CONSTITUTIVE_SOLID_SOLIDSELECTOR_HPP_ */
+#endif /* GEOSX_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_ */

@@ -29,9 +29,13 @@
 
 
 // 1 is std::tuple
-// 2 is camp...TODO Try this out once the camp makes some changes.
-#define CONSTRUCTOR_PARAM_OPTION 1
+// 2 is camp
 
+#if defined(__APPLE__)
+#define CONSTRUCTOR_PARAM_OPTION 2
+#else
+#define CONSTRUCTOR_PARAM_OPTION 1
+#endif
 #if CONSTRUCTOR_PARAM_OPTION==1
 namespace std
 {
@@ -202,7 +206,7 @@ public:
               CONSTITUTIVE_TYPE * const inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
-    m_constitutiveUpdate( inputConstitutiveType->createKernelWrapper() ),
+    m_constitutiveUpdate( inputConstitutiveType->createKernelUpdates() ),
     m_finiteElementSpace( finiteElementSpace )
   {}
 
@@ -595,8 +599,8 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                               elementSubRegion,
                                               finiteElementSpace,
                                               castedConstitutiveRelation );
-          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair( temp,
-                                                                          kernelConstructorParamsTuple );
+          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
+                                                                                  kernelConstructorParamsTuple );
           KERNEL_TYPE kernelComponent  = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif

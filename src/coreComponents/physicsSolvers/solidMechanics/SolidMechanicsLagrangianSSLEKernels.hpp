@@ -77,7 +77,7 @@ struct ExplicitKernel
   {
     GEOSX_MARK_FUNCTION;
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
 #if defined(CALCFEMSHAPE)
     GEOSX_UNUSED_VAR( dNdX );
@@ -266,7 +266,7 @@ struct ImplicitKernel
     static constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
     arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 

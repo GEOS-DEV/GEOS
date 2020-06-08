@@ -26,8 +26,6 @@
 #include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
 
 
-using namespace std;
-
 namespace geosx
 {
 

@@ -382,7 +382,7 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelWrapper( bool const includeState = true )
+  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true )
   {
     if( includeState )
     {
@@ -396,8 +396,15 @@ public:
     }
   }
 
+  /**
+   * @brief Executes a lambda that will return a KernelUpdate for the calling
+   *   class.
+   * @param lambda A lambda function that takes the parameters for the
+   *   constructor of the KernelUpdates class.
+   * @return
+   */
   template< typename UPDATE_KERNEL, typename LAMBDA >
-  UPDATE_KERNEL createDerivedUpdateKernel( LAMBDA && lambda )
+  UPDATE_KERNEL createDerivedKernelUpdates( LAMBDA && lambda )
   {
     return lambda( m_bulkModulus, m_shearModulus, m_stress );
   }

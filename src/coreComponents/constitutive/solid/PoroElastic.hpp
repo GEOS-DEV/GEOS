@@ -95,9 +95,9 @@ public:
     m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
   }
 
-  KernelWrapper createKernelWrapper()
+  KernelWrapper createKernelUpdates()
   {
-    return BASE::template createDerivedUpdateKernel< KernelWrapper >( [&]( auto && ... baseParams ) -> KernelWrapper
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( [&]( auto && ... baseParams ) -> KernelWrapper
     {
       return KernelWrapper( m_biotCoefficient, std::forward< decltype(baseParams) >( baseParams )... );
     } );

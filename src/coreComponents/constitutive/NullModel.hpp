@@ -61,7 +61,7 @@ public:
    * @param includeState Whether or not to include the state in the wrapper.
    * @return 0
    */
-  KernelWrapper createKernelWrapper( bool const includeState = false )
+  KernelWrapper createKernelUpdates( bool const includeState = false )
   {
     GEOSX_UNUSED_VAR( includeState );
     return KernelWrapper();
