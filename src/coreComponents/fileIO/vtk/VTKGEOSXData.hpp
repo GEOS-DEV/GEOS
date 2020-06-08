@@ -60,13 +60,6 @@ public:
 template<>
 void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor const & val );
 
-/// @cond DO_NOT_DOCUMENT
-template<>
-void VTKGEOSXData::CustomInsertValue< R2Tensor >( localIndex index, R2Tensor const & val );
-
-template<>
-void VTKGEOSXData::CustomInsertValue< R2SymTensor >( localIndex index, R2SymTensor const & val );
-/// @endcond
 }
 }
 

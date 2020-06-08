@@ -59,6 +59,8 @@ public:
 
   virtual void compute( Matrix const & mat, DofManager const & dofManager ) override;
 
+  using PreconditionerBase< LAI >::compute;
+
   /**
    * @brief Apply operator to a vector
    * @param src Input vector (x).
