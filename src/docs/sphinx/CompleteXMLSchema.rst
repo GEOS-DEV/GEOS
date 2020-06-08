@@ -156,6 +156,13 @@ Element: Dirichlet
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet.rst
 
 
+.. _XML_DruckerPrager:
+
+Element: DruckerPrager
+======================
+.. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager.rst
+
+
 .. _XML_ElementRegions:
 
 Element: ElementRegions
@@ -851,6 +858,13 @@ Datastructure: Cylinder
 Datastructure: Dirichlet
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/Dirichlet_other.rst
+
+
+.. _DATASTRUCTURE_DruckerPrager:
+
+Datastructure: DruckerPrager
+============================
+.. include:: ../../coreComponents/fileIO/schema/docs/DruckerPrager_other.rst
 
 
 .. _DATASTRUCTURE_ElementRegions:

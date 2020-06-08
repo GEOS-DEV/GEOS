@@ -61,7 +61,7 @@ TEST( DruckerPragerTests, testModel )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( numElem );
   
-  DruckerPrager cm( "model", &constitutiveManager );
+  DruckerPrager & cm = *(constitutiveManager.GetConstitutiveRelation<DruckerPrager>("granite"));
   cm.AllocateConstitutiveData( &disc, numQuad );
   
   EXPECT_EQ( cm.size(), numElem );
