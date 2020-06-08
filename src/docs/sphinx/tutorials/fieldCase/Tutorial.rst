@@ -20,6 +20,7 @@ In GEOSX, all the simulations parameters have to appear in a XML file, between t
    ...
   </Problem>
 
+
 *****************
 Domain definition
 *****************
