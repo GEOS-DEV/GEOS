@@ -32,6 +32,7 @@ def format_xml_level(output,
       attribute_dict = {}
       if ((level == 0) & include_namespace):
         # Handle the optional namespace information at the root level
+        # Note: preferably, this would point to a schema we host online
         attribute_dict['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance'
         attribute_dict['xsi:noNamespaceSchemaLocation'] = '/usr/gapps/GEOS/schema/schema.xsd'
       elif (level > 0):
