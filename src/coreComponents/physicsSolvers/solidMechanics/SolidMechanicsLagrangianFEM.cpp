@@ -525,7 +525,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-#define USE_PHYSICS_LOOP
+  #define USE_PHYSICS_LOOP
 
   // updateIntrinsicNodalData(domain);
 

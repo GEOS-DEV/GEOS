@@ -29,7 +29,7 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 #if defined(GEOSX_USE_CUDA)
-  #define CALCFEMSHAPE
+#define CALCFEMSHAPE
 #endif
 // If UPDATE_STRESS is undef, uses total displacement and stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material
@@ -207,11 +207,11 @@ public:
 #if defined(CALCFEMSHAPE)
     real64 dNdX[ 8 ][ 3 ];
     real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
-#define DNDX dNdX
-  #define DETJ detJ
+    #define DNDX dNdX
+    #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
-  #define DNDX m_dNdX[k][q]
-  #define DETJ m_detJ( k, q )
+    #define DNDX m_dNdX[k][q]
+    #define DETJ m_detJ( k, q )
 #endif //defined(CALCFEMSHAPE)
 
     real64 stressLocal[ 6 ] = {0};

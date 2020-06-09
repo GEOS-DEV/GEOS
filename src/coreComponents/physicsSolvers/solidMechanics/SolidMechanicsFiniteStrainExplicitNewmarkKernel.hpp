@@ -29,7 +29,7 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 #if defined(GEOSX_USE_CUDA)
-  #define CALCFEMSHAPE
+#define CALCFEMSHAPE
 #endif
 // If UPDATE_STRESS is undef, then stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
@@ -37,36 +37,34 @@ namespace SolidMechanicsLagrangianFEMKernels
 
 
 
-
-
 template< int N, int USD >
- GEOSX_HOST_DEVICE
- GEOSX_FORCE_INLINE
- static
- void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+static
+void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
  #if defined(CALCFEMSHAPE)
-                 real64 const (&dNdX)[ N ][ 3 ],
+                real64 const (&dNdX)[ N ][ 3 ],
  #else
-                 arraySlice2d< real64 const > const & dNdX,
+                arraySlice2d< real64 const > const & dNdX,
  #endif
-                 real64 const detJ,
-                 real64 const detF,
-                 real64 const ( &fInv )[ 3 ][ 3 ],
-                 real64 ( & result )[ N ][ 3 ] )
- {
-   GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
+                real64 const detJ,
+                real64 const detF,
+                real64 const ( &fInv )[ 3 ][ 3 ],
+                real64 ( & result )[ N ][ 3 ] )
+{
+  GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
 
-   real64 const integrationFactor = -detJ * detF;
+  real64 const integrationFactor = -detJ * detF;
 
-   real64 P[ 3 ][ 3 ];
-   LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
-   LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
+  real64 P[ 3 ][ 3 ];
+  LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
+  LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
 
-   for( int a = 0; a < N; ++a )    // loop through all shape functions in element
-   {
-     LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
-   }
- }
+  for( int a = 0; a < N; ++a )     // loop through all shape functions in element
+  {
+    LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
+  }
+}
 
 /**
  * @brief Implements kernels for solving the equations of motion using the
@@ -198,11 +196,11 @@ public:
 #if defined(CALCFEMSHAPE)
     real64 dNdX[ 8 ][ 3 ];
     real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
-#define DNDX dNdX
-#define DETJ detJ
+    #define DNDX dNdX
+    #define DETJ detJ
 #else
-#define DNDX m_dNdX[k][q]
-#define DETJ m_detJ( k, q )
+    #define DNDX m_dNdX[k][q]
+    #define DETJ m_detJ( k, q )
 #endif
     real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
     CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );

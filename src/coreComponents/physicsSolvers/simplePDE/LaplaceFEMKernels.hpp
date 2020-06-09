@@ -164,7 +164,7 @@ public:
     {
       for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
       {
-        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi<3>( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
+        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
       }
     }
   }
