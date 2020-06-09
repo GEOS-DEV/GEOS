@@ -303,7 +303,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
@@ -340,15 +340,15 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      R1Tensor temp;
+      real64 temp[ 3 ] = { 0 };
       for( localIndex a=0; a<numNodesPerFace; ++a )
       {
-        temp += u[faceToNodeMap( kf0, a )];
-        temp -= u[faceToNodeMap( kf1, a )];
+        LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
+        LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -Dot( temp, faceNormal[kf0] ) / numNodesPerFace;
+      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 
@@ -955,7 +955,7 @@ HydrofractureSolver::
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   arrayView1d< R1Tensor > const &
@@ -1106,7 +1106,7 @@ HydrofractureSolver::
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
-    arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+    arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
 
 //    arrayView1d< real64 const > const & separationCoeff = subRegion.getSeparationCoefficient();
 //    arrayView1d<real64 const> const &
