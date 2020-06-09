@@ -63,7 +63,7 @@ def format_xml_level(output,
                          include_namespace)
 
         # Add space between blocks
-        if ((level < block_separation_max_depth) & (ii < Nc-1)):
+        if ((level < block_separation_max_depth) & (ii < Nc-1) & (child.tag is not ElementTree.Comment)):
           output.write('\n')
 
       # Write the end tag
