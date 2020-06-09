@@ -1,6 +1,6 @@
 <Problem>
   
-  <Solvers>
+  <Solvers gravityVector="0,0,0">
     
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic name="poroSolve"
