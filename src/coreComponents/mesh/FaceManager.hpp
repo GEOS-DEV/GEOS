@@ -118,7 +118,6 @@ public:
     constexpr static auto faceAreaString = "faceArea";
     constexpr static auto faceCenterString = "faceCenter";
     constexpr static auto faceNormalString = "faceNormal";
-    constexpr static auto faceRotationMatrixString = "faceRotationMatrix";
 
     dataRepository::ViewKey nodeList              = { nodeListString };
     dataRepository::ViewKey edgeList              = { edgeListString };
@@ -138,8 +137,6 @@ public:
 
   arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
   arrayView2d< real64 const > const & faceNormal() const { return m_faceNormal; }
-
-  arrayView3d< real64 const > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   NodeMapType & nodeList()                    { return m_nodeList; }
   NodeMapType const & nodeList() const { return m_nodeList; }
@@ -176,7 +173,6 @@ private:
   array1d< real64 > m_faceArea;
   array2d< real64 > m_faceCenter;
   array2d< real64 > m_faceNormal;
-  array3d< real64 > m_faceRotationMatrix;
 
   constexpr static int MAX_FACE_NODES = 9;
 

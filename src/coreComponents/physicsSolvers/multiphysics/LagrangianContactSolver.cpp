@@ -84,6 +84,12 @@ void LagrangianContactSolver::RegisterDataOnMesh( dataRepository::Group * const 
     {
       region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString )->
+          setPlotLevel( PlotLevel::NOPLOT )->
+          setRegisteringObjects( this->getName())->
+          setDescription( "An array that holds the rotation matrices on the fracture." )->
+          reference().resizeDimension< 1, 2 >( 3, 3 );
+
         subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString )->
           setApplyDefaultValue( 0.0 )->
           setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -169,6 +175,7 @@ void LagrangianContactSolver::ImplicitStepSetup( real64 const & time_n,
                                                  ParallelVector & rhs,
                                                  ParallelVector & solution )
 {
+  ComputeRotationMatrices( domain );
   ComputeTolerances( domain );
 
   this->UpdateDeformationForCoupling( domain );
@@ -282,7 +289,8 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea();
-      arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const &
+      faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView1d< real64 > const &
@@ -473,7 +481,8 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition * co
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const &
+      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
@@ -1060,6 +1069,43 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const * c
   return globalResidualNorm[2];
 }
 
+void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition * const domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+
+  FaceManager const * const faceManager = mesh->getFaceManager();
+  ElementRegionManager * const elemManager = mesh->getElemManager();
+
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
+
+  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  {
+    if( subRegion.hasWrapper( m_tractionKey ) )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+      arrayView3d< real64 > const &
+      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
+
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          array1d< real64 > Nbar( 3 );
+          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+          LvArray::tensorOps::normalize< 3 >( Nbar );
+
+          computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
+        }
+      } );
+    }
+  } );
+}
+
 void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
                                                                           DofManager const & dofManager,
                                                                           ParallelMatrix * const matrix,
@@ -1096,7 +1142,8 @@ void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( Domain
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const &
+      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1197,7 +1244,8 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
       tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
+      arrayView3d< real64 const > const &
+      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 const > const &
       traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
@@ -1450,7 +1498,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
   // Get area and rotation matrix for all faces
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
-  arrayView3d< real64 const > const & faceRotationMatrix = faceManager->faceRotationMatrix();
+  arrayView3d< real64 const > const &
+  faceRotationMatrix = fractureSubRegion->getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1496,7 +1545,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
 
-          real64 invStiffApprox[ 2 ][ 3 ];
+          real64 stiffApprox[ 2 ][ 3 ];
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
@@ -1542,7 +1591,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[ i ][ j ] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              stiffApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
 
@@ -1551,14 +1600,18 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           {
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApproxTotal[ j ][ j ] += invStiffApprox[ i ][ j ];
+              invStiffApproxTotal[ j ][ j ] += stiffApprox[ i ][ j ];
             }
+          }
+          for( localIndex j = 0; j < 3; ++j )
+          {
+            invStiffApproxTotal[ j ][ j ] = 1.0 / invStiffApproxTotal[ j ][ j ];
           }
 
           // Compute R^T * (invK) * R
           real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ faceIndexRef ], invStiffApproxTotal );
-          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ faceIndexRef ] );
+          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ sei[iconn][0] ], invStiffApproxTotal );
+          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ sei[iconn][0] ] );
         }
 
         // Compose local nodal-based local stiffness matrices

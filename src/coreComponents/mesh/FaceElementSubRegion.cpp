@@ -42,7 +42,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_toFacesRelation(),
   m_elementAperture(),
   m_elementArea(),
-  m_elementRotationMatrix(),
   m_elementDefaultConductivity()
 {
   SetElementType( "C3D8" );
@@ -70,12 +69,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setApplyDefaultValue( -1.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
     setDescription( "The area of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The rotation matrix of each FaceElement." )->
-    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
     setApplyDefaultValue( -1 )->
@@ -132,25 +125,14 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
-                                                                arrayView1d< real64 const > const & faceArea,
-                                                                arrayView3d< real64 const > const & faceRotationMatrix )
-{
-  localIndex const faceID = m_toFacesRelation( k, 0 );
-  m_elementArea[ k ] = faceArea[ faceID ];
-  m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
-  LvArray::tensorOps::copy< 3, 3 >( m_elementRotationMatrix[ k ], faceRotationMatrix[ faceID ] );
-}
-
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
-  arrayView3d< real64 const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
 
   forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
-    CalculateElementGeometricQuantities( k, faceArea, faceRotationMatrix );
+    CalculateElementGeometricQuantities( k, faceArea );
   } );
 }
 

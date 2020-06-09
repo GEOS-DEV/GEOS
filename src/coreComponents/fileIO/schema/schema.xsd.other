@@ -1104,8 +1104,6 @@
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
 		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
-		<!--faceRotationMatrix => (no description available)-->
-		<xsd:attribute name="faceRotationMatrix" type="real64_array3d" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
