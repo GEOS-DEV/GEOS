@@ -156,7 +156,7 @@ previously defined in the ``NumericalMethod`` tag. The ``targetRegions`` refers 
 to the Reservoir, because we just want to solve the flow in this region. The ``fluidNames``
 and ``solidNames`` refers to the previously defined materials in the ``Constitutive`` tag.
 
-The ``NonlinearSolverParameters`` and ``LinearSolverParameters`` are then used to set the
+The ``NonlinearSolverParameters`` and ``SystemSolverParameters`` are then used to set the
 numerical solver parameters such as the Newton tolerance and the maximum number of
 iterations.
 
@@ -240,7 +240,7 @@ Lauching the simulation
 
 The simulation can be launched with:
 
-.. codeblock:: sh
+.. code-block:: console
 
   geosx -i FieldCaseTutorial1.xml
 

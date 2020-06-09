@@ -1,4 +1,4 @@
-.. _FiniteVolume:
+.. _FiniteVolumeDiscretization:
 
 Finite Volume Discretization
 -------------------------------
