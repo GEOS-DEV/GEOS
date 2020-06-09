@@ -14,7 +14,7 @@
 	                             newtonTol="1.0e-2"
 	                             maxTimeStepCuts="1"
                                  lineSearchMaxCuts="0"/>                                 
-      <LinearSolverParameters solverType="bicgstab"
+      <LinearSolverParameters solverType="gmres"
                               preconditionerType="block"
                               krylovMaxIter="200"
                               logLevel="0"/>
@@ -63,11 +63,12 @@
   </Geometry>
 
 
-  <Events maxTime="9.0e-01">
+  <Events maxTime="1.44e-01">
     <!--This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
     <PeriodicEvent name="outputs"
+                   timeFrequency="4.5000000e-03"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput"/>
 
@@ -87,32 +88,14 @@
 
     <PeriodicEvent name="solverApplication2"
                    beginTime="4.5000000e-03"   
-                   endTime="9.00000000e-01"   
+                   endTime="1.44000000e-01"   
                    forceDt="4.5000000e-03"   
-                   target="/Solvers/poroSolve" />
-
-    <!--
-    <PeriodicEvent name="solverApplication2"
-                   beginTime="4.5000000e-03"   
-                   endTime="9.0000000e-03"   
-                   forceDt="4.5000000e-03"   
-                   target="/Solvers/poroSolve" />
-
-    -->
-    <!--
-    <PeriodicEvent name="solverApplication1"
-                   beginTime="500"
-                   endTime="2e3"   
-                   forceDt="100.0"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="restarts"
                    timeFrequency="1e99"
-                   targetExactTimestep="0"
-                   target="/Outputs/restartOutput"
-                   endTime="-1" />
+                   target="/Outputs/restartOutput"/>
 
-    -->
   </Events>
 
   <NumericalMethods>
