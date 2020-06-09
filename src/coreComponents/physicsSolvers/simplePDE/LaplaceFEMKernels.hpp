@@ -99,8 +99,8 @@ public:
           inputMatrix,
           inputRhs ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) )  //,
+    m_dNdX( elementSubRegion.dNdX() ),
+    m_detJ( elementSubRegion.detJ() )
   {}
 
   //***************************************************************************
@@ -164,7 +164,7 @@ public:
     {
       for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
       {
-        stack.localJacobian[ a ][ b ] += Dot( m_dNdX( k, q, a ), m_dNdX( k, q, b ) ) * m_detJ( k, q );
+        stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi<3>( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
       }
     }
   }
@@ -209,7 +209,7 @@ protected:
   arrayView1d< real64 const > const m_primaryField;
 
   /// The global shape function derivatives array.
-  arrayView3d< R1Tensor const > const m_dNdX;
+  arrayView4d< real64 const > const m_dNdX;
 
   /// The global determinant of the parent/physical Jacobian.
   arrayView2d< real64 const > const m_detJ;

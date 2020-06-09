@@ -94,14 +94,6 @@ template<> int DB_TYPE< R1Tensor >()
 {
   return DB_DOUBLE;
 }
-template<> int DB_TYPE< R2Tensor >()
-{
-  return DB_DOUBLE;
-}
-template<> int DB_TYPE< R2SymTensor >()
-{
-  return DB_DOUBLE;
-}
 template<> int DB_TYPE< unsigned long >()
 {
   return DB_LONG;
@@ -155,14 +147,6 @@ template<> int GetNumberOfVariablesInField< R1Tensor >()
 {
   return R1Tensor::Length();
 }
-template<> int GetNumberOfVariablesInField< R2Tensor >()
-{
-  return R2Tensor::Length();
-}
-template<> int GetNumberOfVariablesInField< R2SymTensor >()
-{
-  return R2SymTensor::Length();
-}
 template<> int GetNumberOfVariablesInField< string >()
 {
   return 1;
@@ -204,52 +188,6 @@ void SetVariableNames< R1Tensor >( string const & fieldName,
   varnames[2] = const_cast< char * >( varnamestring[2].c_str() );
 }
 
-template<>
-void SetVariableNames< R2Tensor >( string const & fieldName,
-                                   string_array & varnamestring,
-                                   char const * varnames[] )
-{
-  varnamestring.resize( GetNumberOfVariablesInField< R2Tensor >());
-  varnamestring[0] = fieldName + "_11";
-  varnamestring[1] = fieldName + "_12";
-  varnamestring[2] = fieldName + "_13";
-  varnamestring[3] = fieldName + "_21";
-  varnamestring[4] = fieldName + "_22";
-  varnamestring[5] = fieldName + "_23";
-  varnamestring[6] = fieldName + "_31";
-  varnamestring[7] = fieldName + "_32";
-  varnamestring[8] = fieldName + "_33";
-  varnames[0] = const_cast< char * >( varnamestring[0].c_str() );
-  varnames[1] = const_cast< char * >( varnamestring[1].c_str() );
-  varnames[2] = const_cast< char * >( varnamestring[2].c_str() );
-  varnames[3] = const_cast< char * >( varnamestring[3].c_str() );
-  varnames[4] = const_cast< char * >( varnamestring[4].c_str() );
-  varnames[5] = const_cast< char * >( varnamestring[5].c_str() );
-  varnames[6] = const_cast< char * >( varnamestring[6].c_str() );
-  varnames[7] = const_cast< char * >( varnamestring[7].c_str() );
-  varnames[8] = const_cast< char * >( varnamestring[8].c_str() );
-}
-
-template<>
-void SetVariableNames< R2SymTensor >( string const & fieldName,
-                                      string_array & varnamestring,
-                                      char const * varnames[] )
-{
-  varnamestring.resize( GetNumberOfVariablesInField< R2Tensor >());
-  varnamestring[0] = fieldName + "_11";
-  varnamestring[1] = fieldName + "_21";
-  varnamestring[2] = fieldName + "_22";
-  varnamestring[3] = fieldName + "_31";
-  varnamestring[4] = fieldName + "_32";
-  varnamestring[5] = fieldName + "_33";
-  varnames[0] = const_cast< char * >( varnamestring[0].c_str() );
-  varnames[1] = const_cast< char * >( varnamestring[1].c_str() );
-  varnames[2] = const_cast< char * >( varnamestring[2].c_str() );
-  varnames[3] = const_cast< char * >( varnamestring[3].c_str() );
-  varnames[4] = const_cast< char * >( varnamestring[4].c_str() );
-  varnames[5] = const_cast< char * >( varnamestring[5].c_str() );
-}
-
 
 template<> int GetTensorRank< int >()
 {
@@ -278,14 +216,6 @@ template<> int GetTensorRank< real64 >()
 template<> int GetTensorRank< R1Tensor >()
 {
   return DB_VARTYPE_VECTOR;
-}
-template<> int GetTensorRank< R2Tensor >()
-{
-  return DB_VARTYPE_TENSOR;
-}
-template<> int GetTensorRank< R2SymTensor >()
-{
-  return DB_VARTYPE_SYMTENSOR;
 }
 template<> int GetTensorRank< long long unsigned int >()
 {
@@ -997,7 +927,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
           std::type_info const & typeID = wrapper->get_typeid();
 
           if( typeID == typeid( array2d< real64 > ) ||
-              typeID == typeid( array2d< R2SymTensor > ) ||
               typeID == typeid( array3d< real64 > ) ||
               typeID == typeid( array4d< real64 > ) )
           {
@@ -1019,17 +948,6 @@ void SiloFile::WriteMaterialMapsFullStorage( ElementRegionBase const & elemRegio
                                                     problemTime,
                                                     rootDirectory,
                                                     regionMaterialList );
-      }
-      if( fieldName.second->get_typeid() == typeid( array2d< R2SymTensor >))
-      {
-        WriteMaterialDataField2d< real64, R2SymTensor >( meshName,
-                                                         fieldName.first,
-                                                         elemRegion,
-                                                         DB_ZONECENT,
-                                                         cycleNumber,
-                                                         problemTime,
-                                                         rootDirectory,
-                                                         regionMaterialList );
       }
       if( fieldName.second->get_typeid() == typeid( array3d< real64 >))
       {
@@ -2194,13 +2112,6 @@ void SiloFile::WriteWrappersToSilo( string const & meshname,
         this->WriteDataField< globalIndex >( meshname.c_str(), fieldName,
                                              wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
-//      if( typeID==typeid(array2d<R2SymTensor> ) )
-//      {
-//        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper<array2d<R2SymTensor>> const & >( *wrapper );
-//        this->WriteDataField<real64>( meshname.c_str(), fieldName,
-//                                           wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
-//      }
-
     }
   }
 }

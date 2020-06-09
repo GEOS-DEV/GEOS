@@ -110,8 +110,8 @@ public:
           finiteElementSpace,
           inputConstitutiveType ),
 #if !defined(CALCFEMSHAPE)
-    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
+    m_dNdX( elementSubRegion.dNdX() ),
+    m_detJ( elementSubRegion.detJ() ),
 #endif
     m_X( nodeManager.referencePosition()),
     m_u( nodeManager.totalDisplacement()),
@@ -315,7 +315,7 @@ public:
 protected:
   #if !defined(CALCFEMSHAPE)
   /// The shape function derivative for each quadrature point.
-  arrayView3d< R1Tensor const > const m_dNdX;
+  arrayView4d< real64 const > const m_dNdX;
   /// The parent->physical jacobian determinant for each quadrature point.
   arrayView2d< real64 const > const m_detJ;
   #endif

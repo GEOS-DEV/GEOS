@@ -48,5 +48,6 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 }
 
 
+
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */

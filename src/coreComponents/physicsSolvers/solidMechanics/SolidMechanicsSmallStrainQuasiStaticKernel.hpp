@@ -110,8 +110,8 @@ public:
           inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
     m_uhat( nodeManager.incrementalDisplacement()),
-    m_dNdX( elementSubRegion.template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX )),
-    m_detJ( elementSubRegion.template getReference< array2d< real64 > >( dataRepository::keys::detJ ) ),
+    m_dNdX( elementSubRegion.dNdX() ),
+    m_detJ( elementSubRegion.detJ() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] }
   {}
 
@@ -192,15 +192,17 @@ public:
     real64 strainInc[6] = {0};
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      strainInc[0] = strainInc[0] + m_dNdX( k, q, a )[0] * stack.uhat_local[a][0];
-      strainInc[1] = strainInc[1] + m_dNdX( k, q, a )[1] * stack.uhat_local[a][1];
-      strainInc[2] = strainInc[2] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][2];
-      strainInc[3] = strainInc[3] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][1] +
-                     m_dNdX( k, q, a )[1] * stack.uhat_local[a][2];
-      strainInc[4] = strainInc[4] + m_dNdX( k, q, a )[2] * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a )[0] * stack.uhat_local[a][2];
-      strainInc[5] = strainInc[5] + m_dNdX( k, q, a )[1] * stack.uhat_local[a][0] +
-                     m_dNdX( k, q, a )[0] * stack.uhat_local[a][1];
+      strainInc[0] = strainInc[0] + m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][0];
+      strainInc[1] = strainInc[1] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][1];
+      strainInc[2] = strainInc[2] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][2];
+      strainInc[3] = strainInc[3] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][1] +
+                     m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][2];
+
+      strainInc[4] = strainInc[4] + m_dNdX( k, q, a, 2 ) * stack.uhat_local[a][0] +
+                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][2];
+
+      strainInc[5] = strainInc[5] + m_dNdX( k, q, a, 1 ) * stack.uhat_local[a][0] +
+                     m_dNdX( k, q, a, 0 ) * stack.uhat_local[a][1];
     }
 
     m_constitutiveUpdate.SmallStrain( k, q, strainInc );
@@ -261,35 +263,35 @@ public:
       for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
       {
         real64 const (&c)[6][6] = stack.constitutiveStiffness;
-        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
-                                                   c[5][5]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
-                                                   c[4][4]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+0 ] -= ( c[0][0]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
+                                                   c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[0] +
-                                                   c[0][1]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[1] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[0][1]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[0] +
-                                                   c[0][2]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+0 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[0][2]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
-                                                   c[1][1]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
-                                                   c[3][3]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+1 ] -= ( c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[1][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
+                                                   c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[0] +
-                                                   c[5][5]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[1] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+0 ] -= ( c[0][1]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[5][5]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 1 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[1] +
-                                                   c[1][2]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+1 ][ b*3+2 ] -= ( c[3][3]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
+                                                   c[1][2]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[0] +
-                                                   c[4][4]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+0 ] -= ( c[0][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[1] +
-                                                   c[3][3]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+1 ] -= ( c[1][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 1 ) +
+                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
-        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a )[0]*m_dNdX( k, q, b )[0] +
-                                                   c[3][3]*m_dNdX( k, q, a )[1]*m_dNdX( k, q, b )[1] +
-                                                   c[2][2]*m_dNdX( k, q, a )[2]*m_dNdX( k, q, b )[2] ) * m_detJ( k, q );
+        stack.localJacobian[ a*3+2 ][ b*3+2 ] -= ( c[4][4]*m_dNdX( k, q, a, 0 )*m_dNdX( k, q, b, 0 ) +
+                                                   c[3][3]*m_dNdX( k, q, a, 1 )*m_dNdX( k, q, b, 1 ) +
+                                                   c[2][2]*m_dNdX( k, q, a, 2 )*m_dNdX( k, q, b, 2 ) ) * m_detJ( k, q );
 
         dynamicsTerms( a, b );
       }
@@ -321,17 +323,17 @@ public:
 
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a )[ 0 ] +
-                                            stress[ 5 ] * m_dNdX( k, q, a )[ 1 ] +
-                                            stress[ 4 ] * m_dNdX( k, q, a )[ 2 ] -
+      stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
+                                            stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
+                                            stress[ 4 ] * m_dNdX( k, q, a, 2 ) -
                                             m_gravityVector[0] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a )[ 0 ] +
-                                            stress[ 1 ] * m_dNdX( k, q, a )[ 1 ] +
-                                            stress[ 3 ] * m_dNdX( k, q, a )[ 2 ] -
+      stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a, 0 ) +
+                                            stress[ 1 ] * m_dNdX( k, q, a, 1 ) +
+                                            stress[ 3 ] * m_dNdX( k, q, a, 2 ) -
                                             m_gravityVector[1] ) * m_detJ( k, q );
-      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a )[ 0 ] +
-                                            stress[ 3 ] * m_dNdX( k, q, a )[ 1 ] +
-                                            stress[ 2 ] * m_dNdX( k, q, a )[ 2 ] -
+      stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a, 0 ) +
+                                            stress[ 3 ] * m_dNdX( k, q, a, 1 ) +
+                                            stress[ 2 ] * m_dNdX( k, q, a, 2 ) -
                                             m_gravityVector[2] ) * m_detJ( k, q );
     }
   }
@@ -376,7 +378,7 @@ protected:
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
 
   /// The shape function derivative for each quadrature point.
-  arrayView3d< R1Tensor const > const m_dNdX;
+  arrayView4d< real64 const > const m_dNdX;
 
   /// The parent->physical jacobian determinant for each quadrature point.
   arrayView2d< real64 const > const m_detJ;

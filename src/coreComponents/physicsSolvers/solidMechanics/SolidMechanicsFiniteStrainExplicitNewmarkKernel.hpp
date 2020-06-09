@@ -22,7 +22,6 @@
 #include "SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp"
 #include "finiteElement/Kinematics.h"
 
-
 namespace geosx
 {
 
@@ -35,6 +34,39 @@ namespace SolidMechanicsLagrangianFEMKernels
 // If UPDATE_STRESS is undef, then stress is not updated at all.
 //  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
 #define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
+
+
+
+
+
+template< int N, int USD >
+ GEOSX_HOST_DEVICE
+ GEOSX_FORCE_INLINE
+ static
+ void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
+ #if defined(CALCFEMSHAPE)
+                 real64 const (&dNdX)[ N ][ 3 ],
+ #else
+                 arraySlice2d< real64 const > const & dNdX,
+ #endif
+                 real64 const detJ,
+                 real64 const detF,
+                 real64 const ( &fInv )[ 3 ][ 3 ],
+                 real64 ( & result )[ N ][ 3 ] )
+ {
+   GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
+
+   real64 const integrationFactor = -detJ * detF;
+
+   real64 P[ 3 ][ 3 ];
+   LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
+   LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
+
+   for( int a = 0; a < N; ++a )    // loop through all shape functions in element
+   {
+     LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
+   }
+ }
 
 /**
  * @brief Implements kernels for solving the equations of motion using the
@@ -172,86 +204,39 @@ public:
 #define DNDX m_dNdX[k][q]
 #define DETJ m_detJ( k, q )
 #endif
-    R2Tensor dUhatdX, dUdX;
-    real64 * const GEOSX_RESTRICT g0 = dUhatdX.Data();
-    real64 * const GEOSX_RESTRICT g1 = dUdX.Data();
+    real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
+    CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );
+    LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
-    {
-      g0[0] += stack.varLocal[a][0]*DNDX[a][0];
-      g0[1] += stack.varLocal[a][0]*DNDX[a][1];
-      g0[2] += stack.varLocal[a][0]*DNDX[a][2];
-      g0[3] += stack.varLocal[a][1]*DNDX[a][0];
-      g0[4] += stack.varLocal[a][1]*DNDX[a][1];
-      g0[5] += stack.varLocal[a][1]*DNDX[a][2];
-      g0[6] += stack.varLocal[a][2]*DNDX[a][0];
-      g0[7] += stack.varLocal[a][2]*DNDX[a][1];
-      g0[8] += stack.varLocal[a][2]*DNDX[a][2];
-
-
-      g1[0] += stack.uLocal[a][0]*DNDX[a][0];
-      g1[1] += stack.uLocal[a][0]*DNDX[a][1];
-      g1[2] += stack.uLocal[a][0]*DNDX[a][2];
-      g1[3] += stack.uLocal[a][1]*DNDX[a][0];
-      g1[4] += stack.uLocal[a][1]*DNDX[a][1];
-      g1[5] += stack.uLocal[a][1]*DNDX[a][2];
-      g1[6] += stack.uLocal[a][2]*DNDX[a][0];
-      g1[7] += stack.uLocal[a][2]*DNDX[a][1];
-      g1[8] += stack.uLocal[a][2]*DNDX[a][2];
-    }
-
-
-    dUhatdX *= m_dt;
-
-    R2Tensor F, Ldt, fInv;
+    real64 F[ 3 ][ 3 ], Ldt[ 3 ][ 3 ], fInv[ 3 ][ 3 ];
 
     // calculate du/dX
-    F = dUhatdX;
-    F *= 0.5;
-    F += dUdX;
-    F.PlusIdentity( 1.0 );
-    fInv.Inverse( F );
+    LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
+    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+    LvArray::tensorOps::invert< 3 >( fInv, F );
 
     // chain rule: calculate dv/du = dv/dX * dX/du
-    Ldt.AijBjk( dUhatdX, fInv );
+    LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
     // calculate gradient (end of step)
-    F = dUhatdX;
-    F += dUdX;
-    F.PlusIdentity( 1.0 );
-    real64 const detF = F.Det();
-    fInv.Inverse( F );
+    LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
+    LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+    LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+    real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
-
-    R2Tensor Rot;
-    R2SymTensor Dadt;
+    real64 Rot[ 3 ][ 3 ];
+    real64 Dadt[ 6 ];
     HughesWinget( Rot, Dadt, Ldt );
 
-    m_constitutiveUpdate.HypoElastic( k, q, Dadt.Data(), Rot );
+    m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
-    real64 const integrationFactor = -DETJ * detF;
-
-    auto const & stress = m_constitutiveUpdate.m_stress[k][q];
-
-    real64 P[ 3 ][ 3 ];
-    P[ 0 ][ 0 ] = ( stress[ 0 ] * fInv( 0, 0 ) + stress[ 5 ] * fInv( 0, 1 ) + stress[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 0 ][ 1 ] = ( stress[ 0 ] * fInv( 1, 0 ) + stress[ 5 ] * fInv( 1, 1 ) + stress[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 0 ][ 2 ] = ( stress[ 0 ] * fInv( 2, 0 ) + stress[ 5 ] * fInv( 2, 1 ) + stress[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-    P[ 1 ][ 0 ] = ( stress[ 5 ] * fInv( 0, 0 ) + stress[ 1 ] * fInv( 0, 1 ) + stress[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 1 ][ 1 ] = ( stress[ 5 ] * fInv( 1, 0 ) + stress[ 1 ] * fInv( 1, 1 ) + stress[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 1 ][ 2 ] = ( stress[ 5 ] * fInv( 2, 0 ) + stress[ 1 ] * fInv( 2, 1 ) + stress[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-    P[ 2 ][ 0 ] = ( stress[ 4 ] * fInv( 0, 0 ) + stress[ 3 ] * fInv( 0, 1 ) + stress[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 2 ][ 1 ] = ( stress[ 4 ] * fInv( 1, 0 ) + stress[ 3 ] * fInv( 1, 1 ) + stress[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 2 ][ 2 ] = ( stress[ 4 ] * fInv( 2, 0 ) + stress[ 3 ] * fInv( 2, 1 ) + stress[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-    for( int a=0; a<NUM_NODES_PER_ELEM; ++a )      // loop through all shape functions in element
-    {
-      stack.fLocal[a][0] = stack.fLocal[a][0] + P[ 0 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 0 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 0 ][ 2 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[a][1] = stack.fLocal[a][1] + P[ 1 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 1 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 1 ][ 2 ] * DNDX[ a ][ 2 ];
-      stack.fLocal[a][2] = stack.fLocal[a][2] + P[ 2 ][ 0 ] * DNDX[ a ][ 0 ] + P[ 2 ][ 1 ] * DNDX[ a ][ 1 ] + P[ 2 ][ 2 ] * DNDX[ a ][ 2 ];
-    }
+    Integrate< NUM_NODES_PER_ELEM >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
+                                     DNDX,
+                                     DETJ,
+                                     detF,
+                                     fInv,
+                                     stack.fLocal );
   }
 
 

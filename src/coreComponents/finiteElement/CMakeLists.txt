@@ -26,7 +26,6 @@ set( finiteElement_sources
      ElementLibrary/FiniteElement.cpp
      ElementLibrary/FiniteElementBase.cpp
      ElementLibrary/TetrahedralElement.cpp
-     Kinematics.cpp
      basis/BasisBase.cpp
      basis/LagrangeBasis.cpp
      basis/Polynomial.cpp
