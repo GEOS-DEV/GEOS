@@ -1,76 +1,88 @@
 .. _TutorialFieldCase:
 
 #########################################
-Running a simple field cases from scratch
+Simple field cases
 #########################################
 
-In this tutorial, we present how to run a field case by incorporating iteratively different
-physics, from a simple flow problem in a continuous media to a coupled poromechanics one
-in a fractured media.
+**Context**
 
-We will detailed the way the input XML files need to be written in order to run those
-simulations.
+In this tutorial, we set up a simple field case for single phase flow simulation (see :ref:`SinglePhaseFlow`).
 
-In GEOSX, all the simulations parameters have to appear in a XML file, between the XML tags
 
-.. code-block:: xml
+**Objectives**
 
-  <?xml version="1.0" ?>
-  <Problem>
-   ...
-  </Problem>
+At the end of this tutorial you will know:
+
+  - how to import external mesh information and properties,
+  - how to run a specific solver (here, flow) in a specific region only,
+  - the basic syntax of a solver block for wells,
+  - how to control output and visualize results.
+
+
+**Input file**
+
+The xml input file for this test case is located at:
+
+.. code-block:: console
+
+  src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
 
 
 *****************
 Domain definition
 *****************
 
-We consider the following mesh that will be the support for the simulations to come.
+We consider the following mesh as a numerical support to the simulations in this tutorial:
 
 .. image:: mesh.png
    :width: 400px
 
-This mesh is composed of three different continuous regions.
+This mesh contains three continuous regions:
 
-  - Top region (overburden, elementary tag = 1)
-  - Middle region (reservoir layer, elementary tag = 2)
-  - Bottom region (underburden, elementary tag = 3)
+  - a Top region (overburden, elementary tag = 1)
+  - a Middle region (reservoir layer, elementary tag = 2)
+  - a Bottom region (underburden, elementary tag = 3)
 
-The mesh is defined in the GMSH file format (see :ref:`Meshes` for more information on
-the supported mesh file format). Each tetrahedra has an elementary tag associated.
+
+The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
+the supported mesh file format). Each tetrahedron is associated to a unique tag.
 
 .. note::
-  GMSH file format is numbering its tags starting from 1. In GEOSX, the numbering
-  of the ``CellElementRegion`` starts from 0. As a consequence, when the regions
-  will be defined in GEOSX, we have to substract 1 from the GMSH tag to refer
-  to the same region. The next sections of this tutorial will illustrate this.
+
+  The GMSH file format starts numbering tags from 1. In GEOSX, the numbering
+  of ``CellElementRegion`` starts from 0. As a consequence, when regions
+  are defined in GEOSX, we substract 1 from the GMSH tag to refer
+  to the same region. The next sections of this tutorial illustrates this.
+
+
 
 ***************************
 Importing the mesh in GEOSX
 ***************************
 
-The mesh has to be defined using the Mesh tag (see :ref:`Meshes`). For this problem, we
-will use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
-The syntax is very simple : only the file path (that is relative to the location of the
-XML file) and the name of the mesh (that can modified to whatever the user want) need to
-be set.
+Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
+The syntax to import external meshes is simple : in the XML file,
+the mesh ``file`` is included with its path relative to the location of the input XML file
+(or absolute)
+and a user-specified ``name`` for the mesh object.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_MESH -->
   :end-before: <!-- SPHINX_FIELD_CASE_MESH_END -->
 
-.. note::
-  We present in this tutorial the XML blocks in a specific order for the sake of clarity of the explainations. Please
-  keep in mind that this order can be whatever you want.
 
 ************************
 Running flow simulations
 ************************
 
-In this part, we will present how to run simple flow simulations to demonstrate the
-GEOSX capabilities to handle reservoir simulations.
-To ease the demonstration, we make the assumption that the overburden and the underburden are impermeable, the flow only happen in the reservoir. There is two ways to achieve that.
+
+
+We now run a single-phase flow simulations on this field.
+We assume that the overburden and the underburden are impermeable,
+and flow only happen in the reservoir.
+
+There are two methods to achieve this regional solve.
 
 The first solution is to define a unique ``CellElementRegion`` corresponding to the reservoir.
 
@@ -91,29 +103,26 @@ is :
   :start-after: <!-- SPHINX_FIELD_CASE_REGION -->
   :end-before: <!-- SPHINX_FIELD_CASE_REGION_END -->
 
-We choose the latest in order to keep the burdens for the visualization.
-
-.. note::
-  It is possible to define three ``CellElementRegion`` by separating the overburden from
-  the underburden
+We choose the latest in order to keep the over- and underburden for visualization.
 
 .. note::
   The material list here was set for a single phase flow problem. This list is subject
   to change if the problem is not a single phase flow problem.
 
+
 Single Phase Flow, no well
 ==========================
 
-In this first section, we will present how to run a basic flow simulation in the reservoir layer.
-We do not consider any coupling with wells. The injection and production will be mimiced by
+Now, we demonstrate how to run a basic flow simulation in the reservoir layer.
+We do not consider any coupling with wells. Injection and production will be specified by
 imposing a high pressure in the cells close to the injection area and a low pressure
 in the cells close to the production area.
 
 Material definition
 -------------------
 
-We first simulate a single phase flow in the reservoir layer. We define the two materials
-involved in the simulation : the only fluid (water) and the solid (rock).
+We simulate a single phase flow in the reservoir layer with two types of materials
+: fluid (water) and solid (rock).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
@@ -121,7 +130,7 @@ involved in the simulation : the only fluid (water) and the solid (rock).
   :end-before: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
 
 The constitutive parameters such as the density, the viscosity, the compressibility etc. can
-be modified here using the International System of Units. 
+be modified here using the International System of Units.
 
 .. note::
   To consider an incompressible fluid, the user has to set the compressibility to 0.
