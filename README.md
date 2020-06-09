@@ -50,7 +50,7 @@ Documentation is hosted [here](https://geosx-geosx.readthedocs-hosted.com/en/lat
 We recommend newcomers to the code read one or both of the following introductory
 guides:
 
-- [Getting Started Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/gettingStarted/Index.html)
+- [Getting Started Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/buildingGuide/DownloadingAndCompiling.html)
 : Basic instructions for downloading, building, and running the code.
 
 - [Developer Guide](https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/developerGuide/Index.html)
