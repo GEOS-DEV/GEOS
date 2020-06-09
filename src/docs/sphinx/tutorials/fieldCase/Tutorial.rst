@@ -15,8 +15,8 @@ At the end of this tutorial you will know:
 
   - how to import external mesh information and properties,
   - how to run a specific solver (here, flow) in a specific region only,
-  - the basic syntax of a solver block for wells,
-  - how to control output and visualize results.
+  - the basic method of using boxes to set up boundary conditions,
+  - how to control output frequency and export results for visualization.
 
 
 **Input file**
@@ -121,70 +121,71 @@ in the cells close to the production area.
 Material definition
 -------------------
 
-We simulate a single phase flow in the reservoir layer with two types of materials
-: fluid (water) and solid (rock).
+We simulate a single phase flow in the reservoir layer with two types of materials, a fluid (water) and solid (rock).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
 
-The constitutive parameters such as the density, the viscosity, the compressibility etc. can
-be modified here using the International System of Units.
+The constitutive parameters such as the density, the viscosity, and the compressibility are specified in the International System of Units.
 
 .. note::
   To consider an incompressible fluid, the user has to set the compressibility to 0.
 
-Numerical methods settings
+Numerical methods
 --------------------------
 
-Once the materials are defined, we define the numerical method that will be used in the solver.
-We propose to use the classical two-point flux approximation scheme.
+Once materials are defined, we define the numerical method used in the solver.
+We use here a classical two-point flux approximation scheme.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
-The ``TwoPointFluxApproximation`` node has to contain the primary field to be solved in
-``fieldName``. For a flow problem it is the pressure.
+The ``TwoPointFluxApproximation`` node should specify
+the primary field to solve for as ``fieldName``.
+For a flow problem, this field is the pressure.
+
 
 Solver settings
 ---------------
 
-The ``Solver`` XML tag is then set.
+Let us inspect the ``Solver`` XML tags.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_SOLVER_END -->
 
-This node is crucial as it gather all the information previously defined. We use the classical
-``SinglePhaseFVM`` (FVM for Finite Volume Method), with the two-points flux approximation
-previously defined in the ``NumericalMethod`` tag. The ``targetRegions`` refers only
-to the Reservoir, because we just want to solve the flow in this region. The ``fluidNames``
-and ``solidNames`` refers to the previously defined materials in the ``Constitutive`` tag.
 
-The ``NonlinearSolverParameters`` and ``SystemSolverParameters`` are then used to set the
+This node gathers all the information previously defined.
+We use a classical ``SinglePhaseFVM`` Finite Volume Method,
+with the two-points flux approximation
+defined in the ``NumericalMethod`` tag.
+The ``targetRegions`` refers only
+to the Reservoir region because we only solve for flow in this region.
+The ``fluidNames`` and ``solidNames`` refer to the previously-defined materials
+in the ``Constitutive`` tag.
+
+The ``NonlinearSolverParameters`` and ``SystemSolverParameters`` are used to set
 numerical solver parameters such as the Newton tolerance and the maximum number of
 iterations.
 
 Defining geometry boxes
------------------------
+-------------------------
 
-The geometry boxes are useful in order to flag some cells or nodes within it. We will use it
-this GEOSX feature to mimic the injection and production.
+The geometry boxes are useful in order to flag some cells or nodes within the mesh.
+We use it here to lcoate the injection and production locations.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   :end-before: <!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
 
-In order to define a box, the user had to define ``xMax`` and ``xMin`` that are two opposite nodes of the box.
+In order to define a box, the user defines ``xMax`` and ``xMin``, two opposite nodes of the box.
 
-.. note::
-  In the previous XML snippet, the box ``all`` includes the whole model. This box has to be defined for every problem
-  involving the import of an external mesh
 
 Field specification
 -------------------
@@ -202,21 +203,18 @@ The next step is to specify fields, including:
 
 You may note :
 
- - All static parameters and initial value fields have to present the ``initialCondition`` field set to ``1``.
- - The ``objectPath`` refers to the ``ÈlementRegion`` in which the field value has
- - The ``setName`` field points to the box previously defined to apply the fields. 
- - Tensors values has to be set component by component. GEOSX deals with a diagonal matrix for
-   the permeability, so the three values of the permeability tensor are set individually
-   using ``component`` field.
- - ``name`` and ``fieldName`` have a different meaning. ``name`` is used to give a name to the XML block. It has
-   to be unique. ``fieldName`` is the name of the field register in GEOSX. This value has to be set carefully
-   in accordance with the documentation of each solver.
+ - All static parameters and initial value fields must have ``initialCondition`` field set to ``1``.
+ - The ``objectPath`` refers to the ``ÈlementRegion`` in which the field has his value,
+ - The ``setName`` field points to the box previously defined to apply the fields,
+ - GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
+ - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field register in GEOSX. This value has to be set according to the expected input fields of each solver.
+ 
 
 Defining output
 ---------------
 
-The ``Output`` XML tag is used to trigger the writing of visualization files. Here we propose
-to write files natively readable by Paraview.
+The ``Output`` XML tag is used to trigger the writing of visualization files.
+Here, we write files in a format natively readable by Paraview.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
@@ -229,23 +227,26 @@ to write files natively readable by Paraview.
 Triggering events
 -----------------
 
-The final steps is to organize events so the simulation and the outputs can be triggered.
+Last, we use events to guide the simulation through time,
+and specify when outputs must to be  triggered.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_EVENTS -->
   :end-before: <!-- SPHINX_FIELD_CASE_EVENTS_END -->
 
-The ``Events`` tag is associated with the ``maxTime`` keyword defining the maximum time. If this time is
-ever reached or exceeded, the simulation will end.
+The ``Events`` tag is associated with the ``maxTime`` keyword defining the maximum time.
+If this time is ever reached or exceeded, the simulation ends.
 
-Two ``PeriodicEvent`` are then defined. The first one is associated with the solver. The  ``forceDt`` keyword
-means that there will always be time-steps of 20 seconds. The second is associated with the output. The ``timeFrequency``
+Two ``PeriodicEvent`` are defined.
+The first one is associated with the solver.
+The  ``forceDt`` keyword means that there will always be time-steps of 20 seconds.
+The second is associated with the output. The ``timeFrequency``
 keyword means that it will be executed every 100 seconds. The ``targetExactTimestep`` is set to 1, meaning that
 the Event Manager will impose this event will be triggered exactly every 100 seconds.
 
-Lauching the simulation
------------------------
+Launching the simulation
+---------------------------
 
 The simulation can be launched with:
 
