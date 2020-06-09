@@ -917,7 +917,7 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   arrayView1d< R1Tensor > const &
@@ -1023,7 +1023,7 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
   FaceManager const * const faceManager = mesh.getFaceManager();
   NodeManager const * const nodeManager = mesh.getNodeManager();
 
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   FaceManager::NodeMapType const & faceToNodeMap = faceManager->nodeList();
 
   CRSMatrixView< real64 const, localIndex const > const &
@@ -1200,7 +1200,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
 
   // Get area and rotation matrix for all faces
   arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1297,19 +1297,19 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
             }
           }
 
-          R2Tensor invStiffApproxTotal;
-          invStiffApproxTotal = 0.0;
+          real64 invStiffApproxTotal[ 3 ][ 3 ] = { { 0 } };
           for( localIndex i = 0; i < 2; ++i )
           {
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApproxTotal( j, j ) += invStiffApprox[i][j];
+              invStiffApproxTotal[ j ][ j ] += invStiffApprox[ i ][ j ];
             }
           }
-          // Compute n^T * (invK) * n
-          R1Tensor tmpTensor;
-          tmpTensor.AijBj( invStiffApproxTotal, Nbar );
-          rotatedInvStiffApprox[kf] = Dot( Nbar, tmpTensor );
+
+          // Compute R^T * (invK) * R
+          real64 temp[ 3 ];
+          LvArray::tensorOps::AijBj< 3, 3 >( temp, invStiffApproxTotal, Nbar );
+          rotatedInvStiffApprox[ kf ] = LvArray::tensorOps::AiBi< 3 >( temp, Nbar );
         }
 
         // Compose local nodal-based local stiffness matrices

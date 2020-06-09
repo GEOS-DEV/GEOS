@@ -168,13 +168,13 @@ public:
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView1d< R1Tensor const > const & getElementCenter() const
+  arrayView2d< real64 const > const & getElementCenter() const
   { return m_elementCenter; }
 
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView1d< R1Tensor > const & getElementCenter()
+  arrayView2d< real64 > const & getElementCenter()
   { return m_elementCenter; }
 
   /**
@@ -272,7 +272,7 @@ protected:
   localIndex m_numFacesPerElement;
 
   /// Member level field for the element center.
-  array1d< R1Tensor > m_elementCenter;
+  array2d< real64 > m_elementCenter;
 
   /// Member level field for the element volume.
   array1d< real64 > m_elementVolume;

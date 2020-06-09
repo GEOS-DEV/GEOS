@@ -28,25 +28,49 @@ namespace geosx
 class DomainPartition;
 class FluxApproximationBase;
 
+/**
+ * @class FiniteVolumeManager
+ *
+ * Class managing a finite volume discretization.
+ */
 class FiniteVolumeManager : public dataRepository::Group
 {
 public:
 
+  /**
+   * @brief Deleted default constructor.
+   */
   FiniteVolumeManager() = delete;
-  FiniteVolumeManager( string const & name, Group * const parent );
-  virtual ~FiniteVolumeManager() override;
 
+  /**
+   * @brief Constructor.
+   * @param name the name of the FiniteVolumeManager in the data repository
+   * @param parent the parent group of this group.
+   */
+  FiniteVolumeManager( string const & name, Group * const parent );
+
+  /**
+   * @brief Destructor.
+   */
+  virtual ~FiniteVolumeManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
-  /// This function is used to expand any catalogs in the data structure
   virtual void ExpandObjectCatalogs() override;
 
+  /**
+   * @brief Return the FluxApproximation associated with the provided name.
+   * @param[in] name the provided name
+   * @return the FluxApproximation associated with the provided name
+   */
   FluxApproximationBase const * getFluxApproximation( string const & name ) const;
+
+  /**
+   * @copydoc getFluxApproximation( string const & ) const
+   */
   FluxApproximationBase * getFluxApproximation( string const & name );
 
 private:
-
 
 };
 

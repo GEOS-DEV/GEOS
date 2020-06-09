@@ -110,14 +110,14 @@ void CompositionalMultiphaseFluid::PostProcessInput()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-#define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << "given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define COMPFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "CompositionalMultiphaseFluid: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << "given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString )
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString )

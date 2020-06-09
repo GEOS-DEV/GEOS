@@ -16,8 +16,8 @@
  * @file InternalMeshGenerator.hpp
  */
 
-#ifndef INTERNALMESHGENERATOR_H_
-#define INTERNALMESHGENERATOR_H_
+#ifndef GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
+#define GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
@@ -124,10 +124,6 @@ public:
 
 protected:
 
-  /**
-   * @brief This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
   void PostProcessInput() override final;
 
 private:
@@ -349,4 +345,4 @@ public:
 };
 }
 
-#endif /* INTERNALMESHGENERATOR_H_ */
+#endif /* GEOSX_MESHUTILITIES_INTERNALMESHGENERATOR_HPP */

@@ -16,7 +16,8 @@
  * @file PAMELAMeshGenerator.hpp
  */
 
-#pragma once
+#ifndef GEOSX_MESHUTILITIES_PAMELAMESHGENERATOR_HPP
+#define GEOSX_MESHUTILITIES_PAMELAMESHGENERATOR_HPP
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -128,3 +129,5 @@ private:
 };
 
 }
+
+#endif /* GEOSX_MESHUTILITIES_PAMELAMESHGENERATOR_HPP */
