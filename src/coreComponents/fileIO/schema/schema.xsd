@@ -1072,8 +1072,8 @@
 		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--lenghtScale => lenght scale l in the phase-field equation-->
-		<xsd:attribute name="lenghtScale" type="real64" use="required" />
+		<!--lengthScale => lenght scale l in the phase-field equation-->
+		<xsd:attribute name="lengthScale" type="real64" use="required" />
 		<!--localDissipation => Type of local dissipation function. Can be Linear or Quadratic-->
 		<xsd:attribute name="localDissipation" type="string" use="required" />
 		<!--logLevel => Log level-->

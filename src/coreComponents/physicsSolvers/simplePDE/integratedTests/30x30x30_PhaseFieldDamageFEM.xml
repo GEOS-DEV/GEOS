@@ -7,7 +7,7 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 localDissipation = "Quadratic"
-                lenghtScale = "0.2"
+                lengthScale = "0.2"
                 criticalFractureEnergy = "2.7"
                 solidMaterialName="shale"
                 logLevel="0"

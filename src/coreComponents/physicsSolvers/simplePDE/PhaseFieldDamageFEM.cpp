@@ -83,7 +83,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const std::string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription("Type of local dissipation function. Can be Linear or Quadratic" );
 
-  registerWrapper(viewKeyStruct::lenghtScale, &m_lenghtScale)->
+  registerWrapper(viewKeyStruct::lengthScale, &m_lengthScale)->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription("lenght scale l in the phase-field equation");
 
@@ -305,7 +305,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
       localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
 
-      real64 ell = m_lenghtScale;                                 //phase-field length scale
+      real64 ell = m_lengthScale;                                 //phase-field length scale
       real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
       double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
                                                                                                                                                                                       // Linear

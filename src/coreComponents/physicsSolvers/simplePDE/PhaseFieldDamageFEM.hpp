@@ -130,7 +130,7 @@ public:
     static constexpr auto coeffName = "coeffField";
     static constexpr auto localDissipationOption = "localDissipation";
     static constexpr auto solidModelNameString = "solidMaterialName";
-    static constexpr auto lenghtScale = "lenghtScale";
+    static constexpr auto lengthScale = "lengthScale";
     static constexpr auto criticalFractureEnergy = "criticalFractureEnergy";
 
     dataRepository::ViewKey timeIntegrationOption =
@@ -169,7 +169,7 @@ private:
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
   string m_solidModelName;
-  real64 m_lenghtScale;
+  real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
 
   array1d< real64 > m_coeff;
