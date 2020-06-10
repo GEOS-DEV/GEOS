@@ -130,10 +130,10 @@ private:
   real64_array m_tableCoordinates1D;
 
   /// List of table coordinate file names
-  string_array m_coordinateFiles;
+  path_array m_coordinateFiles;
 
   /// Table voxel file names
-  string m_voxelFile;
+  Path m_voxelFile;
 
   /// Table interpolation method input string
   string m_interpolationMethodString;

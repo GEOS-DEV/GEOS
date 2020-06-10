@@ -100,8 +100,8 @@ seed = 1234567
 
 # Pumping schedule
 q = 0.05
-t_init = 3 * 60.0
-t_ramp = 3 * 60.0
+t_init = 60.0
+t_ramp = 60.0
 t_pump = 60 * 60.0
 
 

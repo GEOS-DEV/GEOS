@@ -15,9 +15,12 @@
     <Parameter name="ContactStiffness" value="1e10"/>
 
     <!-- Event timing -->
-    <Parameter name="t_init_a" value="3 [min]"/>
-    <Parameter name="t_init_b" value="6 [min]"/>
+    <Parameter name="t_init_a" value="1 [min]"/>
+    <Parameter name="dt_max_a" value="10 [s]"/>
+    <Parameter name="t_init_b" value="2 [min]"/>
+    <Parameter name="dt_max_b" value="2 [s]"/>
     <Parameter name="t_max" value="200 [min]"/>
+    <Parameter name="dt_max_c" value="4 [s]"/>   
 
     <!-- Etc. -->
     <Parameter name="table_root" value="./tables"/>

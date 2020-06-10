@@ -81,18 +81,18 @@
 
     <!-- Apply the hydrofracture solver, limiting the timesteps during certain time intervals -->
     <PeriodicEvent name="solverApplications_a"
-                   maxEventDt="10.0"
+                   maxEventDt="$dt_max_a$"
                    endTime="$t_init_a$"
                    target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent name="solverApplications_b"
-                   maxEventDt="2.0"
+                   maxEventDt="$dt_max_b$"
                    beginTime="$t_init_a$"
                    endTime="$t_init_b$"
                    target="/Solvers/hydrofracture"/>
 
     <PeriodicEvent name="solverApplications_c"
-                   maxEventDt="4.0"
+                   maxEventDt="$dt_max_c$"
                    beginTime="$t_init_b$"
                    target="/Solvers/hydrofracture"/>
 
@@ -184,7 +184,7 @@
     <TableFunction name="sigma_zz"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
-                   voxelFile="$table_root$/s_zz.csv"
+                   voxelFile="$table_root$/sigma_zz.csv"
                    interpolation="nearest"/>
 
     <TableFunction name="init_pressure"
