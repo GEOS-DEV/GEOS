@@ -85,7 +85,6 @@ public:
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
   // have to use this->member etc.
-  using BASE::m_pressureDofIndex;
   using BASE::m_pressure;
   using BASE::m_deltaPressure;
   using BASE::m_deltaVolume;
@@ -155,34 +154,34 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
+  SetupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution ) override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   /**
    * @brief assembles the flux terms for all cells

@@ -38,7 +38,7 @@ foreach(test ${gtest_geosx_tests})
                       DEPENDS_ON ${dependencyList} )
 
   blt_add_test( NAME ${test_name}
-                COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
+                COMMAND ${test_name} )
 endforeach()
 
 # For some reason, BLT is not setting CUDA language for these source files

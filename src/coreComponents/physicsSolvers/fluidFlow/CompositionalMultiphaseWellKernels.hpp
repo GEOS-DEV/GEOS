@@ -837,6 +837,7 @@ struct VolumeBalanceKernel
           localIndex const numComponents,
           localIndex const numPhases,
           localIndex const numDofPerWellElement,
+          globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView2d< real64 const > const & wellElemPhaseVolFrac,
@@ -870,7 +871,7 @@ struct VolumeBalanceKernel
       // get equation/dof indices
       globalIndex const offset = wellElemDofNumber[iwelem];
       localIndex const volBalRowOffset = CompositionalMultiphaseWell::RowOffset::MASSBAL + NC;
-      globalIndex const localVolBalanceEqnIndex = offset + volBalRowOffset;
+      globalIndex const localVolBalanceEqnIndex = LvArray::integerConversion< localIndex >( offset - rankOffset ) + volBalRowOffset;
       for( localIndex jdof = 0; jdof < welemNDOF; ++jdof )
       {
         localVolBalanceDOF[jdof] = offset + CompositionalMultiphaseWell::ColOffset::DPRES + jdof;

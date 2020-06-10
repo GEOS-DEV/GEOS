@@ -124,14 +124,14 @@ void SinglePhaseWell::UpdateState( WellElementSubRegion & subRegion, localIndex 
   ComputePerforationRates( subRegion, targetIndex );
 }
 
-void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
+void SinglePhaseWell::InitializeWells( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const & resPressure = m_resPressure;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > const & resDensity = m_resDensity;
 
-  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -274,21 +274,21 @@ void SinglePhaseWell::InitializeWells( DomainPartition * const domain )
 
 void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const dt,
-                                         DomainPartition const * const domain,
-                                         DofManager const * const dofManager,
-                                         ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                         ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+                                         DomainPartition const & domain,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
   {
     // get a reference to the degree-of-freedom numbers
-    string const wellDofKey = dofManager->getKey( WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< localIndex const > const & nextWellElemIndex =
@@ -301,26 +301,26 @@ void SinglePhaseWell::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString );
 
     FluxKernel::Launch< serialPolicy >( subRegion.size(),
-                                        dofManager->rankOffset(),
+                                        dofManager.rankOffset(),
                                         wellElemDofNumber,
                                         nextWellElemIndex,
                                         connRate,
                                         dConnRate,
                                         dt,
-                                        m_localMatrix.toViewConstSizes(), // <------------------------
-                                        m_localRhs.toView() ); // <-------------------------
+                                        localMatrix,
+                                        localRhs );
   } );
 }
 
 
-void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
-                                           ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                           ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+void SinglePhaseWell::FormControlEquation( DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
@@ -334,7 +334,7 @@ void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
     WellControls const & wellControls = GetWellControls( subRegion );
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager->getKey( WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -351,27 +351,27 @@ void SinglePhaseWell::FormControlEquation( DomainPartition const * const domain,
     // get the index of the element where the control is enforced
     localIndex const iwelemControl = wellControls.GetReferenceWellElementIndex();
 
-    ControlEquationHelper::ComputeJacobianEntry( dofManager->rankOffset(),
+    ControlEquationHelper::ComputeJacobianEntry( dofManager.rankOffset(),
                                                  wellControls,
                                                  wellElemDofNumber[iwelemControl],
                                                  wellElemPressure[iwelemControl],
                                                  dWellElemPressure[iwelemControl],
                                                  connRate[iwelemControl],
                                                  dConnRate[iwelemControl],
-                                                 m_localMatrix.toViewConstSizes(), // <-----------------------
-                                                 m_localRhs.toView() ); // <-----------------------
+                                                 localMatrix,
+                                                 localRhs );
   } );
 }
 
 
-void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domain,
-                                             DofManager const * const dofManager,
-                                             ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                             ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+void SinglePhaseWell::FormPressureRelations( DomainPartition const & domain,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion const & subRegion )
@@ -380,7 +380,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
     WellControls const & wellControls = GetWellControls( subRegion );
 
     // get the degrees of freedom numbers, depth, next well elem index
-    string const wellDofKey = dofManager->getKey( WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< real64 const > const & wellElemGravCoef =
@@ -400,7 +400,7 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
     arrayView2d< real64 const > const & dWellElemDensity_dPres = fluid.dDensity_dPressure();
 
     PressureRelationKernel::Launch< serialPolicy >( subRegion.size(),
-                                                    dofManager->rankOffset(),
+                                                    dofManager.rankOffset(),
                                                     wellElemDofNumber,
                                                     wellElemGravCoef,
                                                     nextWellElemIndex,
@@ -409,27 +409,27 @@ void SinglePhaseWell::FormPressureRelations( DomainPartition const * const domai
                                                     wellElemDensity,
                                                     dWellElemDensity_dPres,
                                                     wellControls.GetTargetBHP(),
-                                                    m_localMatrix.toViewConstSizes(), // <--------------------
-                                                    m_localRhs.toView() ); // <--------------------
+                                                    localMatrix,
+                                                    localRhs );
   } );
 }
 
 void SinglePhaseWell::AssembleVolumeBalanceTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const GEOSX_UNUSED_PARAM( dt ),
-                                                  DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
-                                                  DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-                                                  ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                                  ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+                                                  DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
+                                                  DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                  CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                                  arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
   // not implemented for single phase flow
 }
 
 
-void SinglePhaseWell::CheckWellControlSwitch( DomainPartition * const domain )
+void SinglePhaseWell::CheckWellControlSwitch( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -593,13 +593,13 @@ void SinglePhaseWell::ComputePerforationRates( WellElementSubRegion & subRegion,
 
 
 real64
-SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
+SinglePhaseWell::CalculateResidualNorm( DomainPartition const & domain,
                                         DofManager const & dofManager,
-                                        ParallelVector const & GEOSX_UNUSED_PARAM( rhs ) )
+                                        arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   real64 localResidualNorm = 0;
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
@@ -615,7 +615,7 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
     SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
     arrayView2d< real64 const > const & wellElemDensity = fluid.density();
 
-    ResidualNormKernel::Launch< serialPolicy, serialReduce >( m_localRhs.toViewConst(), // <------------------------
+    ResidualNormKernel::Launch< serialPolicy, serialReduce >( localRhs,
                                                               dofManager.rankOffset(),
                                                               wellElemDofNumber,
                                                               wellElemGhostRank,
@@ -629,14 +629,14 @@ SinglePhaseWell::CalculateResidualNorm( DomainPartition const * const domain,
   return sqrt( MpiWrapper::Sum( localResidualNorm, MPI_COMM_GEOSX ) );
 }
 
-bool SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
+bool SinglePhaseWell::CheckSystemSolution( DomainPartition const & domain,
                                            DofManager const & dofManager,
-                                           ParallelVector const & GEOSX_UNUSED_PARAM( solution ),
+                                           arrayView1d< real64 const > const & localSolution,
                                            real64 const scalingFactor )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex localCheck = 1;
 
@@ -659,7 +659,7 @@ bool SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
     // here we can reuse the flow solver kernel checking that pressures are positive
     localIndex const subRegionSolutionCheck =
       SinglePhaseWellKernels::SolutionCheckKernel::Launch< serialPolicy,
-                                                           serialReduce >( m_localSolution.toViewConst(), // <--------------------
+                                                           serialReduce >( localSolution,
                                                                            dofManager.rankOffset(),
                                                                            wellElemDofNumber,
                                                                            wellElemGhostRank,
@@ -678,17 +678,17 @@ bool SinglePhaseWell::CheckSystemSolution( DomainPartition const * const domain,
 
 void
 SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
-                                      ParallelVector const & GEOSX_UNUSED_PARAM( solution ),
+                                      arrayView1d< real64 const > const & localSolution,
                                       real64 const scalingFactor,
-                                      DomainPartition * const domain )
+                                      DomainPartition & domain )
 {
-  dofManager.addVectorToField( m_localSolution.toViewConst(), // <----------------------------
+  dofManager.addVectorToField( localSolution,
                                WellElementDofName(),
                                viewKeyStruct::deltaPressureString,
                                scalingFactor,
                                0, 1 );
 
-  dofManager.addVectorToField( m_localSolution.toViewConst(), // <----------------------------
+  dofManager.addVectorToField( localSolution,
                                WellElementDofName(),
                                viewKeyStruct::deltaConnRateString,
                                scalingFactor,
@@ -698,17 +698,17 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaConnRateString );
   CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain->getNeighbors() );
+                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                         domain.getNeighbors() );
 
   // update properties
-  UpdateStateAll( *domain );
+  UpdateStateAll( domain );
 }
 
-void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
 
-  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
@@ -727,15 +727,15 @@ void SinglePhaseWell::ResetStateToBeginningOfStep( DomainPartition * const domai
   } );
 
   // call constitutive models
-  UpdateStateAll( *domain );
+  UpdateStateAll( domain );
 }
 
 
-void SinglePhaseWell::ResetViews( DomainPartition * const domain )
+void SinglePhaseWell::ResetViews( DomainPartition & domain )
 {
   WellSolverBase::ResetViews( domain );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager & elemManager = *mesh.getElemManager();
 
   SinglePhaseBase & flowSolver = *getParent()->GetGroup< SinglePhaseBase >( GetFlowSolverName() );
@@ -771,13 +771,13 @@ void SinglePhaseWell::ResetViews( DomainPartition * const domain )
 }
 
 void SinglePhaseWell::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                            DomainPartition * const domain )
+                                            real64 const & GEOSX_UNUSED_PARAM( real64 const & dt ),
+                                            DomainPartition & domain )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
     // get a reference to the primary variables on well elements
     arrayView1d< real64 > const & wellElemPressure =

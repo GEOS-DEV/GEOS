@@ -68,7 +68,7 @@ void DofManager::clear()
   m_reordered = false;
 }
 
-void DofManager::setMesh( DomainPartition * const domain,
+void DofManager::setMesh( DomainPartition & domain,
                           localIndex const meshLevelIndex,
                           localIndex const meshBodyIndex )
 {
@@ -78,7 +78,7 @@ void DofManager::setMesh( DomainPartition * const domain,
     // Domain is changed! Delete old data structure and create new
     clear();
   }
-  m_domain = domain;
+  m_domain = &domain;
   m_mesh = m_domain->getMeshBody( meshBodyIndex )->getMeshLevel( meshLevelIndex );
 }
 
@@ -97,7 +97,7 @@ bool DofManager::fieldExists( string const & name ) const
   return it != m_fields.end();
 }
 
-string DofManager::getKey( string const & fieldName ) const
+string const & DofManager::getKey( string const & fieldName ) const
 {
   return m_fields[getFieldIndex( fieldName )].key;
 }
@@ -549,6 +549,8 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
   FieldDescription const & colField = m_fields[colFieldIndex];
 
   Connector conn = m_coupling[rowFieldIndex][colFieldIndex].connector;
+
+  // Special treatment for stencil-based sparsity
   if( rowFieldIndex == colFieldIndex && conn == Connector::Stencil )
   {
     setSparsityPatternFromStencil( pattern, rowFieldIndex );
@@ -745,6 +747,155 @@ void DofManager::setSparsityPatternFromStencil( SparsityPattern< globalIndex > &
   } );
 }
 
+namespace
+{
+
+template< int N >
+GEOSX_HOST_DEVICE inline
+localIndex
+getNeighborNodes( localIndex (& neighborNodes )[N],
+                  arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes,
+                  arraySlice1d< localIndex const > const nodeRegions,
+                  arraySlice1d< localIndex const > const nodeSubRegions,
+                  arraySlice1d< localIndex const > const nodeElems )
+{
+  localIndex numNeighbors = 0;
+  for( localIndex localElem = 0; localElem < nodeRegions.size(); ++localElem )
+  {
+    localIndex const er = nodeRegions[localElem];
+    localIndex const esr = nodeSubRegions[localElem];
+    localIndex const k = nodeElems[localElem];
+    for( localIndex localNode = 0; localNode < elemsToNodes[er][esr].size( 1 ); ++localNode )
+    {
+      neighborNodes[numNeighbors++] = elemsToNodes[er][esr]( k, localNode );
+    }
+  }
+
+  GEOSX_ASSERT_GE( N, numNeighbors );
+  return LvArray::sortedArrayManipulation::makeSortedUnique( neighborNodes, neighborNodes + numNeighbors );
+}
+
+} // namespace
+
+template< int DIMS_PER_DOF >
+void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                                                  localIndex const fieldIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldDescription const & field = m_fields[fieldIndex];
+
+  //constexpr int MAX_ELEMS_PER_NODE = 8;
+  //constexpr int MAX_NODES_PER_ELEM = 8;
+  //constexpr int MAX_NODE_NEIGHBORS = 27;
+
+  ElementRegionManager const & elemManager = *m_mesh->getElemManager();
+  NodeManager const & nodeManager = *m_mesh->getNodeManager();
+
+  array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodesArray( elemManager.numRegions() );
+  elemManager.forElementRegionsComplete< CellElementRegion >( field.regions,
+                                                              [&] ( localIndex, localIndex const er, CellElementRegion const & region )
+  {
+    elemsToNodesArray[ er ].resize( region.numSubRegions() );
+
+    region.forElementSubRegionsIndex< CellElementSubRegion >( [&] ( localIndex const esr, CellElementSubRegion const & subRegion )
+    {
+      elemsToNodesArray[ er ][ esr ] = subRegion.nodeList().toViewConst();
+    } );
+  } );
+
+  arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes = elemsToNodesArray.toViewConst();
+  ArrayOfArraysView< localIndex const > const & nodesToRegions = nodeManager.elementRegionList();
+  ArrayOfArraysView< localIndex const > const & nodesToSubRegions = nodeManager.elementSubRegionList();
+  ArrayOfArraysView< localIndex const > const & nodesToElems = nodeManager.elementList();
+  arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
+
+  localIndex const numNodes = nodesToElems.size();
+  localIndex const localDofs = numLocalDofs();
+  localIndex const globalDofs = numGlobalDofs();
+  localIndex const offset = rankOffset();
+
+  arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( field.key );
+
+  {
+    GEOSX_MARK_FUNCTION_TAG( resizing );
+
+    std::vector< localIndex > nnzPerRow( localDofs );
+    forAll< parallelHostPolicy >( numNodes,
+                                  [=, &nnzPerRow] ( localIndex const nodeID )
+    {
+      if( nodeGhostRank[ nodeID ] >= 0 )
+      {
+        return;
+      }
+
+      int constexpr MAX_ELEMS_PER_NODE = 8;
+      int constexpr MAX_NODES_PER_ELEM = 8;
+      int constexpr MAX_NODE_NEIGHBORS = MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM * 2;
+
+      localIndex neighborNodes[ MAX_NODE_NEIGHBORS ];
+      localIndex const numNeighbors = getNeighborNodes( neighborNodes,
+                                                        elemsToNodes,
+                                                        nodesToRegions[nodeID],
+                                                        nodesToSubRegions[nodeID],
+                                                        nodesToElems[nodeID] );
+      localIndex const nodeRow = dofIndex[ nodeID ] - offset;
+      for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
+      {
+        nnzPerRow[ nodeRow + dim ] = DIMS_PER_DOF * numNeighbors;
+      }
+    } );
+
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( localDofs, globalDofs, nnzPerRow.data() );
+  }
+
+  {
+    GEOSX_MARK_FUNCTION_TAG( inserting );
+
+    LvArray::SparsityPatternView< globalIndex, localIndex const > sparsityView = pattern.toView();
+    forAll< parallelHostPolicy >( numNodes,
+                                  [=] ( localIndex const nodeID )
+    {
+      if( nodeGhostRank[ nodeID ] >= 0 )
+      {
+        return;
+      }
+
+      int constexpr MAX_ELEMS_PER_NODE = 8;
+      int constexpr MAX_NODES_PER_ELEM = 8;
+      int constexpr MAX_NODE_NEIGHBORS = MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM * 2;
+
+      localIndex neighborNodes[ MAX_NODE_NEIGHBORS ];
+      localIndex const numNeighbors = getNeighborNodes( neighborNodes,
+                                                        elemsToNodes,
+                                                        nodesToRegions[nodeID],
+                                                        nodesToSubRegions[nodeID],
+                                                        nodesToElems[nodeID] );
+
+      GEOSX_ASSERT_GE( MAX_NODE_NEIGHBORS, numNeighbors );
+
+      globalIndex dofNumbers[ DIMS_PER_DOF * MAX_NODE_NEIGHBORS ];
+      for( localIndex i = 0; i < numNeighbors; ++i )
+      {
+        localIndex const nodeDof = dofIndex[ neighborNodes[ i ] ];
+        for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
+        {
+          dofNumbers[ DIMS_PER_DOF * i + dim ] = nodeDof + dim;
+        }
+      }
+
+      LvArray::sortedArrayManipulation::makeSorted( dofNumbers, dofNumbers + DIMS_PER_DOF * numNeighbors );
+
+      localIndex const nodeRow = dofIndex[ nodeID ] - offset;
+      for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
+      {
+        GEOSX_ASSERT_EQ( DIMS_PER_DOF * numNeighbors, sparsityView.nonZeroCapacity( nodeRow ) );
+        sparsityView.insertNonZeros( nodeRow + dim, dofNumbers, dofNumbers + DIMS_PER_DOF * numNeighbors );
+      }
+    } );
+  }
+}
+
 void DofManager::setSparsityPatternOneBlock( SparsityPattern< globalIndex > & pattern,
                                              localIndex const rowFieldIndex,
                                              localIndex const colFieldIndex ) const
@@ -756,11 +907,35 @@ void DofManager::setSparsityPatternOneBlock( SparsityPattern< globalIndex > & pa
   FieldDescription const & colField = m_fields[colFieldIndex];
 
   Connector conn = m_coupling[rowFieldIndex][colFieldIndex].connector;
+
+  // Special treatment for stencil-based sparsity
   if( rowFieldIndex == colFieldIndex && conn == Connector::Stencil )
   {
     setSparsityPatternFromStencil( pattern, rowFieldIndex );
     return;
   }
+
+  // Special treatment for scalar/vector FEM-style sparsity
+  // TODO: separate counting/resizing from filling in order to enable this in coupled patterns
+#if 0 // uncomment to re-enable faster sparsity construction algorithm for FEM single-physics
+  if( m_fields.size() == 1 && rowFieldIndex == colFieldIndex &&
+      rowField.location == Location::Node && conn == Connector::Elem )
+  {
+    switch( rowField.numComponents )
+    {
+      case 1:
+      {
+        setFiniteElementSparsityPattern< 1 >( pattern, rowFieldIndex );
+        return;
+      }
+      case 3:
+      {
+        setFiniteElementSparsityPattern< 3 >( pattern, rowFieldIndex );
+        return;
+      }
+    }
+  }
+#endif
 
   SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
@@ -1447,18 +1622,17 @@ void DofManager::addCoupling( string const & rowFieldName,
 }
 
 void DofManager::addCoupling( string const & fieldName,
-                              FluxApproximationBase const * stencils )
+                              FluxApproximationBase const & stencils )
 {
   localIndex const fieldIndex = getFieldIndex( fieldName );
   FieldDescription const & field = m_fields[fieldIndex];
 
   GEOSX_ERROR_IF( field.location != Location::Elem, "Field must be supported on elements in order to use stencil sparsity" );
-  GEOSX_ERROR_IF( stencils == nullptr, "Must pass a valid pointer to a flux approximation object" );
 
   CouplingDescription & coupling = m_coupling[fieldIndex][fieldIndex];
   coupling.connector = Connector::Stencil;
   coupling.regions = field.regions;
-  coupling.stencils = stencils;
+  coupling.stencils = &stencils;
 }
 
 void DofManager::reorderByRank()

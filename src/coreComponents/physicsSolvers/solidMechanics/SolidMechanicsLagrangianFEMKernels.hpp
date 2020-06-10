@@ -335,7 +335,7 @@ struct ExplicitKernel
 
 };
 
-struct CRSImplicitKernel
+struct ImplicitKernel
 {
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
@@ -364,8 +364,7 @@ struct CRSImplicitKernel
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
           real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
           R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
-          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
+          CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
           arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( rhs ) )
   {
     GEOSX_ERROR( "SolidMechanicsLagrangianFEM::CRSImplicitKernel::Launch() not implemented" );

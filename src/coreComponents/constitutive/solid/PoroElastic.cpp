@@ -116,6 +116,30 @@ void PoroElastic< BASE >::AllocateConstitutiveData( dataRepository::Group * cons
 
 }
 
+template< typename BASE >
+void PoroElastic< BASE >::StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+                                                    arrayView1d< real64 const > const & dPres )
+{
+  GEOSX_ASSERT_EQ( pres.size(), m_poreVolumeMultiplier.size() );
+  GEOSX_ASSERT_EQ( dPres.size(), m_poreVolumeMultiplier.size() );
+
+  ExponentialRelation< real64, ExponentApproximationType::Linear > const relation = m_poreVolumeRelation;
+
+  localIndex const numElems = m_poreVolumeMultiplier.size( 0 );
+  localIndex const numQuad  = m_poreVolumeMultiplier.size( 1 );
+
+  arrayView2d< real64 > const & pvmult = m_poreVolumeMultiplier;
+  arrayView2d< real64 > const & dPVMult_dPres = m_dPVMult_dPressure;
+
+  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      relation.Compute( pres[k] + dPres[k], pvmult[k][q], dPVMult_dPres[k][q] );
+    }
+  } );
+}
+
 typedef PoroElastic< LinearElasticIsotropic > PoroLinearElasticIsotropic;
 typedef PoroElastic< LinearElasticAnisotropic > PoroLinearElasticAnisotropic;
 typedef PoroElastic< LinearElasticTransverseIsotropic > PoroLinearElasticTransverseIsotropic;

@@ -132,6 +132,7 @@ void setupProblemForTetra( array1d< localIndex > & elemToFaces,
 
 void setupMatrixAndRhsForTetra( globalIndex & elemDofNumber,
                                 array1d< globalIndex > & faceDofNumber,
+                                array1d< integer > & faceGhostRank,
                                 CRSMatrix< real64, globalIndex > & matrix,
                                 CRSMatrix< real64, globalIndex > & matrixPerturb,
                                 CRSMatrix< real64, globalIndex > & matrixFD,
@@ -144,6 +145,9 @@ void setupMatrixAndRhsForTetra( globalIndex & elemDofNumber,
   faceDofNumber( 1 ) = 2;
   faceDofNumber( 2 ) = 3;
   faceDofNumber( 3 ) = 4;
+
+  faceGhostRank.resize( NF );
+  faceGhostRank = -1;
 
   matrix.resize( NF+1, NF+1, NF+1 );
   matrixPerturb.resize( NF+1, NF+1, NF+1 );
@@ -198,6 +202,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   globalIndex elemDofNumber;
   array1d< globalIndex > faceDofNumber;
+  array1d< integer > faceGhostRank;
   CRSMatrix< real64, globalIndex > jacobian;
   CRSMatrix< real64, globalIndex > jacobianPerturb;
   CRSMatrix< real64, globalIndex > jacobianFD;
@@ -206,6 +211,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
 
   setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
+                             faceGhostRank,
                              jacobian,
                              jacobianPerturb,
                              jacobianFD,
@@ -239,6 +245,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   rhs = 0;
 
   AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
                                                     0,
@@ -278,6 +285,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
   rhsPerturb = 0.0;
 
   AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber,
                                                     0,
@@ -329,6 +337,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleConstraints )
     rhsPerturb = 0.0;
 
     AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                      faceGhostRank,
                                                       elemToFaces,
                                                       elemDofNumber,
                                                       0,
@@ -387,6 +396,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   globalIndex elemDofNumber;
   array1d< globalIndex > faceDofNumber;
+  array1d< integer > faceGhostRank;
   CRSMatrix< real64, globalIndex > jacobian;
   CRSMatrix< real64, globalIndex > jacobianPerturb;
   CRSMatrix< real64, globalIndex > jacobianFD;
@@ -395,6 +405,7 @@ TEST( SinglePhaseHybridFVMKernels, assembleOneSidedMassFluxes )
 
   setupMatrixAndRhsForTetra( elemDofNumber,
                              faceDofNumber,
+                             faceGhostRank,
                              jacobian,
                              jacobianPerturb,
                              jacobianFD,

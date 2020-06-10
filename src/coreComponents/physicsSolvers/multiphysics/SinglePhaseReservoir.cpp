@@ -42,13 +42,13 @@ SinglePhaseReservoir::SinglePhaseReservoir( const std::string & name,
 SinglePhaseReservoir::~SinglePhaseReservoir()
 {}
 
-void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
-                                                       DofManager & dofManager,
-                                                       ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ) )
+void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition const & domain,
+                                                       DofManager const & dofManager,
+                                                       SparsityPatternView< globalIndex > const & pattern ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
@@ -61,7 +61,9 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
   localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
-    elemManager.ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion const & subRegion )
@@ -100,32 +102,28 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
       localIndex const ei = resElementIndex[iperf];
       localIndex const iwelem = perfWellElemIndex[iperf];
 
-      eqnRowIndexRes = resDofNumber[er][esr][ei] - dofManager.rankOffset();
+      eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
       dofColIndexRes = resDofNumber[er][esr][ei];
 
       for( localIndex idof = 0; idof < wellNDOF; ++idof )
       {
-        eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - dofManager.rankOffset();
+        eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
         dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
       }
 
-      if( eqnRowIndexRes >= 0 && eqnRowIndexRes < m_localMatrix.numRows() )
+      if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
       {
         for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
         {
-          m_localMatrix.insertNonZero( eqnRowIndexRes,
-                                       dofColIndicesWell[j],
-                                       1 );
+          pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
         }
       }
 
       for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
       {
-        if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < m_localMatrix.numRows() )
+        if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
         {
-          m_localMatrix.insertNonZero( eqnRowIndicesWell[i],
-                                       dofColIndexRes,
-                                       1 );
+          pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
         }
       }
     } );
@@ -134,28 +132,29 @@ void SinglePhaseReservoir::AddCouplingSparsityPattern( DomainPartition * const d
 
 void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
-                                                  DomainPartition * const domain,
-                                                  DofManager const * const dofManager,
-                                                  ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                                  ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+                                                  DomainPartition const & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager & elemManager = *meshLevel.getElemManager();
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
-  string const resDofKey  = dofManager->getKey( m_wellSolver->ResElementDofName() );
+  string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > resDofNumberAccessor =
-    elemManager.ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst resDofNumber =
     resDofNumberAccessor.toViewConst();
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
-                                                               WellElementSubRegion & subRegion )
+                                                               WellElementSubRegion const & subRegion )
   {
     PerforationData const * const perforationData = subRegion.GetPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager->getKey( m_wellSolver->WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -176,16 +175,11 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
     arrayView1d< localIndex const > const & resElementIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
-    /////////////////////////////////////////////////////////////
-    CRSMatrixView< real64, globalIndex const > const & localMatrix = m_localMatrix.toViewConstSizes();
-    arrayView1d< real64 > const & localRhs = m_localRhs.toView();
-    /////////////////////////////////////////////////////////////
-
     // loop over the perforations and add the rates to the residual and jacobian
     forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
     {
       // local working variables and arrays
-      stackArray1d< globalIndex, 2 > eqnRowIndices( 2 );
+      stackArray1d< localIndex, 2 >  eqnRowIndices( 2 );
       stackArray1d< globalIndex, 2 > dofColIndices( 2 );
 
       stackArray1d< real64, 2 > localPerf( 2 );
@@ -207,14 +201,13 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
       globalIndex const elemOffset = wellElemDofNumber[iwelem];
 
       // row index on reservoir side
-      eqnRowIndices[WellSolverBase::SubRegionTag::RES] = resDofNumber[er][esr][ei] - dofManager->rankOffset();
+      eqnRowIndices[WellSolverBase::SubRegionTag::RES] = resDofNumber[er][esr][ei] - rankOffset;
       // column index on reservoir side
       dofColIndices[WellSolverBase::SubRegionTag::RES] = resDofNumber[er][esr][ei];
 
       // row index on well side
-      eqnRowIndices[WellSolverBase::SubRegionTag::WELL] = elemOffset
-                                                          + SinglePhaseWell::RowOffset::MASSBAL
-                                                          - dofManager->rankOffset();
+      eqnRowIndices[WellSolverBase::SubRegionTag::WELL] = LvArray::integerConversion< localIndex >( elemOffset - rankOffset )
+                                                          + SinglePhaseWell::RowOffset::MASSBAL;
       // column index on well side
       dofColIndices[WellSolverBase::SubRegionTag::WELL] = elemOffset
                                                           + SinglePhaseWell::ColOffset::DPRES;

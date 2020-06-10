@@ -43,14 +43,14 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::s
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
 
-void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartition * const domain,
-                                                                   DofManager & dofManager,
-                                                                   ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ) )
+void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartition const & domain,
+                                                                   DofManager const & dofManager,
+                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   // TODO: remove this and just call SolverBase::SetupSystem when DofManager can handle the coupling
 
@@ -62,16 +62,19 @@ void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartiti
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
 
+  string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
   string const resDofKey  = dofManager.getKey( m_wellSolver->ResElementDofName() );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
 
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resDofNumber =
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
   {
     PerforationData const * const perforationData = subRegion.GetPerforationData();
 
     // get the well degrees of freedom and ghosting info
-    string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -105,38 +108,34 @@ void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartiti
 
       for( localIndex idof = 0; idof < resNDOF; ++idof )
       {
-        eqnRowIndicesRes[idof] = resDofNumber[er][esr][ei] + idof - dofManager.rankOffset();
+        eqnRowIndicesRes[idof] = resDofNumber[er][esr][ei] + idof - rankOffset;
         dofColIndicesRes[idof] = resDofNumber[er][esr][ei] + idof;
       }
 
       for( localIndex idof = 0; idof < wellNDOF; ++idof )
       {
-        eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - dofManager.rankOffset();
+        eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
         dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
       }
 
       for( localIndex i = 0; i < eqnRowIndicesRes.size(); ++i )
       {
-        if( eqnRowIndicesRes[i] >= 0 && eqnRowIndicesRes[i] < m_localMatrix.numRows() )
+        if( eqnRowIndicesRes[i] >= 0 && eqnRowIndicesRes[i] < pattern.numRows() )
         {
           for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
           {
-            m_localMatrix.insertNonZero( eqnRowIndicesRes[i],
-                                         dofColIndicesWell[j],
-                                         1 );
+            pattern.insertNonZero( eqnRowIndicesRes[i], dofColIndicesWell[j] );
           }
         }
       }
 
       for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
       {
-        if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < m_localMatrix.numRows() )
+        if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
         {
           for( localIndex j = 0; j < dofColIndicesRes.size(); ++j )
           {
-            m_localMatrix.insertNonZero( eqnRowIndicesWell[i],
-                                         dofColIndicesRes[j],
-                                         1 );
+            pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndicesRes[j] );
           }
         }
       }
@@ -146,13 +145,13 @@ void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartiti
 
 void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                               real64 const dt,
-                                                              DomainPartition * const domain,
-                                                              DofManager const * const dofManager,
-                                                              ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-                                                              ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+                                                              DomainPartition const & domain,
+                                                              DofManager const & dofManager,
+                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel * const meshLevel = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = meshLevel->getElemManager();
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumDof  = maxNumComp + 1;
@@ -160,22 +159,20 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
   localIndex const NC      = m_wellSolver->NumFluidComponents();
   localIndex const resNDOF = m_wellSolver->NumDofPerResElement();
 
-  string const resDofKey  = dofManager->getKey( m_wellSolver->ResElementDofName() );
+  string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > resDofNumberAccessor =
-    elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( resDofKey );
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >::ViewTypeConst resDofNumber =
     resDofNumberAccessor.toViewConst();
+  globalIndex const rankOffset = dofManager.rankOffset();
 
-  CRSMatrixView< real64, globalIndex const > const & localMatrix = m_localMatrix.toViewConstSizes();
-  arrayView1d< real64 > const & localRhs = m_localRhs.toView();
-
-  elemManager->forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
   {
 
     PerforationData const * const perforationData = subRegion.GetPerforationData();
 
     // get the degrees of freedom
-    string const wellDofKey = dofManager->getKey( m_wellSolver->WellElementDofName() );
+    string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
 
@@ -202,11 +199,11 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
     forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
     {
       // local working variables and arrays
-      stackArray1d< long long, 2 * maxNumComp > eqnRowIndices( 2 * NC );
-      stackArray1d< long long, 2 * maxNumDof > dofColIndices( 2 * resNDOF );
+      stackArray1d< localIndex, 2 * maxNumComp > eqnRowIndices( 2 * NC );
+      stackArray1d< globalIndex, 2 * maxNumDof > dofColIndices( 2 * resNDOF );
 
-      stackArray1d< double, 2 * maxNumComp > localPerf( 2 * NC );
-      stackArray2d< double, 2 * maxNumComp * 2 * maxNumDof > localPerfJacobian( 2 * NC, 2 * resNDOF );
+      stackArray1d< real64, 2 * maxNumComp > localPerf( 2 * NC );
+      stackArray2d< real64, 2 * maxNumComp * 2 * maxNumDof > localPerfJacobian( 2 * NC, 2 * resNDOF );
 
       // local working variables and arrays
       eqnRowIndices = -1;
@@ -227,9 +224,10 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
 
       for( localIndex ic = 0; ic < NC; ++ic )
       {
-        eqnRowIndices[WellSolverBase::SubRegionTag::RES * NC + ic] = resOffset + ic - dofManager->rankOffset();
-        eqnRowIndices[WellSolverBase::SubRegionTag::WELL * NC + ic] =
-          wellElemOffset + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic - dofManager->rankOffset();
+        eqnRowIndices[WellSolverBase::SubRegionTag::RES * NC + ic] = LvArray::integerConversion< localIndex >( resOffset - rankOffset )
+                                                                     + ic;
+        eqnRowIndices[WellSolverBase::SubRegionTag::WELL * NC + ic] = LvArray::integerConversion< localIndex >( wellElemOffset - rankOffset )
+                                                                      + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic;
       }
       for( localIndex jdof = 0; jdof < resNDOF; ++jdof )
       {
@@ -269,7 +267,7 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
         {
           localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndices[i],
                                                                     dofColIndices.data(),
-                                                                    localPerfJacobian.data() + 2 * resNDOF * i,
+                                                                    localPerfJacobian[i].dataIfContiguous(),
                                                                     2 * resNDOF );
           atomicAdd( serialAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
         }

@@ -51,7 +51,8 @@ using namespace constitutive;
 LaplaceFEM::LaplaceFEM( const std::string & name,
                         Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_fieldName( "primaryField" ),
+  m_timeIntegrationOption( timeIntegrationOption::ImplicitTransient )
 {
   registerWrapper< string >( laplaceFEMViewKeys.timeIntegrationOption.Key())->
     setInputFlag( InputFlags::REQUIRED )->
@@ -113,7 +114,7 @@ void LaplaceFEM::PostProcessInput()
 real64 LaplaceFEM::SolverStep( real64 const & time_n,
                                real64 const & dt,
                                const int cycleNumber,
-                               DomainPartition * domain )
+                               DomainPartition & domain )
 {
   real64 dtReturn = dt;
   if( m_timeIntegrationOption == timeIntegrationOption::ExplicitTransient )
@@ -123,54 +124,25 @@ real64 LaplaceFEM::SolverStep( real64 const & time_n,
   else if( m_timeIntegrationOption == timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+    dtReturn = this->LinearImplicitStep( time_n, dt, cycleNumber, domain );
   }
   return dtReturn;
 }
 
-real64 LaplaceFEM::ExplicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                 real64 const & dt,
-                                 const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                 DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
-{
-  return dt;
-}
-
-void LaplaceFEM::sparsityGeneration( DomainPartition const & domain, DofManager const & dofManager )
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel const & meshLevel = *( domain.getMeshBody( 0 )->getMeshLevel( 0 ) );
-  NodeManager const & nodeManager = *meshLevel.getNodeManager();
-  ElementRegionManager const & elementRegionManager = *meshLevel.getElemManager();
-
-  dofManager.setFiniteElementSparsityPattern< 1 >( m_localMatrix,
-                                                   elementRegionManager,
-                                                   nodeManager,
-                                                   targetRegionNames(),
-                                                   m_fieldName );
-
-  m_localRhs.resize( m_localMatrix.numRows() );
-}
-
 void LaplaceFEM::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                    DomainPartition * const domain,
-                                    DofManager & dofManager,
-                                    ParallelMatrix & matrix,
-                                    ParallelVector & rhs,
-                                    ParallelVector & solution )
+                                    DomainPartition & domain )
 {
   // Computation of the sparsity pattern
-  SetupSystem( domain, dofManager, matrix, rhs, solution );
+  SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 }
 
 void LaplaceFEM::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                        real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                       DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                       DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {}
 
-void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+void LaplaceFEM::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                             DofManager & dofManager ) const
 {
   dofManager.addField( m_fieldName,
@@ -181,58 +153,32 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( do
                           DofManager::Connector::Elem );
 }
 
-void LaplaceFEM::SetupSystem( DomainPartition * const domain,
-                              DofManager & dofManager,
-                              ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                              ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                              ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  dofManager.setMesh( domain, 0, 0 );
-
-  SetupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalDof = dofManager.numLocalDofs();
-
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-
-  sparsityGeneration( *domain, dofManager );
-}
-
 //START_SPHINX_INCLUDE_04
 void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
-                                 DomainPartition * const domain,
+                                 DomainPartition & domain,
                                  DofManager const & dofManager,
-                                 ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                 ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) )
 {
-  m_localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  m_localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
-
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  Group * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const *
-    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   arrayView1d< globalIndex const > const & dofIndex =
-    nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+    nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   // begin region loop
-  for( localIndex er=0; er<elemManager->numRegions(); ++er )
+  for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
+    ElementRegionBase const & elementRegion = *elemManager.GetRegion( er );
 
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+    FiniteElementDiscretization const & feDiscretization =
+      *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
-    elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
+    elementRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
     {
       arrayView3d< R1Tensor const > const &
       dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
@@ -243,7 +189,7 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
 
-      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+      localIndex const n_q_points = feDiscretization.m_finiteElement->n_quadrature_points();
 
       finiteElementLaunchDispatch< LaplaceFEMKernels::ImplicitKernel >( numNodesPerElement,
                                                                         n_q_points,
@@ -252,87 +198,42 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                                         elemNodes,
                                                                         dofIndex,
                                                                         dofManager.rankOffset(),
-                                                                        m_localMatrix.toViewConstSizes() );
+                                                                        localMatrix );
 
     } );
   }
 
   //END_SPHINX_INCLUDE_04
-
-  if( getLogLevel() == 2 )
-  {
-    // GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    // GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    // std::cout << m_crsMatrix.toViewConst();
-    // GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    // std::cout << m_rhsArray;
-  }
-
-  if( getLogLevel() >= 3 )
-  {
-    // integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-    // string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    // matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
-
-    // string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    // rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
-
-    // GEOSX_LOG_RANK_0( "After LaplaceFEM::AssembleSystem" );
-    // GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    // GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
 }
 
 void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
-                                      ParallelVector const & solution,
+                                      arrayView1d< real64 const > const & localSolution,
                                       real64 const scalingFactor,
-                                      DomainPartition * const domain )
+                                      DomainPartition & domain )
 {
-  dofManager.addVectorToField( solution, m_fieldName, m_fieldName, scalingFactor );
+  dofManager.addVectorToField( localSolution,
+                               m_fieldName,
+                               m_fieldName,
+                               scalingFactor );
 
   // Synchronize ghost nodes
   std::map< string, string_array > fieldNames;
   fieldNames["node"].push_back( m_fieldName );
 
-  CommunicationTools::
-    SynchronizeFields( fieldNames,
-                       domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-                       domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                         domain.getNeighbors(),
+                                         true );
 }
 
 void LaplaceFEM::ApplyBoundaryConditions( real64 const time_n,
                                           real64 const dt,
-                                          DomainPartition * const domain,
+                                          DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                          ParallelVector & GEOSX_UNUSED_PARAM( rhs ) )
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
 {
-  ApplyDirichletBC_implicit( time_n + dt, dofManager, *domain );
-
-  if( getLogLevel() == 2 )
-  {
-    // GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    // GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    // std::cout << matrix;
-    // GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    // std::cout << rhs;
-  }
-
-  if( getLogLevel() >= 3 )
-  {
-    // integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-    // string filename_mat = "matrix_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    // matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
-
-    // string filename_rhs = "rhs_bc_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    // rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
-
-    // GEOSX_LOG_RANK_0( "After LaplaceFEM::ApplyBoundaryConditions" );
-    // GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    // GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
+  ApplyDirichletBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
 }
 
 void LaplaceFEM::SolveSystem( DofManager const & dofManager,
@@ -340,21 +241,17 @@ void LaplaceFEM::SolveSystem( DofManager const & dofManager,
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  m_localSolution.resize( solution.localSize() );
-  solution.extract( m_localSolution );
 }
 
 void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             DofManager const & dofManager,
-                                            DomainPartition & domain )
+                                            DomainPartition & domain,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
 
@@ -374,10 +271,14 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                                                                                m_fieldName,
                                                                                                dofManager.getKey( m_fieldName ),
                                                                                                dofManager.rankOffset(),
-                                                                                               m_localMatrix.toViewConstSizes(),
-                                                                                               m_localRhs.toView() );
+                                                                                               localMatrix,
+                                                                                               localRhs );
   } );
 }
+
+void LaplaceFEM::ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+{}
+
 //START_SPHINX_INCLUDE_00
 REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, std::string const &, Group * const )
 //END_SPHINX_INCLUDE_00

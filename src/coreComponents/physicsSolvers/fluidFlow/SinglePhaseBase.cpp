@@ -26,7 +26,6 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-#include "managers/NumericalMethodsManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
@@ -126,6 +125,17 @@ void SinglePhaseBase::ValidateFluidModels( DomainPartition const & domain ) cons
   }
 }
 
+SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( ConstitutiveBase const & fluid ) const
+{
+  SingleFluidBase const & singleFluid = dynamicCast< SingleFluidBase const & >( fluid );
+  return { singleFluid.density(),
+           singleFluid.dDensity_dPressure(),
+           singleFluid.viscosity(),
+           singleFluid.dViscosity_dPressure(),
+           singleFluid.defaultDensity(),
+           singleFluid.defaultViscosity() };
+}
+
 void SinglePhaseBase::InitializePreSubGroups( Group * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
@@ -163,6 +173,31 @@ void SinglePhaseBase::UpdateSolidModel( Group & dataGroup, localIndex const targ
   solid.StateUpdateBatchPressure( pres, dPres );
 }
 
+void SinglePhaseBase::UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  // output
+
+  arrayView1d< real64 > const & mob =
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::mobilityString );
+
+  arrayView1d< real64 > const & dMob_dPres =
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
+
+  // input
+
+  ConstitutiveBase & fluid = GetConstitutiveModel( dataGroup, m_fluidModelNames[targetIndex] );
+  FluidPropViews fluidProps = getFluidProperties( fluid );
+
+  SinglePhaseBaseKernels::MobilityKernel::Launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                            fluidProps.dens,
+                                                                            fluidProps.dDens_dPres,
+                                                                            fluidProps.visc,
+                                                                            fluidProps.dVisc_dPres,
+                                                                            mob,
+                                                                            dMob_dPres );
+}
 
 void SinglePhaseBase::UpdateState( Group & dataGroup, localIndex const targetIndex ) const
 {
@@ -170,7 +205,7 @@ void SinglePhaseBase::UpdateState( Group & dataGroup, localIndex const targetInd
 
   UpdateFluidModel( dataGroup, targetIndex );
   UpdateSolidModel( dataGroup, targetIndex );
-  UpdateMobility< SingleFluidBase >( dataGroup, targetIndex );
+  UpdateMobility( dataGroup, targetIndex );
 }
 
 void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
@@ -180,66 +215,55 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
   DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::pressureString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
-  ResetViews( domain );
+  ResetViews( mesh );
 
   // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
   // They will be updated in ApplySystemSolution and ImplicitStepComplete, respectively
-  forTargetSubRegions( *mesh, [&]( localIndex const targetIndex,
-                                   ElementSubRegionBase & subRegion )
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
   {
-    SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-    ConstitutiveBase & solid = GetConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
+    ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
 
-    real64 const
-    defaultDensity = fluid.getWrapper< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString )->getDefaultValue();
+    real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
     subRegion.getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString )->setDefaultValue( defaultDensity );
 
     UpdateState( subRegion, targetIndex );
 
+    ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, m_solidModelNames[targetIndex] );
     arrayView1d< real64 const > const & poroRef = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePorosityString );
-    arrayView2d< real64 const > const & dens = fluid.density();
     arrayView2d< real64 const > const & pvmult =
       solid.getReference< array2d< real64 > >( ConstitutiveBase::viewKeyStruct::poreVolumeMultiplierString );
 
     arrayView1d< real64 > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-    arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
-    arrayView1d< real64 > const & poroOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
 
     if( pvmult.size() == poro.size() )
     {
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        densOld[ei] = dens[ei][0];
         poro[ei] = poroRef[ei] * pvmult[ei][0];
-        poroOld[ei] = poro[ei];
       } );
     }
     else
     {
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-      {
-        densOld[ei] = dens[ei][0];
-        poro[ei] = poroRef[ei];
-        poroOld[ei] = poro[ei];
-      } );
+      poro.setValues< parallelDevicePolicy<> >( poroRef );
     }
   } );
 
-  mesh->getElemManager()->forElementRegions< FaceElementRegion >( targetRegionNames(),
-                                                                  [&]( localIndex const targetIndex,
-                                                                       FaceElementRegion & region )
+  mesh.getElemManager()->forElementRegions< FaceElementRegion >( targetRegionNames(),
+                                                                 [&]( localIndex const targetIndex,
+                                                                      FaceElementRegion & region )
   {
     region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       ConstitutiveBase & fluid = GetConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
-      real64 const defaultDensity = fluid.getWrapper< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString )->getDefaultValue();
+      real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
 
       subRegion.getWrapper< real64_array >( viewKeyStruct::effectiveApertureString )->
         setApplyDefaultValue( region.getDefaultAperture() );
@@ -248,27 +272,26 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
         setApplyDefaultValue( defaultDensity * region.getDefaultAperture() );
     } );
   } );
+
+  BackupFields( mesh );
 }
 
 real64 SinglePhaseBase::SolverStep( real64 const & time_n,
                                     real64 const & dt,
                                     const int cycleNumber,
-                                    DomainPartition * domain )
+                                    DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   real64 dt_return;
 
   // setup dof numbers and linear system
-  if( !m_coupledWellsFlag )
-  {
-    SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
-  }
+  SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
-  ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  ImplicitStepSetup( time_n, dt, domain );
 
   // currently the only method is implicit time integration
-  dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -276,70 +299,25 @@ real64 SinglePhaseBase::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
-void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
-                                   DofManager & dofManager,
-                                   ParallelMatrix & matrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  SolverBase::SetupLocalSystem( domain,
-                                dofManager,
-                                m_localMatrix,
-                                m_localRhs,
-                                m_localSolution );
-
-  // TODO: can we make the matrix not lose its callback name after stealing?
-  m_localMatrix.setName( this->getName() + "/localMatrix" );
-  m_localRhs.setName( this->getName() + "/localRhs" );
-
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-  solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
-}
-
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                         DomainPartition * const domain,
-                                         DofManager & dofManager,
-                                         ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                         ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                         ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                         DomainPartition & domain )
 {
-  ResetViews( domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
-  string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
-  m_pressureDofIndex.clear();
-  m_pressureDofIndex = mesh.getElemManager()->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofKey );
-  m_pressureDofIndex.setName( getName() + "/accessors/pressureDofIndex" );
+  ResetViews( mesh );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView1d< real64 const > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-
     arrayView1d< real64 > const & dPres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
     arrayView1d< real64 > const & dVol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
-    arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
-    arrayView1d< real64 > const & poroOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
 
     dPres.setValues< parallelDevicePolicy<> >( 0.0 );
     dVol.setValues< parallelDevicePolicy<> >( 0.0 );
 
     // This should fix NaN density in newly created fracture elements
     UpdateState( subRegion, targetIndex );
-
-    SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-    arrayView2d< real64 const > const & dens = fluid.density();
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      densOld[ei] = dens[ei][0];
-      poroOld[ei] = poro[ei];
-    } );
   } );
 
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
@@ -354,15 +332,16 @@ void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
     UpdateState( subRegion, targetIndex );
   } );
 
+  BackupFields( mesh );
 }
 
 void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                             real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                            DomainPartition * const domain )
+                                            DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
@@ -408,40 +387,34 @@ void SinglePhaseBase::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
 
 void SinglePhaseBase::AssembleSystem( real64 const time_n,
                                       real64 const dt,
-                                      DomainPartition * const domain,
+                                      DomainPartition & domain,
                                       DofManager const & dofManager,
-                                      ParallelMatrix & matrix,
-                                      ParallelVector & rhs )
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( matrix )
-  GEOSX_UNUSED_VAR( rhs )
-
-  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
-
   if( m_poroElasticFlag )
   {
-    AssembleAccumulationTerms< true, parallelDevicePolicy<> >( *domain,
+    AssembleAccumulationTerms< true, parallelDevicePolicy<> >( domain,
                                                                dofManager,
-                                                               m_localMatrix.toViewConstSizes(),
-                                                               m_localRhs.toView() );
+                                                               localMatrix,
+                                                               localRhs );
   }
   else
   {
-    AssembleAccumulationTerms< false, parallelDevicePolicy<> >( *domain,
+    AssembleAccumulationTerms< false, parallelDevicePolicy<> >( domain,
                                                                 dofManager,
-                                                                m_localMatrix.toViewConstSizes(),
-                                                                m_localRhs.toView() );
+                                                                localMatrix,
+                                                                localRhs );
   }
 
   AssembleFluxTerms( time_n,
                      dt,
-                     *domain,
+                     domain,
                      dofManager,
-                     m_localMatrix.toViewConstSizes(),
-                     m_localRhs.toView() );
+                     localMatrix,
+                     localRhs );
 }
 
 template< bool ISPORO, typename POLICY >
@@ -475,9 +448,10 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView1d< real64 const > const & totalMeanStress =
     ISPORO ? subRegion.getReference< array1d< real64 > >( "totalMeanStress" ) : porosityOld;
 
-  SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, fluidModelNames()[targetIndex] );
-  arrayView2d< real64 const > const & density = fluid.density();
-  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
+  ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
+  FluidPropViews fluidProps = getFluidProperties( fluid );
+  arrayView2d< real64 const > const & density = fluidProps.dens;
+  arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
   ConstitutiveBase const & solid = GetConstitutiveModel( subRegion, solidModelNames()[targetIndex] );
   arrayView2d< real64 const > const & pvMult =
@@ -530,10 +504,10 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
   arrayView1d< real64 const > const & poroMult = subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString );
 
-
-  SingleFluidBase const & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
-  arrayView2d< real64 const > const & density = fluid.density();
-  arrayView2d< real64 const > const & dDens_dPres = fluid.dDensity_dPressure();
+  ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
+  FluidPropViews fluidProps = getFluidProperties( fluid );
+  arrayView2d< real64 const > const & density = fluidProps.dens;
+  arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
 #if !defined(ALLOW_CREATION_MASS)
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
@@ -583,18 +557,15 @@ void SinglePhaseBase::AssembleAccumulationTerms( DomainPartition & domain,
 
 void SinglePhaseBase::ApplyBoundaryConditions( real64 time_n,
                                                real64 dt,
-                                               DomainPartition * const domain,
+                                               DomainPartition & domain,
                                                DofManager const & dofManager,
-                                               ParallelMatrix & matrix,
-                                               ParallelVector & rhs )
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( matrix )
-  GEOSX_UNUSED_VAR( rhs )
-
-  ApplySourceFluxBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
-  ApplyDiricletBC( time_n, dt, *domain, dofManager, m_localMatrix.toViewConstSizes(), m_localRhs.toView() );
+  ApplySourceFluxBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  ApplyDiricletBC( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
@@ -704,21 +675,15 @@ void SinglePhaseBase::SolveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-
   rhs.scale( -1.0 );
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  m_localSolution.resize( solution.localSize() );
-  solution.extract( m_localSolution );
 }
 
-void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -732,11 +697,29 @@ void SinglePhaseBase::ResetStateToBeginningOfStep( DomainPartition * const domai
   } );
 }
 
-void SinglePhaseBase::ResetViews( DomainPartition * const domain )
+void SinglePhaseBase::BackupFields( MeshLevel & mesh ) const
 {
-  FlowSolverBase::ResetViews( domain );
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
+  {
+    ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, m_fluidModelNames[targetIndex] );
+    arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
 
-  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+    arrayView1d< real64 > const & poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
+    arrayView1d< real64 > const & densOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
+    arrayView1d< real64 > const & poroOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityOldString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      densOld[ei] = dens[ei][0];
+      poroOld[ei] = poro[ei];
+    } );
+  } );
+}
+
+void SinglePhaseBase::ResetViews( MeshLevel & mesh )
+{
+  FlowSolverBase::ResetViews( mesh );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   m_pressure.clear();

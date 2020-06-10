@@ -255,7 +255,7 @@ struct ExplicitKernel
 /**
  * @struct Structure to wrap templated function that implements the implicit time integration kernel.
  */
-struct CRSImplicitKernel
+struct ImplicitKernel
 {
 // #if defined(GEOSX_USE_CUDA)
   #define CALCFEMSHAPE
@@ -288,8 +288,7 @@ struct CRSImplicitKernel
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
           real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
           R1Tensor const & gravityVector,
-          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+          CRSMatrixView< real64, globalIndex const > const & matrix,
           arrayView1d< real64 > const & rhs )
   {
     GEOSX_MARK_FUNCTION_TAG( CRSMatrix );
@@ -312,7 +311,7 @@ struct CRSImplicitKernel
     auto const & detJ = _detJ;
   #endif
 
-    RAJA::ReduceMax< parallelDeviceReduce, double > maxForce( 0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > maxForce( 0 );
     RAJA::forall< parallelDevicePolicy< 32 > >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
                                                 [=] GEOSX_DEVICE ( localIndex const k )
     {
@@ -437,7 +436,7 @@ struct CRSImplicitKernel
       {
         for( int dim = 0; dim < NDIM; ++dim )
         {
-          globalIndex const dof = elementLocalDofIndex[ NDIM * localNode + dim ] - dofRankOffset;
+          localIndex const dof = LvArray::integerConversion< localIndex >( elementLocalDofIndex[ NDIM * localNode + dim ] - dofRankOffset );
           if( dof < 0 || dof >= matrix.numRows() ) continue;
           matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                        elementLocalDofIndex,

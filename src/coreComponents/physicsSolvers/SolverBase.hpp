@@ -136,7 +136,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * const domain );
+                             DomainPartition & domain );
 
 
 
@@ -174,7 +174,7 @@ public:
   virtual real64 ExplicitStep( real64 const & time_n,
                                real64 const & dt,
                                integer const cycleNumber,
-                               DomainPartition * const domain );
+                               DomainPartition & domain );
 
   /**
    * @brief Function for a nonlinear implicit integration step
@@ -196,11 +196,7 @@ public:
   virtual real64 NonlinearImplicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         integer const cycleNumber,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs,
-                                        ParallelVector & solution );
+                                        DomainPartition & domain );
 
   /**
    * @brief Function to perform line search
@@ -224,11 +220,11 @@ public:
   LineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
-              DomainPartition * const domain,
+              DomainPartition & domain,
               DofManager const & dofManager,
-              ParallelMatrix & matrix,
-              ParallelVector & rhs,
-              ParallelVector const & solution,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              arrayView1d< real64 > const & localRhs,
+              arrayView1d< real64 const > const & localSolution,
               real64 const scaleFactor,
               real64 & lastResidual );
 
@@ -253,11 +249,7 @@ public:
   virtual real64 LinearImplicitStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
-                                     DomainPartition * const domain,
-                                     DofManager & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution );
+                                     DomainPartition & domain );
 
   /**
    * @brief function to perform setup for implicit timestep
@@ -278,18 +270,14 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution );
+                     DomainPartition & domain );
 
   /**
    * @brief Populate degree-of-freedom manager with fields relevant to this solver
    * @param dofManager degree-of-freedom manager associated with the linear system
    */
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const;
 
   /**
@@ -304,18 +292,11 @@ public:
    *       sufficient for most single-physics solvers.
    */
   virtual void
-  SetupSystem( DomainPartition * const domain,
+  SetupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution );
-
-  virtual void
-  SetupLocalSystem( DomainPartition * const domain,
-                    DofManager & dofManager,
-                    CRSMatrix< real64, globalIndex > & localMatrix,
-                    array1d< real64 > & localRhs,
-                    array1d< real64 > & localSolution );
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution );
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -339,10 +320,10 @@ public:
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
-                  DomainPartition * const domain,
+                  DomainPartition & domain,
                   DofManager const & dofManager,
-                  ParallelMatrix & matrix,
-                  ParallelVector & rhs );
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief apply boundary condition to system
@@ -359,10 +340,10 @@ public:
   virtual void
   ApplyBoundaryConditions( real64 const time,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs );
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief Output the assembled linear system for debug purposes.
@@ -403,9 +384,9 @@ public:
    * a tolerance.
    */
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs );
+                         arrayView1d< real64 const > const & localRhs );
 
   /**
    * @brief function to apply a linear system solver to the assembled system.
@@ -442,9 +423,9 @@ public:
    *
    */
   virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
+  CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor );
 
   /**
@@ -455,9 +436,9 @@ public:
    * @return The factor that should be used to scale the solution vector values when they are being applied.
    */
   virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
+  ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
-                            ParallelVector const & solution );
+                            arrayView1d< real64 const > const & localSolution );
 
   /**
    * @brief Function to apply the solution vector to the state
@@ -484,9 +465,9 @@ public:
    */
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain );
+                       DomainPartition & domain );
 
   /**
    * @brief reset state of physics back to the beginning of the step.
@@ -500,7 +481,7 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain );
+  ResetStateToBeginningOfStep( DomainPartition & domain );
 
   /**
    * @brief perform cleanup for implicit timestep
@@ -518,7 +499,7 @@ public:
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain );
+                        DomainPartition & domain );
 
 
   /*

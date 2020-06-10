@@ -33,38 +33,6 @@ class MeshLevel;
 class ObjectManagerBase;
 class FluxApproximationBase;
 
-
-namespace internal
-{
-
-template< int N >
-GEOSX_HOST_DEVICE inline
-localIndex
-getNeighborNodes( localIndex (& neighborNodes )[ N ],
-                  arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes,
-                  arraySlice1d< localIndex const > const nodeRegions,
-                  arraySlice1d< localIndex const > const nodeSubRegions,
-                  arraySlice1d< localIndex const > const nodeElems )
-{
-  localIndex numNeighbors = 0;
-  for( localIndex localElem = 0; localElem < nodeRegions.size(); ++localElem )
-  {
-    localIndex const er = nodeRegions[ localElem ];
-    localIndex const esr = nodeSubRegions[ localElem ];
-    localIndex const k = nodeElems[ localElem ];
-    for( localIndex localNode = 0; localNode < elemsToNodes[ er ][ esr ].size( 1 ); ++localNode )
-    {
-      neighborNodes[ numNeighbors++ ] = elemsToNodes[ er ][ esr ]( k, localNode );
-    }
-  }
-
-  GEOSX_ASSERT_GE( N, numNeighbors );
-  return LvArray::sortedArrayManipulation::makeSortedUnique( neighborNodes, neighborNodes + numNeighbors );
-}
-
-} // namespace internal
-
-
 /**
  * @class DofManager
  * @brief The DoFManager is responsible for allocating global dofs, constructing
@@ -141,7 +109,29 @@ public:
    *
    * @param [in] name a unique name for this DoF manager
    */
-  DofManager( string name );
+  explicit DofManager( string name );
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  DofManager( DofManager const & ) = delete;
+
+  /**
+   * @brief Move constructor.
+   */
+  DofManager( DofManager && ) = default;
+
+  /**
+   * @brief Deleted copy assignment.
+   * @return
+   */
+  DofManager & operator=( DofManager const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment.
+   * @return
+   */
+  DofManager & operator=( DofManager && ) = delete;
 
   /**
    * @brief Destructor.
@@ -160,7 +150,7 @@ public:
    * @param [in] meshLevelIndex Optional localIndex the mesh level.
    * @param [in] meshBodyIndex Optional localIndex the body level.
    */
-  void setMesh( DomainPartition * const domain,
+  void setMesh( DomainPartition & domain,
                 localIndex const meshLevelIndex = 0,
                 localIndex const meshBodyIndex = 0 );
 
@@ -295,7 +285,7 @@ public:
    * automatically from the field definition.
    */
   void addCoupling( string const & fieldName,
-                    FluxApproximationBase const * stencils );
+                    FluxApproximationBase const & stencils );
 
   /**
    * @brief Finish populating fields and apply appropriate dof renumbering
@@ -328,7 +318,7 @@ public:
    * @param [in] fieldName string the name of the field.
    * @return string indicating name of the field.
    */
-  string getKey( string const & fieldName ) const;
+  string const & getKey( string const & fieldName ) const;
 
   /**
    * @brief Return global number of dofs across all processors. If field argument is empty, return
@@ -415,125 +405,6 @@ public:
                            string const & rowFieldName,
                            string const & colFieldName,
                            bool closePattern = true ) const;
-
-  template< int DIMS_PER_DOF >
-  void setFiniteElementSparsityPattern( LvArray::CRSMatrix< real64, globalIndex, localIndex > & matrix,
-                                        ElementRegionManager const & elementRegionManager,
-                                        NodeManager const & nodeManager,
-                                        arrayView1d< std::string const > targetRegions,
-                                        std::string const & field ) const
-  {
-    GEOSX_MARK_FUNCTION;
-
-    //constexpr int MAX_ELEMS_PER_NODE = 8;
-    //constexpr int MAX_NODES_PER_ELEM = 8;
-    //constexpr int MAX_NODE_NEIGHBORS = 27;
-
-    array1d< array1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > > > elemsToNodesArray( elementRegionManager.numRegions() );
-    elementRegionManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
-                                                                         [&] ( localIndex, localIndex const er, CellElementRegion const & region )
-    {
-      elemsToNodesArray[ er ].resize( region.numSubRegions() );
-
-      region.forElementSubRegionsIndex< CellElementSubRegion >(
-        [&] ( localIndex const esr, CellElementSubRegion const & subRegion )
-      {
-        elemsToNodesArray[ er ][ esr ] = subRegion.nodeList().toViewConst();
-      } );
-    } );
-
-    arrayView1d< arrayView1d< arrayView2d< localIndex const, cells::NODE_MAP_USD > const > const > const & elemsToNodes = elemsToNodesArray.toViewConst();
-    ArrayOfArraysView< localIndex const > const & nodesToRegions = nodeManager.elementRegionList();
-    ArrayOfArraysView< localIndex const > const & nodesToSubRegions = nodeManager.elementSubRegionList();
-    ArrayOfArraysView< localIndex const > const & nodesToElems = nodeManager.elementList();
-    arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
-
-    localIndex const numNodes = nodesToElems.size();
-    localIndex const localDofs = numLocalDofs();
-    localIndex const globalDofs = numGlobalDofs();
-    localIndex const offset = rankOffset();
-
-    arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( getKey( field ) );
-
-    LvArray::SparsityPattern< globalIndex, localIndex > sparsity;
-
-    {
-      GEOSX_MARK_FUNCTION_TAG( resizing );
-
-      std::vector< localIndex > nnzPerRow( localDofs );
-      forAll< parallelHostPolicy >( numNodes,
-                                    [=, &nnzPerRow] ( localIndex const nodeID )
-      {
-        if( nodeGhostRank[ nodeID ] >= 0 )
-        { return; }
-
-        int constexpr MAX_ELEMS_PER_NODE = 8;
-        int constexpr MAX_NODES_PER_ELEM = 8;
-
-        localIndex neighborNodes[ MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM ];
-        localIndex const numNeighbors = internal::getNeighborNodes( neighborNodes,
-                                                                    elemsToNodes,
-                                                                    nodesToRegions[ nodeID ],
-                                                                    nodesToSubRegions[ nodeID ],
-                                                                    nodesToElems[ nodeID ] );
-        localIndex const nodeRow = dofIndex[ nodeID ] - offset;
-        for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
-        {
-          nnzPerRow[ nodeRow + dim ] = DIMS_PER_DOF * numNeighbors;
-        }
-      } );
-
-      sparsity.resizeFromRowCapacities< parallelHostPolicy >( localDofs, globalDofs, nnzPerRow.data() );
-    }
-
-    {
-      GEOSX_MARK_FUNCTION_TAG( inserting );
-
-      LvArray::SparsityPatternView< globalIndex, localIndex const > sparsityView = sparsity.toView();
-      forAll< parallelHostPolicy >( numNodes,
-                                    [=] ( localIndex const nodeID )
-      {
-        if( nodeGhostRank[ nodeID ] >= 0 )
-        { return; }
-
-        int constexpr MAX_ELEMS_PER_NODE = 8;
-        int constexpr MAX_NODES_PER_ELEM = 8;
-        int constexpr MAX_NODE_NEIGHBORS = 27;
-
-        localIndex neighborNodes[ MAX_ELEMS_PER_NODE * MAX_NODES_PER_ELEM ];
-        localIndex const numNeighbors = internal::getNeighborNodes( neighborNodes,
-                                                                    elemsToNodes,
-                                                                    nodesToRegions[ nodeID ],
-                                                                    nodesToSubRegions[ nodeID ],
-                                                                    nodesToElems[ nodeID ] );
-
-        GEOSX_ASSERT_GE( MAX_NODE_NEIGHBORS, numNeighbors );
-
-        globalIndex dofNumbers[ DIMS_PER_DOF * MAX_NODE_NEIGHBORS ];
-        for( localIndex i = 0; i < numNeighbors; ++i )
-        {
-          localIndex const nodeDof = dofIndex[ neighborNodes[ i ] ];
-          for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
-          {
-            dofNumbers[ DIMS_PER_DOF * i + dim ] = nodeDof + dim;
-          }
-        }
-
-        LvArray::sortedArrayManipulation::makeSorted( dofNumbers, dofNumbers + DIMS_PER_DOF * numNeighbors );
-
-        localIndex const nodeRow = dofIndex[ nodeID ] - offset;
-        for( int dim = 0; dim < DIMS_PER_DOF; ++dim )
-        {
-          GEOSX_ASSERT_EQ( DIMS_PER_DOF * numNeighbors, sparsityView.nonZeroCapacity( nodeRow ) );
-          sparsityView.insertNonZeros( nodeRow + dim, dofNumbers, dofNumbers + DIMS_PER_DOF * numNeighbors );
-        }
-      } );
-    }
-
-    GEOSX_MARK_BEGIN( stealing );
-    matrix.stealFrom< parallelHostPolicy >( std::move( sparsity ) );
-    GEOSX_MARK_END( stealing );
-  }
 
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
@@ -786,6 +657,10 @@ private:
 
   void setSparsityPatternFromStencil( SparsityPattern< globalIndex > & pattern,
                                       localIndex const fieldIndex ) const;
+
+  template< int DIMS_PER_DOF >
+  void setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                                        localIndex const fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField

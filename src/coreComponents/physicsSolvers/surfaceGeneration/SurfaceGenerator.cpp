@@ -525,20 +525,20 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
 real64 SurfaceGenerator::SolverStep( real64 const & time_n,
                                      real64 const & dt,
                                      const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                     DomainPartition * const domain )
+                                     DomainPartition & domain )
 {
   int rval = 0;
 
-  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
-    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+    MeshLevel & meshLevel = *Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
     {
-      SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain->getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+      SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
 
       rval = SeparationDriver( domain,
                                meshLevel,
-                               domain->getNeighbors(),
+                               domain.getNeighbors(),
                                partition.GetColor(),
                                partition.NumColor(),
                                0,
@@ -546,11 +546,11 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
     }
   }
 
-  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain->group_cast< DomainPartition * >()->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
@@ -564,7 +564,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
-          fluxApprox->addToFractureStencil( *domain,
+          fluxApprox->addToFractureStencil( domain,
                                             this->m_fractureRegionName,
                                             true );
           edgeManager->m_recalculateFractureConnectorEdges.clear();
@@ -580,8 +580,8 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
 
 
 
-int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
-                                        MeshLevel * const mesh,
+int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
+                                        MeshLevel & mesh,
                                         std::vector< NeighborCommunicator > & neighbors,
                                         int const tileColor,
                                         int const numTileColors,
@@ -591,10 +591,10 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   GEOSX_MARK_FUNCTION;
 
   m_faceElemsRupturedThisSolve.clear();
-  NodeManager & nodeManager = *(mesh->getNodeManager());
-  EdgeManager & edgeManager = *(mesh->getEdgeManager());
-  FaceManager & faceManager = *(mesh->getFaceManager());
-  ElementRegionManager & elementManager = *(mesh->getElemManager());
+  NodeManager & nodeManager = *mesh.getNodeManager();
+  EdgeManager & edgeManager = *mesh.getEdgeManager();
+  FaceManager & faceManager = *mesh.getFaceManager();
+  ElementRegionManager & elementManager = *mesh.getElemManager();
 
   std::vector< std::set< localIndex > > nodesToRupturedFaces;
   std::vector< std::set< localIndex > > edgesToRupturedFaces;
@@ -606,7 +606,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   fieldNames["face"].push_back( viewKeyStruct::ruptureStateString );
   fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
 
   if( !prefrac )
@@ -689,7 +689,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
-    ParallelTopologyChange::SynchronizeTopologyChange( mesh,
+    ParallelTopologyChange::SynchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
@@ -2784,7 +2784,7 @@ void SurfaceGenerator::CalculateKinkAngles ( FaceManager & faceManager,
 
 
 
-void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
+void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition & domain,
                                               NodeManager & nodeManager,
                                               EdgeManager & edgeManager,
                                               FaceManager & faceManager,
@@ -2871,7 +2871,7 @@ void SurfaceGenerator::IdentifyRupturedFaces( DomainPartition * domain,
 
 }
 
-void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
+void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                                 NodeManager & nodeManager,
                                                 EdgeManager & edgeManager,
                                                 FaceManager & faceManager,
@@ -2925,13 +2925,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   arrayView1d< localIndex > const &
   parentNodeIndices = nodeManager.getReference< array1d< localIndex > >( nodeManager.viewKeys.parentIndex );
 
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain.getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
@@ -2944,7 +2944,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                                              arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
                                                                                                                constitutiveManager );
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
@@ -3305,7 +3305,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
   }
 }
 
-realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
+realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition & domain,
                                           const localIndex edgeID,
                                           localIndex & trailFaceID,
                                           NodeManager & nodeManager,
@@ -3732,7 +3732,7 @@ realT SurfaceGenerator::CalculateEdgeSIF( DomainPartition * domain,
 }
 
 
-int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
+int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition & domain,
                                                     const localIndex edgeID,
                                                     realT edgeLength,
                                                     localIndex_array & nodeIndices,
@@ -3753,13 +3753,13 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  ConstitutiveManager const * const cm = domain->getConstitutiveManager();
+  ConstitutiveManager const * const cm = domain.getConstitutiveManager();
   ConstitutiveBase const * const solid  = cm->GetConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
   GEOSX_ERROR_IF( solid == nullptr, "constitutive model " + m_solidMaterialNames[0] + " not found" );
   m_solidMaterialFullIndex = solid->getIndexInParent();
 
   ConstitutiveManager * const constitutiveManager =
-    domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+    domain.GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.ConstructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "ShearModulus", constitutiveManager );
@@ -3773,7 +3773,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                                                constitutiveManager );
 
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();

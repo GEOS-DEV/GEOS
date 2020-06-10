@@ -48,37 +48,42 @@ void SinglePhaseProppantBase::ValidateFluidModels( DomainPartition const & domai
   }
 }
 
-void SinglePhaseProppantBase::UpdateState( Group & dataGroup, localIndex const targetIndex ) const
+SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const
 {
-  GEOSX_MARK_FUNCTION;
-
-  UpdateFluidModel( dataGroup, targetIndex );
-  UpdateSolidModel( dataGroup, targetIndex );
-  UpdateMobility< SlurryFluidBase >( dataGroup, targetIndex );
+  SlurryFluidBase const & slurryFluid = dynamicCast< SlurryFluidBase const & >( fluid );
+  return { slurryFluid.density(),
+           slurryFluid.dDensity_dPressure(),
+           slurryFluid.viscosity(),
+           slurryFluid.dViscosity_dPressure(),
+           slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::densityString )->getDefaultValue(),
+           slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString )->getDefaultValue() };
 }
 
 void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const & pres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
-  arrayView1d< real64 const > const & dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
+  arrayView1d< real64 const > const & pres =
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+  arrayView1d< real64 const > const & dPres =
+    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
 
   SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  arrayView1d< real64 const > const & proppantConcentration = dataGroup.getReference< array1d< real64 > >(
-    ProppantTransport::viewKeyStruct::proppantConcentrationString );
+  arrayView1d< real64 const > const & proppantConcentration =
+    dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantConcentrationString );
 
-  arrayView1d< real64 const > const & dProppantConcentration = dataGroup.getReference< array1d< real64 > >(
-    ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );
+  arrayView1d< real64 const > const & dProppantConcentration =
+    dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString );
 
-  arrayView2d< real64 const > const & componentConcentration = dataGroup.getReference< array2d< real64 > >(
-    ProppantTransport::viewKeyStruct::componentConcentrationString );
+  arrayView2d< real64 const > const & componentConcentration =
+    dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::componentConcentrationString );
 
-  arrayView1d< R1Tensor const > const & cellBasedFlux = dataGroup.getReference< array1d< R1Tensor > >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
+  arrayView1d< R1Tensor const > const & cellBasedFlux =
+    dataGroup.getReference< array1d< R1Tensor > >( ProppantTransport::viewKeyStruct::cellBasedFluxString );
 
-  arrayView1d< integer const > const & isProppantBoundaryElement  = dataGroup.getReference< array1d< integer > >(
-    ProppantTransport::viewKeyStruct::isProppantBoundaryString );
+  arrayView1d< integer const > const & isProppantBoundaryElement =
+    dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
 
   forAll< parallelHostPolicy >( dataGroup.size(), [&] ( localIndex const a )
   {
@@ -89,7 +94,6 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
                        isProppantBoundaryElement[a], a, 0 );
   } );
 }
-
 
 void SinglePhaseProppantBase::ResetViewsPrivate( ElementRegionManager const & elemManager )
 {

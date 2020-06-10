@@ -112,7 +112,7 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( DomainPartition * const domain );
+  virtual void ResetViews( MeshLevel & mesh );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
@@ -140,7 +140,7 @@ private:
 
 protected:
 
-  void PrecomputeData( DomainPartition * const domain );
+  void PrecomputeData( MeshLevel & mesh );
 
   virtual void PostProcessInput() override;
 

@@ -29,6 +29,7 @@ namespace SinglePhaseHybridFVMKernels
 /******************************** AssemblerKernelHelper ********************************/
 
 template< localIndex NF >
+GEOSX_HOST_DEVICE
 void
 AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > const & facePres,
                                                  arrayView1d< real64 const > const & dFacePres,
@@ -88,6 +89,7 @@ AssemblerKernelHelper::ComputeOneSidedVolFluxes( arrayView1d< real64 const > con
 }
 
 template< localIndex NF >
+GEOSX_HOST_DEVICE
 void
 AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er,
                                                    localIndex const esr,
@@ -153,6 +155,7 @@ AssemblerKernelHelper::UpdateUpwindedCoefficients( localIndex const er,
 }
 
 template< localIndex NF >
+GEOSX_HOST_DEVICE
 void
 AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex const > const & faceDofNumber,
                                                    arraySlice1d< localIndex const > const & elemToFaces,
@@ -229,8 +232,10 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
 
 
 template< localIndex NF >
+GEOSX_HOST_DEVICE
 void
 AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
+                                            arrayView1d< integer const > const & faceGhostRank,
                                             arraySlice1d< localIndex const > const & elemToFaces,
                                             globalIndex const elemDofNumber,
                                             globalIndex const rankOffset,
@@ -250,12 +255,17 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
   // for each element, loop over the local (one-sided) faces
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
+    if( faceGhostRank[elemToFaces[ifaceLoc]] >= 0 )
+    {
+      continue;
+    }
+
     // flux at this face
     real64 const flux      = oneSidedVolFlux[ifaceLoc];
     real64 const dFlux_dp  = dOneSidedVolFlux_dp[ifaceLoc];
 
     // dof number of this face constraint
-    localIndex const eqnLocalRowIndex = faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset;
+    localIndex const eqnLocalRowIndex = LvArray::integerConversion< localIndex >( faceDofNumber[elemToFaces[ifaceLoc]] - rankOffset );
 
     for( localIndex jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
     {
@@ -280,6 +290,7 @@ AssemblerKernelHelper::AssembleConstraints( arrayView1d< globalIndex const > con
 /******************************** AssemblerKernel ********************************/
 
 template< localIndex NF >
+GEOSX_HOST_DEVICE
 void
 AssemblerKernel::Compute( localIndex const er,
                           localIndex const esr,
@@ -289,6 +300,7 @@ AssemblerKernel::Compute( localIndex const er,
                           arrayView2d< localIndex const > const & elemSubRegionList,
                           arrayView2d< localIndex const > const & elemList,
                           arrayView1d< globalIndex const > const & faceDofNumber,
+                          arrayView1d< integer const > const & faceGhostRank,
                           arrayView1d< real64 const > const & facePres,
                           arrayView1d< real64 const > const & dFacePres,
                           arrayView1d< real64 const > const & faceGravCoef,
@@ -391,6 +403,7 @@ AssemblerKernel::Compute( localIndex const er,
   // use the computed one sided vol fluxes to assemble the constraints
   // enforcing flux continuity at this element's faces
   AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
+                                                    faceGhostRank,
                                                     elemToFaces,
                                                     elemDofNumber[er][esr][ei],
                                                     rankOffset,
@@ -417,6 +430,7 @@ FluxKernel::Launch( localIndex er,
                     arrayView2d< localIndex const > const & elemList,
                     ArrayOfArraysView< localIndex const > const & faceToNodes,
                     arrayView1d< globalIndex const > const & faceDofNumber,
+                    arrayView1d< integer const > const & faceGhostRank,
                     arrayView1d< real64 const > const & facePres,
                     arrayView1d< real64 const > const & dFacePres,
                     arrayView1d< real64 const > const & faceGravCoef,
@@ -489,6 +503,7 @@ FluxKernel::Launch( localIndex er,
                                                                    elemSubRegionList,
                                                                    elemList,
                                                                    faceDofNumber,
+                                                                   faceGhostRank,
                                                                    facePres,
                                                                    dFacePres,
                                                                    faceGravCoef,
@@ -510,7 +525,6 @@ FluxKernel::Launch( localIndex er,
     }
   } );
 }
-
 
 #define INST_AssembleKernelHelper( NF ) \
   template \
@@ -546,6 +560,7 @@ FluxKernel::Launch( localIndex er,
   template \
   void \
   AssemblerKernelHelper::AssembleConstraints< NF >( arrayView1d< globalIndex const > const & faceDofNumber, \
+                                                    arrayView1d< integer const > const & faceGhostRank, \
                                                     arraySlice1d< localIndex const > const & elemToFaces, \
                                                     globalIndex const elemDofNumber, \
                                                     globalIndex const rankOffset, \
@@ -562,7 +577,6 @@ INST_AssembleKernelHelper( 6 );
 
 #undef INST_AssembleKernelHelper
 
-
 #define INST_FluxKernel( NF ) \
   template \
   void FluxKernel::Launch< NF >( localIndex er, \
@@ -576,6 +590,7 @@ INST_AssembleKernelHelper( 6 );
                                  arrayView2d< localIndex const > const & elemList, \
                                  ArrayOfArraysView< localIndex const > const & faceToNodes, \
                                  arrayView1d< globalIndex const > const & faceDofNumber, \
+                                 arrayView1d< integer const > const & faceGhostRank, \
                                  arrayView1d< real64 const > const & facePres, \
                                  arrayView1d< real64 const > const & dFacePres, \
                                  arrayView1d< real64 const > const & faceGravCoef, \

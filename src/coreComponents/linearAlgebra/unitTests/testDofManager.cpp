@@ -78,7 +78,7 @@ protected:
   {
     setupProblemFromXML( problemManager.get(), xmlInput );
     mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( problemManager->getDomainPartition(), 0, 0 );
+    dofManager.setMesh( *problemManager->getDomainPartition(), 0, 0 );
   }
 
   std::unique_ptr< ProblemManager > const problemManager;

@@ -79,7 +79,7 @@ public:
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
   virtual void
-  updateStress( DomainPartition * const domain );
+  updateStress( DomainPartition & domain );
 
 
 
@@ -93,41 +93,30 @@ public:
   real64 SolverStep( real64 const & time_n,
                      real64 const & dt,
                      integer const cycleNumber,
-                     DomainPartition * domain ) override;
+                     DomainPartition & domain ) override;
 
   virtual
   real64 ExplicitStep( real64 const & time_n,
                        real64 const & dt,
                        integer const cycleNumber,
-                       DomainPartition * domain ) override;
+                       DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
+                     DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
-
-  virtual void
-  SetupSystem( DomainPartition * const domain,
-               DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
 
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
-                  DomainPartition * const domain,
+                  DomainPartition & domain,
                   DofManager const & dofManager,
-                  ParallelMatrix & matrix,
-                  ParallelVector & rhs ) override;
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   SolveSystem( DofManager const & dofManager,
@@ -137,29 +126,29 @@ public:
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  void ResetStressToBeginningOfStep( DomainPartition * const domain );
+  void ResetStressToBeginningOfStep( DomainPartition & domain );
 
   virtual void ImplicitStepComplete( real64 const & time,
                                      real64 const & dt,
-                                     DomainPartition * const domain ) override;
+                                     DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -238,44 +227,43 @@ public:
    * @param newmarkBeta The value of \beta in the Newmark update.
    * @param newmarkGamma The value of \gamma in the Newmark update.
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix sparse matrix containing the derivatives of the residual wrt displacement
-   * @param rhs parallel vector containing the global residual
+   * @param localMatrix sparse matrix containing the derivatives of the residual wrt displacement
+   * @param localRhs parallel vector containing the global residual
    * @return The maximum nodal force contribution from all elements.
    */
   virtual real64
-  CRSElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
-                          localIndex NUM_QUADRATURE_POINTS,
-                          constitutive::ConstitutiveBase * const constitutiveRelation,
-                          localIndex const numElems,
-                          real64 const dt,
-                          arrayView3d< R1Tensor const > const & dNdX,
-                          arrayView2d< real64 const > const & detJ,
-                          FiniteElementBase const * const fe,
-                          arrayView1d< integer const > const & elemGhostRank,
-                          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                          arrayView1d< globalIndex const > const & globalDofNumber,
-                          globalIndex const dofRankOffset,
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-                          arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
-                          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
-                          arrayView1d< R1Tensor const > const & vtilde,
-                          arrayView1d< R1Tensor const > const & uhattilde,
-                          arrayView2d< real64 const > const & density,
-                          arrayView1d< real64 const > const & fluidPressure,
-                          arrayView1d< real64 const > const & deltaFluidPressure,
-                          real64 const biotCoefficient,
-                          TimeIntegrationOption const tiOption,
-                          real64 const stiffnessDamping,
-                          real64 const massDamping,
-                          real64 const newmarkBeta,
-                          real64 const newmarkGamma,
-                          R1Tensor const & gravityVector,
-                          DofManager const * const dofManager,
-                          LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
-                          arrayView1d< real64 > const & rhs ) const
+  ImplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
+                               localIndex NUM_QUADRATURE_POINTS,
+                               constitutive::ConstitutiveBase * const constitutiveRelation,
+                               localIndex const numElems,
+                               real64 const dt,
+                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView2d< real64 const > const & detJ,
+                               FiniteElementBase const * const fe,
+                               arrayView1d< integer const > const & elemGhostRank,
+                               arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
+                               arrayView1d< globalIndex const > const & globalDofNumber,
+                               globalIndex const dofRankOffset,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                               arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp,
+                               arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat,
+                               arrayView1d< R1Tensor const > const & vtilde,
+                               arrayView1d< R1Tensor const > const & uhattilde,
+                               arrayView2d< real64 const > const & density,
+                               arrayView1d< real64 const > const & fluidPressure,
+                               arrayView1d< real64 const > const & deltaFluidPressure,
+                               real64 const biotCoefficient,
+                               TimeIntegrationOption const tiOption,
+                               real64 const stiffnessDamping,
+                               real64 const massDamping,
+                               real64 const newmarkBeta,
+                               real64 const newmarkGamma,
+                               R1Tensor const & gravityVector,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) const
   {
     GEOSX_MARK_FUNCTION;
-    using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::CRSImplicitKernel;
+    using ImplicitKernel = SolidMechanicsLagrangianFEMKernels::ImplicitKernel;
     return SolidMechanicsLagrangianFEMKernels::
              ElementKernelLaunchSelector< ImplicitKernel >( NUM_NODES_PER_ELEM,
                                                             NUM_QUADRATURE_POINTS,
@@ -304,9 +292,8 @@ public:
                                                             newmarkBeta,
                                                             newmarkGamma,
                                                             gravityVector,
-                                                            dofManager,
-                                                            matrix,
-                                                            rhs );
+                                                            localMatrix,
+                                                            localRhs );
   }
 
 
@@ -321,27 +308,29 @@ public:
    */
   void ApplyDisplacementBC_implicit( real64 const time,
                                      DofManager const & dofManager,
-                                     DomainPartition & domain );
+                                     DomainPartition & domain,
+                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                     arrayView1d< real64 > const & localRhs );
 
   void CRSApplyTractionBC( real64 const time,
                            DofManager const & dofManager,
                            DomainPartition & domain,
-                           arrayView1d< real64 > const & rhs );
+                           arrayView1d< real64 > const & localRhs );
 
   void ApplyChomboPressure( DofManager const & dofManager,
-                            DomainPartition * const domain,
-                            arrayView1d< real64 > const & rhs );
+                            DomainPartition & domain,
+                            arrayView1d< real64 > const & localRhs );
 
 
   void ApplyContactConstraint( DofManager const & dofManager,
                                DomainPartition & domain,
-                               ParallelMatrix * const matrix,
-                               ParallelVector * const rhs );
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs );
 
   virtual real64
-  ScalingForSystemSolution( DomainPartition const * const domain,
+  ScalingForSystemSolution( DomainPartition const & domain,
                             DofManager const & dofManager,
-                            ParallelVector const & solution ) override;
+                            arrayView1d< real64 const > const & localSolution ) override;
 
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -379,8 +368,6 @@ public:
   {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
-
-  void sparsityGeneration( DomainPartition const & domain, DofManager const & dofManager );
 
 protected:
   virtual void PostProcessInput() override final;

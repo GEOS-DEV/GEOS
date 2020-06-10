@@ -76,30 +76,25 @@ public:
    */
   static string CatalogName() { return "ProppantTransport"; }
 
-  virtual void InitializePreSubGroups( Group * const rootGroup ) override;
+  virtual void
+  InitializePreSubGroups( Group * const rootGroup ) override;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void
+  RegisterDataOnMesh( Group * const MeshBodies ) override;
 
-  virtual void SetupSystem( DomainPartition * const domain,
-                            DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
-
-  virtual real64 SolverStep( real64 const & time_n,
-                             real64 const & dt,
-                             integer const cycleNumber,
-                             DomainPartition * domain ) override;
+  virtual real64
+  SolverStep( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain ) override;
 
   void PreStepUpdate( real64 const & time_n,
                       real64 const & dt,
-                      integer const cycleNumber,
-                      DomainPartition * domain );
+                      DomainPartition & domain );
 
   void PostStepUpdate( real64 const & time_n,
                        real64 const & dt,
-                       integer const cycleNumber,
-                       DomainPartition * domain );
+                       DomainPartition & domain );
 
   /**
    * @defgroup Solver Interface Functions
@@ -108,53 +103,55 @@ public:
    */
   /**@{*/
 
-  virtual void ImplicitStepSetup( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition * const domain,
-                                  DofManager & dofManager,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs,
-                                  ParallelVector & solution ) override;
+  virtual void
+  ImplicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  virtual void AssembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+  virtual void
+  AssembleSystem( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void ApplyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition * const domain,
-                                        DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+  virtual void
+  ApplyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual void SolveSystem( DofManager const & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+  virtual void
+  SolveSystem( DofManager const & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
-  virtual void ImplicitStepComplete( real64 const & time,
-                                     real64 const & dt,
-                                     DomainPartition * const domain ) override;
+  virtual void
+  ImplicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
 
   /**
    * @brief assembles the accumulation terms for all cells
@@ -185,9 +182,7 @@ public:
 
   /**@}*/
 
-  void ResizeFractureFields( real64 const & time_n,
-                             real64 const & dt,
-                             DomainPartition * const domain );
+  void ResizeFractureFields( MeshLevel & mesh );
 
   arrayView1d< string const > const & proppantModelNames() const { return m_proppantModelNames; }
 
@@ -254,7 +249,7 @@ private:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  void ResetViews( DomainPartition * const domain ) override;
+  void ResetViews( MeshLevel & mesh ) override;
 
   /**
    * @brief Function to update all constitutive models
@@ -270,10 +265,10 @@ private:
 
   void UpdateProppantPackVolume( real64 const time_n,
                                  real64 const dt,
-                                 DomainPartition * const domain );
+                                 DomainPartition & domain );
 
   void UpdateCellBasedFlux( real64 const time_n,
-                            DomainPartition * const domain );
+                            DomainPartition & domain );
 
   void UpdateState( Group & dataGroup, localIndex const targetIndex );
 

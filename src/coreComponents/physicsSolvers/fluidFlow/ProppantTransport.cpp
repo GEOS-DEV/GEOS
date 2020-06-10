@@ -173,16 +173,12 @@ void ProppantTransport::InitializePreSubGroups( Group * const rootGroup )
 
 }
 
-void ProppantTransport::ResizeFractureFields( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                              DomainPartition * const domain )
+void ProppantTransport::ResizeFractureFields( MeshLevel & mesh )
 {
   localIndex const NC = m_numComponents;
 
   if( NC > 0 )
   {
-    MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
     forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const,
                                                             FaceElementSubRegion & subRegion )
     {
@@ -314,16 +310,16 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 
   FlowSolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::componentConcentrationString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
-  ResetViews( domain );
+  ResetViews( mesh );
 
   // We have to redo the below loop after fractures are generated
 
@@ -364,32 +360,26 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
 real64 ProppantTransport::SolverStep( real64 const & time_n,
                                       real64 const & dt,
                                       const int cycleNumber,
-                                      DomainPartition * domain )
+                                      DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  FlowSolverBase::PrecomputeData( domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FlowSolverBase::PrecomputeData( mesh );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
 
   real64 dt_return = dt;
 
-  ImplicitStepSetup( time_n,
-                     dt,
-                     domain,
-                     m_dofManager,
-                     m_matrix,
-                     m_rhs,
-                     m_solution );
+  ImplicitStepSetup( time_n, dt, domain );
 
   if( cycleNumber == 0 )
   {
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
 
-    boundaryConditionManager.ApplyInitialConditions( domain );
+    boundaryConditionManager.ApplyInitialConditions( &domain );
 
     localIndex const NC = m_numComponents;
 
@@ -458,14 +448,7 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
   UpdateCellBasedFlux( time_n, domain );
 
   // currently the only method is implicit time integration
-  dt_return = this->NonlinearImplicitStep( time_n,
-                                           dt,
-                                           cycleNumber,
-                                           domain,
-                                           m_dofManager,
-                                           m_matrix,
-                                           m_rhs,
-                                           m_solution );
+  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -486,33 +469,23 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
 
 void ProppantTransport::PreStepUpdate( real64 const & time,
-                                       real64 const & dt,
-                                       const int cycleNumber,
-                                       DomainPartition * domain )
+                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                       DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  FlowSolverBase::PrecomputeData( domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  FlowSolverBase::PrecomputeData( mesh );
 
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
 
-
-  if( cycleNumber == 0 )
+  if( time <= 0 )
   {
-
-    /*  assign intitial and boundary conditions */
-    /*
-       FieldSpecificationManager const * boundaryConditionManager = FieldSpecificationManager::get();
-
-       boundaryConditionManager->ApplyInitialConditions( domain );
-     */
-
     /* Below must be called after ImplicitStepSetup */
 
-    ResizeFractureFields( time, dt, domain );
+    ResizeFractureFields( mesh );
 
     localIndex const NC = m_numComponents;
 
@@ -582,12 +555,11 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
 
 void ProppantTransport::PostStepUpdate( real64 const & time_n,
                                         real64 const & dt_return,
-                                        const int,
-                                        DomainPartition * domain )
+                                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
@@ -601,43 +573,16 @@ void ProppantTransport::PostStepUpdate( real64 const & time_n,
   }
 }
 
-void ProppantTransport::SetupSystem( DomainPartition * const domain,
-                                     DofManager & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution )
-{
-  GEOSX_MARK_FUNCTION;
-
-  SolverBase::SetupLocalSystem( domain,
-                                dofManager,
-                                m_localMatrix,
-                                m_localRhs,
-                                m_localSolution );
-
-  // TODO: can we make the matrix not lose its callback name after stealing?
-  m_localMatrix.setName( this->getName() + "/localMatrix" );
-  m_localRhs.setName( this->getName() + "/localRhs" );
-
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-  solution.create( m_localSolution.toViewConst(), MPI_COMM_GEOSX );
-}
-
 void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                           DomainPartition * const domain,
-                                           DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                           ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                           ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                           ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                           DomainPartition & domain )
 {
 
   localIndex const NC = m_numComponents;
 
-  ResetViews( domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  ResetViews( mesh );
 
   /* The loop below could be moved to SolverStep after ImplicitStepSetup */
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -678,11 +623,11 @@ void ProppantTransport::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
 
 void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                               real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                              DomainPartition * const domain )
+                                              DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
@@ -715,7 +660,7 @@ void ProppantTransport::ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
 
 }
 
-void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( domain ),
+void ProppantTransport::SetupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                                    DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::proppantConcentrationString,
@@ -731,30 +676,24 @@ void ProppantTransport::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PA
 
 void ProppantTransport::AssembleSystem( real64 const time,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs )
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( matrix )
-  GEOSX_UNUSED_VAR( rhs )
-
-  m_localMatrix.setValues< parallelDevicePolicy<> >( 0.0 );
-  m_localRhs.setValues< parallelDevicePolicy<> >( 0.0 );
-
-  AssembleAccumulationTerms( *domain,
+  AssembleAccumulationTerms( domain,
                              dofManager,
-                             m_localMatrix.toViewConstSizes(),
-                             m_localRhs.toView() );
+                             localMatrix,
+                             localRhs );
 
   AssembleFluxTerms( time,
                      dt,
-                     *domain,
+                     domain,
                      dofManager,
-                     m_localMatrix.toViewConstSizes(),
-                     m_localRhs.toView() );
+                     localMatrix,
+                     localRhs );
 }
 
 void ProppantTransport::AssembleAccumulationTerms( DomainPartition const & domain,
@@ -921,7 +860,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 
   FluxKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
 
-  fluxApprox.forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forStencils< FaceElementStencil >( [&]( auto const & stencil )
   {
 
     FluxKernel::Launch( stencil,
@@ -970,16 +909,12 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 
 void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
-                                                 DomainPartition * const domain,
+                                                 DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs )
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs )
 {
-
   GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( matrix )
-  GEOSX_UNUSED_VAR( rhs )
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
@@ -988,7 +923,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
   //  Apply Dirichlet BC for proppant concentration
 
   fsManager.Apply( time_n + dt,
-                   domain,
+                   &domain,
                    "ElementRegions",
                    viewKeyStruct::proppantConcentrationString,
                    [&]( FieldSpecificationBase const * const fs,
@@ -1012,8 +947,8 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
                                                               subRegion,
                                                               dofNumber,
                                                               rankOffset,
-                                                              m_localMatrix.toViewConstSizes(),
-                                                              m_localRhs.toView(),
+                                                              localMatrix,
+                                                              localRhs,
                                                               [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       return proppantConc[a] + dProppantConc[a];
@@ -1029,7 +964,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
     map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
 
     fsManager.Apply( time_n + dt,
-                     domain,
+                     &domain,
                      "ElementRegions",
                      viewKeyStruct::proppantConcentrationString,
                      [&]( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( fs ),
@@ -1047,7 +982,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
     } );
 
     fsManager.Apply( time_n + dt,
-                     domain,
+                     &domain,
                      "ElementRegions",
                      viewKeyStruct::componentConcentrationString,
                      [&] ( FieldSpecificationBase const * const fs,
@@ -1088,11 +1023,8 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 
     GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
 
-    CRSMatrixView< real64, globalIndex const > const & localMatrix = m_localMatrix.toViewConstSizes();
-    arrayView1d< real64 > const & localRhs = m_localRhs.toView();
-
     fsManager.Apply( time_n + dt,
-                     domain,
+                     &domain,
                      "ElementRegions",
                      viewKeyStruct::proppantConcentrationString,
                      [&] ( FieldSpecificationBase const * const GEOSX_UNUSED_PARAM( bc ),
@@ -1138,14 +1070,11 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 }
 
 real64
-ProppantTransport::
-  CalculateResidualNorm( DomainPartition const * const domain,
-                         DofManager const & dofManager,
-                         ParallelVector const & rhs )
+ProppantTransport::CalculateResidualNorm( DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          arrayView1d< real64 const > const & localRhs )
 {
-  GEOSX_UNUSED_VAR( rhs )
-
-  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
@@ -1155,24 +1084,26 @@ ProppantTransport::
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
   {
-
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
-    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    RAJA::ReduceSum< parallelHostReduce, real64 > localSum( 0.0 );
+
+    forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
         localIndex const lid = dofNumber[ei] - rankOffset;
         for( localIndex idof = 0; idof < m_numDofPerCell; ++idof )
         {
-          real64 const val = m_localRhs[lid] / volume[ei];
-          localResidualNorm += val * val;
+          real64 const val = localRhs[lid] / volume[ei];
+          localSum += val * val;
         }
       }
-    }
+    } );
+
+    localResidualNorm += localSum.get();
   } );
 
   // compute global residual norm
@@ -1181,16 +1112,13 @@ ProppantTransport::
 }
 
 void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
-                                             ParallelVector const & solution,
+                                             arrayView1d< real64 const > const & localSolution,
                                              real64 const scalingFactor,
-                                             DomainPartition * const domain )
+                                             DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( solution )
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-
-
-  dofManager.addVectorToField( m_localSolution.toViewConst(),
+  dofManager.addVectorToField( localSolution,
                                viewKeyStruct::proppantConcentrationString,
                                viewKeyStruct::deltaProppantConcentrationString,
                                scalingFactor,
@@ -1199,7 +1127,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
 
   if( m_numDofPerCell > 1 )
   {
-    dofManager.addVectorToField( solution,
+    dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::proppantConcentrationString,
                                  viewKeyStruct::deltaComponentConcentrationString,
                                  scalingFactor,
@@ -1210,7 +1138,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
   fieldNames["elems"].push_back( viewKeyStruct::deltaComponentConcentrationString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
@@ -1228,21 +1156,15 @@ void ProppantTransport::SolveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-
   rhs.scale( -1.0 );
   solution.zero();
 
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
-
-  m_localSolution.resize( solution.localSize() );
-  solution.extract( m_localSolution );
 }
 
-void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   localIndex const NC = m_numComponents;
 
@@ -1267,12 +1189,10 @@ void ProppantTransport::ResetStateToBeginningOfStep( DomainPartition * const dom
 
 }
 
-void ProppantTransport::ResetViews( DomainPartition * const domain )
+void ProppantTransport::ResetViews( MeshLevel & mesh )
 {
-  FlowSolverBase::ResetViews( domain );
-
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  FlowSolverBase::ResetViews( mesh );
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   m_pressure =
     elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::pressureString );
@@ -1410,17 +1330,15 @@ void ProppantTransport::ResetViews( DomainPartition * const domain )
 
 
 void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                             DomainPartition * const domain )
+                                             DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-
-  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres               = m_pressure.toViewConst();
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef           = m_gravCoef.toViewConst();
@@ -1432,7 +1350,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   FluxKernel::ElementView< arrayView1d< R1Tensor > > & cellBasedFlux  = m_cellBasedFlux.toView();
 
-  fluxApprox->forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
 
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
@@ -1451,26 +1369,24 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].push_back( viewKeyStruct::cellBasedFluxString );
 
-  CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
 }
 
 void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
-                                                  DomainPartition * const domain )
+                                                  DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
 
-  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc       = m_proppantConcentration.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc = m_proppantConcentration.toView();
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
   ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & density = m_density.toViewConst();
   ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
@@ -1487,7 +1403,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture  = m_elementAperture.toViewConst();
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
 
-  fluxApprox->forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
     ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation( stencil,
                                                                    dt,
@@ -1520,7 +1436,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].push_back( viewKeyStruct::proppantExcessPackVolumeString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantLiftFluxString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
   }
 
   forTargetSubRegions( mesh, [&]( localIndex const,
@@ -1530,7 +1446,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   } );
 
 
-  fluxApprox->forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
                                                               m_downVector,
@@ -1547,7 +1463,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
     fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
   }
 
   forTargetSubRegions( mesh, [&]( localIndex const,
@@ -1558,7 +1474,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
 
 
-  fluxApprox->forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
     ProppantPackVolumeKernel::LaunchInterfaceElementUpdate( stencil,
                                                             m_downVector,
@@ -1570,7 +1486,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].push_back( viewKeyStruct::isInterfaceElementString );
 
-    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+    CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
   }
 
   // update poroMultiplier and transTMultiplier

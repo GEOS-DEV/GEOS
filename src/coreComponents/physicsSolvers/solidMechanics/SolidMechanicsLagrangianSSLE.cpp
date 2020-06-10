@@ -39,22 +39,14 @@ SolidMechanicsLagrangianSSLE::SolidMechanicsLagrangianSSLE( string const & name,
 SolidMechanicsLagrangianSSLE::~SolidMechanicsLagrangianSSLE()
 {}
 
-void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofManager,
-                                                        ParallelVector const & solution,
-                                                        real64 const scalingFactor,
-                                                        DomainPartition * const domain )
-{
-  SolidMechanicsLagrangianFEM::ApplySystemSolution( dofManager, solution, scalingFactor, domain );
-}
-
 
 void
-SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
+SolidMechanicsLagrangianSSLE::updateStress( DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();

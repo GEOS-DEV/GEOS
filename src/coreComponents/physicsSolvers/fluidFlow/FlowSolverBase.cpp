@@ -164,19 +164,18 @@ void FlowSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  ResetViews( domain );
+  ResetViews( mesh );
 
   // Precompute solver-specific constant data (e.g. gravity-depth)
-  PrecomputeData( domain );
+  PrecomputeData( mesh );
 }
 
-void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
+void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
 {
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager & faceManager = *mesh.getFaceManager();
-
   R1Tensor const gravVector = gravityVector();
 
   forTargetSubRegions( mesh, [&]( localIndex const,
@@ -210,9 +209,8 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
 
 FlowSolverBase::~FlowSolverBase() = default;
 
-void FlowSolverBase::ResetViews( DomainPartition * const domain )
+void FlowSolverBase::ResetViews( MeshLevel & mesh )
 {
-  MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   m_elemGhostRank.clear();

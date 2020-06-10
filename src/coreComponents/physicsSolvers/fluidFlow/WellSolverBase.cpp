@@ -87,10 +87,10 @@ void WellSolverBase::RegisterDataOnMesh( Group * const meshBodies )
   } );
 }
 
-void WellSolverBase::SetupDofs( DomainPartition const * const domain,
+void WellSolverBase::SetupDofs( DomainPartition const & domain,
                                 DofManager & dofManager ) const
 {
-  MeshLevel const & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   array1d< string > regions;
   forTargetRegions< WellElementRegion >( meshLevel, [&]( localIndex const,
@@ -111,16 +111,10 @@ void WellSolverBase::SetupDofs( DomainPartition const * const domain,
 
 void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                        DomainPartition * const domain,
-                                        DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                        ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                        ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                        ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                        DomainPartition & domain )
 {
   // bind the stored reservoir views to the current domain
-
-  // Only do it once!
-  //ResetViews( domain );
+  ResetViews( domain );
 
   // Initialize the primary and secondary variables for the first time step
   if( time_n <= 0.0 )
@@ -134,42 +128,26 @@ void WellSolverBase::ImplicitStepSetup( real64 const & time_n,
 
 void WellSolverBase::AssembleSystem( real64 const time,
                                      real64 const dt,
-                                     DomainPartition * const domain,
+                                     DomainPartition & domain,
                                      DofManager const & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs )
+                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                     arrayView1d< real64 > const & localRhs )
 {
 
   // first deal with the well control and switch if necessary
   CheckWellControlSwitch( domain );
 
-  // then assemble the mass balance equations (exception perforation terms)
-  matrix.open();
-  rhs.open();
-
   // then assemble the mass balance equations
-  AssembleFluxTerms( time, dt, domain, &dofManager, &matrix, &rhs );
+  AssembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the volume balance equations
-  AssembleVolumeBalanceTerms( time, dt, domain, &dofManager, &matrix, &rhs );
+  AssembleVolumeBalanceTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  FormPressureRelations( domain, &dofManager, &matrix, &rhs );
+  FormPressureRelations( domain, dofManager, localMatrix, localRhs );
 
   // finally assemble the well control equation
-  FormControlEquation( domain, &dofManager, &matrix, &rhs );
-
-  matrix.close();
-  rhs.close();
-
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After WellSolverBase::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
-  }
+  FormControlEquation( domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition & domain )
@@ -204,10 +182,10 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
 {
   SolverBase::InitializePostInitialConditions_PreSubGroups( rootGroup );
 
-  DomainPartition * const domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const,
                                                           WellElementSubRegion & subRegion )
   {
@@ -221,10 +199,10 @@ void WellSolverBase::InitializePostInitialConditions_PreSubGroups( Group * const
   PrecomputeData( domain );
 }
 
-void WellSolverBase::PrecomputeData( DomainPartition * const domain )
+void WellSolverBase::PrecomputeData( DomainPartition & domain )
 {
   R1Tensor const gravVector = gravityVector();
-  MeshLevel & meshLevel = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   // loop over the wells
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
@@ -274,9 +252,9 @@ void WellSolverBase::PrecomputeData( DomainPartition * const domain )
   } );
 }
 
-void WellSolverBase::ResetViews( DomainPartition * const domain )
+void WellSolverBase::ResetViews( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
   m_resGravCoef =

@@ -20,12 +20,17 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
 namespace geosx
 {
 
+namespace constitutive
+{
+
+class ConstitutiveBase;
+
+}
 
 /**
  * @class SinglePhaseBase
@@ -64,19 +69,14 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
-
-  virtual void SetupSystem( DomainPartition * const domain,
-                            DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+  virtual void
+  RegisterDataOnMesh( Group * const MeshBodies ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
-              DomainPartition * domain ) override;
+              DomainPartition & domain ) override;
 
   /**
    * @defgroup Solver Interface Functions
@@ -88,27 +88,23 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
+                     DomainPartition & domain ) override;
 
   virtual void
   AssembleSystem( real64 const time_n,
                   real64 const dt,
-                  DomainPartition * const domain,
+                  DomainPartition & domain,
                   DofManager const & dofManager,
-                  ParallelMatrix & matrix,
-                  ParallelVector & rhs ) override;
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   SolveSystem( DofManager const & dofManager,
@@ -117,12 +113,12 @@ public:
                ParallelVector & solution ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain ) override;
+                        DomainPartition & domain ) override;
 
   template< bool ISPORO, typename POLICY >
   void AccumulationLaunch( localIndex const targetIndex,
@@ -194,12 +190,6 @@ public:
    */
   virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const;
 
-  /**
-   * @brief Function to update all constitutive models
-   * @param dataGroup group that contains the fields
-   */
-  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
-
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     // used for face-based BC
@@ -236,15 +226,52 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( DomainPartition * const domain ) override;
+  virtual void ResetViews( MeshLevel & mesh ) override;
 
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
+  /**
+   * @brief Backup current values of all constitutive fields that participate in the accumulation term
+   * @param mesh the mesh to operate on
+   */
+  void BackupFields( MeshLevel & mesh ) const;
+
 protected:
 
   virtual void ValidateFluidModels( DomainPartition const & domain ) const;
+
+  /**
+   * @brief Structure holding views into fluid properties used by the base solver.
+   */
+  struct FluidPropViews
+  {
+    arrayView2d< real64 const > const & dens;        ///< density
+    arrayView2d< real64 const > const & dDens_dPres; ///< derivative of density w.r.t. pressure
+    arrayView2d< real64 const > const & visc;        ///< viscosity
+    arrayView2d< real64 const > const & dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
+    real64 const defaultDensity;                     ///< default density to use for new elements
+    real64 const defaulViscosity;                    ///< default vi to use for new elements
+  };
+
+  /**
+   * @brief Extract properties from a fluid.
+   * @param fluid base reference to the fluid object
+   * @return structure with property views
+   *
+   * This function enables derived solvers to substitute SingleFluidBase for a different,
+   * unrelated fluid class, and customize property extraction. For example, it is used by
+   * SinglePhaseProppantBase to allow using SlurryFluidBase, which does not inherit from
+   * SingleFluidBase currently (but this design may need to be revised).
+   */
+  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
+
+  /**
+   * @brief Function to update all constitutive models
+   * @param dataGroup group that contains the fields
+   */
+  virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update all constitutive models
@@ -256,33 +283,20 @@ protected:
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  template< class FLUIDBASE >
   void UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const;
-
-  /// view into dof index arrays
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > m_pressureDofIndex;
-
-  /// views into primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
 
-  /// views into intermediate fields
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
-
-  /// views into material fields
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
-
-  // coupling with proppant transport
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_poroMultiplier;
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
@@ -292,47 +306,6 @@ private:
   virtual void ResetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
-
-
-
-template< class FLUIDBASE >
-void SinglePhaseBase::UpdateMobility( Group & dataGroup, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  // output
-
-  arrayView1d< real64 > const & mob =
-    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::mobilityString );
-
-  arrayView1d< real64 > const & dMob_dPres =
-    dataGroup.getReference< array1d< real64 > >( viewKeyStruct::dMobility_dPressureString );
-
-  // input
-
-  FLUIDBASE & fluid = GetConstitutiveModel< FLUIDBASE >( dataGroup, m_fluidModelNames[targetIndex] );
-
-  arrayView2d< real64 const > const & dens =
-    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::densityString );
-
-  arrayView2d< real64 const > const & dDens_dPres =
-    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dDens_dPresString );
-
-  arrayView2d< real64 const > const & visc =
-    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::viscosityString );
-
-  arrayView2d< real64 const > const & dVisc_dPres =
-    fluid.template getReference< array2d< real64 > >( FLUIDBASE::viewKeyStruct::dVisc_dPresString );
-
-  SinglePhaseBaseKernels::MobilityKernel::Launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                                                            dens,
-                                                                            dDens_dPres,
-                                                                            visc,
-                                                                            dVisc_dPres,
-                                                                            mob,
-                                                                            dMob_dPres );
-
-}
 
 } /* namespace geosx */
 
