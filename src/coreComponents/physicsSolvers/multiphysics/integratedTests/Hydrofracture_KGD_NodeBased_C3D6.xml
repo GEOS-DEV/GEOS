@@ -29,7 +29,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2, Fracture}"
+      targetRegions="{Region2}"
       solidMaterialNames="{rock}"
       contactRelationName="fractureContact"
       >

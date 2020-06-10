@@ -972,12 +972,19 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
 
   matrix.open();
 
+  if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {
+    ElementRegionManager const & elemManager = *mesh.getElemManager();
+    array1d< string > allFaceElementRegions;
+    elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
+    {
+      allFaceElementRegions.push_back( elemRegion.getName() );
+    } );
     finiteElement::
       fillSparsity< serialPolicy,
                     FaceElementSubRegion,
                     SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
-                                                                       targetRegionNames(),
+                                                                       allFaceElementRegions,
                                                                        nullptr,
                                                                        dofNumber,
                                                                        matrix,
