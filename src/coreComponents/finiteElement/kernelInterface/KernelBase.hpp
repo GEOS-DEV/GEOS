@@ -365,8 +365,8 @@ public:
   static
   typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
                            std::is_same< POLICY, parallelHostPolicy >::value, real64 >::type
-  Launch( localIndex const numElems,
-          KERNEL_TYPE const & kernelComponent )
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
@@ -393,6 +393,7 @@ public:
     return maxResidual.get();
   }
 
+  //START_kernelLauncher
   /**
    * @brief Kernel Launcher.
    * @tparam POLICY The RAJA policy to use for the launch.
@@ -411,18 +412,23 @@ public:
   static
   typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
                               std::is_same< POLICY, parallelHostPolicy >::value ), real64 >::type
-  Launch( localIndex const numElems,
-          KERNEL_TYPE const & kernelComponent )
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
+    // launch the kernel
     forAll< POLICY >( numElems,
                       [=] GEOSX_DEVICE ( localIndex const k )
     {
+      // allocate the stack variables
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
+
       for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
@@ -438,6 +444,7 @@ public:
     } );
     return maxResidual.get();
   }
+  //END_kernelLauncher
 
 protected:
   /// The element to nodes map.
@@ -460,6 +467,7 @@ protected:
 //*****************************************************************************
 //*****************************************************************************
 
+//START_regionBasedKernelApplication
 /**
  * @brief Performs a loop over specific regions (by type and name) and calls
  *        a kernel launch on the subregions with compile time knowledge of
@@ -508,13 +516,13 @@ template< typename POLICY,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
-real64 RegionBasedKernelApplication( MeshLevel & mesh,
+real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      arrayView1d< string const > const & constitutiveNames,
                                      FiniteElementDiscretization const * const feDiscretization,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
-
+  // save the maximum residual contribution for scaling residuals for convergence criteria.
   real64 maxResidualContribution = 0;
 
   NodeManager & nodeManager = *(mesh.getNodeManager());
@@ -523,6 +531,8 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
   ElementRegionManager & elementRegionManager = *(mesh.getElemManager());
 
 
+  // Create a tuple that contains the kernelConstructorParams, as the lambda does not properly catch the parameter pack
+  // until c++20
 #if CONSTRUCTOR_PARAM_OPTION==1
   std::tuple< KERNEL_CONSTRUCTOR_PARAMS &... > kernelConstructorParamsTuple = std::forward_as_tuple( kernelConstructorParams ... );
 #elif CONSTRUCTOR_PARAM_OPTION==2
@@ -530,14 +540,17 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 #endif
 
 
+  // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
                                                             [&] ( localIndex const targetRegionIndex,
                                                                   auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
+
+    // Create an alias for the type of subregion we are in, which is now known at compile time.
     typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
 
-
+    // Extract the number of quadrature point from the finite element object.
     FiniteElementBase const * finiteElementSpace = nullptr;
     if( feDiscretization != nullptr )
     {
@@ -549,6 +562,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                  1 :
                                  finiteElementSpace->n_quadrature_points();
 
+    // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
     if( targetRegionIndex <= constitutiveNames.size()-1 )
@@ -561,25 +575,36 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
       constitutiveRelation = nullConstitutiveModel;
     }
 
+    // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
                                                                       [&]( auto * const castedConstitutiveRelation )
     {
+      // Create an alias for the type of contitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
+
+      // Apply a sequence of integer dispatch functions to convert the number of nodes per element,
+      // and number of quadrature points per element to a compile time constant.
       integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
       {
         integralTypeDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
         {
+          // Compile time values!
           static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
           static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
 
-
+          // Define an alias for the kernel type for easy use.
           using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
                                                CONSTITUTIVE_TYPE,
                                                NUM_NODES_PER_ELEM,
                                                NUM_NODES_PER_ELEM >;
 
+          // 1) Combine the tuple containing the physics kernel specific constructor parameters with
+          // the parameters common to all phsyics kernels that use this interface,
+          // 2) Instantiate the kernel.
+          // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
+          // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
+          // only use one option...most likely camp since we can easily fix bugs.
 #if CONSTRUCTOR_PARAM_OPTION==1
-
           auto temp = std::forward_as_tuple( nodeManager,
                                              edgeManager,
                                              faceManager,
@@ -590,7 +615,7 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
           auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
                                                                     kernelConstructorParamsTuple );
 
-          KERNEL_TYPE kernelComponent  = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+          KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #elif CONSTRUCTOR_PARAM_OPTION==2
           auto temp = camp::forward_as_tuple( nodeManager,
@@ -601,18 +626,22 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
                                               castedConstitutiveRelation );
           auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
                                                                                   kernelConstructorParamsTuple );
-          KERNEL_TYPE kernelComponent  = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+          KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
-          maxResidualContribution = std::max( maxResidualContribution,
-                                              KERNEL_TYPE::template Launch< POLICY,
-                                                                            NUM_QUADRATURE_POINTS
-                                                                            >( numElems,
-                                                                               kernelComponent ) );
+
+          // Call the kernelLaunch function, and store the maximum contribution to the residual.
+          maxResidualContribution =
+            std::max( maxResidualContribution,
+                      KERNEL_TYPE::template kernelLaunch< POLICY,
+                                                          NUM_QUADRATURE_POINTS
+                                                          >( numElems,
+                                                             kernelComponent ) );
         } );
       } );
     } );
 
+    // Remove the null constitutive model (not required, but cleaner)
     if( nullConstitutiveModel )
     {
       elementSubRegion.deregisterGroup( "nullModelGroup" );
@@ -622,8 +651,10 @@ real64 RegionBasedKernelApplication( MeshLevel & mesh,
 
   return maxResidualContribution;
 }
-}
-}
+//END_regionBasedKernelApplication
+
+} // namespace finiteElement
+} // namespace geosx
 
 
 

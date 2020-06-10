@@ -285,7 +285,7 @@ template< typename POLICY,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE >
 static
-real64 FillSparsity( MeshLevel & mesh,
+real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
                      FiniteElementDiscretization const * const feDiscretization,
                      arrayView1d< globalIndex const > const & inputDofNumber,
@@ -294,7 +294,7 @@ real64 FillSparsity( MeshLevel & mesh,
 {
   real64 rval = 0;
 
-  rval = RegionBasedKernelApplication< POLICY,
+  rval = regionBasedKernelApplication< POLICY,
                                        constitutive::NullModel,
                                        REGION_TYPE,
                                        SparsityHelper< KERNEL_TEMPLATE >::template Kernel

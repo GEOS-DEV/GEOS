@@ -97,10 +97,7 @@ public:
 
   KernelWrapper createKernelUpdates()
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( [&]( auto && ... baseParams ) -> KernelWrapper
-    {
-      return KernelWrapper( m_biotCoefficient, std::forward< decltype(baseParams) >( baseParams )... );
-    } );
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
   }
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

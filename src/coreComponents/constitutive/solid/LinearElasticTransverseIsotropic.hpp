@@ -474,22 +474,25 @@ public:
   }
 
   /**
-   * @brief Executes a lambda that will return a KernelUpdate for the calling
-   *   class.
-   * @param lambda A lambda function that takes the parameters for the
-   *   constructor of the KernelUpdates class.
-   * @return
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for
+   *   the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
    */
-  template< typename UPDATE_KERNEL, typename LAMBDA >
-  UPDATE_KERNEL createDerivedKernelUpdates( LAMBDA && lambda )
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
   {
-    return lambda( m_c11,
-                   m_c13,
-                   m_c33,
-                   m_c44,
-                   m_c66,
-                   m_stress );
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_c11,
+                          m_c13,
+                          m_c33,
+                          m_c44,
+                          m_c66,
+                          m_stress );
   }
+
 
 protected:
   virtual void PostProcessInput() override;

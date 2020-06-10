@@ -284,8 +284,8 @@ public:
             int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static real64
-  Launch( localIndex const, //numElems,
-          KERNEL_TYPE const & kernelComponent )
+  kernelLaunch( localIndex const, //numElems,
+                KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
 

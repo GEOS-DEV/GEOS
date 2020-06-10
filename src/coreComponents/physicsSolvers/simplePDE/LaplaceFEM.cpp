@@ -180,7 +180,7 @@ void LaplaceFEM::SetupSystem( DomainPartition * const domain,
   matrix.open();
 
 
-  finiteElement::FillSparsity< serialPolicy,
+  finiteElement::fillSparsity< serialPolicy,
                                CellElementSubRegion,
                                LaplaceFEMKernel >( *mesh,
                                                    targetRegionNames(),
@@ -222,7 +222,7 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
   rhs.open();
 
   finiteElement::
-    RegionBasedKernelApplication< serialPolicy,
+    regionBasedKernelApplication< serialPolicy,
                                   constitutive::NullModel,
                                   CellElementSubRegion,
                                   LaplaceFEMKernel >( *mesh,
