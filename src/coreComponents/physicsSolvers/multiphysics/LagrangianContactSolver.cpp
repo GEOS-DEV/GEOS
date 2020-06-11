@@ -448,8 +448,6 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
                                           m_rhs,
                                           m_solution );
 
-  m_solidSolver->updateStress( domain );
-
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dtReturn, domain );
 
@@ -907,7 +905,8 @@ void LagrangianContactSolver::SetupSystem( DomainPartition * const domain,
                                            DofManager & dofManager,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           ParallelVector & solution,
+                                           bool const GEOSX_UNUSED_PARAM( setSparsity ) )
 {
   GEOSX_MARK_FUNCTION;
 
