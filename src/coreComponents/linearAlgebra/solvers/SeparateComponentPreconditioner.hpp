@@ -57,9 +57,9 @@ public:
    */
   virtual ~SeparateComponentPreconditioner() override;
 
-  virtual void compute( Matrix const & mat, DofManager const & dofManager ) override;
-
   using PreconditionerBase< LAI >::compute;
+
+  virtual void compute( Matrix const & mat, DofManager const & dofManager ) override;
 
   /**
    * @brief Apply operator to a vector

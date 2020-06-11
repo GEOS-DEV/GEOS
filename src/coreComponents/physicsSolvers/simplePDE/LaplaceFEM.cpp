@@ -18,25 +18,20 @@
  */
 
 #include "LaplaceFEM.hpp"
-
-#include <vector>
-#include <math.h>
+#include "LaplaceFEMKernels.hpp"
 
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "mpiCommunications/NeighborCommunicator.hpp"
-#include "dataRepository/Group.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
-
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
-#include "managers/NumericalMethodsManager.hpp"
-#include "codingUtilities/Utilities.hpp"
-
 #include "managers/DomainPartition.hpp"
+#include "managers/NumericalMethodsManager.hpp"
 
 namespace geosx
 {
@@ -48,7 +43,6 @@ namespace keys
 }
 
 using namespace dataRepository;
-using namespace constitutive;
 
 
 //START_SPHINX_INCLUDE_01
@@ -168,6 +162,38 @@ void LaplaceFEM::SetupDofs( DomainPartition const * const GEOSX_UNUSED_PARAM( do
                           DofManager::Connector::Elem );
 }
 
+void LaplaceFEM::SetupSystem( DomainPartition * const domain,
+                              DofManager & dofManager,
+                              ParallelMatrix & matrix,
+                              ParallelVector & rhs,
+                              ParallelVector & solution,
+                              bool const setSparisty )
+{
+  GEOSX_MARK_FUNCTION;
+  SolverBase::SetupSystem( domain, dofManager, matrix, rhs, solution, setSparisty );
+
+  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  NodeManager const * const nodeManager = mesh->getNodeManager();
+  arrayView1d< globalIndex const > const &
+  dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
+
+  matrix.open();
+
+
+  finiteElement::fillSparsity< serialPolicy,
+                               CellElementSubRegion,
+                               LaplaceFEMKernel >( *mesh,
+                                                   targetRegionNames(),
+                                                   nullptr,
+                                                   dofIndex,
+                                                   matrix,
+                                                   rhs );
+
+
+  matrix.close();
+
+}
+
 //START_SPHINX_INCLUDE_04
 void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
@@ -177,73 +203,39 @@ void LaplaceFEM::AssembleSystem( real64 const time_n,
                                  ParallelVector & rhs )
 {
   MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+
   Group * const nodeManager = mesh->getNodeManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+
   NumericalMethodsManager const *
     numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
-  array1d< globalIndex > const & dofIndex =
-    nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+  array1d< globalIndex > const &
+  dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
+
+  FiniteElementDiscretization const *
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   matrix.open();
   rhs.open();
 
-  // begin region loop
-  for( localIndex er=0; er<elemManager->numRegions(); ++er )
-  {
-    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
+  finiteElement::
+    regionBasedKernelApplication< serialPolicy,
+                                  constitutive::NullModel,
+                                  CellElementSubRegion,
+                                  LaplaceFEMKernel >( *mesh,
+                                                      targetRegionNames(),
+                                                      array1d< string >(),
+                                                      feDiscretization,
+                                                      dofIndex,
+                                                      matrix,
+                                                      rhs,
+                                                      m_fieldName );
 
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
-    elementRegion->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
-    {
-      arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-
-      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
-
-      globalIndex_array elemDofIndex( numNodesPerElement );
-      real64_array element_rhs( numNodesPerElement );
-      real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
-
-      arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
-
-      // begin element loop, skipping ghost elements
-      for( localIndex k=0; k<elementSubRegion.size(); ++k )
-      {
-        if( elemGhostRank[k] < 0 )
-        {
-          element_rhs = 0.0;
-          element_matrix = 0.0;
-          for( localIndex q=0; q<n_q_points; ++q )
-          {
-            for( localIndex a=0; a<numNodesPerElement; ++a )
-            {
-              elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
-
-              real64 diffusion = 1.0;
-              for( localIndex b=0; b<numNodesPerElement; ++b )
-              {
-                element_matrix( a, b ) += detJ[k][q] *
-                                          diffusion *
-                                          LvArray::tensorOps::AiBi< 3 >( dNdX[k][q][a], dNdX[k][q][b] );
-              }
-
-            }
-          }
-          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
-          rhs.add( elemDofIndex, element_rhs );
-        }
-      }
-    } );
-  }
   matrix.close();
   rhs.close();
   //END_SPHINX_INCLUDE_04

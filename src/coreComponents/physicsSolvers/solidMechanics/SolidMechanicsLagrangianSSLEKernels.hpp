@@ -32,62 +32,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-struct StressCalculationKernel
-{
-  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
-  static inline real64
-  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          localIndex const numElems,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView4d< real64 const > const & dNdX,
-          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
-          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
-
-    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
-
-
-//    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
-    using KERNEL_POLICY = parallelHostPolicy;
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   [&] ( localIndex const k )
-    {
-      real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        LvArray::tensorOps::copy< 3 >( uhat_local[ a ], uhat[ elemsToNodes( k, a ) ] );
-      }
-
-      real64 c[ 6 ][ 6 ];
-      constitutive.GetStiffness( k, c );
-
-      //Compute Quadrature
-      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-      {
-        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-        {
-          real64 const v0_x_dNdXa0 = uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
-
-          stress( k, q, 0 ) += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] );
-          stress( k, q, 1 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] );
-          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] );
-          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ];
-          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ];
-          stress( k, q, 5 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ];
-        }
-      }//quadrature loop
-
-    } );
-
-    return 0.0;
-  }
-};
-
 /**
  * @struct Structure to wrap templated function that implements the explicit time integration kernels.
  */
@@ -132,7 +76,7 @@ struct ExplicitKernel
   {
     GEOSX_MARK_FUNCTION;
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
 #if defined(CALCFEMSHAPE)
     GEOSX_UNUSED_VAR( dNdX );
@@ -157,7 +101,7 @@ struct ExplicitKernel
       real64 varLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 
 #if defined(CALCFEMSHAPE)
-      real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 xLocal[ 8 ][ 3 ];
 #endif
 
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
@@ -314,7 +258,7 @@ struct ImplicitKernel
     static constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
     arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 

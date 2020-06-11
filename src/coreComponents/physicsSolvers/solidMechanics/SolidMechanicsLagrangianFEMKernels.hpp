@@ -21,10 +21,10 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/solidSelector.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
@@ -100,18 +100,22 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 {
   real64 rval = 0;
 
-  constitutive::constitutiveUpdatePassThru( constitutiveRelation, [&]( auto & constitutive )
+  using namespace constitutive;
+
+  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
+                                              [&]( auto * const constitutive )
   {
-    using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
+    using CONSTITUTIVE_TYPE = TYPEOFPTR( constitutive );
     if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
     {
-      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( &constitutive, std::forward< PARAMS >( params )... );
+      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( constitutive,
+                                                                        std::forward< PARAMS >( params )... );
     }
     else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
     {
       GEOSX_ERROR( "Not implemented!" );
-      // rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...
-      // );
+//      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( constitutive,
+//                                                                        std::forward< PARAMS >( params )... );
     }
   } );
   return rval;
@@ -198,7 +202,7 @@ struct ExplicitKernel
 
 
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelUpdates();
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -325,6 +329,7 @@ struct ExplicitKernel
  */
 struct ImplicitKernel
 {
+
   /**
    * @brief Launch of the element processing kernel for implicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -391,6 +396,7 @@ struct ImplicitKernel
   }
 
 };
+
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 
