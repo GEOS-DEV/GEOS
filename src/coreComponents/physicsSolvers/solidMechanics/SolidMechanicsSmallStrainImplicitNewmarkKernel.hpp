@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidMechanicsSmallStrainImplicitNewmarkKernels.hpp
+ * @file SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_
@@ -118,7 +118,7 @@ public:
   //***************************************************************************
   /**
    * @class StackVariables
-   * @copydoc geosx::finiteElement::QuasiStatic::StackVariables
+   * @copydoc QuasiStatic::StackVariables
    *
    * Adds a stack array for the vtilde, uhattilde, and the
    * Inertial mass damping.
@@ -151,7 +151,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::QuasiStatic::setup.
+   * @copydoc QuasiStatic::setup
    *
    * For the ImplicitNewmark implementation, global values from the velocity
    * predictor, and the incremental displacement predictor are placed into
@@ -175,9 +175,9 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::QuasiStatic::quadraturePointJacobianContribution.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
    *
-   * The ImplcitNewmark kernel adds the calculation of the inertial damping,
+   * The ImplcitNewmark kernel adds the calculation of the inertia damping,
    * jacobian and residual contributions.
    */
   GEOSX_DEVICE
@@ -212,7 +212,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::QuasiStatic::complete.
+   * @copydoc QuasiStatic::complete
    *
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.

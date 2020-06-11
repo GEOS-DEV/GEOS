@@ -130,7 +130,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup
    *
    * For the LaplaceFEMKernel implementation, global values from the
    * primaryField, and degree of freedom numbers are placed into element local
@@ -152,7 +152,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::quadraturePointJacobianContribution
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -170,7 +170,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    *
    * Form element residual from the fully formed element Jacobian dotted with
    * the primary field and map the element local Jacobian/Residual to the
@@ -178,9 +178,10 @@ public:
    */
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+  real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    GEOSX_UNUSED_VAR( k );
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )

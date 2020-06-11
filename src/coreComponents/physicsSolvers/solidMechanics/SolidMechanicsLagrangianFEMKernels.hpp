@@ -113,8 +113,9 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
     }
     else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
     {
-      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( constitutive,
-                                                                        std::forward< PARAMS >( params )... );
+      GEOSX_ERROR( "Not implemented!" );
+//      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( constitutive,
+//                                                                        std::forward< PARAMS >( params )... );
     }
   } );
   return rval;

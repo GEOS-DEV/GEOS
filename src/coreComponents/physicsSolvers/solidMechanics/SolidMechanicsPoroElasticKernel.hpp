@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidMechanicsPoroElasticKernels.hpp
+ * @file SolidMechanicsPoroElasticKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSPOROELASTICKERNEL_HPP_
@@ -57,6 +57,7 @@ class PoroElastic : public BASE< SUBREGION_TYPE,
                                  NUM_NODES_PER_ELEM >
 {
 public:
+  /// Alias for the base class.
   using Base = BASE< SUBREGION_TYPE,
                      CONSTITUTIVE_TYPE,
                      NUM_NODES_PER_ELEM,
@@ -97,7 +98,7 @@ public:
 
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
    *
    * The divergence of the effective stress is integrated over the volume of
    * the element, yielding the nodal force (residual) contributions.

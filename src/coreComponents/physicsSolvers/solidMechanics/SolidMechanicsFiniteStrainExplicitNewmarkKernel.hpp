@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidMechanicsSmallStrainExplicitNewmarkKernels.hpp
+ * @file SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSFINITESTRAINEXPLICITNEWMARK_HPP_
@@ -29,14 +29,29 @@ namespace SolidMechanicsLagrangianFEMKernels
 {
 
 #if defined(GEOSX_USE_CUDA)
+/// Macro variable to indicate whether or not to calculate the shape function
+/// derivatives in the kernel instead of using a pre-calculated value.
 #define CALCFEMSHAPE
 #endif
-// If UPDATE_STRESS is undef, then stress is not updated at all.
-//  #define UPDATE_STRESS 1 // uses total displacement to and adds material stress state to integral for nodalforces.
-#define UPDATE_STRESS 2 // uses velocity*dt and updates material stress state.
+/// If UPDATE_STRESS is undef, uses total displacement and stress is not
+/// updated at all.
+/// If UPDATE_STRESS 1, uses total displacement to and adds material stress
+/// state to integral for nodalforces.
+/// If UPDATE_STRESS 2 then velocity*dt is used to update material stress state
+#define UPDATE_STRESS 2
 
 
-
+/**
+ * @brief Integrate the divergence of a rank-2 tensor in Voigt notation
+ * @tparam N The number of support points.
+ * @tparam USD The stride one dimensions.
+ * @param fieldVar The rank-2 tensor in Voigt notation.
+ * @param dNdX The shape function derivatives at this quadrature point.
+ * @param detJ The jacobian for the parent space transformation.
+ * @param detF The determinant of the deformation gradient.
+ * @param fInv The inverse of the deformation gradient.
+ * @param result The resulting vector.
+ */
 template< int N, int USD >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
@@ -69,7 +84,7 @@ void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
 /**
  * @brief Implements kernels for solving the equations of motion using the
  *   explicit Newmark method under the finite strain assumption.
- * @copydoc geosx::finiteElement::ExplicitSmallStrain
+ * @copydoc ExplicitSmallStrain
  *
  * ### Explicit Small Strain Description
  * Finite strain implementation.
@@ -110,7 +125,7 @@ public:
 #endif
 
   /**
-   * @copydoc ExplcitSmallStrain
+   * @copydoc ExplicitSmallStrain
    */
   ExplicitFiniteStrain( NodeManager & nodeManager,
                         EdgeManager const & edgeManager,
@@ -196,11 +211,17 @@ public:
 #if defined(CALCFEMSHAPE)
     real64 dNdX[ 8 ][ 3 ];
     real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
+
+    /// Macro to substitute in the shape function derivatives.
     #define DNDX dNdX
+
+    /// Macro to substitute the determinant of the jacobian transformation to the parent space.
     #define DETJ detJ
 #else
+    /// @cond DOXYGEN_SKIP
     #define DNDX m_dNdX[k][q]
     #define DETJ m_detJ( k, q )
+    /// @endcond DOXYGEN_SKIP
 #endif
     real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
     CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );

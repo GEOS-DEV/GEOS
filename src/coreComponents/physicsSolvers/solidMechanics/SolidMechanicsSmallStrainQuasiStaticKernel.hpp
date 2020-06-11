@@ -13,7 +13,7 @@
  */
 
 /**
- * @file SolidMechanicsSmallStrainQuasiStaticKernels.hpp
+ * @file SolidMechanicsSmallStrainQuasiStaticKernel.hpp
  */
 
 #ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_
@@ -150,7 +150,7 @@ public:
 
   /**
    * @brief Copy global values from primary field to a local stack array.
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::setup.
+   * @copydoc ::geosx::finiteElement::ImplicitKernelBase::setup
    *
    * For the QuasiStatic implementation, global values from the displacement,
    * incremental displacement, and degree of freedom numbers are placed into
@@ -177,7 +177,7 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointStateUpdate
    *
    * For solid mechanics kernels, the strain increment is calculated, and the
    * constitutive update is called. In addition, the constitutive stiffness
@@ -245,8 +245,10 @@ public:
   };
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution.
-   *
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointJacobianContribution
+   * @tparam DYNAMICS_LAMBDA The type of the lambda that will generate dynamics
+   *   terms inside the Jacobian loop.
+   * @param dynamicsTerms The lambda that generates dynamics terms.
    * For solid mechanics kernels, the derivative of the force residual wrt
    * the incremental displacement is filled into the local element jacobian.
    */
@@ -299,7 +301,10 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution.
+   * @copydoc geosx::finiteElement::KernelBase::quadraturePointResidualContribution
+   * @tparam STRESS_MODIFIER The type of the function to modify the stress
+   *   prior to integration.
+   * @param stressModifier The stress modifier functor/lambda.
    *
    * The divergence of the stress is integrated over the volume of the element,
    * yielding the nodal force (residual) contributions.
@@ -339,13 +344,14 @@ public:
   }
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete.
+   * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
   //GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+  real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    GEOSX_UNUSED_VAR(k);
     real64 meanForce = 0;
     for( localIndex a=0; a<stack.numRows; ++a )
     {

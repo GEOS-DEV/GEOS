@@ -28,20 +28,31 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 
-// 1 is std::tuple
-// 2 is camp
 
 #if defined(__APPLE__)
+/// Use camp::tuple to hold constructor params.
 #define CONSTRUCTOR_PARAM_OPTION 2
 #else
+/// Use std::tuple to hold constructor params.
 #define CONSTRUCTOR_PARAM_OPTION 1
 #endif
 #if CONSTRUCTOR_PARAM_OPTION==1
 namespace std
 {
-
 namespace detail
 {
+/**
+ * @brief Implementation of std::make_from_tuple()
+ * @tparam T
+ * @tparam Tuple
+ * @tparam I
+ * @tparam T
+ * @tparam Tuple
+ * @tparam I
+ * @param t
+ * @param
+ * @return
+ */
 template< class T, class Tuple, std::size_t... I >
 constexpr T make_from_tuple_impl( Tuple && t, std::index_sequence< I... > )
 {
@@ -49,6 +60,15 @@ constexpr T make_from_tuple_impl( Tuple && t, std::index_sequence< I... > )
 }
 } // namespace detail
 
+/**
+ * @brief Implementation of std::make_from_tuple()
+ * @tparam T
+ * @tparam Tuple
+ * @tparam T
+ * @tparam Tuple
+ * @param t
+ * @return
+ */
 template< class T, class Tuple >
 constexpr T make_from_tuple( Tuple && t )
 {
@@ -107,21 +127,21 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-//    case 4:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-//      break;
-//    }
-//    case 5:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-//      break;
-//    }
-//    case 6:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
-//      break;
-//    }
+    case 4:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
+      break;
+    }
+    case 5:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+      break;
+    }
+    case 6:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
+      break;
+    }
     case 8:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
@@ -197,7 +217,7 @@ public:
    * @brief Constructor
    * @param elementSubRegion Reference to the SUBREGION_TYPE(class template
    *                         parameter) object.
-   * @param inputConstitutiveUpdate The constitutive update object.
+   * @param inputConstitutiveType The constitutive object.
    * @param finiteElementSpace Placeholder for the finite element space object,
    *                           which currently doesn't do much.
    */
@@ -330,6 +350,7 @@ public:
    *                             type that derives from KernelBase.
    * @param k The element index.
    * @param stack The StackVariable object that hold the stack variables.
+   * @return The maximum contribution to the residual.
    *
    * ### KernelBase::complete() Description
    *
@@ -478,7 +499,7 @@ protected:
  *                           pass-thru/dispatch which gives the kernel launch
  *                           compile time knowledge of the constitutive model.
  *                           This is achieved through a call to the
- *                           #constitutive::ConstitutivePassThru function which
+ *                           ConstitutivePassThru function which
  *                           should have a specialization for CONSTITUTIVE_BASE
  *                           implemented in order to perform the compile time
  *                           dispatch.
@@ -505,7 +526,7 @@ protected:
  *         the residual.
  *
  * Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
- * #KernelBase::Launch.
+ * #::geosx::finiteElement::KernelBase::kernelLaunch().
  */
 template< typename POLICY,
           typename CONSTITUTIVE_BASE,

@@ -105,7 +105,7 @@ public:
 
   //***************************************************************************
   /**
-   * @copydoc KernelBase::StackVariables
+   * @copydoc finiteElement::KernelBase::StackVariables
    */
   struct StackVariables : public Base::StackVariables
   {
@@ -183,9 +183,10 @@ public:
    */
 //    GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  real64 complete( localIndex const GEOSX_UNUSED_PARAM( k ),
+  real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    GEOSX_UNUSED_VAR(k);
     m_matrix.insert( stack.localRowDofIndex,
                      stack.localColDofIndex,
                      &(stack.localJacobian[0][0]),
@@ -214,10 +215,9 @@ protected:
 //*****************************************************************************
 /**
  * @brief Helper struct to define a specialization of
- *        #geosx::finiteElement::ImplicitKernelBase that may be used to
- *        generate the sparsity pattern.
+ *   #::geosx::finiteElement::ImplicitKernelBase that may be used to generate the sparsity pattern.
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
- *                         Most likely derives from #ImplicitKernelBase.
+ *                         Most likely derives from ImplicitKernelBase.
  */
 template< template< typename,
                     typename,
@@ -274,7 +274,7 @@ struct SparsityHelper
  *
  * Fills matrix sparsity using information from physics specific implementation
  * of #geosx::finiteElement::KernelBase interface using the
- * #geosx::finiteElement::Kernel alias to specialize
+ * #geosx::finiteElement::KernelBase alias to specialize
  * #geosx::finiteElement::ImplicitKernelBase to conform with the template
  * pattern specified in the physics kernels.
  */
