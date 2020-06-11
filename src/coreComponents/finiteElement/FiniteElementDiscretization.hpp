@@ -118,7 +118,6 @@ public:
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;
-  FiniteElementBase * m_finiteElement = nullptr;
 protected:
   void PostProcessInput() override final;
 

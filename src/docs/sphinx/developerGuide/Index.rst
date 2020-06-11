@@ -16,6 +16,8 @@ Welcome to the GEOSX developer guide.
    Doxygen
 
    /coreComponents/dataRepository/dataRepository.rst
+   
+   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
 
    /coreComponents/mesh/docs/meshDeveloperGuide.rst
 

@@ -48,9 +48,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
-{
-  delete m_finiteElement;
-}
+{}
 
 localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
 {
@@ -79,7 +77,6 @@ void FiniteElementDiscretization::PostProcessInput()
 
   m_basis = basisManager.GetGroup< BasisBase >( basisName );
   m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
-  m_finiteElement = new FiniteElement< 3 >( *m_basis, *m_quadrature, 0 );
 }
 
 

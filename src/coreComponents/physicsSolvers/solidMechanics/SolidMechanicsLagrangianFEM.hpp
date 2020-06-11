@@ -78,10 +78,6 @@ public:
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
-  virtual void
-  updateStress( DomainPartition * const domain );
-
-
 
   /**
    * @defgroup Solver Interface Functions
@@ -114,6 +110,13 @@ public:
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
 
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               bool const setSparsity = false ) override;
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
@@ -156,6 +159,22 @@ public:
 
   /**@}*/
 
+
+  template< typename CONSTITUTIVE_BASE,
+            template< typename SUBREGION_TYPE,
+                      typename CONSTITUTIVE_TYPE,
+                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+            typename ... PARAMS >
+  void AssemblyLaunch( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       ParallelMatrix & matrix,
+                       ParallelVector & rhs,
+                       PARAMS && ... params );
+
+
+  template< typename ... PARAMS >
+  real64 explicitKernelDispatch( PARAMS && ... params );
 
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
@@ -334,7 +353,6 @@ public:
                             DofManager const & dofManager,
                             ParallelVector const & solution ) override;
 
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
@@ -355,6 +373,9 @@ public:
     static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
     static constexpr auto maxForce = "maxForce";
+    static constexpr auto elemsAttachedToSendOrReceiveNodes = "elemsAttachedToSendOrReceiveNodes";
+    static constexpr auto elemsNotAttachedToSendOrReceiveNodes = "elemsNotAttachedToSendOrReceiveNodes";
+    static constexpr auto effectiveStress = "effectiveStress";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
@@ -370,6 +391,22 @@ public:
   {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
+
+  SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
+  {
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes );
+  }
+
+  SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
+  {
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes );
+  }
+
+  void setEffectiveStress( integer const input )
+  {
+    m_effectiveStress = input;
+  }
+
 
 protected:
   virtual void PostProcessInput() override final;
@@ -387,13 +424,14 @@ protected:
   integer m_strainTheory;
   array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-
-
-  array1d< array1d< SortedArray< localIndex > > > m_elemsAttachedToSendOrReceiveNodes;
-  array1d< array1d< SortedArray< localIndex > > > m_elemsNotAttachedToSendOrReceiveNodes;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
+
+  /// Indicates whether or not to use effective stress when integrating the
+  /// stress divergence in the kernels. This means calling the poroelastic
+  /// variant of the solid mechanics kernels.
+  integer m_effectiveStress;
 
   SolidMechanicsLagrangianFEM();
 
@@ -402,6 +440,71 @@ protected:
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
+
+
+template< typename CONSTITUTIVE_BASE,
+          template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+          typename ... PARAMS >
+void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs,
+                                                  PARAMS && ... params )
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+
+  matrix.open();
+  rhs.open();
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  ResetStressToBeginningOfStep( &domain );
+
+
+  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
+                                        gravityVector().Data()[1],
+                                        gravityVector().Data()[2] };
+
+  m_maxForce = finiteElement::
+                 regionBasedKernelApplication< serialPolicy,
+                                               CONSTITUTIVE_BASE,
+                                               CellElementSubRegion,
+                                               KERNEL_TEMPLATE >( mesh,
+                                                                  targetRegionNames(),
+                                                                  m_solidMaterialNames,
+                                                                  feDiscretization,
+                                                                  dofNumber,
+                                                                  matrix,
+                                                                  rhs,
+                                                                  gravityVectorData,
+                                                                  std::forward< PARAMS >( params )... );
+
+
+  ApplyContactConstraint( dofManager,
+                          domain,
+                          &matrix,
+                          &rhs );
+
+  matrix.close();
+  rhs.close();
+
+
+}
 
 
 } /* namespace geosx */

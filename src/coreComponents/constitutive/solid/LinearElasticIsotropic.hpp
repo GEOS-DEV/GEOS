@@ -37,6 +37,7 @@ namespace constitutive
 class LinearElasticIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+
   /**
    * @brief Constructor
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each
@@ -54,14 +55,14 @@ public:
     m_shearModulus( shearModulus )
   {}
 
+  /// Deleted default constructor
+  LinearElasticIsotropicUpdates() = delete;
+
   /// Default copy constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates const & ) = default;
 
   /// Default move constructor
   LinearElasticIsotropicUpdates( LinearElasticIsotropicUpdates && ) = default;
-
-  /// Deleted default constructor
-  LinearElasticIsotropicUpdates() = delete;
 
   /// Deleted copy assignment operator
   LinearElasticIsotropicUpdates & operator=( LinearElasticIsotropicUpdates const & ) = delete;
@@ -367,10 +368,37 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelWrapper()
+  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true )
   {
-    return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    if( includeState )
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus, m_shearModulus, m_stress );
+    }
+    else
+    {
+      return LinearElasticIsotropicUpdates( m_bulkModulus,
+                                            m_shearModulus,
+                                            typename decltype(m_stress)::ViewType{} );
+    }
   }
+
+  /**
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for
+   *   the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
+   */
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  {
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_bulkModulus,
+                          m_shearModulus,
+                          m_stress );
+  }
+
 
 protected:
   virtual void PostProcessInput() override;

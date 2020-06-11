@@ -287,7 +287,8 @@ public:
                DofManager & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
-               ParallelVector & solution );
+               ParallelVector & solution,
+               bool const setSparsity = true );
 
   /**
    * @brief function to assemble the linear system matrix and rhs

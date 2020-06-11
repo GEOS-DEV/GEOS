@@ -59,7 +59,7 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
   dataRepository::Group disc( "discretization", nullptr );
   disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
-  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelWrapper();
+  LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
 
   arrayView3d< real64, solid::STRESS_USD > const & stress = cm.getStress();
 

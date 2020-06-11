@@ -766,8 +766,17 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/wells \
         @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
+        @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @CMAKE_BINARY_DIR@/include/common 
+
+
 
 #        @PROJECT_SOURCE_DIR@/coreComponents/managers \
 #        @PROJECT_SOURCE_DIR@/coreComponents/mesh \

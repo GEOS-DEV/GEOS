@@ -40,9 +40,6 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual void
-  updateStress( DomainPartition * const domain ) override;
-
 
   virtual void ApplySystemSolution( DofManager const & dofManager,
                                     ParallelVector const & solution,

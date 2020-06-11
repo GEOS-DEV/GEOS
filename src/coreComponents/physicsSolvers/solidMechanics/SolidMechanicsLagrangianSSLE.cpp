@@ -48,53 +48,6 @@ void SolidMechanicsLagrangianSSLE::ApplySystemSolution( DofManager const & dofMa
 }
 
 
-void
-SolidMechanicsLagrangianSSLE::updateStress( DomainPartition * const domain )
-{
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  NodeManager & nodeManager = *mesh.getNodeManager();
-
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const &
-  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incDisp = nodeManager.incrementalDisplacement();
-
-  // begin region loop
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & elementSubRegion )
-  {
-    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
-
-    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-    localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-
-    std::unique_ptr< FiniteElementBase >
-    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
-
-    SolidBase & constitutiveRelation = GetConstitutiveModel< SolidBase >( elementSubRegion, m_solidMaterialNames[targetIndex] );
-
-    // space for element matrix and rhs
-
-    using Kernels = SolidMechanicsLagrangianSSLEKernels::StressCalculationKernel;
-    return SolidMechanicsLagrangianFEMKernels::
-      ElementKernelLaunchSelector< Kernels >( numNodesPerElement,
-                                              fe->n_quadrature_points(),
-                                              &constitutiveRelation,
-                                              elementSubRegion.size(),
-                                              elemsToNodes,
-                                              dNdX,
-                                              detJ,
-                                              incDisp );
-  } );
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsLagrangianSSLE, string const &, dataRepository::Group * const )
 } /* namespace geosx */

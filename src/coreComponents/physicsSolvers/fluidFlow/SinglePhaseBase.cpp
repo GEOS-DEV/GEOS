@@ -291,7 +291,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
                                    DofManager & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
-                                   ParallelVector & solution )
+                                   ParallelVector & solution,
+                                   bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   ResetViews( domain );
@@ -300,7 +301,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
                            dofManager,
                            matrix,
                            rhs,
-                           solution );
+                           solution,
+                           setSparsity );
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),

@@ -57,6 +57,11 @@ protected:
     m_stress( stress )
   {}
 
+
+  /// Deleted default constructor
+  SolidBaseUpdates() = delete;
+
+
   /**
    * @brief Copy Constructor
    * @param source Object to copy
@@ -68,9 +73,6 @@ protected:
    * @param source Object to move resources from
    */
   SolidBaseUpdates( SolidBaseUpdates && source ) = default;
-
-  /// Deleted default constructor
-  SolidBaseUpdates() = delete;
 
   /// Deleted copy assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates const & ) = delete;
