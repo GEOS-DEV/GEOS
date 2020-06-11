@@ -351,7 +351,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR( k );
     real64 meanForce = 0;
     for( localIndex a=0; a<stack.numRows; ++a )
     {

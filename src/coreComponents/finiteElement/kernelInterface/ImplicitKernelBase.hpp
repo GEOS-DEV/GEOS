@@ -186,7 +186,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR( k );
     m_matrix.insert( stack.localRowDofIndex,
                      stack.localColDofIndex,
                      &(stack.localJacobian[0][0]),
