@@ -134,7 +134,8 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -148,12 +149,15 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
-  // by hand, add sparsity pattern induced by well perforations
-  AddCouplingSparsityPattern( domain,
-                              dofManager,
-                              matrix );
+    // by hand, add sparsity pattern induced by well perforations
+    AddCouplingSparsityPattern( domain,
+                                dofManager,
+                                matrix );
+  }
 }
 
 

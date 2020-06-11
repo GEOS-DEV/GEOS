@@ -58,6 +58,9 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /// Allow for partial overload of Base::compute()
+  using Base::compute;
+
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
@@ -74,8 +77,6 @@ public:
    * @param mat the matrix to precondition.
    */
   virtual void compute( Matrix const & mat ) override;
-
-  using PreconditionerBase< PetscInterface >::compute;
 
   /**
    * @brief Apply operator to a vector

@@ -111,10 +111,6 @@ public:
 
   };
 
-  struct groupKeyStruct
-  {};
-
-
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
 protected:

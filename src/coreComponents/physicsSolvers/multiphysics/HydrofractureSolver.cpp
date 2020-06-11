@@ -247,7 +247,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
-      m_solidSolver->updateStress( domain );
+//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -526,7 +526,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -535,13 +536,15 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                               m_solidSolver->getDofManager(),
                               m_solidSolver->getSystemMatrix(),
                               m_solidSolver->getSystemRhs(),
-                              m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getSystemSolution(),
+                              false );
 
   m_flowSolver->SetupSystem( domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getSystemMatrix(),
                              m_flowSolver->getSystemRhs(),
-                             m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getSystemSolution(),
+                             setSparsity );
 
   // setup coupled DofManager
   m_dofManager.setMesh( domain, 0, 0 );

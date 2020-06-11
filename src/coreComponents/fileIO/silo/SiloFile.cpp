@@ -3073,11 +3073,10 @@ void SiloFile::WriteStressVarDefinition( string const & MatDir )
     const char * expObjName = expressionName.c_str();
     const char * const names[1] = { expObjName };
     int const types[1] = { DB_VARTYPE_TENSOR };
-    string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_21>,<"+ MatDir + "/stress_13>},"
-                                                                                                  "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+
-                              MatDir + "/stress_23>},"
-                                       "{<"
-                              + MatDir + "/stress_13>,<"+ MatDir + "/stress_23>,<"+ MatDir + "/stress_33>}}";
+    string const definition = "{{<"+ MatDir + "/stress_11>,<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_13>},"
+                                                                                                  "{<"+ MatDir + "/stress_12>,<"+ MatDir + "/stress_22>,<"+ MatDir + "/stress_23>},"
+                                                                                                                                                                     "{<"+ MatDir + "/stress_13>,<"+
+                              MatDir + "/stress_23>,<"+ MatDir + "/stress_33>}}";
     const char * const defns[1] = { definition.c_str() };
     DBPutDefvars( m_dbBaseFilePtr,
                   expObjName,

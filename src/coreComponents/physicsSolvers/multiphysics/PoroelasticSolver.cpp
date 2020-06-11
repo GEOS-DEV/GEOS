@@ -20,6 +20,7 @@
 
 #include "PoroelasticSolver.hpp"
 
+#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -95,7 +96,8 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
                                      DofManager & dofManager,
                                      ParallelMatrix & matrix,
                                      ParallelVector & rhs,
-                                     ParallelVector & solution )
+                                     ParallelVector & solution,
+                                     bool const setSparsity )
 {
   // setup monolithic coupled system
   dofManager.setMesh( domain, 0, 0 );
@@ -112,8 +114,10 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( m_matrix, true );
-
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( m_matrix, true );
+  }
   if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
   {
     CreatePreconditioner();
@@ -168,7 +172,7 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
 {
   if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
-    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
+//    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
     m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
     m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   }
@@ -185,6 +189,8 @@ void PoroelasticSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
+
+  m_solidSolver->setEffectiveStress( 1 );
 
   if( ctOption == "SIM_FixedStress" )
   {
@@ -340,10 +346,11 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
 
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-    localIndex const numQuadraturePoints = feDiscretization.m_finiteElement->n_quadrature_points();
+    localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
 
     forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const ei )
     {
+
 
       R1Tensor u_local[10];
 
@@ -387,10 +394,13 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-  m_solidSolver->AssembleSystem( time_n, dt, domain,
-                                 dofManager,
-                                 matrix,
-                                 rhs );
+//  m_solidSolver->AssembleSystem( time_n, dt, domain,
+//                                 dofManager,
+//                                 matrix,
+//                                 rhs );
+
+  m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
+                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( *domain, dofManager, matrix, rhs );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt, domain,
@@ -699,7 +709,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
                                                            solidSolver.getSystemRhs(),
                                                            solidSolver.getSystemSolution() );
 
-    solidSolver.updateStress( domain );
+//    solidSolver.updateStress( domain );
 
     if( dtReturnTemporary < dtReturn )
     {

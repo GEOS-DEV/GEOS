@@ -13,6 +13,8 @@ set( finiteElement_headers
      quadrature/GaussQuadrature.hpp
      quadrature/QuadratureBase.hpp
      quadrature/QuadratureRuleManager.hpp
+     kernelInterface/KernelBase.hpp
+     kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
    )
