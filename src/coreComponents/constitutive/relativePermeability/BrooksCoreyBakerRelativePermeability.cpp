@@ -24,7 +24,6 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
 
 namespace constitutive
 {
@@ -34,29 +33,29 @@ BrooksCoreyBakerRelativePermeability::BrooksCoreyBakerRelativePermeability( std:
                                                                             Group * const parent )
   : RelativePermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction, false )->
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString, &m_phaseMinVolumeFraction )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Minimum volume fraction value for each phase" );
 
 
-  registerWrapper( viewKeyStruct::waterOilRelPermExponentString, &m_waterOilRelPermExponent, false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermExponentString, &m_waterOilRelPermExponent )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rel perm power law exponent for the pair (water phase, oil phase) at residual gas saturation" );
 
-  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::waterOilRelPermMaxValueString, &m_waterOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (water phase, oil phase) at residual gas saturation" );
 
 
-  registerWrapper( viewKeyStruct::gasOilRelPermExponentString, &m_gasOilRelPermExponent, false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermExponentString, &m_gasOilRelPermExponent )->
     setApplyDefaultValue( 1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Rel perm power law exponent for the pair (gas phase, oil phase) at residual water saturation" );
 
-  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue, false )->
+  registerWrapper( viewKeyStruct::gasOilRelPermMaxValueString, &m_gasOilRelPermMaxValue )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation" );
@@ -100,14 +99,14 @@ void BrooksCoreyBakerRelativePermeability::PostProcessInput()
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "BrooksCoreyBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
 
-#define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( integer_conversion< localIndex >((data).size()) != integer_conversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << " given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "BrooksCoreyBakerRelativePermeability: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << " given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
 

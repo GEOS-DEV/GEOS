@@ -202,28 +202,24 @@ public:
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T * RegisterGroup( std::string const & name, std::unique_ptr< Group > newObject );
+  T * RegisterGroup( std::string const & name, std::unique_ptr< T > newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<Group>)
+   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name          The name of the group to use as a string key.
    * @param[in] newObject     A unique_ptr to the object that is being registered.
-   * @param[in] takeOwnership A flag to indicate whether or not the repository should
-   *                          take ownership of the group.
    * @return                  A pointer to the newly registered Group.
    *
-   * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership
-   * if @p takeOwnership is @p true.
+   * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
   T * RegisterGroup( std::string const & name,
-                     T * newObject,
-                     bool const takeOwnership );
+                     T * newObject );
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<Group>)
+   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
@@ -238,7 +234,7 @@ public:
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<Group>)
+   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in,out] keyIndex A KeyIndexT object that will be used to specify the name of
@@ -256,7 +252,7 @@ public:
   }
 
   /**
-   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<Group>)
+   * @brief @copybrief RegisterGroup(std::string const &,std::unique_ptr<T>)
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @tparam TBASE The type whose type catalog will be used to look up the new sub-group type
@@ -814,8 +810,8 @@ public:
 
   /**
    * @brief Create and register a Wrapper around a new object.
-   * @tparam     T the type of the wrapped object
-   * @tparam TBASE the base type to cast the returned wrapper to
+   * @tparam T The type of the object allocated.
+   * @tparam TBASE The type of the object that the Wrapper holds.
    * @param[in]  name the name of the wrapper to use as a string key
    * @param[out] rkey a pointer to a index type that will be filled with the new
    *             Wrapper index in this Group
@@ -847,18 +843,15 @@ public:
                                   std::unique_ptr< T > newObject );
 
   /**
-   * @brief Register a Wrapper around a given object and conditionally take ownership.
+   * @brief Register a Wrapper around an existing object, does not take ownership of the object.
    * @tparam T the type of the wrapped object
    * @param[in] name          the name of the wrapper to use as a string key
    * @param[in] newObject     a pointer to the object that is being registered
-   * @param[in] takeOwnership a flag to indicate whether or not the repository should
-   *                          take ownership of the group
    * @return                  a pointer to the newly registered/created Wrapper
    */
   template< typename T >
   Wrapper< T > * registerWrapper( std::string const & name,
-                                  T * newObject,
-                                  bool takeOwnership );
+                                  T * newObject );
 
   /**
    * @brief Register and take ownership of an existing Wrapper.
@@ -867,7 +860,7 @@ public:
    * @return        an un-typed pointer to the newly registered/created wrapper
    */
   WrapperBase * registerWrapper( string const & name,
-                                 WrapperBase * const wrapper );
+                                 std::unique_ptr< WrapperBase > wrapper );
 
   /**
    * @brief Removes a Wrapper from this group.
@@ -1269,9 +1262,9 @@ public:
 
   /**
    * @brief Resize the group and all contained wrappers that resize with parent.
-   * @param newsize the new size of the group
+   * @param newSize the new size of the group
    */
-  virtual void resize( localIndex const newsize );
+  virtual void resize( localIndex const newSize );
 
   /**
    * @brief Set the new capacity and reserve it in all wrappers that resize with parent.
@@ -1541,7 +1534,7 @@ using ViewKey = Group::wrapperMap::KeyIndex;
 
 template< typename T >
 T * Group::RegisterGroup( std::string const & name,
-                          std::unique_ptr< Group > newObject )
+                          std::unique_ptr< T > newObject )
 {
   newObject->m_parent = this;
   return dynamicCast< T * >( m_subGroups.insert( name, newObject.release(), true ) );
@@ -1550,14 +1543,9 @@ T * Group::RegisterGroup( std::string const & name,
 
 template< typename T >
 T * Group::RegisterGroup( std::string const & name,
-                          T * newObject,
-                          bool const takeOwnership )
+                          T * newObject )
 {
-  if( takeOwnership )
-  {
-    newObject->m_parent = this;
-  }
-  return dynamicCast< T * >( m_subGroups.insert( name, newObject, takeOwnership ) );
+  return dynamicCast< T * >( m_subGroups.insert( name, newObject, false ) );
 }
 
 // Doxygen bug - sees this as a separate function
@@ -1567,13 +1555,14 @@ Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
                                            ViewKey::index_type * const rkey )
 {
   m_wrappers.insert( name,
-                     (Wrapper< TBASE >::template Factory< T >( name, this ) ).release(),
+                     new Wrapper< TBASE >( name, this, std::make_unique< T >() ),
                      true );
 
   if( rkey != nullptr )
   {
     *rkey = m_wrappers.getIndex( name );
   }
+
   Wrapper< TBASE > * const rval = getWrapper< TBASE >( name );
   if( rval->sizedFromParent() == 1 )
   {
@@ -1614,11 +1603,10 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 
 template< typename T >
 Wrapper< T > * Group::registerWrapper( std::string const & name,
-                                       T * newObject,
-                                       bool takeOwnership )
+                                       T * newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject, takeOwnership ),
+                     new Wrapper< T >( name, this, newObject ),
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );

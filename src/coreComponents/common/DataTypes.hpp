@@ -28,14 +28,14 @@
 #include "common/BufferAllocator.hpp"
 #include "common/DataLayouts.hpp"
 #include "Logger.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/Array.hpp"
-#include "cxx-utilities/src/ArrayOfArrays.hpp"
-#include "cxx-utilities/src/ArrayOfSets.hpp"
-#include "cxx-utilities/src/CRSMatrix.hpp"
-#include "cxx-utilities/src/Macros.hpp"
-#include "cxx-utilities/src/SortedArray.hpp"
-#include "cxx-utilities/src/StackBuffer.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -95,8 +95,8 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 
   using POINTER_TO_NEW_TYPE = std::remove_reference_t< NEW_TYPE > *;
   POINTER_TO_NEW_TYPE ptr = dynamicCast< POINTER_TO_NEW_TYPE >( &val );
-  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << cxx_utilities::demangleType( val ) << " to " <<
-                  cxx_utilities::demangleType< NEW_TYPE >() << " failed." );
+  GEOSX_ERROR_IF( ptr == nullptr, "Cast from " << LvArray::demangleType( val ) << " to " <<
+                  LvArray::demangleType< NEW_TYPE >() << " failed." );
 
   return *ptr;
 }
@@ -105,7 +105,7 @@ NEW_TYPE dynamicCast( EXISTING_TYPE & val )
 #ifdef GEOSX_USE_MPI
 extern MPI_Comm MPI_COMM_GEOSX;
 #else
-constexpr int MPI_COMM_GEOSX = 0;
+extern int MPI_COMM_GEOSX;
 #endif
 
 /**
@@ -115,12 +115,16 @@ constexpr int MPI_COMM_GEOSX = 0;
 
 /// Unsigned size type.
 using size_t      = std::size_t;
+
 /// Signed integer type.
 using integer     = std::int32_t;
+
 /// Local index type (for indexing objects within an MPI partition).
 using localIndex  = std::ptrdiff_t;
+
 /// Global index type (for indexing objects across MPI partitions).
 using globalIndex = long long int;//std::int64_t;
+
 /// String type.
 using string      = std::string;
 
@@ -139,9 +143,9 @@ using real64 = double;
 /// Type stored in communication buffers.
 using buffer_unit_type = signed char;
 
-#ifdef USE_CHAI
+#ifdef GEOSX_USE_CHAI
 /// Type of storage for communication buffers.
-using buffer_type = std::vector< buffer_unit_type, buffer_allocator< buffer_unit_type > >;
+using buffer_type = std::vector< buffer_unit_type, BufferAllocator< buffer_unit_type > >;
 #else
 /// Type of storage for communication buffers.
 using buffer_type = std::vector< buffer_unit_type >;
@@ -232,32 +236,32 @@ template< typename T, int MAXSIZE >
 using stackArray3d = StackArray< T, 3, MAXSIZE >;
 
 /// Alias for 4D array.
-template< typename T >
-using array4d = Array< T, 4 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 4 > >
+using array4d = Array< T, 4, PERMUTATION >;
 
 /// Alias for 4D array view.
-template< typename T >
-using arrayView4d = ArrayView< T, 4 >;
+template< typename T, int USD=3 >
+using arrayView4d = ArrayView< T, 4, USD >;
 
 /// Alias for 4D array slice.
-template< typename T >
-using arraySlice4d = ArraySlice< T, 4 >;
+template< typename T, int USD=4 >
+using arraySlice4d = ArraySlice< T, 4, USD >;
 
 /// Alias for 4D stack array.
 template< typename T, int MAXSIZE >
 using stackArray4d = StackArray< T, 4, MAXSIZE >;
 
 /// Alias for 5D array.
-template< typename T >
-using array5d = Array< T, 5 >;
+template< typename T, typename PERMUTATION=camp::make_idx_seq_t< 5 > >
+using array5d = Array< T, 5, PERMUTATION >;
 
 /// Alias for 5D array view.
-template< typename T >
-using arrayView5d = ArrayView< T, 5 >;
+template< typename T, int USD=4 >
+using arrayView5d = ArrayView< T, 5, USD >;
 
 /// Alias for 5D array slice.
-template< typename T >
-using arraySlice5d = ArraySlice< T, 5 >;
+template< typename T, int USD=4 >
+using arraySlice5d = ArraySlice< T, 5, 4 >;
 
 /// Alias for 5D stack array.
 template< typename T, int MAXSIZE >
@@ -340,6 +344,7 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::
 template< typename TKEY, typename TVAL >
 class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
 {};
+/// @endcond
 
 /**
  * @brief Stream output operator for map types.
@@ -362,7 +367,6 @@ std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const
   stream << "}";
   return stream;
 }
-/// @endcond
 
 /// Ordered map type.
 template< typename TKEY, typename TVAL >
@@ -379,69 +383,89 @@ using unordered_map = mapBase< TKEY, TVAL, std::integral_constant< bool, false >
  */
 ///@{
 
-using integer_array        = array1d< integer >;
+/// A 1-dimensional array of geosx::integer types.
+using integer_array = array1d< integer >;
 
-using real32_array        = array1d< real32 >;
+/// A 1-dimensional array of geosx::real32 types.
+using real32_array = array1d< real32 >;
 
-using real64_array        = array1d< real64 >;
+/// A 1-dimensional array of geosx::real64 types.
+using real64_array = array1d< real64 >;
 
-using string_array        = array1d< string >;
+/// A 1-dimensional array of geosx::string types.
+using string_array = array1d< string >;
 
-using path_array        = array1d< Path >;
+/// A 1-dimensional array of geosx::Path types
+using path_array = array1d< Path >;
 
-using localIndex_array        = array1d< localIndex >;
+/// A 1-dimensional array of geosx::localIndex types
+using localIndex_array = array1d< localIndex >;
 
-using globalIndex_array        = array1d< globalIndex >;
-
-
-
-using integer_array2d       = array2d< integer >;
-
-using real32_array2d       = array2d< real32 >;
-
-using real64_array2d       = array2d< real64 >;
-
-using localIndex_array2d       = array2d< localIndex >;
-
-using globalIndex_array2d       = array2d< globalIndex >;
+/// A 1-dimensional array of geosx::globalIndex types
+using globalIndex_array = array1d< globalIndex >;
 
 
+/// A 2-dimensional array of geosx::integer types.
+using integer_array2d = array2d< integer >;
 
-using integer_array3d       = array3d< integer >;
+/// A 2-dimensional array of geosx::real32 types.
+using real32_array2d = array2d< real32 >;
 
-using real32_array3d       = array3d< real32 >;
+/// A 2-dimensional array of geosx::real64 types.
+using real64_array2d = array2d< real64 >;
 
-using real64_array3d       = array3d< real64 >;
+/// A 2-dimensional array of geosx::localIndex types
+using localIndex_array2d = array2d< localIndex >;
 
-using localIndex_array3d       = array3d< localIndex >;
+/// A 2-dimensional array of geosx::globalIndex types
+using globalIndex_array2d = array2d< globalIndex >;
 
-using globalIndex_array3d       = array3d< globalIndex >;
+
+/// A 3-dimensional array of geosx::integer types.
+using integer_array3d = array3d< integer >;
+
+/// A 3-dimensional array of geosx::real32 types.
+using real32_array3d = array3d< real32 >;
+
+/// A 3-dimensional array of geosx::real64 types.
+using real64_array3d = array3d< real64 >;
+
+/// A 3-dimensional array of geosx::localIndex types.
+using localIndex_array3d = array3d< localIndex >;
+
+/// A 3-dimensional array of geosx::globalIndex types.
+using globalIndex_array3d = array3d< globalIndex >;
 
 ///@}
+
+/// @cond DO_NOT_DOCUMENT
 
 /**
  * @name Legacy typedefs.
  */
 ///@{
 
+
+/// A 1-dimensional array of ::R1Tensor types.
 using r1_array = array1d< R1Tensor >;
-using r2_array = array1d< R2Tensor >;
-using r2Sym_array = array1d< R2SymTensor >;
 
+/// A 2-dimensional array of ::R1Tensor types.
 using r1_array2d= array2d< R1Tensor >;
-using r2_array2d= array2d< R2Tensor >;
-using r2Sym_array2d= array2d< R2SymTensor >;
 
-//using mapPair = std::pair<integer, localIndex>;
+/// A 1-dimensional array of ::R1Tensor types.
 using mapPair_array = std::pair< localIndex_array, localIndex_array >;
 
+///@}
+/// @endcond DO_NOT_DOCUMENT
 
+/// A variable for the maximum value of a geosx::globalIndex.
 constexpr static auto GLOBALINDEX_MAX = std::numeric_limits< globalIndex >::max();
+
+/// A variable for the maximum value of a geosx::localIndex.
 constexpr static auto LOCALINDEX_MAX = std::numeric_limits< localIndex >::max();
 
+/// A global variable for the value of a object that has not been assigned a geosx::globalIndex.
 constexpr static localIndex unmappedLocalIndexValue = -1;
-
-///@}
 
 
 /**
@@ -471,16 +495,12 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
-      {std::type_index( typeid(R2Tensor)), "R2Tensor"},
-      {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
       {std::type_index( typeid(real64_array)), "real64_array"},
       {std::type_index( typeid(localIndex_array)), "localIndex_array"},
       {std::type_index( typeid(globalIndex_array)), "globalIndex_array"},
       {std::type_index( typeid(r1_array)), "r1_array"},
-      {std::type_index( typeid(r2_array)), "r2_array"},
-      {std::type_index( typeid(r2Sym_array)), "r2Sym_array"},
       {std::type_index( typeid(integer_array2d)), "integer_array2d"},
       {std::type_index( typeid(real32_array2d)), "real32_array2d"},
       {std::type_index( typeid(real64_array2d)), "real64_array2d"},
@@ -492,8 +512,6 @@ public:
       {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
       {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
       {std::type_index( typeid(r1_array2d)), "r1_array2d"},
-      {std::type_index( typeid(r2_array2d)), "r2_array2d"},
-      {std::type_index( typeid(r2Sym_array2d)), "r2Sym_array2d"},
       {std::type_index( typeid(string)), "string"},
       {std::type_index( typeid(Path)), "path"},
       {std::type_index( typeid(string_array)), "string_array"},
@@ -509,7 +527,7 @@ public:
     }
     else
     {
-      return cxx_utilities::demangle( key.name());
+      return LvArray::demangle( key.name());
     }
   }
 
@@ -533,8 +551,6 @@ public:
     real32_array_id,     //!< real32_array_id
     real64_array_id,     //!< real64_array_id
     r1_array_id,         //!< r1_array_id
-    r2_array_id,         //!< r2_array_id
-    r2Sym_array_id,      //!< r2Sym_array_id
 
     integer_array2d_id,    //!< integer_array2d_id
     localIndex_array2d_id, //!< localIndex_array2d_id
@@ -543,8 +559,6 @@ public:
     real64_array2d_id,     //!< real64_array2d_id
     real64_array2d_ji_id,   //!< real64_array2d_ji_id
     r1_array2d_id,         //!< r1_array2d_id
-    r2_array2d_id,         //!< r2_array2d_id
-    r2Sym_array2d_id,      //!< r2Sym_array2d_id
 
     integer_array3d_id,    //!< integer_array3d_id
     localIndex_array3d_id, //!< localIndex_array3d_id
@@ -576,16 +590,12 @@ public:
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
-      { std::type_index( typeid(R2Tensor)), TypeIDs::r2Tensor_id },
-      { std::type_index( typeid(R2SymTensor)), TypeIDs::r2SymTensor_id },
       { std::type_index( typeid(integer_array)), TypeIDs::integer_array_id },
       { std::type_index( typeid(localIndex_array)), TypeIDs::localIndex_array_id },
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
       { std::type_index( typeid(real32_array)), TypeIDs::real32_array_id },
       { std::type_index( typeid(real64_array)), TypeIDs::real64_array_id },
       { std::type_index( typeid(r1_array)), TypeIDs::r1_array_id },
-      { std::type_index( typeid(r2_array)), TypeIDs::r2_array_id },
-      { std::type_index( typeid(r2Sym_array)), TypeIDs::r2Sym_array_id },
 
       { std::type_index( typeid(integer_array2d)), TypeIDs::integer_array2d_id },
       { std::type_index( typeid(localIndex_array2d)), TypeIDs::localIndex_array2d_id },
@@ -594,8 +604,6 @@ public:
       { std::type_index( typeid(real64_array2d)), TypeIDs::real64_array2d_id },
       { std::type_index( typeid(array2d< real64, RAJA::PERM_JI >)), TypeIDs::real64_array2d_ji_id },
       { std::type_index( typeid(r1_array2d)), TypeIDs::r1_array2d_id },
-      { std::type_index( typeid(r2_array2d)), TypeIDs::r2_array2d_id },
-      { std::type_index( typeid(r2Sym_array2d)), TypeIDs::r2Sym_array2d_id },
 
       { std::type_index( typeid(integer_array3d)), TypeIDs::integer_array3d_id },
       { std::type_index( typeid(localIndex_array3d)), TypeIDs::localIndex_array3d_id },
@@ -626,6 +634,35 @@ public:
    */
   class typeRegex
   {
+public:
+
+    /// The type of map used to store the map of type parsing regular expressions
+    using regexMapType = std::map< std::string, std::string >;
+
+    /**
+     * @brief Get an iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::iterator begin(){return regexMap.begin();}
+
+    /**
+     * @brief Get an iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::iterator end(){return regexMap.end();}
+
+    /**
+     * @brief Get a const iterator to the beginning of regex map.
+     * @return
+     */
+    regexMapType::const_iterator begin() const {return regexMap.begin();}
+
+    /**
+     * @brief Get a const iterator to the end of regex map.
+     * @return
+     */
+    regexMapType::const_iterator end() const {return regexMap.end();}
+
 private:
 
     /**
@@ -679,14 +716,11 @@ private:
     // Regex to match a string that does not contain the characters  ,{}
     std::string rs = "[^,\\{\\}]*";
 
-    // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
-    // These are identical aside from the number of repetitions in the curly brackets
+    // Regex to match a R1Tensor
     std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
-    std::string r2 = "\\s*(" + rr + ",\\s*){8}" + rr;
-    std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
-    std::unordered_map< std::string, std::string > regexMap =
+    regexMapType regexMap =
     {
       {"integer", ri},
       {"localIndex", ri},
@@ -694,24 +728,18 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
-      {"R2Tensor", r2},
-      {"R2SymTensor", r2s},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},
       {"real32_array", constructArrayRegex( rr, 1 )},
       {"real64_array", constructArrayRegex( rr, 1 )},
       {"r1_array", constructArrayRegex( r1, 1 )},
-      {"r2_array", constructArrayRegex( r2, 1 )},
-      {"r2Sym_array", constructArrayRegex( r2s, 1 )},
       {"integer_array2d", constructArrayRegex( ri, 2 )},
       {"localIndex_array2d", constructArrayRegex( ri, 2 )},
       {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
       {"real32_array2d", constructArrayRegex( rr, 2 )},
       {"real64_array2d", constructArrayRegex( rr, 2 )},
       {"r1_array2d", constructArrayRegex( r1, 2 )},
-      {"r2_array2d", constructArrayRegex( r2, 2 )},
-      {"r2Sym_array2d", constructArrayRegex( r2s, 2 )},
       {"integer_array3d", constructArrayRegex( ri, 3 )},
       {"localIndex_array3d", constructArrayRegex( ri, 3 )},
       {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
@@ -722,34 +750,10 @@ private:
       {"string_array", constructArrayRegex( rs, 1 )},
       {"path_array", constructArrayRegex( rs, 1 )},
       {"mapPair", rs},
-      {"mapPair_array", constructArrayRegex( rs, 1 )}
+      {"mapPair_array", constructArrayRegex( rs, 1 )},
+      {"geosx_TimeIntegrationOption", rs},
+      {"geosx_dataRepository_PlotLevel", ri}
     };
-
-public:
-
-    /**
-     * @brief Get an iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator begin(){return regexMap.begin();}
-
-    /**
-     * @brief Get an iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::iterator end(){return regexMap.end();}
-
-    /**
-     * @brief Get a const iterator to the beginning of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator begin() const {return regexMap.begin();}
-
-    /**
-     * @brief Get a const iterator to the end of regex map.
-     * @return
-     */
-    std::unordered_map< std::string, std::string >::const_iterator end() const {return regexMap.end();}
   };
 
   /**
@@ -789,14 +793,6 @@ public:
       case ( TypeIDs::r1_array_id ):
       {
         return lambda( r1_array( 1 ) );
-      }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ) );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ) );
       }
       case ( TypeIDs::real64_array2d_id ):
       {
@@ -855,14 +851,6 @@ public:
       {
         return lambda( r1_array( 1 ), R1Tensor() );
       }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ), R2SymTensor()  );
-      }
       case ( TypeIDs::integer_array2d_id ):
       {
         return lambda( integer_array2d(), integer( 1 ) );
@@ -890,14 +878,6 @@ public:
       case ( TypeIDs::r1_array2d_id ):
       {
         return lambda( r1_array2d(), R1Tensor() );
-      }
-      case ( TypeIDs::r2_array2d_id ):
-      {
-        return lambda( r2_array2d(), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array2d_id ):
-      {
-        return lambda( r2Sym_array2d(), R2SymTensor()  );
       }
       case ( TypeIDs::integer_array3d_id ):
       {

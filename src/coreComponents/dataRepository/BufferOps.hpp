@@ -21,21 +21,25 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "cxx-utilities/src/IntegerConversion.hpp"
+#include "LvArray/src/IntegerConversion.hpp"
 
 #include <type_traits>
 
 namespace geosx
 {
 
-/* Forward declaration of InterObjectRelation */
+/**
+ * @brief Forward declaration of InterObjectRelation
+ */
 template< typename T >
 class InterObjectRelation;
 
 namespace bufferOps
 {
 
-/* Forward declaration of is_packable */
+/**
+ * @brief Forward declaration of is_packable
+ */
 template< typename T >
 struct is_packable_helper;
 
@@ -474,7 +478,7 @@ Unpack( buffer_unit_type const * & buffer,
 template< bool DO_PACKING, typename SORTED >
 localIndex
 Pack( buffer_unit_type * & buffer,
-      arrayView1d< localIndex_array const > const & var,
+      arrayView1d< arrayView1d< localIndex const > const > const & var,
       mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,

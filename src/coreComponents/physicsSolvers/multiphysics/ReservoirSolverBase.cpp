@@ -40,11 +40,11 @@ ReservoirSolverBase::ReservoirSolverBase( const std::string & name,
   m_flowSolverName(),
   m_wellSolverName()
 {
-  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName, 0 )->
+  registerWrapper( viewKeyStruct::flowSolverNameString, &m_flowSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the flow solver to use in the reservoir-well system solver" );
 
-  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName, 0 )->
+  registerWrapper( viewKeyStruct::wellSolverNameString, &m_wellSolverName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the well solver to use in the reservoir-well system solver" );
 
@@ -134,7 +134,8 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -148,12 +149,15 @@ void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
 
-  // by hand, add sparsity pattern induced by well perforations
-  AddCouplingSparsityPattern( domain,
-                              dofManager,
-                              matrix );
+    // by hand, add sparsity pattern induced by well perforations
+    AddCouplingSparsityPattern( domain,
+                                dofManager,
+                                matrix );
+  }
 }
 
 
@@ -270,9 +274,10 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
                                        ParallelVector & rhs,
                                        ParallelVector & solution )
 {
+  GEOSX_MARK_FUNCTION;
+
   rhs.scale( -1.0 );
   solution.zero();
-
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 

@@ -33,7 +33,7 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
   this->RegisterGroup( viewKeyStruct::elementSubRegions );
 
-  registerWrapper( viewKeyStruct::materialListString, &m_materialList, 0 )->
+  registerWrapper( viewKeyStruct::materialListString, &m_materialList )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "List of materials present in this region" );
 

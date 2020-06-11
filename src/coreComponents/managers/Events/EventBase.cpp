@@ -55,52 +55,52 @@ EventBase::EventBase( const std::string & name,
   // This enables logLevel filtering
   enableLogLevelInput();
 
-  registerWrapper( viewKeyStruct::eventTargetString, &m_eventTarget, false )->
+  registerWrapper( viewKeyStruct::eventTargetString, &m_eventTarget )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the object to be executed when the event criteria are met." );
 
-  registerWrapper( viewKeyStruct::beginTimeString, &m_beginTime, false )->
+  registerWrapper( viewKeyStruct::beginTimeString, &m_beginTime )->
     setApplyDefaultValue( 0.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Start time of this event." );
 
-  registerWrapper( viewKeyStruct::endTimeString, &m_endTime, false )->
+  registerWrapper( viewKeyStruct::endTimeString, &m_endTime )->
     setApplyDefaultValue( 1e100 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "End time of this event." );
 
-  registerWrapper( viewKeyStruct::forceDtString, &m_forceDt, false )->
+  registerWrapper( viewKeyStruct::forceDtString, &m_forceDt )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "While active, this event will request this timestep value (ignoring any children/targets requests)." );
 
-  registerWrapper( viewKeyStruct::maxEventDtString, &m_maxEventDt, false )->
+  registerWrapper( viewKeyStruct::maxEventDtString, &m_maxEventDt )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "While active, this event will request a timestep <= this value (depending upon any child/target requests)." );
 
-  registerWrapper( viewKeyStruct::finalDtStretchString, &m_finalDtStretch, false )->
+  registerWrapper( viewKeyStruct::finalDtStretchString, &m_finalDtStretch )->
     setApplyDefaultValue( 1e-3 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Allow the final dt request for this event to grow by this percentage to match the endTime exactly." );
 
-  registerWrapper( viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop, false )->
+  registerWrapper( viewKeyStruct::targetExactStartStopString, &m_targetExactStartStop )->
     setApplyDefaultValue( 1 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "If this option is set, the event will reduce its timestep requests to match any specified beginTime/endTimes exactly." );
 
-  registerWrapper( viewKeyStruct::lastTimeString, &m_lastTime, false )->
+  registerWrapper( viewKeyStruct::lastTimeString, &m_lastTime )->
     setApplyDefaultValue( -1.0e100 )->
     setDescription( "Last event occurrence (time)" );
 
-  registerWrapper( viewKeyStruct::lastCycleString, &m_lastCycle, false )->
+  registerWrapper( viewKeyStruct::lastCycleString, &m_lastCycle )->
     setApplyDefaultValue( -1.0e9 )->
     setDescription( "Last event occurrence (cycle)" );
 
-  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent, false )->
+  registerWrapper( viewKeyStruct::currentSubEventString, &m_currentSubEvent )->
     setDescription( "Index of the current subevent" );
 
-  registerWrapper( viewKeyStruct::isTargetExecutingString, &m_targetExecFlag, false )->
+  registerWrapper( viewKeyStruct::isTargetExecutingString, &m_targetExecFlag )->
     setDescription( "Index of the current subevent" );
 }
 
@@ -143,7 +143,7 @@ void EventBase::GetTargetReferences()
   {
     Group * tmp = this->GetGroupByPath( m_eventTarget );
     m_target = Group::group_cast< ExecutableGroup * >( tmp );
-    GEOSX_ERROR_IF( m_target == nullptr, "The target of an event must be executable! " << m_target );
+    GEOSX_ERROR_IF( m_target == nullptr, "The event " << m_eventTarget << " does not exist or it is not executable." );
   }
 
   this->forSubGroups< EventBase >( []( EventBase & subEvent )
@@ -214,8 +214,6 @@ void EventBase::Execute( real64 const time_n,
                          real64 const,
                          Group * domain )
 {
-  GEOSX_MARK_FUNCTION;
-
   // If m_targetExecFlag is set, then the code has resumed at a point
   // after the target has executed.
   if((m_target != nullptr) && (m_targetExecFlag == 0))

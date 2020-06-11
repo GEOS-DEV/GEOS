@@ -49,7 +49,8 @@ public:
                             DofManager & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+                            ParallelVector & solution,
+                            bool const setSparsity = true ) override;
 
   virtual void SetupDofs( DomainPartition const * const domain,
                           DofManager & dofManager ) const override;
@@ -152,12 +153,14 @@ public:
   FlowSolverBase const * getFlowSolver() const { return this->getParent()->GetGroup( m_flowSolverName )->group_cast< FlowSolverBase const * >(); }
 
 protected:
+
   virtual void PostProcessInput() override final;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
 
-
 private:
+
+  void CreatePreconditioner();
 
   string m_solidSolverName;
   string m_flowSolverName;

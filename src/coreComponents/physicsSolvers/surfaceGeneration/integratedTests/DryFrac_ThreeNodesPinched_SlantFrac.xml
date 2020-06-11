@@ -13,8 +13,8 @@
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-3"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters krylovTol="1.0e-10"
-                              logLevel="0"/>
+      <LinearSolverParameters solverType="gmres"
+                              krylovTol="1.0e-10"/>
      </SolidMechanicsLagrangianSSLE>
   
     <SurfaceGenerator name="SurfaceGen"
@@ -159,7 +159,7 @@
   </Functions>
  
   <Outputs>
-    <Silo name="siloOutput" plotLevel="5" parallelThreads="1" plotFileRoot="simple2D"/>
+    <Silo name="siloOutput" plotLevel="3" parallelThreads="1" plotFileRoot="simple2D"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

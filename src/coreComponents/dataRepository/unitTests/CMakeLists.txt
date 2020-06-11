@@ -11,9 +11,10 @@ set( dataRepository_tests
      testXmlWrapper.cpp
      testBufferOps.cpp
      testPacking.cpp
+     testWrapperHelpers.cpp
    )
 
-set( dependencyList gtest cxx-utilities managers dataRepository mpiCommunications common mesh wells constitutive meshUtilities)
+set( dependencyList gtest geosx_core )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

@@ -45,33 +45,32 @@ public:
   static const string CatalogName()
   { return "EdgeManager"; }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const override
   { return EdgeManager::CatalogName(); }
 
   ///@}
 
-  static inline localIndex GetFaceMapOverallocation()
+  static localIndex faceMapExtraSpacePerEdge()
   { return 4; }
 
   EdgeManager( std::string const & name,
                Group * const parent );
   ~EdgeManager() override;
 
-//  void Initialize() {}
+  virtual void resize( localIndex const newsize ) override;
 
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
+
   void SetIsExternal( FaceManager const * const faceManager );
-//  void ExtractMapFromObjectForAssignGlobalObjectNumbers( const ObjectDataStructureBaseT& compositionObjectManager,
-//                                                         array<globalIndex_array>& objectToCompositionObject );
 
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
 
-
   virtual void
   ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override final;
+                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   virtual localIndex PackUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
@@ -82,7 +81,7 @@ public:
 
   void FixUpDownMaps( bool const clearIfUnmapped );
 
-  void CompressRelationMaps( );
+  void compressRelationMaps();
 
   void depopulateUpMaps( std::set< localIndex > const & receivedEdges,
                          ArrayOfArraysView< localIndex const > const & facesToEdges );
@@ -90,10 +89,6 @@ public:
   void ConnectivityFromGlobalToLocal( const SortedArray< localIndex > & indices,
                                       const map< globalIndex, localIndex > & nodeGlobalToLocal,
                                       const map< globalIndex, localIndex > & faceGlobalToLocal );
-
-//  void UpdateEdgeExternalityFromSplit( const FaceManager& faceManager,
-//                                     const SortedArray<localIndex>& newEdgeIndices,
-//                                     const SortedArray<localIndex>& modifiedEdgeIndices );
 
   void AddToEdgeToFaceMap( FaceManager const * const faceManager,
                            arrayView1d< localIndex const > const & newFaceIndices );
@@ -111,16 +106,6 @@ public:
   R1Tensor calculateLength( localIndex const edgeIndex,
                             arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
-
-
-//  localIndex FindEdgeFromNodeIDs(const localIndex nodeA, const localIndex
-// nodeB, const NodeManager& nodeManager);
-
-//  void SetLayersFromDomainBoundary(const NodeManager * const nodeManager);
-
-
-//  FixedOneToManyRelation& m_toNodesRelation;
-//  UnorderedVariableOneToManyRelation& m_toFacesRelation;
 
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
@@ -151,19 +136,17 @@ public:
   constexpr int maxEdgesPerNode() const { return 100; }
 
   NodeMapType & nodeList()       { return m_toNodesRelation; }
+
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
 
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
-  {
-    return m_toNodesRelation( edgeIndex, nodeIndex );
-  }
-  localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
-  {
-    return m_toNodesRelation( edgeIndex, nodeIndex );
-  }
+  { return m_toNodesRelation( edgeIndex, nodeIndex ); }
 
+  localIndex nodeList( localIndex const edgeIndex, localIndex const nodeIndex ) const
+  { return m_toNodesRelation( edgeIndex, nodeIndex ); }
 
   FaceMapType & faceList()       { return m_toFacesRelation; }
+
   FaceMapType const & faceList() const { return m_toFacesRelation; }
 
 

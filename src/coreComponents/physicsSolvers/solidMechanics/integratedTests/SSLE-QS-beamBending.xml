@@ -6,15 +6,15 @@
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   discretization="FE1"
+                                  logLevel="0"
                                   targetRegions="{Region2}"
                                   solidMaterialNames="{shale}"
                                   >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters useMLPrecond="1"
-                              scalingOption="0"
+      <LinearSolverParameters solverType="gmres"
                               krylovTol="1.0e-12"
-                              logLevel="0"/>
+                              preconditionerType="amg"/>
      </SolidMechanicsLagrangianSSLE>
   </Solvers>
 

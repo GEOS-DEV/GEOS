@@ -14,11 +14,9 @@
 
 /*
  * @file Perforation.cpp
- *
  */
 
 #include "Perforation.hpp"
-
 #include "dataRepository/InputFlags.hpp"
 
 namespace geosx
@@ -33,26 +31,25 @@ Perforation::Perforation( string const & name, Group * const parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead, false )->
+  registerWrapper( viewKeyStruct::distanceFromHeadString, &m_distanceFromHead )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Linear distance from well head to the perforation" );
 
-  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility, false )->
+  registerWrapper( viewKeyStruct::wellTransmissibilityString, &m_wellTransmissibility )->
     setApplyDefaultValue( -1.0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Perforation transmissibility" );
-
 }
+
 
 void Perforation::PostProcessInput()
 {
   GEOSX_ERROR_IF( m_distanceFromHead <= 0,
                   "Invalid distance well head to perforation " << getName() );
-
 }
+
 
 Perforation::~Perforation()
 {}
-
 
 } //namespace geosx

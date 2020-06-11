@@ -45,11 +45,11 @@ EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const std::string & name,
                                                     Group * const parent ):
   SolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames, false )->
+  registerWrapper( viewKeyStruct::solidMaterialNameString, &m_solidMaterialNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of the solid material used in solid mechanic solver" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName, false )->
+  registerWrapper( viewKeyStruct::fractureRegionNameString, &m_fractureRegionName )->
     setInputFlag( dataRepository::InputFlags::OPTIONAL )->
     setApplyDefaultValue( "FractureRegion" );
 }

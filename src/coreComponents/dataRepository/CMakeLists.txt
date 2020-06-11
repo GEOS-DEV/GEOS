@@ -14,7 +14,7 @@ set(dataRepository_headers
     ReferenceWrapper.hpp
     RestartFlags.hpp
     ConduitRestart.hpp
-    WrapperHelpers.hpp
+    wrapperHelpers.hpp
     Wrapper.hpp
     WrapperBase.hpp
     xmlWrapper.hpp
@@ -40,7 +40,7 @@ if( ENABLE_MPI )
 endif()
 
 if( BUILD_OBJ_LIBS )
-  set (dependencyList common cxx-utilities codingUtilities pugixml fileIO)
+  set (dependencyList common lvarray codingUtilities pugixml fileIO)
 else()
   set( dependencyList common codingUtilities)
 endif()

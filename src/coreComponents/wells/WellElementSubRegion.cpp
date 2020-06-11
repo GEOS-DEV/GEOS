@@ -20,7 +20,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
-#include "cxx-utilities/src/ArrayUtilities.hpp"
+#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
@@ -35,18 +35,15 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_searchDepth( 10 )
 {
 
-  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName, false );
-  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation, false );
-  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex, false );
-  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal, false );
-  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex, false );
-  registerWrapper( viewKeyStruct::topRankString, &m_topRank, false );
-  registerWrapper( viewKeyStruct::radiusString, &m_radius, false );
+  registerWrapper( viewKeyStruct::wellControlsString, &m_wellControlsName );
+  registerWrapper( viewKeyStruct::wellNodeListString, &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::nextWellElementIndexString, &m_nextWellElementIndex );
+  registerWrapper( viewKeyStruct::nextWellElementIndexGlobalString, &m_nextWellElementIndexGlobal );
+  registerWrapper( viewKeyStruct::topWellElementIndexString, &m_topWellElementIndex );
+  registerWrapper( viewKeyStruct::topRankString, &m_topRank );
+  registerWrapper( viewKeyStruct::radiusString, &m_radius );
 
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString, &m_elementCenter, false );
-  registerWrapper( ElementSubRegionBase::viewKeyStruct::elementVolumeString, &m_elementVolume, false );
-
-  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData, false );
+  RegisterGroup( groupKeyStruct::perforationDataString, &m_perforationData );
 
   this->setNumNodesPerElement( 2 );
   this->setNumFacesPerElement( 0 );
@@ -97,7 +94,7 @@ void CollectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
     localNodes.insert( inodeBottomGlobal );
 
     localIndex const nextGlobal =
-      integer_conversion< localIndex >( nextElemIdGlobal[ integer_conversion< localIndex >( currGlobal ) ] );
+      LvArray::integerConversion< localIndex >( nextElemIdGlobal[ LvArray::integerConversion< localIndex >( currGlobal ) ] );
 
     // if the next well elem is not local, add the node in between curr and next to boundaryNodes
     if( nextGlobal >= 0 && !localElems.contains( nextGlobal ))
@@ -277,10 +274,9 @@ void InitializeLocalSearch( MeshLevel const & mesh,
                             localIndex & esrInit,
                             localIndex & eiInit )
 {
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > >
-  resElemCenter = mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor const > >( ElementSubRegionBase::
-                                                                                                                        viewKeyStruct::
-                                                                                                                        elementCenterString );
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
+  resElemCenter = mesh.getElemManager()->ConstructViewAccessor< array2d< real64 >,
+                                                                arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString );
   // to initialize the local search for the reservoir element that contains "location",
   // we find the reservoir element that minimizes the distance from "location" to the reservoir element center
   auto ret = minLocOverElemsInMesh( &mesh, [&] ( localIndex const er,
@@ -591,7 +587,7 @@ void WellElementSubRegion::CheckPartitioningValidity( InternalWellGenerator cons
           // remove the duplicate elements
           if( MpiWrapper::Comm_rank( MPI_COMM_GEOSX ) == iownerRank )
           {
-            localElems.erase( iwelemGlobal );
+            localElems.remove( iwelemGlobal );
           }
         }
         rankCount++;
@@ -716,7 +712,12 @@ void WellElementSubRegion::ConstructSubRegionLocalElementMaps( MeshLevel & mesh,
         m_nextWellElementIndex[iwelemLocal] = -2; // remote elem
       }
     }
-    m_elementCenter[iwelemLocal] = elemCoordsGlobal[iwelemGlobal];
+
+    // TODO Change to LvArray::tensorOps::copy
+    m_elementCenter[ iwelemLocal ][ 0 ] = elemCoordsGlobal[ iwelemGlobal ][ 0 ];
+    m_elementCenter[ iwelemLocal ][ 1 ] = elemCoordsGlobal[ iwelemGlobal ][ 1 ];
+    m_elementCenter[ iwelemLocal ][ 2 ] = elemCoordsGlobal[ iwelemGlobal ][ 2 ];
+
     m_elementVolume[iwelemLocal] = elemVolumeGlobal[iwelemGlobal];
     m_radius[iwelemLocal] = wellGeometry.GetElementRadius();
 

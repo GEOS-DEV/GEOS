@@ -61,12 +61,14 @@ public:
   /**
    * @brief Copy assignment.
    * @param src EpetraVector to be copied.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector const & src );
 
   /**
    * @brief Move assignment.
    * @param src EpetraVector to be moved from.
+   * @return the new vector
    */
   EpetraVector & operator=( EpetraVector && src ) noexcept;
 
@@ -130,6 +132,8 @@ public:
 
   virtual void scale( real64 const scalingFactor ) override;
 
+  virtual void reciprocal() override;
+
   virtual real64 dot( EpetraVector const & vec ) const override;
 
   virtual void copy( EpetraVector const & x ) override;
@@ -179,11 +183,13 @@ public:
 
   /**
    * @brief Returns a const pointer to the underlying Epetra object.
+   * @return const pointer to the underlying Epetra object
    */
   Epetra_FEVector const & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Epetra object.
+   * @return non-const pointer to the underlying Epetra object
    */
   Epetra_FEVector & unwrapped();
 

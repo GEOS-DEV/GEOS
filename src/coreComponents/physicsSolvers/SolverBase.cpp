@@ -17,6 +17,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+#include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "managers/DomainPartition.hpp"
 
 namespace geosx
@@ -28,11 +29,11 @@ SolverBase::SolverBase( std::string const & name,
                         Group * const parent )
   :
   ExecutableGroup( name, parent ),
-  m_systemSolverParameters( groupKeyStruct::systemSolverParametersString, this ),
   m_cflFactor(),
   m_maxStableDt{ 1e99 },
   m_nextDt( 1e99 ),
   m_dofManager( name ),
+  m_linearSolverParameters( groupKeyStruct::linearSolverParametersString, this ),
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString, this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -43,18 +44,18 @@ SolverBase::SolverBase( std::string const & name,
   // This sets a flag to indicate that this object increments time
   this->SetTimestepBehavior( 1 );
 
-  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor, false )->
+  registerWrapper( viewKeyStruct::cflFactorString, &m_cflFactor )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when calculating the maximum allowable time step. Values should be in the interval (0,1] " );
 
-  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt, false )->
+  registerWrapper( viewKeyStruct::maxStableDtString, &m_maxStableDt )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::FALSE )->
     setDescription( "Value of the Maximum Stable Timestep for this solver." );
 
-  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName, false )->
+  this->registerWrapper( viewKeyStruct::discretizationString, &m_discretizationName )->
     setApplyDefaultValue( "none" )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this "
@@ -62,109 +63,33 @@ SolverBase::SolverBase( std::string const & name,
                     "should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` "
                     "discretization should be specified." );
 
-  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames, false )->
+  registerWrapper( viewKeyStruct::targetRegionsString, &m_targetRegionNames )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
-  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt, false )->
+  registerWrapper( viewKeyStruct::initialDtString, &m_nextDt )->
     setApplyDefaultValue( 1e99 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Initial time-step value required by the solver to the event manager." );
+
+  RegisterGroup( groupKeyStruct::linearSolverParametersString, &m_linearSolverParameters );
+  RegisterGroup( groupKeyStruct::nonlinearSolverParametersString, &m_nonlinearSolverParameters );
 }
 
-SolverBase::~SolverBase()
+SolverBase::~SolverBase() = default;
+
+Group * SolverBase::CreateChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
-//  delete m_linearSolverWrapper;
+  return nullptr;
 }
 
 SolverBase::CatalogInterface::CatalogType & SolverBase::GetCatalog()
 {
   static SolverBase::CatalogInterface::CatalogType catalog;
   return catalog;
-}
-
-Group * SolverBase::CreateChild( string const & childKey, string const & childName )
-{
-  Group * rval = nullptr;
-  if( childKey == SystemSolverParameters::CatalogName() )
-  {
-    rval = RegisterGroup( childName, &m_systemSolverParameters, 0 );
-  }
-  else if( childKey == NonlinearSolverParameters::CatalogName() )
-  {
-    rval = RegisterGroup( childName, &m_nonlinearSolverParameters, 0 );
-  }
-  else
-  {
-    GEOSX_ERROR( childKey << " is an invalid key to SolverBase child group." );
-  }
-  return rval;
-}
-
-void SolverBase::ExpandObjectCatalogs()
-{
-  CreateChild( SystemSolverParameters::CatalogName(), SystemSolverParameters::CatalogName() );
-  CreateChild( NonlinearSolverParameters::CatalogName(), NonlinearSolverParameters::CatalogName() );
-}
-
-void SolverBase::PostProcessInput()
-{
-  SetLinearSolverParameters();
-}
-
-void SolverBase::SetLinearSolverParameters()
-{
-  m_linearSolverParameters.logLevel = m_systemSolverParameters.getLogLevel();
-
-  if( m_systemSolverParameters.scalingOption() )
-  {
-    m_linearSolverParameters.scaling.useRowScaling = true;
-  }
-
-  if( m_systemSolverParameters.useDirectSolver() )
-  {
-    m_linearSolverParameters.solverType = "direct";
-  }
-  else
-  {
-    m_linearSolverParameters.krylov.maxIterations = m_systemSolverParameters.numKrylovIter();
-    m_linearSolverParameters.krylov.tolerance = m_systemSolverParameters.krylovTol();
-
-    if( m_systemSolverParameters.kspace() > 0 )
-    {
-      m_linearSolverParameters.krylov.maxRestart = m_systemSolverParameters.kspace();
-    }
-
-    if( m_systemSolverParameters.useBicgstab() )
-    {
-      m_linearSolverParameters.solverType = "bicgstab";
-    }
-    else
-    {
-      m_linearSolverParameters.solverType = "gmres";
-    }
-
-    if( m_systemSolverParameters.useMLPrecond() )
-    {
-      m_linearSolverParameters.preconditionerType = "amg";
-
-      // TODO hardcoded to match old behavior
-      m_linearSolverParameters.amg.cycleType = "W";
-      m_linearSolverParameters.amg.smootherType = "ilu";
-    }
-    else
-    {
-      m_linearSolverParameters.preconditionerType = "ilut";
-      m_linearSolverParameters.ilu.fill = static_cast< int >( m_systemSolverParameters.ilut_fill() );
-      m_linearSolverParameters.ilu.threshold = m_systemSolverParameters.ilut_drop();
-
-      // TODO hardcoded to match old behavior
-      m_linearSolverParameters.dd.overlap = 1;
-    }
-  }
 }
 
 bool SolverBase::CheckModelNames( array1d< string > & modelNames,
@@ -394,6 +319,53 @@ bool SolverBase::LineSearch( real64 const & time_n,
   return lineSearchSuccess;
 }
 
+/**
+ * @brief Eisenstat-Walker adaptive tolerance
+ *
+ * This method enables an inexact-Newton method is which the linear solver
+ * tolerance is chosen based on the nonlinear solver convergence behavior.
+ * In early Newton iterations, the search direction is usually imprecise, and
+ * therefore a weak linear convergence tolerance can be chosen to minimize
+ * computational cost.  As the search gets closer to the true solution, however,
+ * more stringent linear tolerances are necessary to maintain quadratic convergence
+ * behavior.
+ *
+ * The user can set the weakest tolerance allowed, with a default of 1e-3.
+ * Even weaker values (e.g. 1e-2,1e-1) can be used for further speedup, but may
+ * occasionally cause convergence problems.  Use this parameter with caution.  The
+ * most stringent tolerance is hardcoded to 1e-8, which is sufficient for
+ * most problems.
+ *
+ * See Eisenstat, S.C. and Walker, H.F., 1996. Choosing the forcing terms in an
+ * inexact Newton method. SIAM Journal on Scientific Computing, 17(1), pp.16-32.
+ *
+ * @param newNewtonNorm Residual norm at current iteration
+ * @param oldNewtonNorm Residual norm at previous iteration
+ * @param weakestTol Weakest tolerance allowed (default 1e-3).
+ * @return Adaptive tolerance recommendation
+ */
+real64 SolverBase::EisenstatWalker( real64 const newNewtonNorm,
+                                    real64 const oldNewtonNorm,
+                                    real64 const weakestTol )
+{
+  real64 const strongestTol = 1e-8;
+  real64 const exponent = 2.0;
+  real64 const gamma = 0.9;
+
+  real64 normRatio = newNewtonNorm / oldNewtonNorm;
+  if( normRatio > 1 )
+    normRatio = 1;
+
+  real64 newKrylovTol = gamma*std::pow( normRatio, exponent );
+  real64 altKrylovTol = gamma*std::pow( oldNewtonNorm, exponent );
+
+  real64 krylovTol = std::max( newKrylovTol, altKrylovTol );
+  krylovTol = std::min( krylovTol, weakestTol );
+  krylovTol = std::max( krylovTol, strongestTol );
+
+  return krylovTol;
+}
+
 real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
                                           real64 const & dt,
                                           integer const cycleNumber,
@@ -442,9 +414,9 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
     {
       if( getLogLevel() >= 1 && logger::internal::rank==0 )
       {
-        char output[200] = {0};
+        char output[35] = {0};
         sprintf( output, "    Attempt: %2d, NewtonIter: %2d ; ", dtAttempt, newtonIter );
-        std::cout << output;
+        std::cout << output << std::endl;
       }
 
       // call assemble to fill the matrix and the rhs
@@ -465,11 +437,11 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       {
         if( newtonIter!=0 )
         {
-          char output[200] = {0};
+          char output[46] = {0};
           sprintf( output,
-                   "Last LinSolve(iter,tol) = (%4d, %4.2e) ; ",
-                   m_systemSolverParameters.m_numKrylovIter,
-                   m_systemSolverParameters.m_krylovTol );
+                   "Last LinSolve(iter,res) = (%3d, %4.2e) ; ",
+                   m_linearSolverResult.numIterations,
+                   m_linearSolverResult.residualReduction );
           std::cout<<output;
         }
         std::cout<<std::endl;
@@ -512,10 +484,10 @@ real64 SolverBase::NonlinearImplicitStep( real64 const & time_n,
       }
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
-      // TODO: need to combine overlapping usage on LinearSolverParameters and SystemSolverParamters
-      if( m_systemSolverParameters.useAdaptiveKrylovTol())
+      LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
+      if( krylovParams.useAdaptiveTol )
       {
-        m_systemSolverParameters.m_krylovTol = LinearSolverParameters::eisenstatWalker( residualNorm, lastResidual );
+        krylovParams.relTolerance = EisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
       }
 
       // call the default linear solver on the system
@@ -596,7 +568,8 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
                               DofManager & dofManager,
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
-                              ParallelVector & solution )
+                              ParallelVector & solution,
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -611,7 +584,10 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( matrix );
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( matrix );
+  }
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
@@ -643,19 +619,35 @@ SolverBase::CalculateResidualNorm( DomainPartition const * const GEOSX_UNUSED_PA
   return 0;
 }
 
-void SolverBase::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+void SolverBase::SolveSystem( DofManager const & dofManager,
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
                               ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
-  // Create a solver from the parameter list
-  LinearSolver solver( m_linearSolverParameters );
 
-  // Solve using the iterative solver and compare norms with true solution
-  solver.solve( matrix, solution, rhs );
+  LinearSolverParameters const & params = m_linearSolverParameters.get();
 
-  // Debug for logLevel >= 2
+  // TODO: We probably want to keep an instance of linear solver as a member of physics solver
+  //       so we can have constant access to last solve statistics, convergence history, etc.
+  //       This requires unifying "LAI interface" solvers with "native" Krylov solvers somehow.
+
+  if( params.solverType == "direct" || !m_precond )
+  {
+    LinearSolver solver( params );
+    solver.solve( matrix, solution, rhs );
+    m_linearSolverResult = solver.result();
+  }
+  else
+  {
+    m_precond->compute( matrix, dofManager );
+    std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::Create( params, matrix, *m_precond );
+    solver->solve( rhs, solution );
+    m_linearSolverResult = solver->result();
+  }
+
+  GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
+
   if( getLogLevel() >= 2 )
   {
     GEOSX_LOG_RANK_0( "After SolveSystem" );

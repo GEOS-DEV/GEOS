@@ -78,10 +78,6 @@ public:
 
   void updateIntrinsicNodalData( DomainPartition * const domain );
 
-  virtual void
-  updateStress( DomainPartition * const domain );
-
-
 
   /**
    * @defgroup Solver Interface Functions
@@ -114,6 +110,13 @@ public:
   SetupDofs( DomainPartition const * const domain,
              DofManager & dofManager ) const override;
 
+  virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               bool const setSparsity = false ) override;
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
@@ -157,6 +160,22 @@ public:
   /**@}*/
 
 
+  template< typename CONSTITUTIVE_BASE,
+            template< typename SUBREGION_TYPE,
+                      typename CONSTITUTIVE_TYPE,
+                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+            typename ... PARAMS >
+  void AssemblyLaunch( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       ParallelMatrix & matrix,
+                       ParallelVector & rhs,
+                       PARAMS && ... params );
+
+
+  template< typename ... PARAMS >
+  real64 explicitKernelDispatch( PARAMS && ... params );
+
   /**
    * @brief Launch of the element processing kernel for explicit time integration.
    * @param NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -177,10 +196,11 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               SortedArray< localIndex > const & elementList,
+                               SortedArrayView< localIndex const > const & elementList,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
                                arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
                                arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
@@ -195,6 +215,7 @@ public:
                                                             elemsToNodes,
                                                             dNdX,
                                                             detJ,
+                                                            X,
                                                             u,
                                                             vel,
                                                             acc,
@@ -239,7 +260,7 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                localIndex const numElems,
                                real64 const dt,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
@@ -253,7 +274,7 @@ public:
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                real64 const biotCoefficient,
-                               timeIntegrationOption const tiOption,
+                               TimeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
                                real64 const newmarkBeta,
@@ -332,27 +353,6 @@ public:
                             DofManager const & dofManager,
                             ParallelVector const & solution ) override;
 
-
-  void SetTimeIntegrationOption( string const & stringVal )
-  {
-    if( stringVal == "ExplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ExplicitDynamic;
-    }
-    else if( stringVal == "ImplicitDynamic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::ImplicitDynamic;
-    }
-    else if( stringVal == "QuasiStatic" )
-    {
-      this->m_timeIntegrationOption = timeIntegrationOption::QuasiStatic;
-    }
-    else
-    {
-      GEOSX_ERROR( "Invalid time integration option: " << stringVal );
-    }
-  }
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr auto vTildeString = "velocityTilde";
@@ -363,8 +363,7 @@ public:
     static constexpr auto massDampingString = "massDamping";
     static constexpr auto stiffnessDampingString = "stiffnessDamping";
     static constexpr auto useVelocityEstimateForQSString = "useVelocityForQS";
-    static constexpr auto timeIntegrationOptionStringString = "timeIntegrationOption";
-    static constexpr auto timeIntegrationOptionString = "timeIntegrationOptionEnum";
+    static constexpr auto timeIntegrationOptionString = "timeIntegrationOption";
     static constexpr auto maxNumResolvesString = "maxNumResolves";
     static constexpr auto strainTheoryString = "strainTheory";
     static constexpr auto solidMaterialNamesString = "solidMaterialNames";
@@ -374,6 +373,9 @@ public:
     static constexpr auto noContactRelationNameString = "NOCONTACT";
     static constexpr auto contactForceString = "contactForce";
     static constexpr auto maxForce = "maxForce";
+    static constexpr auto elemsAttachedToSendOrReceiveNodes = "elemsAttachedToSendOrReceiveNodes";
+    static constexpr auto elemsNotAttachedToSendOrReceiveNodes = "elemsNotAttachedToSendOrReceiveNodes";
+    static constexpr auto effectiveStress = "effectiveStress";
 
     dataRepository::ViewKey vTilde = { vTildeString };
     dataRepository::ViewKey uhatTilde = { uhatTildeString };
@@ -386,11 +388,25 @@ public:
   } solidMechanicsViewKeys;
 
   struct groupKeyStruct
-  {
-    dataRepository::GroupKey systemSolverParameters = { "SystemSolverParameters" };
-  } solidMechanicsGroupKeys;
+  {} solidMechanicsGroupKeys;
 
   arrayView1d< string const > const & solidMaterialNames() const { return m_solidMaterialNames; }
+
+  SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
+  {
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodes );
+  }
+
+  SortedArray< localIndex > & getElemsNotAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
+  {
+    return subRegion.getReference< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes );
+  }
+
+  void setEffectiveStress( integer const input )
+  {
+    m_effectiveStress = input;
+  }
+
 
 protected:
   virtual void PostProcessInput() override final;
@@ -401,21 +417,21 @@ protected:
   real64 m_newmarkBeta;
   real64 m_massDamping;
   real64 m_stiffnessDamping;
-  string m_timeIntegrationOptionString;
-  timeIntegrationOption m_timeIntegrationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
   array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-
-
-  array1d< array1d< SortedArray< localIndex > > > m_elemsAttachedToSendOrReceiveNodes;
-  array1d< array1d< SortedArray< localIndex > > > m_elemsNotAttachedToSendOrReceiveNodes;
   SortedArray< localIndex > m_sendOrReceiveNodes;
   SortedArray< localIndex > m_nonSendOrReceiveNodes;
   MPI_iCommData m_iComm;
+
+  /// Indicates whether or not to use effective stress when integrating the
+  /// stress divergence in the kernels. This means calling the poroelastic
+  /// variant of the solid mechanics kernels.
+  integer m_effectiveStress;
 
   SolidMechanicsLagrangianFEM();
 
@@ -424,6 +440,71 @@ protected:
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
+
+
+template< typename CONSTITUTIVE_BASE,
+          template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
+                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+          typename ... PARAMS >
+void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  ParallelMatrix & matrix,
+                                                  ParallelVector & rhs,
+                                                  PARAMS && ... params )
+{
+  GEOSX_MARK_FUNCTION;
+  MeshLevel & mesh = *(domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 ));
+
+  NodeManager const & nodeManager = *(mesh.getNodeManager());
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+
+  matrix.open();
+  rhs.open();
+
+  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+
+  ResetStressToBeginningOfStep( &domain );
+
+
+  real64 const gravityVectorData[3] = { gravityVector().Data()[0],
+                                        gravityVector().Data()[1],
+                                        gravityVector().Data()[2] };
+
+  m_maxForce = finiteElement::
+                 regionBasedKernelApplication< serialPolicy,
+                                               CONSTITUTIVE_BASE,
+                                               CellElementSubRegion,
+                                               KERNEL_TEMPLATE >( mesh,
+                                                                  targetRegionNames(),
+                                                                  m_solidMaterialNames,
+                                                                  feDiscretization,
+                                                                  dofNumber,
+                                                                  matrix,
+                                                                  rhs,
+                                                                  gravityVectorData,
+                                                                  std::forward< PARAMS >( params )... );
+
+
+  ApplyContactConstraint( dofManager,
+                          domain,
+                          &matrix,
+                          &rhs );
+
+  matrix.close();
+  rhs.close();
+
+
+}
 
 
 } /* namespace geosx */

@@ -95,7 +95,7 @@ void SpatialPartition::InitializePostSubGroups( Group * const )
     {
       check *= this->m_Partitions( i );
     }
-    assert( check == m_size );
+    GEOSX_ERROR_IF_NE( check, m_size );
   }
 
   //get communicator, rank, and coordinates
@@ -129,10 +129,10 @@ void SpatialPartition::InitializeMetis()
   //get size of problem and decomposition
   m_size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   m_rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+
   //check to make sure our dimensions agree
-  {
-    assert( m_sizeMetis == m_size );
-  }
+  GEOSX_ERROR_IF_NE( m_sizeMetis, m_size );
+
   //initialize cached requests and status
   m_mpiRequest.resize( 100 );
   m_mpiStatus.resize( 100 );
@@ -196,11 +196,11 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
   }
   else
   {
-    const int dim = this->m_Partitions( integer_conversion< localIndex >( idim ) );
-    const bool periodic = this->m_Periodic( integer_conversion< localIndex >( idim ) );
+    const int dim = this->m_Partitions( LvArray::integerConversion< localIndex >( idim ) );
+    const bool periodic = this->m_Periodic( LvArray::integerConversion< localIndex >( idim ) );
     for( int i = -1; i < 2; i++ )
     {
-      ncoords[idim] = this->m_coords( integer_conversion< localIndex >( idim ) ) + i;
+      ncoords[idim] = this->m_coords( LvArray::integerConversion< localIndex >( idim ) ) + i;
       bool ok = true;
       if( periodic )
       {
@@ -227,9 +227,9 @@ void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborL
   for(; itNeighbor != neighborList.end(); itNeighbor++ )
   {
     m_neighbors.push_back( NeighborCommunicator());
-    m_neighbors.back().SetNeighborRank( integer_conversion< int >( *itNeighbor ) );
+    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( *itNeighbor ) );
 
-//    m_neighbors.back().Initialize( integer_conversion<int>(*itNeighbor), this->m_rank, this->m_size );
+//    m_neighbors.back().Initialize( LvArray::integerConversion<int>(*itNeighbor), this->m_rank, this->m_size );
   }
 }
 
@@ -258,7 +258,7 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       {
         check *= this->m_Partitions( i );
       }
-      assert( check == m_size );
+      GEOSX_ERROR_IF_NE( check, m_size );
     }
 
     //get communicator, rank, and coordinates
@@ -518,39 +518,4 @@ bool SpatialPartition::IsCoordInContactGhostRange( const R1Tensor & elemCenter )
   return rval;
 }
 
-//
-//void SpatialPartition::WriteSiloDerived( SiloFile& siloFile )
-//{
-//  siloFile.DBWriteWrapper("m_Partitions",m_Partitions);
-//  siloFile.DBWriteWrapper("m_Periodic",m_Periodic);
-//  siloFile.DBWriteWrapper("m_coords",m_coords);
-//  siloFile.DBWriteWrapper("m_PartitionLocations0",m_PartitionLocations[0]);
-//  siloFile.DBWriteWrapper("m_PartitionLocations1",m_PartitionLocations[1]);
-//  siloFile.DBWriteWrapper("m_PartitionLocations2",m_PartitionLocations[2]);
-//  siloFile.DBWriteWrapper("m_blockSize",m_blockSize);
-//  siloFile.DBWriteWrapper("m_min",m_min);
-//  siloFile.DBWriteWrapper("m_max",m_max);
-//  siloFile.DBWriteWrapper("m_gridSize",m_gridSize);
-//  siloFile.DBWriteWrapper("m_gridMin",m_gridMin);
-//  siloFile.DBWriteWrapper("m_gridMax",m_gridMax);
-//
-//}
-//
-//void SpatialPartition::ReadSiloDerived( const SiloFile& siloFile )
-//{
-//  siloFile.DBReadWrapper("m_Partitions",m_Partitions);
-//  siloFile.DBReadWrapper("m_Periodic",m_Periodic);
-//  siloFile.DBReadWrapper("m_coords",m_coords);
-//  siloFile.DBReadWrapper("m_PartitionLocations0",m_PartitionLocations[0]);
-//  siloFile.DBReadWrapper("m_PartitionLocations1",m_PartitionLocations[1]);
-//  siloFile.DBReadWrapper("m_PartitionLocations2",m_PartitionLocations[2]);
-//  siloFile.DBReadWrapper("m_blockSize",m_blockSize);
-//  siloFile.DBReadWrapper("m_min",m_min);
-//  siloFile.DBReadWrapper("m_max",m_max);
-//  siloFile.DBReadWrapper("m_gridSize",m_gridSize);
-//  siloFile.DBReadWrapper("m_gridMin",m_gridMin);
-//  siloFile.DBReadWrapper("m_gridMax",m_gridMax);
-//
-//
-//}
 }

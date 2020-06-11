@@ -17,6 +17,7 @@
 
 #include "ElementRegionManager.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "FaceElementRegion.hpp"
 #include "FaceManager.hpp"
@@ -54,7 +55,7 @@ void ElementRegionManager::resize( integer_array const & numElements,
                                    string_array const & regionNames,
                                    string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
 {
-  localIndex const n_regions = integer_conversion< localIndex >( regionNames.size());
+  localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
   {
     ElementRegionBase * elemRegion = this->GetRegion( reg );
@@ -126,7 +127,7 @@ void ElementRegionManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   for( string const & name: names )
   {
     ElementRegionBase * const elementRegion = GetRegion( name );
-    SchemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
+    schemaUtilities::SchemaConstruction( elementRegion, schemaRoot, targetChoiceNode, documentationType );
   }
 }
 
@@ -524,7 +525,6 @@ ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
                                         ElementReferenceAccessor< localIndex_array > & packList,
                                         bool const overwriteMap )
 {
-  GEOSX_MARK_FUNCTION;
   int unpackedSize = 0;
 
   localIndex numRegionsRead;

@@ -1,5 +1,3 @@
-message( "Entering /src/CMakeLists.txt")
-
 cmake_minimum_required(VERSION 3.9)
 
 ################################
@@ -98,12 +96,12 @@ if( ENABLE_OPENMP )
 endif()
 
 if( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+  set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core axom
+                   DEPENDS_ON geosx_core 
                               ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
@@ -142,11 +140,9 @@ endif()
 
 
 install( DIRECTORY ../examples/ 
-	 DESTINATION examples
-	 )
+     DESTINATION examples
+     )
 
 install( DIRECTORY ../scripts/ 
-	 DESTINATION scripts
-	 )
-
-message( "Exiting /src/CMakeLists.txt")
+     DESTINATION scripts
+     )

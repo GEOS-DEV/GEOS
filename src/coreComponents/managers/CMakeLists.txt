@@ -11,12 +11,12 @@ set(managers_headers
     Outputs/OutputManager.hpp
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
-    Outputs/VTKOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/TimeHistoryCollector.hpp
     Outputs/TimeHistoryOutput.hpp
     Tasks/TaskBase.hpp
     Tasks/TasksManager.hpp
+    Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
     Functions/TableFunction.hpp
@@ -47,12 +47,12 @@ set(managers_sources
     Outputs/OutputManager.cpp
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
-    Outputs/VTKOutput.cpp
     Outputs/RestartOutput.cpp
     Outputs/TimeHistoryCollector.cpp
     Outputs/TimeHistoryOutput.cpp
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
+    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
@@ -74,10 +74,15 @@ if( ENABLE_MPI )
     list( APPEND managers_sources Outputs/ChomboIO.cpp )
 endif()
 
+if( ENABLE_VTK )
+    list( APPEND managers_headers Outputs/VTKOutput.hpp )
+    list( APPEND managers_sources Outputs/VTKOutput.cpp )
+endif()
+
 if( BUILD_OBJ_LIBS )
-  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra )
+  set( dependencyList dataRepository fileIO optionparser RAJA linearAlgebra conduit conduit_relay conduit_blueprint )
 else()
-  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications )
+  set( dependencyList common fileIO linearAlgebra optionparser RAJA mpiCommunications conduit conduit_relay conduit_blueprint )
 endif()
 
 if( ENABLE_MATHPRESSO )

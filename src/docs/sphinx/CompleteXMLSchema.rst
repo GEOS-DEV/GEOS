@@ -30,6 +30,13 @@ Element: BlackOilFluid
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid.rst
 
 
+.. _XML_Blueprint:
+
+Element: Blueprint
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint.rst
+
+
 .. _XML_BoundedPlane:
 
 Element: BoundedPlane
@@ -324,6 +331,13 @@ Element: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
+.. _XML_LagrangianContact:
+
+Element: LagrangianContact
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact.rst
+
+
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -352,6 +366,13 @@ Element: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
 
 
+.. _XML_LinearSolverParameters:
+
+Element: LinearSolverParameters
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
@@ -359,11 +380,11 @@ Element: Mesh
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
 
 
-.. _XML_MeshFile:
+.. _XML_MohrCoulomb:
 
-Element: MeshFile
-=================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile.rst
+Element: MohrCoulomb
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -378,6 +399,13 @@ Element: MultiPhaseMultiComponentFluid
 Element: NonlinearSolverParameters
 ==================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+
+
+.. _XML_NullModel:
+
+Element: NullModel
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel.rst
 
 
 .. _XML_NumericalMethods:
@@ -604,13 +632,6 @@ Element: SymbolicFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction.rst
 
 
-.. _XML_SystemSolverParameters:
-
-Element: SystemSolverParameters
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters.rst
-
-
 .. _XML_TableFunction:
 
 Element: TableFunction
@@ -711,6 +732,13 @@ Datastructure: Benchmarks
 Datastructure: BlackOilFluid
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/BlackOilFluid_other.rst
+
+
+.. _DATASTRUCTURE_Blueprint:
+
+Datastructure: Blueprint
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/Blueprint_other.rst
 
 
 .. _DATASTRUCTURE_BoundedPlane:
@@ -1028,6 +1056,13 @@ Datastructure: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
 
 
+.. _DATASTRUCTURE_LagrangianContact:
+
+Datastructure: LagrangianContact
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact_other.rst
+
+
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -1063,6 +1098,13 @@ Datastructure: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearSolverParameters:
+
+Datastructure: LinearSolverParameters
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -1077,11 +1119,11 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
-.. _DATASTRUCTURE_MeshFile:
+.. _DATASTRUCTURE_MohrCoulomb:
 
-Datastructure: MeshFile
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/MeshFile_other.rst
+Datastructure: MohrCoulomb
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
 
 
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
@@ -1096,6 +1138,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 Datastructure: NonlinearSolverParameters
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_NullModel:
+
+Datastructure: NullModel
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel_other.rst
 
 
 .. _DATASTRUCTURE_NumericalMethods:
@@ -1327,13 +1376,6 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction_other.rst
-
-
-.. _DATASTRUCTURE_SystemSolverParameters:
-
-Datastructure: SystemSolverParameters
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

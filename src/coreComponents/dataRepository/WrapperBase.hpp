@@ -17,14 +17,16 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 
-#include <string>
-#include <memory>
 #include "common/DataTypes.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
+
+#include <string>
+#include <memory>
+#include <set>
 
 namespace conduit
 {
@@ -141,7 +143,7 @@ public:
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( chai::ExecutionSpace const space, bool const touch ) = 0;
+  virtual void move( chai::ExecutionSpace const space, bool const touch ) const = 0;
 
   ///@}
 
@@ -165,6 +167,37 @@ public:
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) = 0;
 
   /**
+   * @brief Push the data in the wrapper into a Conduit blueprint field.
+   * @param fields The Conduit Node containg the blueprint fields.
+   * @param name The name of the field.
+   * @param topology The topology associated with the field.
+   * @param componentNames The name of the components, if not specified they are auto generated.
+   * @note This wrapper must hold an LvArray::Array.
+   */
+  virtual void addBlueprintField( conduit::Node & fields,
+                                  std::string const & name,
+                                  std::string const & topology,
+                                  std::vector< std::string > const & componentNames = {} ) const = 0;
+
+  /**
+   * @brief Push the data in the wrapper into a Conduit Blueprint mcarray.
+   * @param node The Conduit Node to put the data into.
+   * @param componentNames The names of the components, if not specified they are auto generated.
+   * @note This wrapper must hold an LvArray::Array.
+   */
+  virtual void populateMCArray( conduit::Node & node, std::vector< std::string > const & componentNames = {} ) const = 0;
+
+  /**
+   * @brief Create a new Wrapper with values averaged over the second dimension.
+   * @param name The name to give the new wrapper.
+   * @param group The group to hang the new Wrapper from.
+   * @return The newly created wrapper.
+   * @note This Wrapper must hold an LvArray::Array of dimension 2 or greater.
+   * @note The new Wrapper is not registered with @p group.
+   */
+  virtual std::unique_ptr< WrapperBase > averageOverSecondDim( std::string const & name, Group & group ) const = 0;
+
+  /**
    * @name Restart output methods
    */
   ///@{
@@ -172,15 +205,16 @@ public:
   /**
    * @brief Register the wrapper's data for writing with Conduit.
    */
-  virtual void registerToWrite() = 0;
+  virtual void registerToWrite() const = 0;
 
   /**
    * @brief Write the wrapped data into Conduit.
    */
-  virtual void finishWriting() = 0;
+  virtual void finishWriting() const = 0;
 
   /**
    * @brief Read the wrapped data from Conduit.
+   * @return True iff the Wrapper read in data.
    */
   virtual bool loadFromConduit() = 0;
 
@@ -333,17 +367,6 @@ public:
   }
 
   /**
-   * @brief Set the plotLevel of the wrapper.
-   * @param flag an integer that specifies the new plotLevel value
-   * @return a pointer to this wrapper
-   */
-  WrapperBase * setPlotLevel( int const flag )
-  {
-    m_plotLevel = IntToPlotLevel( flag );
-    return this;
-  }
-
-  /**
    * @brief Get name of the wrapper.
    * @return name of the wrapper
    */
@@ -408,7 +431,7 @@ public:
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
-  std::vector< string > const & getRegisteringObjects() const
+  std::set< string > const & getRegisteringObjects() const
   {
     return m_registeringObjects;
   }
@@ -420,7 +443,7 @@ public:
    */
   WrapperBase * setRegisteringObjects( string const & objectName )
   {
-    m_registeringObjects.push_back( objectName );
+    m_registeringObjects.insert( objectName );
     return this;
   }
 
@@ -485,36 +508,37 @@ protected:
 
   /// @endcond
 
-private:
+protected:
 
-  /// name of the object that is being wrapped
+  /// Name of the object that is being wrapped
   string m_name;
 
-  /// pointer to Group that holds this WrapperBase
+  /// Pointer to Group that holds this WrapperBase
   Group * m_parent;
 
-  /// integer to indicate whether or not this wrapped object should be resized when m_parent is resized
+  /// Integer to indicate whether or not this wrapped object should be resized when m_parent is resized
   int m_sizedFromParent;
 
-  /// flag to determine the restart behavior for this wrapped object
+  /// Flag to determine the restart behavior for this wrapped object
   RestartFlags m_restart_flags;
 
-  /// flag to store the plotLevel
+  /// Flag to store the plotLevel
   PlotLevel m_plotLevel;
 
-  /// flag to store if this wrapped object should be read from input
+  /// Flag to store if this wrapped object should be read from input
   InputFlags m_inputFlag;
 
-  /// a string description of the wrapped object
+  /// A string description of the wrapped object
   string m_description;
 
-  std::vector< string > m_registeringObjects;
+  /// A vector of the names of the objects that created this Wrapper.
+  std::set< string > m_registeringObjects;
 
-  /// a reference to the corresponding conduit::Node
+  /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
 };
 
-}
-} /* namespace geosx */
+} /// namespace dataRepository
+} /// namespace geosx
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_ */

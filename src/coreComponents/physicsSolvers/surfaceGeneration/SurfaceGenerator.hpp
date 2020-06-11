@@ -122,6 +122,8 @@ public:
 
   // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
 
+  inline string const getFractureRegionName() const { return m_fractureRegionName; }
+
 protected:
 
   virtual void InitializePostInitialConditions_PreSubGroups( Group * const problemManager ) override final;

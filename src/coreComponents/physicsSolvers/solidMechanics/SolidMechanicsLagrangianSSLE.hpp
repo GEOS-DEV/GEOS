@@ -40,9 +40,6 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual void
-  updateStress( DomainPartition * const domain ) override;
-
 
   virtual void ApplySystemSolution( DofManager const & dofManager,
                                     ParallelVector const & solution,
@@ -53,10 +50,11 @@ public:
   ExplicitElementKernelLaunch( localIndex NUM_NODES_PER_ELEM,
                                localIndex NUM_QUADRATURE_POINTS,
                                constitutive::ConstitutiveBase * const constitutiveRelation,
-                               SortedArray< localIndex > const & elementList,
+                               SortedArrayView< localIndex const > const & elementList,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
+                               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
                                arrayView2d< real64 const, nodes::VELOCITY_USD > const & vel,
                                arrayView2d< real64, nodes::ACCELERATION_USD > const & acc,
@@ -71,6 +69,7 @@ public:
                                                             elemsToNodes,
                                                             dNdX,
                                                             detJ,
+                                                            X,
                                                             u,
                                                             vel,
                                                             acc,
@@ -83,7 +82,7 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                localIndex const numElems,
                                real64 const dt,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,
@@ -97,7 +96,7 @@ public:
                                arrayView1d< real64 const > const & fluidPressure,
                                arrayView1d< real64 const > const & deltaFluidPressure,
                                real64 const biotCoefficient,
-                               timeIntegrationOption const tiOption,
+                               TimeIntegrationOption const tiOption,
                                real64 const stiffnessDamping,
                                real64 const massDamping,
                                real64 const newmarkBeta,
