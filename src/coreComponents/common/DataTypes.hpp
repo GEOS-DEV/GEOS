@@ -449,20 +449,8 @@ using globalIndex_array3d = array3d< globalIndex >;
 /// A 1-dimensional array of ::R1Tensor types.
 using r1_array = array1d< R1Tensor >;
 
-/// A 1-dimensional array of ::R2Tensor types.
-using r2_array = array1d< R2Tensor >;
-
-/// A 1-dimensional array of ::R2SymTensor types.
-using r2Sym_array = array1d< R2SymTensor >;
-
 /// A 2-dimensional array of ::R1Tensor types.
 using r1_array2d= array2d< R1Tensor >;
-
-/// A 2-dimensional array of ::R2Tensor types.
-using r2_array2d= array2d< R2Tensor >;
-
-/// A 2-dimensional array of ::R2SymTensor types.
-using r2Sym_array2d= array2d< R2SymTensor >;
 
 /// A 1-dimensional array of ::R1Tensor types.
 using mapPair_array = std::pair< localIndex_array, localIndex_array >;
@@ -507,16 +495,12 @@ public:
       {std::type_index( typeid(localIndex)), "localIndex"},
       {std::type_index( typeid(globalIndex)), "globalIndex"},
       {std::type_index( typeid(R1Tensor)), "R1Tensor"},
-      {std::type_index( typeid(R2Tensor)), "R2Tensor"},
-      {std::type_index( typeid(R2SymTensor)), "R2SymTensor"},
       {std::type_index( typeid(integer_array)), "integer_array"},
       {std::type_index( typeid(real32_array)), "real32_array"},
       {std::type_index( typeid(real64_array)), "real64_array"},
       {std::type_index( typeid(localIndex_array)), "localIndex_array"},
       {std::type_index( typeid(globalIndex_array)), "globalIndex_array"},
       {std::type_index( typeid(r1_array)), "r1_array"},
-      {std::type_index( typeid(r2_array)), "r2_array"},
-      {std::type_index( typeid(r2Sym_array)), "r2Sym_array"},
       {std::type_index( typeid(integer_array2d)), "integer_array2d"},
       {std::type_index( typeid(real32_array2d)), "real32_array2d"},
       {std::type_index( typeid(real64_array2d)), "real64_array2d"},
@@ -528,8 +512,6 @@ public:
       {std::type_index( typeid(localIndex_array3d)), "localIndex_array3d"},
       {std::type_index( typeid(globalIndex_array3d)), "globalIndex_array3d"},
       {std::type_index( typeid(r1_array2d)), "r1_array2d"},
-      {std::type_index( typeid(r2_array2d)), "r2_array2d"},
-      {std::type_index( typeid(r2Sym_array2d)), "r2Sym_array2d"},
       {std::type_index( typeid(string)), "string"},
       {std::type_index( typeid(Path)), "path"},
       {std::type_index( typeid(string_array)), "string_array"},
@@ -569,8 +551,6 @@ public:
     real32_array_id,     //!< real32_array_id
     real64_array_id,     //!< real64_array_id
     r1_array_id,         //!< r1_array_id
-    r2_array_id,         //!< r2_array_id
-    r2Sym_array_id,      //!< r2Sym_array_id
 
     integer_array2d_id,    //!< integer_array2d_id
     localIndex_array2d_id, //!< localIndex_array2d_id
@@ -579,8 +559,6 @@ public:
     real64_array2d_id,     //!< real64_array2d_id
     real64_array2d_ji_id,   //!< real64_array2d_ji_id
     r1_array2d_id,         //!< r1_array2d_id
-    r2_array2d_id,         //!< r2_array2d_id
-    r2Sym_array2d_id,      //!< r2Sym_array2d_id
 
     integer_array3d_id,    //!< integer_array3d_id
     localIndex_array3d_id, //!< localIndex_array3d_id
@@ -612,16 +590,12 @@ public:
       { std::type_index( typeid(real32)), TypeIDs::real32_id },
       { std::type_index( typeid(real64)), TypeIDs::real64_id },
       { std::type_index( typeid(R1Tensor)), TypeIDs::r1Tensor_id },
-      { std::type_index( typeid(R2Tensor)), TypeIDs::r2Tensor_id },
-      { std::type_index( typeid(R2SymTensor)), TypeIDs::r2SymTensor_id },
       { std::type_index( typeid(integer_array)), TypeIDs::integer_array_id },
       { std::type_index( typeid(localIndex_array)), TypeIDs::localIndex_array_id },
       { std::type_index( typeid(globalIndex_array)), TypeIDs::globalIndex_array_id },
       { std::type_index( typeid(real32_array)), TypeIDs::real32_array_id },
       { std::type_index( typeid(real64_array)), TypeIDs::real64_array_id },
       { std::type_index( typeid(r1_array)), TypeIDs::r1_array_id },
-      { std::type_index( typeid(r2_array)), TypeIDs::r2_array_id },
-      { std::type_index( typeid(r2Sym_array)), TypeIDs::r2Sym_array_id },
 
       { std::type_index( typeid(integer_array2d)), TypeIDs::integer_array2d_id },
       { std::type_index( typeid(localIndex_array2d)), TypeIDs::localIndex_array2d_id },
@@ -630,8 +604,6 @@ public:
       { std::type_index( typeid(real64_array2d)), TypeIDs::real64_array2d_id },
       { std::type_index( typeid(array2d< real64, RAJA::PERM_JI >)), TypeIDs::real64_array2d_ji_id },
       { std::type_index( typeid(r1_array2d)), TypeIDs::r1_array2d_id },
-      { std::type_index( typeid(r2_array2d)), TypeIDs::r2_array2d_id },
-      { std::type_index( typeid(r2Sym_array2d)), TypeIDs::r2Sym_array2d_id },
 
       { std::type_index( typeid(integer_array3d)), TypeIDs::integer_array3d_id },
       { std::type_index( typeid(localIndex_array3d)), TypeIDs::localIndex_array3d_id },
@@ -744,11 +716,8 @@ private:
     // Regex to match a string that does not contain the characters  ,{}
     std::string rs = "[^,\\{\\}]*";
 
-    // Regexes to match a R1Tensor, R2Tensor, and R2SymTensor
-    // These are identical aside from the number of repetitions in the curly brackets
+    // Regex to match a R1Tensor
     std::string r1 = "\\s*(" + rr + ",\\s*){2}" + rr;
-    std::string r2 = "\\s*(" + rr + ",\\s*){8}" + rr;
-    std::string r2s = "\\s*(" + rr + ",\\s*){5}" + rr;
 
     // Build master list of regexes
     regexMapType regexMap =
@@ -759,24 +728,18 @@ private:
       {"real32", rr},
       {"real64", rr},
       {"R1Tensor", r1},
-      {"R2Tensor", r2},
-      {"R2SymTensor", r2s},
       {"integer_array", constructArrayRegex( ri, 1 )},
       {"localIndex_array", constructArrayRegex( ri, 1 )},
       {"globalIndex_array", constructArrayRegex( ri, 1 )},
       {"real32_array", constructArrayRegex( rr, 1 )},
       {"real64_array", constructArrayRegex( rr, 1 )},
       {"r1_array", constructArrayRegex( r1, 1 )},
-      {"r2_array", constructArrayRegex( r2, 1 )},
-      {"r2Sym_array", constructArrayRegex( r2s, 1 )},
       {"integer_array2d", constructArrayRegex( ri, 2 )},
       {"localIndex_array2d", constructArrayRegex( ri, 2 )},
       {"globalIndex_array2d", constructArrayRegex( ri, 2 )},
       {"real32_array2d", constructArrayRegex( rr, 2 )},
       {"real64_array2d", constructArrayRegex( rr, 2 )},
       {"r1_array2d", constructArrayRegex( r1, 2 )},
-      {"r2_array2d", constructArrayRegex( r2, 2 )},
-      {"r2Sym_array2d", constructArrayRegex( r2s, 2 )},
       {"integer_array3d", constructArrayRegex( ri, 3 )},
       {"localIndex_array3d", constructArrayRegex( ri, 3 )},
       {"globalIndex_array3d", constructArrayRegex( ri, 3 )},
@@ -830,14 +793,6 @@ private:
       case ( TypeIDs::r1_array_id ):
       {
         return lambda( r1_array( 1 ) );
-      }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ) );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ) );
       }
       case ( TypeIDs::real64_array2d_id ):
       {
@@ -896,14 +851,6 @@ private:
       {
         return lambda( r1_array( 1 ), R1Tensor() );
       }
-      case ( TypeIDs::r2_array_id ):
-      {
-        return lambda( r2_array( 1 ), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array_id ):
-      {
-        return lambda( r2Sym_array( 1 ), R2SymTensor()  );
-      }
       case ( TypeIDs::integer_array2d_id ):
       {
         return lambda( integer_array2d(), integer( 1 ) );
@@ -931,14 +878,6 @@ private:
       case ( TypeIDs::r1_array2d_id ):
       {
         return lambda( r1_array2d(), R1Tensor() );
-      }
-      case ( TypeIDs::r2_array2d_id ):
-      {
-        return lambda( r2_array2d(), R2Tensor() );
-      }
-      case ( TypeIDs::r2Sym_array2d_id ):
-      {
-        return lambda( r2Sym_array2d(), R2SymTensor()  );
       }
       case ( TypeIDs::integer_array3d_id ):
       {

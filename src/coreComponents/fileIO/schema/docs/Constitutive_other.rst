@@ -15,6 +15,7 @@ LinearElasticIsotropic                node :ref:`DATASTRUCTURE_LinearElasticIsot
 LinearElasticTransverseIsotropic      node :ref:`DATASTRUCTURE_LinearElasticTransverseIsotropic`      
 MohrCoulomb                           node :ref:`DATASTRUCTURE_MohrCoulomb`                           
 MultiPhaseMultiComponentFluid         node :ref:`DATASTRUCTURE_MultiPhaseMultiComponentFluid`         
+NullModel                             node :ref:`DATASTRUCTURE_NullModel`                             
 ParticleFluid                         node :ref:`DATASTRUCTURE_ParticleFluid`                         
 PoreVolumeCompressibleSolid           node :ref:`DATASTRUCTURE_PoreVolumeCompressibleSolid`           
 PoroLinearElasticAnisotropic          node :ref:`DATASTRUCTURE_PoroLinearElasticAnisotropic`          
