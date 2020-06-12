@@ -1,21 +1,17 @@
 ---
-name: Cleanup Request
-about: Request code cleanup.
-title: 
-labels: 
-assignees: 
+name: Cleanup request
+about: Request code cleanup or refactoring.
+title: ''
+labels: 'type: cleanup / refactor'
+assignees: ''
 
 ---
 
 **Describe the issue**
 A clear and concise description of what needs cleanup, and why.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+**Proposed cleanup**
+Provide suggestions for new design(s)
 
 **Screenshots**
 If applicable, add screenshots to help explain the messiness.
