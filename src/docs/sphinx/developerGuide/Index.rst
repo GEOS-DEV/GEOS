@@ -19,30 +19,37 @@ Welcome to the GEOSX developer guide.
 
    Doxygen
 
-   Caliper
+   /coreComponents/common/docs/caliper.rst
 
-   /coreComponents/LvArray/src/index.rst
+   /coreComponents/LvArray/src/docs/sphinx/LvArray.rst
 
    /coreComponents/managers/docs/ProblemManager.rst
 
    /coreComponents/dataRepository/dataRepository.rst
    
-   XML
+   /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
-   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
+   XML
 
    /coreComponents/linearAlgebra/docs/DofManager.rst
 
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
+   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
 
    AddingNewSolver
 
 
 Overview of the code structure
+
 Managed Groups
+
 Arrays
+
 Data Repository
+
 Physics Solvers
+
 Constitutive Models
+
 Linear Algebra Interface
+
 Portable Programming: RAJA and CHAI

@@ -1,5 +1,5 @@
 *****************************
-Basic profiling with CALIPER
+Caliper Profiling
 *****************************
 
 GEOSX is equipped with `Caliper timers <https://github.com/LLNL/Caliper>`_.

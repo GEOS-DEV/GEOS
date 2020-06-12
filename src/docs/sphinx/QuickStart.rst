@@ -276,6 +276,6 @@ It is wise to run our unit test suite as an additional check that everything is 
   cd GEOSX/build-your-platform-release
   ctest -V
 
-This will run a large suite of simple tests that check various components of the code.  You may also consider running the integrated tests, though this task is a but more complex.  Please refer to :ref:`Integrated Tests` for further information.
+This will run a large suite of simple tests that check various components of the code.  You may also consider running the integrated tests, though this task is a but more complex.  Please refer to :ref:`IntegratedTests` for further information.
 
 **Note:** If *all* of the unit tests fail, there is likely something wrong with your installation.  Refer to the FAQs above for how best to proceed in this situation.  If only a few tests fail, it is possible that your platform configuration has exposed some issue that our existing platform tests do not catch.  If you suspect this is the case, please consider posting an issue to our issue tracker (after first checking whether other users have encountered a similar issue).
