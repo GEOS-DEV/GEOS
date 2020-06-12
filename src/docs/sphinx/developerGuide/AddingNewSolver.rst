@@ -205,7 +205,7 @@ to writing our new *LaplaceDiffFEM* solver.
 
 Start doing your own Physic solver
 ===================================
-As we will extend *LaplaceFEM* capabilities, we will derive publicly from it
+As we will extend *LaplaceFEM* capabilities, we will derive publicly from it.
 
 Declaration File
 -----------------
@@ -215,57 +215,55 @@ commented afterwards.
 
 .. code-block:: c++
 
-                #include "physicsSolvers/simplePDE/LaplaceFEM.hpp"
+  #include "physicsSolvers/simplePDE/LaplaceFEM.hpp"
 
-                namespace geosx
-                {
+  namespace geosx
+  {
 
-                class LaplaceDiffFEM : public LaplaceFEM
-                {
-                public:
+  class LaplaceDiffFEM : public LaplaceFEM
+  {
+  public:
 
-                LaplaceDiffFEM() = delete;
+    LaplaceDiffFEM() = delete;
 
-                LaplaceDiffFEM( const std::string& name,
-                                Group * const parent );
+    LaplaceDiffFEM( const std::string& name,
+                    Group * const parent );
 
-                virtual ~LaplaceDiffFEM() override;
+    virtual ~LaplaceDiffFEM() override;
 
-                static string CatalogName() { return "LaplaceDiffFEM"; }
+    static string CatalogName() { return "LaplaceDiffFEM"; }
 
-
-                virtual void
-                AssembleSystem( real64 const time,
-                                real64 const dt,
-                                DomainPartition * const domain,
-                                DofManager const & dofManager,
-                                ParallelMatrix & matrix,
-                                ParallelVector & rhs ) override;
-
-
-                struct viewKeyStruct : public LaplaceFEM::viewKeyStruct
-                {
-                   dataRepository::ViewKey diffusionCoeff = {"diffusionCoeff"};
-                }  laplaceDiffFEMViewKeys;
-
-                protected:
-                virtual void PostProcessInput() override final;
+    virtual void
+    AssembleSystem( real64 const time,
+                    real64 const dt,
+                    DomainPartition * const domain,
+                    DofManager const & dofManager,
+                    ParallelMatrix & matrix,
+                    ParallelVector & rhs ) override;
 
 
-                private:
-                   real64 m_diffusion;
+    struct viewKeyStruct : public LaplaceFEM::viewKeyStruct
+    {
+      dataRepository::ViewKey diffusionCoeff = { "diffusionCoeff" };
+    } laplaceDiffFEMViewKeys;
 
-                };
+    protected:
+    virtual void PostProcessInput() override final;
+
+  private:
+    real64 m_diffusion;
+
+  };
 
 
 We intend to have a user-defined diffusion coefficient, we then need a `real64` class variable ``m_diffusion``
 to store it.
 
-Consistently with *LaplaceFEM*, we will also elete the nullary constructor and declare a constructor with the same arguments for
+Consistently with *LaplaceFEM*, we will also delete the nullary constructor and declare a constructor with the same arguments for
 forwarding to `Group` master class. Another mandatory step is to override the static ``CatalogName()`` method to properly
 register any data from the new solver class.
 
-Then as mentionned in :ref:`Implementation`, the diffusion coefficient is used when assembling the matrix coefficient. Hence
+Then as mentioned in :ref:`Implementation`, the diffusion coefficient is used when assembling the matrix coefficient. Hence
 we will have to override the ``AssembleSystem()`` function as detailed below.
 
 Moreover, if we want to introduce a new binding between the input XML and the code we will have to work on the three
@@ -281,76 +279,72 @@ Implementation File
 As we have seen in :ref:`Implementation`, the first place where to implement a new register from XML input is
 in the constructor. The ``diffusionCoeff`` entry we have defined in the ``laplaceDiffFEMViewKeys``
 will then be asked as a required input. If not provided, the error thrown will ask for it described asked
-an "input uniform diffusion coeff for the laplace equation".
+an "input uniform diffusion coefficient for the Laplace equation".
 
 .. code-block:: c++
 
-                LaplaceDiffFEM::LaplaceDiffFEM( const std::string& name,
-                        Group * const parent ):
-                LaplaceFEM( name, parent ), m_diffusion(0.0)
-                {
+  LaplaceDiffFEM::LaplaceDiffFEM( const std::string& name,
+                                  Group * const parent ):
+  LaplaceFEM( name, parent ), m_diffusion(0.0)
+  {
+    registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key())->
+      setInputFlag(InputFlags::REQUIRED)->
+      setDescription("input uniform diffusion coeff for the laplace equation");
+  }
 
-                 registerWrapper<string>(laplaceDiffFEMViewKeys.diffusionCoeff.Key())->
-                 setInputFlag(InputFlags::REQUIRED)->
-                 setDescription("input uniform diffusion coeff for the laplace equation");
-                }
-
-Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``PostProcessInput()``
+Another important spot for binding the value of the XML read parameter to our ``m_diffusion`` is in ``PostProcessInput()``.
 
 .. code-block:: c++
 
-     void LaplaceDiffFEM::PostProcessInput()
-     {
-       LaplaceFEM::PostProcessInput();
+  void LaplaceDiffFEM::PostProcessInput()
+  {
+    LaplaceFEM::PostProcessInput();
 
-       string sDiffCoeff = this->getReference<string>(laplaceDiffFEMViewKeys.diffusionCoeff);
-       this->m_diffusion = std::stof(sDiffCoeff);
-
-    }
+    string sDiffCoeff = this->getReference<string>(laplaceDiffFEMViewKeys.diffusionCoeff);
+    this->m_diffusion = std::stof(sDiffCoeff);
+  }
 
 Now that we have required, read and bind the user-defined diffusion value to a variable, we can use it in the construction of our
-matrix into the overrriden ``AssembleSystem()``.
+matrix into the overridden ``AssembleSystem()``.
 
 .. code-block:: c++
-  :emphasize-lines: 17-19
+  :emphasize-lines: 16-18
 
-      // begin element loop, skipping ghost elements
-      for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
+  // begin element loop, skipping ghost elements
+  for( localIndex k=0 ; k<elementSubRegion->size() ; ++k )
+  {
+    if(elemGhostRank[k] < 0)
+    {
+      element_rhs = 0.0;
+      element_matrix = 0.0;
+      for( localIndex q=0 ; q<n_q_points ; ++q)
       {
-        if(elemGhostRank[k] < 0)
+        for( localIndex a=0 ; a<numNodesPerElement ; ++a)
         {
-          element_rhs = 0.0;
-          element_matrix = 0.0;
-          for( localIndex q=0 ; q<n_q_points ; ++q)
+          elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
+
+          for( localIndex b=0 ; b<numNodesPerElement ; ++b)
           {
-            for( localIndex a=0 ; a<numNodesPerElement ; ++a)
-            {
-              elemDofIndex[a] = dofIndex[ elemNodes( k, a ) ];
-
-              for( localIndex b=0 ; b<numNodesPerElement ; ++b)
-              {
-
-                element_matrix(a,b) += detJ[k][q] *
-                                       m_diffusion *
-                                     + Dot( dNdX[k][q][a], dNdX[k][q][b] );
-              }
-
-            }
+            element_matrix(a,b) += detJ[k][q] *
+                                   m_diffusion *
+                                 + Dot( dNdX[k][q][a], dNdX[k][q][b] );
           }
-          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
-          rhs.add( elemDofIndex, element_rhs );
+
         }
       }
+      matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+      rhs.add( elemDofIndex, element_rhs );
+    }
+  }
 
-
-This complete the implementation of our new solver *LaplaceDiffFEM*.
+This completes the implementation of our new solver *LaplaceDiffFEM*.
 
 Nonetheless, the compiler should complain that ``m_fieldName`` is privately as inherited from *LaplaceFEM*. One should then either promote ``m_fieldName`` to protected
 or add a getter in *LaplaceFEM* class to correct the error. The getter option has been chosen and the fix in our solver is then:
 
 .. code-block:: c++
 
- array1d<globalIndex> const & dofIndex =
+  array1d<globalIndex> const & dofIndex =
     nodeManager->getReference< array1d<globalIndex> >( dofManager.getKey( getFieldName() ) );
 
 
@@ -361,9 +355,9 @@ Last steps
 
 After assembling both declarations and implementations for our new solver, the final steps go as:
 
- - Add declarations to parent CMakeLists.txt (here add to ``physicsSolvers_headers`` )
- - Add implementations to parent CMakeLists.txt (here add to ``physicsSolvers_sources``)
- - Check that Doxygen comments are properly set in our solver class
- - Uncrustify it to match the code style
- - Write unit tests for each new features in the solver class
- - Write an integratedTests for the solver class
+ - add declarations to parent CMakeLists.txt (here add to ``physicsSolvers_headers`` );
+ - add implementations to parent CMakeLists.txt (here add to ``physicsSolvers_sources``);
+ - check that Doxygen comments are properly set in our solver class;
+ - uncrustify it to match the code style;
+ - write unit tests for each new features in the solver class;
+ - write an integratedTests for the solver class.
