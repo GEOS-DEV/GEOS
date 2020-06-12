@@ -16,11 +16,10 @@ a specified material, as a starting point.
    \end{eqnarray*}
 
 It is advised to read :ref:`XML_and_classes` preliminary to this tutorial.
-The point here is to develop a new solver which will read constant diffusion coeff from the XML input.
+The point here is to develop a new solver which will read constant diffusion coefficient from the XML input.
 
 For readability, member functions in the text will be referenced by their names but their
-arguments will be ommited.
-
+arguments will be omitted.
 
 *LaplaceFEM* overview
 =============================
@@ -31,21 +30,23 @@ before diving into specifying a new solver class that meets our needs.
 Declaration file
 -----------------
 The four included headers are:
- - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers
- - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain.
- - ``linearAlgebra/DofManager.hpp`` which declares a manager used to handle degree of freedom indexation and manipulation
- - ``linearAlgebra/interfaces/InterfaceTypes.hpp`` which declares an interface to linear solvers and linear algebra librairies.
+
+ - ``physicsSolver/SolverBase.hpp`` which declares the abstraction class shared by all physics solvers;
+ - ``managers/FieldSpecification/FieldSpecificationManager.hpp`` which declares a manager used to access and to set field on the discretized domain;
+ - ``linearAlgebra/interfaces/InterfaceTypes.hpp`` which declares an interface to linear solvers and linear algebra libraries.
 
 Right after that, a struct is designed to store the maximal stable timestep.
+
    .. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
       :language: c++
       :start-after: //START_SPHINX_INCLUDE_00
       :end-before: //END_SPHINX_INCLUDE_00
 
 Some forward declarations are following :
- - ``FieldSpecificationBase`` is forward declared as we will use it to set the field on the boundary,
- - ``FiniteElementBase`` is forward declared as we will use finite element dicretization,
- - ``DomainPartition`` is forward declared as we will use MPI parallelism and its associated domain decomposition
+
+ - ``FieldSpecificationBase`` is forward declared as we will use it to set the field on the boundary;
+ - ``FiniteElementBase`` is forward declared as we will use finite element dicretization;
+ - ``DomainPartition`` is forward declared as we will use MPI parallelism and its associated domain decomposition.
 
 Let us jump forward to the class enum and variable as they contain the data used
 specifically in the implementation of *LaplaceFEM*.
@@ -53,13 +54,13 @@ specifically in the implementation of *LaplaceFEM*.
 class enums and variables
 ``````````````````````````````
 The class exhibits three member variables:
- - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`
- - ``m_stabletdt`` type-specialized struct which stores the maximum timestep as a `real64`
- - ``m_timeIntegrationOption`` an `enum` value allowing to dispatch with respect to the transient treatment
+
+ - ``m_fieldName`` which stores the name of the diffused variable (*e.g.* the temperature) as a `string`;
+ - ``m_timeIntegrationOption`` an `enum` value allowing to dispatch with respect to the transient treatment.
 
 ``timeIntegrationOption`` is an `enum` specifying the transient treatment which can be chosen respectively
-between *SteadyState* , *ImplicitTransient* and *ExplicitTransient* depending on wheter we are interested
-in the transient state and wheter we want it to be discretized as a backward or a forward Euler scheme.
+between *SteadyState*, *ImplicitTransient* and *ExplicitTransient* depending on whether we are interested
+in the transient state and whether we want it to be discretized as a backward or a forward Euler scheme.
 
 .. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
@@ -75,12 +76,12 @@ Once explained the main variables and enum, let us start reading through the dif
 
 Start looking at the class *LaplaceFEM* constructor and desctructor declarations
 shows the usual `string` ``name`` and `Group*` pointer to ``parent`` that are required
-to build the global file-system like structure of GEOSX. (see :ref:`GroupPar` for details).
+to build the global file-system like structure of GEOSX (see :ref:`GroupPar` for details).
 It can also be noted that the nullary constructor is deleted on purpose to avoid compiler
 automatic generation and user misuse.
 
 The next method ``CatalogName()`` is static and return the key to be added to the *Catalog* for this type of solver
-(see :ref:`ObjectCatalogPar` for details). It has to be paired with the following macro in the implementation file
+(see :ref:`ObjectCatalogPar` for details). It has to be paired with the following macro in the implementation file.
 
 .. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
@@ -100,20 +101,25 @@ and specialized every step towards the system matrix assembly and the solver sta
 
 
 Eventually, ``ApplyDirichletBC_implicit()`` is the working specialized member functions called
-as ``ApplyBoundaryConditions()`` is called in this particular class override.
+when ``ApplyBoundaryConditions()`` is called in this particular class override.
 
-Browsing the Mother class ``SolverBase``, it can be noted that most of the solver interface functions are called during
+Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
 either ``SolverBase::LinearImplicitStep()`` or ``SolverBase::NonLinearImplicitStep()`` depending on the solver strategy chosen.
 
 The next couple of methods are inlined getters whose name are self-explanatory.
 
+.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+   :language: c++
+   :start-after: //START_SPHINX_INCLUDE_05
+   :end-before: //END_SPHINX_INCLUDE_05
+
 Switching to protected members, ``PostProcessInput()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
-It will set and dispatch solver variables from the Mother class ``BaseSolver`` to the most dervied class.
-For *LaplaceFEM*, it will allow us to set the right time integration scheme based ont the XML value
+It will set and dispatch solver variables from the base class ``BaseSolver`` to the most derived class.
+For *LaplaceFEM*, it will allow us to set the right time integration scheme based on the XML value
 as will be further explored in the next :ref:`Implementation` section.
 
-Let us jump back to focus on a ``struct`` which play also an important role,
+Let us jump back to focus on a ``struct`` which play also an important role: the *viewKeyStruct* structure.
 
 *viewKeyStruct* structure
 `````````````````````````````
@@ -134,7 +140,7 @@ We can check that in the *LaplaceFEM* companion integratedTest
    :start-after: <Solvers>
    :end-before: </Solvers>
 
-In the following section, we sill see where this binding takes place.
+In the following section, we will see where this binding takes place.
 
 .. _Implementation:
 
@@ -149,10 +155,10 @@ to other tutorials.
    :end-before: //END_SPHINX_INCLUDE_01
 
 Checking out the constructor, we can see that the use of a ``registerWrapper<T>(...)``
-allow us to register the key value from the enum ``viewKeyStruct`` defining them as :
+allow us to register the key value from the `enum` ``viewKeyStruct`` defining them as:
 
- - ``InputFlags::OPTIONAL`` if they are optional and can be provided
- - ``InputFlags::REQUIRED`` if they are required and will throw error if not
+ - ``InputFlags::OPTIONAL`` if they are optional and can be provided;
+ - ``InputFlags::REQUIRED`` if they are required and will throw error if not;
 
 and their associated descriptions for auto-generated docs.
 
@@ -162,20 +168,20 @@ and their associated descriptions for auto-generated docs.
    :end-before: //END_SPHINX_INCLUDE_02
 
 ``RegisterDataOnMesh()`` is browsing all subgroups in the mesh ``Group`` object and
-for all nodes in the sub group
+for all nodes in the sub group:
 
- - register the observed field under the chosen ``m_fieldName`` key
- - apply a default value
- - set the output verbosity level (here ``PlotLevel::LEVEL_0``)
- - set the field associated description for auto generated docs
+ - register the observed field under the chosen ``m_fieldName`` key;
+ - apply a default value;
+ - set the output verbosity level (here ``PlotLevel::LEVEL_0``);
+ - set the field associated description for auto generated docs.
 
 .. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_03
    :end-before: //END_SPHINX_INCLUDE_03
 
-``PostProcessInput()`` will ensure all dispatches and assignements of all read values from the base class defined
-to the deepest derived class. In the Mother class *BaseSolver*, it will set the gravity vector value and the linear solver parameters.
+``PostProcessInput()`` will ensure all dispatches and assignments of all read values from the base class defined
+to the deepest derived class. In the base class *BaseSolver*, it will set the gravity vector value and the linear solver parameters.
 In *LaplaceFEM* implementation, it will assign the ``m_timeIntegrationOption``
 to the read value and throw a runtime error if it not among the `enum` values.
 
@@ -193,7 +199,9 @@ nodes embedded loops on degrees of freedom in a local index embedded loops to fi
 As we spotted the place to change in a code to get a user-defined diffusion coefficient into the game, let us jump
 to writing our new *LaplaceDiffFEM* solver.
 
-Note: we might want to remove final keyword from ``PostProcessInput()`` as it will prevent you from overriding it
+.. note::
+
+  We might want to remove final keyword from ``PostProcessInput()`` as it will prevent you from overriding it.
 
 Start doing your own Physic solver
 ===================================
