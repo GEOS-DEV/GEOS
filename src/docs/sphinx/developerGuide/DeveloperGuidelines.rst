@@ -13,19 +13,19 @@ As now, our CI/CD system tests on these platforms:
 - Ubuntu 18.04, with gcc 8.0 and clang 8.0.0 + cuda10.1.243
 - Centos 7.6.1810, with gcc 8.3.1 + cuda10.1.243
 - Centos 7.7, with clang 9.0.0
-- MacOSX, with xcode 11.2
+- Mac OS X, with xcode 11.2
 
 More generally, these platforms are supported:
 
 - Linux
-- MacOSX
+- Mac OS X
 
 Naming Conventions
 ==================
 
 File Names
 ----------------
-- File names will be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__
+- File names should be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__.
 - C++ header files are always named with a file extension of  \*.hpp.
 - C++ header implementation files, which contain templated or inline function definitions, are always named \*Helpers.hpp.
 - C++ source files are always named with a file extension of  \*.cpp.
