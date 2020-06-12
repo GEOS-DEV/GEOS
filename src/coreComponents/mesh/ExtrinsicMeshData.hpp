@@ -1,20 +1,31 @@
 /*
- * MeshFields.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: May 7, 2020
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
  */
+
 
 #ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
 #define GEOSX_EXTRINSIC_MESH_DATA_HPP_
 
+/**
+ * @file ExtrinsicMeshData.hpp
+ */
 
 #include "managers/ObjectManagerBase.hpp"
 
 namespace geosx
 {
 /**
- *
+ * A scope for extrinsic mesh data traits.
  */
 namespace extrinsicMeshData
 {
@@ -33,13 +44,14 @@ namespace extrinsicMeshData
  */
 struct ParentIndex
 {
-  static constexpr auto key = "parentIndex";
-  using DataType = localIndex;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2;
+  static constexpr auto key = "parentIndex";                            ///< The key for registration.
+  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Index of parent within the mesh object it is registered on.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
@@ -50,255 +62,278 @@ struct ParentIndex
  */
 struct ChildIndex
 {
-  static constexpr auto key = "childIndex";
-  using DataType = localIndex;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2;
+  static constexpr auto key = "childIndex";                             ///< The key for registration.
+  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Index of child within the  mesh object it is registered on.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 struct DegreeFromCrack
 {
-  static constexpr auto key = "degreeFromCrack";
-  using DataType = integer;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto key = "degreeFromCrack";                        ///< The key for registration.
+  using DataType = integer;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Connectivity distance from crack.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 struct DegreeFromCrackTip
 {
-  static constexpr auto key = "degreeFromCrackTip";
-  using DataType = integer;
-  using Type = array1d< integer >;
-  static constexpr DataType defaultValue = 100000;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto key = "degreeFromCrackTip";                     ///< The key for registration.
+  using DataType = integer;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< integer >;                                      ///< The type to be registered
+  static constexpr DataType defaultValue = 100000;                      ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Degree of connectivity separation from crack tip.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 struct SIFNode
 {
-  static constexpr auto key = "SIFNode";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = 0;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "SIFNode";                                ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF on the node.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 struct RuptureTime
 {
-  static constexpr auto key = "ruptureTime";
-  using DataType = real64;
-  using Type = array1d< real64 >;
-  static constexpr DataType defaultValue = 1.0e9;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "ruptureTime";                            ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< real64 >;                                       ///< The type to be registered
+  static constexpr DataType defaultValue = 1.0e9;                       ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Time that the object was ruptured.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 struct RuptureRate
 {
-  static constexpr auto key = "ruptureRate";
-  using DataType = real64;
-  using Type = array1d< real64 >;
-  static constexpr DataType defaultValue = 1.0e99;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "ruptureRate";                            ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< real64 >;                                       ///< The type to be registered
+  static constexpr DataType defaultValue = 1.0e99;                      ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Rate of rupture.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 
 struct SIF_I
 {
-  static constexpr auto key = "SIF_I";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto key = "SIF_I";                                  ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF_I of the edge.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct SIF_II
 {
-  static constexpr auto key = "SIF_II";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto key = "SIF_II";                                 ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF_II of the edge.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct SIF_III
 {
-  static constexpr auto key = "SIF_III";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1;
+  static constexpr auto key = "SIF_III";                                ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF_III of the edge.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 struct RuptureState
 {
-  static constexpr auto key = "ruptureState";
-  using DataType = integer;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = 0;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "ruptureState";                           ///< The key for registration.
+  using DataType = integer;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 struct SIFonFace
 {
-  static constexpr auto key = "SIFonFace";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = 1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "SIFonFace";                              ///< The key for registration.
+  using DataType = real64;                                              ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = 1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF on the face.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 struct K_IC
 {
-  static constexpr auto key = "K_IC";
-  using DataType = R1Tensor;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = 1e99;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "K_IC";                                   ///< The key for registration.
+  using DataType = R1Tensor;                                            ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr real64 defaultValue = 1e99;                          ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC in each plane.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 
 struct K_IC_00
 {
-  static constexpr auto key = "K_IC_00";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_00";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 0-plane, in 0-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_01
 {
-  static constexpr auto key = "K_IC_01";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_01";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 0-plane, in 1-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_02
 {
-  static constexpr auto key = "K_IC_02";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_02";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 0-plane, in 2-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_10
 {
-  static constexpr auto key = "K_IC_10";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_10";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 1-plane, in 0-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_11
 {
-  static constexpr auto key = "K_IC_11";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_11";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 1-plane, in 1-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_12
 {
-  static constexpr auto key = "K_IC_12";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_12";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 1-plane, in 2-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_20
 {
-  static constexpr auto key = "K_IC_20";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_20";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 2-plane, in 0-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_21
 {
-  static constexpr auto key = "K_IC_21";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_21";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 2-plane, in 1-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 struct K_IC_22
 {
-  static constexpr auto key = "K_IC_22";
-  using DataType = real64;
-  using Type = array1d< DataType >;
-  static constexpr real64 defaultValue = -1;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT;
+  static constexpr auto key = "K_IC_22";                               ///< The key for registration.
+  using DataType = real64;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                    ///< The type to be registered
+  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "K_IC on 2-plane, in 2-direction.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 
 
 struct PrimaryCandidateFace
 {
-  static constexpr auto key = "primaryCandidateFace";
-  using DataType = localIndex;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = 0;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "primaryCandidateFace";                   ///< The key for registration.
+  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "SIF_III of the edge.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 struct IsFaceSeparable
 {
-  static constexpr auto key = "isFaceSeparable";
-  using DataType = integer;
-  using Type = array1d< DataType >;
-  static constexpr DataType defaultValue = 0;
-  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
+  static constexpr auto key = "isFaceSeparable";                        ///< The key for registration.
+  using DataType = integer;                                             ///< The base type for registration of a templated container.
+  using Type = array1d< DataType >;                                     ///< The type to be registered
+  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
+
+  /// Description of the data associated with this trait.
   static constexpr auto description = "A flag to mark if the face is separable.";
-  dataRepository::ViewKey viewKey = { key };
 };
 
 

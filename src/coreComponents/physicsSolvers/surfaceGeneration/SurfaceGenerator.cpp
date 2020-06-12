@@ -237,15 +237,15 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     {
       // TODO For some reason, these are 0 in the baselines even though the defaults are set to -1????? Change
       // before merge and rebasline.
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_01 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_02 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_10 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_11 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_12 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_20 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_21 >( this->getName() ).setApplyDefaultValue(0);
-      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_22 >( this->getName() ).setApplyDefaultValue(0);
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_01 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_02 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_10 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_11 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_12 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_20 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_21 >( this->getName() ).setApplyDefaultValue( 0 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_22 >( this->getName() ).setApplyDefaultValue( 0 );
     } );
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
