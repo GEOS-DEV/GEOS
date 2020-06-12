@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowWithInternalMesh:
 
 #####################################################
-Tutorial 1: First steps with GEOSX
+Tutorial 1: First steps 
 #####################################################
 
 **Context**
