@@ -57,6 +57,11 @@ protected:
     m_stress( stress )
   {}
 
+
+  /// Deleted default constructor
+  SolidBaseUpdates() = delete;
+
+
   /**
    * @brief Copy Constructor
    * @param source Object to copy
@@ -68,9 +73,6 @@ protected:
    * @param source Object to move resources from
    */
   SolidBaseUpdates( SolidBaseUpdates && source ) = default;
-
-  /// Deleted default constructor
-  SolidBaseUpdates() = delete;
 
   /// Deleted copy assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates const & ) = delete;
@@ -101,8 +103,8 @@ private:
    */
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const = 0;
+                                   real64 const ( &voigtStrain )[ 6 ],
+                                   real64 ( &stress )[ 6 ] ) const = 0;
 
   /**
    * @brief Update the constitutive state using input generated under small
@@ -115,7 +117,7 @@ private:
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const = 0;
+                            real64 const ( &voigtStrainInc )[ 6 ] ) const = 0;
 
   /**
    * @brief Hypoelastic update to the constitutive state using input generated
@@ -129,8 +131,8 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const = 0;
+                            real64 const ( &Ddt )[ 6 ],
+                            real64 const ( &Rot )[ 3 ][ 3 ] ) const = 0;
 
   /**
    * @brief Hyper-elastic stress update
@@ -141,7 +143,7 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const = 0;
+                             real64 ( &stress )[ 6 ] ) const = 0;
 
   /**
    * @brief Hyper-elastic state update

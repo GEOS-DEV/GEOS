@@ -161,7 +161,7 @@ public:
    * @param[in] numFaceNodes number of nodes for the face
    */
   void SortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-                      R1Tensor const & elemCenter,
+                      arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
 
@@ -331,21 +331,13 @@ public:
    * @brief Get an immutable accessor to a table containing all the face area.
    * @return an immutable table containing all the face area
    */
-  array1d< real64 > const & faceArea() const { return m_faceArea; }
-
-  /**
-   * @brief Get a mutable asscessor to a table containing all the face centers.
-   * @details this table is mutable so it can be used to compute
-   * or modify the face centers in this FaceManager
-   * @return a table containing all the face centers
-   */
-  array1d< R1Tensor > & faceCenter()       { return m_faceCenter; }
+  arrayView1d< real64 const > const & faceArea() const { return m_faceArea; }
   
   /**
    * @brief Get an immutable accessor to a table containing all the face centers.
    * @return an immutable table containing all the face centers
    */
-  array1d< R1Tensor > const & faceCenter() const { return m_faceCenter; }
+  arrayView2d< real64 const > const & faceCenter() const { return m_faceCenter; }
 
   /**
    * @brief Get a mutable accessor to a table containing all the face normals.
@@ -353,25 +345,19 @@ public:
    * or modify the face normals in this FaceManager
    * @return a table containing all the face normals
    */
-  array1d< R1Tensor > & faceNormal()       { return m_faceNormal; }
+  arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
   
   /**
    * @brief Get an immutable accessor to a table containing all the face normals.
    * @return an immutable table containing all the face normals
    */
-  array1d< R1Tensor > const & faceNormal() const { return m_faceNormal; }
-
-  /**
-   * @brief Get a mutable accessor to a table containing all the face rotationa matrix.
-   * @return a table containing all the face rotation matrixes
-   */
-  array1d< R2Tensor > & faceRotationMatrix()       { return m_faceRotationMatrix; }
+  arrayView2d< real64 const > const & faceNormal() const { return m_faceNormal; }
 
   /**
    * @brief Get an immutable accessor to a table containig all the face rotation matrix.
    * @return constant reference to the list of all face rotation matrixes.
    */
-  array1d< R2Tensor > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
+  arrayView3d< real64 const > const & faceRotationMatrix() const { return m_faceRotationMatrix; }
 
   /**
    * @brief Get a mutable accessor to a map containing the list of each nodes for each faces.
@@ -401,37 +387,37 @@ public:
    * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
    * @return non-const reference to faces-to-ElementRegion relation
    */
-  array2d< localIndex > & elementRegionList()       { return m_toElements.m_toElementRegion; }
+   arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
   
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
    * @return const reference to nodes-to-ElementRegion relation
    */
-  array2d< localIndex > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+   arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
   
   /**
    * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
    * @return non-const reference to faces-to-ElementSubRegion relation
    */
-  array2d< localIndex > & elementSubRegionList()       { return m_toElements.m_toElementSubRegion; }
+   arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
   
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
    * @return const reference to faces-to-ElementSubRegion relation
    */
-  array2d< localIndex > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+   arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
    */
-  array2d< localIndex > & elementList()       { return m_toElements.m_toElementIndex; }
+   arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
   
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.
    * @return const reference to faces-to-elements relation
    */
-  array2d< localIndex > const & elementList() const { return m_toElements.m_toElementIndex; }
+   arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
@@ -482,15 +468,13 @@ private:
 
   /// list of faces area
   array1d< real64 > m_faceArea;
-  
-  /// list of faces center
-  array1d< R1Tensor > m_faceCenter;
-  
-  /// list of faces normal
-  array1d< R1Tensor > m_faceNormal;
 
+  /// list of faces center
+  array2d< real64 > m_faceCenter;
+  /// list of faces normal
+  array2d< real64 > m_faceNormal;
   // list of the rotation matrix to switch from the fracture (n,t1,t2) to the element reference (x,y,z) system.
-  array1d< R2Tensor > m_faceRotationMatrix;
+  array3d< real64 > m_faceRotationMatrix;
 
   /// constant expression of the maximum number of nodes per faces
   constexpr static int MAX_FACE_NODES = 9;

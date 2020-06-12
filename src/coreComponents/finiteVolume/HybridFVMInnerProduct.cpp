@@ -27,34 +27,15 @@ namespace geosx
 namespace HybridFVMInnerProduct
 {
 
+// TODO This should be removed.
 void
 HybridFVMInnerProductHelper::makeFullTensor( R1Tensor const & values,
                                              stackArray2d< real64, 9 > & result )
 {
   result = 0.0;
-  R1Tensor axis;
-  R2SymTensor temp;
-
-  localIndex constexpr dim = 3;
-
-  // assemble full tensor from eigen-decomposition
-  for( unsigned icoord = 0; icoord < dim; ++icoord )
-  {
-    // assume principal axis aligned with global coordinate system
-    axis = 0.0;
-    axis( icoord ) = 1.0;
-
-    // XXX: is there a more elegant way to do this?
-    temp.dyadic_aa( axis );
-    temp *= values( icoord );
-    for( localIndex i = 0; i < dim; ++i )
-    {
-      for( localIndex j = 0; j < dim; ++j )
-      {
-        result( i, j ) += temp( i, j );
-      }
-    }
-  }
+  result[ 0 ][ 0 ] = values[ 0 ];
+  result[ 1 ][ 1 ] = values[ 1 ];
+  result[ 2 ][ 2 ] = values[ 2 ];
 }
 
 void
@@ -66,15 +47,10 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
                                      real64 const & lengthTolerance,
                                      stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > const & transMatrix )
 {
-  localIndex constexpr dim = 3;
   localIndex const numFacesInElem = elemToFaces.size();
 
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
-
-  R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
-  stackArray2d< real64, dim *dim > permTensor( dim, dim );
-  permTensor = 0;
 
   // we are ready to compute the transmissibility matrix
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
@@ -84,42 +60,36 @@ TPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENCE
       // for now, TPFA trans
       if( ifaceLoc == jfaceLoc )
       {
+        real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
 
         // 1) compute the face geometry data: center, normal, vector from cell center to face center
-        real64 const faceArea =
-          computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                     faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
-                                                     nodePosition,
-                                                     faceCenter,
-                                                     faceNormal,
-                                                     areaTolerance );
+        real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[ elemToFaces[ ifaceLoc ] ],
+                                                                           nodePosition,
+                                                                           faceCenter,
+                                                                           faceNormal,
+                                                                           areaTolerance );
 
-        cellToFaceVec  = faceCenter;
-        cellToFaceVec -= elemCenter;
+        LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+        // TODO: Change to LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+        cellToFaceVec[ 0 ] -= elemCenter[ 0 ];
+        cellToFaceVec[ 1 ] -= elemCenter[ 1 ];
+        cellToFaceVec[ 2 ] -= elemCenter[ 2 ];
 
-        if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
+        if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
         {
-          faceNormal *= -1;
+          LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
         }
 
-        real64 const c2fDistance = cellToFaceVec.Normalize();
-
-        // 2) assemble full coefficient tensor from principal axis/components
-        HybridFVMInnerProductHelper::makeFullTensor( elemPerm, permTensor );
+        real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
         // TODO: take symmetry into account to optimize this
-        faceConormal( 0 ) = permTensor( 0, 0 ) * faceNormal( 0 )
-                            + permTensor( 0, 1 ) * faceNormal( 1 )
-                            + permTensor( 0, 2 ) * faceNormal( 2 );
-        faceConormal( 1 ) = permTensor( 1, 0 ) * faceNormal( 0 )
-                            + permTensor( 1, 1 ) * faceNormal( 1 )
-                            + permTensor( 1, 2 ) * faceNormal( 2 );
-        faceConormal( 2 ) = permTensor( 2, 0 ) * faceNormal( 0 )
-                            + permTensor( 2, 1 ) * faceNormal( 1 )
-                            + permTensor( 2, 2 ) * faceNormal( 2 );
+        // TODO: Change to LvArray::tensorOps::AiBi
+        faceConormal[ 0 ] = elemPerm[ 0 ] * faceNormal[ 0 ];
+        faceConormal[ 1 ] = elemPerm[ 1 ] * faceNormal[ 1 ];
+        faceConormal[ 2 ] = elemPerm[ 2 ] * faceNormal[ 2 ];
 
         // 3) compute the one-sided face transmissibility
-        transMatrix[ifaceLoc][jfaceLoc]  = Dot( cellToFaceVec, faceConormal );
+        transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
         transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
         transMatrix[ifaceLoc][jfaceLoc]  = std::max( transMatrix[ifaceLoc][jfaceLoc],
                                                      weightTolerance );
@@ -148,15 +118,11 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   localIndex constexpr dim = 3;
   localIndex const numFacesInElem = elemToFaces.size();
 
-  R1Tensor faceCenter, faceNormal, cellToFaceVec;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
   stackArray2d< real64, dim *MAX_NUM_FACES > cellToFaceMat( numFacesInElem, dim );
   stackArray2d< real64, dim *MAX_NUM_FACES > normalsMat( numFacesInElem, dim );
   stackArray2d< real64, dim *dim > permMat( dim, dim );
-  cellToFaceMat = 0;
-  normalsMat = 0;
-  permMat = 0;
 
   stackArray1d< real64, dim > work_dim( dim );
   stackArray2d< real64, dim *dim > work_dimByDim ( dim, dim );
@@ -165,59 +131,46 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
   stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > worka_numFacesByNumFaces( numFacesInElem, numFacesInElem );
   stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workb_numFacesByNumFaces( numFacesInElem, numFacesInElem );
   stackArray2d< real64, MAX_NUM_FACES *MAX_NUM_FACES > workc_numFacesByNumFaces( numFacesInElem, numFacesInElem );
-  work_dim = 0;
-  work_dimByDim = 0;
-  work_dimByNumFaces = 0;
-  work_numFacesByDim = 0;
-  worka_numFacesByNumFaces = 0;
-  workb_numFacesByNumFaces = 0;
-  workc_numFacesByNumFaces = 0;
 
   stackArray1d< real64, MAX_NUM_FACES > q0( numFacesInElem );
   stackArray1d< real64, MAX_NUM_FACES > q1( numFacesInElem );
   stackArray1d< real64, MAX_NUM_FACES > q2( numFacesInElem );
-  q0 = 0;
-  q1 = 0;
-  q2 = 0;
 
   // 1) fill the matrices cellToFaceMat and normalsMat row by row
   for( localIndex ifaceLoc = 0; ifaceLoc < numFacesInElem; ++ifaceLoc )
   {
+    real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[ 3 ];
 
     // compute the face geometry data: center, normal, vector from cell center to face center
-    real64 const faceArea =
-      computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                 faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
-                                                 nodePosition,
-                                                 faceCenter,
-                                                 faceNormal,
-                                                 areaTolerance );
+    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[ elemToFaces[ ifaceLoc ] ],
+                                                                       nodePosition,
+                                                                       faceCenter,
+                                                                       faceNormal,
+                                                                       areaTolerance );
 
-    cellToFaceVec  = faceCenter;
-    cellToFaceVec -= elemCenter;
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+    // TODO: Change to LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    cellToFaceVec[ 0 ] -= elemCenter[ 0 ];
+    cellToFaceVec[ 1 ] -= elemCenter[ 1 ];
+    cellToFaceVec[ 2 ] -= elemCenter[ 2 ];
 
     if( orthonormalizeWithSVD )
     {
-      cellToFaceMat( ifaceLoc, 0 ) = cellToFaceVec( 0 );
-      cellToFaceMat( ifaceLoc, 1 ) = cellToFaceVec( 1 );
-      cellToFaceMat( ifaceLoc, 2 ) = cellToFaceVec( 2 );
+      LvArray::tensorOps::copy< 3 >( cellToFaceMat[ ifaceLoc ], cellToFaceVec );
     }
     else
     {
-      q0( ifaceLoc ) = cellToFaceVec( 0 );
-      q1( ifaceLoc ) = cellToFaceVec( 1 );
-      q2( ifaceLoc ) = cellToFaceVec( 2 );
+      q0( ifaceLoc ) = cellToFaceVec[ 0 ];
+      q1( ifaceLoc ) = cellToFaceVec[ 1 ];
+      q2( ifaceLoc ) = cellToFaceVec[ 2 ];
     }
 
-    if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
-      faceNormal *= -1;
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
     }
 
-    normalsMat( ifaceLoc, 0 ) = faceArea*faceNormal( 0 );
-    normalsMat( ifaceLoc, 1 ) = faceArea*faceNormal( 1 );
-    normalsMat( ifaceLoc, 2 ) = faceArea*faceNormal( 2 );
-
+    LvArray::tensorOps::scaledCopy< 3 >( normalsMat[ ifaceLoc ], faceNormal, faceArea );
   }
 
   // 2) assemble full coefficient tensor from principal axis/components
@@ -225,6 +178,7 @@ QTPFACellInnerProductKernel::Compute( arrayView2d< real64 const, nodes::REFERENC
 
   // TODO: replace the BlasLapack calls below with explicitly for loops
   //       this should be easy if MGS orthonormalization is as robust as SVD
+  //       Also don't construct permMat.
 
   // 3) compute N K N'
   BlasLapackLA::matrixMatrixTMultiply( permMat,
