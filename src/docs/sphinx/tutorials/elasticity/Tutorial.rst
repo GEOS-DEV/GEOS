@@ -17,7 +17,7 @@ At the end of this tutorial you will know:
 
   - how to use the solid mechanics solver to solve a quasistatic problem,
   - how to set up a traction force on a surface,
-  - how to use a table function to set time-dependent loading.
+  - how to use a table function to control time-dependent loading.
 
 **Input file**
 
@@ -28,6 +28,21 @@ The xml input file for this test case is located at:
 .. code-block:: console
 
   src/coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
+
+------------------------------------
+Discretized computational domain
+------------------------------------
+
+The following mesh is used in this tutorial:
+
+.. image:: beamBendingMesh.png
+   :width: 400px
+
+This mesh contains 80 x 8 x 4 eight-node brick elements in the x, y and z directions, respectively.
+Here, the ``InternalMesh``
+is used to generate a structured three-dimensional mesh with ``C3D8`` as 
+the ``elementTypes``. This mesh is defined as a cell block with the name
+``cb1``.
 
 
 
