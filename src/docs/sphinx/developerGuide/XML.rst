@@ -1,6 +1,6 @@
 .. _XML_and_classes:
 
-GEOSX data structures and XML input correspondence
+XML Input
 ##################################################
 
 

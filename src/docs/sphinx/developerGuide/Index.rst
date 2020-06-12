@@ -11,27 +11,29 @@ Welcome to the GEOSX developer guide.
 
    GitWorkflow
 
-   GenerateSphinxDoc
-
-   Doxygen
-
-   /coreComponents/dataRepository/dataRepository.rst
-   
-   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
-
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
-
    UnitTests
 
    IntegratedTests
 
-   caliper_link
+   Sphinx
 
-   XML_and_classes
+   Doxygen
+
+   Caliper
+
+   /coreComponents/LvArray/src/index.rst
 
    /coreComponents/managers/docs/ProblemManager.rst
 
+   /coreComponents/dataRepository/dataRepository.rst
+   
+   XML
+
+   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
+
    /coreComponents/linearAlgebra/docs/DofManager.rst
+
+   /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
    AddingNewSolver
 

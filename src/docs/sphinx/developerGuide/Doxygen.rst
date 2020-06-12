@@ -1,6 +1,6 @@
 .. _Doxygen:
 
-Doxygen documentation
+Doxygen Documentation
 ##################################################
 
 Developer documentation of code is provided in the form of Doxygen-style comment blocks.
@@ -9,7 +9,7 @@ Having concise but high quality documentation of public APIs helps both users an
 We use Doxygen and Ctest to enforce documentation coverage. If Doxygen produces any warnings, your pull request will fail CI checks!
 See :ref:`GitWorkflow` for more on pull requests and CI.
 
-Accessing documentation
+Accessing
 ====================================
 
 There are two ways to access Doxygen documentation.
@@ -53,7 +53,7 @@ On readthedocs
 Go to `GEOSX documentation <https://geosx-geosx.readthedocs-hosted.com/>`__, select the version of interest and
 follow the "Doxygen" link at the bottom of the index page.
 
-Documentation guide
+Guidelines
 ====================================
 
 What to document

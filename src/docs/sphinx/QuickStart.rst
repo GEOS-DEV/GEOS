@@ -26,29 +26,29 @@ possible, and we are working on additional deployment options to make this proce
 
 #. If you encounter problems building one of the third-party libraries we depend on, check out their support pages.  They may be able to help you more directly than we can.
 
-#. Still stuck? Check out our `issues tracker<https://github.com/GEOSX/GEOSX/issues>`_, searching current or closed issues that may address your problem.  Perhaps someone has had an identical issue, or something close.  The issue tracker has a convenient search bar where you can search for relevant keywords.  Remember to remove the default ``is:open`` keyword to search both open and closed issues.
+#. Still stuck? Check out our `issues tracker <https://github.com/GEOSX/GEOSX/issues>`_, searching current or closed issues that may address your problem.  Perhaps someone has had an identical issue, or something close.  The issue tracker has a convenient search bar where you can search for relevant keywords.  Remember to remove the default ``is:open`` keyword to search both open and closed issues.
 
 #. If you have exhausted the options above, it is time to seek help from the developers.  Post an issue on our issue tracker.  Be specific, providing as much information as possible about your system setup and the error you are encountering.  Please be patient in this process, as we may need to correspond a few times and ask you to run additional tests.  Most of the time, users have a slightly unusual system configuration that we haven't encountered yet, such as an older version of a particular library.  Other times there is a legitimate bug in GEOSX to be addressed.  Take pride in the fact that you may be saving the next user from wasted time and frustration.
 
 Repository Organization
 ==============================
-The source for GEOSX and related tools are hosted on `Github<https://github.com>`_.  We use `Git workflows<https://git-scm.com>`_ to version control our code and manage the entire development process.  On Github, we have a GEOSX organization that hosts several related repositories:
+The source for GEOSX and related tools are hosted on `Github <https://github.com>`_.  We use `Git workflows <https://git-scm.com>`_ to version control our code and manage the entire development process.  On Github, we have a GEOSX organization that hosts several related repositories:
 
-`GEOSX Organization<https://github.com/GEOSX>`_
+`GEOSX Organization <https://github.com/GEOSX>`_
 
 You should sign up for a free Github account, particularly if you are interested in posting issues to our issue tracker and communicating with the developers. The main repository of interest is obviously GEOSX itself:
 
-`GEOSX Repository<https://github.com/GEOSX/GEOSX>`_
+`GEOSX Repository <https://github.com/GEOSX/GEOSX>`_
 
-We also rely on two types of dependencies: first-party and third-party.  First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.  For example, there is a geologic mesh handling package called PAMELA and an equation-of-state package called PVTPackage. These packages are handled as `Git Submodules<https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.  Most users will never have to worry that these modules are in fact separate projects from GEOSX.
+We also rely on two types of dependencies: first-party and third-party.  First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.  For example, there is a geologic mesh handling package called PAMELA and an equation-of-state package called PVTPackage. These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.  Most users will never have to worry that these modules are in fact separate projects from GEOSX.
 
-`PAMELA Repository<https://github.com/GEOSX/PAMELA>`_
+`PAMELA Repository <https://github.com/GEOSX/PAMELA>`_
 
-`PVTPackage Repository<https://github.com/GEOSX/PVTPackage>`_
+`PVTPackage Repository <https://github.com/GEOSX/PVTPackage>`_
 
 We also rely on several open-source Third-Party Libraries (TPLs).  These are well-respected projects developed externally to GEOSX.  We have found, however, that many compilation issues stem from version incompatibilities between different packages.  To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
 
-`thirdPartyLibs Repository<https://github.com/GEOSX/thirdPartyLibs>`_
+`thirdPartyLibs Repository <https://github.com/GEOSX/thirdPartyLibs>`_
 
 Our build system will automatically use the mirror package versions by default.  You are welcome to tune your configuration, however, to point to different versions installed on your system.  If you work on an HPC platform, for example, the more common packages may already be available and optimized for platform hardware.  For new users, however, it may be safer to begin with the TPL mirror.
 
@@ -60,7 +60,7 @@ Finally, there are also several private repositories only accessible to the core
 Username and Authentication
 =============================
 
-You will need to sign up for a username on `Github.com<https://github.com>`_. At this point, you can directly download the source code as a zip file. We strongly suggest, however, that users don't rely on this option.  Instead, most users should use Git to directly *clone* the repository.  This makes it much easier to stay up to date with the latest releases and bug fixes.  If you are not familiar with the basics of Git, `here is a helpful resource<https://git-scm.com>`_ to get you started.
+You will need to sign up for a username on `Github.com <https://github.com>`_. At this point, you can directly download the source code as a zip file. We strongly suggest, however, that users don't rely on this option.  Instead, most users should use Git to directly *clone* the repository.  This makes it much easier to stay up to date with the latest releases and bug fixes.  If you are not familiar with the basics of Git, `here is a helpful resource <https://git-scm.com>`_ to get you started.
 
 It is also suggested that you setup SSH keys for authentication, and use SSH for your clones as discussed
 `in this article <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_.
@@ -132,7 +132,7 @@ Notes:
 Configuration
 ================
 
-At a minimum, you will need a relatively recent compiler suite installed on your system (e.g. `GCC<https://gcc.gnu.org>`_, `Clang<https://clang.llvm.org>`_) as well as `CMake<https://cmake.org>`_.  If you want to run jobs using MPI-based parallelism, you will also need an MPI implementation (e.g. `OpenMPI<https://www.open-mpi.org>`_, `MVAPICH<https://mvapich.cse.ohio-state.edu>`_).  Note that GEOSX supports a variety of parallel computing models, depending on the hardware and software environment.  Advanced users are referred to the :ref:`BuildGuide` for a discussion of the available configuration options.
+At a minimum, you will need a relatively recent compiler suite installed on your system (e.g. `GCC <https://gcc.gnu.org>`_, `Clang <https://clang.llvm.org>`_) as well as `CMake <https://cmake.org>`_.  If you want to run jobs using MPI-based parallelism, you will also need an MPI implementation (e.g. `OpenMPI <https://www.open-mpi.org>`_, `MVAPICH <https://mvapich.cse.ohio-state.edu>`_).  Note that GEOSX supports a variety of parallel computing models, depending on the hardware and software environment.  Advanced users are referred to the :ref:`BuildGuide` for a discussion of the available configuration options.
 
 Before beginning, it is a good idea to have a clear idea of the flavor and version of the build tools you are using.  If something goes wrong, the first thing the support team will ask you for is this information.
 
