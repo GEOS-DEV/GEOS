@@ -8,8 +8,16 @@ GEOSX is written in standard c++14.
 
 Target Platforms
 ================
+As now, our CI/CD system tests on these platforms:
+
+- Ubuntu 18.04, with gcc 8.0 and clang 8.0.0 + cuda10.1.243
+- Centos 7.6.1810, with gcc 8.3.1 + cuda10.1.243
+- Centos 7.7, with clang 9.0.0
+- MacOSX, with xcode 11.2
+
+More generally, these platforms are supported:
+
 - Linux
-- BlueOS
 - MacOSX
 
 Naming Conventions
@@ -18,16 +26,18 @@ Naming Conventions
 File Names
 ----------------
 - File names will be `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__
-- C++ header files are always named with a file extion of  \*.hpp.
-- C++ header implementation files, which contain templated or inline function definitions, are always named \*_impl.hpp.
-- C++ source files are always named with a file extion of  \*.cpp.
-- C++ class declarations and defintions are contained files with identical names, except for the extensions.
+- C++ header files are always named with a file extension of  \*.hpp.
+- C++ header implementation files, which contain templated or inline function definitions, are always named \*Helpers.hpp.
+- C++ source files are always named with a file extension of  \*.cpp.
+- C++ class declarations and definitions are contained files with identical names, except for the extensions.
 - C++ free function headers and source files are declared/defined in files with identical names, except for the extension.
 
 For example, a class named "Foo" may be declared in a file named "Foo.hpp", with inline/templated functions
-defined in "Foo_impl.hpp, with the source implmenetaion contained in Foo.cpp.
+defined in "FooHelpers.hpp", with the source implementation contained in Foo.cpp.
 
-- There should not be identical filenames that only differ by case. Some filesystems are not case-sensitive,
+.. warning::
+
+  There should not be identical filenames that only differ by case. Some filesystems are not case-sensitive,
   and worse, some filesystems such as MacOSX are case-preserving but not case sensitive.
 
 Function Names
@@ -40,7 +50,7 @@ Variables should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__.
 
 Member Names
 --------------
-Member data should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__ prefix with 'm\_' (i.e. double m_dataVariable;)
+Member data should be `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__ prefix with "m\_" (i.e. double m_dataVariable;)
 
 Class/Struct Names
 ------------------
@@ -61,7 +71,7 @@ Please use `PascalCase <https://en.wikipedia.org/wiki/Camel_case>`__ for typenam
 
 Alias/Typedef Names
 -------------------
-Alias and typedefs should be the case of the underlying type that they alias. If no clear format is apperent,
+Alias and typedefs should be the case of the underlying type that they alias. If no clear format is apparent,
 as is the case with `double`, then use `camelCase <https://en.wikipedia.org/wiki/Camel_case>`__
 
 Namespace Names
@@ -113,15 +123,15 @@ GEOSX applies a variant of the
 `BSD/Allman Style <https://en.wikipedia.org/wiki/Indentation_style#Allman_style>`__.
 Key points to the GEOSX style are:
 
-#. Opening braces ( i.e. { ) go on the next line of any control statment, and are not indented from the control statement .
-#. NO TABS. Only spaces. In case it isn't clear...NO TABS!
+#. Opening braces (i.e. "{") go on the next line of any control statement, and are not indented from the control statement.
+#. NO TABS. Only spaces. In case it isn't clear ... NO TABS!
 #. 2-space indentation
 
    .. code-block:: c
 
       for( int i=0 ; i<10 ; ++i )
       {
-        std::cout<<"blah"<<std::endl;
+        std::cout << "blah" << std::endl;
       }
 
 #. Try to stay under 100 character line lengths. To achieve this apply these rules in order
@@ -144,7 +154,7 @@ Key points to the GEOSX style are:
 As part of the continuous integration testing, this GEOSX code style is enforced via the uncrustify tool.
 While quite extensive, uncrustify does not enforce every example of the preferred code style.
 In cases where uncrusitfy is unable to enforce code style, it will ignore formatting rules.
-In these cases it is acceptible to proceed with pull requests, as there is no logical recourse.
+In these cases it is acceptable to proceed with pull requests, as there is no logical recourse.
 
 Const Keyword
 ================
