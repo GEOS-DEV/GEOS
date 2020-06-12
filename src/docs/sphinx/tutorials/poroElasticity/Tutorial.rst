@@ -2,7 +2,7 @@
 
 
 ##############################################
-Poroelasticity : Terzaghi Poroelasticity
+Tutorial 6: Poroelasticity
 ##############################################
 
 

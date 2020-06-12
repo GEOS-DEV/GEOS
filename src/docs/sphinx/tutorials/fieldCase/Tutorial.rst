@@ -1,7 +1,7 @@
 .. _TutorialFieldCase:
 
 #########################################
-Simple field cases
+Step 3: A simple field case
 #########################################
 
 **Context**

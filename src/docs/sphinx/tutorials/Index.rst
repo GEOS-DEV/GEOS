@@ -24,10 +24,11 @@ and how to extend its functionalities.
 
    singlePhaseFlowExternalMesh/Tutorial
 
-   elasticity/Tutorial
+   fieldCase/Tutorial
 
    compositionalFlow/Tutorial
 
+   elasticity/Tutorial
+
    poroElasticity/Tutorial
 
-   fieldCase/Tutorial

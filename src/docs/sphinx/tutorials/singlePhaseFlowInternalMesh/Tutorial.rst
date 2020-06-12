@@ -1,7 +1,7 @@
 .. _TutorialSinglePhaseFlowWithInternalMesh:
 
 #####################################################
-First steps with GEOSX: single-phase flow solver
+Tutorial 1: First steps with GEOSX
 #####################################################
 
 **Context**
