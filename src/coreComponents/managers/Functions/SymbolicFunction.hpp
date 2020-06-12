@@ -36,11 +36,7 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /**
-   * @brief The constructor
-   * @param[in] name the name of this object manager
-   * @param[in] parent the parent Group
-   */
+/// @copydoc geosx::dataRepository::Group::Group
   SymbolicFunction( const std::string & name,
                     dataRepository::Group * const parent );
 
@@ -49,10 +45,7 @@ public:
    */
   virtual ~SymbolicFunction() override;
 
-  /**
-   * @brief The catalog name interface
-   * @return name of the TableFunction in the FunctionBase catalog
-   */
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "SymbolicFunction"; }
 
   /**

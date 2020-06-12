@@ -34,26 +34,19 @@ namespace geosx
 class RestartOutput : public OutputBase
 {
 public:
-  /**
-   * @brief Main constructor.
-   * @param name The name of the object in the data repository.
-   * @param parent The parent of this object in the data repository.
-   **/
+/// @copydoc geosx::dataRepository::Group::Group 
   RestartOutput( std::string const & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~RestartOutput() override;
 
-  /**
-   * @brief Catalog name interface
-   * @return This type's catalog name
-   */
+ /// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "Restart"; }
 
   /**
    * @brief Writes out a restart file.
-   * @copydetails EventBase::Execute()
+   * @copydoc EventBase::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,

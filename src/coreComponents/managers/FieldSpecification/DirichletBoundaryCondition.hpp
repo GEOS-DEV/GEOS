@@ -44,10 +44,7 @@ public:
    */
   virtual ~DirichletBoundaryCondition();
 
-  /**
-   * @brief Static Factory Catalog Functions
-   * @return the catalog name
-   */
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "Dirichlet"; }
 
   virtual const string getCatalogName() const

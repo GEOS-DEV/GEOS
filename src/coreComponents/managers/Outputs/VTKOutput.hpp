@@ -34,25 +34,18 @@ namespace geosx
 class VTKOutput : public OutputBase
 {
 public:
-  /**
-   * @brief Main constructor
-   * @param name The name of the object in the data repository
-   * @param parent The parent of this object in the data repository
-   **/
+/// @copydoc geosx::dataRepository::Group::Group
   VTKOutput( std::string const & name, Group * const parent );
 
   /// Destructor
   virtual ~VTKOutput() override;
 
-  /**
-   * @brief Catalog name interface
-   * @return This type's catalog name
-   */
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "VTK"; }
 
   /**
    * @brief Writes out a set of vtk files.
-   * @copydetails EventBase::Execute()
+   * @copydoc EventBase::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -63,7 +56,7 @@ public:
 
   /**
    * @brief Write one final set of vtk files as the code exits
-   * @copydetails ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::Cleanup()
    */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,

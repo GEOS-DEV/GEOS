@@ -38,23 +38,14 @@ namespace keys
 class OutputManager : public dataRepository::Group
 {
 public:
-  /**
-   * @brief Main constructor.
-   * @param name The name of the object in the data repository.
-   * @param parent The parent of this object in the data repository.
-   **/
+/// @copydoc geosx::dataRepository::Group::Group
   OutputManager( std::string const & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~OutputManager() override;
 
-  /**
-   * @brief Construct and retrieve a pointer to a registered group by catalog key.
-   * @param childKey A catalog key denoting the group to create.
-   * @param childName The name of the newly created group.
-   * @return A pointer to the newly created group.
-   */
+/// @copydoc geosx::dataRepository::Group::CreateChild
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
   /// This function is used to expand any catalogs in the data structure

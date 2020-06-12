@@ -33,26 +33,19 @@ namespace geosx
 class SiloOutput : public OutputBase
 {
 public:
-  /**
-   * @brief Main constructor
-   * @param name The name of the object in the data repository
-   * @param parent The parent of this object in the data repository
-   **/
+/// @copydoc geosx::dataRepository::Group::Group 
   SiloOutput( std::string const & name,
               Group * const parent );
 
   /// Destructor
   virtual ~SiloOutput() override;
 
-  /**
-   * @brief Catalog name interface
-   * @return This type's catalog name
-   */
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "Silo"; }
 
   /**
    * @brief Writes out a Silo plot file.
-   * @copydetails EventBase::Execute()
+   * @copydoc EventBase::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
@@ -63,7 +56,7 @@ public:
 
   /**
    * @brief Writes out a Silo plot file at the end of the simulation.
-   * @copydetails ExecutableGroup::Cleanup()
+   * @copydoc ExecutableGroup::Cleanup()
    */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,

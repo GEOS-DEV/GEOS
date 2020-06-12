@@ -45,11 +45,7 @@ string const inputVarNames( "inputVarNames" );
 class FunctionBase : public dataRepository::Group
 {
 public:
-  /**
-   * @brief constructor
-   * @param name the name of the FunctionBase in the data repository
-   * @param parent the parent group of this group.
-   */
+/// @copydoc geosx::dataRepository::Group::Group
   FunctionBase( const std::string & name,
                 dataRepository::Group * const parent );
 
@@ -58,10 +54,7 @@ public:
    */
   virtual ~FunctionBase() override;
 
-  /**
-   * @brief Static Factory Catalog Functions
-   * @return the catalog name
-   */
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "FunctionBase"; }
 
   /**
