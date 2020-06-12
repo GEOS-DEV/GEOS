@@ -1,24 +1,20 @@
 ###############################################################################
-Guidelines
+Code style
 ###############################################################################
 
-Language
-========
-GEOSX is written in standard c++14.
+Introduction
+============
+GEOSX is written in standard c++14. In general, target platforms are:
 
-Target Platforms
-================
-As now, our CI/CD system tests on these platforms:
+- Linux
+- Mac OS X
+
+Currently, our CI/CD system tests on these platforms:
 
 - Ubuntu 18.04, with gcc 8.0 and clang 8.0.0 + cuda10.1.243
 - Centos 7.6.1810, with gcc 8.3.1 + cuda10.1.243
 - Centos 7.7, with clang 9.0.0
 - Mac OS X, with xcode 11.2
-
-More generally, these platforms are supported:
-
-- Linux
-- Mac OS X
 
 Naming Conventions
 ==================
@@ -116,6 +112,25 @@ and a source file named "Foo.cpp"
     }
   }
 
+Const Keyword
+================
+
+#. All functions and accessors should be declared as "const" functions unless modification to the class is required.
+#. In the case of accessors, both a "const" and "non-const" version should be provided.
+#. The const keyword should be placed in the location read by the compiler, which is right to left.
+
+The following examples are provided:
+
+   .. code-block:: c
+
+      int a=0; // regular int
+      int const b = 0; // const int
+      int * const c = &a; // const pointer to non const int
+      int const * const d = &b; // const pointer to const int
+      int & e = a; // reference to int
+      int const & f = b; // reference to const int
+
+
 Code Format
 ===========
 
@@ -147,32 +162,14 @@ Key points to the GEOSX style are:
                       real64 const& dt,
                       const int cycleNumber,
                       DomainPartition * const domain )
-     {
-       code here
-     }
+    {
+      code here
+    }
 
 As part of the continuous integration testing, this GEOSX code style is enforced via the uncrustify tool.
 While quite extensive, uncrustify does not enforce every example of the preferred code style.
 In cases where uncrusitfy is unable to enforce code style, it will ignore formatting rules.
 In these cases it is acceptable to proceed with pull requests, as there is no logical recourse.
-
-Const Keyword
-================
-#. All functions and accessors should be declared as "const" functions unless modification to the class is required.
-#. In the case of accessors, both a "const" and "non-const" version should be provided.
-#. The const keyword should be placed in the location read by the compiler, which is right to left.
-
-The following examples are provided:
-
-   .. code-block:: c
-
-      int a=0; // regular int
-      int const b = 0; // const int
-      int * const c = &a; // const pointer to non const int
-      int const * const d = &b; // const pointer to const int
-      int & e = a; // reference to int
-      int const & f = b; // reference to const int
-
 
 Header Guards
 =============
