@@ -7,7 +7,7 @@ Welcome to the GEOSX developer guide.
 .. toctree::
    :maxdepth: 1
 
-   DeveloperGuidelines
+   CodeStyle
 
    GitWorkflow
 

@@ -18,7 +18,7 @@
      </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
-  
+  <!-- SPHINX_BeamBendingMesh -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
@@ -30,7 +30,7 @@
                   nz="{4}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
-
+  <!-- SPHINX_BeamBendingMeshEND -->
 
   <Events maxTime="10.0">
     <!-- This event is applied every cycle, and overrides the
