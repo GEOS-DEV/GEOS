@@ -2,7 +2,7 @@ GEOSX Documentation
 =================================
 
 GEOSX is a simulation platform focused on enabling streamlined development of HPC physics simulators.
-
+`KernelBase <doxygen_output/html/_kernel_base_8hpp.html>`_
 
 .. toctree::
    :maxdepth: 2
@@ -37,3 +37,4 @@ Doxygen
 .. raw:: html
 
    <a href="doxygen_output/html/index.html">Link to Doxygen</a>
+

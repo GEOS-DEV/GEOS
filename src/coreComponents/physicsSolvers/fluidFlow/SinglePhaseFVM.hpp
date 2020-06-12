@@ -168,7 +168,8 @@ public:
                DofManager & dofManager,
                ParallelMatrix & matrix,
                ParallelVector & rhs,
-               ParallelVector & solution ) override;
+               ParallelVector & solution,
+               bool const setSparsity = true ) override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time_n,

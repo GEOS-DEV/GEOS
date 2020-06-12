@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef VTMMESHGENERATOR_H_
-#define VTMMESHGENERATOR_H_
+#ifndef GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP
+#define GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -249,4 +249,4 @@ public:
 };
 }
 
-#endif /* INTERNALMESHGENERATOR_H_ */
+#endif /* GEOSX_MESHUTILITIES_VTMMESHGENERATOR_HPP */

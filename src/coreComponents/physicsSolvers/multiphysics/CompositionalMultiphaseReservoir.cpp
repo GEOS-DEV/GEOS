@@ -90,8 +90,10 @@ void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartiti
 
     stackArray1d< globalIndex, maxNumDof > dofIndexRes( resNDOF );
     stackArray1d< globalIndex, maxNumDof > dofIndexWell( wellNDOF );
-    stackArray2d< real64, maxNumDof * maxNumDof > values( resNDOF, wellNDOF );
-    values = 1.0;
+    stackArray2d< real64, maxNumDof * maxNumDof > valuesResWell( resNDOF, wellNDOF );
+    stackArray2d< real64, maxNumDof * maxNumDof > valuesWellRes( wellNDOF, resNDOF );
+    valuesResWell = 1.0;
+    valuesWellRes = 1.0;
 
     // Insert the entries corresponding to reservoir-well perforations
     // This will fill J_WR, and J_RW
@@ -114,18 +116,14 @@ void CompositionalMultiphaseReservoir::AddCouplingSparsityPattern( DomainPartiti
       }
 
       // fill J_RW
-      matrix.insert( dofIndexRes.data(),
-                     dofIndexWell.data(),
-                     values.data(),
-                     resNDOF,
-                     wellNDOF );
+      matrix.insert( dofIndexRes,
+                     dofIndexWell,
+                     valuesResWell );
 
       // fill J_WR
-      matrix.insert( dofIndexWell.data(),
-                     dofIndexRes.data(),
-                     values.data(),
-                     wellNDOF,
-                     resNDOF );
+      matrix.insert( dofIndexWell,
+                     dofIndexRes,
+                     valuesWellRes );
     }
 
   } );

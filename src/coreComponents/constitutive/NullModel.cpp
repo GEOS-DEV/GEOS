@@ -12,22 +12,32 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "gtest/gtest.h"
+#include "NullModel.hpp"
 
-
-//#include <cstring>
-
-//#include "src/codingUtilities/stackTrace.hpp"
-
-// API coverage tests
-// Each test should be documented with the interface functions being tested
-
-//------------------------------------------------------------------------------
-// getName()
-//------------------------------------------------------------------------------
-TEST( testSolidMechanicsLagrangianFEM, feature )
+namespace geosx
 {
-//	signal(SIGSEGV, stacktrace::handler);   // install our handler
-//	stacktrace::foo(); // this will call foo, bar, and baz.  baz segfaults.
-//  geosx::stacktrace::handler( SIGSEGV, 0 );
+namespace constitutive
+{
+
+NullModel::NullModel( string const & name,
+                      Group * const parent ):
+  ConstitutiveBase( name, parent )
+{}
+
+NullModel::~NullModel()
+{}
+
+void NullModel::DeliverClone( string const & name,
+                              Group * const parent,
+                              std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  if( !clone )
+  {
+    clone = std::make_unique< NullModel >( name, parent );
+  }
 }
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, std::string const &, dataRepository::Group * const )
+
+} // constitutive
+} /* namespace geosx */
