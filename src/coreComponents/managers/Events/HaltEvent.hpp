@@ -44,10 +44,7 @@ public:
   /// Destructor
   virtual ~HaltEvent() override;
 
-  /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
+  /// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "HaltEvent"; }
 
   /**

@@ -32,21 +32,14 @@ namespace geosx
 class PeriodicEvent : public EventBase
 {
 public:
-  /**
-   * @brief Main constructor.
-   * @param name The name of the object in the data repository.
-   * @param parent The parent of this object in the data repository.
-   **/
+  /// @copydoc geosx::dataRepository::Group::Group
   PeriodicEvent( const std::string & name,
                  Group * const parent );
 
   /// Destructor
   virtual ~PeriodicEvent() override;
 
-  /**
-   * @brief Catalog name interface.
-   * @return This type's catalog name.
-   **/
+/// @copydoc geosx::dataRepository::Group::CatalogName
   static string CatalogName() { return "PeriodicEvent"; }
 
   /**
