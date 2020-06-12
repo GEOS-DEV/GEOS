@@ -31,16 +31,8 @@ namespace extrinsicMeshData
 {
 
 
-
 /**
- * @name Trait definitions for the surface generators.
- */
-///@{
-
-/**
- * @struct ParentIndex
- * @brief  Holds the interface for registering and getting access to the
- *         data where the parentIndex will be stored.
+ * Trait struct for registering/accessing the ParentIndex.
  */
 struct ParentIndex
 {
@@ -56,9 +48,7 @@ struct ParentIndex
 
 
 /**
- * @struct ChildIndex
- * @brief  Holds the interface for registering and getting access to the
- *         data where the childIndex will be stored.
+ * Trait struct for registering/accessing the  ChildIndex
  */
 struct ChildIndex
 {
@@ -69,10 +59,13 @@ struct ChildIndex
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Index of child within the  mesh object it is registered on.";
+  static constexpr auto description = "Index of child within the mesh object it is registered on.";
 };
 
 
+/**
+ * Trait struct for registering/accessing the  DegreeFromCrack
+ */
 struct DegreeFromCrack
 {
   static constexpr auto key = "degreeFromCrack";                        ///< The key for registration.
@@ -82,9 +75,13 @@ struct DegreeFromCrack
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Connectivity distance from crack.";
+  static constexpr auto
+    description = "Distance to the crack in terms of topological distance. "
+                  "(i.e. how many nodes are along the path to the closest "
+                  "node that is on the crack surface.";
 };
 
+/// Trait struct for registering/accessing the  DegreeFromCrackTip
 struct DegreeFromCrackTip
 {
   static constexpr auto key = "degreeFromCrackTip";                     ///< The key for registration.
@@ -94,9 +91,13 @@ struct DegreeFromCrackTip
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Degree of connectivity separation from crack tip.";
+  static constexpr auto
+    description = "Distance to the crack tip in terms of topological distance. "
+                  "(i.e. how many nodes are along the path to the closest "
+                  "node that is on the crack surface.";
 };
 
+/// Trait struct for registering/accessing the  SIFNode
 struct SIFNode
 {
   static constexpr auto key = "SIFNode";                                ///< The key for registration.
@@ -106,9 +107,11 @@ struct SIFNode
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF on the node.";
+  static constexpr auto
+    description = "Calculated Stress Intensity Factor on the node.";
 };
 
+/// Trait struct for registering/accessing the  RuptureTime
 struct RuptureTime
 {
   static constexpr auto key = "ruptureTime";                            ///< The key for registration.
@@ -118,10 +121,10 @@ struct RuptureTime
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Time that the object was ruptured.";
+  static constexpr auto description = "Time that the object was ruptured/split.";
 };
 
-
+/// Trait struct for registering/accessing the  RuptureRate
 struct RuptureRate
 {
   static constexpr auto key = "ruptureRate";                            ///< The key for registration.
@@ -131,11 +134,12 @@ struct RuptureRate
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Rate of rupture.";
+  static constexpr auto
+    description = "Rate of rupture in terms of number of objects split per time.";
 };
 
 
-
+/// Trait struct for registering/accessing the  SIF_I
 struct SIF_I
 {
   static constexpr auto key = "SIF_I";                                  ///< The key for registration.
@@ -145,8 +149,11 @@ struct SIF_I
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF_I of the edge.";
+  static constexpr auto
+    description = "Calculated mode 1 Stress Intensity Factor on the node.";
 };
+
+/// Trait struct for registering/accessing the  SIF_II
 struct SIF_II
 {
   static constexpr auto key = "SIF_II";                                 ///< The key for registration.
@@ -156,8 +163,12 @@ struct SIF_II
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF_II of the edge.";
+  static constexpr auto
+    description = "Calculated mode 2 Stress Intensity Factor on the node.";
+
 };
+
+/// Trait struct for registering/accessing the  SIF_III
 struct SIF_III
 {
   static constexpr auto key = "SIF_III";                                ///< The key for registration.
@@ -167,9 +178,11 @@ struct SIF_III
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF_III of the edge.";
+  static constexpr auto
+    description = "Calculated mode 3 Stress Intensity Factor on the node.";
 };
 
+/// Trait struct for registering/accessing the  RuptureState
 struct RuptureState
 {
   static constexpr auto key = "ruptureState";                           ///< The key for registration.
@@ -179,10 +192,12 @@ struct RuptureState
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured.";
+  static constexpr auto
+    description = "Rupture state of the face: \n 0=not ready for rupture \n 1=ready for rupture \n 2=ruptured.";
 };
 
 
+/// Trait struct for registering/accessing the  SIFonFace
 struct SIFonFace
 {
   static constexpr auto key = "SIFonFace";                              ///< The key for registration.
@@ -192,10 +207,11 @@ struct SIFonFace
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF on the face.";
+  static constexpr auto description = "Calculated Stress Intensity Factor on the face.";
 };
 
 
+/// Trait struct for registering/accessing the  K_IC
 struct K_IC
 {
   static constexpr auto key = "K_IC";                                   ///< The key for registration.
@@ -205,11 +221,11 @@ struct K_IC
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC in each plane.";
+  static constexpr auto
+    description = "Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face.";
 };
 
-
-
+/// Trait struct for registering/accessing the  K_IC_00
 struct K_IC_00
 {
   static constexpr auto key = "K_IC_00";                               ///< The key for registration.
@@ -219,8 +235,10 @@ struct K_IC_00
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 0-plane, in 0-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 0-plane, in 0-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_01
 struct K_IC_01
 {
   static constexpr auto key = "K_IC_01";                               ///< The key for registration.
@@ -230,8 +248,10 @@ struct K_IC_01
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 0-plane, in 1-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 0-plane, in 1-direction.";
 };
+
+/// Trait struct for registering/accessing the  SIF_II
 struct K_IC_02
 {
   static constexpr auto key = "K_IC_02";                               ///< The key for registration.
@@ -241,8 +261,10 @@ struct K_IC_02
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 0-plane, in 2-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 0-plane, in 2-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_10
 struct K_IC_10
 {
   static constexpr auto key = "K_IC_10";                               ///< The key for registration.
@@ -252,8 +274,10 @@ struct K_IC_10
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 1-plane, in 0-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 1-plane, in 0-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_11
 struct K_IC_11
 {
   static constexpr auto key = "K_IC_11";                               ///< The key for registration.
@@ -263,8 +287,10 @@ struct K_IC_11
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 1-plane, in 1-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 1-plane, in 1-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_12
 struct K_IC_12
 {
   static constexpr auto key = "K_IC_12";                               ///< The key for registration.
@@ -274,8 +300,10 @@ struct K_IC_12
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 1-plane, in 2-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 1-plane, in 2-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_20
 struct K_IC_20
 {
   static constexpr auto key = "K_IC_20";                               ///< The key for registration.
@@ -285,8 +313,10 @@ struct K_IC_20
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 2-plane, in 0-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 2-plane, in 0-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_21
 struct K_IC_21
 {
   static constexpr auto key = "K_IC_21";                               ///< The key for registration.
@@ -296,8 +326,10 @@ struct K_IC_21
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 2-plane, in 1-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 2-plane, in 1-direction.";
 };
+
+/// Trait struct for registering/accessing the  K_IC_22
 struct K_IC_22
 {
   static constexpr auto key = "K_IC_22";                               ///< The key for registration.
@@ -307,11 +339,10 @@ struct K_IC_22
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "K_IC on 2-plane, in 2-direction.";
+  static constexpr auto description = ":math:`K_{IC}` on 2-plane, in 2-direction.";
 };
 
-
-
+/// Trait struct for registering/accessing the  PrimaryCandidateFace
 struct PrimaryCandidateFace
 {
   static constexpr auto key = "primaryCandidateFace";                   ///< The key for registration.
@@ -321,9 +352,10 @@ struct PrimaryCandidateFace
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
-  static constexpr auto description = "SIF_III of the edge.";
+  static constexpr auto description = "??.";
 };
 
+/// Trait struct for registering/accessing the  IsFaceSeparable
 struct IsFaceSeparable
 {
   static constexpr auto key = "isFaceSeparable";                        ///< The key for registration.
@@ -335,25 +367,6 @@ struct IsFaceSeparable
   /// Description of the data associated with this trait.
   static constexpr auto description = "A flag to mark if the face is separable.";
 };
-
-
-///@}
-
-
-/**
- * @name Trait definitions for the Solid Mechanics Solvers.
- */
-///@{
-
-///@}
-
-/**
- * @name Trait definitions for the Flow Solvers.
- */
-///@{
-
-///@}
-
 
 
 } // namespace extrinsicMeshData

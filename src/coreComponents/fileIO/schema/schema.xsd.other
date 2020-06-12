@@ -1025,13 +1025,13 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--SIF_I => SIF_I of the edge. => SurfaceGenerator-->
+		<!--SIF_I => Calculated mode 1 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_I" type="real64_array" />
-		<!--SIF_II => SIF_II of the edge. => SurfaceGenerator-->
+		<!--SIF_II => Calculated mode 2 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_II" type="real64_array" />
-		<!--SIF_III => SIF_III of the edge. => SurfaceGenerator-->
+		<!--SIF_III => Calculated mode 3 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_III" type="real64_array" />
-		<!--childIndex => Index of child within the  mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -1061,9 +1061,9 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--K_IC => K_IC in each plane. => SurfaceGenerator-->
+		<!--K_IC => Critical Stress Intensity Factor :math:`K_IC` in the plane of the face. :math:`a^2 + b^2 = c^2` => SurfaceGenerator-->
 		<xsd:attribute name="K_IC" type="r1_array" />
-		<!--SIFonFace => SIF on the face. => SurfaceGenerator-->
+		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
 		<!--boundaryFaceDensity => (no description available)-->
 		<xsd:attribute name="boundaryFaceDensity" type="real64_array2d" />
@@ -1073,9 +1073,9 @@
 		<xsd:attribute name="boundaryFacePressure" type="real64_array" />
 		<!--boundaryFaceViscosity => (no description available)-->
 		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
-		<!--childIndex => Index of child within the  mesh object it is registered on. => SurfaceGenerator-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--degreeFromCrackTip => Degree of connectivity separation from crack tip. => SurfaceGenerator-->
+		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
@@ -1115,11 +1115,14 @@
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--primaryCandidateFace => SIF_III of the edge. => SurfaceGenerator-->
+		<!--primaryCandidateFace => ??. => SurfaceGenerator-->
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
-		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured. => SurfaceGenerator-->
+		<!--ruptureState => Rupture state of the face: 
+ 0=not ready for rupture 
+ 1=ready for rupture 
+ 2=ruptured. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
-		<!--ruptureTime => Time that the object was ruptured. => SurfaceGenerator-->
+		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
@@ -1135,19 +1138,19 @@
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
-		<!--SIFNode => SIF on the node. => SurfaceGenerator-->
+		<!--SIFNode => Calculated Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
-		<!--childIndex => Index of child within the  mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
-		<!--degreeFromCrack => Connectivity distance from crack. => SurfaceGenerator-->
+		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
-		<!--degreeFromCrackTip => Degree of connectivity separation from crack tip. => SurfaceGenerator-->
+		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
@@ -1175,7 +1178,7 @@
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-		<!--ruptureTime => Time that the object was ruptured. => SurfaceGenerator-->
+		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
