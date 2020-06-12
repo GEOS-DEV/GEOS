@@ -45,7 +45,10 @@ public:
   /// Destructor
   virtual ~EventBase() override;
 
-  /// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "EventBase"; }
 
   /**
@@ -62,7 +65,7 @@ public:
                                             dataRepository::Group * domain ) override;
   /**
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * @copydoc ExecutableGroup::Execute()
+   * @copydetails ExecutableGroup::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,

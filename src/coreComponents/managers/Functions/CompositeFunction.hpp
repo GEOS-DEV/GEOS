@@ -36,7 +36,11 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-/// @copydoc geosx::dataRepository::Group::Group
+  /**
+   * @brief constructor
+   * @param name the name of the CompositeFunction in the data repository
+   * @param parent the parent group of this group.
+   */
   CompositeFunction( const std::string & name,
                      dataRepository::Group * const parent );
 
@@ -45,7 +49,10 @@ public:
    */
   virtual ~CompositeFunction() override;
 
-/// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
+   */
   static string CatalogName() { return "CompositeFunction"; }
 
   /**

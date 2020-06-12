@@ -101,7 +101,7 @@ public:
   /// @endcond
   ///@}
 
-  /// Alias to access the object catalog for EventBase derived types.
+  /// Catalog interface
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
   /// @copydoc dataRepository::Group::GetCatalog()

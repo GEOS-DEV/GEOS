@@ -33,7 +33,11 @@ namespace geosx
 class FunctionManager : public dataRepository::Group
 {
 public:
-/// @copydoc geosx::dataRepository::Group::Group
+  /**
+   * @brief constructor
+   * @param name the name of the FunctionManager in the data repository
+   * @param parent the parent group of this group.
+   */
   FunctionManager( const std::string & name,
                    dataRepository::Group * const parent );
 
@@ -52,7 +56,10 @@ public:
     return theFunctionManager;
   }
 
-/// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
+   */
   static string CatalogName() { return "FunctionManager"; }
 
   /**

@@ -61,7 +61,10 @@ public:
    */
   static CatalogInterface::CatalogType & GetCatalog();
 
-/// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
+   */
   static string CatalogName() { return "FieldSpecification"; }
 
   /**

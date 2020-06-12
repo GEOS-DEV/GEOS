@@ -33,13 +33,20 @@ namespace geosx
 class OutputBase : public ExecutableGroup
 {
 public:
- /// @copydoc geosx::dataRepository::Group::Group 
+  /**
+   * @brief Main constructor.
+   * @param name The name of the object in the data repository.
+   * @param parent The parent of this object in the data repository.
+   **/
   explicit OutputBase( std::string const & name, Group * const parent );
 
   /// Destructor
   virtual ~OutputBase() override;
 
-/// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "OutputBase"; }
 
   /// Method for setting up output directories.

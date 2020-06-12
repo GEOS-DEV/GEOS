@@ -32,7 +32,11 @@ namespace geosx
 class SourceFluxBoundaryCondition : public FieldSpecificationBase
 {
 public:
-/// @copydoc geosx::dataRepository::Group::Group
+  /**
+   * @brief constructor
+   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param parent the parent group of this group.
+   */
   SourceFluxBoundaryCondition( string const & name, dataRepository::Group * const parent );
 
   /**
@@ -52,7 +56,10 @@ public:
    */
   virtual void InitializePreSubGroups( Group * const rootGroup ) override;
 
-/// @copydoc geosx::dataRepository::Group::CatalogName
+  /**
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
+   */
   static string CatalogName() { return "SourceFlux"; }
 
   virtual const string getCatalogName() const override
