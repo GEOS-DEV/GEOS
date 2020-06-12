@@ -6,7 +6,18 @@ Tutorial 5: Elasticity
 
 **Context**
 
+In this tutorial, we use a a small strain linear elastic based solid mechanics solver 
+(see :ref:`SolidMechanics`) from GEOSX to solve for the bending of a three-dimensional beam. 
+The beam is fixed at one end, and subjects to a traction force pointing to the y-positive 
+direction on the other end. The beam will be deformed in the x-y plane.
+
 **Objectives**
+
+At the end of this tutorial you will know:
+
+  - how to use the solid mechanics solver to solve a quasistatic problem,
+  - how to set up a traction force on a surface,
+  - how to use a table function to set time-dependent loading.
 
 **Input file**
 
