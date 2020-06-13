@@ -162,7 +162,7 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialPoroelasticity`, we learn how to solve a simple poroelastic problem
+In the next tutorial :ref:`TutorialPoroelasticity`, we learn how to solve a simple poroelastic problem.
 
 **For more details**
 
