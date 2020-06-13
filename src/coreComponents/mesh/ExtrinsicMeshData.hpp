@@ -37,9 +37,9 @@ namespace extrinsicMeshData
 struct ParentIndex
 {
   static constexpr auto key = "parentIndex";                            ///< The key for registration.
-  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -53,9 +53,9 @@ struct ParentIndex
 struct ChildIndex
 {
   static constexpr auto key = "childIndex";                             ///< The key for registration.
-  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_2; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -69,9 +69,9 @@ struct ChildIndex
 struct DegreeFromCrack
 {
   static constexpr auto key = "degreeFromCrack";                        ///< The key for registration.
-  using DataType = integer;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = integer;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -85,9 +85,9 @@ struct DegreeFromCrack
 struct DegreeFromCrackTip
 {
   static constexpr auto key = "degreeFromCrackTip";                     ///< The key for registration.
-  using DataType = integer;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< integer >;                                      ///< The type to be registered
-  static constexpr DataType defaultValue = 100000;                      ///< The dataRepository::DefaultValue
+  using dataType = integer;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 100000;                      ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -101,9 +101,9 @@ struct DegreeFromCrackTip
 struct SIFNode
 {
   static constexpr auto key = "SIFNode";                                ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -115,9 +115,9 @@ struct SIFNode
 struct RuptureTime
 {
   static constexpr auto key = "ruptureTime";                            ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< real64 >;                                       ///< The type to be registered
-  static constexpr DataType defaultValue = 1.0e9;                       ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                       ///< The type to be registered
+  static constexpr dataType defaultValue = 1.0e9;                       ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -128,9 +128,9 @@ struct RuptureTime
 struct RuptureRate
 {
   static constexpr auto key = "ruptureRate";                            ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< real64 >;                                       ///< The type to be registered
-  static constexpr DataType defaultValue = 1.0e99;                      ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                       ///< The type to be registered
+  static constexpr dataType defaultValue = 1.0e99;                      ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -143,9 +143,9 @@ struct RuptureRate
 struct SIF_I
 {
   static constexpr auto key = "SIF_I";                                  ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -157,9 +157,9 @@ struct SIF_I
 struct SIF_II
 {
   static constexpr auto key = "SIF_II";                                 ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -172,9 +172,9 @@ struct SIF_II
 struct SIF_III
 {
   static constexpr auto key = "SIF_III";                                ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_1; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -186,9 +186,9 @@ struct SIF_III
 struct RuptureState
 {
   static constexpr auto key = "ruptureState";                           ///< The key for registration.
-  using DataType = integer;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  using dataType = integer;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -201,9 +201,9 @@ struct RuptureState
 struct SIFonFace
 {
   static constexpr auto key = "SIFonFace";                              ///< The key for registration.
-  using DataType = real64;                                              ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = 1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                              ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 1;                           ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -215,8 +215,8 @@ struct SIFonFace
 struct K_IC
 {
   static constexpr auto key = "K_IC";                                   ///< The key for registration.
-  using DataType = R1Tensor;                                            ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
+  using dataType = R1Tensor;                                            ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
   static constexpr real64 defaultValue = 1e99;                          ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
@@ -229,9 +229,9 @@ struct K_IC
 struct K_IC_00
 {
   static constexpr auto key = "K_IC_00";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -242,9 +242,9 @@ struct K_IC_00
 struct K_IC_01
 {
   static constexpr auto key = "K_IC_01";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -255,9 +255,9 @@ struct K_IC_01
 struct K_IC_02
 {
   static constexpr auto key = "K_IC_02";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -268,9 +268,9 @@ struct K_IC_02
 struct K_IC_10
 {
   static constexpr auto key = "K_IC_10";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -281,9 +281,9 @@ struct K_IC_10
 struct K_IC_11
 {
   static constexpr auto key = "K_IC_11";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -294,9 +294,9 @@ struct K_IC_11
 struct K_IC_12
 {
   static constexpr auto key = "K_IC_12";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -307,9 +307,9 @@ struct K_IC_12
 struct K_IC_20
 {
   static constexpr auto key = "K_IC_20";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -320,9 +320,9 @@ struct K_IC_20
 struct K_IC_21
 {
   static constexpr auto key = "K_IC_21";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -333,9 +333,9 @@ struct K_IC_21
 struct K_IC_22
 {
   static constexpr auto key = "K_IC_22";                               ///< The key for registration.
-  using DataType = real64;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                    ///< The type to be registered
-  static constexpr real64 defaultValue = -1;                           ///< The dataRepository::DefaultValue
+  using dataType = real64;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                    ///< The type to be registered
+  static constexpr dataType defaultValue = -1;                         ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::NOPLOT; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -346,9 +346,9 @@ struct K_IC_22
 struct PrimaryCandidateFace
 {
   static constexpr auto key = "primaryCandidateFace";                   ///< The key for registration.
-  using DataType = localIndex;                                          ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  using dataType = localIndex;                                          ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.
@@ -359,9 +359,9 @@ struct PrimaryCandidateFace
 struct IsFaceSeparable
 {
   static constexpr auto key = "isFaceSeparable";                        ///< The key for registration.
-  using DataType = integer;                                             ///< The base type for registration of a templated container.
-  using Type = array1d< DataType >;                                     ///< The type to be registered
-  static constexpr DataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
+  using dataType = integer;                                             ///< The base type for registration of a templated container.
+  using type = array1d< dataType >;                                     ///< The type to be registered
+  static constexpr dataType defaultValue = 0;                           ///< The dataRepository::DefaultValue
   static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0; ///< The default dataRepository::PlotLevel
 
   /// Description of the data associated with this trait.

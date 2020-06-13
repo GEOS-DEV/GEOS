@@ -558,7 +558,7 @@ public:
    * @return A wrapper to the type specified by @p MESH_DATA_TRAIT.
    */
   template< typename MESH_DATA_TRAIT >
-  dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
+  dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
   registerExtrinsicData( string const & nameOfRegisteringObject )
   {
     // These are required to work-around the need for instantiation of
@@ -567,15 +567,12 @@ public:
 
     //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
-    constexpr dataRepository::PlotLevel plotLevel = MESH_DATA_TRAIT::plotLevel;
-    string const description = MESH_DATA_TRAIT::description;
+    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
 
-
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( MESH_DATA_TRAIT::key )->
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
                setApplyDefaultValue( defaultValue )->
-               setPlotLevel( plotLevel )->
-               setDescription( description )->
+               setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
+               setDescription( MESH_DATA_TRAIT::description )->
                setRegisteringObjects( nameOfRegisteringObject ) );
   }
 
@@ -608,7 +605,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   auto const & getExtrinsicData() const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( MESH_DATA_TRAIT::key )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
   }
 
   /**
@@ -621,7 +618,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   auto & getExtrinsicData()
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( MESH_DATA_TRAIT::key )->referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
   }
 
 #if 0

@@ -108,14 +108,14 @@ and
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getReference<array2d<real64, nodes::TOTAL_DISPLACEMENT_PERM >(keys::TotalDisplacement);
     ... do something with u
 
-This approach is flexible and extendible, but is difficult to use, and 
-potentially error prone.
-Therefore we have developed a more controlled manner by which to register and 
-extract commonly used data on the mesh.
-The trait approach requires the definition of a ``traits struct`` for each data 
-object that will be supported.
-In the example use case we are working with, there should be the following
-definition somewhere in a header file:
+This approach is flexible and extendible, but is potentially error prone due to
+its verbosity.
+Therefore we also provide a more controlled/uniform method  by which to register 
+and extract commonly used data on the mesh.
+The ``trait approach`` requires the definition of a ``traits struct`` for each 
+data object that will be supported.
+To apply the ``trait appraoch`` to the example use case shown above, there 
+should be the following definition somewhere in a header file:
 
 .. code-block:: c++
 
@@ -154,11 +154,9 @@ And to extract the data, the call would be:
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.getExtrinsicData< extrinsicMeshData::TotalDisplacement >();
     ... do something with u
 
-The end result of the trait approach is that the developer has defined a 
-standard specification for ``TotalDisplacement``, which may be used uniformly
-across the code.
-The registration is much simpler, and more importantly, the extraction of data
-is simpler.
+The end result of the ``trait approach`` to this example is that the developer
+has defined a standard specification for ``TotalDisplacement``, which may be 
+used uniformly across the code.
 
 
 

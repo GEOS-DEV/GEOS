@@ -1061,7 +1061,7 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--K_IC => Critical Stress Intensity Factor :math:`K_IC` in the plane of the face. :math:`a^2 + b^2 = c^2` => SurfaceGenerator-->
+		<!--K_IC => Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face. => SurfaceGenerator-->
 		<xsd:attribute name="K_IC" type="r1_array" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
