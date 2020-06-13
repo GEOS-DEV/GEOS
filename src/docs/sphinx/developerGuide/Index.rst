@@ -7,7 +7,7 @@ Welcome to the GEOSX developer guide.
 .. toctree::
    :maxdepth: 1
 
-   DeveloperGuidelines
+   CodeStyle
 
    GitWorkflow
 
@@ -15,15 +15,17 @@ Welcome to the GEOSX developer guide.
 
    IntegratedTests
 
+   Benchmarks
+
    Sphinx
 
    Doxygen
 
-   /coreComponents/common/docs/caliper.rst
-
    /coreComponents/LvArray/src/docs/sphinx/LvArray.rst
 
    /coreComponents/managers/docs/ProblemManager.rst
+
+   Caliper
 
    /coreComponents/dataRepository/dataRepository.rst
    

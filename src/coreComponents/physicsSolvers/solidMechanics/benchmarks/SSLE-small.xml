@@ -4,8 +4,8 @@
     <quartz>
       <Run name="OMP"
            nodes="1" tasksPerNode="1"
-           timeLimit="10"
-           autoPartition="On"/>
+           autoPartition="On"
+           timeLimit="10"/>
       <Run name="MPI_OMP"
            nodes="1" tasksPerNode="2"
            autoPartition="On"

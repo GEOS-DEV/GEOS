@@ -22,41 +22,102 @@ At the end of this tutorial you will know:
   - how to use and visualize hexahedral and tetrahedral meshes.
 
 
-**Input file**
+**Input Files**
 
-This tutorial uses external input files. You will need a GEOSX XML file and a mesh file.
-The xml input file for this test case is located at:
+This tutorial uses an XML file containing the main input for GEOSX
+and a separate file with all the mesh information.
+As we will see later, the main XML file points to the external
+mesh file with an `include` statement.
+The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
+  src/coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
 
-
+The mesh file format used in this tutorial is called `MSH
+<https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format>`_.
+This format is a standard scientific meshing format not specific to GEOSX.
+It is maintained as the native format of the meshing tool Gmsh.
+MSH is designed for unstructured meshes and contains a
+compact and complete representation of the mesh geometry and of its properties.
+The mesh file used here is human-readable ASCII.
+It contains a list of nodes with their (x,y,z) coordinates,
+and a list of elements that are constructed from these nodes.
 
 
 .. _ExternalHexahedral:
 .. _2_ImportingExternalMesh:
 
 ---------------------------------------------
-Externally Generated - hexahedral elements
+Hexahedral elements
 ---------------------------------------------
 
-GEOSX comes with a suite of simple data sets to get you started.
-We will explore simple data sets with different geometrical objects.
-All meshes will be imported from external files using a tool called **PAMELA** (Parallel Meshing Library) as the importer.
-The first flow simulations will be single-phase displacements:
 
-  #. Cube made with externally-specified :ref:`**hexahedral** <ExternalHexahedral>` elements,
-  #. Cube made with externally-specified :ref:`**tetrahedral** <ExternalTetrahedral>` elements.
+In the first part of the tutorial, we will run flow simulations
+on a mesh made of hexahedral elements. These types of elements
+are used in classical cartesian grids (sugar cubes)
+or corner-point grids or pillar grids.
 
 
-This example consists of a simple sugar-cube stack of size 10x10x10.
+
+Brief discussion about hexahedral meshes in GEOSX
+------------------------------------------------------------------------
+
+Although closely related, the hexahedral grids that GEOSX
+can process are slightly different
+than either structured grid or corner-point grids.
+The differences are worth pointing out here. In GEOSX:
+
+ - **hexahedra can have irregular shapes**: no pillars are needed and
+   vertices can be anywhere in space. This is useful for grids that turn, fold,
+   or are heavily bent. Hexahedral blocks should nevertheless not be deprecated
+   and have 8 distinct vertices.
+   Some tolerance exists for deprecation to wedges or prisms
+   in some solvers (finite element solvers), but it is best to avoid such situations
+   and label elements according to their actual shape.
+   Butterfly cells, flat cells, negative or zero volume cells will cause problems.
+ - **the mesh needs to be conformal:** in 3D, this means that neighboring
+   grid blocks have to share exactly a complete face. Note that corner-point
+   grids do not have this requirement and their blocks can be shifted. When importing grids
+   from usual geomodeling packages, this is an important consideration. This
+   problem is solved by splitting shifted grid blocks to restore conformity.
+   The advantages
+   of conformal grids used here are worth the trouble: by using conformal grids
+   we can run finite elements and finite volume simulations on the same mesh
+   without problems (a key to multiphysics simulation).
+ - **there is no assumption of overall structure**: GEOSX does not need to know
+   a number of block in the X, Y, Z direction and does not assume that the
+   mesh is a full cartesian domain where the reservoir must be carved out from.
+   Blocks are numbered by indices that assume
+   nothing about spatial positioning and there is no concept of (i,j,k).
+   This approach also implies that
+   no logical "masks" are needed to remove inactive or dead cells, as often done
+   in cartesian grids to get the actual reservoir contours from a bounding box,
+   and here we only need to specify grid blocks that are active.
+
+
+
 
 
 Problem description
 ------------------------
 
-We propagate fluid from one vertical face of a cube to the opposite side.
+In this first part of the tutorial, we use a hexahedral mesh provided with GEOSX.
+This hexahedral mesh is strictly identical to the grid used in the first tutorial (:ref:`TutorialSinglePhaseFlowWithInternalMesh`), but instead of using
+the internal grid generator GEOSX, we specify it with spatial node coordinates in MSH format.
+
+
+The process by which grids are imported into GEOSX is worth explaining.
+To import external grid into GEOSX, we use an external component (submodule) called **PAMELA**.
+PAMELA (Parallel Meshing Library) was developed as a stand-alone utility to import grids
+in multiple formats and write them into memory for GEOSX to consume.
+Although PAMELA is not necessary to run GEOSX (the internal grid
+generator of GEOSX has plenty of interesting features), you do need
+PAMELA if you want to import external grids and not be limited by the internal grid generator.
+
+
+So here, our mesh consists of a simple sugar-cube stack of size 10x10x10.
+We inject fluid from one vertical face of a cube, and produce it from the opposite side.
 The displacement is single phase, compressible, subject to gravity forces.
 We use GEOSX to compute the pressure inside each grid block.
 
@@ -65,7 +126,7 @@ Looking at the XML file
 ------------------------
 
 We are going to inspect blocks in the following XML file:
-``src\coreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_hex_gravity.xml``
+``src/coreComponents/physicsSolvers/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml``
 
 The file contains a number of XML blocks.
 We will describe the most important of them.
@@ -206,7 +267,10 @@ All results are written in a format compatible with `VisIt
 Externally Generated - tetrahedral elements
 ------------------------------------------------
 
-This example consists of a simple stack of tetrahedral elements.
+In the second part of the tutorial, we use the same domain but this time discretized
+into tetrahedral elements. Tetrahedral meshes are not common in geomodeling (yet!)
+and thus are less prone to legacy format assumptions. In GEOSX, these meshes also needs to be conformal.
+
 
 
 Problem description
