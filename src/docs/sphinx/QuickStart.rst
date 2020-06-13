@@ -9,14 +9,29 @@ Before jumping to the installation process, we want to first address some freque
 Frequently Asked Questions
 ==========================
 
-**Does GEOSX have a graphical user interface?:** Given the focus on rapid development and HPC environments, GEOSX does not have a graphical user interface.  This is consistent with many other high performance computing packages, but we recognize it can be a deal-breaker for certain users.  For those who can get past this failing, we promise we still have a lot to offer.  In a typical workflow, you will prepare an XML-based input file describing your problem.  You may also prepare a mesh file containing geometric and property information describing, say, a reservoir you would like to simulate.  There is no shortage of GUI tools that can help you in this model building stage.  The resulting input deck is then consumed by GEOSX to run the simulation and produce results.  This may be done in a terminal of your local machine or by submitting a job to a remote server.  The resulting output files can then be visualized by any number of graphical visualization programs.  Thus, while GEOSX is GUI free, the typical workflow is not.
+**Does GEOSX have a graphical user interface?:** Given the focus on rapid development and HPC environments, GEOSX does not have a graphical user interface.
+This is consistent with many other high performance computing packages, but we recognize it can be a deal-breaker for certain users.
+For those who can get past this failing, we promise we still have a lot to offer.
+In a typical workflow, you will prepare an XML-based input file describing your problem.
+You may also prepare a mesh file containing geometric and property information describing, say, a reservoir you would like to simulate.
+There is no shortage of GUI tools that can help you in this model building stage.
+The resulting input deck is then consumed by GEOSX to run the simulation and produce results.
+This may be done in a terminal of your local machine or by submitting a job to a remote server.
+The resulting output files can then be visualized by any number of graphical visualization programs (typically `VisIt <https://wci.llnl.gov/simulation/computer-codes/visit/>`_ or `paraview <https://www.paraview.org/>`_).
+Thus, while GEOSX is GUI free, the typical workflow is not.
 
 **Do I need to be a code developer to use GEOSX?:** For the moment, most users will
 need to download and compile the code from source, which we readily admit this requires
 a certain level of development expertise.  We try to make this process as easy as
 possible, and we are working on additional deployment options to make this process easier.  Once installed, however, our goal is to make GEOSX accessible to coders and non-coders alike.  Our target audience includes engineers and scientists who want to solve tough application problems, but could care less about the insides of the tool.  For those of you who *are* interested in scientific computing, however, GEOSX is an open source project and we welcome external contributions.
 
-**What are the system requirements?:** GEOSX is primarily written in C++, with a focus on standards compliance and platform-to-platform portability.  It is designed to run on everything from commodity laptops to the world's most powerful supercomputers.  We regularly test the code across a variety of operating systems and compilers.  Most of these operating systems are linux-based--e.g. Ubuntu, CentOS, Mac OSX.  We do have developers working in Windows environments, but they tend to use a Virtual Machine or work within a docker image rather than directly in the Windows environment.  In the instructions below, we assume you have access to fairly standard development tools.  Using advanced features of GEOSX, like GPU-acceleration, will of course introduce additional hardware and software requirements.
+**What are the system requirements?:** GEOSX is primarily written in C++, with a focus on standards compliance and platform-to-platform portability.
+It is designed to run on everything from commodity laptops to the world's most powerful supercomputers.
+We regularly test the code across a variety of operating systems and compilers.
+Most of these operating systems are Linux/UNIX based (e.g. Ubuntu, CentOS, Mac OSX).
+We do have developers working in Windows environments, but they use a Virtual Machine or work within a docker image rather than directly in the Windows environment.
+In the instructions below, we assume you have access to fairly standard development tools.
+Using advanced features of GEOSX, like GPU-acceleration, will of course introduce additional hardware and software requirements.
 
 **Help, I get errors while trying to download/compile/run!:** Unfortunately, no set of instructions is foolproof.  It is simply impossible to anticipate every system configuration or user.  If you run into problems during the installation, we recommend the following five-step process:
 
@@ -32,59 +47,71 @@ possible, and we are working on additional deployment options to make this proce
 
 Repository Organization
 ==============================
-The source for GEOSX and related tools are hosted on `Github <https://github.com>`_.  We use `Git workflows <https://git-scm.com>`_ to version control our code and manage the entire development process.  On Github, we have a GEOSX organization that hosts several related repositories:
+The source for GEOSX and related tools are hosted on `Github <https://github.com>`_.
+We use `Git workflows <https://git-scm.com>`_ to version control our code and manage the entire development process.
+On Github, we have a `GEOSX <https://github.com/GEOSX>`_ organization that hosts several related repositories:
 
 `GEOSX Organization <https://github.com/GEOSX>`_
 
-You should sign up for a free Github account, particularly if you are interested in posting issues to our issue tracker and communicating with the developers. The main repository of interest is obviously GEOSX itself:
+You should sign up for a free Github account, particularly if you are interested in posting issues to our issue tracker and communicating with the developers. The main repository of interest is obviously GEOSX itself: `GEOSX Repository <https://github.com/GEOSX/GEOSX>`_
 
-`GEOSX Repository <https://github.com/GEOSX/GEOSX>`_
+We also rely on two types of dependencies: first-party and third-party.
+First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.
+For example, there is a geologic mesh handling package called `PAMELA Repository <https://github.com/GEOSX/PAMELA>`_ and an equation-of-state package called `PVTPackage Repository <https://github.com/GEOSX/PVTPackage>`_.
+These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.
+Most users will never have to worry that these modules are in fact separate projects from GEOSX.
 
-We also rely on two types of dependencies: first-party and third-party.  First-party dependencies are projects directly associated with the GEOSX effort, but kept in separate repositories because they form stand-alone tools.  For example, there is a geologic mesh handling package called PAMELA and an equation-of-state package called PVTPackage. These packages are handled as `Git Submodules <https://git-scm.com/book/en/v2/Git-Tools-Submodules>`_, which provides a transparent way of coordinating multiple code development projects.  Most users will never have to worry that these modules are in fact separate projects from GEOSX.
+We also rely on several open-source Third-Party Libraries (TPLs) (see `thirdPartyLibs Repository <https://github.com/GEOSX/thirdPartyLibs>`_).
+These are well-respected projects developed externally to GEOSX.  We have found, however, that many compilation issues stem from version incompatibilities between different packages.
+To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
+We also provide a building script that conveniently and consistently build those dependencies.
 
-`PAMELA Repository <https://github.com/GEOSX/PAMELA>`_
-
-`PVTPackage Repository <https://github.com/GEOSX/PVTPackage>`_
-
-We also rely on several open-source Third-Party Libraries (TPLs).  These are well-respected projects developed externally to GEOSX.  We have found, however, that many compilation issues stem from version incompatibilities between different packages.  To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
-
-`thirdPartyLibs Repository <https://github.com/GEOSX/thirdPartyLibs>`_
-
-Our build system will automatically use the mirror package versions by default.  You are welcome to tune your configuration, however, to point to different versions installed on your system.  If you work on an HPC platform, for example, the more common packages may already be available and optimized for platform hardware.  For new users, however, it may be safer to begin with the TPL mirror.
+Our build system will automatically use the mirror package versions by default.
+You are welcome to tune your configuration, however, to point to different versions installed on your system.
+If you work on an HPC platform, for example, the more common packages may already be available and optimized for platform hardware.
+For new users, however, it may be safer to begin with the TPL mirror.
 
 *Note*: If you are working on an HPC platform with several other GEOSX users, we often compile the TPLs in a shared location so individual users don't have to waste their storage quota. Inquire with your institution's point-of-contact whether this option already exists. For all LLNL systems, the answer is yes.
 
-Finally, there are also several private repositories only accessible to the core development team.  These include, for example, repositories for managing different components of our Continuous Integration process.
-
+Finally, there are also several private repositories only accessible to the core development team.
+These include, for example, repositories for managing reservoir data that cannot be shared publicly.
 
 Username and Authentication
 =============================
 
-You will need to sign up for a username on `Github.com <https://github.com>`_. At this point, you can directly download the source code as a zip file. We strongly suggest, however, that users don't rely on this option.  Instead, most users should use Git to directly *clone* the repository.  This makes it much easier to stay up to date with the latest releases and bug fixes.  If you are not familiar with the basics of Git, `here is a helpful resource <https://git-scm.com>`_ to get you started.
+At this point, you can directly download the source code as a zip file.
+We strongly suggest however (since some unit tests are likely to fail), that users don't rely on this option.
+Instead, most users should use Git to directly *clone* the repository.
+This makes it much easier to stay up to date with the latest releases and bug fixes.
+If you are not familiar with the basics of Git, `here is a helpful resource <https://git-scm.com>`_ to get you started.
 
-It is also suggested that you setup SSH keys for authentication, and use SSH for your clones as discussed
-`in this article <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_.
-Before going further, you should `test your ssh connection <https://help.github.com/en/github/authenticating-to-github/testing-your-ssh-connection>`_. If it fails (perhaps because of your institution's proxy), you may consider the `personnal access token option <https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line>`_ as an alternative.
-
-
+If you intend to develop inside the GEOSX codebase, you may benefit from setting up your git credentials (see :ref:`GitWorkflow`).
 
 Download
 ======================
 
-The tutorial here assumes you will use a Git clone with the SSH connection pattern.  Using a HTTPS connection pattern requires a very slight modification. See additional instructions at the end of this section.  If you do not already have Git installed on your system, you will need to install it.  We recommend using a relatively recent version of Git, as there have been some notable improvements over the past few years.  You can check if Git is already available by opening a terminal and typing
+The tutorial here assumes you will use a https clone with no specific credentials.
+Using an ssh connection pattern requires a very slight modification.
+See additional instructions at the end of this section.
+
+If you do not already have Git installed on your system, you will need to install it.
+We recommend using a relatively recent version of Git, as there have been some notable improvements over the past few years.
+You can check if Git is already available by opening a terminal and typing
 
 .. code-block:: sh
 
   git --version
+
+You'll also need the `git-lfs <https://git-lfs.github.com/>`_ large file extension.
 
 The first task is to clone the ``GEOSX`` and ``thirdPartyLibs`` repositories.
 If you do not tell it otherwise, the build system will expect the GEOSX and thirdPartyLibs to be parallel to each other in the directory structure.  For example,
 
 .. code-block:: sh
 
-  codes/
-      GEOSX/
-      thirdPartyLibs/
+  codes
+  ├── GEOSX
+  └── thirdPartyLibs
 
 where the toplevel ``codes`` directory can be re-named and located wherever you like. It is possible to customize the build system to expect a different structure, but for now let us assume you take the simplest approach.
 
@@ -100,7 +127,7 @@ Inside this directory, we can clone the GEOSX repository.  We will also use some
 
 .. code-block:: sh
 
-   git clone git@github.com:GEOSX/GEOSX.git
+   git clone https://github.com/GEOSX/GEOSX.git
    cd GEOSX
    git lfs install
    git submodule init
@@ -113,7 +140,7 @@ Next, we do the same for the TPL repository.  From the ``codes`` directory, type
 
 .. code-block:: sh
 
-   git clone git@github.com:GEOSX/thirdPartyLibs.git
+   git clone https://github.com/GEOSX/thirdPartyLibs.git
    cd thirdPartyLibs
    git lfs install
    git pull
@@ -127,7 +154,7 @@ Notes:
 
 #. ``git-lfs`` may not function properly (or may be very slow) if your version of git and git-lfs are not current. If you are using an older version, you may need to add ``git lfs pull`` after ``git pull`` in the above procedures.
 
-#. You can adapt the commands if you use an https connection instead. The clone ``git clone git@github.com:GEOSX/GEOSX.git`` becomes ``git clone https://${USER}:${TOKEN}@github.com/GEOSX/GEOSX.git``. (You may or may not include your username and password in the URL).
+#. You can adapt the commands if you use an ssh connection instead. The clone ``https://github.com/GEOSX/GEOSX.git`` becomes ``git clone git@github.com:GEOSX/GEOSX.git``. You may also be willing to insert your credentials in the command line (less secure) ``git clone https://${USER}:${TOKEN}@github.com/GEOSX/GEOSX.git``.
 
 Configuration
 ================
@@ -144,7 +171,7 @@ Before beginning, it is a good idea to have a clear idea of the flavor and versi
 
 Here, you may need to replace ``cpp`` with the full path to the C++ compiler you would like to use, depending on how your path and any aliases are configured.
 
-GEOSX compilations are driven by a cmake ``hostconfig`` file, which tells the build system about the compilers you are using, where various packages reside, and what options you want to enable.  We have created a number of default hostconfig files for common systems.  You should browse them to see if any are close to your needs:
+GEOSX compilations are driven by a cmake ``host-config`` file, which tells the build system about the compilers you are using, where various packages reside, and what options you want to enable.  We have created a number of default hostconfig files for common systems.  You should browse them to see if any are close to your needs:
 
 .. code-block:: sh
 
@@ -185,7 +212,7 @@ We maintain host configs (ending in ``.cmake``) for HPC systems at various insti
 
 The various ``set()`` commands are used to set environment variables that control the build.  You will see in the above example that we set the C++ compiler to ``/user/bin/clang++`` and so forth.  We also disable CUDA and OpenMP, but enable PAMELA and PVTPackage.  The final line is related to our unit test suite.  See the :ref:`BuildGuide` for more details on available options.
 
-**Note**: If you develop a new hostconfig for a particular platform that may be useful for other users, please consider sharing it with the developer team.
+**Note**: If you develop a new ``host-config`` for a particular platform that may be useful for other users, please consider sharing it with the developer team.
 
 Compilation
 ==================
@@ -203,10 +230,12 @@ We begin with the third-party libraries, and use a python ``config-build.py`` sc
    cd build-your-platform-release
    make
 
-Note that building all of the TPLs can take quite a while, so you may want to go get a cup of coffee at this point.  Also note that you should *not* use a parallel ``make -j N`` command to try and speed up the build time.
+Note that building all of the TPLs can take quite a while, so you may want to go get a cup of coffee at this point.
+Also note that you should *not* use a parallel ``make -j N`` command to try and speed up the build time.
+More details on how to build the third party libraries are available :ref:`here <Third_party_libraries_build_management_pattern>`.
 
 The next step is to compile the main code.
-Again, the config-build sets up cmake for you, so the process is very similar.
+Again, the ``config-build.py`` sets up cmake for you, so the process is very similar.
 
 .. code-block:: sh
 
@@ -216,7 +245,9 @@ Again, the config-build sets up cmake for you, so the process is very similar.
    make -j4
    make install
 
-Here, the parallel ``make -j4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.  The ``make install`` command then installs GEOSX to a default location unless otherwise specified. If all goes well, a ``geosx`` executable should now be available:
+Here, the parallel ``make -j4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
+The ``make install`` command then installs GEOSX to a default location unless otherwise specified.
+If all goes well, a ``geosx`` executable should now be available:
 
 .. code-block:: sh
 

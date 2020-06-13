@@ -1,3 +1,5 @@
+.. _Dependencies:
+
 Dependencies
 ============
 
@@ -79,6 +81,8 @@ The developper should provide these tools too.
 
 If you want further details about building the GEOSX and its TPLs, (which packages to install for example),
 consider having a look at the `Dockerfiles in the third party library repository <https://github.com/GEOSX/thirdPartyLibs/tree/master/docker>`_.
+
+.. _Third_party_libraries_build_management_pattern:
 
 Third party libraries build management pattern
 ==============================================

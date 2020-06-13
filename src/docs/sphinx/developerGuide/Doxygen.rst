@@ -23,7 +23,11 @@ Prior to configuring a GEOSX build, have Doxygen installed:
 
    sudo apt install doxygen
 
-Configure GEOSX and go the the build directory:
+.. note::
+
+  Eventually, doxygen (version 1.8.13) is provided within the `thirdPartyLibs` repository.
+
+Configure GEOSX and go the build directory:
 
   .. code-block:: sh
 
