@@ -65,7 +65,7 @@ public:
                                             dataRepository::Group * domain ) override;
   /**
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
-   * @copydetails ExecutableGroup::Execute()
+   * @copydoc ExecutableGroup::Execute()
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,

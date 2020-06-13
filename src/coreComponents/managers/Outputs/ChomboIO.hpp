@@ -33,11 +33,7 @@ namespace geosx
 class ChomboIO : public OutputBase
 {
 public:
-  /**
-   * @brief Main constructor
-   * @param name The name of the object in the data repository
-   * @param parent The parent of this object in the data repository
-   **/
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   ChomboIO( std::string const & name, Group * const parent );
 
   /// Destructor

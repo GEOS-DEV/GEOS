@@ -36,11 +36,7 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /**
-   * @brief The constructor
-   * @param[in] name the name of this object manager
-   * @param[in] parent the parent Group
-   */
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   SymbolicFunction( const std::string & name,
                     dataRepository::Group * const parent );
 

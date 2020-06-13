@@ -36,11 +36,7 @@ namespace geosx
 class CompositeFunction : public FunctionBase
 {
 public:
-  /**
-   * @brief constructor
-   * @param name the name of the CompositeFunction in the data repository
-   * @param parent the parent group of this group.
-   */
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   CompositeFunction( const std::string & name,
                      dataRepository::Group * const parent );
 
