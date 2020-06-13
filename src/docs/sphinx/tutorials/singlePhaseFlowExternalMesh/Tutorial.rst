@@ -9,9 +9,11 @@ Tutorial 2: Using an external mesh
 **Context**
 
 In this tutorial, we use a simple single-phase flow solver (see :ref:`SinglePhaseFlow`)
-from GEOSX to solve for pressure propagation on a mesh that we import into GEOSX.
-The main goal of this tutorial is to work on importing external meshes,
-an important feature to use GEOSX on meshes representing realistic models.
+to solve for pressure propagation on a mesh that is imported into GEOSX.
+The main goal of this tutorial is to learn how to work with external meshes,
+and to learn how easy it is to swap meshes on the same physical problem in GEOSX.
+This makes GEOSX a powerful tool to solve real field applications with complex geometries
+and perform assessments of mesh geometry and resolution effects.
 
 **Objectives**
 
@@ -19,6 +21,7 @@ At the end of this tutorial you will know:
 
   - the syntax and format of input meshes,
   - how to input external files into a GEOSX input XML file,
+  - how to run the same physical problem with two different meshes,
   - how to use and visualize hexahedral and tetrahedral meshes.
 
 
@@ -27,7 +30,7 @@ At the end of this tutorial you will know:
 This tutorial uses an XML file containing the main input for GEOSX
 and a separate file with all the mesh information.
 As we will see later, the main XML file points to the external
-mesh file with an `include` statement.
+mesh file with an ``include`` statement.
 The XML input file for this test case is located at:
 
 .. code-block:: console
@@ -37,7 +40,7 @@ The XML input file for this test case is located at:
 The mesh file format used in this tutorial is called `MSH
 <https://gmsh.info/doc/texinfo/gmsh.html#MSH-file-format>`_.
 This format is a standard scientific meshing format not specific to GEOSX.
-It is maintained as the native format of the meshing tool Gmsh.
+It is maintained as the native format of the meshing tool `Gmsh <https://gmsh.info>`__.
 MSH is designed for unstructured meshes and contains a
 compact and complete representation of the mesh geometry and of its properties.
 The mesh file used here is human-readable ASCII.
@@ -78,29 +81,33 @@ The differences are worth pointing out here. In GEOSX:
    Butterfly cells, flat cells, negative or zero volume cells will cause problems.
  - **the mesh needs to be conformal:** in 3D, this means that neighboring
    grid blocks have to share exactly a complete face. Note that corner-point
-   grids do not have this requirement and their blocks can be shifted. When importing grids
-   from usual geomodeling packages, this is an important consideration. This
+   grids do not have this requirement and neighboring blocks can be offset.
+   When importing grids
+   from commonly-used geomodeling packages, this is an important consideration. This
    problem is solved by splitting shifted grid blocks to restore conformity.
-   The advantages
-   of conformal grids used here are worth the trouble: by using conformal grids
-   we can run finite elements and finite volume simulations on the same mesh
-   without problems (a key to multiphysics simulation).
+   While it may seem convenient to be able to have offset grid blocks at first,
+   the advantages
+   of conformal grids used in GEOSX are worth the extra meshing effort:
+   by using conformal grids,
+   GEOSX can run finite elements and finite volume simulations on the same mesh
+   without problems, going seamlessly from one numerical method to the other.
+   This is key to enabling multiphysics simulation.
  - **there is no assumption of overall structure**: GEOSX does not need to know
-   a number of block in the X, Y, Z direction and does not assume that the
-   mesh is a full cartesian domain where the reservoir must be carved out from.
+   a number of block in the X, Y, Z direction (no NX, NY, NZ) and does not assume that the
+   mesh is a full cartesian domain that the interesting parts of the reservoir
+   must be carved out from.
    Blocks are numbered by indices that assume
    nothing about spatial positioning and there is no concept of (i,j,k).
    This approach also implies that
-   no logical "masks" are needed to remove inactive or dead cells, as often done
+   no "masks" are needed to remove inactive or dead cells, as often done
    in cartesian grids to get the actual reservoir contours from a bounding box,
    and here we only need to specify grid blocks that are active.
+   For performance and flexibility, this lean approach to meshes is important.
 
 
 
-
-
-Problem description
-------------------------
+Importing an external mesh with PAMELA
+----------------------------------------
 
 In this first part of the tutorial, we use a hexahedral mesh provided with GEOSX.
 This hexahedral mesh is strictly identical to the grid used in the first tutorial (:ref:`TutorialSinglePhaseFlowWithInternalMesh`), but instead of using
@@ -110,57 +117,65 @@ the internal grid generator GEOSX, we specify it with spatial node coordinates i
 The process by which grids are imported into GEOSX is worth explaining.
 To import external grid into GEOSX, we use an external component (submodule) called **PAMELA**.
 PAMELA (Parallel Meshing Library) was developed as a stand-alone utility to import grids
-in multiple formats and write them into memory for GEOSX to consume.
+in multiple formats and write them into memory for GEOSX.
 Although PAMELA is not necessary to run GEOSX (the internal grid
-generator of GEOSX has plenty of interesting features), you do need
-PAMELA if you want to import external grids and not be limited by the internal grid generator.
+generator of GEOSX has plenty of interesting features), you need
+PAMELA if you want to import external grids.
 
 
 So here, our mesh consists of a simple sugar-cube stack of size 10x10x10.
-We inject fluid from one vertical face of a cube, and produce it from the opposite side.
-The displacement is single phase, compressible, subject to gravity forces.
-We use GEOSX to compute the pressure inside each grid block.
+We inject fluid from one vertical face of a cube (the face corresponding to x=0),
+and we let the pressure equilibrate in the closed domain.
+The displacement is a single-phase, compressible fluid subject to gravity forces,
+so we expect the pressure to be constant on the injection face,
+and to be close to hydrostatic on the opposite plane (x=10).
+We use GEOSX to compute the pressure inside each grid block over a period of time
+of 100 seconds.
 
-
-Looking at the XML file
-------------------------
-
-We are going to inspect blocks in the following XML file:
-``src/coreComponents/physicsSolvers/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml``
-
-The file contains a number of XML blocks.
-We will describe the most important of them.
-
-
-
-External mesh specification
------------------------------
-
-Now, we specify the source of our mesh.
-In this example, the mesh is imported using PAMELA from
-an existing file called ``cube_10x10x10_hex.msh``.
-This file is a file contain grid information in the
-`GMSH <http://gmsh.info>`_
-format.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
-  :language: xml
-  :start-after: <!-- SPHINX_TUT_EXT_HEX_MESH -->
-  :end-before: <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
-
-The mesh looks like this:
 
 .. image:: HexCube.png
    :width: 250px
 
 
+To see how import such a mesh,
+we inspect the following XML file:
 
-Element Regions
------------------------------
 
-This block defines regions.
+.. code-block:: console
+
+  src/coreComponents/physicsSolvers/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+
+
+In the XML ``Mesh`` tag, instead of an ``InternalMesh`` tag,
+we have a ``PAMELAMeshGenerator`` tag.
+We see that a file called ``cube_10x10x10_hex.msh`` is
+imported using PAMELA, and this object is instantiated with a user-defined ``name`` value.
+The file here contains geometric information in
+`MSH <http://gmsh.info>`__
+format (it can also contain properties, as we will see in the next tutorial).
+
+.. literalinclude::    ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_EXT_HEX_MESH -->
+  :end-before: <!-- SPHINX_TUT_EXT_HEX_MESH_END -->
+
+Here are the first few lines of the msh file :
+
+.. literalinclude::
+   ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_hex.msh
+   :caption: cube_10x10x10_hex.msh
+   :lines: 1-20
+
+GEOSX can run different physical solver on different regions of the mesh at different times.
+Here, to keep things simple, we run one solver (single-phase flow)
+on the entire domain throughout the simulation.
+Even this is trivial, we need to define and name a region encompassing the entire domain
+and assign it to the single-phase flow solver.
+We also need to provide material properties to the regions.
+This is done by specifying ``ElementRegions``.
 Here, the entire field is one region called ``Domain``,
 and contains ``water`` and ``rock`` only.
+
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
   :language: xml
@@ -168,27 +183,25 @@ and contains ``water`` and ``rock`` only.
   :end-before: <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
 
 
-
-
-
 Running GEOSX
-^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
 
 The command to run GEOSX is
 
-``path/to/geosx -i path/to/this/xml_file.xml``
+
+.. code-block:: console
+
+  path/to/geosx -i ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_hex_gravity.xml
 
 Note that all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
-
 When running GEOSX, console messages will provide indications regarding the
 status of the simulation.
 
 In our case, the first lines are:
 
-.. code-block:: sh
+.. code-block:: console
 
-  GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeHex
   Adding Geometric Object: Box, all
@@ -236,12 +249,14 @@ with console messages as follows.
     Writing into the GEOSX mesh data structure
     Running simulation
 
-The console should display initialization messages,
-and then step into the simulation with the specified time-step increments.
+
+Notice the specification of the number of nodes (1331), and hexahedra (1000).
+After the adjacency calculations, GEOSX starts the simulation itself.
+with the time-step increments specified in the XML file.
 
 At the end of your simulation, you should see something like:
 
-.. code-block:: sh
+.. code-block:: console
 
   Time: 99s, dt:1s, Cycle: 99
   Cleaning up events
@@ -249,77 +264,94 @@ At the end of your simulation, you should see something like:
 
   init time = 0.081181s, run time = 5.4595s
 
+Once this is done, GEOSX is finished and we can inspect the outcome.
 
 Visualization of results in VisIt
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------
+
+All results are written in a format compatible with `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+To load the results, point VisIt to the ``database`` file written in the Silo output folder.
 
 .. image:: ExtHexResults.png
     :width: 400px
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+We see that the face x=0 shown here in the back of the illustration applies a constant
+pressure boundary condition (colored in green), whereas the face across from it
+displays a pressure field under gravity effect, equilibrated and hydrostatic.
+These results are consistent with what we expect.
 
+Let us now see if a tetrahedral mesh, under the same exact physical conditions,
+can reproduce these results.
 
 
 .. _ExternalTetrahedral:
 
 ------------------------------------------------
-Externally Generated - tetrahedral elements
+Externally Generated Tetrahedral Elements
 ------------------------------------------------
 
-In the second part of the tutorial, we use the same domain but this time discretized
-into tetrahedral elements. Tetrahedral meshes are not common in geomodeling (yet!)
-and thus are less prone to legacy format assumptions. In GEOSX, these meshes also needs to be conformal.
+In the second part of the tutorial, we discretize the
+same cubic domain but with tetrahedral elements.
+Tetrahedral meshes are not yet common in geomodeling
+but offer tremendous flexibility
+in modeling fracture planes, faults, complex reservoir
+horizons and boundaries.
+Just like for hexahedral meshes,
+and for the same reasons (compatibility with finite volume and finite element methods),
+tetrahedral meshes in GEOSX must be conformal.
 
 
-
-Problem description
--------------------------
-
-We propagate fluid from one vertical face of a cube to the opposite side.
-The displacement is single phase, compressible, subject to gravity forces.
+As stated previously, the problem we wish to solve here
+is the exact same physical problem as with hexahedral grid blocks.
+We apply a constant pressure condition (injection)
+from the x=0 vertical face of the domain, and we let pressure
+equilibrate over time. We observe the opposite side of the cube and expect
+to see hydrostatic pressure profiles because of the gravitational effect.
+The displacement is a single phase, compressible flow subject to gravity forces.
 We use GEOSX to compute the pressure inside each grid block.
 
 
-Looking at the XML file
--------------------------
-
-We are going to inspect blocks in the following XML file:
-``src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_tetra_gravity.xml``
-
-The file contains a number of XML blocks.
-We will describe the most important of them.
-
+The set-up for this problem is almost identical to
+the hexahedral mesh set-up. We simply point our ``Mesh`` tag to
+include a tetrahedral grid. The beauty of not relying on I,J,K indices
+for any property specification or well trajectory
+makes it **easy to try different meshes for the same physical problems with GEOSX**.
+Swapping out meshes without requiring other modifications
+to the input files makes mesh refinement studies easy to perform with GEOSX.
 
 
-External mesh specification
------------------------------
+Like before, the XML file for this problem is the following:
 
-Now, we specify the source of our mesh.
-In this example, the mesh is imported using PAMELA from
-an existing file called ``cube_10x10x10_hex.msh``.
-This file is a file contain grid information in the
-`GMSH <http://gmsh.info>`_
-format.
+.. code-block:: console
+
+   src\CoreComponents\physicsSolvers\integratedTests\singlePhaseFlow\pamela_test\3D_10x10x10_compressible_pamela_tetra_gravity.xml
+
+
+The only difference, is that now, the ``Mesh`` tag points GEOSX to
+a different mesh file called ``cube_10x10x10_tet.msh``.
+This file contains nodes and tetrahedral elements in `Gmsh`_ format,
+representing a different discretization of the exact same 10x10x10 cubic domain.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_EXT_TETRA_MESH -->
   :end-before: <!-- SPHINX_TUT_EXT_TETRA_MESH_END -->
 
-The mesh looks like this:
+The mesh now looks like this:
 
 .. image:: TetCube.png
-  :width: 250px
+  :width: 400px
 
 
+And the MSH file starts as follows (notice the tetrahedral point coordinates as real numbers):
 
-Element Regions
------------------------------
+.. literalinclude::
+   ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+   :caption: cube_10x10x10_tet.msh
+   :lines: 1-20
 
-This block defines regions.
-Here, the entire field is one region called ``Domain``,
-and contains ``water`` and ``rock`` only.
+Again, the entire field is one region called ``Domain`` and contains ``water`` and ``rock`` only.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/3D_10x10x10_compressible_pamela_tetra_gravity.xml
   :language: xml
@@ -328,23 +360,22 @@ and contains ``water`` and ``rock`` only.
 
 
 Running GEOSX
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 The command to run GEOSX is
 
-``path/to/geosx -i path/to/this/xml_file.xml``
+.. code-block:: console
 
-Note that all paths for files included in the XML file are relative
+  path/to/geosx -i ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/pamela_test/cube_10x10x10_tet.msh
+
+Again, all paths for files included in the XML file are relative
 to this XML file, not to the GEOSX executable.
-
 When running GEOSX, console messages will provide indications regarding the
 status of the simulation.
-
 In our case, the first lines are:
 
-.. code-block:: sh
+.. code-block:: console
 
-  GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
   Adding Mesh: PAMELAMeshGenerator, CubeTetra
   Adding Geometric Object: Box, all
@@ -358,7 +389,7 @@ In our case, the first lines are:
 
 Followed by:
 
-.. code-block:: sh
+.. code-block:: console
 
   0 >>> **********************************************************************
   0 >>>                          PAMELA Library Import tool
@@ -388,9 +419,10 @@ Followed by:
   0 >>> *** Done...
   Writing into the GEOSX mesh data structure
 
-And finally, the simulation is run:
+We see that we have now 366 nodes and 1153 tetrahedral elements.
+And finally, when the simulation is successfully done we see:
 
-.. code-block:: sh
+.. code-block:: console
 
   Running simulation
   Time: 0s, dt:1s, Cycle: 0
@@ -400,10 +432,6 @@ And finally, the simulation is run:
   Time: 4s, dt:1s, Cycle: 4
   Time: 5s, dt:1s, Cycle: 5
   Time: 6s, dt:1s, Cycle: 6
-  Time: 7s, dt:1s, Cycle: 7
-  Time: 8s, dt:1s, Cycle: 8
-  Time: 9s, dt:1s, Cycle: 9
-  Time: 10s, dt:1s, Cycle: 10
   ...
   Time: 96s, dt:1s, Cycle: 96
   Time: 97s, dt:1s, Cycle: 97
@@ -417,12 +445,41 @@ And finally, the simulation is run:
 
 
 Visualization of results in VisIt
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
+
+
+All results are written in a format compatible with `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ by default.
+If we load into VisIt the `.database` file found in the Silo folder, we observe the following results:
 
 .. image:: ExtTetResults.png
   :width: 400px
 
+Here, we can see that despite the different mesh sizes and shapes,
+we are able to recover our pressure profile without any problems,
+or degradation in runtime performance.
 
 
-All results are written in a format compatible with `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_.
+------------------------------------
+To go further
+------------------------------------
+
+**Feedback on this tutorial**
+
+This concludes the single-phase external mesh tutorial.
+For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
+
+**Next tutorial**
+
+In the next tutorial :ref:`TutorialFieldCase`, we learn how to run a
+simple field case with more complex unstructured meshes containing different regions and properties.
+
+**For more details**
+
+  - A complete description of the Internal Mesh generator is found here :ref:`Meshes`.
+  - PAMELA being an external submodule has less documentation, but the same :ref:`Meshes` page may get you started.
+  - GEOSX can handle tetrahedra, hexahedra, prisms, pyramids, wedges, and any combination thereof in one mesh.
+    For more information on how MSH formats can help you specify these mesh types, see the `Gmsh`_ website.
+
+
+.. _Gmsh: https://gmsh.info
