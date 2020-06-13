@@ -34,6 +34,7 @@ Discretized computational domain
 ------------------------------------
 
 The following mesh is used in this tutorial:
+
 .. image:: beamBendingMesh.png
    :width: 600px
 
@@ -52,6 +53,7 @@ the ``elementTypes``. This mesh is defined as a cell block with the name
 Gravity
 ------------------------------------
 The gravity is turned off explicitly at the beginning of the input file:
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_Gravity -->
@@ -66,6 +68,7 @@ domain is discretized by ``FE1``,
 which is defined in the ``NumericalMethods`` block. The material is designated as 
 ``shale``, whose properties are defined in the 
 ``Constitutive`` block.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
@@ -77,6 +80,7 @@ Finite element discretization
 The computational domain is discretized by ``C3D8`` elements with the first order interpolation
 functions at each direction in the parent domain. The 2 x 2 x 2 Gauss quadrature rule is adopted to be
 compatible with the first order interpolation functions.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_FEDiscretization -->
@@ -88,6 +92,7 @@ Constitutive model
 Recall that in the ``SolidMechanicsLagrangianSSLE`` block, 
 ``shale`` is designated as the material in the computational domain. Here, the material 
 is defined as linear isotropic.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_Material -->
@@ -119,6 +124,7 @@ Table function
 ------------------------------------
 A table function is used to define the time-dependent loading at the beam tip. ``coordinates`` and ``values`` form a time-magnitude
 pair for the loading magnitude. In this case, the loading magnitude increases linearly as the time evolves.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_TableFunction -->
@@ -130,6 +136,7 @@ Execution
 Finally, the execution of the simulation is set up in the ``Events`` block, where
 ``target`` points to the solid mechanics solver defined in the ``Solvers`` block, and
 the time increment ``forceDt`` is set as 1.0s.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
   :start-after: <!-- SPHINX_Execution -->
@@ -139,6 +146,7 @@ the time increment ``forceDt`` is set as 1.0s.
 Result
 ------------------------------------
 The deformed beam is shown as following (notice that the displacement is visually magnified):
+
 .. image:: deformationBendingBeam.png
    :width: 600px
 
