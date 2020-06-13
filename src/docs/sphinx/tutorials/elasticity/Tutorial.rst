@@ -7,16 +7,17 @@ Tutorial 5: Elasticity
 **Context**
 
 In this tutorial, we use a a small strain linear elastic based solid mechanics solver 
-(see :ref:`SolidMechanics`) from GEOSX to solve for the bending of a three-dimensional beam. 
+(see :ref:`SolidMechanicsLagrangianFEM`) from GEOSX to solve for the bending of a three-dimensional beam. 
 The beam is fixed at one end, and subjects to a traction force pointing to the y-positive 
-direction on the other end. The beam will be deformed in the x-y plane.
+direction on the other end. The beam is deformed in the x-y plane.
 
 **Objectives**
 
-At the end of this tutorial you will know:
+At the end of this tutorial, you will know:
 
   - how to use the solid mechanics solver to solve a quasistatic problem,
-  - how to set up a traction force on a surface,
+  - how to set up displacement boundary condition at element nodes,
+  - how to set up traction boundary condition on element surfaces,
   - how to use a table function to control time-dependent loading.
 
 **Input file**
@@ -103,14 +104,14 @@ Boundary conditions
 ------------------------------------
 As aforementioned, the beam is fixed on one end, and subjects to surface traction on
 the other end. These boundary conditions are set up through the ``FieldSpecifications`` block.
-Here,``nodeManager`` and 
+Here, ``nodeManager`` and 
 ``faceManager`` 
 in the ``objectPath`` indicate that the boundary conditions are applied to the element nodes and faces, respectively.
 Component ``0``, ``1``, and ``2`` refer to the x, y, and z direction, respectively. And the non-zero values given by
 ``Scale`` indicate the magnitude of the loading. Some shorthands, such as 
-``xneg`` and ``xpos`` are used as the locations where the boundary conditions are applied in the computational domain.
-For instance, ``xneg`` means the area of computational domain located at the left-most in the x-axis, while
-``xpos`` refers to the area located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``,
+``xneg`` and ``xpos``, are used as the locations where the boundary conditions are applied in the computational domain.
+For instance, ``xneg`` means the portion of the computational domain located at the left-most in the x-axis, while
+``xpos`` refers to the portion located at the right-most area in the x-axis. Similar shorthands include ``ypos``, ``yneg``,
 ``zpos``, and ``zneg``. Particularly, the time-dependent loading applied at the beam tip is defined through a function with 
 the name ``timeFunction``.
 
@@ -122,8 +123,8 @@ the name ``timeFunction``.
 ------------------------------------
 Table function
 ------------------------------------
-A table function is used to define the time-dependent loading at the beam tip. ``coordinates`` and ``values`` form a time-magnitude
-pair for the loading magnitude. In this case, the loading magnitude increases linearly as the time evolves.
+A table function is used to define the time-dependent loading at the beam tip. The ``coordinates`` and ``values`` form a time-magnitude
+pair for the loading time history. In this case, the loading magnitude increases linearly as the time evolves.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/solidMechanics/integratedTests/SSLE-QS-beamBending.xml
   :language: xml
@@ -150,9 +151,22 @@ The deformed beam is shown as following (notice that the displacement is visuall
 .. image:: deformationBendingBeam.png
    :width: 600px
 
+
+------------------------------------
+To go further
+------------------------------------
+
 **Feedback on this tutorial**
+
+This concludes the solid mechanics for small-strain linear elasticity tutorial.
+For any feedback on this tutorial, please submit a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
 
 **Next tutorial**
 
+In the next tutorial :ref:`TutorialPoroelasticity`, we learn how to solve a simple poroelastic problem
+
 **For more details**
+
+  - More on meshes, please see :ref:`Meshes`.
+  - More on events, please see :ref:`EventManager`.
 
