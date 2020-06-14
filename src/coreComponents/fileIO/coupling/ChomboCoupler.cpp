@@ -14,6 +14,7 @@
 
 #include "ChomboCoupler.hpp"
 #include "hdf5_interface/coupler.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "mesh/FaceManager.hpp"
 #include <cstdint>
 #include <tuple>
@@ -41,8 +42,13 @@ void ChomboCoupler::write( double dt )
 {
   ++m_counter;
   FaceManager const * const faces = m_mesh.getFaceManager();
+  ElementRegionManager const * const elemRegionManager = m_mesh.getElemManager();
+
 
   ArrayOfArraysView< localIndex const > const & face_connectivity = faces->nodeList().toViewConst();
+  FaceManager::ElemMapType const & toElementRelation = faces->toElementRelation();
+  arrayView2d< localIndex const > const & faceToElementRegionIndex = toElementRelation.m_toElementRegion.toViewConst();
+
   localIndex const n_faces = face_connectivity.size();
 
   /* Copy the face connectivity into a contiguous array. */
@@ -58,11 +64,26 @@ void ChomboCoupler::write( double dt )
   arrayView1d< integer const > const & ruptureState = faces->getReference< integer_array >( "ruptureState" );
   arrayView1d< integer const > const & ghostRank = faces->ghostRank();
 
+  localIndex voidRegionIndex = -1;
+  elemRegionManager->forElementRegionsComplete([&]( localIndex const elemRegionIndex,
+                                                    ElementRegionBase const & elemRegion )
+  {
+    if( elemRegion.getName() == "void" )
+    {
+      voidRegionIndex = elemRegionIndex;
+    }
+  });
+
   bool * faceMask = new bool[n_faces];
   for( localIndex i = 0; i < n_faces; ++i )
   {
-    faceMask[i] = (ruptureState[i] > 1) && (ghostRank[i] < 0);
+    bool isVoid = (faceToElementRegionIndex[i][0] == voidRegionIndex) ||
+                  (faceToElementRegionIndex[i][1] == voidRegionIndex);
+    //std::cout<<"face "<<i<<" is attached to a void cell"<<std::endl;
+    faceMask[i] = (ruptureState[i] > 1) && (ghostRank[i] < 0) && (!isVoid);
   }
+
+
 
   /* Build the face FieldMap. */
   FieldMap_in face_fields;
