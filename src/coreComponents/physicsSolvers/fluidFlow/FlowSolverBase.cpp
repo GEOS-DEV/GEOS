@@ -181,28 +181,29 @@ void FlowSolverBase::PrecomputeData( MeshLevel & mesh )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView1d< R1Tensor const > const & elemCenter =
-      subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
     {
-      gravityCoef[ei] = Dot( elemCenter[ei], gravVector );
+      gravityCoef[ ei ] = elemCenter( ei, 0 ) * gravVector[ 0 ] + elemCenter( ei, 1 ) * gravVector[ 1 ] + elemCenter( ei, 2 ) * gravVector[ 2 ];
     } );
   } );
 
   {
-    arrayView1d< R1Tensor const > const & faceCenter =
-      faceManager.getReference< array1d< R1Tensor > >( FaceManager::viewKeyStruct::faceCenterString );
+    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< parallelHostPolicy >( faceManager.size(), [=] ( localIndex const kf )
     {
-      gravityCoef[kf] = Dot( faceCenter[kf], gravVector );
+      // TODO change to LvArray::tensorOps::AiBi once gravVector is a c-array.
+      gravityCoef[ kf ] = faceCenter[ kf ][ 0 ] * gravVector[ 0 ];
+      gravityCoef[ kf ] += faceCenter[ kf ][ 1 ] * gravVector[ 1 ];
+      gravityCoef[ kf ] += faceCenter[ kf ][ 2 ] * gravVector[ 2 ];
     } );
   }
 }

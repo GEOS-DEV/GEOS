@@ -180,11 +180,9 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
     elementRegion.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & elementSubRegion )
     {
-      arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
+      arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-      arrayView2d< real64 const > const &
-      detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
+      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
       localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();

@@ -329,9 +329,9 @@ real64 SinglePhaseHybridFVM::CalculateResidualNorm( DomainPartition const & doma
   arrayView1d< globalIndex const > const & faceDofNumber =
     faceManager.getReference< array1d< globalIndex > >( faceDofKey );
 
-  array2d< localIndex > const & elemRegionList    = faceManager.elementRegionList();
-  array2d< localIndex > const & elemSubRegionList = faceManager.elementSubRegionList();
-  array2d< localIndex > const & elemList          = faceManager.elementList();
+  arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
   defaultViscosity /= subRegionCounter;
 

@@ -25,10 +25,6 @@
 
 #include <cstdlib>
 
-template< int T_dim > class R2SymTensorT;
-template< int T_dim > class R2TensorT;
-
-
 /**
  * @brief R1TensorT is a rank-1 tensor object type
  * @tparam T_dim length of tensor index
@@ -158,70 +154,14 @@ public:
   /// non-const access to data
   GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE realT & operator[]( const int i )       { return this->t_data[i]; }
 
-  //***** MULTIPLICATION OPERATIONS *******************************************
-  /**
-   * @brief Contract a rank-2 with a rank-1 tensor.
-   * @param[in] A rank2 tensor
-   * @param[in] B rank1 tensor
-   *
-   * This function contracts the input tensors and places the result into this->t_data.
-   */
-  template< int DIM = T_dim >
-  GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE
-  std::enable_if_t< DIM <= 3, void >
-  AijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-  {
-    if( T_dim == 1 )
-    {
-      this->t_data[0] = A.t_data[0] * B.t_data[0];
-    }
-    if( T_dim == 2 )
-    {
-      this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
-      this->t_data[1] = A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
-    }
-    else if( T_dim == 3 )
-    {
-      this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
-      this->t_data[1] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
-      this->t_data[2] = A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
-    }
-  }
-
   realT ProductOfSquares() const;
-
-  /// subtract inner product of Rank2 tensor with Rank 1 tensor
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
-
-  /// subtract inner product of Rank2 tensor with Rank 1 tensor
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
-
-  /// multiply (inner product) transpose Rank2 tensor with Rank 1 tensor
-
-  void AijBi( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
-
-  /// multiply (inner product) Symmetric Rank2 tensor with Rank 1 tensor
-  GEOSX_HOST_DEVICE void AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
   /// Hadamard product between two Rank1 tensors
   void AiBi( const R1TensorT< T_dim > & A, const R1TensorT< T_dim > & B );
 
-  /// permutation operator contracted on a Rank2 tensor
-  void eijkAjk( const R2TensorT< T_dim > & A );
-
   /// cross product of 2 rank1 tensors
   GEOSX_HOST_DEVICE
   void Cross( const R1TensorT< T_dim > & a, const R1TensorT< T_dim > & b );
-
-  /// get a row from a symmetric rank2 tensor
-  void GetRow( const R2SymTensorT< T_dim > & A, const int row );
-
-  /// get a column from a symmetric rank2 tensor (same as GetRow())
-  void GetCol( const R2SymTensorT< T_dim > & A, const int col );
 
 
   //****** TENSOR OPERATIONS **************************************************
@@ -244,13 +184,6 @@ public:
   //***** OUTPUT **************************************************************
   /// output
   void print( std::ostream & os ) const;
-
-  //***** FRIEND DECLARATIONS *************************************************
-  /// declare R2SymTensorT a friend so that it can access t_data directly
-  friend class R2SymTensorT< T_dim >;
-
-  /// declare R2TensorT a friend so that it can access t_data directly
-  friend class R2TensorT< T_dim >;
 
   // define cross product
   friend inline
@@ -305,8 +238,6 @@ void R1TensorT< T_dim >::print( std::ostream & os ) const
     os << (*this)( i ) << '\t';
 }
 
-#include "R2SymTensorT.h"
-#include "R2TensorT.h"
 
 //*****************************************************************************
 //***** R1TensorT Member Function Definition **********************************
@@ -372,14 +303,6 @@ inline realT R1TensorT< T_dim >::Sum( void ) const
 }
 
 //***** MULTIPLICATION OPERATORS **********************************************
-/**
- * @param[in] A rank2 tensor
- * @param[in] B rank1 tensor
- * @return none
- *
- * this function contracts the input tensors and places the result into
- * this->t_data.
- */
 
 /**
  * @param[in] A rank2 tensor
@@ -391,146 +314,6 @@ inline void R1TensorT< T_dim >::AiBi( const R1TensorT< T_dim > & A, const R1Tens
 {
   for( int i = 0; i < T_dim; i++ )
     this->t_data[i] = A.t_data[i] * B.t_data[i];
-}
-
-
-
-/**
- * @param[in] A rank2 tensor
- * @param[in] B rank1 tensor
- * @return none
- *
- * this function contracts the input tensors and subtracts the result into
- * this->t_data.
- */
-template< int T_dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void R1TensorT< T_dim >::minusAijBj( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-  if( T_dim == 1 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0];
-  }
-  if( T_dim == 2 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
-    this->t_data[1] -= A.t_data[2] * B.t_data[0] + A.t_data[3] * B.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[2] * B.t_data[2];
-    this->t_data[1] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
-    this->t_data[2] -= A.t_data[6] * B.t_data[0] + A.t_data[7] * B.t_data[1] + A.t_data[8] * B.t_data[2];
-  }
-//  else
-//    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-
-}
-
-
-template< int T_dim >
-GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void R1TensorT< T_dim >::minusAijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-  if( T_dim == 1 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0];
-  }
-  if( T_dim == 2 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
-    this->t_data[1] -= A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] -= A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[3] * B.t_data[2];
-    this->t_data[1] -= A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1] + A.t_data[4] * B.t_data[2];
-    this->t_data[2] -= A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
-  }
-  else
-    std::cout << "R1TensorT::ProductOfSquares not implemented for nsdof>3";
-
-}
-/**
- * @param[in] A rank2 tensor
- * @param[in] B rank1 tensor
- * @return none
- *
- * this function contracts the input tensors and places the result into
- * this->t_data.
- */
-template< int T_dim >
-inline void R1TensorT< T_dim >::AijBi( const R2TensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[2] * B.t_data[1];
-    this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[3] * B.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[3] * B.t_data[1] + A.t_data[6] * B.t_data[2];
-    this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[7] * B.t_data[2];
-    this->t_data[2] = A.t_data[2] * B.t_data[0] + A.t_data[5] * B.t_data[1] + A.t_data[8] * B.t_data[2];
-  }
-  else
-    std::cout << "R1TensorT not implemented for nsdof>3";
-}
-
-/**
- * @param[in] A symmetric rank2 tensor
- * @param[in] B rank1 tensor
- * @return none
- *
- * this function contracts the input tensors and places the result into
- * this->t_data.
- */
-template< int T_dim >
-inline void R1TensorT< T_dim >::AijBj( const R2SymTensorT< T_dim > & A, const R1TensorT< T_dim > & B )
-{
-#ifdef __INTEL_COMPILER
-#pragma warning push
-#pragma warning disable 175
-#endif
-#ifdef  __IBMC__
-#pragma report(disable, "1540-2907")
-#endif
-  if( T_dim == 2 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1];
-    this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1];
-  }
-  else if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[0] * B.t_data[0] + A.t_data[1] * B.t_data[1] + A.t_data[3] * B.t_data[2];
-    this->t_data[1] = A.t_data[1] * B.t_data[0] + A.t_data[2] * B.t_data[1] + A.t_data[4] * B.t_data[2];
-    this->t_data[2] = A.t_data[3] * B.t_data[0] + A.t_data[4] * B.t_data[1] + A.t_data[5] * B.t_data[2];
-  }
-  else
-    GEOSX_ERROR( "R1TensorT not implemented for nsdof>3" );
-}
-
-/**
- * @param[in] A rank2 tensor
- * @return none
- *
- * this function contracts the permutation operator on two indicies of a
- * rank2 tensor and places the result in this->tdata
- */
-template< int T_dim >
-inline void R1TensorT< T_dim >::eijkAjk( const R2TensorT< T_dim > & A )
-{
-  if( T_dim == 3 )
-  {
-    this->t_data[0] = A.t_data[5] - A.t_data[7];
-    this->t_data[1] = A.t_data[6] - A.t_data[2];
-    this->t_data[2] = A.t_data[1] - A.t_data[3];
-  }
-  else
-    std::cout << "R1TensorT not implemented for nsdof>3";
-
 }
 
 /**
@@ -554,78 +337,6 @@ inline void R1TensorT< T_dim >::Cross( const R1TensorT< T_dim > & a, const R1Ten
 //  else
 //    std::cout << "R1TensorT not implemented for nsdof>3";
 
-}
-
-/**
- * @param[in] A symmetric rank2 tensor
- * @param[in] row row number to extract
- * @return none
- *
- * this function extracts a row from A and places it in this->tdata
- */
-template< int T_dim >
-inline void R1TensorT< T_dim >::GetRow( const R2SymTensorT< T_dim > & A, const int row )
-{
-
-  if( T_dim == 3 )
-  {
-    if( row == 1 )
-    {
-      this->t_data[0] = A.t_data[0];
-      this->t_data[1] = A.t_data[1];
-      this->t_data[2] = A.t_data[3];
-    }
-    else if( row == 2 )
-    {
-      this->t_data[0] = A.t_data[1];
-      this->t_data[1] = A.t_data[2];
-      this->t_data[2] = A.t_data[4];
-    }
-    else if( row == 3 )
-    {
-      this->t_data[0] = A.t_data[3];
-      this->t_data[1] = A.t_data[4];
-      this->t_data[2] = A.t_data[5];
-    }
-  }
-  else
-    std::cout << "R1TensorT not implemented for nsdof>3";
-}
-
-/**
- * @param[in] A symmetric rank2 tensor
- * @param[in] col col number to extract
- * @return none
- *
- * this function extracts a column from A and places it in this->tdata
- */
-template< int T_dim >
-inline void R1TensorT< T_dim >::GetCol( const R2SymTensorT< T_dim > & A, const int col )
-{
-
-  if( T_dim == 3 )
-  {
-    if( col == 1 )
-    {
-      this->t_data[0] = A.t_data[0];
-      this->t_data[1] = A.t_data[1];
-      this->t_data[2] = A.t_data[3];
-    }
-    else if( col == 2 )
-    {
-      this->t_data[0] = A.t_data[1];
-      this->t_data[1] = A.t_data[2];
-      this->t_data[2] = A.t_data[4];
-    }
-    else if( col == 3 )
-    {
-      this->t_data[0] = A.t_data[3];
-      this->t_data[1] = A.t_data[4];
-      this->t_data[2] = A.t_data[5];
-    }
-  }
-  else
-    std::cout << "R1TensorT not implemented for nsdof>3";
 }
 
 #endif

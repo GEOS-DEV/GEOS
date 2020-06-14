@@ -685,7 +685,6 @@ void ProblemManager::ApplyNumericalMethods()
           {
             if( feDiscretization != nullptr )
             {
-              feDiscretization->ApplySpaceToTargetCells( &subRegion );
               feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
             }
           } );

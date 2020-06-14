@@ -306,17 +306,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
     localIndex const numQuadraturePoints = feDiscretization.m_finiteElement->n_quadrature_points();
 
-    forAll< parallelDevicePolicy<> >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    // TODO: remove use of R1Tensor and use device policy
+    forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const ei )
     {
-
-      R1Tensor u_local[10];
-
-      for( localIndex i = 0; i < numNodesPerElement; ++i )
-      {
-        localIndex const nodeIndex = elemsToNodes( ei, i );
-        u_local[ i ] = u[ nodeIndex ];
-      }
-
       real64 effectiveMeanStress = 0.0;
       for( localIndex q=0; q<numQuadraturePoints; ++q )
       {
@@ -331,7 +323,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
       // update element volume
       R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
         Xlocal[a] = X[elemsToNodes[ei][a]];
         Xlocal[a] += u[elemsToNodes[ei][a]];
@@ -411,10 +403,9 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     string const & solidName = m_solidSolver->solidMaterialNames()[m_solidSolver->targetRegionIndex( region.getName() )];
     SolidBase const & solid = GetConstitutiveModel< SolidBase >( elementSubRegion, solidName );
 
-    arrayView3d< R1Tensor const > const &
-    dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
+    arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-    arrayView2d< real64 const > const & detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
+    arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
     arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
 
@@ -436,7 +427,8 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
     int numQuadraturePoints = fe->n_quadrature_points();
 
-    forAll< parallelDevicePolicy<> >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    // TODO: remove use of R1Tensor and use device policy
+    forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const k )
     {
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
@@ -448,7 +440,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
 
         for( integer a = 0; a < numNodesPerElement; ++a )
         {
-          R1Tensor const & dNdXa = dNdX[k][q][a];
+          R1Tensor const dNdXa = dNdX[k][q][a];
 
           dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdXa[0] * detJq;
           dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdXa[1] * detJq;

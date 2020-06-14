@@ -457,8 +457,8 @@ FluxKernel::Launch( localIndex er,
     subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString );
 
   // get the element data needed for transmissibility computation
-  arrayView1d< R1Tensor const > const & elemCenter =
-    subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+  arrayView2d< real64 const > const & elemCenter =
+    subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString );
   arrayView1d< real64 const > const & elemVolume =
     subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
   arrayView1d< R1Tensor const > const & elemPerm =

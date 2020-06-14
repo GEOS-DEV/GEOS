@@ -32,12 +32,12 @@ struct ImplicitKernel
 {
 
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
-  static real64 Launch( arrayView3d< R1Tensor const > const & dNdX,
+  static real64 Launch( arrayView4d< real64 const > const & dNdX,
                         arrayView2d< real64 const > const & detJ,
                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes,
                         arrayView1d< globalIndex const > const & dofIndex,
                         globalIndex const dofRankOffset,
-                        LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix )
+                        CRSMatrixView< real64, globalIndex const > const & matrix )
   {
     localIndex const numElems = dNdX.size( 0 );
     GEOSX_ERROR_IF_NE( dNdX.size( 0 ), numElems );
@@ -67,7 +67,7 @@ struct ImplicitKernel
           {
             elementMatrix[ a ][ b ] += detJ( k, q ) *
                                        diffusion *
-                                       +Dot( dNdX( k, q, a ), dNdX( k, q, b ) );
+                                       + LvArray::tensorOps::AiBi< 3 >( dNdX[ k ][ q ][ a ], dNdX[ k ][ q ][ b ] );
           }
 
         }

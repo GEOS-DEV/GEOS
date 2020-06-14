@@ -50,27 +50,16 @@ struct HybridFVMInnerProductHelper
   void MakeFullTensor( R1Tensor const & values,
                        arraySlice2d< real64 > const & result )
   {
-    R1Tensor axis;
-    R2SymTensor temp;
-
-    localIndex constexpr dim = 3;
-
-    // assemble full tensor from eigen-decomposition
-    for( unsigned icoord = 0; icoord < dim; ++icoord )
+    for( int i = 0; i < 3; ++i )
     {
-      // assume principal axis aligned with global coordinate system
-      axis = 0.0;
-      axis( icoord ) = 1.0;
-
-      temp.dyadic_aa( axis );
-      for( localIndex i = 0; i < dim; ++i )
+      for( int j = 0; j < 3; ++j )
       {
-        for( localIndex j = 0; j < dim; ++j )
-        {
-          result( i, j ) = result( i, j ) + values( icoord ) * temp( i, j );
-        }
+        result( i, j ) = 0.0;
       }
     }
+    result[ 0 ][ 0 ] = values[ 0 ];
+    result[ 1 ][ 2 ] = values[ 1 ];
+    result[ 1 ][ 2 ] = values[ 2 ];
   }
 
 
@@ -144,7 +133,6 @@ struct TPFACellInnerProductKernel
     real64 const areaTolerance = lengthTolerance * lengthTolerance;
     real64 const weightTolerance = 1e-30 * lengthTolerance;
 
-    R1Tensor faceCenter, faceNormal, faceConormal, cellToFaceVec;
     stackArray2d< real64, dim *dim > permTensor( dim, dim );
 
     // we are ready to compute the transmissibility matrix
@@ -155,25 +143,28 @@ struct TPFACellInnerProductKernel
         // for now, TPFA trans
         if( ifaceLoc == jfaceLoc )
         {
+          real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
 
           // 1) compute the face geometry data: center, normal, vector from cell center to face center
           real64 const faceArea =
             computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                       faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
                                                        nodePosition,
                                                        faceCenter,
                                                        faceNormal,
                                                        areaTolerance );
 
-          cellToFaceVec  = faceCenter;
-          cellToFaceVec -= elemCenter;
+          LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+          // TODO: Change to LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+          cellToFaceVec[ 0 ] -= elemCenter[ 0 ];
+          cellToFaceVec[ 1 ] -= elemCenter[ 1 ];
+          cellToFaceVec[ 2 ] -= elemCenter[ 2 ];
 
-          if( Dot( cellToFaceVec, faceNormal ) < 0.0 )
+          if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
           {
-            faceNormal *= -1;
+            LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
           }
 
-          real64 const c2fDistance = cellToFaceVec.Normalize();
+          real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
           // 2) assemble full coefficient tensor from principal axis/components
           for( localIndex i = 0; i < dim; ++i )
@@ -186,18 +177,13 @@ struct TPFACellInnerProductKernel
           HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
 
           // TODO: take symmetry into account to optimize this
-          faceConormal( 0 ) = permTensor( 0, 0 ) * faceNormal( 0 )
-                              + permTensor( 0, 1 ) * faceNormal( 1 )
-                              + permTensor( 0, 2 ) * faceNormal( 2 );
-          faceConormal( 1 ) = permTensor( 1, 0 ) * faceNormal( 0 )
-                              + permTensor( 1, 1 ) * faceNormal( 1 )
-                              + permTensor( 1, 2 ) * faceNormal( 2 );
-          faceConormal( 2 ) = permTensor( 2, 0 ) * faceNormal( 0 )
-                              + permTensor( 2, 1 ) * faceNormal( 1 )
-                              + permTensor( 2, 2 ) * faceNormal( 2 );
+          // TODO: Change to LvArray::tensorOps::AiBi
+          faceConormal[ 0 ] = elemPerm[ 0 ] * faceNormal[ 0 ];
+          faceConormal[ 1 ] = elemPerm[ 1 ] * faceNormal[ 1 ];
+          faceConormal[ 2 ] = elemPerm[ 2 ] * faceNormal[ 2 ];
 
           // 3) compute the one-sided face transmissibility
-          transMatrix[ifaceLoc][jfaceLoc]  = Dot( cellToFaceVec, faceConormal );
+          transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
           transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
         }
@@ -253,7 +239,6 @@ struct QTPFACellInnerProductKernel
   {
     localIndex constexpr dim = 3;
 
-    R1Tensor faceCenter, faceNormal;
     real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
     stackArray2d< real64, NF *dim > cellToFaceMat( NF, dim );
@@ -272,30 +257,31 @@ struct QTPFACellInnerProductKernel
     // 1) fill the matrices cellToFaceMat and normalsMat row by row
     for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
     {
+      real64 faceCenter[ 3 ], faceNormal[ 3 ];
+
       // compute the face geometry data: center, normal, vector from cell center to face center
       real64 const faceArea =
         computationalGeometry::Centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
-                                                   faceToNodes.sizeOfArray( elemToFaces[ifaceLoc] ),
                                                    nodePosition,
                                                    faceCenter,
                                                    faceNormal,
                                                    areaTolerance );
 
-      q0( ifaceLoc ) = faceCenter( 0 ) - elemCenter( 0 );
-      q1( ifaceLoc ) = faceCenter( 1 ) - elemCenter( 1 );
-      q2( ifaceLoc ) = faceCenter( 2 ) - elemCenter( 2 );
+      q0( ifaceLoc ) = faceCenter[ 0 ] - elemCenter( 0 );
+      q1( ifaceLoc ) = faceCenter[ 1 ] - elemCenter( 1 );
+      q2( ifaceLoc ) = faceCenter[ 2 ] - elemCenter( 2 );
 
-      real64 const dotProduct = q0( ifaceLoc ) * faceNormal( 0 )
-                                + q1( ifaceLoc ) * faceNormal( 1 )
-                                + q2( ifaceLoc ) * faceNormal( 2 );
+      real64 const dotProduct = q0( ifaceLoc ) * faceNormal[ 0 ]
+                                + q1( ifaceLoc ) * faceNormal[ 1 ]
+                                + q2( ifaceLoc ) * faceNormal[ 2 ];
       if( dotProduct < 0.0 )
       {
-        faceNormal *= -1;
+        LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
       }
 
-      normalsMat( ifaceLoc, 0 ) = faceArea * faceNormal( 0 );
-      normalsMat( ifaceLoc, 1 ) = faceArea * faceNormal( 1 );
-      normalsMat( ifaceLoc, 2 ) = faceArea * faceNormal( 2 );
+      normalsMat( ifaceLoc, 0 ) = faceArea * faceNormal[ 0 ];
+      normalsMat( ifaceLoc, 1 ) = faceArea * faceNormal[ 1 ];
+      normalsMat( ifaceLoc, 2 ) = faceArea * faceNormal[ 2 ];
 
     }
 
