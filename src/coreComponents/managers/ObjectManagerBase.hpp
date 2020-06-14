@@ -572,6 +572,7 @@ public:
     return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
                setApplyDefaultValue( defaultValue )->
                setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
+               setRestartFlags( MESH_DATA_TRAIT::restartFlag )->
                setDescription( MESH_DATA_TRAIT::description )->
                setRegisteringObjects( nameOfRegisteringObject ) );
   }
