@@ -14,6 +14,7 @@ set(mesh_headers
     FaceElementRegion.hpp
     EmbeddedSurfaceSubRegion.hpp
     EmbeddedSurfaceRegion.hpp
+    ExtrinsicMeshData.hpp
     FaceManager.hpp
     InterObjectRelation.hpp
     MeshBody.hpp

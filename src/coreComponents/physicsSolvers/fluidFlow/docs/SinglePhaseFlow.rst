@@ -85,12 +85,12 @@ where :math:`\Delta t = t_{n+1}-t_n` is the time-step. The expression of this re
 Usage
 ======
 
-The solver is enabled by adding a ``<SinglePhaseFlow>`` node in the Solvers section.
+The solver is enabled by adding a ``<SinglePhaseFVM>`` node in the Solvers section.
 Like any solver, time stepping is driven by events, see :ref:`EventManager`.
 
 The following attributes are supported:
 
-.. include:: /coreComponents/fileIO/schema/docs/SinglePhaseFlow.rst
+.. include:: /coreComponents/fileIO/schema/docs/SinglePhaseFVM.rst
 
 In particular:
 

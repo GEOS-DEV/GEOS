@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
@@ -66,25 +67,11 @@ void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex >( this->getName() );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ChildIndex >( this->getName() );
   }
 }
 
