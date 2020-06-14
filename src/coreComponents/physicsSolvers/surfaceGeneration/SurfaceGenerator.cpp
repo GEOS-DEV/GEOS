@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -34,8 +35,6 @@
 #ifdef USE_GEOSX_PTP
 #include "physicsSolvers/GEOSX_PTP/ParallelTopologyChange.hpp"
 #endif
-
-#include <set>
 
 namespace geosx
 {
@@ -236,144 +235,58 @@ void SurfaceGenerator::RegisterDataOnMesh( Group * const MeshBodies )
 
     elemManager->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                       extrinsicMeshData::K_IC_01,
+                                       extrinsicMeshData::K_IC_02,
+                                       extrinsicMeshData::K_IC_10,
+                                       extrinsicMeshData::K_IC_11,
+                                       extrinsicMeshData::K_IC_12,
+                                       extrinsicMeshData::K_IC_20,
+                                       extrinsicMeshData::K_IC_21,
+                                       extrinsicMeshData::K_IC_22 >( this->getName() );
     } );
 
     elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_00String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_01String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_02String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_10String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_11String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_12String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_20String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_21String )->setDefaultValue( -1 );
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::K_IC_22String )->setDefaultValue( -1 );
-
-      subRegion.registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
-        setApplyDefaultValue( m_nonRuptureTime )->
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-        setDescription( "Time that the face was ruptured." );
-
-      subRegion.registerWrapper< real64_array >( viewKeyStruct::ruptureRateString )->
-        setApplyDefaultValue( 1.0e99 )->
-        setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-        setDescription( "Rate of rupture for a given face." );
+      subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
+                                       extrinsicMeshData::K_IC_01,
+                                       extrinsicMeshData::K_IC_02,
+                                       extrinsicMeshData::K_IC_10,
+                                       extrinsicMeshData::K_IC_11,
+                                       extrinsicMeshData::K_IC_12,
+                                       extrinsicMeshData::K_IC_20,
+                                       extrinsicMeshData::K_IC_21,
+                                       extrinsicMeshData::K_IC_22,
+                                       extrinsicMeshData::RuptureTime,
+                                       extrinsicMeshData::RuptureRate >( this->getName() );
     } );
 
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     EdgeManager * const edgeManager = meshLevel->getEdgeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of node." );
+    nodeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
+                                        extrinsicMeshData::ChildIndex,
+                                        extrinsicMeshData::DegreeFromCrack,
+                                        extrinsicMeshData::DegreeFromCrackTip,
+                                        extrinsicMeshData::SIFNode,
+                                        extrinsicMeshData::RuptureTime >( this->getName() );
 
-    nodeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of node." );
+    edgeManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
+                                        extrinsicMeshData::ChildIndex,
+                                        extrinsicMeshData::SIF_I,
+                                        extrinsicMeshData::SIF_II,
+                                        extrinsicMeshData::SIF_III >( this->getName() );
 
-    nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "connectivity distance from crack." );
-
-    nodeManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackTipString )->
-      setApplyDefaultValue( 100000 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "degree of connectivity separation from crack tip." );
-
-    nodeManager->registerWrapper< real64_array >( viewKeyStruct::SIFNodeString )->
-      setApplyDefaultValue( 0 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "SIF on the node" );
-
-    nodeManager->registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
-      setApplyDefaultValue( m_nonRuptureTime )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "Time that the node was ruptured." );
-
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the edge." );
-
-    edgeManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Child index of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_I of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IIString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_II of the edge." );
-
-    edgeManager->registerWrapper< real64_array >( viewKeyStruct::SIF_IIIString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "SIF_III of the edge." );
-
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "Parent index of the face." );
-
-    faceManager->registerWrapper< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString )->
-      setApplyDefaultValue( -1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "child index of the face." );
-
-    faceManager->registerWrapper< integer_array >( viewKeyStruct::ruptureStateString )->
-      setApplyDefaultValue( 0 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured" );
-
-    faceManager->registerWrapper< real64_array >( viewKeyStruct::ruptureTimeString )->
-      setApplyDefaultValue( m_nonRuptureTime )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "Time that the face was ruptured." );
-
-    faceManager->registerWrapper< real64_array >( viewKeyStruct::SIFonFaceString )->
-      setApplyDefaultValue( 1 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "SIF on the face" );
-
-    faceManager->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::K_ICString )->
-      setApplyDefaultValue( {1e99, 1e99, 1e99} )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "K_IC on the face" );
-
-    faceManager->registerWrapper< localIndex_array >( viewKeyStruct::primaryCandidateFaceString )->
-      setApplyDefaultValue( 0 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "The face that has the highest score for splitability" );
-
-    faceManager->registerWrapper< integer_array >( viewKeyStruct::isFaceSeparableString )->
-      setApplyDefaultValue( 0 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-      setDescription( "A flag to mark if the face is separable" );
-
-    faceManager->registerWrapper< integer_array >( viewKeyStruct::degreeFromCrackTipString )->
-      setApplyDefaultValue( 100000 )->
-      setPlotLevel( dataRepository::PlotLevel::LEVEL_1 )->
-      setDescription( "degree of connectivity separation from crack tip." );
+    faceManager->registerExtrinsicData< extrinsicMeshData::ParentIndex,
+                                        extrinsicMeshData::ChildIndex,
+                                        extrinsicMeshData::RuptureState,
+                                        extrinsicMeshData::RuptureTime,
+                                        extrinsicMeshData::SIFonFace,
+                                        extrinsicMeshData::K_IC,
+                                        extrinsicMeshData::PrimaryCandidateFace,
+                                        extrinsicMeshData::IsFaceSeparable,
+                                        extrinsicMeshData::DegreeFromCrackTip >( this->getName() );
   }
 }
 
@@ -386,14 +299,11 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     NodeManager * const nodeManager = meshLevel->getNodeManager();
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    arrayView1d< localIndex > & parentNodeIndex =
-      nodeManager->getReference< localIndex_array >( nodeManager->viewKeys.parentIndex );
+    arrayView1d< localIndex > const & parentNodeIndex = nodeManager->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-    arrayView1d< localIndex > & parentFaceIndex =
-      faceManager->getReference< localIndex_array >( faceManager->viewKeys.parentIndex );
+    arrayView1d< localIndex > const & parentFaceIndex = faceManager->getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-    arrayView1d< localIndex > & childFaceIndex =
-      faceManager->getReference< localIndex_array >( faceManager->viewKeys.childIndex );
+    arrayView1d< localIndex > const & childFaceIndex = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
     parentNodeIndex = -1;
     parentFaceIndex = -1;
@@ -463,15 +373,15 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
             //          localIndex const er = elementManager->GetRegions().getIndex( elementRegionName );
             //          localIndex const esr = elementRegion->GetSubRegions().getIndex( elementSubRegion->getName() );
 
-            arrayView1d< real64 const > const & K_IC_00 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_00String );
-            arrayView1d< real64 const > const & K_IC_01 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_01String );
-            arrayView1d< real64 const > const & K_IC_02 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_02String );
-            arrayView1d< real64 const > const & K_IC_10 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_10String );
-            arrayView1d< real64 const > const & K_IC_11 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_11String );
-            arrayView1d< real64 const > const & K_IC_12 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_12String );
-            arrayView1d< real64 const > const & K_IC_20 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_20String );
-            arrayView1d< real64 const > const & K_IC_21 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_21String );
-            arrayView1d< real64 const > const & K_IC_22 = elementSubRegion->getReference< array1d< real64 > >( viewKeyStruct::K_IC_22String );
+            arrayView1d< real64 const > const & K_IC_00 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_00 >();
+            arrayView1d< real64 const > const & K_IC_01 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_01 >();
+            arrayView1d< real64 const > const & K_IC_02 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_02 >();
+            arrayView1d< real64 const > const & K_IC_10 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_10 >();
+            arrayView1d< real64 const > const & K_IC_11 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_11 >();
+            arrayView1d< real64 const > const & K_IC_12 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_12 >();
+            arrayView1d< real64 const > const & K_IC_20 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_20 >();
+            arrayView1d< real64 const > const & K_IC_21 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_21 >();
+            arrayView1d< real64 const > const & K_IC_22 = elementSubRegion->getExtrinsicData< extrinsicMeshData::K_IC_22 >();
 
             R1Tensor k0;
             k0[0] = K_IC_00[iEle]*faceNormals[kf][0] + K_IC_10[iEle]*faceNormals[kf][1] + K_IC_20[iEle]*faceNormals[kf][2];
@@ -614,7 +524,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   map< string, string_array > fieldNames;
-  fieldNames["face"].push_back( viewKeyStruct::ruptureStateString );
+  fieldNames["face"].push_back( extrinsicMeshData::RuptureState::key );
   fieldNames["node"].push_back( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
@@ -778,8 +688,7 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
                                             NodeManager & nodeManager,
                                             ModifiedObjectLists & receivedObjects )
 {
-  arrayView1d< localIndex const > const &
-  parentNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
+  arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
   for( localIndex const nodeIndex : receivedObjects.newNodes )
   {
@@ -794,11 +703,13 @@ void SurfaceGenerator::SynchronizeTipSets ( FaceManager & faceManager,
   arrayView1d< integer > const & edgeIsExternal = edgeManager.isExternal();
   arrayView1d< integer > const & nodeIsExternal = nodeManager.isExternal();
 
-  arrayView1d< localIndex const > const &
-  parentEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::parentIndexString );
 
   arrayView1d< localIndex const > const &
-  childEdgeIndices = edgeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  parentEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
+
+  arrayView1d< localIndex const > const &
+  childEdgeIndices = edgeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
+
 
   ArrayOfSetsView< localIndex const > const & edgeToFaceMap = edgeManager.faceList().toViewConst();
 
@@ -1719,21 +1630,21 @@ void SurfaceGenerator::PerformFracture( const localIndex nodeID,
   arrayView1d< localIndex const > const &
   childNodeIndices = nodeManager.getReference< localIndex_array >( ObjectManagerBase::viewKeyStruct::childIndexString );
 
-  arrayView1d< integer > &
-  degreeFromCrack = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackString );
+  arrayView1d< integer > const &
+  degreeFromCrack = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrack >();
 
-  arrayView1d< integer > &
-  nodeDegreeFromCrackTip = nodeManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackTipString );
+  arrayView1d< integer > const &
+  nodeDegreeFromCrackTip = nodeManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
 
-  arrayView1d< integer > &
-  faceDegreeFromCrackTip = faceManager.getReference< integer_array >( viewKeyStruct::degreeFromCrackTipString );
+  arrayView1d< integer > const &
+  faceDegreeFromCrackTip = faceManager.getExtrinsicData< extrinsicMeshData::DegreeFromCrackTip >();
 
 
-  arrayView1d< real64 > &
-  nodeRuptureTime = nodeManager.getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const &
+  nodeRuptureTime = nodeManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
-  arrayView1d< real64 > &
-  faceRuptureTime = faceManager.getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const &
+  faceRuptureTime = faceManager.getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   // ***** split all the objects first *****
 
@@ -4584,11 +4495,12 @@ SurfaceGenerator::calculateRuptureRate( FaceElementRegion & faceElementRegion,
   ArrayOfArraysView< localIndex const > const &
   fractureConnectorEdgesToFaceElements = edgeManager.m_fractureConnectorEdgesToFaceElements.toViewConst();
 
-  arrayView1d< real64 const > const &
-  ruptureTime = subRegion->getReference< real64_array >( viewKeyStruct::ruptureTimeString );
+  arrayView1d< real64 > const &
+  ruptureTime = subRegion->getExtrinsicData< extrinsicMeshData::RuptureTime >();
 
   arrayView1d< real64 > const &
-  ruptureRate = subRegion->getReference< real64_array >( viewKeyStruct::ruptureRateString );
+  ruptureRate = subRegion->getExtrinsicData< extrinsicMeshData::RuptureRate >();
+
 
   arrayView2d< real64 const > const & elemCenter = subRegion->getElementCenter();
 
