@@ -327,6 +327,7 @@ struct FaceDirichletBCKernel
                       BoundaryStencil::IndexContainerViewConstType const & sesri,
                       BoundaryStencil::IndexContainerViewConstType const & sefi,
                       BoundaryStencil::WeightContainerViewConstType const & trans,
+                      ElementView< arrayView1d< integer const > > const & ghostRank,
                       ElementView< arrayView1d< globalIndex const > > const & dofNumber,
                       globalIndex const rankOffset,
                       ElementView< arrayView1d< real64 const > > const & pres,
@@ -368,11 +369,16 @@ struct FaceDirichletBCKernel
       localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
       localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
       localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
-      globalIndex const dofIndex = dofNumber[er][esr][ei];
 
-      // Add to global residual/jacobian
-      localRhs[dofIndex - rankOffset] += flux;
-      localMatrix.addToRow< parallelDeviceAtomic >( dofIndex - rankOffset, &dofIndex, &fluxJacobian, 1 );
+      if( ghostRank[er][esr][ei] < 0 )
+      {
+        // Add to global residual/jacobian
+        globalIndex const dofIndex = dofNumber[er][esr][ei];
+        localIndex const localRow = LvArray::integerConversion< localIndex >( dofIndex - rankOffset );
+
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], flux );
+        localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &fluxJacobian, 1 );
+      }
     } );
   }
 };

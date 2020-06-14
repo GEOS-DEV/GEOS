@@ -355,6 +355,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       FaceDirichletBCKernel::Launch( seri, sesri, sefi, trans,
+                                     m_elemGhostRank.toViewConst(),
                                      elemDofNumber.toViewConst(),
                                      dofManager.rankOffset(),
                                      m_pressure.toViewConst(),
