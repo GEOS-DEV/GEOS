@@ -26,7 +26,11 @@ and how to extend its functionalities.
 
    fieldCase/Tutorial
 
-   compositionalFlow/Tutorial
+   deadOilBottomLayersSPE10/Tutorial
+
+   deadOilEclipseModel/Tutorial
+
+   co2FieldCaseUnstructuredGrid/Tutorial
 
    elasticity/Tutorial
 
