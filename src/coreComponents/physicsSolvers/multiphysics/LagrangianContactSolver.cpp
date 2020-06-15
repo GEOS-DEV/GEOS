@@ -181,7 +181,6 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 > const &
       deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString );
       arrayView2d< real64 const > const &
@@ -195,15 +194,12 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
+        for( localIndex i = 0; i < 3; ++i )
         {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            deltaTraction[kfe][i] = 0.0;
-            previousLocalJump[kfe][i] = localJump[kfe][i];
-          }
-          previousFractureState[kfe] = fractureState[kfe];
+          deltaTraction[kfe][i] = 0.0;
+          previousLocalJump[kfe][i] = localJump[kfe][i];
         }
+        previousFractureState[kfe] = fractureState[kfe];
       } );
     }
   } );
@@ -378,7 +374,6 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition & dom
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
       arrayView2d< real64 > const & deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString );
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
@@ -389,17 +384,14 @@ void LagrangianContactSolver::ResetStateToBeginningOfStep( DomainPartition & dom
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
+        for( localIndex i = 0; i < 3; ++i )
         {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            traction[kfe][i] -= deltaTraction[kfe][i];
-            deltaTraction[kfe][i] = 0.0;
+          traction[kfe][i] -= deltaTraction[kfe][i];
+          deltaTraction[kfe][i] = 0.0;
 
-            localJump[kfe][i] = previousLocalJump[kfe][i];
-          }
-          fractureState[kfe] = previousFractureState[kfe];
+          localJump[kfe][i] = previousLocalJump[kfe][i];
         }
+        fractureState[kfe] = previousFractureState[kfe];
       } );
     }
   } );
@@ -449,7 +441,6 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
@@ -457,25 +448,21 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
         // Contact constraints
-        if( ghostRank[kfe] < 0 )
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
+        real64 globalJumpTemp[ 3 ] = { 0 };
+        for( localIndex a=0; a<numNodesPerFace; ++a )
         {
-          localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
-          real64 globalJumpTemp[ 3 ] = { 0 };
-          for( localIndex a=0; a<numNodesPerFace; ++a )
+          for( localIndex i=0; i<3; ++i )
           {
-            for( localIndex i=0; i<3; ++i )
-            {
-              globalJumpTemp[ i ] +=
-                ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
-                  + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / numNodesPerFace;
-            }
+            globalJumpTemp[ i ] +=
+              ( -u[faceToNodeMap( elemsToFaces[kfe][0], a )][i]
+                + u[faceToNodeMap( elemsToFaces[kfe][1], a )][i] ) / numNodesPerFace;
           }
-
-          real64 localJumpTemp[ 3 ];
-          LvArray::tensorOps::AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
-          LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
-
         }
+
+        real64 localJumpTemp[ 3 ];
+        LvArray::tensorOps::AjiBj< 3, 3 >( localJumpTemp, rotationMatrix[ kfe ], globalJumpTemp );
+        LvArray::tensorOps::copy< 3 >( localJump[ kfe ], localJumpTemp );
       } );
     }
   } );
@@ -976,31 +963,31 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
     contactR2 += localSum.get();
   } );
 
-  real64 localR2[3] = { momentumR2, contactR2, momentumR2 + contactR2 };
+  real64 localR2[2] = { momentumR2, contactR2 };
   real64 globalResidualNorm[3]{};
 
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  real64_array globalR2( 3 * size );
+  real64_array globalR2( 2 * size );
   globalR2 = 0;
 
   // Everything is done on rank 0
   MpiWrapper::gather( localR2,
-                      3,
+                      2,
                       globalR2.data(),
-                      3,
+                      2,
                       0,
                       MPI_COMM_GEOSX );
 
   if( rank==0 )
   {
+    globalResidualNorm[0] = globalR2[0];
     for( int r=0; r<size; ++r )
     {
       // sum across all ranks
-      globalResidualNorm[0] += globalR2[3 * r];
-      globalResidualNorm[1] += globalR2[3 * r + 1];
-      globalResidualNorm[2] += globalR2[3 * r + 2];
+      globalResidualNorm[1] += globalR2[2 * r + 1];
     }
+    globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
     globalResidualNorm[0] = sqrt( globalResidualNorm[0] );
     globalResidualNorm[1] = sqrt( globalResidualNorm[1] );
     globalResidualNorm[2] = sqrt( globalResidualNorm[2] );
@@ -1191,7 +1178,7 @@ void LagrangianContactSolver::
             elemDOF[i] = tracDofNumber[kfe] + LvArray::integerConversion< globalIndex >( i );
           }
 
-          real64 elemRHS[3];
+          real64 elemRHS[3] = {0.0, 0.0, 0.0};
           real64 const Ja = area[kfe];
           real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
 
@@ -1436,17 +1423,13 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   {
     typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-    ArrayOfArraysView< integer const > const & isGhostConnector = stencil.getIsGhostConnectors();
-
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
       localIndex const numFluxElems = stencil.stencilSize( iconn );
 
       // A fracture connector has to be an edge shared by two faces
-      // TODO: the ghost check needs to be revised now that we're assembling into local matrix only - Sergey
-      if( numFluxElems == 2 && isGhostConnector[iconn][0] < 0 )
+      if( numFluxElems == 2 )
       {
-
         // First index: face element. Second index: node
         real64_array2d nodalArea( 2, 2 );
         real64 rotatedInvStiffApprox[ 2 ][ 3 ][ 3 ];
@@ -1465,9 +1448,15 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
-            localIndex er = faceToElem.m_toElementRegion[faceIndex][0];
-            localIndex esr = faceToElem.m_toElementSubRegion[faceIndex][0];
-            localIndex ei = faceToElem.m_toElementIndex[faceIndex][0];
+            //localIndex er = faceToElem.m_toElementRegion[faceIndex][0];
+            //localIndex esr = faceToElem.m_toElementSubRegion[faceIndex][0];
+            //localIndex ei = faceToElem.m_toElementIndex[faceIndex][0];
+            localIndex er = faceToElem.m_toElementRegion[faceIndex][0] >
+                            -1 ? faceToElem.m_toElementRegion[faceIndex][0] : faceToElem.m_toElementRegion[faceIndex][1];
+            localIndex esr = faceToElem.m_toElementSubRegion[faceIndex][0] >
+                             -1 ? faceToElem.m_toElementSubRegion[faceIndex][0] : faceToElem.m_toElementSubRegion[faceIndex][1];
+            localIndex ei = faceToElem.m_toElementIndex[faceIndex][0] >
+                            -1 ? faceToElem.m_toElementIndex[faceIndex][0] : faceToElem.m_toElementIndex[faceIndex][1];
 
             real64 const volume = elemVolume[er][esr][ei];
 
@@ -1661,40 +1650,36 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
         }
 
         // Global matrix and rhs assembly
-        // TODO: Sergey: I think this check can be removed now, but need Andrea to take a look
-        if( std::max( nDof[0], nDof[1] ) > 0 )
+        for( localIndex kf = 0; kf < 2; ++kf )
         {
-          for( localIndex kf = 0; kf < 2; ++kf )
+          localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[kf][0] - rankOffset );
+
+          stackArray2d< real64, 3*3 > const & totalInvStiffApproxDiag = ( kf == 0 ) ? totalInvStiffApprox00 : totalInvStiffApprox11;
+          stackArray2d< real64, 3*3 > const & totalInvStiffApproxOffDiag = ( kf == 0 ) ? totalInvStiffApprox01 : totalInvStiffApprox10;
+          stackArray1d< real64, 3 > const & rhs = ( kf == 0 ) ? rhs0 : rhs1;
+
+          // Only assemble contribution if "row" fracture element is local
+          // TODO: use parallel atomics
+          if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
-            localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[kf][0] - rankOffset );
-
-            stackArray2d< real64, 3*3 > const & totalInvStiffApproxDiag = ( kf == 0 ) ? totalInvStiffApprox00 : totalInvStiffApprox11;
-            stackArray2d< real64, 3*3 > const & totalInvStiffApproxOffDiag = ( kf == 0 ) ? totalInvStiffApprox01 : totalInvStiffApprox10;
-            stackArray1d< real64, 3 > const & rhs = ( kf == 0 ) ? rhs0 : rhs1;
-
-            // Only assemble contribution if "row" fracture element is local
-            // TODO: use parallel atomics
-            if( localRow >= 0 && localRow < localMatrix.numRows() )
+            for( localIndex idof = 0; idof < nDof[kf]; ++idof )
             {
-              for( localIndex idof = 0; idof < nDof[kf]; ++idof )
+              // (i,i)-block
+              localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
+                                                                        elemDOF[kf],
+                                                                        totalInvStiffApproxDiag[idof].dataIfContiguous(),
+                                                                        nDof[kf] );
+              // (i,j)-block
+              if( nDof[1-kf] > 0 )
               {
-                // (i,i)-block
                 localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
-                                                                          elemDOF[kf],
-                                                                          totalInvStiffApproxDiag[idof].dataIfContiguous(),
-                                                                          nDof[kf] );
-                // (i,j)-block
-                if( nDof[1-kf] > 0 )
-                {
-                  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
-                                                                            elemDOF[1-kf],
-                                                                            totalInvStiffApproxOffDiag[idof].dataIfContiguous(),
-                                                                            nDof[1-kf] );
-                }
-
-                // residual
-                RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + idof], rhs[idof] );
+                                                                          elemDOF[1-kf],
+                                                                          totalInvStiffApproxOffDiag[idof].dataIfContiguous(),
+                                                                          nDof[1-kf] );
               }
+
+              // residual
+              RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow + idof], rhs[idof] );
             }
           }
         }
@@ -1760,16 +1745,12 @@ void LagrangianContactSolver::SetFractureStateForElasticStep( DomainPartition & 
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString );
       forAll< serialPolicy >( subRegion.size(), [&]( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
+        if( fractureState[kfe] != FractureState::OPEN )
         {
-          if( fractureState[kfe] != FractureState::OPEN )
-          {
-            fractureState[kfe] = FractureState::STICK;
-          }
+          fractureState[kfe] = FractureState::STICK;
         }
       } );
     }
