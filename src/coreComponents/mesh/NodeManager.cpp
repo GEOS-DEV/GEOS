@@ -30,13 +30,18 @@ namespace geosx
 
 using namespace dataRepository;
 
-
+// *********************************************************************************************************************
+/**
+ * @return
+ */
+//START_SPHINX_REFPOS_REG
 NodeManager::NodeManager( std::string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 )
 {
   registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
+  //END_SPHINX_REFPOS_REG
   this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );

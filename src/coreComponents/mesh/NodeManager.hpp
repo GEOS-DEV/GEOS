@@ -392,8 +392,11 @@ public:
    * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
    */
-  ArrayOfArraysView< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex.toViewConst(); }
-  
+
+  ArrayOfArraysView< localIndex const > const & elementList() const
+  { return m_toElements.m_toElementIndex.toViewConst(); }
+
+  //START_SPHINX_REFPOS_ACCESS
   /**
    * @brief Get the mutable reference position array. This table will contain all the node coordinates.
    * @return reference position array
@@ -404,8 +407,11 @@ public:
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
    * @return an immutable arrayView of the reference position.
    */
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const { return m_referencePosition; }
-  
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const
+  { return m_referencePosition; }
+  //END_SPHINX_REFPOS_ACCESS
+
   /**
    * @brief Get a mutable total displacement array.
    * @return the total displacement array if it exists, or an error is thrown if it does not exist
@@ -502,8 +508,12 @@ private:
   localIndex PackUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
 
-  /// Reference position of the nodes
+
+
+  //START_SPHINX_REFPOS
+  /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
+  //END_SPHINX_REFPOS
 
   /// nodes-to-edges relation
   EdgeMapType m_toEdgesRelation;
