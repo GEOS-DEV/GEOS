@@ -13,7 +13,7 @@
  */
 
 /**
- * @file BoundaryConditionManager.hpp
+ * @file FieldSpecificationManager.hpp
  */
 
 #ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
@@ -32,6 +32,10 @@ namespace dataRepository
 {
 namespace keys
 {
+/**
+ * @brief The key for BoundaryConditionManager
+ * @return the key
+ */
 string const boundaryConditionManager( "BoundaryConditionManager" );
 }
 }
@@ -54,9 +58,10 @@ public:
   static FieldSpecificationManager & get();
 
   /**
-   * @brief create a new FieldSpecificationBase object as a child of this group.
+   * @brief Create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
    * @param childName the name of the new FieldSpecificationBase object in the repository
+   * @return the group child
    */
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 
@@ -137,6 +142,40 @@ public:
                         string const & fieldName,
                         LAMBDA && lambda ) const;
 
+  /**
+   * @brief Function to apply a value directly to a field variable and applies a lambda
+   *        for any post operations that are needed.
+   * @tparam PRELAMBDA The type of the lambda function to be called before the ApplyFieldValue
+   * @tparam POSTLAMBDA The type of the lambda function to be called after the ApplyFieldValue
+   * @param time The time at which the field will be evaluated. For instance if the
+   *             field is a time dependent function, this is the evaluation time.
+   * @param domain The DomainPartition object.
+   * @param fieldPath The path to the object that contains the variable described in fieldName. This
+   *                  path need not be the complete path, but rather the check that is performed is
+   *                  that the fieldPath specified is contained in the string that specifies the
+   *                  path from the actual field specification. In other words, the fieldPath variable
+   *                  can be a substring of the path specified , and that will be
+   *                  sufficient to proceed with the application of the value.
+   * @param fieldName The name of the field/variable that the value will be applied to.
+   *                  It may not be necessary that this name is in the data repository, as the user
+   *                  supplied lambda may apply whatever it condition it would like. However, this
+   *                  name is used for comparing against the value given in the field specification.
+   * @param preLambda A lambda function that defines any operations that should be performed
+   *                  before application of value to the field.
+   * @param postLambda A lambda function that defines any operations that should be performed
+   *                   after application of value to the field.
+   *
+   * Interface function that applies a value directly to a field by looping
+   * through all FieldSpecificationBase objects present in the FieldSpecificationManager. Calls the
+   * preLambda function to apply any operations required before the application of the value to the
+   * field in addition to setting the target field. Searches for the string specified in fieldPath
+   * as a substring in the objectPath specified in the input file, checks if fieldName is equal to
+   * the fieldName specified in the input file, and check if the time parameter falls within the
+   * beginTime and endTime of the FieldSpecificationBase object, and calls
+   * FieldSpecificationBase::ApplyFieldValue(), and calls the postLambda function to apply any
+   * operations required for completing the application of the value to the field in addition to
+   * setting the target field.
+   */
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void ApplyFieldValue( real64 const time,
                         dataRepository::Group * domain,

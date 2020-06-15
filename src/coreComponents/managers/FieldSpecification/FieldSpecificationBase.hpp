@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FieldBase.hpp
+ * @file FieldSpecificationBase.hpp
  */
 
 #ifndef GEOSX_MANAGERS_FIELDSPECIFICATION_FIELDSPECIFICATIONBASE_HPP
@@ -61,8 +61,16 @@ public:
    */
   static CatalogInterface::CatalogType & GetCatalog();
 
+  /**
+   * @brief Static Factory Catalog Functions
+   * @return the catalog name
+   */
   static string CatalogName() { return "FieldSpecification"; }
 
+  /**
+   * @brief return the catalog name
+   * @return the catalog name
+   */
   virtual const string getCatalogName() const
   {
     return FieldSpecificationBase::CatalogName();
@@ -85,6 +93,16 @@ public:
    */
   virtual ~FieldSpecificationBase() override;
 
+  /**
+   * @tparam FIELD_OP type that contains static functions to apply the value to the field
+   * @param[in] field the field to apply the value to.
+   * @param[in] targetSet the set of indices which the value will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the value.
+   * @param[in] dataGroup the Group that contains the field to apply the value to.
+   *
+   * This function applies the value to a field variable.
+   */
   template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
   void ApplyFieldValueKernel( ArrayView< T, N, USD > const & field,
                               SortedArrayView< localIndex const > const & targetSet,
@@ -141,14 +159,14 @@ public:
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
-   *               Either \ref BcEqual or \ref BcAdd.
+   *               Either \ref OpEqual or \ref OpAdd.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
-   * @param[in] dofMapName The name of the map from the local index of the primary field to the
-   *                       global degree of freedom number.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
    *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
    *                   degree of freedom.
@@ -175,15 +193,15 @@ public:
   /**
    * @brief Function to apply a boundary condition to a system of equations
    * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
-   *               Either \ref BcEqual or \ref BcAdd.
+   *               Either \ref OpEqual or \ref OpAdd.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
-   * @param[in] dofMapName The name of the map from the local index of the primary field to the
-   *                       global degree of freedom number.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
    * @param[in] dofDim The number of degrees of freedom per index of the primary field. For instance
    *                   this will be 1 for a pressure degree of freedom, and 3 for a displacement
    *                   degree of freedom.
@@ -208,31 +226,61 @@ public:
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const;
 
+  /**
+   * @brief Function to zero matrix rows to apply boundary conditions
+   * @tparam LAI The linear algebra interface
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[inout] matrix A ParallelMatrix object: the system matrix.
+   *
+   * This function zeroes the rows of the matrix that correspond to boundary conditions.
+   */
   template< typename LAI >
   void ZeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                            arrayView1d< globalIndex const > const & dofMap,
                                            typename LAI::ParallelMatrix & matrix ) const;
 
+  /**
+   * @brief View keys
+   */
   struct viewKeyStruct
   {
+    /// The key for setName
     constexpr static auto setNamesString = "setNames";
+    /// The key for constitutivePath
     constexpr static auto constitutivePathString = "constitutivePath";
+    /// The key for objectPath
     constexpr static auto objectPathString = "objectPath";
+    /// The key for fieldName
     constexpr static auto fieldNameString = "fieldName";
+    /// The key for dataType
     constexpr static auto dataTypeString = "dataType";
+    /// The key for component
     constexpr static auto componentString = "component";
+    /// The key for direction
     constexpr static auto directionString = "direction";
+    /// The key for bcApplicationTableName
     constexpr static auto bcApplicationTableNameString = "bcApplicationTableName";
+    /// The key for scale
     constexpr static auto scaleString = "scale";
+    /// The key for functionName
     constexpr static auto functionNameString = "functionName";
+    /// The key for initialCondition
     constexpr static auto initialConditionString = "initialCondition";
+    /// The key for beginTime
     constexpr static auto beginTimeString = "beginTime";
+    /// The key for endTime
     constexpr static auto endTimeString = "endTime";
-    constexpr static auto fluxBoundaryConditionString = "fluxBoundaryConditionString";
-  } viewKeys;
+    /// The key for fluxBoundaryCondition
+    constexpr static auto fluxBoundaryConditionString = "fluxBoundaryCondition";
+  } viewKeys; ///< viewKeys
 
+  /**
+   * @brief Group keys
+   */
   struct groupKeyStruct
-  {} groupKeys;
+  {} groupKeys; ///< groupKeys
 
 
   /**
@@ -244,69 +292,129 @@ public:
     return m_functionName;
   }
 
+  /**
+   * Accessor
+   * @return const reference to m_objectPath
+   */
   virtual const string & GetObjectPath() const
   {
     return m_objectPath;
   }
 
+  /**
+   * Accessor
+   * @return const reference to m_fieldName
+   */
   virtual const string & GetFieldName() const
   {
     return m_fieldName;
   }
 
+  /**
+   * Accessor
+   * @return const m_component
+   */
   virtual int GetComponent() const
   {
     return m_component;
   }
 
-  virtual const R1Tensor & GetDirection( realT GEOSX_UNUSED_PARAM( time ) )
+  /**
+   * Accessor
+   * @param[in] time Time
+   * @return const reference to m_direction
+   */
+  virtual const R1Tensor & GetDirection( realT time )
   {
+    GEOSX_UNUSED_VAR( time );
     return m_direction;
   }
 
+  /**
+   * Accessor
+   * @return const m_beginTime
+   */
   real64 GetStartTime() const
   {
     return m_beginTime;
   }
 
+  /**
+   * Accessor
+   * @return const m_endTime
+   */
   real64 GetEndTime() const
   {
     return m_endTime;
   }
 
+  /**
+   * Accessor
+   * @return const reference to m_setNames
+   */
   string_array const & GetSetNames() const
   {
     return m_setNames;
   }
 
+  /**
+   * Accessor
+   * @return const m_initialCondition
+   */
   int initialCondition() const
   {
     return m_initialCondition;
   }
 
+  /**
+   * Accessor
+   * @return const m_scale
+   */
   real64 GetScale() const
-  { return m_scale; }
+  {
+    return m_scale;
+  }
 
+  /**
+   * Mutator
+   * @param[in] fieldName The name of the field
+   */
   void SetFieldName( string const & fieldName )
   {
     m_fieldName = fieldName;
   }
 
+  /**
+   * Mutator
+   * @param[in] objectPath The path for the object
+   */
   void SetObjectPath( string const & objectPath )
   {
     m_objectPath = objectPath;
   }
 
+  /**
+   * Mutator
+   * @param[in] scale Scaling factor
+   */
   void SetScale( real64 const & scale )
   {
     m_scale = scale;
   }
 
+  /**
+   * Mutator
+   * @param[in] isInitialCondition Logical value to indicate if it is an initial condition
+   */
   void InitialCondition( bool isInitialCondition )
   {
     m_initialCondition = isInitialCondition;
   }
 
+  /**
+   * Mutator
+   * @param[in] setName The name of the set
+   */
   void AddSetName( string const & setName )
   {
     m_setNames.push_back( setName );
@@ -416,7 +524,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
 template< typename FIELD_OP, typename POLICY >
 void FieldSpecificationBase::ApplyFieldValue( SortedArrayView< localIndex const > const & targetSet,
                                               real64 const time,
-                                              Group * dataGroup,
+                                              dataRepository::Group * dataGroup,
                                               string const & fieldName ) const
 {
   dataRepository::WrapperBase * wrapper = dataGroup->getWrapperBase( fieldName );
@@ -462,10 +570,8 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView< lo
       real64 value = 0.0;
       FieldSpecificationEqual::ReadFieldValue( fieldView, a, component, value );
       return value;
-    }
-                                                           );
-  }
-                                  );
+    } );
+  } );
 }
 
 template< typename FIELD_OP, typename LAI, typename LAMBDA >
@@ -475,11 +581,13 @@ FieldSpecificationBase::
                                   real64 const time,
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & GEOSX_UNUSED_PARAM( dofDim ),
+                                  integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const
 {
+  GEOSX_UNUSED_VAR( dofDim );
+
   integer const component = GetComponent();
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::Instance();
@@ -574,11 +682,13 @@ FieldSpecificationBase::
                                   real64 const dt,
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
-                                  integer const & GEOSX_UNUSED_PARAM( dofDim ),
+                                  integer const & dofDim,
                                   typename LAI::ParallelMatrix & matrix,
                                   typename LAI::ParallelVector & rhs,
                                   LAMBDA && lambda ) const
 {
+  GEOSX_UNUSED_VAR( dofDim );
+
   integer const component = GetComponent();
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::Instance();

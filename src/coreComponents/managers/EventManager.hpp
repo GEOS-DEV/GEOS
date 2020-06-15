@@ -80,7 +80,7 @@ public:
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
-
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto maxTimeString = "maxTime";
@@ -98,13 +98,13 @@ public:
     dataRepository::ViewKey maxCycle = { "maxCycle" };
     dataRepository::ViewKey currentSubEvent = { "currentSubEvent" };
   } viewKeys;
-
+  /// @endcond
   ///@}
 
-  /// Catalog interface
+  /// Alias to access the object catalog for EventBase derived types.
   using CatalogInterface = dataRepository::CatalogInterface< EventBase, std::string const &, Group * const >;
 
-  /// Catalog interface
+  /// @copydoc dataRepository::Group::GetCatalog()
   static CatalogInterface::CatalogType & GetCatalog();
 
 private:

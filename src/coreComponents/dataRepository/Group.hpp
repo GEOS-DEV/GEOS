@@ -82,6 +82,8 @@ public:
   ///@{
 
   /**
+   * @brief Constructor
+   *
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */

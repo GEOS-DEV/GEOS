@@ -24,8 +24,19 @@
 namespace geosx
 {
 
+/**
+ * @brief OpEqual Operator that sets a value
+ */
 struct OpEqual
 {
+  /**
+   * @brief Pointwise set of a value
+   * @tparam T type of the left-hand side
+   * @tparam U type of the right-hand side
+   * @param[in] lhs value to set
+   * @param[in] rhs input value
+   * @return none
+   */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
   void apply( T & lhs, U const & rhs )
@@ -34,8 +45,19 @@ struct OpEqual
   }
 };
 
+/**
+ * @brief OpAdd Operator that adds a value
+ */
 struct OpAdd
 {
+  /**
+   * @brief Pointwise update of a value
+   * @tparam T type of the left-hand side
+   * @tparam U type of the right-hand side
+   * @param[in] lhs value to update
+   * @param[in] rhs input value
+   * @return none
+   */
   template< typename T, typename U >
   GEOSX_HOST_DEVICE static inline
   void apply( T & lhs, U const & rhs )
@@ -44,9 +66,13 @@ struct OpAdd
   }
 };
 
+/**
+ * @brief FieldSpecificationOp
+ */
 template< typename OP >
 struct FieldSpecificationOp
 {
+  /// Alias for OP, the operator
   using OpType = OP;
 
   /**
@@ -56,6 +82,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component not used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index] (+)= value.
    */
@@ -64,9 +91,10 @@ struct FieldSpecificationOp
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   SpecifyFieldValue( arrayView1d< T > const & field,
                      localIndex const index,
-                     integer const GEOSX_UNUSED_PARAM( component ),
+                     integer const component,
                      real64 const value )
   {
+    GEOSX_UNUSED_VAR( component );
     OP::template apply( field( index ), value );
   }
 
@@ -78,6 +106,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value.
    */
@@ -99,6 +128,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component not used.
    * @param[out] value The value read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index].
    */
@@ -107,9 +137,10 @@ struct FieldSpecificationOp
   static inline typename std::enable_if< !traits::is_tensorT< T >, void >::type
   ReadFieldValue( arrayView1d< T const > const & field,
                   localIndex const index,
-                  integer const GEOSX_UNUSED_PARAM( component ),
+                  integer const component,
                   real64 & value )
   {
+    GEOSX_UNUSED_VAR( component );
     OP::template apply( value, field( index ) );
   }
 
@@ -120,6 +151,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component not used.
    * @param[out] value The value read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index][component].
    */
@@ -142,6 +174,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along second dimension of 2d array.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value.
    */
@@ -175,6 +208,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
@@ -213,6 +247,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to read @p value from.
    * @param[in] component The index along second dimension of 2d array.
    * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    *
    * This function performs value (+)= field[index][component].
    */
@@ -230,15 +265,26 @@ struct FieldSpecificationOp
 
   /**
    * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
+   * @param[in] field The array2d field variable to read @p value from.
+   * @param[in] index The index in field to read @p value from.
+   * @param[in] component The index along second dimension of 2d array.
+   * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    */
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline typename std::enable_if< traits::is_tensorT< T >, void >::type
-  ReadFieldValue( arrayView2d< T const, USD > const & GEOSX_UNUSED_PARAM( field ),
-                  localIndex const GEOSX_UNUSED_PARAM( index ),
-                  integer const GEOSX_UNUSED_PARAM( component ),
-                  real64 & GEOSX_UNUSED_PARAM( value ) )
+  ReadFieldValue( arrayView2d< T const, USD > const & field,
+                  localIndex const index,
+                  integer const component,
+                  real64 & value )
   {
+    GEOSX_UNUSED_VAR( field );
+    GEOSX_UNUSED_VAR( index );
+    GEOSX_UNUSED_VAR( component );
+    GEOSX_UNUSED_VAR( value );
     GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
 
@@ -250,6 +296,7 @@ struct FieldSpecificationOp
    * @param[in] index The index in field to apply @p value to.
    * @param[in] component The index along third dimension of 3d array.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index] (+)= value for all values of field[index].
    */
@@ -289,6 +336,7 @@ struct FieldSpecificationOp
    * @param[in] component The component of @p field to apply @p value to. If @p T is a scalar type,
    *                      this will not be used.
    * @param[in] value The value to apply to @p field.
+   * @return type of the field value.
    *
    * This function performs field[index][component] (+)= value for all values of field[index].
    */
@@ -327,15 +375,26 @@ struct FieldSpecificationOp
 
   /**
    * @brief This function is not meaningful. It exists for generic purposes, but will result in an error if called.
+   * @tparam T The type of the array2d field variable specified in @p field.
+   * @tparam USD the unit stride dimension of the array @p field.
+   * @param[in] field The array2d field variable to read @p value from.
+   * @param[in] index The index in field to read @p value from.
+   * @param[in] component The index along second dimension of 2d array.
+   * @param[out] value The value that is read from @p field.
+   * @return type of the input field value.
    */
   template< typename T, int USD >
   GEOSX_HOST_DEVICE
   static inline void
-  ReadFieldValue( arrayView3d< T const, USD > const & GEOSX_UNUSED_PARAM( field ),
-                  localIndex const GEOSX_UNUSED_PARAM( index ),
-                  integer const GEOSX_UNUSED_PARAM( component ),
-                  real64 & GEOSX_UNUSED_PARAM( value ) )
+  ReadFieldValue( arrayView3d< T const, USD > const & field,
+                  localIndex const index,
+                  integer const component,
+                  real64 & value )
   {
+    GEOSX_UNUSED_VAR( field );
+    GEOSX_UNUSED_VAR( index );
+    GEOSX_UNUSED_VAR( component );
+    GEOSX_UNUSED_VAR( value );
     GEOSX_ERROR( "ReadFieldValue: unsupported operation" );
   }
 
@@ -348,6 +407,7 @@ struct FieldSpecificationOp
  */
 struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
 {
+  /// Alias for FieldSpecificationOp< OpEqual >
   using base_type = FieldSpecificationOp< OpEqual >;
   using base_type::SpecifyFieldValue;
 
@@ -416,6 +476,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
  */
 struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
 {
+  /// Alias for FieldSpecificationOp< OpAdd >
   using base_type = FieldSpecificationOp< OpAdd >;
   using base_type::SpecifyFieldValue;
 
@@ -426,15 +487,17 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    * @param[out] rhs The rhs contribution to be modified
    * @param[in] bcValue The value to add to rhs
    * @param[in] fieldValue unused.
-   *
    */
   template< typename LAI >
-  static inline void SpecifyFieldValue( globalIndex const GEOSX_UNUSED_PARAM( dof ),
-                                        typename LAI::ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
+  static inline void SpecifyFieldValue( globalIndex const dof,
+                                        typename LAI::ParallelMatrix & matrix,
                                         real64 & rhs,
                                         real64 const & bcValue,
-                                        real64 const GEOSX_UNUSED_PARAM( fieldValue ) )
+                                        real64 const fieldValue )
   {
+    GEOSX_UNUSED_VAR( dof );
+    GEOSX_UNUSED_VAR( matrix );
+    GEOSX_UNUSED_VAR( fieldValue );
     rhs += bcValue;
   }
 
