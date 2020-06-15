@@ -219,4 +219,7 @@ protected:
 
 
 } // namespace geosx
+
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
+
 #endif // GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
