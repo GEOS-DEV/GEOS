@@ -290,4 +290,6 @@ protected:
 
 } // namespace geosx
 
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
+
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_

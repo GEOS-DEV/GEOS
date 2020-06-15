@@ -145,4 +145,6 @@ using QuasiStaticPoroElastic = PoroElastic< SUBREGION_TYPE,
 
 } // namespace geosx
 
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
+
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSPOROELASTICKERNEL_HPP_
