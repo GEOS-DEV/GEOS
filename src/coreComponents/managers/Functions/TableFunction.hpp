@@ -116,6 +116,30 @@ public:
    */
   array1d< real64 > & getValues()       { return m_values; }
 
+  /**
+   * @brief Set the interpolation method
+   * @param interpolationMethodString The interpolation method string
+   */
+  void setInterpolationMethod(string interpolationMethodString);
+
+  /**
+   * @brief Set the table coordinates
+   * @param coordinates An array of arrays containing table coordinate definitions
+   */
+  void setTableCoordinates(array1d< real64_array > coordinates) { m_coordinates = coordinates; }
+
+  /**
+   * @brief Set the table values
+   * @param values An array of table values in fortran order
+   */
+  void setTableValues(real64_array values) { m_values = values; }
+
+  /**
+   * @brief Set the table dimensionality
+   * @param dimensions The number of table dimensions
+   */
+  void setTableDimensions(localIndex dimensions) { m_dimensions = dimensions; }
+
   /// Enumerator of available interpolation types
   enum class InterpolationType
   {

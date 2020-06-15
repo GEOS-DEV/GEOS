@@ -116,6 +116,33 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
 }
 
 
+void TableFunction::setInterpolationMethod(string interpolationMethodString)
+{
+  // Parse the interpolation method string
+  if( interpolationMethodString == "linear" )
+  {
+    m_interpolationMethod = InterpolationType::Linear;
+  }
+  else if( interpolationMethodString == "nearest" )
+  {
+    m_interpolationMethod = InterpolationType::Nearest;
+  }
+  else if( interpolationMethodString == "upper" )
+  {
+    m_interpolationMethod = InterpolationType::Upper;
+  }
+  else if( interpolationMethodString == "lower" )
+  {
+    m_interpolationMethod = InterpolationType::Lower;
+  }
+  else
+  {
+    GEOSX_ERROR( "Unrecognized interpolation type: " << interpolationMethodString );
+  }
+}
+
+
+
 void TableFunction::InitializeFunction()
 {
   // Read in data
@@ -143,30 +170,7 @@ void TableFunction::InitializeFunction()
     }
   }
 
-
-  // Parse the interpolation method string
-  if( m_interpolationMethodString == "linear" )
-  {
-    m_interpolationMethod = InterpolationType::Linear;
-  }
-  else if( m_interpolationMethodString == "nearest" )
-  {
-    m_interpolationMethod = InterpolationType::Nearest;
-  }
-  else if( m_interpolationMethodString == "upper" )
-  {
-    m_interpolationMethod = InterpolationType::Upper;
-  }
-  else if( m_interpolationMethodString == "lower" )
-  {
-    m_interpolationMethod = InterpolationType::Lower;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized interpolation type: " << m_interpolationMethodString );
-  }
-
-
+  setInterpolationMethod(m_interpolationMethodString);
   reInitializeFunction();
 }
 

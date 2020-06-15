@@ -117,6 +117,13 @@ public:
                               real64 const time,
                               SortedArray< localIndex > const & set ) const;
 
+  /**
+   * @brief Set the input variable names
+   * @param inputVarNames A list of input variable names
+   */
+  void setInputVarNames(string_array inputVarNames) { m_inputVarNames = inputVarNames; }
+
+  
 protected:
   /// names for the input variables
   string_array m_inputVarNames;
@@ -152,7 +159,7 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
   localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
   GEOSX_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
 
-  localIndex varSize[4];
+  localIndex varSize[4] = {0, 0, 0, 0};
   int timeVar[4] = {1, 1, 1, 1};
   for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
@@ -164,15 +171,17 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       varSize[varIndex] = 1;
       timeVar[varIndex] = 0;
     }
-    else
+    else if (group->size() > 0)
     {
-      dataRepository::WrapperBase const & wrapper = *(group->getWrapperBase( varName ));
-      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper.voidPointer() );
-      varSize[ varIndex ] = wrapper.elementByteSize() / sizeof( double );
+      // Should we throw a warning if the group is zero-length?
+
+      dataRepository::WrapperBase const * wrapper = group->getWrapperBase( varName );
+      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper->voidPointer() );
+      // varSize[ varIndex ] = wrapper.elementByteSize() / sizeof( double );
+      varSize[varIndex] = wrapper->size() / group->size();
     }
   }
 
-  integer count=0;
   forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
     localIndex const index = set[ i ];
@@ -188,10 +197,10 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
     }
 
     // TODO: Check this line to make sure it is correct
-    result[count] = static_cast< LEAF const * >(this)->Evaluate( input );
-    ++count;
+    // Note: Since we are iterating over a set, place the result
+    // at the same location as the input.
+    result[index] = static_cast< LEAF const * >(this)->Evaluate( input );
   } );
-
 }
 } /* namespace geosx */
 
