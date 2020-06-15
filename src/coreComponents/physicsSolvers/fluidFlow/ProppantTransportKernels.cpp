@@ -205,7 +205,7 @@ void FluxKernel::
           globalIndex const globalRow = dofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
           localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
           GEOSX_ASSERT_GE( localRow, 0 );
-          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow + numDofPerCell );
+          GEOSX_ASSERT_GE( localMatrix.numRows(), localRow + numDofPerCell );
 
           for( localIndex idof = 0; idof < numDofPerCell; ++idof )
           {
