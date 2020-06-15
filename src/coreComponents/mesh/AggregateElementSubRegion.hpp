@@ -122,14 +122,17 @@ public:
     return m_fineToCoarse;
   }
 
-  virtual void CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
-                                                    FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) ) override
+  virtual void CalculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                    FaceManager const & faceManager ) override
   {
+    GEOSX_UNUSED_VAR( nodeManager );
+    GEOSX_UNUSED_VAR( faceManager );
     //TODO ?
   }
 
-  virtual void setupRelatedObjectsInRelations( MeshLevel const * const GEOSX_UNUSED_PARAM( mesh ) ) override
+  virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override
   {
+    GEOSX_UNUSED_VAR( mesh );
     //TODO ?
   }
 

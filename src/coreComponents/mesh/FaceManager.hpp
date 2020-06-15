@@ -156,7 +156,7 @@ public:
   /**
    * @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
    * @param[in] X array view of mesh nodes coordinates
-   * @param[in] elemCenter coordinate of the element center
+   * @param[in] elementCenter coordinate of the element center
    * @param[in,out] faceNodes reordered local label list of nodes
    * @param[in] numFaceNodes number of nodes for the face
    */

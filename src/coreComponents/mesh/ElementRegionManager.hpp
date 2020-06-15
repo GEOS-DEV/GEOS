@@ -856,6 +856,13 @@ public:
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm ) const;
 
+
+  /**
+   * @brief Construct a ConstitutiveRelationAccessor.
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   * @param cm pointer to ConstitutiveManager
+   * @return ConstitutiveRelationAccessor
+   */
   template< typename CONSTITUTIVE_TYPE >
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   ConstructFullConstitutiveAccessor( constitutive::ConstitutiveManager const * const cm );
@@ -889,6 +896,7 @@ public:
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
+  /// @copydoc dataRepository::Group::Unpack( buffer_unit_type const * & buffer, arrayView1d< localIndex > & packList,integer const recursive, bool on_device = false );
   using ObjectManagerBase::Unpack;
 
   /**
@@ -983,6 +991,7 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
+    /// element regions group string key
     static constexpr auto elementRegionsGroup = "elementRegionsGroup";
   } m_ElementRegionManagerKeys; ///< Element region manager keys
 
