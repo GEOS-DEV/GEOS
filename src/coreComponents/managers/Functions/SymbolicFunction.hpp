@@ -36,17 +36,24 @@ namespace geosx
 class SymbolicFunction : public FunctionBase
 {
 public:
-  /// Main constructor
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   SymbolicFunction( const std::string & name,
                     dataRepository::Group * const parent );
 
-  /// Destructor
+  /**
+   * @brief The destructor
+   */
   virtual ~SymbolicFunction() override;
 
-  /// Catalog name interface
+  /**
+   * @brief The catalog name interface
+   * @return name of the TableFunction in the FunctionBase catalog
+   */
   static string CatalogName() { return "SymbolicFunction"; }
 
-  /// Function initialization
+  /**
+   * @brief Initialize the table function
+   */
   virtual void InitializeFunction() override;
 
   /**
@@ -67,6 +74,7 @@ public:
   /**
    * @brief Method to evaluate a function
    * @param input a scalar input
+   * @return the function result
    */
   inline real64 Evaluate( real64 const * const input ) const override final
   {

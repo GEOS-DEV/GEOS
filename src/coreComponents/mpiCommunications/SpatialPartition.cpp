@@ -234,16 +234,12 @@ void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborL
 }
 
 
-void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
-{
-  xmin = m_xBoundingBoxMin;
-  xmax = m_xBoundingBoxMax;
-}
+//void SpatialPartition::GetPartitionBoundingBox( R1Tensor & xmin, R1Tensor & xmax )
+//{
+//  xmin = m_xBoundingBoxMin;
+//  xmax = m_xBoundingBoxMax;
+//}
 
-/**
- * @param min global minimum spatial dimensions
- * @param max global maximum spatial dimensions
- **/
 void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
 {
 
@@ -339,16 +335,16 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
   }
 }
 
-void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
-{
-  // global values
-  // without updating partition sizes.  We need this in mesh generator when we
-  // have extension zones.
-  m_gridMin = min;
-  m_gridMax = max;
-  m_gridSize = max;
-  m_gridSize -= min;
-}
+//void SpatialPartition::setGlobalDomainSizes( const R1Tensor & min, const R1Tensor & max )
+//{
+//  // global values
+//  // without updating partition sizes.  We need this in mesh generator when we
+//  // have extension zones.
+//  m_gridMin = min;
+//  m_gridMax = max;
+//  m_gridSize = max;
+//  m_gridSize -= min;
+//}
 
 void SpatialPartition::SetPartitionGeometricalBoundary( R1Tensor & min, R1Tensor & max )
 {

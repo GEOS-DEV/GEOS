@@ -45,7 +45,10 @@ public:
   NumericalMethodsManager() = delete;
 
   /**
-   * @copydoc geosx::dataRepository::Group::Group( string const &, Group * const )
+   * @brief Constructor
+   *
+   * @param[in] name the name of this object manager
+   * @param[in] parent the parent Group
    */
   NumericalMethodsManager( string const & name, Group * const parent );
 
