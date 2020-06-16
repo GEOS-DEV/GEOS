@@ -1,7 +1,7 @@
-.. _TutorialDeadOilNorme:
+.. _TutorialDeadOilEgg:
 
 ##################################################
-Tutorial 6: Dead-Oil simulation in the Norne field  
+Tutorial 6: Dead-Oil simulation in the Egg model  
 ##################################################
 
 **Context**
