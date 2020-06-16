@@ -160,8 +160,8 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
     {
       // if not, then fill increase the size of the fractureConnectors to face elements map and
       // fill the fractureConnectorsToEdges map with the current edge....and the inverse map too.
-      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( nullptr, 0 );
-      edgeManager->m_fractureConnectorsEdgesToEdges.push_back( edge );
+      edgeManager->m_fractureConnectorEdgesToFaceElements.appendArray( 0 );
+      edgeManager->m_fractureConnectorsEdgesToEdges.emplace_back( edge );
       edgeManager->m_edgesToFractureConnectorsEdges[edge] = edgeManager->m_fractureConnectorsEdgesToEdges.size()-1;
     }
     // now fill the fractureConnectorsToFaceElements map. This is analogous to the edge to face map
