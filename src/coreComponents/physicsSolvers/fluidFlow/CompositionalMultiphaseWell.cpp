@@ -1582,9 +1582,9 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaMixtureConnRateString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaMixtureConnRateString ) );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getNeighbors() );

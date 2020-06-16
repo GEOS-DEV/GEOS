@@ -90,8 +90,8 @@ void NodeManager::SetEdgeMaps( EdgeManager const * const edgeManager )
 
   forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
   {
-    toEdgesTemp.atomicAppendToArray( parallelHostAtomic{}, edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.atomicAppendToArray( parallelHostAtomic{}, edgeToNodeMap( edgeID, 1 ), edgeID );
+    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 0 ), edgeID );
+    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 1 ), edgeID );
     totalNodeEdges += 2;
   } );
 
@@ -143,7 +143,7 @@ void NodeManager::SetFaceMaps( FaceManager const * const faceManager )
     totalNodeFaces += numFaceNodes;
     for( localIndex a = 0; a < numFaceNodes; ++a )
     {
-      toFacesTemp.atomicAppendToArray( parallelHostAtomic{}, faceToNodes( faceID, a ), faceID );
+      toFacesTemp.emplaceBackAtomic< parallelHostAtomic >( faceToNodes( faceID, a ), faceID );
     }
   } );
 
@@ -254,9 +254,9 @@ void NodeManager::SetElementMaps( ElementRegionManager const * const elementRegi
       for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
       {
         localIndex const nodeIndex = elemToNodeMap( k, a );
-        toElementRegionList.appendToArray( nodeIndex, er );
-        toElementSubRegionList.appendToArray( nodeIndex, esr );
-        toElementList.appendToArray( nodeIndex, k );
+        toElementRegionList.emplaceBack( nodeIndex, er );
+        toElementSubRegionList.emplaceBack( nodeIndex, esr );
+        toElementList.emplaceBack( nodeIndex, k );
       }
     }
   } );

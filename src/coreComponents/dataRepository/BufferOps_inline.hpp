@@ -414,7 +414,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 {
   ArrayOfArrays< T > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
-  var.stealFrom( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  var.assimilate( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
   return sizeOfUnpackedChars;
 }
 

@@ -142,7 +142,7 @@ public:
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( chai::ExecutionSpace const space, bool const touch ) const = 0;
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
   ///@}
 

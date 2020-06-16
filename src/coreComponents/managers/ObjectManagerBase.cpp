@@ -174,7 +174,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & 
   {
     if( isDomainBoundary[k] == 1 )
     {
-      objectList.push_back( k );
+      objectList.emplace_back( k );
     }
   }
 }
@@ -186,7 +186,7 @@ void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array 
   {
     if( isDomainBoundary[k] == 1 )
     {
-      objectList.push_back( this->m_localToGlobalMap[k] );
+      objectList.emplace_back( this->m_localToGlobalMap[k] );
     }
   }
   std::sort( objectList.begin(), objectList.end() );
@@ -636,7 +636,7 @@ localIndex ObjectManagerBase::UnpackGlobalMaps( buffer_unit_type const * & buffe
 
         unpackedLocalIndices( a ) = newLocalIndex;
 
-        newGlobalIndices.push_back( globalIndices[a] );
+        newGlobalIndices.emplace_back( globalIndices[a] );
 
         ++numNewIndices;
 
@@ -767,7 +767,7 @@ void ObjectManagerBase::SetReceiveLists()
   {
     if( m_ghostRank[a] > -1 )
     {
-      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().push_back( a );
+      getNeighborData( m_ghostRank[ a ] ).ghostsToReceive().emplace_back( a );
     }
   }
 }
@@ -897,7 +897,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   {
     eraseList.clear();
     localIndex pos = 0;
-    for( auto const & compositeIndex : upmap.getIterableSet( targetIndex ) )
+    for( auto const & compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
       for( localIndex a=0; a<downmap.size( 1 ); ++a )
@@ -911,7 +911,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.push_back( pos );
+        eraseList.emplace_back( pos );
       }
 
       ++pos;
@@ -961,7 +961,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   {
     eraseList.clear();
     localIndex pos = 0;
-    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
+    for( localIndex const compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
       for( localIndex a=0; a<downmap[compositeIndex].size(); ++a )
@@ -975,7 +975,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.push_back( pos );
+        eraseList.emplace_back( pos );
       }
 
       ++pos;
@@ -994,10 +994,10 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
   for( localIndex const targetIndex : targetIndices )
   {
     eraseList.clear();
-    for( localIndex const compositeIndex : upmap.getIterableSet( targetIndex ) )
+    for( localIndex const compositeIndex : upmap[ targetIndex ] )
     {
       bool hasTargetIndex = false;
-      for( localIndex const compositeLocalIndex : downmap.getIterableArray( compositeIndex ) )
+      for( localIndex const compositeLocalIndex : downmap[ compositeIndex ] )
       {
         if( compositeLocalIndex == targetIndex )
         {
@@ -1007,7 +1007,7 @@ void ObjectManagerBase::CleanUpMap( std::set< localIndex > const & targetIndices
 
       if( !hasTargetIndex )
       {
-        eraseList.push_back( compositeIndex );
+        eraseList.emplace_back( compositeIndex );
       }
     }
 

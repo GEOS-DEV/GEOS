@@ -971,8 +971,8 @@ SinglePhaseWell::ApplySystemSolution( DofManager const & dofManager,
                                1, m_numDofPerWellElement );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaConnRateString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaConnRateString ) );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getNeighbors() );

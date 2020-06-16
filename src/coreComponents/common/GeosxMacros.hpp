@@ -66,15 +66,15 @@
 #define GEOSX_UNUSED_PARAM( X )
 
 /// Used to silence unused variable warnings, cuda doesn't respect casting to void.
-template< typename T >
+template< typename ... ARGS >
 GEOSX_HOST_DEVICE inline constexpr
-void i_g_n_o_r_e( T & ) {}
+void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( X ) i_g_n_o_r_e( X );
+#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
 
 /// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+#define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
 
 ///@}
 

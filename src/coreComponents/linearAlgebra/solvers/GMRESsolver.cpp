@@ -121,7 +121,6 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   // Create upper Hessenberg matrix
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_maxRestart + 1, m_maxRestart );
-  H = 0.0;
 
   // Create plane rotation storage
   array1d< real64 > c( m_maxRestart + 1 );

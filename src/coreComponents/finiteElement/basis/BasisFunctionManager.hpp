@@ -27,12 +27,12 @@ namespace keys
 }
 
 
-class BasisFunctionManager : public dataRepository::Group
+class BasisFunctionManager final : public dataRepository::Group
 {
 public:
   BasisFunctionManager() = delete;
   BasisFunctionManager( string const & name, Group * const parent );
-  virtual ~BasisFunctionManager() override final;
+  virtual ~BasisFunctionManager() override;
 
   virtual Group * CreateChild( string const & childKey, string const & childName ) override;
 

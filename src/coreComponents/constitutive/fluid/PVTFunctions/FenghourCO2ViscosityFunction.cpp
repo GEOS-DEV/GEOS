@@ -78,7 +78,7 @@ void FenghourCO2ViscosityFunction::MakeTable( string_array const & inputPara )
 
   while( P <= PEnd )
   {
-    pressures.push_back( P );
+    pressures.emplace_back( P );
     P += dP;
   }
 
@@ -86,7 +86,7 @@ void FenghourCO2ViscosityFunction::MakeTable( string_array const & inputPara )
 
   while( T <= TEnd )
   {
-    temperatures.push_back( T );
+    temperatures.emplace_back( T );
     T += dT;
   }
 

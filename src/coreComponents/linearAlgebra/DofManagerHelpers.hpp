@@ -492,7 +492,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
           // check if we should visit this location
           if( ( VISIT_GHOSTS || ghostRank[locIdx] < 0) && !std::exchange( locationsVisited[locIdx], true ) )
           {
-            locationsToVisit.push_back( locIdx );
+            locationsToVisit.emplace_back( locIdx );
           }
         }
       }
