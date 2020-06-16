@@ -91,7 +91,7 @@ models (set with the ``fluidNames`` and ``relPermNames`` attributes) are used in
 single-physics solvers.
 If this is not the case, GEOSX will throw an error and terminate the simulation.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
@@ -127,7 +127,7 @@ It is the responsibility of the user to make sure that there is a perforation in
 of the well mesh---otherwise, an error will be thrown and the simulation will terminate. The well
 geometry must be specified in meters.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
@@ -177,7 +177,7 @@ of the **Output** XML block (here, ``restartOutput``).
 
 More information about the events can be found at :ref:`EventManager`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
@@ -198,7 +198,7 @@ This is currently the only numerical scheme that can be used with a flow solver 
 There is no numerical scheme to specify for the well mesh.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
@@ -233,7 +233,7 @@ and to the constitutive models introduced in the **Constitutive** block.
 As before, this is done using the names chosen by the user when these blocks
 are defined.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
@@ -276,7 +276,7 @@ We remind the reader that the attribute ``name`` of the constitutive models defi
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
@@ -311,7 +311,7 @@ in the **BlackOilFluid** XML sub-block.
 Note that there is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -327,7 +327,7 @@ Specifying the output formats
 In this section, we request an output of the results in VTK format and an output of the restart file.
 Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_bottom_layers_spe10.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
@@ -406,17 +406,16 @@ When ``Running simulation`` is shown, we are done with the case set up and go in
 .. code-block:: console
 		
   Running simulation
-  Time: 0s, dt:1000s, Cycle: 0
-      Attempt:  0, NewtonIter:  0 ; 
-      Attempt:  0, NewtonIter:  1 ; 
+  Time: 0s, dt:10s, Cycle: 0
+    Attempt:  0, NewtonIter:  0 ; 
+
+    Attempt:  0, NewtonIter:  1 ; 
   Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-      Attempt:  0, NewtonIter:  2 ; 
+    Attempt:  0, NewtonIter:  2 ; 
   Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-      Attempt:  0, NewtonIter:  3 ; 
+    Attempt:  0, NewtonIter:  3 ; 
   Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-      Attempt:  0, NewtonIter:  4 ; 
-  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
-      Attempt:  0, NewtonIter:  5 ; 
+    Attempt:  0, NewtonIter:  4 ; 
   Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
   coupledFlowAndWells: Newton solver converged in less than 16 iterations, time-step required will be doubled.
 
@@ -447,10 +446,10 @@ a `GitHub issue on the project's GitHub page <https://github.com/GEOSX/GEOSX/iss
 **Next tutorial**
 
 In the next tutorial :ref:`TutorialDeadOilEgg`, we learn how to run a
-a more complex test case based on the Egg model.
+more complex test case based on the Egg model.
 
 **For more details**
 
-  - A complete description of the reservoir flow solver is found here :ref:`CompositionalMultiphaseFlow`.
+  - A complete description of the reservoir flow solver is found here: :ref:`CompositionalMultiphaseFlow`.
   - The well solver is description at :ref:`CompositionalMultiphaseWell`. 
   - The available constitutive models are listed at :ref:`Constitutive`.
