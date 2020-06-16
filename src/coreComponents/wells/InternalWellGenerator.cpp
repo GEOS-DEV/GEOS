@@ -135,7 +135,7 @@ Group * InternalWellGenerator::CreateChild( string const & childKey, string cons
     ++m_numPerforations;
 
     // keep track of the perforations that have been added
-    m_perforationList.push_back( childName );
+    m_perforationList.emplace_back( childName );
 
     return RegisterGroup< Perforation >( childName );
   }
@@ -472,7 +472,7 @@ void InternalWellGenerator::MergePerforations()
 
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    elemToPerfMap[m_perfElemId[iperf]].push_back( iperf );
+    elemToPerfMap[m_perfElemId[iperf]].emplace_back( iperf );
   }
 
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )

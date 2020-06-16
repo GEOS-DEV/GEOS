@@ -222,7 +222,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
 
   // Need a synchronization of deltaTraction as will be used in AssembleStabilization
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaTractionString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString ) );
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain->getNeighbors() );
@@ -884,7 +884,7 @@ void LagrangianContactSolver::SetupDofs( DomainPartition const * const domain,
   string_array fractureRegions;
   elemManager->forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
   {
-    fractureRegions.push_back( elementRegion.getName() );
+    fractureRegions.emplace_back( elementRegion.getName() );
   } );
 
   dofManager.addField( viewKeyStruct::tractionString,
@@ -1752,10 +1752,10 @@ void LagrangianContactSolver::ApplySystemSolution( DofManager const & dofManager
   dofManager.addVectorToField( solution, viewKeyStruct::tractionString, viewKeyStruct::tractionString, -scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::tractionString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaTractionString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::tractionString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString ) );
   // This is used locally only, synchronized just for output reasons
-  fieldNames["elems"].push_back( viewKeyStruct::localJumpString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::localJumpString ) );
   // fractureStateString is synchronized in UpdateFractureState
   // previousFractureStateString and previousLocalJumpString used locally only
 
@@ -1920,7 +1920,7 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition * const domai
 void LagrangianContactSolver::SynchronizeFractureState( DomainPartition * const domain ) const
 {
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::fractureStateString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),
