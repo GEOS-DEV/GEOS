@@ -58,8 +58,8 @@ struct HybridFVMInnerProductHelper
       }
     }
     result[ 0 ][ 0 ] = values[ 0 ];
-    result[ 1 ][ 2 ] = values[ 1 ];
-    result[ 1 ][ 2 ] = values[ 2 ];
+    result[ 1 ][ 1 ] = values[ 1 ];
+    result[ 2 ][ 2 ] = values[ 2 ];
   }
 
 

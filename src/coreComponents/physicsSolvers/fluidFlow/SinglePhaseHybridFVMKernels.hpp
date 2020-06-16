@@ -248,6 +248,7 @@ struct AssemblerKernel
            ElementView< arrayView1d< real64 const > > const & mobility,
            ElementView< arrayView1d< real64 const > > const & dMobility_dp,
            ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+           integer const elemGhostRank,
            globalIndex const rankOffset,
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
