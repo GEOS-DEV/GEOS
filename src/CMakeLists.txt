@@ -134,7 +134,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA
                      )
 endif()
 
-if( ${SPHINX_FOUND} )
+if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
 endif()
 

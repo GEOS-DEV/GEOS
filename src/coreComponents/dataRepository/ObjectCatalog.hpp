@@ -194,7 +194,7 @@ public:
  */
 //START_SPHINX_3
 template< typename BASETYPE, typename TYPE, typename ... ARGS >
-class CatalogEntry : public CatalogInterface< BASETYPE, ARGS... >
+class CatalogEntry final : public CatalogInterface< BASETYPE, ARGS... >
 {
 public:
 
@@ -214,7 +214,7 @@ public:
   /**
    * @brief Default destructor.
    */
-  ~CatalogEntry() override final
+  ~CatalogEntry() override
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOSX_LOG( "Calling destructor for CatalogEntry< " << LvArray::demangle( typeid(TYPE).name())
@@ -266,7 +266,7 @@ public:
    * @return a unique_ptr<BASETYPE> to the newly allocated class.
    */
   //START_SPHINX_4
-  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const override final
+  virtual std::unique_ptr< BASETYPE > Allocate( ARGS... args ) const override
   {
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Creating type " << LvArray::demangle( typeid(TYPE).name())
@@ -481,7 +481,7 @@ public:
  * @tparam TYPE
  */
 template< typename BASETYPE, typename TYPE >
-class CatalogEntry< BASETYPE, TYPE > : public CatalogInterface< BASETYPE >
+class CatalogEntry< BASETYPE, TYPE > final : public CatalogInterface< BASETYPE >
 {
 public:
   /**
@@ -500,7 +500,7 @@ public:
   /**
    * @brief Default destructor.
    */
-  ~CatalogEntry() override final
+  ~CatalogEntry() override
   {
 #if OBJECTCATALOGVERBOSE > 1
     GEOSX_LOG( "Calling destructor for CatalogEntry< " << LvArray::demangle( typeid(TYPE).name())
@@ -550,7 +550,7 @@ public:
    * @brief Create a new instance of @p TYPE.
    * @return a unique_ptr<BASETYPE> that owns the new instance
    */
-  virtual std::unique_ptr< BASETYPE > Allocate(  ) const override final
+  virtual std::unique_ptr< BASETYPE > Allocate(  ) const override
   {
 #if OBJECTCATALOGVERBOSE > 0
     GEOSX_LOG( "Creating type " << LvArray::demangle( typeid(TYPE).name())

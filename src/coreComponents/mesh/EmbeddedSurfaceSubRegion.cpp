@@ -95,8 +95,8 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
                                                        R1Tensor normalVector )
 {
-  m_embeddedSurfaceToCell.push_back( cellIndex );
-  m_normalVector.push_back( normalVector );
+  m_embeddedSurfaceToCell.emplace_back( cellIndex );
+  m_normalVector.emplace_back( normalVector );
 
   // resize
   this->resize( this->size() + 1 );
@@ -171,18 +171,18 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       {
         addEmbeddedElem = false;
       }
-      intersectionPoints.push_back( point );
+      intersectionPoints.emplace_back( point );
     }
   } //end of edge loop
 
   if( addEmbeddedElem )
   {
-    m_embeddedSurfaceToCell.push_back( cellIndex );
-    m_embeddedSurfaceToRegion.push_back( regionIndex );
-    m_embeddedSurfaceToSubRegion.push_back( subRegionIndex );
-    m_normalVector.push_back( normalVector );
-    m_tangentVector1.push_back( fracture->getWidthVector());
-    m_tangentVector2.push_back( fracture->getLengthVector());
+    m_embeddedSurfaceToCell.emplace_back( cellIndex );
+    m_embeddedSurfaceToRegion.emplace_back( regionIndex );
+    m_embeddedSurfaceToSubRegion.emplace_back( subRegionIndex );
+    m_normalVector.emplace_back( normalVector );
+    m_tangentVector1.emplace_back( fracture->getWidthVector());
+    m_tangentVector2.emplace_back( fracture->getLengthVector());
     // resize
     this->resize( this->size() + 1 );
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );

@@ -358,7 +358,7 @@ string_array ElementRegionBase::getConstitutiveNames() const
     Group const * const matModel = this->GetSubRegion( 0 )->GetConstitutiveModels()->GetGroup( matName );
     if( dynamic_cast< CONSTITUTIVE_TYPE const * >( matModel ) != nullptr )
     {
-      rval.push_back( matName );
+      rval.emplace_back( matName );
     }
   }
   return rval;

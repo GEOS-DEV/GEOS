@@ -417,7 +417,7 @@ public:
    */
   void AddSetName( string const & setName )
   {
-    m_setNames.push_back( setName );
+    m_setNames.emplace_back( setName );
   }
 
 
