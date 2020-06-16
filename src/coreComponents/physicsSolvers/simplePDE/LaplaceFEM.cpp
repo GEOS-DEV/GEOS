@@ -274,7 +274,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
 
   // Synchronize ghost nodes
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( m_fieldName );
+  fieldNames["node"].emplace_back( m_fieldName );
 
   CommunicationTools::
     SynchronizeFields( fieldNames,

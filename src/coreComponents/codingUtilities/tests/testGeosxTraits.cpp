@@ -206,7 +206,7 @@ TEST( testGeosxTraits, is_string )
 
 TEST( testGeosxTraits, is_array )
 {
-  static_assert( is_array< LvArray::Array< int, 1, camp::make_idx_seq< 0 >::type, int > >, "Should be true." );
+  static_assert( is_array< array1d< int > >, "Should be true." );
 
   static_assert( !is_array< int >, "Should be false." );
   static_assert( !is_array< double >, "Should be false." );

@@ -4,7 +4,7 @@
 Name                             Type                                                                                                             Description                                               
 ================================ ================================================================================================================ ========================================================= 
 domainBoundaryIndicator          integer_array                                                                                                    (no description available)                                
-edgeList                         geosx_InterObjectRelation< LvArray_ArrayOfArrays< long, long > >                                                 Map to the edges.                                         
+edgeList                         geosx_InterObjectRelation< LvArray_ArrayOfArrays< long, long, LvArray_NewChaiBuffer > >                          Map to the edges.                                         
 elementAperture                  real64_array                                                                                                     The aperture of each EmbeddedSurface.                     
 elementArea                      real64_array                                                                                                     The area of each EmbeddedSurface element.                 
 elementCenter                    real64_array2d                                                                                                   (no description available)                                

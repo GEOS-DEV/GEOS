@@ -551,8 +551,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::Velocity );
-  fieldNames["node"].push_back( keys::Acceleration );
+  fieldNames["node"].emplace_back( keys::Velocity );
+  fieldNames["node"].emplace_back( keys::Acceleration );
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain->getNeighbors(), m_iComm, true );
 
@@ -978,7 +978,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition * const domain,
     array1d< string > allFaceElementRegions;
     elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
     {
-      allFaceElementRegions.push_back( elemRegion.getName() );
+      allFaceElementRegions.emplace_back( elemRegion.getName() );
     } );
     finiteElement::
       fillSparsity< serialPolicy,
@@ -1223,8 +1223,8 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( solution, keys::TotalDisplacement, keys::TotalDisplacement, -scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::IncrementalDisplacement );
-  fieldNames["node"].push_back( keys::TotalDisplacement );
+  fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
+  fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain->getMeshBody( 0 )->getMeshLevel( 0 ),

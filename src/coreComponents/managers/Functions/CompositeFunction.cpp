@@ -84,7 +84,7 @@ void CompositeFunction::InitializeFunction()
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.push_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));
+    m_subFunctions.emplace_back( functionManager.GetGroup< FunctionBase >( m_functionNames[ii] ));
   }
 #else
   GEOSX_ERROR( "GEOSX was not configured with mathpresso!" );
@@ -105,7 +105,7 @@ void CompositeFunction::Evaluate( dataRepository::Group const * const group,
   {
     real64_array tmp( result.size());
     m_subFunctions[ii]->Evaluate( group, time, set, tmp );
-    subFunctionResults.push_back( std::move( tmp ));
+    subFunctionResults.emplace_back( std::move( tmp ));
   }
 
   // Evaluate the symbolic math

@@ -278,7 +278,7 @@ public:
   template< typename T >
   T & AddProperty( string const & propertyName )
   {
-    m_externalPropertyNames.push_back( propertyName );
+    m_externalPropertyNames.emplace_back( propertyName );
     return this->registerWrapper< T >( propertyName )->reference();
   }
 

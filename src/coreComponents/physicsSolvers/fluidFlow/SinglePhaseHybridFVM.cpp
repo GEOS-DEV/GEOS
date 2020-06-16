@@ -612,8 +612,8 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
 
   // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
   std::map< string, string_array > fieldNames;
-  fieldNames["face"].push_back( viewKeyStruct::deltaFacePressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+  fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 

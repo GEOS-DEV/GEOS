@@ -93,7 +93,7 @@ public:
    */
   void AddCellBlockName( string const & cellBlockName )
   {
-    m_cellBlockNames.push_back( cellBlockName );
+    m_cellBlockNames.emplace_back( cellBlockName );
   }
 
   virtual void GenerateMesh( Group * const cellBlocks ) override;

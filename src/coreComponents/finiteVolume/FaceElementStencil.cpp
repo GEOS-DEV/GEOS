@@ -38,10 +38,10 @@ void FaceElementStencil::add( localIndex const numPts,
   typename decltype( m_connectorIndices )::iterator iter = m_connectorIndices.find( connectorIndex );
   if( iter==m_connectorIndices.end() )
   {
-    m_elementRegionIndices.appendArray( elementRegionIndices, numPts );
-    m_elementSubRegionIndices.appendArray( elementSubRegionIndices, numPts );
-    m_elementIndices.appendArray( elementIndices, numPts );
-    m_weights.appendArray( weights, numPts );
+    m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
+    m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
+    m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
+    m_weights.appendArray( weights, weights + numPts );
 
     m_connectorIndices[connectorIndex] = m_weights.size() - 1;
   }
@@ -53,10 +53,10 @@ void FaceElementStencil::add( localIndex const numPts,
     m_elementIndices.clearArray( stencilIndex );
     m_weights.clearArray( stencilIndex );
 
-    m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, numPts );
-    m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, numPts );
-    m_elementIndices.appendToArray( stencilIndex, elementIndices, numPts );
-    m_weights.appendToArray( stencilIndex, weights, numPts );
+    m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, elementRegionIndices + numPts );
+    m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, elementSubRegionIndices + numPts );
+    m_elementIndices.appendToArray( stencilIndex, elementIndices, elementIndices + numPts );
+    m_weights.appendToArray( stencilIndex, weights, weights + numPts );
   }
 }
 
@@ -78,16 +78,16 @@ void FaceElementStencil::add( localIndex const numPts,
     if( stencilIndex < m_cellCenterToEdgeCenters.size())
     {
       m_cellCenterToEdgeCenters.clearArray( stencilIndex );
-      m_cellCenterToEdgeCenters.appendToArray( stencilIndex, cellCenterToEdgeCenter, numPts );
+      m_cellCenterToEdgeCenters.appendToArray( stencilIndex, cellCenterToEdgeCenter, cellCenterToEdgeCenter + numPts );
 
       m_isGhostConnectors.clearArray( stencilIndex );
-      m_isGhostConnectors.appendToArray( stencilIndex, isGhostConnectors, numPts );
+      m_isGhostConnectors.appendToArray( stencilIndex, isGhostConnectors, isGhostConnectors + numPts );
 
     }
     else
     {
-      m_cellCenterToEdgeCenters.appendArray( cellCenterToEdgeCenter, numPts );
-      m_isGhostConnectors.appendArray( isGhostConnectors, numPts );
+      m_cellCenterToEdgeCenters.appendArray( cellCenterToEdgeCenter, cellCenterToEdgeCenter + numPts );
+      m_isGhostConnectors.appendArray( isGhostConnectors, isGhostConnectors + numPts );
     }
   }
 }

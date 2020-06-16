@@ -765,9 +765,9 @@ void WellElementSubRegion::UpdateNodeManagerNodeToElementMap( MeshLevel & mesh )
 
       // update the reverse map from well node to well element
       // this is needed to generate the adjacency list in communication setup phase
-      toElementRegionList.appendToArray( inodeLocal, iregion );
-      toElementSubRegionList.appendToArray( inodeLocal, isubRegion );
-      toElementList.appendToArray( inodeLocal, iwelemLocal );
+      toElementRegionList.emplaceBack( inodeLocal, iregion );
+      toElementSubRegionList.emplaceBack( inodeLocal, isubRegion );
+      toElementList.emplaceBack( inodeLocal, iwelemLocal );
     }
   }
   setupRelatedObjectsInRelations( &mesh );

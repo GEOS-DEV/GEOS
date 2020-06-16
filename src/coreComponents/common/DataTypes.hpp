@@ -36,6 +36,7 @@
 #include "LvArray/src/Macros.hpp"
 #include "LvArray/src/SortedArray.hpp"
 #include "LvArray/src/StackBuffer.hpp"
+#include "LvArray/src/NewChaiBuffer.hpp"
 
 #include "math/TensorT/TensorT.h"
 #include "Path.hpp"
@@ -161,16 +162,14 @@ using buffer_type = std::vector< buffer_unit_type >;
 /// Multidimensional array type. See LvArray:Array for details.
 template< typename T,
           int NDIM,
-          typename PERMUTATION=camp::make_idx_seq_t< NDIM >,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
-using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, DATA_VECTOR_TYPE >;
+          typename PERMUTATION=camp::make_idx_seq_t< NDIM > >
+using Array = LvArray::Array< T, NDIM, PERMUTATION, localIndex, LvArray::NewChaiBuffer >;
 
 /// Multidimensional array view type. See LvArray:ArrayView for details.
 template< typename T,
           int NDIM,
-          int USD = NDIM - 1,
-          template< typename > class DATA_VECTOR_TYPE=LvArray::NewChaiBuffer >
-using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, DATA_VECTOR_TYPE >;
+          int USD = NDIM - 1 >
+using ArrayView = LvArray::ArrayView< T, NDIM, USD, localIndex, LvArray::NewChaiBuffer >;
 
 /// Multidimensional array slice type. See LvArray:ArraySlice for details.
 template< typename T, int NDIM, int USD = NDIM - 1 >
@@ -268,13 +267,21 @@ template< typename T, int MAXSIZE >
 using stackArray5d = StackArray< T, 5, MAXSIZE >;
 
 
+/// Alias for Sparsity pattern class.
+template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+using SparsityPattern = LvArray::SparsityPattern< COL_INDEX, INDEX_TYPE, LvArray::NewChaiBuffer >;
+
+/// Alias for Sparsity pattern View.
+template< typename COL_INDEX, typename INDEX_TYPE=localIndex >
+using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE const, LvArray::NewChaiBuffer >;
+
 /// Alias for CRS Matrix class.
 template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex >;
+using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, localIndex, LvArray::NewChaiBuffer >;
 
 /// Alias for CRS Matrix View.
 template< typename T, typename COL_INDEX=localIndex >
-using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const >;
+using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, localIndex const, LvArray::NewChaiBuffer >;
 
 ///@}
 
@@ -289,11 +296,11 @@ using set = std::set< T >;
 
 /// A sorted array of local indices.
 template< typename T >
-using SortedArray = LvArray::SortedArray< T, localIndex >;
+using SortedArray = LvArray::SortedArray< T, localIndex, LvArray::NewChaiBuffer >;
 
 /// A sorted array view of local indices.
 template< typename T >
-using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
+using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::NewChaiBuffer >;
 
 ///@}
 
@@ -304,19 +311,19 @@ using SortedArrayView = LvArray::SortedArrayView< T, localIndex >;
 
 /// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
 template< typename T >
-using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex >;
+using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex, LvArray::NewChaiBuffer >;
 
 /// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
 template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES >;
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES, LvArray::NewChaiBuffer >;
 
 /// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
 template< typename T >
-using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex >;
+using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex, LvArray::NewChaiBuffer >;
 
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
 template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const >;
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const, LvArray::NewChaiBuffer >;
 
 ///@}
 

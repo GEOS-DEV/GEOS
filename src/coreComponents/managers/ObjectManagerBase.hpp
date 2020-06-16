@@ -378,7 +378,7 @@ public:
       integer & owningRank = m_ghostRank[ index ];
       if( owningRank >= 0 )
       {
-        nonLocalGhosts.push_back( { m_localToGlobalMap[ index ], owningRank } );
+        nonLocalGhosts.emplace_back( m_localToGlobalMap[ index ], owningRank );
       }
       else
       {

@@ -163,7 +163,7 @@ void FluxStencil< INDEX, WEIGHT >::add( localIndex const numPts,
     entries[i] = { indices[i], weights[i] };
   }
 
-  m_connections.appendArray( entries.data(), numPts );
+  m_connections.appendArray( entries.begin(), entries.end() );
   m_connectorIndices[connectorIndex] = m_connections.size() - 1;
 }
 
