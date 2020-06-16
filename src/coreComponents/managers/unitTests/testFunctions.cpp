@@ -350,8 +350,88 @@ TEST( FunctionTests, 4DTable_multipleInputs )
 
 
 
-// #ifdef GEOSX_USE_MATHPRESSO
-// #endif
+#ifdef GEOSX_USE_MATHPRESSO
+
+TEST( FunctionTests, 4DTable_symbolic )
+{
+  FunctionManager * functionManager = &FunctionManager::FunctionManager::Instance();
+
+  // Symbolic function with four inputs
+  string expression = "1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d)";
+  localIndex Ntest = 20;
+  
+  // Set variable names
+  string_array inputVarNames(4);
+  string nameA = "a";
+  string nameB = "b";
+  string nameC = "c";
+  string nameD = "d";
+  inputVarNames[0] = nameA;
+  inputVarNames[1] = nameB;
+  inputVarNames[2] = nameC;
+  inputVarNames[3] = nameD;
+
+  // Initialize the table
+  SymbolicFunction * table_d = functionManager->CreateChild( "SymbolicFunction", "table_d" )->group_cast< SymbolicFunction * >();
+  table_d->setSymbolicExpression(expression);
+  table_d->setInputVarNames(inputVarNames);
+  table_d->setSymbolicVariableNames(inputVarNames);
+  table_d->InitializeFunction();
+
+  // Setup a group for testing the batch mode function evaluation
+  string groupName = "testGroup";
+  dataRepository::Group testGroup(groupName, nullptr);
+  real64_array inputA;
+  real64_array inputB;
+  real64_array inputC;
+  real64_array inputD;
+  testGroup.registerWrapper(nameA, &inputA)->setSizedFromParent( 1 );
+  testGroup.registerWrapper(nameB, &inputB)->setSizedFromParent( 1 );
+  testGroup.registerWrapper(nameC, &inputC)->setSizedFromParent( 1 );
+  testGroup.registerWrapper(nameD, &inputD)->setSizedFromParent( 1 );
+  testGroup.resize(Ntest);
+
+  // Build testing inputs/outputs
+  real64_array expected( Ntest );
+  real64_array output( Ntest );
+  SortedArray< localIndex > set;
+
+  // Fill out the set
+  for (localIndex ii=0; ii<Ntest; ++ii)
+  {
+    set.insert(ii);
+  }
+
+  // Setup a random number generator
+  std::default_random_engine generator;
+  std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+
+  // Build the inputs  
+  for (localIndex ii=0; ii<Ntest; ++ii)
+  {
+    real64 a = distribution(generator);
+    real64 b = distribution(generator);
+    real64 c = distribution(generator);
+    real64 d = distribution(generator);
+    inputA[ii] = a;
+    inputB[ii] = b;
+    inputC[ii] = c;
+    inputD[ii] = d;
+
+    expected[ii] = 1.0+(2.0*a)-(3.0*b*b)+(5.0*c*c*c)-(7.0*d*d*d*d);
+  }
+
+  // Evaluate the function in batch mode
+  table_d->Evaluate( &(testGroup), 0.0, set.toView(), output );
+
+  // Compare results
+  for (localIndex jj=0; jj<Ntest; ++jj)
+  {
+    ASSERT_NEAR( expected[jj], output[jj], 1e-10 );
+  }
+}
+
+#endif
 
 
 int main( int argc, char * * argv )
