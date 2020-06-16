@@ -176,13 +176,15 @@ void TableFunction::InitializeFunction()
 
 void TableFunction::reInitializeFunction()
 {
+  m_dimensions = LvArray::integerConversion< localIndex >(m_coordinates.size());
+  m_size.resize(m_dimensions);
 
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;
   m_indexIncrement.resize( m_dimensions );
   for( localIndex ii=0; ii<m_dimensions; ++ii )
   {
-    m_size[ii] = m_coordinates[ii].size();
+    m_size[ii] = LvArray::integerConversion< localIndex >( m_coordinates[ii].size() );
     m_indexIncrement[ii] = increment;
     increment *= m_size[ii];
   }

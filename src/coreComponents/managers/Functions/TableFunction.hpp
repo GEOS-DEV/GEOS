@@ -134,12 +134,6 @@ public:
    */
   void setTableValues(real64_array values) { m_values = values; }
 
-  /**
-   * @brief Set the table dimensionality
-   * @param dimensions The number of table dimensions
-   */
-  void setTableDimensions(localIndex dimensions) { m_dimensions = dimensions; }
-
   /// Enumerator of available interpolation types
   enum class InterpolationType
   {
