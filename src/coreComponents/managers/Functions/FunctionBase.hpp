@@ -153,14 +153,13 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
                               real64_array & result ) const
 {
   real64 const * input_ptrs[4];
-
-  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-
-  localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
-  GEOSX_ERROR_IF( numVars > 4, "Number of variables is: " << numVars );
-
   localIndex varSize[4] = {0, 0, 0, 0};
   int timeVar[4] = {1, 1, 1, 1};
+
+  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
+  localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
+  localIndex groupSize = group->size();
+  localIndex totalVarSize = 0;
   for( auto varIndex=0; varIndex<numVars; ++varIndex )
   {
     string const & varName = inputVarNames[varIndex];
@@ -170,17 +169,22 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       input_ptrs[varIndex] = &time;
       varSize[varIndex] = 1;
       timeVar[varIndex] = 0;
+      ++totalVarSize;
     }
-    else if (group->size() > 0)
+    else if (groupSize > 0)
     {
       // Should we throw a warning if the group is zero-length?
-
       dataRepository::WrapperBase const * wrapper = group->getWrapperBase( varName );
       input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper->voidPointer() );
-      // varSize[ varIndex ] = wrapper.elementByteSize() / sizeof( double );
-      varSize[varIndex] = wrapper->size() / group->size();
+      
+      localIndex wrapperSize = LvArray::integerConversion< localIndex >(wrapper->size());
+      varSize[varIndex] = wrapperSize / groupSize;
+      totalVarSize += varSize[varIndex];
     }
   }
+
+  // Make sure the inputs do not exceed the maximum length
+  GEOSX_ERROR_IF( totalVarSize > 4, "Function input size is: " << totalVarSize );
 
   forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
   {
