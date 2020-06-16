@@ -69,8 +69,14 @@ public:
    */
   virtual ~SinglePhaseBase() override = default;
 
-  virtual void
-  RegisterDataOnMesh( Group * const MeshBodies ) override;
+  virtual void RegisterDataOnMesh( Group * const MeshBodies ) override;
+
+  virtual void SetupSystem( DomainPartition & domain,
+                            DofManager & dofManager,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            array1d< real64 > & localRhs,
+                            array1d< real64 > & localSolution,
+                            bool const setSparsity = true ) override;
 
   virtual real64
   SolverStep( real64 const & time_n,

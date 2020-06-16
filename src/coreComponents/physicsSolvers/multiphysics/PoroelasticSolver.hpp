@@ -49,7 +49,8 @@ public:
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
                             array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution ) override;
+                            array1d< real64 > & localSolution,
+                            bool const setSparsity = true ) override;
 
   virtual void
   SetupDofs( DomainPartition const & domain,

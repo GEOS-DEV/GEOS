@@ -28,7 +28,7 @@ namespace geosx
 {
 
 /**
- * @class CommandLineOptions class containing the parsed command line options.
+ * CommandLineOptions class containing the parsed command line options.
  */
 struct CommandLineOptions
 {
@@ -93,6 +93,7 @@ CommandLineOptions const & getCommandLineOptions();
 
 /**
  * @brief Override the input file name, useful only for tests.
+ * @param inputFileName new input file name
  */
 void overrideInputFileName( std::string const & inputFileName );
 

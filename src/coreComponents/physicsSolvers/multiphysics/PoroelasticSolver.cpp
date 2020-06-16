@@ -20,6 +20,7 @@
 
 #include "PoroelasticSolver.hpp"
 
+#include "../solidMechanics/SolidMechanicsPoroElasticKernel.hpp"
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/PoroElastic.hpp"
@@ -95,7 +96,8 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
                                      DofManager & dofManager,
                                      CRSMatrix< real64, globalIndex > & localMatrix,
                                      array1d< real64 > & localRhs,
-                                     array1d< real64 > & localSolution )
+                                     array1d< real64 > & localSolution,
+                                     bool const setSparsity )
 {
   if( m_precond )
   {
@@ -103,8 +105,12 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
   }
 
   // setup monolithic coupled system
-  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution );
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( m_matrix, true );
+  }
   if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
   {
     CreatePreconditioner();
@@ -143,7 +149,8 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
 {
   if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
-    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
+    m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+    m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   }
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
@@ -160,6 +167,8 @@ void PoroelasticSolver::PostProcessInput()
   GEOSX_ERROR_IF( m_solidSolver == nullptr, "Solid solver not found or invalid type: " << m_solidSolverName );
 
   string ctOption = this->getReference< string >( viewKeyStruct::couplingTypeOptionStringString );
+
+  m_solidSolver->setEffectiveStress( 1 );
 
   if( ctOption == "SIM_FixedStress" )
   {
@@ -304,7 +313,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
 
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-    localIndex const numQuadraturePoints = feDiscretization.m_finiteElement->n_quadrature_points();
+    localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
 
     // TODO: remove use of R1Tensor and use device policy
     forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const ei )
@@ -343,11 +352,17 @@ void PoroelasticSolver::AssembleSystem( real64 const time_n,
 {
 
   // assemble J_SS
-  m_solidSolver->AssembleSystem( time_n, dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
+//  m_solidSolver->AssembleSystem( time_n, dt,
+//                                 domain,
+//                                 dofManager,
+//                                 localMatrix,
+//                                 localRhs );
+
+  m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
+                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
+                                                                                               dofManager,
+                                                                                               localMatrix,
+                                                                                               localRhs );
 
   // assemble J_FF
   m_flowSolver->AssembleSystem( time_n, dt,
@@ -640,8 +655,6 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
 
     m_solidSolver->ResetStressToBeginningOfStep( domain );
     dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
-
-    m_solidSolver->updateStress( domain );
 
     if( dtReturnTemporary < dtReturn )
     {

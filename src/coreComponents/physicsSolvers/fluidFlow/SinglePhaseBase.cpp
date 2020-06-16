@@ -299,6 +299,24 @@ real64 SinglePhaseBase::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
+void SinglePhaseBase::SetupSystem( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   array1d< real64 > & localRhs,
+                                   array1d< real64 > & localSolution,
+                                   bool const setSparsity )
+{
+  GEOSX_MARK_FUNCTION;
+  ResetViews( *(domain.getMeshBody(0)->getMeshLevel(0)) );
+
+  SolverBase::SetupSystem( domain,
+                           dofManager,
+                           localMatrix,
+                           localRhs,
+                           localSolution,
+                           setSparsity );
+}
+
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
                                          DomainPartition & domain )

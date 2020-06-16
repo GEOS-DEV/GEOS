@@ -12,26 +12,32 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file CommandLineParser.hpp
- */
+#include "NullModel.hpp"
 
-#ifndef GEOSX_MANAGERS_COMMANDLINEPARSER_HPP_
-#define GEOSX_MANAGERS_COMMANDLINEPARSER_HPP_
-
-#include "optionparser.h"
 namespace geosx
 {
-
-class CommandLineParser
+namespace constitutive
 {
-public:
-  CommandLineParser();
-  ~CommandLineParser();
 
+NullModel::NullModel( string const & name,
+                      Group * const parent ):
+  ConstitutiveBase( name, parent )
+{}
 
-};
+NullModel::~NullModel()
+{}
 
+void NullModel::DeliverClone( string const & name,
+                              Group * const parent,
+                              std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  if( !clone )
+  {
+    clone = std::make_unique< NullModel >( name, parent );
+  }
+}
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, std::string const &, dataRepository::Group * const )
+
+} // constitutive
 } /* namespace geosx */
-
-#endif /* GEOSX_MANAGERS_COMMANDLINEPARSER_HPP_ */

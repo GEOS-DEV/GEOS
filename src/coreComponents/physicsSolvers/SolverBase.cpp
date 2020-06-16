@@ -623,7 +623,8 @@ void SolverBase::SetupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
                               array1d< real64 > & localRhs,
-                              array1d< real64 > & localSolution )
+                              array1d< real64 > & localSolution,
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -632,12 +633,17 @@ void SolverBase::SetupSystem( DomainPartition & domain,
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  SparsityPattern< globalIndex > pattern;
-  dofManager.setSparsityPattern( pattern );
-  localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
+  localIndex const numLocalRows = dofManager.numLocalDofs();
 
-  localRhs.resize( localMatrix.numRows() );
-  localSolution.resize( localMatrix.numRows() );
+  SparsityPattern< globalIndex > pattern;
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( pattern );
+    localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
+  }
+
+  localRhs.resize( numLocalRows );
+  localSolution.resize( numLocalRows );
 
   localMatrix.setName( this->getName() + "/localMatrix" );
   localRhs.setName( this->getName() + "/localRhs" );

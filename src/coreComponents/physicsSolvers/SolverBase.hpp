@@ -296,7 +296,8 @@ public:
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
                array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution );
+               array1d< real64 > & localSolution,
+               bool const setSparsity = true );
 
   /**
    * @brief function to assemble the linear system matrix and rhs

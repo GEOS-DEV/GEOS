@@ -111,7 +111,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
 
-  auto cw = cm.createKernelWrapper();
+  auto cw = cm.createKernelUpdates();
 
 
   auto const & stateStress = cw.m_stress;
@@ -262,7 +262,7 @@ TEST( LinearElasticAnisotropicTests, testXML )
   model->AllocateConstitutiveData( &disc, 1 );
 
 
-  LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelWrapper();
+  LinearElasticAnisotropicUpdates kernelWrapper = model->createKernelUpdates();
 
   real64 stiffness[6][6];
   kernelWrapper.GetStiffness( 0, stiffness );

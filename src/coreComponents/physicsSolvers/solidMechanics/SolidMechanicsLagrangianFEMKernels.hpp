@@ -21,10 +21,10 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/solidSelector.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
@@ -99,7 +99,10 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 {
   real64 rval = 0;
 
-  constitutive::constitutiveUpdatePassThru( constitutiveRelation, [&]( auto & constitutive )
+  using namespace constitutive;
+
+  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
+                                              [&]( auto * const constitutive )
   {
     rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >( params )... );
   } );
@@ -187,7 +190,7 @@ struct ExplicitKernel
 
 
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelUpdates();
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -311,6 +314,39 @@ struct ExplicitKernel
 
 struct ImplicitKernel
 {
+
+  /**
+   * @brief Launch of the element processing kernel for implicit time integration.
+   * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
+   * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+   * @tparam CONSTITUTIVE_TYPE the type of the constitutive relation that is being used.
+   * @param constitutiveRelation A pointer to the constitutive relation that is being used.
+   * @param numElems The number of elements the kernel will process.
+   * @param dt The timestep.
+   * @param dNdX The derivatives of the shape functions wrt the reference configuration.
+   * @param detJ The determinant of the transformation matrix (Jacobian) to the parent element.
+   * @param fe A pointer to the finite element class used in this kernel.
+   * @param elemGhostRank An array containing the values of the owning ranks for ghost elements.
+   * @param elemsToNodes The map from the elements to the nodes that form that element.
+   * @param globalDofNumber The map from localIndex to the globalDOF number.
+   * @param disp The array of total displacements.
+   * @param uhat The array of incremental displacements (displacement for this step).
+   * @param vtilde The array for the velocity predictor.
+   * @param uhattilde The array for the incremental displacement predictor.
+   * @param density The array containing the density
+   * @param fluidPressure Array containing element fluid pressure at the beginning of the step.
+   * @param deltaFluidPressure Array containing the change in element fluid pressure over this step.
+   * @param biotCoefficient The biotCoefficient used to calculate effective stress.
+   * @param tiOption The time integration option used for the integration.
+   * @param stiffnessDamping The stiffness damping coefficient for the Newmark method assuming Rayleigh damping.
+   * @param massDamping The mass damping coefficient for the Newmark method assuming Rayleigh damping.
+   * @param newmarkBeta The value of \beta in the Newmark update.
+   * @param newmarkGamma The value of \gamma in the Newmark update.
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix sparse matrix containing the derivatives of the residual wrt displacement
+   * @param rhs parallel vector containing the global residual
+   * @return The maximum nodal force contribution from all elements.
+   */
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( constitutiveRelation ),
@@ -345,6 +381,7 @@ struct ImplicitKernel
     return 0;
   }
 };
+
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

@@ -221,7 +221,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       // currently the only method is implicit time integration
       dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-      m_solidSolver->updateStress( domain );
+//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -500,7 +500,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
                                        CRSMatrix< real64, globalIndex > & GEOSX_UNUSED_PARAM( localMatrix ),
                                        array1d< real64 > & GEOSX_UNUSED_PARAM( localRhs ),
-                                       array1d< real64 > & GEOSX_UNUSED_PARAM( localSolution ) )
+                                       array1d< real64 > & GEOSX_UNUSED_PARAM( localSolution ),
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -517,7 +518,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getLocalMatrix(),
                              m_flowSolver->getLocalRhs(),
-                             m_flowSolver->getLocalSolution() );
+                             m_flowSolver->getLocalSolution(),
+                             setSparsity );
 
   // setup coupled DofManager
   m_dofManager.setMesh( domain, 0, 0 );

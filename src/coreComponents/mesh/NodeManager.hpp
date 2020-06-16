@@ -322,6 +322,7 @@ public:
   ArrayOfArraysView< localIndex const > const & elementList() const
   { return m_toElements.m_toElementIndex.toViewConst(); }
 
+  //START_SPHINX_REFPOS_ACCESS
   /**
    * @brief Get the reference position array.
    * @return a reference to the reference position of the nodes
@@ -335,6 +336,7 @@ public:
    */
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition() const
   { return m_referencePosition; }
+  //END_SPHINX_REFPOS_ACCESS
 
   /**
    * @brief Get the total displacement array if it exists, if not an error is thrown.
@@ -406,8 +408,10 @@ private:
                                     arrayView1d< localIndex const > const & packList ) const;
 
 
+  //START_SPHINX_REFPOS
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
+  //END_SPHINX_REFPOS
 
   /// nodeToEdge relation
   EdgeMapType m_toEdgesRelation;

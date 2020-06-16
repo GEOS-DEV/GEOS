@@ -417,8 +417,6 @@ real64 LagrangianContactSolver::SolverStep( real64 const & time_n,
   // currently the only method is implicit time integration
   dtReturn = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-  m_solidSolver->updateStress( domain );
-
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dtReturn, domain );
 
