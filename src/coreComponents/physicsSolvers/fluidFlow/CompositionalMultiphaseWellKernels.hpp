@@ -253,7 +253,7 @@ struct FluxKernel
         for( localIndex ic = 0; ic < NC; ++ic )
         {
           // mass balance equations for all components
-          oneSidedEqnRowIndices[ic] = offsetUp + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic;
+          oneSidedEqnRowIndices[ic] = offsetUp + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic - rankOffset;
         }
 
         // in the dof ordering used in this class, there are 1 pressure dofs

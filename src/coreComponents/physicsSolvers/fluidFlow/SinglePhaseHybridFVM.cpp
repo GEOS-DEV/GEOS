@@ -85,7 +85,6 @@ void SinglePhaseHybridFVM::InitializePostInitialConditions_PreSubGroups( Group *
 
   // in the flux kernel, we need to make sure that we act only on the target regions
   // for that, we need the following region filter
-  m_regionFilter.setName( "TODO: get rid of region filter" );
   for( string const & regionName : targetRegionNames() )
   {
     m_regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
