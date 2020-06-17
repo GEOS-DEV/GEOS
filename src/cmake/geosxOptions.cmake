@@ -77,7 +77,12 @@ else()
 endif()
 
 option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
-option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+
+if ( ENABLE_CUDA)
+  option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
+else()
+  option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
+endif()
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)

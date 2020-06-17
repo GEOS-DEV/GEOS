@@ -99,18 +99,15 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
-
-set( geosx_core_libs_full "" )
-if( NOT GEOSX_BUILD_SHARED_LIBS )
-  foreach( lib ${geosx_core_libs} )
-    list( APPEND geosx_core_libs_full ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG})
-  endforeach()
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+else()
+  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON ${geosx_core_libs_full}
-                              ${extraComponentsLinkList}
+                   DEPENDS_ON ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
 

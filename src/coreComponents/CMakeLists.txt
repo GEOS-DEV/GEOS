@@ -50,10 +50,21 @@ list( APPEND coreLibs lvarray)
 add_subdirectory(LvArray)
 
 foreach( lib ${subdirs} )
-    add_subdirectory(${lib})
     if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
       list( APPEND coreLibs ${lib})
     endif()
+endforeach()
+
+if( NOT GEOSX_BUILD_SHARED_LIBS )
+  set( geosx_core_list "" )
+  foreach( lib ${coreLibs} )
+    list( APPEND geosx_core_list ${GEOSX_LINK_PREPEND_FLAG} ${lib} ${GEOSX_LINK_POSTPEND_FLAG})
+  endforeach()
+  set (geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "")
+endif()
+
+foreach( lib ${subdirs} )
+    add_subdirectory(${lib})
 endforeach()
 
 # Python config
@@ -107,8 +118,6 @@ set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # To install the shared library
 install(TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-
-set( geosx_core_libs ${coreLibs} CACHE PATH "" FORCE)
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents)
 
