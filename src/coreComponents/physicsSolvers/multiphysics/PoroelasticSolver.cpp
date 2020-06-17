@@ -107,10 +107,6 @@ void PoroelasticSolver::SetupSystem( DomainPartition & domain,
   // setup monolithic coupled system
   SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  if( setSparsity )
-  {
-    dofManager.setSparsityPattern( m_matrix, true );
-  }
   if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
   {
     CreatePreconditioner();
@@ -147,11 +143,6 @@ void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
                                               real64 const & dt,
                                               DomainPartition & domain )
 {
-  if( m_couplingTypeOption == couplingTypeOption::FIM )
-  {
-    m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-    m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
-  }
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
 }
