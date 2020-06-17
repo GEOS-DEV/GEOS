@@ -31,8 +31,8 @@ Domain definition
 
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
-.. image:: mesh.png
-   :width: 400px
+.. image:: fieldCase-view0-legend.png
+   :width: 600px
 
 This mesh contains three continuous regions:
 
@@ -242,7 +242,7 @@ Specifying the output formats
         ---------------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
-Here, we write files in a format natively readable by Paraview.
+Here, we write files in a format natively readable by Paraview under the tar *VTK*
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
   :language: xml
@@ -251,6 +251,20 @@ Here, we write files in a format natively readable by Paraview.
 
 .. note::
   The ``name`` keyword defines the name of the output file.
+
+
+------------------------------------------------
+Using Functions to specify dependent properties
+------------------------------------------------
+
+Eventually, one can define varying properties using ``TableFunction`` under the **Functions** tag :
+
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  :language: xml
+  :start-after: <!-- SPHINX_FIELD_CASE_TFUNC -->
+  :end-before: <!-- SPHINX_FIELD_CASE_TFUNC_END -->
+
+Here, the injection pressure is set to vary with time. Attentive reader might have noticed that ``sourceTerm`` was bound to a ``TableFunction`` named *timeInj* under **FieldSpecifications** tag definition.
 
 ------------------------------------
 Runnning GEOSX
@@ -269,8 +283,18 @@ The simulation can be launched with:
 Visualization of results
 ------------------------------------
 
-.. image:: result1.png
-   :width: 400px
+Post-treating under Paraview, we can isolate the *Reservoir* block from its over- and under-burden to vizualize pressure distribution on it. 
+
+.. image:: fieldCase-view11.png
+   :width: 600px
+
+Changing point of view and overlaying stream path allows to highlight injection time-variation
+
+.. image:: fieldCase-stream11.png
+   :width: 600px
+
+.. image:: fieldCase-stream13.png
+   :width: 600px
 
 -----------------------------------
 To go further
@@ -282,7 +306,7 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **Next tutorial**
 
-In the next tutorial :ref:`TutorialDeadOil`, we learn how to run a dead oil case on a SPE10 channelized layer.
+In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we learn how to run a dead oil case on a SPE10 channelized layer.
 
 **For more details**
 
