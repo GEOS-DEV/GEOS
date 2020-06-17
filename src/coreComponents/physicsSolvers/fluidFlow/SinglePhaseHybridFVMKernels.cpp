@@ -313,6 +313,7 @@ AssemblerKernel::Compute( localIndex const er,
                           ElementView< arrayView1d< real64 const > > const & mobility,
                           ElementView< arrayView1d< real64 const > > const & dMobility_dp,
                           ElementView< arrayView1d< globalIndex const > > const & elemDofNumber,
+                          integer const elemGhostRank,
                           globalIndex const rankOffset,
                           real64 const & dt,
                           arraySlice2d< real64 const > const & transMatrix,
@@ -364,19 +365,21 @@ AssemblerKernel::Compute( localIndex const er,
   // at this point, we know the local flow direction in the element
   // so we can upwind the transport coefficients (mobilities) at the one sided faces
   // ** this function needs non-local information **
-  AssemblerKernelHelper::UpdateUpwindedCoefficients< NF >( er, esr, ei,
-                                                           elemRegionList,
-                                                           elemSubRegionList,
-                                                           elemList,
-                                                           regionFilter,
-                                                           elemToFaces,
-                                                           mobility,
-                                                           dMobility_dp,
-                                                           elemDofNumber,
-                                                           oneSidedVolFlux,
-                                                           upwMobility,
-                                                           dUpwMobility_dp,
-                                                           upwDofNumber );
+  if( elemGhostRank < 0 )
+  {
+    AssemblerKernelHelper::UpdateUpwindedCoefficients< NF >( er, esr, ei,
+                                                             elemRegionList,
+                                                             elemSubRegionList,
+                                                             elemList,
+                                                             regionFilter,
+                                                             elemToFaces,
+                                                             mobility,
+                                                             dMobility_dp,
+                                                             elemDofNumber,
+                                                             oneSidedVolFlux,
+                                                             upwMobility,
+                                                             dUpwMobility_dp,
+                                                             upwDofNumber );
 
   /*
    * perform assembly in this element in two steps:
@@ -386,20 +389,21 @@ AssemblerKernel::Compute( localIndex const er,
 
   // use the computed one sided vol fluxes and the upwinded mobilities
   // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
-  AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
-                                                           elemToFaces,
-                                                           elemDofNumber[er][esr][ei],
-                                                           rankOffset,
-                                                           oneSidedVolFlux,
-                                                           dOneSidedVolFlux_dp,
-                                                           dOneSidedVolFlux_dfp,
-                                                           upwMobility,
-                                                           dUpwMobility_dp,
-                                                           upwDofNumber,
-                                                           dt,
-                                                           localMatrix,
-                                                           localRhs );
-
+    AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
+                                                             elemToFaces,
+                                                             elemDofNumber[er][esr][ei],
+                                                             rankOffset,
+                                                             oneSidedVolFlux,
+                                                             dOneSidedVolFlux_dp,
+                                                             dOneSidedVolFlux_dfp,
+                                                             upwMobility,
+                                                             dUpwMobility_dp,
+                                                             upwDofNumber,
+                                                             dt,
+                                                             localMatrix,
+                                                             localRhs );
+  }
+  
   // use the computed one sided vol fluxes to assemble the constraints
   // enforcing flux continuity at this element's faces
   AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
@@ -446,7 +450,7 @@ FluxKernel::Launch( localIndex er,
   // get the cell-centered DOF numbers and ghost rank for the assembly
   arrayView1d< integer const > const & elemGhostRank =
     subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
-
+  
   // get the map from elem to faces
   arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 
@@ -478,51 +482,48 @@ FluxKernel::Launch( localIndex er,
   forAll< KERNEL_POLICY >( subRegion.size(), [=] GEOSX_DEVICE ( localIndex const ei )
   {
 
-    if( elemGhostRank[ei] < 0 )
-    {
+    // transmissibility matrix
+    stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
-      // transmissibility matrix
-      stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+    // recompute the local transmissibility matrix at each iteration
+    // we can decide later to precompute transMatrix if needed
+    HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
+                                                                       faceToNodes,
+                                                                       elemToFaces[ei],
+                                                                       elemCenter[ei],
+                                                                       elemVolume[ei],
+                                                                       elemPerm[ei],
+                                                                       2,
+                                                                       lengthTolerance,
+                                                                       transMatrix );
 
-      // recompute the local transmissibility matrix at each iteration
-      // we can decide later to precompute transMatrix if needed
-      HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
-                                                                         faceToNodes,
-                                                                         elemToFaces[ei],
-                                                                         elemCenter[ei],
-                                                                         elemVolume[ei],
-                                                                         elemPerm[ei],
-                                                                         2,
-                                                                         lengthTolerance,
-                                                                         transMatrix );
+    // perform flux assembly in this element
+    SinglePhaseHybridFVMKernels::AssemblerKernel::Compute< NF >( er, esr, ei,
+                                                                 regionFilter,
+                                                                 elemRegionList,
+                                                                 elemSubRegionList,
+                                                                 elemList,
+                                                                 faceDofNumber,
+                                                                 faceGhostRank,
+                                                                 facePres,
+                                                                 dFacePres,
+                                                                 faceGravCoef,
+                                                                 elemToFaces[ei],
+                                                                 elemPres[ei],
+                                                                 dElemPres[ei],
+                                                                 elemGravCoef[ei],
+                                                                 elemDens[ei][0],
+                                                                 dElemDens_dp[ei][0],
+                                                                 mobility,
+                                                                 dMobility_dp,
+                                                                 elemDofNumber,
+                                                                 elemGhostRank[ei],
+                                                                 rankOffset,
+                                                                 dt,
+                                                                 transMatrix,
+                                                                 localMatrix,
+                                                                 localRhs );
 
-      // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::AssemblerKernel::Compute< NF >( er, esr, ei,
-                                                                   regionFilter,
-                                                                   elemRegionList,
-                                                                   elemSubRegionList,
-                                                                   elemList,
-                                                                   faceDofNumber,
-                                                                   faceGhostRank,
-                                                                   facePres,
-                                                                   dFacePres,
-                                                                   faceGravCoef,
-                                                                   elemToFaces[ei],
-                                                                   elemPres[ei],
-                                                                   dElemPres[ei],
-                                                                   elemGravCoef[ei],
-                                                                   elemDens[ei][0],
-                                                                   dElemDens_dp[ei][0],
-                                                                   mobility,
-                                                                   dMobility_dp,
-                                                                   elemDofNumber,
-                                                                   rankOffset,
-                                                                   dt,
-                                                                   transMatrix,
-                                                                   localMatrix,
-                                                                   localRhs );
-
-    }
   } );
 }
 
