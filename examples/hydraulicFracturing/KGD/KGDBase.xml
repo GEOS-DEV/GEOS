@@ -66,24 +66,24 @@
     <PeriodicEvent 
       name="solverApplications0"
       beginTime="0.0"
-      endTime="1.0"
+      endTime="20.0"
       forceDt="0.2"
       targetExactStartStop="1"
       target="/Solvers/hydrofracture" />
 
-    <PeriodicEvent 
+    <!--PeriodicEvent 
       name="solverApplications1"
-      beginTime="1.0"
+      beginTime="2.0"
       endTime="20.0"
       forceDt="0.5"
       targetExactStartStop="1"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture" /-->
       
     <PeriodicEvent 
       name="solverApplications2"
       beginTime="20.0"
       endTime="100.0"
-      forceDt="1.0"
+      forceDt="0.5"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
