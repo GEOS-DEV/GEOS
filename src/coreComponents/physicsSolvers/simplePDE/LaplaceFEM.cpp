@@ -169,7 +169,8 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
   arrayView1d< globalIndex const > const &
   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
-  SparsityPattern< globalIndex > pattern;
+  SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
+  array1d<localIndex> rowSizes( dofManager.numLocalDofs() );
 
   finiteElement::fillSparsity< serialPolicy,
                                CellElementSubRegion,
@@ -177,8 +178,11 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
                                                    targetRegionNames(),
                                                    nullptr,
                                                    dofIndex,
+                                                   dofManager.rankOffset(),
                                                    pattern,
-                                                   localRhs );
+                                                   rowSizes );
+
+  localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
 
 }
 
@@ -216,6 +220,7 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                       array1d< string >(),
                                                       feDiscretization,
                                                       dofIndex,
+                                                      dofManager.rankOffset(),
                                                       localMatrix,
                                                       localRhs,
                                                       m_fieldName );

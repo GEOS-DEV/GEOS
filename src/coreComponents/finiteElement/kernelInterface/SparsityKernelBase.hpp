@@ -64,8 +64,9 @@ public:
 
 
   using typename Base::StackVariables;
-  using Base::setup;
+  using Base::m_dofRankOffset;
 
+  using Base::setup;
 
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
@@ -77,8 +78,9 @@ public:
                       FiniteElementBase const * const finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
+                      globalIndex const rankOffset,
                       SparsityPattern< globalIndex > & inputSparsity,
-                      array1d< real64 > & inputRhs ):
+                      arrayView1d< localIndex > const & rowSizes ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -86,9 +88,11 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           CRSMatrix< real64, globalIndex >().toViewConstSizes(),
-          inputRhs ),
-    m_sparsity( inputSparsity )
+          array1d< real64 >().toView() ),
+    m_sparsity( inputSparsity ),
+    m_rowSizes( rowSizes )
   {}
 
 
@@ -98,25 +102,29 @@ public:
    * In this implementation, only the matrix values are inserted, making this
    * implementation appropriate for generating the sparsity pattern.
    */
-//    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
 
-    localIndex const dofRankOffset = 0; /// TODO pass this in from DofManager
     for( localIndex r=0 ; r<stack.numRows ; ++r  )
     {
-      localIndex const row = stack.localRowDofIndex[r] - dofRankOffset;
-      m_sparsity.insertNonZeros( row,
-                                 stack.localColDofIndex,
-                                 &(stack.localColDofIndex[stack.numCols] ) );
+      localIndex const row = stack.localRowDofIndex[r] - m_dofRankOffset;
+      if( row < 0 || row >= m_sparsity.numRows() ) continue;
+      for( localIndex c=0 ; c<stack.numCols ; ++c )
+      {
+        m_sparsity.insertNonZero( row,
+                                  stack.localColDofIndex[c] );
+      }
     }
     return 0;
   }
 private:
   SparsityPattern< globalIndex > & m_sparsity;
+
+  arrayView1d< localIndex > const & m_rowSizes;
 };
 
 
@@ -158,7 +166,8 @@ struct SparsityHelper
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint >;
+                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint
+                                   >;
 };
 
 
@@ -199,24 +208,24 @@ real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
                      FiniteElementDiscretization const * const feDiscretization,
                      arrayView1d< globalIndex const > const & inputDofNumber,
+                     globalIndex const rankOffset,
                      SparsityPattern< globalIndex > & inputSparsityPattern,
-                     array1d< real64 > & inputRhs )
+                     arrayView1d < localIndex > const & rowSizes )
 {
-  real64 rval = 0;
+  regionBasedKernelApplication< POLICY,
+                                constitutive::NullModel,
+                                REGION_TYPE,
+                                SparsityHelper< KERNEL_TEMPLATE >::template Kernel
+                                >( mesh,
+                                   targetRegions,
+                                   array1d< string >(),
+                                   feDiscretization,
+                                   inputDofNumber,
+                                   rankOffset,
+                                   inputSparsityPattern,
+                                   rowSizes );
 
-  rval = regionBasedKernelApplication< POLICY,
-                                       constitutive::NullModel,
-                                       REGION_TYPE,
-                                       SparsityHelper< KERNEL_TEMPLATE >::template Kernel
-                                       >( mesh,
-                                          targetRegions,
-                                          array1d< string >(),
-                                          feDiscretization,
-                                          inputDofNumber,
-                                          inputSparsityPattern,
-                                          inputRhs );
-
-  return rval;
+  return 0;
 }
 
 }

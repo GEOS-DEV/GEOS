@@ -78,6 +78,7 @@ public:
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
@@ -96,6 +97,7 @@ public:
                FiniteElementBase const * const finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
+               globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3] ):
@@ -106,6 +108,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
@@ -361,23 +364,11 @@ public:
     }
 //            meanForce /= stack.ndof;
 
-//    m_matrix.add( stack.localRowDofIndex,
-//                  stack.localColDofIndex,
-//                  &(stack.localJacobian[0][0]),
-//                  stack.numRows,
-//                  stack.numCols );
-//
-//    m_rhs.add( stack.localRowDofIndex,
-//               stack.localResidual,
-//               stack.numRows );
-
-    globalIndex const dofRankOffset = 0;
-
     for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - dofRankOffset );
+        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                        stack.localRowDofIndex,

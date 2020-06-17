@@ -88,12 +88,14 @@ public:
                       FiniteElementBase const * const finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
+                      globalIndex const rankOffset,
                       CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                       arrayView1d< real64 > const & inputRhs ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_dofNumber( inputDofNumber ),
+    m_dofRankOffset( rankOffset ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
   {
@@ -179,6 +181,9 @@ public:
 protected:
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_dofNumber;
+
+  /// The global rank offset
+  globalIndex const m_dofRankOffset;
 
   /// The global Jacobian matrix.
   CRSMatrixView< real64, globalIndex const > const & m_matrix;

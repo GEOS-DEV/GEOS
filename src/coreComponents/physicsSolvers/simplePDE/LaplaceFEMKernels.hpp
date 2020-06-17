@@ -147,7 +147,10 @@ public:
                                                   1,
                                                   1 >;
 
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
@@ -165,6 +168,7 @@ public:
                     FiniteElementBase const * const finiteElementSpace,
                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
                     arrayView1d< globalIndex const > const & inputDofNumber,
+                    globalIndex const rankOffset,
                     CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                     arrayView1d< real64 > const & inputRhs,
                     string const & fieldName ):
@@ -175,6 +179,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
@@ -269,7 +274,17 @@ public:
       }
     }
 
-    Base::complete( k, stack );
+    for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    {
+        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
+        if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                                stack.localColDofIndex,
+                                                                                stack.localJacobian[ a ],
+                                                                                NUM_NODES_PER_ELEM );
+
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
+    }
 
     return 1.0;
   }

@@ -938,7 +938,8 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   arrayView1d< globalIndex const > const &
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
-  SparsityPattern< globalIndex > pattern;
+  SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
+  array1d<localIndex> rowSizes( dofManager.numLocalDofs() );
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {
@@ -956,8 +957,9 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                                                                        allFaceElementRegions,
                                                                        nullptr,
                                                                        dofNumber,
+                                                                       dofManager.rankOffset(),
                                                                        pattern,
-                                                                       localRhs );
+                                                                       rowSizes );
 
   }
   finiteElement::
@@ -967,8 +969,9 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                                                                      targetRegionNames(),
                                                                      nullptr,
                                                                      dofNumber,
+                                                                     dofManager.rankOffset(),
                                                                      pattern,
-                                                                     localRhs );
+                                                                     rowSizes );
 
   localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
 

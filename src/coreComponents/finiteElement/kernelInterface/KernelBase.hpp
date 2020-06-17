@@ -406,10 +406,7 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.m_elemGhostRank[k] < 0 )
-      {
-        maxResidual.max( kernelComponent.complete( k, stack ) );
-      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
     } );
     return maxResidual.get();
   }
@@ -458,10 +455,8 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.m_elemGhostRank[k] < 0 )
-      {
-        maxResidual.max( kernelComponent.complete( k, stack ) );
-      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+
     } );
     return maxResidual.get();
   }
