@@ -349,7 +349,7 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
@@ -359,10 +359,10 @@ public:
     for( localIndex a=0; a<stack.numRows; ++a )
     {
 //        RAJA::atomicMax< RAJA::auto_atomic >( &meanForce, stack.localResidual[a] );
-      meanForce = std::max( meanForce, fabs(stack.localResidual[a]) );
-//                meanForce += fabs( stack.localResidual[a] );
+//      meanForce = max( meanForce, fabs(stack.localResidual[a]) );
+      meanForce += fabs( stack.localResidual[a] );
     }
-//            meanForce /= stack.ndof;
+//    meanForce /= stack.ndof;
 
     for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
     {

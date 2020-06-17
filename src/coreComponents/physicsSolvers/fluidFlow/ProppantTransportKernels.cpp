@@ -133,7 +133,7 @@ void FluxKernel::
 
   forAll< parallelHostPolicy >( stencil.size(), [=] ( localIndex const iconn )
   {
-    localIndex const numFluxElems = stencil.stencilSize( iconn );
+    localIndex const numFluxElems = seri.sizeOfArray( iconn );
 
     if( ( numFluxElems > 1 || updateProppantPacking != 0 ) ) //isGhostConnectors[iconn][0] < 0 )
     {

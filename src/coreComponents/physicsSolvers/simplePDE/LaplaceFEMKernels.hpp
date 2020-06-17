@@ -260,7 +260,7 @@ public:
    * the primary field and map the element local Jacobian/Residual to the
    * global matrix/vector.
    */
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
