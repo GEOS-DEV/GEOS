@@ -31,7 +31,7 @@ Domain definition
 
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
-.. image:: fieldCase-view0-legend.png
+.. image:: mesh.png
    :width: 600px
 
 This mesh contains three continuous regions:
@@ -265,6 +265,11 @@ Eventually, one can define varying properties using ``TableFunction`` under the 
   :end-before: <!-- SPHINX_FIELD_CASE_TFUNC_END -->
 
 Here, the injection pressure is set to vary with time. Attentive reader might have noticed that ``sourceTerm`` was bound to a ``TableFunction`` named *timeInj* under **FieldSpecifications** tag definition.
+The initial pressure and diagonal term of the permeability tensor are also set to be heterogeneously distributed throughout the reservoir thanks to ND-tables. The files *xlin.geos*, *ylin.geos* and *zlin.geos* define a regular meshing of the bounding box containing the reservoir. The *pressure.geos* or *permx.geos* files define values of nammed variables at those points. 
+
+
+.. note::
+  The varying values imposed in *values* or passed through *voxelFile* are premultiplied by the *scale* attribute from **FieldSpecifications**.
 
 ------------------------------------
 Runnning GEOSX
@@ -283,18 +288,34 @@ The simulation can be launched with:
 Visualization of results
 ------------------------------------
 
-Post-treating under Paraview, we can isolate the *Reservoir* block from its over- and under-burden to vizualize pressure distribution on it. 
+Post-treating under Paraview, we can isolate the *Reservoir* block from its over- and under-burden to vizualize pressure distribution on it. Display the logarithmic maps of horizontal and vertical heterogeneous permeability, 
 
-.. image:: fieldCase-view11.png
+.. image:: fieldCase-view02.png
+   :width: 600px
+
+.. image:: fieldCase-logkx.png
+   :width: 600px
+
+.. image:: fieldCase-logkz.png
    :width: 600px
 
 Changing point of view and overlaying stream path allows to highlight injection time-variation
 
-.. image:: fieldCase-stream11.png
+.. image:: streamlines.mpg
    :width: 600px
 
-.. image:: fieldCase-stream13.png
+which reflects also in the pressure field at different times. 
+
+.. image:: pressureField.0000.png
    :width: 600px
+
+.. image:: pressureField.0025.png
+   :width: 600px
+
+.. image:: pressureField.0050.png
+   :width: 600px
+
+
 
 -----------------------------------
 To go further

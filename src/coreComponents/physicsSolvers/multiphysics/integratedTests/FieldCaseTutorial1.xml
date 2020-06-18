@@ -73,42 +73,46 @@
   <!-- SPHINX_FIELD_CASE_FIELD -->
   <FieldSpecifications>
     <FieldSpecification name="permx"
-    component="0"
     initialCondition="1"
+    component="0"
     setNames="{all}"
     objectPath="ElementRegions/Reservoir"
     fieldName="permeability"
-    scale="1e-12"/>
+    scale="1e-12" 
+    functionName="permxFunc" /> 
     
     <FieldSpecification name="permy"
-    component="1"
     initialCondition="1"
+    component="1"
     setNames="{all}"
     objectPath="ElementRegions/Reservoir"
     fieldName="permeability"
-    scale="1e-12"/>
+    scale="1e-12" 
+    functionName="permyFunc" /> 
     
     <FieldSpecification name="permz"
-    component="2"
     initialCondition="1"
+    component="2"
     setNames="{all}"
     objectPath="ElementRegions/Reservoir"
     fieldName="permeability"
-    scale="1e-15"/>
+    scale="1e-15" 
+    functionName="permzFunc" /> 
     
     <FieldSpecification name="referencePorosity"
     initialCondition="1"
     setNames="{all}"
     objectPath="ElementRegions/Reservoir"
     fieldName="referencePorosity"
-    scale="0.05"/>
+    scale="0.05" />
     
     <FieldSpecification name="initialPressure"
     initialCondition="1"
     setNames="{all}"
     objectPath="ElementRegions/Reservoir"
     fieldName="pressure"
-    scale="5e6"/>
+    scale="1" 
+    functionName="initialPressureFunc" /> 
     
     <FieldSpecification name="sourceTerm"
     objectPath="ElementRegions/Reservoir"
@@ -148,7 +152,31 @@
 
   <!-- SPHINX_FIELD_CASE_TFUNC -->
   <Functions>
-    <TableFunction     name="timeInj"		inputVarNames="{time}" coordinates="{20e6,100e6,300e6}" values="{1, 0.01, 0.0001}" />
+	<TableFunction     name="timeInj"		inputVarNames="{time}" coordinates="{40e6,100e6,300e6}" values="{1, 0.01, 0.0001}" />
+  	<TableFunction name="initialPressureFunc"
+                   inputVarNames="{elementCenter}"
+		   coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
+		   voxelFile="tables_FieldCaseTuto/pressure.geos"
+		   interpolation="linear" />
+        
+	<TableFunction name="permxFunc"
+                   inputVarNames="{elementCenter}"
+		   coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
+		   voxelFile="tables_FieldCaseTuto/permx.geos"
+		   interpolation="nearest" />
+	   
+   	<TableFunction name="permyFunc"
+                   inputVarNames="{elementCenter}"
+		   coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
+		   voxelFile="tables_FieldCaseTuto/permy.geos"
+	   	   interpolation="nearest" />
+		   
+	<TableFunction name="permzFunc"
+                   inputVarNames="{elementCenter}"
+		   coordinateFiles="{tables_FieldCaseTuto/xlin.geos,tables_FieldCaseTuto/ylin.geos,tables_FieldCaseTuto/zlin.geos}"
+		   voxelFile="tables_FieldCaseTuto/permz.geos"
+		   interpolation="nearest" /> 
+
   </Functions>
   <!-- SPHINX_FIELD_CASE_TFUNC_END -->
 
