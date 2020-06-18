@@ -25,7 +25,6 @@
 #include "ElementRegionManager.hpp"
 
 namespace geosx
-
 {
 
 using namespace dataRepository;

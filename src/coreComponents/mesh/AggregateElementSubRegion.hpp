@@ -28,7 +28,7 @@ namespace geosx
  * @class AggregateElementSubRegion
  * @brief The AggregateElementSubRegion class provides an interface to aggregate fine cells into coarse cells.
  */
-  
+
 class AggregateElementSubRegion : public ElementSubRegionBase
 {
 public:
@@ -57,7 +57,7 @@ public:
     return AggregateElementSubRegion::CatalogName();
   }
   ///@}
-  
+
   /**
    * @brief Find all the fine cell in a given aggregate coarse cell.
    * @tparam LAMBDA template argument

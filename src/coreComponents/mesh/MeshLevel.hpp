@@ -29,7 +29,7 @@ namespace geosx
 class ElementRegionManager;
 
 /**
- * @class MeshLevel 
+ * @class MeshLevel
  * @brief Class facilitating the representation of a multi-level discretization of a MeshBody.
  * @details This contains the main components that compose a discretized mesh in GEOSX (nodes, faces, elements).
  *          In current practice, the code utilizes a single ``MeshLevel`` until such time as we
@@ -67,7 +67,7 @@ public:
 
   virtual void InitializePostInitialConditions_PostSubGroups( Group * const ) override;
 
-  /// @cond DO_NOT_DOCUMENT  
+  /// @cond DO_NOT_DOCUMENT
 
   struct viewStructKeys
   {
@@ -93,7 +93,7 @@ public:
   } groupKeys;
 
   /// @endcond
-  
+
   /**
    * @name Getters / Setters
    */
@@ -131,23 +131,23 @@ public:
 
   /**
    * @brief Get the element region manager.
-   * @return a pointer to the elementRegionManager object 
+   * @return a pointer to the elementRegionManager object
    */
   ElementRegionManager const * getElemManager() const { return &m_elementManager; }
   /**
    * @copydoc getElemManager() const
-   */ 
+   */
   ElementRegionManager * getElemManager()             { return &m_elementManager; }
 
   ///@}
-  
+
 private:
 
-  /// Manager for node data   
+  /// Manager for node data
   NodeManager m_nodeManager;
   /// Manager for edge data
   EdgeManager m_edgeManager;
-  /// Manager for face data  
+  /// Manager for face data
   FaceManager m_faceManager;
   /// Manager for element data
   ElementRegionManager m_elementManager;

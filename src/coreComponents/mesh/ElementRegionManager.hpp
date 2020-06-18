@@ -896,7 +896,7 @@ public:
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
-  /// @copydoc dataRepository::Group::Unpack( buffer_unit_type const * & buffer, arrayView1d< localIndex > & packList,integer const recursive, bool on_device = false );
+  /// @copydoc dataRepository::Group::Unpack
   using ObjectManagerBase::Unpack;
 
   /**

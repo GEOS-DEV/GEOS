@@ -82,8 +82,8 @@ public:
   { return 8; }
 
 /**
-   * @name Constructors/destructor
-   */
+ * @name Constructors/destructor
+ */
   ///@{
 
   /**
@@ -101,8 +101,8 @@ public:
 
   /// @cond DO_NOT_DOCUMENT
   /**
-  * @brief deleted constructor
-  */
+   * @brief deleted constructor
+   */
   NodeManager() = delete;
 
   /**
@@ -111,13 +111,13 @@ public:
   NodeManager( const NodeManager & init ) = delete;
 
   /**
-  * @brief deleted assignement operator
-  */
+   * @brief deleted assignement operator
+   */
   NodeManager & operator=( const NodeManager & ) = delete;
   /// @endcond
 
   ///@}
-  
+
   /**
    * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
    * @details the size of the NodeManager is the number of nodes
@@ -125,7 +125,7 @@ public:
    */
   virtual void resize( localIndex const newsize ) override;
 
-   /**
+  /**
    * @name Static Factory Catalog Functions
    */
   ///@{
@@ -143,9 +143,9 @@ public:
    */
   const string getCatalogName() const override final
   { return NodeManager::CatalogName(); }
-  
+
   ///@}
-  
+
   /**
    * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
    * @param [in] edgeManager the edgeManager to assign this NodeManager
@@ -157,7 +157,7 @@ public:
    * @param [in] faceManager the faceManager to assign this NodeManager
    */
   void SetFaceMaps( FaceManager const * const faceManager );
-  
+
   /**
    * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
    * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
@@ -170,7 +170,7 @@ public:
    */
   void CompressRelationMaps();
 
- /**
+  /**
    * @name Packing methods
    */
   ///@{
@@ -180,7 +180,7 @@ public:
    * @param [in,out] exclusionList Sorted array with excluded local indices
    */
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-  
+
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
    * @details Packed data are meant to be communicated to other MPI ranks
@@ -213,18 +213,19 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
-  
+
   /**
    * @brief Call FixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
    * @details Packed data are meant to be communicated to other MPI ranks
    * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
-  
+
   ///@}
-  
+
   /**
-   * @brief Clean up the mappings between nodes and edges, faces, elements based on a new (updated) list of nodes, in order to keep only relevant mappings.
+   * @brief Clean up the mappings between nodes and edges, faces, elements based on a new (updated) list of nodes, in order to keep only
+   * relevant mappings.
    * @param [in] receivedNodes the new list of target node indices
    * @param [in] edgesToNodes map to go from edges to nodes
    * @param [in] facesToNodes map to go from faces to nodes
@@ -235,7 +236,7 @@ public:
                          ArrayOfArraysView< localIndex const > const & facesToNodes,
                          ElementRegionManager const & elemRegionManager );
 
-   /**
+  /**
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
@@ -311,20 +312,20 @@ public:
   {}
   /// groupKeys
   groupKeys;
-  
+
   ///@}
 
   /**
    * \defgroup Accessors for NodeManager fixed data
    * @{
    */
-  
+
   /**
    * @brief Provide an immutable accessor to the nodes-to-edges relation.
    * @return const reference to  nodes-to-edges relation
    */
   EdgeMapType const & edgeList() const { return m_toEdgesRelation; }
-  
+
   /**
    * @brief Get a mutable accessor to the node-to-edges relation.
    * @return reference to nodes-to-edges relation
@@ -348,7 +349,7 @@ public:
    * @return reference to nodes-to-elements relation
    */
   ElemMapType & toElementRelation() {return m_toElements;}
-  
+
   /**
    * @brief Provide a const accessor to the nodes-to-elements relation.
    * @details The returned ElemMapType gives access, for one node
@@ -357,13 +358,13 @@ public:
    * @return const reference to nodes-to-elements relation
    */
   ElemMapType const & toElementRelation() const {return m_toElements;}
-  
+
   /**
    * @brief Get the mutable nodes-to-elements-regions relation.
    * @return reference to nodes-to-elements-regions relation
    */
   ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
-  
+
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
    * @return const reference to nodes-to-elements-regions relation
@@ -375,19 +376,19 @@ public:
    * @return reference to nodes-to-elements-subregions relation
    */
   ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
-  
+
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
    */
   ArrayOfArraysView< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
-  
+
   /**
    * @brief Get the mutable nodes-to-elements indices.
    * @return reference to nodes-to-elements indices
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
-  
+
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
@@ -402,7 +403,7 @@ public:
    * @return reference position array
    */
   array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
-  
+
   /**
    * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
    * @return an immutable arrayView of the reference position.
@@ -421,7 +422,7 @@ public:
   {
     return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
   }
-  
+
   /**
    * @brief Provide an immutable arrayView to the total displacement array.
    * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
@@ -431,7 +432,7 @@ public:
   {
     return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement );
   }
-  
+
   /**
    * @brief Get a mutable incremental displacement array.
    * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
@@ -441,7 +442,7 @@ public:
   {
     return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement );
   }
-  
+
   /**
    * @brief Provide an immutable arrayView to the incremental displacement array.
    * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
@@ -461,7 +462,7 @@ public:
   {
     return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
   }
-  
+
   /**
    * @brief Provide an immutable arrayView to the velocity array.
    * @return immutable arrayView of the velocity array if it exists, or an error is thrown if it does not exist
@@ -471,7 +472,7 @@ public:
   {
     return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity );
   }
-  
+
   /**
    * @brief Get a mutable acceleration array.
    * @return the acceleration array if it exists, or an error is thrown if it does not exist
@@ -481,7 +482,7 @@ public:
   {
     return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration );
   }
-  
+
   /**
    * @brief Provide an immutable arrayView to the acceleration array.
    * @return immutable arrayView of the acceleration array if it exists, or an error is thrown if it does not exist
@@ -492,8 +493,8 @@ public:
     return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration );
   }
 
-   ///@}
-  
+  ///@}
+
 private:
 
   /**

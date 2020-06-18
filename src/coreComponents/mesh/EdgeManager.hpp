@@ -52,14 +52,14 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  
+
   /**
    * @return the string representing the edge manager name in the catalog
    */
   static const string CatalogName()
   { return "EdgeManager"; }
 
-  
+
   /**
    * @brief Getter used to access the edge manager catalog name.
    * @return the edge manager catalog name
@@ -80,7 +80,7 @@ public:
    * @name Constructors/destructors
    */
   ///@{
-  
+
   /**
    * @brief main constructor for EdgeManager Objects
    * @param[in] name the name of the EdgeManager object in the repository
@@ -88,14 +88,14 @@ public:
    */
   EdgeManager( std::string const & name,
                Group * const parent );
-  
+
   /**
    * @brief default destructor
    */
   ~EdgeManager() override;
 
   ///@}
-  
+
   /**
    * @brief Resize the EdgeManager object and all it members.
    * @details the size of the EdgeMananager is the number of edges
@@ -103,13 +103,13 @@ public:
    * @param[in] newSize the new number of edges.
    */
   virtual void resize( localIndex const newSize ) override;
-  
+
   /**
    * @brief Set the node of the domain boundary object.
    * @param[in] referenceObject the reference of the face manager.
    */
   void SetDomainBoundaryObjects( const ObjectDataStructureBaseT * const referenceObject = nullptr );
-  
+
   /**
    * @brief Set external edges.
    * @details external edges are the edges on the faces which are external
@@ -123,7 +123,7 @@ public:
    * @param[in] nodeManager manager of all nodes in the DomainPartition
    */
   void BuildEdges( FaceManager * const faceManager, NodeManager * const nodeManager );
-  
+
   /**
    * @brief Build \p globalEdgeNodes, a  vector containing all the global indices
    * of each nodes of each edges
@@ -152,7 +152,7 @@ public:
    */
   virtual localIndex PackUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
-  
+
   /**
    * @brief Unpack a buffer to an array of indices that has been packed.
    * @details Packed data are meant to be communicated to other MPI ranks
@@ -166,19 +166,19 @@ public:
                                        localIndex_array & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
-  
+
   /**
    * @brief Call FixUpDownMaps of the class ObjectManagerBase for nodes-to-edges and nodes-to-faces relation maps.
    * @param[in] clearIfUnmapped boolean to indicate if the unmaped indices should be removed or not
    */
   void FixUpDownMaps( bool const clearIfUnmapped );
-  
+
   /**
    * @brief Compress all nodes-to-faces relation maps
    * so that the values of each array are contiguous with no extra capacity in between.
    */
   void compressRelationMaps();
-  
+
   /**
    * @brief Clean up the edges-to-faces mapping with respect to a new list of edges.
    * @param[in] receivedEdges the new list of edges indices
@@ -204,7 +204,7 @@ public:
    */
   void AddToEdgeToFaceMap( FaceManager const * const faceManager,
                            arrayView1d< localIndex const > const & newFaceIndices );
-  
+
   /**
    * @brief Split an edge (separate its two extremity nodes)
    * @param[in] indexToSplit Index of the edge to split
@@ -216,7 +216,7 @@ public:
                   const localIndex parentNodeIndex,
                   const localIndex childNodeIndex[2],
                   array1d< SortedArray< localIndex > > & nodesToEdges );
-  
+
   /**
    * @brief Check if edge \p edgeID contains node \p nodeID
    * @param[in] edgeID local index of the edge
@@ -285,7 +285,7 @@ public:
   groupKeys;
 
   ///}@
-  
+
   /**
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
@@ -296,7 +296,7 @@ public:
    * @name Getters for stored value.
    */
   ///@{
-  
+
   /**
    * @brief Get a node list.
    * @return reference to the list of edge to node relation
@@ -308,7 +308,7 @@ public:
    * @return reference to the list of edge to node relation
    */
   NodeMapType const & nodeList() const { return m_toNodesRelation; }
-  
+
   /**
    * @brief Get a reference to a node list
    * @param[in] edgeIndex local index of the edge
@@ -317,7 +317,7 @@ public:
    */
   localIndex & nodeList( localIndex const edgeIndex, localIndex const nodeIndex )
   { return m_toNodesRelation( edgeIndex, nodeIndex ); }
-  
+
   /**
    * @brief Get a node list
    * @param[in] edgeIndex local index of the edge

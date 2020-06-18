@@ -68,7 +68,7 @@ public:
    */
   virtual const string getCatalogName() const override
   { return FaceManager::CatalogName(); }
- ///@}
+  ///@}
 
   /**
    * @brief Get the default number of node per face in node list
@@ -76,7 +76,7 @@ public:
    */
   static localIndex nodeMapExtraSpacePerFace()
   { return 4; }
-  
+
   /**
    * @brief Get the default number of edge per face in edge list
    * @return the default number of edge per face in edge list
@@ -95,27 +95,27 @@ public:
    * @param[in] parent the parent Group object of FaceManager
    */
   FaceManager( string const & name, Group * const parent );
-  
+
   /**
    * @brief Destructor override from ObjectManager
    */
   virtual ~FaceManager() override;
-  
+
   /**
    * @brief Deleted default constructor
    */
   FaceManager() = delete;
-  
+
   /**
    * @brief Deleted copy constructor
    */
   FaceManager( FaceManager const & ) = delete;
-  
-  
+
+
   /**
    * @brief Deleted move constructor
    */
- FaceManager( FaceManager && ) = delete;
+  FaceManager( FaceManager && ) = delete;
 
   ///@}
 
@@ -125,18 +125,18 @@ public:
    * @param[in] newsize new size the FaceManager.
    */
   virtual void resize( localIndex const newsize ) override;
-  
- /**
-  * @brief Build faces in filling face-to-node and face-to-element mappings.
-  * @param[in] nodeManager mesh node manager
-  * @param[in] elemManager element manager
-  */
+
+  /**
+   * @brief Build faces in filling face-to-node and face-to-element mappings.
+   * @param[in] nodeManager mesh node manager
+   * @param[in] elemManager element manager
+   */
   void BuildFaces( NodeManager * const nodeManager, ElementRegionManager * const elemManager );
 
- /**
-  * @brief Compute faces center, area and normal.
-  * @param[in] nodeManager NodeManager associated with the current DomainPartition
-  */
+  /**
+   * @brief Compute faces center, area and normal.
+   * @param[in] nodeManager NodeManager associated with the current DomainPartition
+   */
   void computeGeometry( NodeManager const * const nodeManager );
 
   /**
@@ -144,15 +144,15 @@ public:
    * @return the maximum number of nodes a face have
    */
   localIndex getMaxFaceNodes() const;
-  
- /**
-  * @brief Sort all faces nodes counterclockwisely in m_nodeList.
-  * @param[in] nodeManager node manager allowing access to face nodes coordinates
-  * @param[in] elemManager element manager allowing access to the cell elements
-  */
+
+  /**
+   * @brief Sort all faces nodes counterclockwisely in m_nodeList.
+   * @param[in] nodeManager node manager allowing access to face nodes coordinates
+   * @param[in] elemManager element manager allowing access to the cell elements
+   */
   void SortAllFaceNodes( NodeManager const * const nodeManager,
                          ElementRegionManager const * const elemManager );
-  
+
   /**
    * @brief Reorder face nodes to be labeled counter-clockwise resulting in outgoing normal.
    * @param[in] X array view of mesh nodes coordinates
@@ -170,12 +170,12 @@ public:
    * @param[in] nodeManager manager of mesh nodes
    */
   void SetDomainBoundaryObjects( NodeManager * const nodeManager );
-  
+
   /**
    * @brief Flag faces on boundary or external to the DomainPartition.
    */
   void SetIsExternal();
-  
+
   /**
    * @name Packing methods
    */
@@ -187,7 +187,7 @@ public:
    * @param [in,out] exclusionList Sorted array with excluded local faces indices
    */
   virtual void ViewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-  
+
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
    * @details Packed data are meant to be communicated to other MPI ranks
@@ -236,21 +236,22 @@ public:
    * @note The method used here on each arrays (compress) does not free any memory.
    */
   void compressRelationMaps();
-  
+
   /**
    * @brief Enforce child faces and parent faces to have opposite normals.
    * @param[in] targetIndices set of face indices for which the enforcement has to be done
    */
   virtual void enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices ) override;
-  
+
   /**
-   * @brief Clean up the mappings from faces to element index, region, subregion on a new (updated) list of faces, in order to keep only relevant mappings.
+   * @brief Clean up the mappings from faces to element index, region, subregion on a new (updated) list of faces, in order to keep only
+   * relevant mappings.
    * @param [in] receivedFaces the new list of target node indices
    * @param [in] elemRegionManager Element Region Manager
    */
   void depopulateUpMaps( std::set< localIndex > const & receivedFaces,
                          ElementRegionManager const & elemRegionManager );
-  
+
 
   //void SetGlobalIndexFromCompositionalObject( ObjectManagerBase const * const compositionalObject );
 
@@ -260,11 +261,11 @@ public:
    * @param[out] faceToNodes face-to-node map
    */
   virtual void ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManagerBase const * const nodeManager,
-                                                   std::vector< std::vector< globalIndex > > & faceToNodes ) override;
+                                                                std::vector< std::vector< globalIndex > > & faceToNodes ) override;
 
   /**
-    * @name viewKeyStruct/groupKeyStruct
-    */
+   * @name viewKeyStruct/groupKeyStruct
+   */
   ///@{
 
   /**
@@ -272,7 +273,6 @@ public:
    *  @brief struct containing the view access keys to be bound with class data member
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
-
   {
     /// @cond DO_NOT_DOCUMENT
     static constexpr auto nodeListString              = "nodeList";
@@ -297,10 +297,10 @@ public:
 
 
 
- /**
-  * @struct groupKeyStruct
-  * @brief  contains added group access keys to be bound with class in group hierarchy
-  */
+  /**
+   * @struct groupKeyStruct
+   * @brief  contains added group access keys to be bound with class in group hierarchy
+   */
   struct groupKeyStruct : ObjectManagerBase::groupKeyStruct
   {}
   /// groupKeys
@@ -308,17 +308,17 @@ public:
 
   ///@}
 
- /**
-  * @name Accessors for FaceManager fixed data
-  */
+  /**
+   * @name Accessors for FaceManager fixed data
+   */
   ///@{
-  
+
   /**
    * @brief Get the constant upper limit for number of faces per Node.
    * @return constant expression of the max number of faces per node
    */
   constexpr int maxFacesPerNode() const { return 100; }
-  
+
   /**
    * @brief Get a mutable accessor to a table containing all the face area.
    * @details this table is mutable so it can be used to compute
@@ -326,13 +326,13 @@ public:
    * @return a table containing all the face area
    */
   array1d< real64 > & faceArea()       { return m_faceArea; }
-  
+
   /**
    * @brief Get an immutable accessor to a table containing all the face area.
    * @return an immutable table containing all the face area
    */
   arrayView1d< real64 const > const & faceArea() const { return m_faceArea; }
-  
+
   /**
    * @brief Get an immutable accessor to a table containing all the face centers.
    * @return an immutable table containing all the face centers
@@ -346,7 +346,7 @@ public:
    * @return a table containing all the face normals
    */
   arrayView2d< real64 > const & faceNormal() { return m_faceNormal; }
-  
+
   /**
    * @brief Get an immutable accessor to a table containing all the face normals.
    * @return an immutable table containing all the face normals
@@ -364,7 +364,7 @@ public:
    * @return non-const reference to a map containing the list of each nodes for each faces
    */
   NodeMapType & nodeList()                    { return m_nodeList; }
-  
+
   /**
    * @brief Get an immutable accessor to a map containing the list of each nodes for each faces
    * @return const reference to a map containing the list of each nodes for each faces
@@ -376,7 +376,7 @@ public:
    * @return non-const reference to a map containing the list of each edges for each faces
    */
   EdgeMapType & edgeList()       { return m_edgeList; }
-  
+
   /**
    * @brief Get an immutable accessor to a map containing the list of each edges for each faces.
    * @return const reference to a map containing the list of each edges for each faces
@@ -387,37 +387,37 @@ public:
    * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
    * @return non-const reference to faces-to-ElementRegion relation
    */
-   arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
-  
+  arrayView2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
+
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
    * @return const reference to nodes-to-ElementRegion relation
    */
-   arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
-  
+  arrayView2d< localIndex const > const & elementRegionList() const { return m_toElements.m_toElementRegion; }
+
   /**
    * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
    * @return non-const reference to faces-to-ElementSubRegion relation
    */
-   arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
-  
+  arrayView2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
    * @return const reference to faces-to-ElementSubRegion relation
    */
-   arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
+  arrayView2d< localIndex const > const & elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
    */
-   arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
-  
+  arrayView2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
+
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.
    * @return const reference to faces-to-elements relation
    */
-   arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
+  arrayView2d< localIndex const > const & elementList() const { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
@@ -426,7 +426,7 @@ public:
    * @return non-const reference to faces-to-element-index relation
    */
   ElemMapType & toElementRelation()       { return m_toElements; }
-  
+
   /**
    * @brief Get an immutable accessor to the faces-to-element-index relation.
    * @details The returned ElemMapType gives access, for one face
@@ -434,11 +434,11 @@ public:
    * @return non-const reference to faces-to-element-index relation
    */
   ElemMapType const & toElementRelation() const { return m_toElements; }
-  
+
   ///}@
 
 private:
-  
+
   /**
    * @brief Pack the upward and downward pointing maps.
    * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
@@ -453,16 +453,16 @@ private:
 
   /// face keyed map containing face-to-node relation
   NodeMapType m_nodeList;
-  
+
   /// face keyed map containing face-to-edge relation
   EdgeMapType m_edgeList;
-  
+
   /// face keyed map containing face-to-element relation
   ElemMapType m_toElements;
 
   /// map of global to local indices for nodes
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
-  
+
   /// map of global  to local  indices for edges
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 

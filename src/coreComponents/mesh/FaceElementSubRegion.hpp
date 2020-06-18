@@ -282,7 +282,7 @@ public:
    * @brief Get face element rotation matrix.
    * @return a list of all face element rotation matrixces.
    */
-    arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
+  arrayView3d< real64 > const & getElementRotationMatrix()       { return m_elementRotationMatrix; }
 
   /**
    * @copydoc getElementRotationMatrix()
