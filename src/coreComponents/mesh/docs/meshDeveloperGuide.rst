@@ -25,7 +25,7 @@ To illustrate the mesh hierarchy, we propose to present it along with a model wi
 regions (Top and Bottom) (:numref:`modelFig`).
 
 .. _modelFig:
-.. figure:: ../../../coreComponents/mesh/docs/model.svg
+.. figure:: ../../../coreComponents/mesh/docs/model.png
    :align: center
    :width: 500
    :figclass: align-center
@@ -37,6 +37,7 @@ DomainPartition
 In :numref:`MeshObjectInstantiationHierarchy` the top level object ``DomainPartition`` represents 
 a partition of the decomposed physical domain.
 At this time there is a unique ``DomainPartition`` for every MPI rank.
+
 .. note::
   Hypothetically, 
   there may be more than one ``DomainPartition`` in cases where the ranks are overloaded.
@@ -70,6 +71,7 @@ a individual body.
 MeshLevel
 =========
 The ``MeshLevel`` is intended to facilitate the representation of a multi-level discretization of a ``MeshBody``.
+
 .. note::
   In current practice, the code utilizes a single ``MeshLevel`` until such time as we 
   implement a proper multi-level mesh capability.
@@ -125,7 +127,8 @@ Each ``ElementRegion`` holds some number of ``ElementSubRegion``.
 The ``ElementSubRegion`` is meant to hold all the element topologies present in an ``ElementSubRegion`` 
 in their own groups. 
 For instance, for a ``CellElementRegion``, there may be one ``CellElementSubRegion`` for all
-tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:fig:`meshPolyFig`).
+tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:numref:`meshPolyFig`).
+
 .. _meshPolyFig:
 .. figure:: ../../../coreComponents/mesh/docs/mesh_multi.png
    :align: center
@@ -135,4 +138,4 @@ tetrahedra, one for all hexahedra, one for all wedges and one for all the pyrami
    Model meshed with different cell types
 
 Now that all the classes of the mesh hierarchy has been described, we propose to adapt the diagram
-presented in :fig:`diagFig` to match with the example presented in :numref:`modelFig`.
+presented in :numref:`diagFig` to match with the example presented in :numref:`modelFig`.

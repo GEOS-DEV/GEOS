@@ -65,9 +65,9 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
 
   SortedArray< localIndex > connectedEdges;
 
-  array2d< localIndex > const & faceToElementRegion = faceManager->elementRegionList();
-  array2d< localIndex > const & faceToElementSubRegion = faceManager->elementSubRegionList();
-  array2d< localIndex > const & faceToElementIndex = faceManager->elementList();
+  arrayView2d< localIndex const > const & faceToElementRegion = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & faceToElementSubRegion = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & faceToElementIndex = faceManager->elementList();
 
   Group * elementSubRegions = this->GetGroup( viewKeyStruct::elementSubRegions );
 
@@ -82,8 +82,8 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   arrayView1d< real64 > const &
   creationMass = subRegion->getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString );
 
-  arrayView1d< R1Tensor const > const & faceCenter = faceManager->faceCenter();
-  arrayView1d< R1Tensor > const & elemCenter = subRegion->getElementCenter();
+  arrayView2d< real64 const > const & faceCenter = faceManager->faceCenter();
+  arrayView2d< real64 > const & elemCenter = subRegion->getElementCenter();
   arrayView1d< real64 const > const & elemArea = subRegion->getElementArea();
 
   arrayView1d< integer > const & subRegionGhostRank = subRegion->ghostRank();
@@ -99,8 +99,7 @@ localIndex FaceElementRegion::AddToFractureMesh( real64 const time_np1,
   localIndex const kfe = subRegion->size() - 1;
   ruptureTime( kfe ) = time_np1;
 
-  elemCenter( kfe ) = faceCenter( faceIndices[0] );
-
+  LvArray::tensorOps::copy< 3 >( elemCenter[ kfe ], faceCenter[ faceIndices[ 0 ] ] );
 
   faceMap[kfe][0] = faceIndices[0];
   faceMap[kfe][1] = faceIndices[1];

@@ -45,7 +45,6 @@ public:
    */
   virtual ~TableFunction() override;
 
-  ///
   /**
    * @brief The catalog name interface
    * @return name of the TableFunction in the FunctionBase catalog
@@ -63,10 +62,14 @@ public:
   template< typename T >
   void parse_file( array1d< T > & target, string const & filename, char delimiter );
 
-  /// Initialize the table function
+  /**
+   * @brief Initialize the table function
+   */
   virtual void InitializeFunction() override;
 
-  /// Build the maps used to evaluate the table function
+  /**
+   * @brief Build the maps used to evaluate the table function
+   */
   void reInitializeFunction();
 
   /**
@@ -98,7 +101,7 @@ public:
   array1d< real64_array > const & getCoordinates() const { return m_coordinates; }
 
   /**
-   * @copydoc const & getCoordinates() const
+   * @copydoc getCoordinates() const
    */
   array1d< real64_array > & getCoordinates()       { return m_coordinates; }
 
@@ -109,7 +112,7 @@ public:
   array1d< real64 > const & getValues() const { return m_values; }
 
   /**
-   * @copydoc const & getValues() const
+   * @copydoc getValues() const
    */
   array1d< real64 > & getValues()       { return m_values; }
 

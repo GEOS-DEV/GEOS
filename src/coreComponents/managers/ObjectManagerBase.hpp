@@ -549,6 +549,132 @@ public:
   }
 
   /**
+   * @brief Register data with this ObjectManagerBase using a
+   *   dataRepository::Wrapper.
+   * @tparam MESH_DATA_TRAIT The trait struct that holds the information for
+   *   the data being registered with the repository.
+   * @param nameOfRegisteringObject The name of the object that is requesting
+   *   that this data be registered.
+   * @return A wrapper to the type specified by @p MESH_DATA_TRAIT.
+   */
+  template< typename MESH_DATA_TRAIT >
+  dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
+  registerExtrinsicData( string const & nameOfRegisteringObject )
+  {
+    // These are required to work-around the need for instantiation of
+    // the static constexpr trait components. This will not be required once
+    // we move to c++17.
+
+    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
+    // This is required for the Tensor classes.
+    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
+               setApplyDefaultValue( defaultValue )->
+               setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
+               setRestartFlags( MESH_DATA_TRAIT::restartFlag )->
+               setDescription( MESH_DATA_TRAIT::description )->
+               setRegisteringObjects( nameOfRegisteringObject ) );
+  }
+
+  /**
+   * @brief Register a collection of data with this ObjectManagerBase using a
+   *   dataRepository::Wrapper.
+   * @tparam MESH_DATA_TRAIT0 The first of the trait structs that holds the
+   *   information for the data being registered with the repository.
+   * @tparam MESH_DATA_TRAIT1 The second of the trait structs that holds the
+   *   information for the data being registered with the repository.
+   * @tparam MESH_DATA_TRAITS The parameter pack of trait structs that holds
+   *   the information for the data being registered with the repository.
+   * @param nameOfRegisteringObject The name of the object that is requesting
+   *   that this data be registered.
+   */
+  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
+  void registerExtrinsicData( string const & nameOfRegisteringObject )
+  {
+    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject );
+    registerExtrinsicData< MESH_DATA_TRAIT1, MESH_DATA_TRAITS... >( nameOfRegisteringObject );
+  }
+
+  /**
+   * @brief Get a view to the data associated with a trait from this
+   *   ObjectManagerBase.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return A const reference to a view to const data.
+   */
+  template< typename MESH_DATA_TRAIT >
+  auto const & getExtrinsicData() const
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+  }
+
+  /**
+   * @brief Get a view to the data associated with a trait from this
+   *   ObjectManagerBase.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return A reference to a view to the data.
+   */
+  template< typename MESH_DATA_TRAIT >
+  auto & getExtrinsicData()
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+  }
+
+#if 0
+  template< typename MESH_DATA_TRAIT >
+  dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
+  registerExtrinsicData( string const & nameOfRegisteringObject,
+                         MESH_DATA_TRAIT const & extrinisicDataTrait )
+  {
+    // These are required to work-around the need for instantiation of
+    // the static constexpr trait components. This will not be required once
+    // we move to c++17.
+
+    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
+    constexpr dataRepository::PlotLevel plotLevel = MESH_DATA_TRAIT::plotLevel;
+    string const description = MESH_DATA_TRAIT::description;
+
+    // This is required for the Tensor classes.
+    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->
+               setApplyDefaultValue( defaultValue )->
+               setPlotLevel( plotLevel )->
+               setDescription( description )->
+               setRegisteringObjects( nameOfRegisteringObject ) );
+  }
+
+  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
+  void registerExtrinsicData( string const & nameOfRegisteringObject,
+                              MESH_DATA_TRAIT0 const & extrinisicDataTrait0,
+                              MESH_DATA_TRAIT1 const & extrinisicDataTrait1,
+                              MESH_DATA_TRAITS && ... extrinisicDataTraits )
+  {
+    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject, extrinisicDataTrait0 );
+    registerExtrinsicData< MESH_DATA_TRAIT1,
+                           MESH_DATA_TRAITS... >( nameOfRegisteringObject,
+                                                  extrinisicDataTrait1,
+                                                  std::forward< MESH_DATA_TRAITS >( extrinisicDataTraits )... );
+  }
+
+  template< typename MESH_DATA_TRAIT >
+  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait ) const
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+  }
+
+  template< typename MESH_DATA_TRAIT >
+  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait )
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+  }
+#endif
+
+  //**********************************************************************************************************************
+
+  /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
