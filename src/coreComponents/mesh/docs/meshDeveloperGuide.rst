@@ -128,7 +128,7 @@ Each ``ElementRegion`` holds some number of ``ElementSubRegion``.
 The ``ElementSubRegion`` is meant to hold all the element topologies present in an ``ElementSubRegion`` 
 in their own groups. 
 For instance, for a ``CellElementRegion``, there may be one ``CellElementSubRegion`` for all
-tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:ref:`meshPolyFig`).
+tetrahedra, one for all hexahedra, one for all wedges and one for all the pyramids (:numref:`meshPolyFig`).
 
 .. _meshPolyFig:
 .. figure:: ../../../coreComponents/mesh/docs/mesh_multi.png
@@ -139,4 +139,4 @@ tetrahedra, one for all hexahedra, one for all wedges and one for all the pyrami
    Model meshed with different cell types
 
 Now that all the classes of the mesh hierarchy has been described, we propose to adapt the diagram
-presented in :ref:`diagFig` to match with the example presented in :numref:`modelFig`.
+presented in :numref:`diagFig` to match with the example presented in :numref:`modelFig`.

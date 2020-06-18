@@ -400,4 +400,6 @@ protected:
 
 } // namespace geosx
 
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
+
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_

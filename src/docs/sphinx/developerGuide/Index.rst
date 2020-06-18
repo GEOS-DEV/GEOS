@@ -19,6 +19,12 @@ Welcome to the GEOSX developer guide.
 
    Sphinx
 
+   /coreComponents/dataRepository/dataRepository.rst
+   
+   WorkingWithData
+   
+   /coreComponents/mesh/docs/meshDeveloperGuide.rst
+
    Doxygen
 
    /coreComponents/LvArray/src/docs/sphinx/LvArray.rst
