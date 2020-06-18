@@ -108,7 +108,8 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
-   * @copydoc numNodesPerElement() const
+   * @brief Get the number of nodes per element.
+   * @return number of nodes per element
    */
   virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
 
