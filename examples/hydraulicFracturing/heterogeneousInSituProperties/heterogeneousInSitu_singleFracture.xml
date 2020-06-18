@@ -43,10 +43,10 @@
   </Mesh>
 
   <Geometry>
-    <Box name="perf_a"
-         xMin="-0.1, -0.1, -4.1"
-         xMax="4.1, 0.1, 4.1"/>
     <Box name="source_a"
+         xMin="-0.1, -0.1, -0.1"
+         xMax="4.1, 0.1, 4.1"/>
+    <Box name="perf_a"
          xMin="-4.1, -0.1, -4.1"
          xMax="4.1, 0.1, 4.1"/>
     <ThickPlane name="fracturable_a"
