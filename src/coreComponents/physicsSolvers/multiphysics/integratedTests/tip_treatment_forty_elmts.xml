@@ -124,7 +124,7 @@
       name="solverApplications1"
       beginTime="2.0"
       endTime="50.0"
-      forceDt="4.0"
+      forceDt="2.0"
       target="/Solvers/hydrofracture" />
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep

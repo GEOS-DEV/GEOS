@@ -286,7 +286,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	//TJ: print out surface aperture before newton solve
 	{
-	  std::cout << "Inside hydrofracture solver, "
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "before newton solve: "
 		    << std::endl;
 	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
@@ -351,7 +352,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	//TJ: print out surface aperture after newton solve
 	{
-	  std::cout << "Inside hydrofracture solver, "
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "after newton solve: "
 		    << std::endl;
 	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
@@ -405,11 +407,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         real64 const PI = 2 * acos(0.0);
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
 	//TJ: find the location of the tip boundary
-        if (subRegion->size() == 1)
+        if (time_n < 1.0e-6) //first step
           m_tipElement = 0;
 
         real64 const tipElmtArea = subRegion->getElementArea()[m_tipElement];
-        real64 const tipElmtSize = sqrt(tipElmtArea);
+        real64 tipElmtSize = sqrt(tipElmtArea);
+        // hard coded
+        tipElmtSize = 1.0;
         R1Tensor const tipElmtCenter = subRegion->getElementCenter()[m_tipElement];
         // Tip propagates in the y-direction (hard coded)
         real64 const tipBCLocation = tipElmtCenter[1] - 0.5 * tipElmtSize;
@@ -428,14 +432,24 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
         //TJ: use the displacement gap at the newly split node pair for the tip asymptotic relation
-        real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
+	int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+
+	real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
         GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			  "Node crosses the symmetric plane." );
-        std::cout << "refNodeIndex = " << refNodeIndex << ", childIndex = "
+        std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
                                        << myChildIndex[refNodeIndex] << std::endl;
+        std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
+                                     << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
+				     << std::endl;
 	real64 tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
 	m_newTipLocation = tipX + tipBCLocation;
 	m_convergedTipLoc = m_newTipLocation;
+	std::cout << "Rank " << rank
+	          << ": Tip element = " << m_tipElement
+	          << ", "
+		  << "converged tip loc = " << m_convergedTipLoc
+		  << std::endl;
 
 
       }
@@ -700,6 +714,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
           locallyFractured = 1;
 
           // when there is more than one fracture face element, we use tip-based method
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
           if (subRegion->size() >= 0)
           {
 	    /* TJ: This is where we can prescribe the displacement boundary conditions
@@ -714,14 +729,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			   "we can manipulate the node displacements "
 			   "at the newly generated nodes via split. "
 			<< std::endl;
-	      std::cout << "m_tipNodes: ";
+	      std::cout << "Rank " << rank << " m_tipNodes: ";
 	      for(auto & item : tipNodes)
 		std::cout << item << " ";
 	      std::cout << std::endl;
 	    }
 	    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
 	    {
-	      std::cout << "m_trailingFaces: ";
+	      std::cout << "Rank " << rank << " m_trailingFaces: ";
 	      for(auto & item : trailingFaces)
 		std::cout << item << " ";
 	      std::cout << std::endl;
@@ -842,10 +857,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      } // for localIndex i
 	      GEOSX_ASSERT_MSG( found == true,
 			    "Trailing face is not found among the fracture face elements" );
-	      std::cout << "m_tipElement = " << m_tipElement << std::endl;
+	      std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
 
 	      real64 const tipElmtArea = subRegion->getElementArea()[m_tipElement];
-	      real64 const tipElmtSize = sqrt(tipElmtArea);
+	      real64 tipElmtSize = sqrt(tipElmtArea);
+	      tipElmtSize = 1.0;
 	      R1Tensor const tipElmtCenter = subRegion->getElementCenter()[m_tipElement];
 	      // Tip propagates in the y-direction (hard coded)
 	      real64 const tipBCLocation = tipElmtCenter[1] - 0.5 * tipElmtSize;
@@ -879,7 +895,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 			disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
 			dispIncre(node,0) = disp(node,0) - 0.0;
-			std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
+			std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
 
 		      }
 		    } // for localIndex j
@@ -974,7 +990,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         //TJ: check the face elmt aperture due to the nodal displacement change
         {
-	  std::cout << "Face element info (after manipulating disp, before "
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank
+	            << ": Face element info (after manipulating disp, before "
 		       "UpdateDeformationForCoupling): " << std::endl;
 	  for(localIndex i=0; i<nodeMap.size(); i++)
 	  {
@@ -1003,7 +1021,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         //TJ: check the face elmt aperture due to the nodal displacement change
         {
-	  std::cout << "Face element info (after manipulating disp, after "
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank "<< rank
+	            << " Face element info (after manipulating disp, after "
 		       "UpdateDeformationForCoupling): " << std::endl;
 	  for(localIndex i=0; i<nodeMap.size(); i++)
 	  {
