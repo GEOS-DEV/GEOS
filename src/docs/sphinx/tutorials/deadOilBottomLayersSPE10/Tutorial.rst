@@ -15,8 +15,8 @@ Injection and production are performed using multi-segmented wells.
 
 At the end of this tutorial you will know:
 
-  - how to import an external mesh with embedded geological properties (permeability) in the Eclipse format (``.grdecl``).  
-  - how to set up a multiphase, multicomponent simulation.
+  - how to import an external mesh with embedded geological properties (permeability) in the Eclipse format (``.grdecl``),
+  - how to set up a multiphase, multicomponent simulation,
   - how to couple reservoir flow with wells.
 
 **Input file**
@@ -78,7 +78,7 @@ The coupling solver defines all the target regions on which the single-physics s
 are applied, namely the reservoir region (named ``reservoir`` here) and one region for each well.
 
 The simulation is fully coupled and driven by the coupled solver. Therefore, the time stepping
-information (here, ``initialDt``, but there may be other parameters used to fine tune the time
+information (here, ``initialDt``, but there may be other parameters used to fine-tune the time
 stepping strategy), the nonlinear solver parameters, and the linear solver parameters must be
 specified at the level of the coupling solver. There is no need to specify these parameters at
 the level of the single-physics solvers. 
@@ -86,10 +86,14 @@ Note that it is worth repeating the ``logLevel=1`` parameter at the level of the
 to make sure that a notification is issued when the well control is switched (from rate control
 to BHP control, for instance).
 
-We have to make sure that the same fluid and relative permeability
-models (set with the ``fluidNames`` and ``relPermNames`` attributes) are used in the two
+Note that the same fluid and relative permeability
+models (set with the ``fluidNames`` and ``relPermNames`` attributes) must be used in the two
 single-physics solvers.
-If this is not the case, GEOSX will throw an error and terminate the simulation.
+GEOSX will throw an error and terminate the simulation if it is not the case.
+
+Take note of the specification of well constraints and controls in the single-physics
+well solver with ``control``, ``targetBHP``, ``targetRate``
+and ``injectionStream`` (for the composition of the multiphase injection fluid).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
@@ -103,14 +107,14 @@ Specifying a reservoir mesh and defining the geometry of the wells
 
 In the presence of wells, the **Mesh** block of the XML input file includes two parts:
 
- - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh,
+ - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
  - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
 
 In this tutorial, the reservoir mesh is imported from an Eclipse ``.grdecl`` mesh file that
 describes the mesh and also contains the value of the three components of the permeability
 (in the x, y, and z directions) for each cell.
 The import is requested in the **PAMELAMeshGenerator** XML sub-block. The mesh description
-must be done in meters, and the permeability field must be specified in meters squared. 
+must be done in meters, and the permeability field must be specified in square meters (not in Darcy or milliDarcy).
 More information about the mesh importer can be found in :ref:`Meshes`.
 
 Each well is defined internally (i.e., not imported from a file) in a separate **InternalWell**
@@ -119,12 +123,12 @@ using the attribute ``meshName``, to the region corresponding to this well using
 ``wellRegionName``, and to the control of this well using the attribute ``wellControl``.
 
 In this tutorial, the five wells have the same structure, with one vertical segment
-discretized with four well cells. 
+discretized into four well cells.
 We define three perforations along the well (one perforation for each layer of the reservoir mesh).
 The location of the perforations is found internally using the linear distance along the wellbore
 from the top of the well, specified by the attribute ``distanceFromHead``.
 It is the responsibility of the user to make sure that there is a perforation in the bottom cell
-of the well mesh---otherwise, an error will be thrown and the simulation will terminate. The well
+of the well mesh otherwise an error will be thrown and the simulation will terminate. The well
 geometry must be specified in meters.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
@@ -151,31 +155,33 @@ serving different purposes: solver application, result output, and restart file 
 
 The periodic event named ``solverApplications`` triggers the application of the solvers
 on their target regions. 
-For a coupled simulation, this event must point to the coupling solver by name (here, we chose
-the name ``coupledFlowAndWells`` in the **Solvers** block).
-We do not specify any time stepping information here, so the time step is initialized using
-the ``initialDt`` attribute of the coupling solver (in seconds).
-Then, if the solver converges in more than a certain number of nonlinear iterations (by default, 16),
+For a coupled simulation, this event must point to the coupling solver by name. Here, we choose
+the name ``coupledFlowAndWells`` in the **Solvers** block.
+We do not specify any time-stepping information here, so the time step is initialized using
+the ``initialDt`` attribute of the coupling solver. Note that all times are in seconds.
+Then, if the solver converges in more than a certain number of nonlinear iterations (by default 16),
 the time step will be increased.
 If the time step fails, the time step will be cut. The parameters defining the time stepping strategy
 can be finely tuned by the user in the coupling solver block.
 
 The output event forces GEOSX to write out the results at the frequency specified by the attribute
-``timeFrequency`` (in seconds).
+``timeFrequency``.
 Here, we choose to output the results using the VTK format (see :ref:`TutorialSinglePhaseFlowExternalMesh`
 for a tutorial that uses the Silo output file format).
-Using ``targetExactTimestep=1`` in this XML sub-block forces GEOSX to adapt the time stepping to 
+Using ``targetExactTimestep=1`` in this XML block forces GEOSX to adapt the time stepping to
 ensure that an output is generated exactly at the time frequency requested by the user.
-In the ``target`` attribute, the user must use the name that is defined in the **VTK** XML sub-block
-of the **Output** XML block documented at the end of this tutorial (here, ``vtkOutput``).
+In the ``target`` attribute, we must use the name defined in the **VTK** XML tag
+inside the **Output** XML section, as documented at the end of this tutorial (here, ``vtkOutput``).
 
-The restart event instructs GEOSX to write out a restart file at the middle of the simulation.
-The restart file can then be used (if needed) to restart the simulation from this time.  
+The restart event instructs GEOSX to write out one or multiple restart files at set times in the simulation.
+Restart files are used to restart a simulation from a specific point in time.
+These files contain all the necessary information to restoring all internal
+variables to their exact state at the chosen time, and continue the simulation from here on.
 Here, the ``target`` attribute must contain the name defined in the **Restart** XML sub-block 
 of the **Output** XML block (here, ``restartOutput``).
 
 
-More information about the events can be found at :ref:`EventManager`.
+More information about events can be found at :ref:`EventManager`.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
@@ -191,9 +197,9 @@ More information about the events can be found at :ref:`EventManager`.
 Defining Numerical Methods
 ----------------------------------
 
-In the **NumericalMethods** XML block, we select  the TPFA finite-volume scheme to
+In the **NumericalMethods** XML block, we select a two-point flux approximation (TPFA) finite-volume scheme to
 discretize the governing equations on the reservoir mesh.
-This is currently the only numerical scheme that can be used with a flow solver of type
+TPFA is currently the only numerical scheme that can be used with a flow solver of type
 **CompositionalMultiphaseFlow**.
 There is no numerical scheme to specify for the well mesh.
 
@@ -210,9 +216,9 @@ Defining reservoir and well regions
 -----------------------------------
 
 In the presence of wells, it is required to specify at least two types of element regions in
-the **ElementRegions** XML block, namely **CellElementRegion** and **WellElementRegion**.
+the **ElementRegions** XML block: **CellElementRegion** and **WellElementRegion**.
 
-In this tutorial, we define a **CellElementRegion** named ``reservoir`` corresponding to the
+Here, we define a **CellElementRegion** named ``reservoir`` corresponding to the
 reservoir mesh.
 The attribute ``cellBlocks`` must be set to ``0_HEX`` to point this element region
 to the hexahedral mesh corresponding to the bottom layers of SPE10 that we have
@@ -224,11 +230,11 @@ hexahedral meshes in GEOSX.
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
-The names ``fluid``, ``rock``, and ``relperm`` that are used to do that in the ``materialList``
-correspond to the attribute ``name`` of the XML sub-blocks of the **Constitutive** block (see below). 
+The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
+correspond to the attribute ``name`` of the **Constitutive** block.
 
 We also define five **WellElementRegions** corresponding to the five wells.
-These regions must point to the well meshes defined in the **Mesh** XML block,
+These regions point to the well meshes defined in the **Mesh** XML block
 and to the constitutive models introduced in the **Constitutive** block.
 As before, this is done using the names chosen by the user when these blocks
 are defined.
@@ -247,13 +253,13 @@ Defining material properties with constitutive laws
 
 For a simulation performed with the **CompositionalMultiphaseFlow** 
 physics solver, at least three types of constitutive models must be
-specified (using SI units) in
-the **Constitutive** XML block:
+specified in the **Constitutive** XML block:
 
 - a fluid model describing the thermodynamics behavior of the fluid mixture,
 - a relative permeability model,
 - a rock compressibility model.
 
+All these models use SI units exclusively.
 A capillary pressure model can also be specified in this block but is omitted here for simplicity.
   
 Here, we introduce a fluid model  describing a simplified mixture thermodynamic behavior.
@@ -290,23 +296,23 @@ Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
 
 In the **FieldSpecifications** section, we define the initial conditions as well
-as the geological properties not read from the mesh file (here, the porosity field).
-This is done using SI units.
-In this tutorial, we focus on the specification of the initial conditions for
+as the geological properties not read from the mesh file, such as the porosity field in this tutorial.
+All this is done using SI units.
+Here, we focus on the specification of the initial conditions for
 a simulation performed with the **CompositionalMultiphaseFlow** solver.
 We refer to :ref:`TutorialSinglePhaseFlowWithInternalMesh` for a more general
-discussion on the **FieldSpecification** XML sub-blocks.
+discussion on the **FieldSpecification** XML blocks.
 
 For a simulation performed with the **CompositionalMultiphaseFlow** solver,
 we have to set the initial pressure as well as the initial global component
 fractions (in this case, the oil, gas, and water component fractions).
-The ``component`` attribute of the **FieldSpecification** XML sub-block must use the
+The ``component`` attribute of the **FieldSpecification** XML block must use the
 order in which the ``phaseNames`` have been defined in the **BlackOilFluid**
-XML sub-block. In other words, ``component=0`` is used to initialize the oil
+XML block. In other words, ``component=0`` is used to initialize the oil
 global component fraction, ``component=1`` is used to initialize the gas global
 component fraction, and ``component=2`` is used to initialize the water global
 component fraction, because we previously set ``phaseNames="{oil, gas, water}"``
-in the **BlackOilFluid** XML sub-block.
+in the **BlackOilFluid** XML block.
 
 Note that there is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
@@ -401,7 +407,8 @@ This is followed by the creation of the 39600 hexahedral cells of the imported m
   0 >>> Clean Adjacency...
   0 >>> *** Done...
 			
-When ``Running simulation`` is shown, we are done with the case set up and go into the execution of the simulation itself:
+When ``Running simulation`` is shown, we are done with the case set-up and
+the code steps into the execution of the simulation itself:
 
 .. code-block:: console
 		
@@ -423,7 +430,9 @@ When ``Running simulation`` is shown, we are done with the case set up and go in
 Visualization of results
 ------------------------------------
 
-We use Paraview to visualize the results:
+A file compatible with Paraview is produced in this tutorial.
+It is found in the output folder, and usually has the extension `.pvd`.
+We can load this file into Paraview directly and visualize results:
 
 |pic1| |pic2|
 
