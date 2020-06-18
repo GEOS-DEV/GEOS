@@ -333,7 +333,7 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                         gravityVector().Data()[2] };
 
   m_maxForce = finiteElement::
-                 regionBasedKernelApplication< serialPolicy,
+                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                                CONSTITUTIVE_BASE,
                                                CellElementSubRegion,
                                                KERNEL_TEMPLATE >( mesh,

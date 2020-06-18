@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
+//#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
@@ -227,6 +228,9 @@ protected:
                        MPI_Comm const & comm )
   {
     localMatrix.move( chai::CPU, false );
+
+//    std::cout<<" ******************** localMatrix ********************"<<std::endl;
+//    std::cout<<localMatrix<<std::endl;
 
     localIndex maxEntriesPerRow = 0;
     for( localIndex i = 0; i < localMatrix.numRows(); ++i )

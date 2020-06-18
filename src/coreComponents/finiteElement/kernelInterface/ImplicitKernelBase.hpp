@@ -186,10 +186,10 @@ protected:
   globalIndex const m_dofRankOffset;
 
   /// The global Jacobian matrix.
-  CRSMatrixView< real64, globalIndex const > const & m_matrix;
+  CRSMatrixView< real64, globalIndex const > const  m_matrix;
 
   /// The global residaul vector.
-  arrayView1d< real64 > const & m_rhs;
+  arrayView1d< real64 > const  m_rhs;
 
 };
 

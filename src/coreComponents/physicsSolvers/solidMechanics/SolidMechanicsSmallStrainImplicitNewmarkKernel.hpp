@@ -219,7 +219,7 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  //    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const

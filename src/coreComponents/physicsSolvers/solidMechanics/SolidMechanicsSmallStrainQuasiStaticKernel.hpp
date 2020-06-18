@@ -141,10 +141,10 @@ public:
     {}
 
     /// Stack storage for the element local nodal displacement
-    R1Tensor u_local[numNodesPerElem];
+    real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the element local nodal incremental displacement
-    R1Tensor uhat_local[numNodesPerElem];
+    real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
     real64 constitutiveStiffness[6][6];
@@ -355,14 +355,7 @@ public:
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
-    real64 meanForce = 0;
-    for( localIndex a=0; a<stack.numRows; ++a )
-    {
-//        RAJA::atomicMax< RAJA::auto_atomic >( &meanForce, stack.localResidual[a] );
-//      meanForce = max( meanForce, fabs(stack.localResidual[a]) );
-      meanForce += fabs( stack.localResidual[a] );
-    }
-//    meanForce /= stack.ndof;
+    real64 maxForce = 0;
 
     for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
     {
@@ -376,11 +369,12 @@ public:
                                                                      NUM_NODES_PER_ELEM * numDofPerTrialSupportPoint );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
+        maxForce = fmax( maxForce, fabs(stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ]) );
       }
     }
 
 
-    return meanForce;
+    return maxForce;
   }
 
 

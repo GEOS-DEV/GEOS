@@ -212,7 +212,7 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 
   finiteElement::
-    regionBasedKernelApplication< serialPolicy,
+    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                   constitutive::NullModel,
                                   CellElementSubRegion,
                                   LaplaceFEMKernel >( *mesh,

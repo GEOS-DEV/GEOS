@@ -266,6 +266,8 @@ public:
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
+    real64 maxForce = 0;
+
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
@@ -284,9 +286,10 @@ public:
                                                                                 NUM_NODES_PER_ELEM );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
+        maxForce = fmax( maxForce, fabs(stack.localResidual[ a ]) );
     }
 
-    return 1.0;
+    return maxForce;
   }
 
 

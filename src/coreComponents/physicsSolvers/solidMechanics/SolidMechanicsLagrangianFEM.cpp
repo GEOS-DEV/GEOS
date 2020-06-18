@@ -1200,6 +1200,8 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
                                                ParallelVector & solution )
 {
   solution.zero();
+
+//  std::cout<<"
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 

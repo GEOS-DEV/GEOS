@@ -307,7 +307,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
     localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
 
     // TODO: remove use of R1Tensor and use device policy
-    forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const ei )
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       real64 effectiveMeanStress = 0.0;
       for( localIndex q=0; q<numQuadraturePoints; ++q )
@@ -434,7 +434,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     int numQuadraturePoints = fe->n_quadrature_points();
 
     // TODO: remove use of R1Tensor and use device policy
-    forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const k )
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
@@ -442,24 +442,23 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
 
       for( integer q = 0; q < numQuadraturePoints; ++q )
       {
-        const realT detJq = detJ[k][q];
+        const real64 detJq = detJ[k][q];
 
         for( integer a = 0; a < numNodesPerElement; ++a )
         {
-          R1Tensor const dNdXa = dNdX[k][q][a];
 
-          dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdXa[0] * detJq;
-          dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdXa[1] * detJq;
-          dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdXa[2] * detJq;
-          dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdXa[0] * detJq;
-          dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdXa[1] * detJq;
-          dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdXa[2] * detJq;
+          dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdX[k][q][a][2] * detJq;
+          dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][2] * detJq;
 
           localIndex localNodeIndex = elemsToNodes[k][a];
 
-          real64 Rf_tmp = dNdXa[0] * incr_disp[localNodeIndex][0]
-                          + dNdXa[1] * incr_disp[localNodeIndex][1]
-                          + dNdXa[2] * incr_disp[localNodeIndex][2];
+          real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
+                        + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
+                        + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
           Rf_tmp *= density[k][0] * biotCoefficient * detJq;
           Rf[0] += Rf_tmp;
         }
