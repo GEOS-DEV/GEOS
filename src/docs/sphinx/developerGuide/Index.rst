@@ -5,38 +5,37 @@ Developer Guide
 Welcome to the GEOSX developer guide.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   DeveloperGuidelines
+   Contributing/DeveloperGuidelines.rst
 
-   GitWorkflow
+   Contributing/UnitTests.rst
 
-   GenerateSphinxDoc
+   Contributing/GitWorkflow.rst
 
-   Doxygen
+   Contributing/GenerateSphinxDoc.rst
 
-   /coreComponents/dataRepository/dataRepository.rst
-   
-   WorkingWithData
-   
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
+   Contributing/Doxygen.rst
 
-   UnitTests
+   Contributing/IntegratedTests
 
-   IntegratedTests
+   Contributing/caliper_link
 
-   caliper_link
+   KeyComponents/dataRepo_link.rst
 
-   XML_and_classes
+   KeyComponents/XML_and_classes
 
-   /coreComponents/managers/docs/ProblemManager.rst
+   KeyComponents/ProblemManager_link.rst
 
-   /coreComponents/linearAlgebra/docs/DofManager.rst
+   KeyComponents/mesh_link.rst
 
-   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
+   KeyComponents/dofManager_link.rst
+
+   KeyComponents/fem_link.rst
+
+   KeyComponents/WorkingWithData
 
    AddingNewSolver
-
 
 Overview of the code structure
 Managed Groups
