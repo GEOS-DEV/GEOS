@@ -50,7 +50,6 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-
   CellElementStencilTPFA & stencil = this->getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
 
   arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
@@ -64,6 +63,9 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
     elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString );
+
   ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
@@ -73,12 +75,11 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     regionFilter.insert( elemManager.GetRegions().getIndex( regionName ) );
   }
 
-  constexpr localIndex numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
-
-  stackArray1d< localIndex, numElems > stencilCellsRegionIndex( numElems );
-  stackArray1d< localIndex, numElems > stencilCellsSubRegionIndex( numElems );
-  stackArray1d< localIndex, numElems > stencilCellsIndex( numElems );
-  stackArray1d< real64, numElems > stencilWeights( numElems );
+  stackArray1d< localIndex, 2 > stencilCellsRegionIndex( 2 );
+  stackArray1d< localIndex, 2 > stencilCellsSubRegionIndex( 2 );
+  stackArray1d< localIndex, 2 > stencilCellsIndex( 2 );
+  stackArray1d< real64, 2 > stencilWeights( 2 );
+  stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve( faceManager.size() );
@@ -108,11 +109,16 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
     real64 faceWeight = 0.0;
 
-    for( localIndex ke = 0; ke < numElems; ++ke )
+    for( localIndex ke = 0; ke < 2; ++ke )
     {
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];
       localIndex const ei  = elemList[kf][ke];
+
+      stencilCellsRegionIndex[ke] = er;
+      stencilCellsSubRegionIndex[ke] = esr;
+      stencilCellsIndex[ke] = ei;
+      stencilCellsGlobalIndex[ke] = elemGlobalIndex[er][esr][ei];
 
       LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
@@ -149,21 +155,26 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     GEOSX_ASSERT( faceWeight > 0.0 );
     faceWeight = 1.0 / faceWeight;
 
-    for( localIndex ke = 0; ke < numElems; ++ke )
+    for( localIndex ke = 0; ke < 2; ++ke )
     {
-      stencilCellsRegionIndex[ke] = elemRegionList[kf][ke];
-      stencilCellsSubRegionIndex[ke] = elemSubRegionList[kf][ke];
-      stencilCellsIndex[ke] = elemList[kf][ke];
       stencilWeights[ke] = faceWeight * (ke == 0 ? 1 : -1);
     }
-    stencil.add( CellElementStencilTPFA::NUM_POINT_IN_FLUX,
+
+    // Ensure elements are added to stencil in order of global indices
+    if( stencilCellsGlobalIndex[0] >= stencilCellsGlobalIndex[1] )
+    {
+      std::swap( stencilCellsRegionIndex[0], stencilCellsRegionIndex[1] );
+      std::swap( stencilCellsSubRegionIndex[0], stencilCellsSubRegionIndex[1] );
+      std::swap( stencilCellsIndex[0], stencilCellsIndex[1] );
+    }
+
+    stencil.add( 2,
                  stencilCellsRegionIndex,
                  stencilCellsSubRegionIndex,
                  stencilCellsIndex,
                  stencilWeights.data(),
                  kf );
   }
-//  stencil.compress();
 }
 
 
