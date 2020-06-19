@@ -84,7 +84,7 @@ public:
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
