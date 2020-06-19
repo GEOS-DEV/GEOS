@@ -1,8 +1,8 @@
 *****************************
-Basic profiling with CALIPER
+Caliper Profiling
 *****************************
 
-GEOSX is equipped with `Caliper <https://github.com/LLNL/Caliper>`_ timers.
+GEOSX is equipped with `Caliper timers <https://github.com/LLNL/Caliper>`_.
 We integrate Caliper into GEOSX by marking source-code sections of interest such as computational kernels or initialization steps.
 Caliper is included in the GEOSX TPL library and is built by adding the following cmake configuration to a host-config file.
 

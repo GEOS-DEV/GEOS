@@ -4,17 +4,13 @@
 Build Guide
 ###############################################################################
 
-Welcome to the GEOSX building guide.
+Welcome to the GEOSX build guide.
 
 .. toctree::
    :maxdepth: 1
-
-   DownloadingAndCompiling
 
    Dependencies
 
    ContinuousIntegration
 
    ubuntuVirtualMachineOnOSX/Instructions
-
-

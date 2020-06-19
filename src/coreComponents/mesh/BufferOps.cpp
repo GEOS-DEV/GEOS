@@ -78,7 +78,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
-  GEOSX_MARK_FUNCTION_TAG( "Unpack OrderedVariableToManyElementRelation" );
+  GEOSX_MARK_SCOPE( "Unpack OrderedVariableToManyElementRelation" );
 
   localIndex sizeOfUnpackedChars = 0;
 
@@ -208,7 +208,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
                    ElementRegionManager const * const elementRegionManager,
                    bool const clearFlag )
 {
-  GEOSX_MARK_FUNCTION_TAG( "Unpack FixedToManyElementRelation" );
+  GEOSX_MARK_SCOPE( "Unpack FixedToManyElementRelation" );
 
   localIndex sizeOfUnpackedChars = 0;
 
