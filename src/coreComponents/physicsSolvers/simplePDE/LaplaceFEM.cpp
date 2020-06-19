@@ -170,7 +170,7 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
   dofIndex = nodeManager->getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
   SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d<localIndex> rowSizes( dofManager.numLocalDofs() );
+  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
 
   finiteElement::fillSparsity< serialPolicy,
                                CellElementSubRegion,

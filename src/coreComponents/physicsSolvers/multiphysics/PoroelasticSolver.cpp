@@ -457,8 +457,8 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
           localIndex localNodeIndex = elemsToNodes[k][a];
 
           real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
-                        + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
-                        + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
+                          + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
+                          + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
           Rf_tmp *= density[k][0] * biotCoefficient * detJq;
           Rf[0] += Rf_tmp;
         }

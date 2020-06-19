@@ -890,7 +890,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
     RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                            [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       for( int i=0; i<3; ++i )
       {
@@ -902,7 +902,7 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic && dt > 0.0 )
   {
     RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        [=] GEOSX_HOST_DEVICE ( localIndex const a )
+                                            [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       for( int i=0; i<3; ++i )
       {
@@ -941,7 +941,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
   SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d<localIndex> rowSizes( dofManager.numLocalDofs() );
+  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {
