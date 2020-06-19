@@ -20,11 +20,8 @@
 #include "common/Path.hpp"
 #include "managers/ProblemManager.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2DensityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/FenghourCO2ViscosityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineCO2DensityFunction.hpp"
-#include "constitutive/fluid/PVTFunctions/BrineViscosityFunction.hpp"
+#include "PVTFunctions/FlashModelBase.hpp"
+#include "PVTFunctions/PVTFunctionBase.hpp"
 
 
 namespace geosx
@@ -150,11 +147,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
       if( streq( strs[0], "DensityFun" ))
       {
-        m_phaseDensityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ) );
       }
       else if( streq( strs[0], "ViscosityFun" ))
       {
-        m_phaseViscosityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ) );
       }
       else
         GEOSX_ERROR( "Error: Invalid PVT function: " << strs[0] << "." );
@@ -179,14 +176,16 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
       if( streq( strs[0], "FlashModel" ))
       {
 
-        m_flashModel = ( FlashModel::CatalogInterface::Factory( strs[1],
-                                                                strs,
-                                                                m_phaseNames,
-                                                                m_componentNames,
-                                                                m_componentMolarWeight ) );
+        m_flashModel = FlashModel::CatalogInterface::Factory( strs[1],
+                                                              strs,
+                                                              m_phaseNames,
+                                                              m_componentNames,
+                                                              m_componentMolarWeight );
       }
       else
+      {
         GEOSX_ERROR( "Error: Not flash model: " << strs[0] << "." );
+      }
     }
 
     is.close();
