@@ -852,16 +852,18 @@ SolidMechanicsLagrangianFEM::
     // TODO: eliminate
     stress_n.resize( stress.size( 0 ), stress.size( 1 ), 6 );
 
-    for( localIndex k=0; k<stress.size( 0 ); ++k )
+    arrayView3d< real64, solid::STRESS_USD > const & vstress_n = stress_n.toView();
+
+    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex a=0; a<stress.size( 1 ); ++a )
       {
         for( localIndex i=0; i<6; ++i )
         {
-          stress_n( k, a, i ) = stress( k, a, i );
+          vstress_n( k, a, i ) = stress( k, a, i );
         }
       }
-    }
+    } );
   } );
 
 
@@ -887,8 +889,8 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
     real64 const newmarkGamma = this->getReference< real64 >( solidMechanicsViewKeys.newmarkGamma );
     real64 const newmarkBeta = this->getReference< real64 >( solidMechanicsViewKeys.newmarkBeta );
 
-    RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        [=] ( localIndex const a )
+    RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                        [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       for( int i=0; i<3; ++i )
       {
@@ -899,8 +901,8 @@ void SolidMechanicsLagrangianFEM::ImplicitStepComplete( real64 const & GEOSX_UNU
   }
   else if( this->m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic && dt > 0.0 )
   {
-    RAJA::forall< parallelHostPolicy >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
-                                        [=] ( localIndex const a )
+    RAJA::forall< parallelDevicePolicy<> >( RAJA::TypedRangeSegment< localIndex >( 0, numNodes ),
+                                        [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       for( int i=0; i<3; ++i )
       {
@@ -987,8 +989,8 @@ void SolidMechanicsLagrangianFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARA
 {
   GEOSX_MARK_FUNCTION;
 
-  m_localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
-  m_localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
+  localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
   if( m_effectiveStress==1 )
   {
@@ -1200,8 +1202,6 @@ void SolidMechanicsLagrangianFEM::SolveSystem( DofManager const & dofManager,
                                                ParallelVector & solution )
 {
   solution.zero();
-
-//  std::cout<<"
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
@@ -1240,7 +1240,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
     arrayView3d< real64 const, solid::STRESS_USD > const &
     stress_n = subRegion.getReference< array3d< real64, solid::STRESS_PERMUTATION > >( viewKeyStruct::stress_n );
 
-    for( localIndex k=0; k<stress.size( 0 ); ++k )
+    forAll< parallelDevicePolicy<> >( stress.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex a=0; a<stress.size( 1 ); ++a )
       {
@@ -1249,7 +1249,7 @@ void SolidMechanicsLagrangianFEM::ResetStressToBeginningOfStep( DomainPartition 
           stress( k, a, i ) = stress_n( k, a, i );
         }
       }
-    }
+    } );
   } );
 }
 

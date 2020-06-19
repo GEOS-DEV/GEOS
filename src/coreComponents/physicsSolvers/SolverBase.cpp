@@ -768,6 +768,15 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
+  static int count = 0;
+  if( count < 4 )
+  {
+//  std::cout<<"************************* MATRIX *************************"<<std::endl;
+//  std::cout<<matrix<<std::endl<<std::endl;
+//  std::cout<<"************************* RHS *************************"<<std::endl;
+//  std::cout<<rhs<<std::endl<<std::endl;
+  }
+
   LinearSolverParameters const & params = m_linearSolverParameters.get();
 
   // TODO: We probably want to keep an instance of linear solver as a member of physics solver
@@ -787,6 +796,14 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
     solver->solve( rhs, solution );
     m_linearSolverResult = solver->result();
   }
+
+  if( count < 4 )
+  {
+//  std::cout<<"************************* SOLUTION *************************"<<std::endl;
+//  std::cout<<solution<<std::endl<<std::endl;
+  }
+  ++count;
+
 
   GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
 }
