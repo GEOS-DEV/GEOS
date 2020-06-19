@@ -13,7 +13,7 @@
  */
 
 /**
- * @file testArrayLAOperations.cpp
+ * @file testDenseLAOperations.cpp
  */
 
 #include "gtest/gtest.h"
@@ -32,14 +32,15 @@ using INDEX_TYPE = std::ptrdiff_t;
 static real64 const machinePrecision = 20.0 * std::numeric_limits< real64 >::epsilon();
 static real64 const pi = std::atan( 1.0 )*4.0;
 
+template< typename LAI >
 void vector_norm1_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   real64 norm1 = 0.0;
@@ -50,19 +51,19 @@ void vector_norm1_test()
 
   // Check
   EXPECT_NEAR( norm1,
-               BlasLapackLA::vectorNorm1( vec ),
+               LAI::vectorNorm1( vec ),
                norm1 * machinePrecision );
 }
 
-
+template< typename LAI >
 void vector_norm2_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm2
   real64 norm2 = 0.0;
@@ -74,19 +75,19 @@ void vector_norm2_test()
 
   // Check
   EXPECT_NEAR( norm2,
-               BlasLapackLA::vectorNorm2( vec ),
+               LAI::vectorNorm2( vec ),
                norm2 * machinePrecision );
 }
 
-
+template< typename LAI >
 void vector_normInf_test()
 {
   INDEX_TYPE N = 24;
   array1d< real64 > vec( N );
 
   // Populate vector with random coefficients
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = std::abs( vec( 0 ));
@@ -101,14 +102,14 @@ void vector_normInf_test()
 
   // Check
   EXPECT_NEAR( normInf,
-               BlasLapackLA::vectorNormInf( vec ),
+               LAI::vectorNormInf( vec ),
                normInf * machinePrecision );
 }
 
-template< typename PERM >
+template< typename LAI >
 void determinant_test()
 {
-  array2d< real64, PERM > Laplacian1d;
+  array2d< real64 > Laplacian1d;
   real64 determinant;
 
   real64 theta;
@@ -146,21 +147,21 @@ void determinant_test()
 
     determinant = N_real + 1.0; // Exact determinant
     EXPECT_NEAR( determinant,
-                 BlasLapackLA::determinant( Laplacian1d ),
+                 LAI::determinant( Laplacian1d ),
                  (lambda_max/lambda_min) * machinePrecision );
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_normInf_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > mat( M, N );
+  array2d< real64 > mat( M, N );
 
   // Populate matrix with random coefficients
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normInf
   real64 normInf = 0.0;
@@ -176,20 +177,20 @@ void matrix_normInf_test()
 
   // Check
   EXPECT_NEAR( normInf,
-               BlasLapackLA::matrixNormInf( mat ),
+               LAI::matrixNormInf( mat ),
                normInf * machinePrecision );
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_norm1_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > mat( M, N );
+  array2d< real64 > mat( M, N );
 
   // Populate matrix with random coefficients
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute norm1
   array1d< real64 > tmp( N );
@@ -201,25 +202,24 @@ void matrix_norm1_test()
       tmp( j ) += std::abs( mat( i, j ) );
     }
   }
-
   real64 *norm1 = std::max_element( tmp.begin(), tmp.end());
 
   // Check
   EXPECT_NEAR( *norm1,
-               BlasLapackLA::matrixNorm1( mat ),
+               LAI::matrixNorm1( mat ),
                *norm1 * machinePrecision );
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_normFrobenius_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > mat( M, N );
+  array2d< real64 > mat( M, N );
 
   // Populate matrix with random coefficients
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute normFrobeniusm
   real64 normFrobenius = 0.0;
@@ -234,11 +234,11 @@ void matrix_normFrobenius_test()
 
   // Check
   EXPECT_NEAR( normFrobenius,
-               BlasLapackLA::matrixNormFrobenius( mat ),
+               LAI::matrixNormFrobenius( mat ),
                normFrobenius * machinePrecision );
 }
 
-
+template< typename LAI >
 void vector_vector_add_test()
 {
   INDEX_TYPE N = 24;
@@ -247,10 +247,10 @@ void vector_vector_add_test()
   array1d< real64 > vecSum( N );
 
   // Populate vectors with random coefficients
-  BlasLapackLA::vectorRand( vec1,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-  BlasLapackLA::vectorRand( vec2,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec1,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( vec2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum vecSum = alpha*vec1 + vec2
   real64 alpha = 3.0;
@@ -260,9 +260,9 @@ void vector_vector_add_test()
   }
 
   // Compute v2 = alpha*vec1 + vec2
-  BlasLapackLA::vectorVectorAdd( vec1,
-                                 vec2,
-                                 alpha );
+  LAI::vectorVectorAdd( vec1,
+                        vec2,
+                        alpha );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -273,22 +273,22 @@ void vector_vector_add_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_matrix_add_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > mat1( M, N );
-  array2d< real64, PERM > mat2( M, N );
-  array2d< real64, PERM > matSum( M, N );
+  array2d< real64 > mat1( M, N );
+  array2d< real64 > mat2( M, N );
+  array2d< real64 > matSum( M, N );
 
   // Populate vectors with random coefficients
   // Populate matrix with random coefficients
-  BlasLapackLA::matrixRand( mat1,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
+  LAI::matrixRand( mat1,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
   // Populate matrix with random coefficients
-  BlasLapackLA::matrixRand( mat2,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector sum matSum = alpha*mat1 + mat2
   real64 alpha = 3.0;
@@ -301,9 +301,9 @@ void matrix_matrix_add_test()
   }
 
   // Compute mat2 = alpha*mat1 + mat2
-  BlasLapackLA::matrixMatrixAdd( mat1,
-                                 mat2,
-                                 alpha );
+  LAI::matrixMatrixAdd( mat1,
+                        mat2,
+                        alpha );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -317,6 +317,7 @@ void matrix_matrix_add_test()
   }
 }
 
+template< typename LAI >
 void vector_scale_test()
 {
   INDEX_TYPE N = 24;
@@ -324,8 +325,8 @@ void vector_scale_test()
   array1d< real64 > vecScaled( N );
 
   // Populate vectors with random coefficients
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vecScaled = alpha*vec
   real64 alpha = 3.0;
@@ -335,8 +336,8 @@ void vector_scale_test()
   }
 
   // Compute vec = alpha*vec
-  BlasLapackLA::vectorScale( alpha,
-                             vec );
+  LAI::vectorScale( alpha,
+                    vec );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -347,17 +348,17 @@ void vector_scale_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_scale_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > mat( M, N );
-  array2d< real64, PERM > matScaled( M, N );
+  array2d< real64 > mat( M, N );
+  array2d< real64 > matScaled( M, N );
 
   // Populate vectors with random coefficients
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector matScaled = alpha*mat
   real64 alpha = 3.0;
@@ -370,8 +371,8 @@ void matrix_scale_test()
   }
 
   // Compute mat = alpha*mat
-  BlasLapackLA::matrixScale( alpha,
-                             mat );
+  LAI::matrixScale( alpha,
+                    mat );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -385,7 +386,7 @@ void matrix_scale_test()
   }
 }
 
-
+template< typename LAI >
 void vector_dot_test()
 {
   INDEX_TYPE N = 6;
@@ -393,10 +394,10 @@ void vector_dot_test()
   array1d< real64 > vec2( N );
 
   // Populate vectors with random coefficients
-  BlasLapackLA::vectorRand( vec1,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-  BlasLapackLA::vectorRand( vec2,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec1,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( vec2,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
   // Compute vector vec1_dot_v2 = vec1^t*vec2
   real64 vec1DotVec2 = 0.0;
@@ -407,28 +408,28 @@ void vector_dot_test()
 
   // Check
   EXPECT_NEAR( vec1DotVec2,
-               BlasLapackLA::vectorDot( vec1,
-                                        vec2 ),
+               LAI::vectorDot( vec1,
+                               vec2 ),
                static_cast< real64 >(N)*machinePrecision );
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > A( M, N );
+  array2d< real64 > A( M, N );
   array1d< real64 > X( N );
   array1d< real64 > Y( M );
   array1d< real64 > vecResult( M );
 
   // Populate matrix and vectors with random coefficients
-  BlasLapackLA::matrixRand( A,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-  BlasLapackLA::vectorRand( X,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-  BlasLapackLA::vectorRand( Y,
-                            BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+  LAI::matrixRand( A,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( X,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( Y,
+                   LAI::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*A*X + beta*Y
   real64 alpha = 3.0;
@@ -443,11 +444,11 @@ void matrix_vector_multiply_test()
   }
 
   // Compute Y = alpha*A*X + beta*Y
-  BlasLapackLA::matrixVectorMultiply( A,
-                                      X,
-                                      Y,
-                                      alpha,
-                                      beta );
+  LAI::matrixVectorMultiply( A,
+                             X,
+                             Y,
+                             alpha,
+                             beta );
 
   // Check
   for( INDEX_TYPE i = 0; i < M; ++i )
@@ -458,23 +459,23 @@ void matrix_vector_multiply_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrixT_vector_multiply_test()
 {
   INDEX_TYPE M = 6;
   INDEX_TYPE N = 24;
-  array2d< real64, PERM > A( M, N );
+  array2d< real64 > A( M, N );
   array1d< real64 > X( M );
   array1d< real64 > Y( N );
   array1d< real64 > vecResult( N );
 
   // Populate matrix and vectors with random coefficients
-  BlasLapackLA::matrixRand( A,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-  BlasLapackLA::vectorRand( X,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-  BlasLapackLA::vectorRand( Y,
-                            BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+  LAI::matrixRand( A,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( X,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( Y,
+                   LAI::RandomNumberDistribution::NORMAL_01 );
 
   // Compute vector vecResults = alpha*transpose(A)*X + beta*Y
   real64 alpha = 3.0;
@@ -489,11 +490,11 @@ void matrixT_vector_multiply_test()
   }
 
   // Compute Y = alpha*A*X + beta*Y
-  BlasLapackLA::matrixTVectorMultiply( A,
-                                       X,
-                                       Y,
-                                       alpha,
-                                       beta );
+  LAI::matrixTVectorMultiply( A,
+                              X,
+                              Y,
+                              alpha,
+                              beta );
 
   // Check
   for( INDEX_TYPE i = 0; i < N; ++i )
@@ -504,7 +505,7 @@ void matrixT_vector_multiply_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -515,10 +516,10 @@ void matrix_matrix_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64, PERM > A;
-  array2d< real64, PERM > B;
-  array2d< real64, PERM > C;
-  array2d< real64, PERM > matResult;
+  array2d< real64 > A;
+  array2d< real64 > B;
+  array2d< real64 > C;
+  array2d< real64 > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -535,12 +536,12 @@ void matrix_matrix_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        BlasLapackLA::matrixRand( A,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-        BlasLapackLA::matrixRand( B,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-        BlasLapackLA::matrixRand( C,
-                                  BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -556,11 +557,11 @@ void matrix_matrix_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        BlasLapackLA::matrixMatrixMultiply( A,
-                                            B,
-                                            C,
-                                            alpha,
-                                            beta );
+        LAI::matrixMatrixMultiply( A,
+                                   B,
+                                   C,
+                                   alpha,
+                                   beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -578,7 +579,7 @@ void matrix_matrix_multiply_test()
 
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrixT_matrix_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -589,10 +590,10 @@ void matrixT_matrix_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64, PERM > A;
-  array2d< real64, PERM > B;
-  array2d< real64, PERM > C;
-  array2d< real64, PERM > matResult;
+  array2d< real64 > A;
+  array2d< real64 > B;
+  array2d< real64 > C;
+  array2d< real64 > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -609,12 +610,12 @@ void matrixT_matrix_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        BlasLapackLA::matrixRand( A,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-        BlasLapackLA::matrixRand( B,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-        BlasLapackLA::matrixRand( C,
-                                  BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -630,11 +631,11 @@ void matrixT_matrix_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        BlasLapackLA::matrixTMatrixMultiply( A,
-                                             B,
-                                             C,
-                                             alpha,
-                                             beta );
+        LAI::matrixTMatrixMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -652,7 +653,7 @@ void matrixT_matrix_multiply_test()
 
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -663,10 +664,10 @@ void matrix_matrixT_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64, PERM > A;
-  array2d< real64, PERM > B;
-  array2d< real64, PERM > C;
-  array2d< real64, PERM > matResult;
+  array2d< real64 > A;
+  array2d< real64 > B;
+  array2d< real64 > C;
+  array2d< real64 > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -683,12 +684,12 @@ void matrix_matrixT_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        BlasLapackLA::matrixRand( A,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-        BlasLapackLA::matrixRand( B,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-        BlasLapackLA::matrixRand( C,
-                                  BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -704,11 +705,11 @@ void matrix_matrixT_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        BlasLapackLA::matrixMatrixTMultiply( A,
-                                             B,
-                                             C,
-                                             alpha,
-                                             beta );
+        LAI::matrixMatrixTMultiply( A,
+                                    B,
+                                    C,
+                                    alpha,
+                                    beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -726,7 +727,7 @@ void matrix_matrixT_multiply_test()
 
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrixT_matrixT_multiply_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -737,10 +738,10 @@ void matrixT_matrixT_multiply_test()
   array1d< INDEX_TYPE > N_indeces( M_indeces );
   array1d< INDEX_TYPE > K_indeces( M_indeces );
 
-  array2d< real64, PERM > A;
-  array2d< real64, PERM > B;
-  array2d< real64, PERM > C;
-  array2d< real64, PERM > matResult;
+  array2d< real64 > A;
+  array2d< real64 > B;
+  array2d< real64 > C;
+  array2d< real64 > matResult;
   real64 alpha = 3.0;
   real64 beta = 7.0;
 
@@ -757,12 +758,12 @@ void matrixT_matrixT_multiply_test()
         matResult.resize( M, N );
 
         // Populate matrices with random coefficients
-        BlasLapackLA::matrixRand( A,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
-        BlasLapackLA::matrixRand( B,
-                                  BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-        BlasLapackLA::matrixRand( C,
-                                  BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+        LAI::matrixRand( A,
+                         LAI::RandomNumberDistribution::UNIFORM_01 );
+        LAI::matrixRand( B,
+                         LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+        LAI::matrixRand( C,
+                         LAI::RandomNumberDistribution::NORMAL_01 );
 
         // Compute matrix matResult = alpha*A*B + beta*C
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -778,11 +779,11 @@ void matrixT_matrixT_multiply_test()
         }
 
         // Compute C = alpha*A*B + beta*C
-        BlasLapackLA::matrixTMatrixTMultiply( A,
-                                              B,
-                                              C,
-                                              alpha,
-                                              beta );
+        LAI::matrixTMatrixTMultiply( A,
+                                     B,
+                                     C,
+                                     alpha,
+                                     beta );
 
         // Check
         for( INDEX_TYPE i = 0; i < M; ++i )
@@ -799,11 +800,11 @@ void matrixT_matrixT_multiply_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_inverse_test()
 {
-  array2d< real64, PERM > Laplacian1d;
-  array2d< real64, PERM > Laplacian1dInv;
+  array2d< real64 > Laplacian1d;
+  array2d< real64 > Laplacian1dInv;
   real64 exact_entry;
   real64 theta;
   real64 lambda_max;
@@ -833,8 +834,8 @@ void matrix_inverse_test()
 
     // Compute inverse of Laplacian1d
     Laplacian1dInv.resize( N, N );
-    BlasLapackLA::matrixInverse( Laplacian1d,
-                                 Laplacian1dInv );
+    LAI::matrixInverse( Laplacian1d,
+                        Laplacian1dInv );
 
     // Check
     N_real = static_cast< real64 >(N);
@@ -858,7 +859,7 @@ void matrix_inverse_test()
   }
 }
 
-
+template< typename LAI >
 void vector_copy_test()
 {
   array1d< INDEX_TYPE > N_indeces;
@@ -876,12 +877,12 @@ void vector_copy_test()
     dst.resize( N );
 
     // Populate src vector with random coefficients
-    BlasLapackLA::vectorRand( src,
-                              BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+    LAI::vectorRand( src,
+                     LAI::RandomNumberDistribution::NORMAL_01 );
 
     // Copy vector, dst = src
-    BlasLapackLA::vectorCopy( src,
-                              dst );
+    LAI::vectorCopy( src,
+                     dst );
 
     // Check
     for( INDEX_TYPE i = 0; i < N; ++i )
@@ -893,7 +894,7 @@ void vector_copy_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_copy_test()
 {
   array1d< INDEX_TYPE > M_indeces;
@@ -903,8 +904,8 @@ void matrix_copy_test()
   M_indeces.push_back( 100 );
   array1d< INDEX_TYPE > N_indeces( M_indeces );
 
-  array2d< real64, PERM > src;
-  array2d< real64, PERM > dst;
+  array2d< real64 > src;
+  array2d< real64 > dst;
 
   for( INDEX_TYPE M : M_indeces )
   {
@@ -914,12 +915,12 @@ void matrix_copy_test()
       dst.resize( M, N );
 
       // Populate src matrix with random coefficients
-      BlasLapackLA::matrixRand( src,
-                                BlasLapackLA::RandomNumberDistribution::NORMAL_01 );
+      LAI::matrixRand( src,
+                       LAI::RandomNumberDistribution::NORMAL_01 );
 
       // Copy matrix, dst = src
-      BlasLapackLA::matrixCopy( src,
-                                dst );
+      LAI::matrixCopy( src,
+                       dst );
 
       // Check
       for( INDEX_TYPE i = 0; i < M; ++i )
@@ -935,6 +936,7 @@ void matrix_copy_test()
   }
 }
 
+template< typename LAI >
 void vector_rand_test()
 {
   INDEX_TYPE N = 10000;
@@ -943,15 +945,15 @@ void vector_rand_test()
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
   real64 *v_max = std::max_element( vec.begin(), vec.end());
   real64 *v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( 0.0 <= *v_min && *v_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
-  BlasLapackLA::vectorRand( vec,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::vectorRand( vec,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
   v_max = std::max_element( vec.begin(), vec.end());
   v_min = std::min_element( vec.begin(), vec.end());
   EXPECT_TRUE( -1.0 <= *v_min && *v_max <= 1.0 );
@@ -961,25 +963,25 @@ void vector_rand_test()
 
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_rand_test()
 {
   INDEX_TYPE M =  99;
   INDEX_TYPE N = 101;
-  array2d< real64, PERM > mat( M, N );
+  array2d< real64 > mat( M, N );
 
   // Populate vector with random coefficients
 
   // --- uniform distribution (0,1);
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_01 );
   real64 *A_max = std::max_element( mat.begin(), mat.end());
   real64 *A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( 0.0 <= *A_min && *A_max <= 1.0 );
 
   // --- uniform distribution (-1,1);
-  BlasLapackLA::matrixRand( mat,
-                            BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+  LAI::matrixRand( mat,
+                   LAI::RandomNumberDistribution::UNIFORM_m1p1 );
   A_max = std::max_element( mat.begin(), mat.end());
   A_min = std::min_element( mat.begin(), mat.end());
   EXPECT_TRUE( -1.0 <= *A_min && *A_max <= 1.0 );
@@ -989,6 +991,7 @@ void matrix_rand_test()
 
 }
 
+template< typename LAI >
 void set_get_random_number_generator_seed_test()
 {
   array1d< int > seedSet( 4 );
@@ -996,10 +999,10 @@ void set_get_random_number_generator_seed_test()
   seedSet( 1 ) = 2;
   seedSet( 2 ) = 3;
   seedSet( 3 ) = 7; // must be odd
-  BlasLapackLA::setRandomNumberGeneratorSeed( seedSet );
+  LAI::setRandomNumberGeneratorSeed( seedSet );
 
   array1d< int > seedGet( 4 );
-  BlasLapackLA::getRandomNumberGeneratorSeed( seedGet );
+  LAI::getRandomNumberGeneratorSeed( seedGet );
 
   // Check
   for( INDEX_TYPE i = 0; i< seedSet.size(); ++i )
@@ -1008,7 +1011,7 @@ void set_get_random_number_generator_seed_test()
   }
 }
 
-
+template< typename LAI >
 void performance_test()
 {
   constexpr localIndex MAX_SIZE = 1024 * 8 * 4;
@@ -1023,17 +1026,17 @@ void performance_test()
     b.resize( size, size );
     c.resize( size, size );
 
-    BlasLapackLA::matrixRand( a,
-                              BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
-    BlasLapackLA::matrixRand( b,
-                              BlasLapackLA::RandomNumberDistribution::UNIFORM_m1p1 );
+    LAI::matrixRand( a,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
+    LAI::matrixRand( b,
+                     LAI::RandomNumberDistribution::UNIFORM_m1p1 );
 
     std::chrono::duration< double > multiplicationTime {};
     localIndex const nIter = MAX_SIZE / (size + 1) + 1;
     for( localIndex iter = 0; iter < nIter; ++iter )
     {
       auto start = std::chrono::high_resolution_clock::now();
-      BlasLapackLA::matrixMatrixMultiply( a, b, c, 1.0, 1.0 );
+      LAI::matrixMatrixMultiply( a, b, c, 1.0, 1.0 );
       auto end = std::chrono::high_resolution_clock::now();
       multiplicationTime += end - start;
     }
@@ -1044,7 +1047,7 @@ void performance_test()
   }
 }
 
-template< typename PERM >
+template< typename LAI >
 void matrix_svd_test()
 {
   array1d< INDEX_TYPE > M_indices;
@@ -1058,18 +1061,17 @@ void matrix_svd_test()
   M_indices.push_back( 8 );
   array1d< INDEX_TYPE > N_indices( M_indices );
 
-  array2d< real64, PERM > A;
-  array2d< real64, PERM > U;
-  array2d< real64, PERM > VT;
+  array2d< real64 > A;
+  array2d< real64 > U;
   array1d< real64 > S_vec;
+  array2d< real64 > VT;
 
-
-  array2d< real64, PERM > A_svd;
-  array2d< real64, PERM > UTU;
-  array2d< real64, PERM > U_extended;
-  array2d< real64, PERM > S_extended;
-  array2d< real64, PERM > VT_extended;
-  array2d< real64, PERM > work0;
+  array2d< real64 > A_svd;
+  array2d< real64 > UTU;
+  array2d< real64 > U_extended;
+  array2d< real64 > S_extended;
+  array2d< real64 > VT_extended;
+  array2d< real64 > work0;
 
   for( INDEX_TYPE M : M_indices )
   {
@@ -1091,61 +1093,61 @@ void matrix_svd_test()
       work0.resize( M, N );
 
       // Populate matrix A with random coefficients
-      BlasLapackLA::matrixRand( A,
-                                BlasLapackLA::RandomNumberDistribution::UNIFORM_01 );
+      LAI::matrixRand( A,
+                       LAI::RandomNumberDistribution::UNIFORM_01 );
 
       // Compute the SVD of A
-      BlasLapackLA::matrixSVD( A, U, S_vec, VT );
+      LAI::matrixSVD( A, U, S_vec, VT );
 
       // 1) Check that we recover the matrix with the decomposition
 
       // fill U_extended
-      for( INDEX_TYPE i = 0; i < U_extended.size( 0 ); ++i )
+      for( int i = 0; i < U_extended.size( 0 ); ++i )
       {
-        for( INDEX_TYPE j = 0; j < U_extended.size( 1 ); ++j )
+        for( int j = 0; j < U_extended.size( 1 ); ++j )
         {
           U_extended( i, j ) = 0.0;
         }
       }
-      for( INDEX_TYPE i = 0; i < U.size( 0 ); ++i )
+      for( int i = 0; i < U.size( 0 ); ++i )
       {
-        for( INDEX_TYPE j = 0; j < U.size( 1 ); ++j )
+        for( int j = 0; j < U.size( 1 ); ++j )
         {
           U_extended( i, j ) = U( i, j );
         }
       }
 
       // fill VT_extended
-      for( INDEX_TYPE i = 0; i < VT_extended.size( 0 ); ++i )
+      for( int i = 0; i < VT_extended.size( 0 ); ++i )
       {
-        for( INDEX_TYPE j = 0; j < VT_extended.size( 1 ); ++j )
+        for( int j = 0; j < VT_extended.size( 1 ); ++j )
         {
           VT_extended( i, j ) = 0.0;
         }
       }
-      for( INDEX_TYPE i = 0; i < VT.size( 0 ); ++i )
+      for( int i = 0; i < VT.size( 0 ); ++i )
       {
-        for( INDEX_TYPE j = 0; j < VT.size( 1 ); ++j )
+        for( int j = 0; j < VT.size( 1 ); ++j )
         {
           VT_extended( i, j ) = VT( i, j );
         }
       }
 
       // fill S_extended
-      for( INDEX_TYPE i = 0; i < S_extended.size( 0 ); ++i )
+      for( int i = 0; i < S_extended.size( 0 ); ++i )
       {
-        for( INDEX_TYPE j = 0; j < S_extended.size( 1 ); ++j )
+        for( int j = 0; j < S_extended.size( 1 ); ++j )
         {
           S_extended( i, j ) = 0.0;
         }
       }
-      for( INDEX_TYPE i = 0; i < S_vec.size(); ++i )
+      for( int i = 0; i < S_vec.size(); ++i )
       {
         S_extended( i, i ) = S_vec( i );
       }
 
-      BlasLapackLA::matrixMatrixMultiply( S_extended, VT_extended, work0 );
-      BlasLapackLA::matrixMatrixMultiply( U_extended, work0, A_svd );
+      LAI::matrixMatrixMultiply( S_extended, VT_extended, work0 );
+      LAI::matrixMatrixMultiply( U_extended, work0, A_svd );
 
       for( INDEX_TYPE i = 0; i < M; ++i )
       {
@@ -1158,14 +1160,14 @@ void matrix_svd_test()
       }
 
       // 2) Check that U is orthonormal
-      BlasLapackLA::matrixTMatrixMultiply( U, U, UTU );
-      for( INDEX_TYPE i = 0; i < UTU.size( 0 ); ++i )
+      LAI::matrixTMatrixMultiply( U, U, UTU );
+      for( int i = 0; i < UTU.size( 0 ); ++i )
       {
         UTU( i, i ) = 1 - UTU( i, i );
       }
 
       EXPECT_NEAR( 0.0,
-                   BlasLapackLA::matrixNormFrobenius( UTU ),
+                   LAI::matrixNormFrobenius( UTU ),
                    machinePrecision );
     }
   }
@@ -1173,180 +1175,133 @@ void matrix_svd_test()
 
 TEST( Array1D, vectorNorm1 )
 {
-  vector_norm1_test();
+  vector_norm1_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorNorm2 )
 {
-  vector_norm2_test();
+  vector_norm2_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorNormInf )
 {
-  vector_normInf_test();
+  vector_normInf_test< BlasLapackLA >();
 }
 
-
-TEST( Array2D, determinantRowMajor )
+TEST( Array2D, determinant )
 {
-  determinant_test< MatrixLayout::ROW_MAJOR_PERM >();
+  determinant_test< BlasLapackLA >();
 }
 
-TEST( Array2D, determinantColMajor )
+TEST( Array2D, matrixNormInf )
 {
-  determinant_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_normInf_test< BlasLapackLA >();
 }
 
-
-TEST( Array2D, matrixNormInfRowMajor )
+TEST( Array2D, matrixNorm1 )
 {
-  matrix_normInf_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_norm1_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixNormInfColMajor )
+TEST( Array2D, matrixNormFrobenius )
 {
-  matrix_normInf_test< MatrixLayout::COL_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixNorm1RowMajor )
-{
-  matrix_norm1_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixNorm1ColMajor )
-{
-  matrix_norm1_test< MatrixLayout::COL_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixNormFrobeniusRowMajor )
-{
-  matrix_normFrobenius_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixNormFrobeniusColMajor )
-{
-  matrix_normFrobenius_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_normFrobenius_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorVectorAdd )
 {
-  vector_vector_add_test();
+  vector_vector_add_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixMatrixAddRowMajor )
+TEST( Array2D, matrixMatrixAdd )
 {
-  matrix_matrix_add_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixMatrixAddColMajor )
-{
-  matrix_matrix_add_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_matrix_add_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorScale )
 {
-  vector_scale_test();
+  vector_scale_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixScaleRowMajor )
+TEST( Array2D, matrixScale )
 {
-  matrix_scale_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixScaleColMajor )
-{
-  matrix_scale_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_scale_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorDot )
 {
-  vector_dot_test();
+  vector_dot_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixVectorMultiplyRowMajor )
+TEST( Array2D, matrixVectorMultiply )
 {
-  matrix_vector_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_vector_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixTVectorMultiplyRowMajor )
+TEST( Array2D, matrixTVectorMultiply )
 {
-  matrixT_vector_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_vector_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixMatrixMultiplyRowMajor )
+TEST( Array2D, matrixMatrixMultiply )
 {
-  matrix_matrix_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_matrix_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixTMatrixMultiplyRowMajor )
+TEST( Array2D, matrixTMatrixMultiply )
 {
-  matrixT_matrix_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_matrix_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixMatrixTMultiplyRowMajor )
+TEST( Array2D, matrixMatrixTMultiply )
 {
-  matrix_matrixT_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_matrixT_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixTMatrixTMultiplyRowMajor )
+TEST( Array2D, matrixTMatrixTMultiply )
 {
-  matrixT_matrixT_multiply_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrixT_matrixT_multiply_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixInverseRowMajor )
+TEST( Array2D, matrixInverse )
 {
-  matrix_inverse_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixInverseColMajor )
-{
-  matrix_inverse_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_inverse_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorCopy )
 {
-  vector_copy_test();
+  vector_copy_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixCopyRowMajor )
+TEST( Array2D, matrixCopy )
 {
-  matrix_copy_test< MatrixLayout::ROW_MAJOR_PERM >();
-}
-
-TEST( Array2D, matrixCopyColMajor )
-{
-  matrix_copy_test< MatrixLayout::COL_MAJOR_PERM >();
+  matrix_copy_test< BlasLapackLA >();
 }
 
 TEST( Array1D, vectorRand )
 {
-  vector_rand_test();
+  vector_rand_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixRandRowMajor )
+TEST( Array2D, matrixRand )
 {
-  matrix_rand_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_rand_test< BlasLapackLA >();
 }
 
-TEST( Array2D, matrixRandColMajor )
+TEST( DenseLAInterface, setGetRandomNumberGeneratorSeed )
 {
-  matrix_rand_test< MatrixLayout::COL_MAJOR_PERM >();
+  set_get_random_number_generator_seed_test< BlasLapackLA >();
 }
 
-TEST( BlasLapackLAInterface, setGetRandomNumberGeneratorSeed )
-{
-  set_get_random_number_generator_seed_test();
-}
-
-TEST( BlasLapackLAInterface, performanceTest )
+TEST( DenseLAInterface, performanceTest )
 {
   // performance_test<BlasLapackLA>();
   SUCCEED();
 }
 
-TEST( BlasLapackLAInterface, matrixSVDRowMajor )
+TEST( DenseLAInterface, matrixSVD )
 {
-  matrix_svd_test< MatrixLayout::ROW_MAJOR_PERM >();
+  matrix_svd_test< BlasLapackLA >();
 }
 
 int main( int argc, char * * argv )

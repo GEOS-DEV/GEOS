@@ -485,6 +485,8 @@ FluxKernel::Launch( localIndex er,
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
 
+    real64 const perm[ 3 ] = { elemPerm[ei][0], elemPerm[ei][1], elemPerm[ei][2] };
+
     // recompute the local transmissibility matrix at each iteration
     // we can decide later to precompute transMatrix if needed
     HybridFVMInnerProduct::QTPFACellInnerProductKernel::Compute< NF >( nodePosition,
@@ -492,7 +494,7 @@ FluxKernel::Launch( localIndex er,
                                                                        elemToFaces[ei],
                                                                        elemCenter[ei],
                                                                        elemVolume[ei],
-                                                                       elemPerm[ei],
+                                                                       perm,
                                                                        2,
                                                                        lengthTolerance,
                                                                        transMatrix );
