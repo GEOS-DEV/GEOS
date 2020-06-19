@@ -121,7 +121,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   dofManager.setMesh( *domain, 0, 0 );
 
   string_array Region;
-  Region.push_back( "region1" );
+  Region.emplace_back( "region1" );
 
   dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, Region );
   dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
@@ -186,7 +186,7 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   dofManager.setMesh( *domain, 0, 0 );
 
   string_array region;
-  region.push_back( "region1" );
+  region.emplace_back( "region1" );
 
   dofManager.addField( "cellCentered", DofManager::Location::Elem, region );
   dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );

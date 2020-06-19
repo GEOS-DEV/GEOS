@@ -140,7 +140,7 @@ void InternalMeshGenerator::GenerateElementRegions( DomainPartition & GEOSX_UNUS
   //
   //  for( string_array::size_type r=0 ; r<m_regionNames.size() ; ++r )
   //  {
-  //    numElements.push_back( 0 );
+  //    numElements.emplace_back( 0 );
   //  }
   //
   //  domain.m_feElementManager->resize( numElements, m_regionNames,
@@ -635,9 +635,9 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
          iterNumElemsInRegion != numElemsInRegions.end(); ++iterNumElemsInRegion )
     {
 
-      numElements.push_back( iterNumElemsInRegion->second );
-      elementRegionNames.push_back( iterNumElemsInRegion->first );
-      elementTypes.push_back( elemTypeInRegions[iterNumElemsInRegion->first] );
+      numElements.emplace_back( iterNumElemsInRegion->second );
+      elementRegionNames.emplace_back( iterNumElemsInRegion->first );
+      elementTypes.emplace_back( elemTypeInRegions[iterNumElemsInRegion->first] );
 
       localElemIndexInRegion[iterNumElemsInRegion->first] = 0;
     }

@@ -248,7 +248,7 @@ public:
                                              dataRepository::Group const * const dataGroup,
                                              arrayView1d< globalIndex const > const & dofMap,
                                              globalIndex const dofRankOffset,
-                                             LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                             CRSMatrixView< real64, globalIndex const > const & matrix,
                                              arrayView1d< real64 > const & rhs,
                                              ArrayView< T const, NDIM, USD > const & fieldView ) const;
 
@@ -259,7 +259,7 @@ public:
                                        string const & fieldName,
                                        string const & dofMapName,
                                        globalIndex const dofRankOffset,
-                                       LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                       CRSMatrixView< real64, globalIndex const > const & matrix,
                                        arrayView1d< real64 > const & rhs ) const;
 
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
@@ -269,7 +269,7 @@ public:
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
@@ -281,14 +281,14 @@ public:
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
   template< typename POLICY >
   void ZeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                            arrayView1d< globalIndex const > const & dofMap,
-                                           LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix ) const;
+                                           CRSMatrixView< real64, globalIndex const > const & matrix ) const;
 
   /**
    * @brief View keys
@@ -466,7 +466,7 @@ public:
    */
   void AddSetName( string const & setName )
   {
-    m_setNames.push_back( setName );
+    m_setNames.emplace_back( setName );
   }
 
 
@@ -846,7 +846,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystemKernel( SortedArrayVi
                                                                    dataRepository::Group const * const dataGroup,
                                                                    arrayView1d< globalIndex const > const & dofMap,
                                                                    globalIndex const dofRankOffset,
-                                                                   LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                                                   CRSMatrixView< real64, globalIndex const > const & matrix,
                                                                    arrayView1d< real64 > const & rhs,
                                                                    ArrayView< T const, NDIM, USD > const & fieldView ) const
 {
@@ -867,7 +867,7 @@ void FieldSpecificationBase::ApplyBoundaryConditionToSystem( SortedArrayView< lo
                                                              string const & fieldName,
                                                              string const & dofMapName,
                                                              globalIndex const dofRankOffset,
-                                                             LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                                             CRSMatrixView< real64, globalIndex const > const & matrix,
                                                              arrayView1d< real64 > const & rhs ) const
 {
   dataRepository::WrapperBase const & wrapperBase = *dataGroup->getWrapperBase( fieldName );
@@ -890,7 +890,7 @@ FieldSpecificationBase::
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
@@ -914,7 +914,7 @@ FieldSpecificationBase::
                                   dataRepository::Group const * const dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
@@ -1001,7 +1001,7 @@ FieldSpecificationBase::
 template< typename POLICY >
 void FieldSpecificationBase::ZeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                                                  arrayView1d< globalIndex const > const & dofMap,
-                                                                 LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix ) const
+                                                                 CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
   integer const component = GetComponent();

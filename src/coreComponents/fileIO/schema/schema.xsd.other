@@ -577,13 +577,13 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
-		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
-		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--tipNodes => Set containing all the nodes at the fracture tip-->
-		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--trailingFaces => Set containing all the trailing faces-->
-		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -1018,7 +1018,7 @@
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1038,11 +1038,11 @@
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
 		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;long, long, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
 		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1076,7 +1076,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="localIndex_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -1106,7 +1106,7 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryCandidateFace => ?? => SurfaceGenerator-->
@@ -1149,17 +1149,17 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="externalForce" type="r1_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1246,7 +1246,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => Map to the edges.-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
 		<!--elementArea => The area of each EmbeddedSurface element.-->

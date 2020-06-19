@@ -203,7 +203,7 @@ void DofManager::createIndexArray( FieldDescription & field )
 
     // step 4. synchronize across ranks
     std::map< string, string_array > fieldNames;
-    fieldNames[ MeshHelper< LOC >::syncObjName ].push_back( field.key );
+    fieldNames[ MeshHelper< LOC >::syncObjName ].emplace_back( field.key );
 
     CommunicationTools::
       SynchronizeFields( fieldNames, m_mesh,
@@ -283,7 +283,7 @@ void DofManager::addField( string const & fieldName,
   {
     elemManager->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      field.regions.push_back( region.getName() );
+      field.regions.emplace_back( region.getName() );
     } );
   }
   else
@@ -557,7 +557,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
     return;
   }
 
-  LvArray::SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
+  SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
   localIndex maxDofRow = 0;
   LocationSwitch( rowField.location, static_cast< Location >( conn ),
@@ -852,7 +852,7 @@ void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex >
   {
     GEOSX_MARK_FUNCTION_TAG( inserting );
 
-    LvArray::SparsityPatternView< globalIndex, localIndex const > sparsityView = pattern.toView();
+    SparsityPatternView< globalIndex > sparsityView = pattern.toView();
     forAll< parallelHostPolicy >( numNodes,
                                   [=] ( localIndex const nodeID )
     {
@@ -1666,7 +1666,7 @@ void DofManager::reorderByRank()
         ArrayHelper::reference( indexArray, locIdx ) += adjustment;
       } );
 
-      fieldToSync[MeshHelper< LOC >::syncObjName].push_back( field.key );
+      fieldToSync[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
     } );
   }
 

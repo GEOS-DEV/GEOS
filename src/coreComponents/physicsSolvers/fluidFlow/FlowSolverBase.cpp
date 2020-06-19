@@ -156,7 +156,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   stencilTargetRegions.clear();
   for( auto const & targetRegion : stencilTargetRegionsSet )
   {
-    stencilTargetRegions.push_back( targetRegion );
+    stencilTargetRegions.emplace_back( targetRegion );
   }
 }
 

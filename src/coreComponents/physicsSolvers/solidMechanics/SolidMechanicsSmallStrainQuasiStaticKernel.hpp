@@ -147,7 +147,7 @@ public:
     real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[6][6];
+    real64 constitutiveStiffness[ 6 ][ 6 ];
   };
   //*****************************************************************************
 

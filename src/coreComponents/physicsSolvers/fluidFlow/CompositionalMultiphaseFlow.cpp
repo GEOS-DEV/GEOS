@@ -537,8 +537,8 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::pressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::globalCompDensityString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
@@ -1265,8 +1265,8 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                1, m_numDofPerCell );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )

@@ -218,7 +218,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::pressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 

@@ -79,13 +79,13 @@ string_array getRegions( MeshLevel const * const mesh, std::vector< string > con
   string_array regions;
   if( !input.empty() )
   {
-    regions.insert( 0, input.data(), input.size() );
+    regions.insert( 0, input.begin(), input.end() );
   }
   else
   {
     mesh->getElemManager()->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      regions.push_back( region.getName() );
+      regions.emplace_back( region.getName() );
     } );
   }
   return regions;

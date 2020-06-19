@@ -242,10 +242,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       else
       {
         std::map< string, string_array > fieldNames;
-        fieldNames["node"].push_back( keys::IncrementalDisplacement );
-        fieldNames["node"].push_back( keys::TotalDisplacement );
-        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
-        fieldNames["elems"].push_back( "elementAperture" );
+        fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
+        fieldNames["node"].emplace_back( keys::TotalDisplacement );
+        fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
+        fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain.getMeshBody( 0 )->getMeshLevel( 0 ),
@@ -487,7 +487,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const & domain,
   string_array fractureRegions;
   elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
   {
-    fractureRegions.push_back( elementRegion.getName() );
+    fractureRegions.emplace_back( elementRegion.getName() );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -1168,6 +1168,12 @@ HydrofractureSolver::
 }
 
 #ifdef GEOSX_LA_INTERFACE_TRILINOS
+
+// For some reason this needs to be defined when using cuda
+#if defined( __CUDACC__)
+#define KOKKOS_ENABLE_SERIAL_ATOMICS
+#endif
+
 #include "Epetra_FEVector.h"
 #include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -1595,6 +1601,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 
   m_solidSolver->getSystemSolution().extract( m_solidSolver->getLocalSolution() );
   m_flowSolver->getSystemSolution().extract( m_flowSolver->getLocalSolution() );
+#else
+  GEOSX_ERROR( "Only implemented for trilinos." );
 #endif
 }
 

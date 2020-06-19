@@ -639,7 +639,7 @@ void SolverBase::SetupSystem( DomainPartition & domain,
   if( setSparsity )
   {
     dofManager.setSparsityPattern( pattern );
-    localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
+    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
 
   localRhs.resize( numLocalRows );

@@ -121,7 +121,7 @@ void EpetraVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-  localValues.move( chai::CPU, false );
+  localValues.move( LvArray::MemorySpace::CPU, false );
 
   int const localSize = LvArray::integerConversion< int >( localValues.size() );
   Epetra_Map const map( LvArray::integerConversion< long long >( -1 ),

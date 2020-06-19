@@ -162,7 +162,7 @@ void HypreVector::create( arrayView1d< real64 const > const & localValues,
 {
   GEOSX_LAI_ASSERT( closed() );
 
-  localValues.move( chai::CPU, false );
+  localValues.move( LvArray::MemorySpace::CPU, false );
 
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
 

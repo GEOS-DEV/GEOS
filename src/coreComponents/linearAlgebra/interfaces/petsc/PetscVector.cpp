@@ -114,7 +114,7 @@ void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_C
   PetscInt const size = localValues.size();
   PetscScalar * values;
 
-  localValues.move( chai::CPU, false );
+  localValues.move( LvArray::MemorySpace::CPU, false );
 
   GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );

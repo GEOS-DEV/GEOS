@@ -169,7 +169,7 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
+          SortedArrayView< localIndex const > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
           arrayView4d< real64 const > const & dNdX,
           arrayView2d< real64 const > const & detJ,

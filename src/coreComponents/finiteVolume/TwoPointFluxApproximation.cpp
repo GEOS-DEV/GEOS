@@ -169,9 +169,9 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
     }
 
     stencil.add( 2,
-                 stencilCellsRegionIndex,
-                 stencilCellsSubRegionIndex,
-                 stencilCellsIndex,
+                 stencilCellsRegionIndex.data(),
+                 stencilCellsSubRegionIndex.data(),
+                 stencilCellsIndex.data(),
                  stencilWeights.data(),
                  kf );
   }
@@ -409,9 +409,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
       // add/overwrite the stencil for index fci
       fractureStencil.add( numElems,
-                           stencilCellsRegionIndex,
-                           stencilCellsSubRegionIndex,
-                           stencilCellsIndex,
+                           stencilCellsRegionIndex.data(),
+                           stencilCellsSubRegionIndex.data(),
+                           stencilCellsIndex.data(),
                            stencilWeights.data(),
                            fci );
 
@@ -532,9 +532,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
             stencilWeights[1] = -ht;
 
             cellStencil.add( 2,
-                             stencilCellsRegionIndex,
-                             stencilCellsSubRegionIndex,
-                             stencilCellsIndex,
+                             stencilCellsRegionIndex.data(),
+                             stencilCellsSubRegionIndex.data(),
+                             stencilCellsIndex.data(),
                              stencilWeights.data(),
                              faceIndex );
           }

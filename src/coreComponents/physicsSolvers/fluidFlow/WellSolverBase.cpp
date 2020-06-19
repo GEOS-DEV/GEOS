@@ -96,7 +96,7 @@ void WellSolverBase::SetupDofs( DomainPartition const & domain,
   forTargetRegions< WellElementRegion >( meshLevel, [&]( localIndex const,
                                                          WellElementRegion const & region )
   {
-    regions.push_back( region.getName() );
+    regions.emplace_back( region.getName() );
   } );
 
   dofManager.addField( WellElementDofName(),

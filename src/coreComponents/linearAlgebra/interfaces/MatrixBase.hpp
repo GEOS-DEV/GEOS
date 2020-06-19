@@ -227,7 +227,7 @@ protected:
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm )
   {
-    localMatrix.move( chai::CPU, false );
+    localMatrix.move( LvArray::MemorySpace::CPU, false );
 
 //    std::cout<<" ******************** localMatrix ********************"<<std::endl;
 //    std::cout<<localMatrix<<std::endl;

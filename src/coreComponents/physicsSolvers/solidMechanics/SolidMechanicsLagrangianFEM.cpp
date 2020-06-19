@@ -550,8 +550,8 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::Velocity );
-  fieldNames["node"].push_back( keys::Acceleration );
+  fieldNames["node"].emplace_back( keys::Velocity );
+  fieldNames["node"].emplace_back( keys::Acceleration );
 
   CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
@@ -949,7 +949,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
     array1d< string > allFaceElementRegions;
     elemManager.forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elemRegion )
     {
-      allFaceElementRegions.push_back( elemRegion.getName() );
+      allFaceElementRegions.emplace_back( elemRegion.getName() );
     } );
 
     finiteElement::
@@ -975,7 +975,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                                                                      pattern,
                                                                      rowSizes );
 
-  localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
 
 }
@@ -1187,8 +1187,8 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
                                -scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( keys::IncrementalDisplacement );
-  fieldNames["node"].push_back( keys::TotalDisplacement );
+  fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
+  fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
@@ -1353,7 +1353,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
           if( localRow >= 0 && localRow < localMatrix.numRows() )
           {
             localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow,
-                                                                      rowDOF,
+                                                                      rowDOF.data(),
                                                                       dRdP[idof].dataIfContiguous(),
                                                                       numNodesPerFace*3*2 );
             RAJA::atomicAdd( serialAtomic{}, &localRhs[localRow], nodeRHS[idof] );

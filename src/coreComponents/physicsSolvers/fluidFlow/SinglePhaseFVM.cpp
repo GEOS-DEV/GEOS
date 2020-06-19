@@ -192,7 +192,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 

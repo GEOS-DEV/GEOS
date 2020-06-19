@@ -245,7 +245,7 @@ void ReservoirSolverBase::SetupSystem( DomainPartition & domain,
   AddCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   // Finally, steal the pattern into a CRS matrix
-  localMatrix.stealFrom< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   localRhs.resize( localMatrix.numRows() );
   localSolution.resize( localMatrix.numRows() );
 

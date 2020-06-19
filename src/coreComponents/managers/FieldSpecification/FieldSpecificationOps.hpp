@@ -449,7 +449,7 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
   static inline void GEOSX_HOST_DEVICE
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
-                     LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                     CRSMatrixView< real64, globalIndex const > const & matrix,
                      real64 & rhs,
                      real64 const bcValue,
                      real64 const fieldValue )
@@ -539,7 +539,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
   GEOSX_HOST_DEVICE
   static inline void SpecifyFieldValue( globalIndex const dof,
                                         globalIndex const dofRankOffset,
-                                        LvArray::CRSMatrixView< real64, globalIndex const, localIndex const > const & matrix,
+                                        CRSMatrixView< real64, globalIndex const > const & matrix,
                                         real64 & rhs,
                                         real64 const bcValue,
                                         real64 const fieldValue )

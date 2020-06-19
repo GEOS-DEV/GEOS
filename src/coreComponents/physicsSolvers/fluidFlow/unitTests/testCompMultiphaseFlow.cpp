@@ -516,7 +516,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
   jacobian.setValues< parallelDevicePolicy<> >( 0.0 );
 
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-  residual.move( chai::CPU, false );
+  residual.move( LvArray::MemorySpace::CPU, false );
 
   // copy the analytical residual
   array1d< real64 > residualOrig( residual );
@@ -538,14 +538,14 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
 
     arrayView1d< real64 const > const & pres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::pressureString );
-    pres.move( chai::CPU, false );
+    pres.move( LvArray::MemorySpace::CPU, false );
 
     arrayView1d< real64 > const & dPres =
       subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaPressureString );
 
     arrayView2d< real64 const > const & compDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::globalCompDensityString );
-    compDens.move( chai::CPU, false );
+    compDens.move( LvArray::MemorySpace::CPU, false );
 
     arrayView2d< real64 > const & dCompDens =
       subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseFlow::viewKeyStruct::deltaGlobalCompDensityString );
@@ -567,7 +567,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
         solver.ResetStateToBeginningOfStep( domain );
 
         real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-        dPres.move( chai::CPU, true );
+        dPres.move( LvArray::MemorySpace::CPU, true );
         dPres[ei] = dP;
 
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
@@ -592,7 +592,7 @@ void testNumericalJacobian( CompositionalMultiphaseFlow & solver,
         solver.ResetStateToBeginningOfStep( domain );
 
         real64 const dRho = perturbParameter * totalDensity;
-        dCompDens.move( chai::CPU, true );
+        dCompDens.move( LvArray::MemorySpace::CPU, true );
         dCompDens[ei][jc] = dRho;
 
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,

@@ -220,13 +220,13 @@ AssemblerKernelHelper::AssembleOneSidedMassFluxes( arrayView1d< globalIndex cons
   // jacobian -- derivative wrt elem centered vars
   localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                             elemDofColIndices.data(),
-                                                            dSumLocalMassFluxes_dElemVars,
+                                                            dSumLocalMassFluxes_dElemVars.data(),
                                                             elemDofColIndices.size() );
 
   // jacobian -- derivatives wrt face centered vars
   localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                             faceDofColIndices.data(),
-                                                            dSumLocalMassFluxes_dFaceVars,
+                                                            dSumLocalMassFluxes_dFaceVars.data(),
                                                             faceDofColIndices.size() );
 }
 

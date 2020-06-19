@@ -211,7 +211,7 @@ void FluxKernel::
           {
             RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow + idof], localFlux[i * numDofPerCell + idof] );
             localMatrix.addToRowBinarySearchUnsorted< parallelHostAtomic >( localRow + idof,
-                                                                            dofColIndices,
+                                                                            dofColIndices.data(),
                                                                             localFluxJacobian[i * numDofPerCell + idof].dataIfContiguous(),
                                                                             stencilSize * numDofPerCell );
           }

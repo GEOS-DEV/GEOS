@@ -413,7 +413,7 @@ void FluxKernel::
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                          dofColIndices,
+                                                                          dofColIndices.data(),
                                                                           localFluxJacobian[i].dataIfContiguous(),
                                                                           stencilSize );
       }
@@ -547,7 +547,7 @@ void FluxKernel::
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                            dofColIndices,
+                                                                            dofColIndices.data(),
                                                                             localFluxJacobian[i].dataIfContiguous(),
                                                                             stencilSize );
 
