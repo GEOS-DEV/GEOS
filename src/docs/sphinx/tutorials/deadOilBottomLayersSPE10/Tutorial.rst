@@ -1,7 +1,7 @@
 .. _TutorialDeadOilBottomLayersSPE10:
 
 ####################################################################
-Tutorial 5: Dead-Oil simulation in a channelized permeability field
+Tutorial 5: Multiphase Simulation with Wells
 ####################################################################
 
 **Context**
