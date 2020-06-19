@@ -556,6 +556,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
   }
 
   //TJ print-out about fracture tip state
+/*
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
   std::cout << "Fracture tip after separation driver "
                 "(SurfaceGenerator::SolverStep.cpp)"
@@ -579,6 +580,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
   for(auto & item : m_trailingFaces)
     std::cout << item << " ";
   std::cout << std::endl;
+*/
 
   NumericalMethodsManager * const
   numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
@@ -2885,7 +2887,7 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
   HydrofractureSolver * const myHydroSolver = this->getParent()->GetGroup< HydrofractureSolver >( "hydrofracture" );
   real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
+//  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
 
 
   for( localIndex iEdge = 0; iEdge != edgeManager.size(); ++iEdge )
@@ -2943,6 +2945,7 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
 			   - 0.5*sqrt(faceArea[pickedFace]);
 	  tipElmtBC = faceCenter[pickedFace][component]
 	  			   - 0.5*1.0;  //hard coded
+	  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
 	  std::cout << "Rank " << rank << ": tipElmtBC = " << tipElmtBC << std::endl;
 	  if( tipLoc > tipElmtBC && time_np1 > 0.0 && edgeMode == 1 && isFaceSeparable[pickedFace] == 1 )
 	  {
