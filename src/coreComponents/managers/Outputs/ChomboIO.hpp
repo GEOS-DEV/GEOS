@@ -30,14 +30,14 @@ namespace geosx
  *
  * A class for coupling to CHOMBO
  */
-class ChomboIO : public OutputBase
+class ChomboIO final : public OutputBase
 {
 public:
   /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   ChomboIO( std::string const & name, Group * const parent );
 
   /// Destructor
-  virtual ~ChomboIO() final override;
+  virtual ~ChomboIO() override;
 
   /**
    * @brief Catalog name interface
@@ -55,7 +55,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override;
+                        dataRepository::Group * const domain ) override;
 
   /**
    * @brief Writes out a Chombo plot file at the end of the simulation.
@@ -65,7 +65,7 @@ public:
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override
+                        dataRepository::Group * const domain ) override
   {
     m_waitForInput = 0;
     Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );

@@ -149,11 +149,11 @@ void MultiPhaseMultiComponentFluid::CreatePVTModels()
 
       if( streq( strs[0], "DensityFun" ))
       {
-        m_phaseDensityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseDensityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
       }
       else if( streq( strs[0], "ViscosityFun" ))
       {
-        m_phaseViscosityFuns.push_back( PVTFunction::CatalogInterface::Factory( strs[1], strs, m_componentNames, m_componentMolarWeight ));
+        m_phaseViscosityFuns.emplace_back( PVTFunction::CatalogInterface::Factory( strs[ 1 ], strs, m_componentNames, m_componentMolarWeight ) );
       }
       else
         GEOSX_ERROR( "Error: Invalid PVT function: " << strs[0] << "." );
