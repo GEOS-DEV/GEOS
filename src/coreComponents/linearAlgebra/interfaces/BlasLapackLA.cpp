@@ -21,12 +21,11 @@
 
 #include <random>
 
+// BLAS and LAPACK function declaration
+#include "BlasLapackFunctions.h"
 
 // Put everything under the geosx namespace.
 namespace geosx
-{
-
-namespace BlasLapackLA
 {
 
 // Random device and random number generator seed integer array used
@@ -37,14 +36,21 @@ static std::uniform_int_distribution< int > dis( 0, 4095 );
 static std::uniform_int_distribution< int > disOdd( 0, 2047 );
 static int ISEED[] = {dis( gen ), dis( gen ), dis( gen ), disOdd( gen )*2 + 1};
 
-real64 vectorNorm1( arraySlice1d< real64 const > const & X )
+real64 BlasLapackLA::vectorNorm1( arraySlice1d< real64 const > const & X )
 {
   int const INCX = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
   return GEOSX_dasum( &N, X.dataIfContiguous(), &INCX );
 }
 
-real64 vectorNormInf( arraySlice1d< real64 const > const & X )
+real64 BlasLapackLA::vectorNorm2( arraySlice1d< real64 const > const & X )
+{
+  int const INCX = 1;
+  int const N = LvArray::integerConversion< int >( X.size() );
+  return GEOSX_dnrm2( &N, X.dataIfContiguous(), &INCX );
+}
+
+real64 BlasLapackLA::vectorNormInf( arraySlice1d< real64 const > const & X )
 {
   int const INCX = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
@@ -151,15 +157,10 @@ static real64 determinant( arraySlice2d< real64 const, USD > const & A )
 
 template< int USD >
 static real64 matrixNorm( arraySlice2d< real64 const, USD > const & A,
-                          char const NORM,
-                          bool const transpose )
+                          char const NORM )
 {
-  int const M = transpose
-              ? LvArray::integerConversion< int >( A.size( 0 ) )
-              : LvArray::integerConversion< int >( A.size( 1 ) );
-  int const N = transpose
-              ? LvArray::integerConversion< int >( A.size( 1 ) )
-              : LvArray::integerConversion< int >( A.size( 0 ) );
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( A.size( 1 ) );
 
   array1d< double > temp;
   double * WORK = nullptr;
@@ -199,7 +200,7 @@ void matrixScale( real64 const alpha,
 
 template< int USD >
 void matrixRand( arraySlice2d< real64, USD > const & A,
-                 RandomNumberDistribution const & idist )
+                 BlasLapackLA::RandomNumberDistribution const & idist )
 {
   int const IDIST = static_cast< int >(idist);
   int const NN = LvArray::integerConversion< int >( A.size() );
@@ -282,10 +283,8 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
   }
 
   // Check if matrix is singular
-  GEOSX_ASSERT_MSG( std::abs( detA ) >
-                    std::numeric_limits< real64 >::epsilon() *
-                    matrixNorm( A, 'F', true ),
-                    "Matrix is singular" );
+  GEOSX_ASSERT_MSG( std::abs( detA ) > 0, "Matrix is singular" );
+
   real64 oneOverDetA = 1. / detA;
 
   // --- Compute inverse
@@ -352,74 +351,111 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
 
 } // namespace detail
 
-real64 determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 BlasLapackLA::determinant( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
   return detail::determinant( A );
 }
 
-real64 determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 BlasLapackLA::determinant( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
   return detail::determinant( A );
 }
 
-real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 BlasLapackLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
   // For row-major, computed as one-norm of the transpose matrix
-  return detail::matrixNorm( A, '1', true );
+  return detail::matrixNorm( A, '1' );
 }
 
-real64 matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 BlasLapackLA::matrixNormInf( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
-  return detail::matrixNorm( A, 'I', false );
+  return detail::matrixNorm( A, 'I' );
 }
 
-real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
+real64 BlasLapackLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
   // For row-major, computed as infinity-norm of the transpose matrix
-  return detail::matrixNorm( A, 'I', true );
+  return detail::matrixNorm( A, 'I' );
 }
 
-real64 matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 BlasLapackLA::matrixNorm1( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
 {
-  return detail::matrixNorm( A, '1', false );
+  return detail::matrixNorm( A, '1' );
 }
 
-real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
-{
-  // For row-major, computed using the transpose matrix
-  return detail::matrixNorm( A, 'F', true );
-}
-
-real64 matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+real64 BlasLapackLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A )
 {
   // For row-major, computed using the transpose matrix
-  return detail::matrixNorm( A, 'F', false );
+  return detail::matrixNorm( A, 'F' );
 }
 
-void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                      arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
-                      real64 const alpha )
+real64 BlasLapackLA::matrixNormFrobenius( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A )
+{
+  // For row-major, computed using the transpose matrix
+  return detail::matrixNorm( A, 'F' );
+}
+
+void BlasLapackLA::vectorVectorAdd( arraySlice1d< real64 const > const & X,
+                                    arraySlice1d< real64 > const & Y,
+                                    real64 const alpha )
+{
+  GEOSX_ASSERT_MSG( X.size() == Y.size(),
+                    "Vector dimensions not compatible for sum" );
+
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = LvArray::integerConversion< int >( X.size() );
+  GEOSX_daxpy( &N, &alpha, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
+}
+
+void BlasLapackLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B,
+                                    real64 const alpha )
 {
   detail::matrixMatrixAdd( A, B, alpha );
 }
 
-void matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                      arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
-                      real64 const alpha )
+void BlasLapackLA::matrixMatrixAdd( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                                    arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B,
+                                    real64 const alpha )
 {
   detail::matrixMatrixAdd( A, B, alpha );
 }
 
-void matrixScale( real64 const alpha, arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A )
+void BlasLapackLA::vectorScale( real64 const alpha,
+                                arraySlice1d< real64 > const & X )
+{
+  int const INCX = 1;
+  int const N = LvArray::integerConversion< int >( X.size() );
+  GEOSX_dscal( &N, &alpha, X.dataIfContiguous(), &INCX );
+}
+
+void BlasLapackLA::matrixScale( real64 const alpha, arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A )
 {
   detail::matrixScale( alpha, A );
 }
 
-void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                           arraySlice1d< real64 const > const & X,
-                           arraySlice1d< real64 > const & Y,
-                           real64 const alpha,
-                           real64 const beta )
+void BlasLapackLA::matrixScale( real64 const alpha, arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A )
+{
+  detail::matrixScale( alpha, A );
+}
+
+real64 BlasLapackLA::vectorDot( arraySlice1d< real64 const > const & X,
+                                arraySlice1d< real64 const > const & Y )
+{
+  GEOSX_ASSERT_MSG( X.size() == Y.size(), "Vector dimensions not compatible for dot product" );
+  int const INCX = 1;
+  int const INCY = 1;
+  int const N = LvArray::integerConversion< int >( X.size() );
+  return GEOSX_ddot( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
+
+}
+
+void BlasLapackLA::matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                         arraySlice1d< real64 const > const & X,
+                                         arraySlice1d< real64 > const & Y,
+                                         real64 const alpha,
+                                         real64 const beta )
 {
   GEOSX_ASSERT_MSG( A.size( 1 ) == X.size() && A.size( 0 ) == Y.size(),
                     "Matrix, source vector and destination vector not compatible" );
@@ -436,11 +472,11 @@ void matrixVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR >
   GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, X.dataIfContiguous(), &N, A.dataIfContiguous(), &K, &beta, Y.dataIfContiguous(), &N );
 }
 
-void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                            arraySlice1d< real64 const > const & X,
-                            arraySlice1d< real64 > const & Y,
-                            real64 const alpha,
-                            real64 const beta )
+void BlasLapackLA::matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                          arraySlice1d< real64 const > const & X,
+                                          arraySlice1d< real64 > const & Y,
+                                          real64 const alpha,
+                                          real64 const beta )
 {
   GEOSX_ASSERT_MSG( A.size( 0 ) == X.size() && A.size( 1 ) == Y.size(),
                     "Matrix, source vector and destination vector not compatible" );
@@ -457,12 +493,35 @@ void matrixTVectorMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
   GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, X.dataIfContiguous(), &N, A.dataIfContiguous(), &M, &beta, Y.dataIfContiguous(), &N );
 }
 
+void BlasLapackLA::matrixMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                         arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                         arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                         real64 const alpha,
+                                         real64 const beta )
+{
 
-void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                            arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                            arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                            real64 const alpha,
-                            real64 const beta )
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+                    C.size( 1 ) == B.size( 1 ) &&
+                    A.size( 1 ) == B.size( 0 ),
+                    "Matrix dimensions not compatible for product" );
+
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 1 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
+
+  // A*B = C is computed as B^T * A^T = C^T, i.e. accessing the transpose
+  // matrices using a column-major layout
+  char const TRANS1 = 'N';
+  char const TRANS2 = 'N';
+
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &N, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N );
+}
+
+void BlasLapackLA::matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                          arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                          real64 const alpha,
+                                          real64 const beta )
 {
 
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -483,12 +542,36 @@ void matrixTMatrixMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR 
   GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &N, A.dataIfContiguous(), &M, &beta, C.dataIfContiguous(), &N );
 }
 
+void BlasLapackLA::matrixMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                          arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                          arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                          real64 const alpha,
+                                          real64 const beta )
+{
 
-void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                             arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
-                             arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
-                             real64 const alpha,
-                             real64 const beta )
+  GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 0 ) &&
+                    C.size( 1 ) == B.size( 0 ) &&
+                    A.size( 1 ) == B.size( 1 ),
+                    "Matrix dimensions not compatible for product" );
+
+  int const M = LvArray::integerConversion< int >( A.size( 0 ) );
+  int const N = LvArray::integerConversion< int >( B.size( 0 ) );
+  int const K = LvArray::integerConversion< int >( A.size( 1 ) );
+
+  // A*B^T = C is computed as B * A^T = C^T, i.e. accessing the transpose
+  // matrices using a column-major layout
+
+  char const TRANS1 = 'T';
+  char const TRANS2 = 'N';
+
+  GEOSX_dgemm( &TRANS1, &TRANS2, &N, &M, &K, &alpha, B.dataIfContiguous(), &K, A.dataIfContiguous(), &K, &beta, C.dataIfContiguous(), &N );
+}
+
+void BlasLapackLA::matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                           arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & B,
+                                           arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & C,
+                                           real64 const alpha,
+                                           real64 const beta )
 {
 
   GEOSX_ASSERT_MSG( C.size( 0 ) == A.size( 1 ) &&
@@ -511,34 +594,34 @@ void matrixTMatrixTMultiply( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR
   return;
 }
 
-void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
-                    real64 & detA )
+void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv,
+                                  real64 & detA )
 {
   detail::matrixInverse( A, Ainv, detA );
 }
 
-void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                    arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
-                    real64 & detA )
+void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                                  arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv,
+                                  real64 & detA )
 {
   detail::matrixInverse( A, Ainv, detA );
 }
 
-void matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                    arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv )
+void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                                  arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & Ainv )
 {
   detail::matrixInverse( A, Ainv );
 }
 
-void matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                    arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv )
+void BlasLapackLA::matrixInverse( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                                  arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & Ainv )
 {
   detail::matrixInverse( A, Ainv );
 }
 
-void vectorCopy( array1d< real64 > const & X,
-                 array1d< real64 > & Y )
+void BlasLapackLA::vectorCopy( arraySlice1d< real64 const > const & X,
+                               arraySlice1d< real64 > const & Y )
 {
   GEOSX_ASSERT_MSG( X.size() == Y.size(),
                     "Vector dimensions not compatible for copying" );
@@ -546,22 +629,22 @@ void vectorCopy( array1d< real64 > const & X,
   int const INCX = 1;
   int const INCY = 1;
   int const N = LvArray::integerConversion< int >( X.size() );
-  GEOSX_dcopy( &N, X.data(), &INCX, Y.data(), &INCY );
+  GEOSX_dcopy( &N, X.dataIfContiguous(), &INCX, Y.dataIfContiguous(), &INCY );
 }
 
-void matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                 arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B )
+void BlasLapackLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                               arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & B )
 {
   return detail::matrixCopy( A, B );
 }
 
-void matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                 arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B )
+void BlasLapackLA::matrixCopy( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                               arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & B )
 {
   return detail::matrixCopy( A, B );
 }
 
-void setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
+void BlasLapackLA::setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
 {
   // Error checking
   GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
@@ -580,7 +663,7 @@ void setRandomNumberGeneratorSeed( arraySlice1d< int const > const & seed )
   }
 }
 
-void getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
+void BlasLapackLA::getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
 {
   // Error checking
   GEOSX_ASSERT_MSG( seed.size() >= 4, "Seed array must have size at least four" );
@@ -590,8 +673,8 @@ void getRandomNumberGeneratorSeed( arraySlice1d< int > const & seed )
   }
 }
 
-void vectorRand( arraySlice1d< real64 > const & X,
-                 RandomNumberDistribution const & idist )
+void BlasLapackLA::vectorRand( arraySlice1d< real64 > const & X,
+                               RandomNumberDistribution const & idist )
 {
 
   int IDIST = static_cast< int >(idist);
@@ -600,22 +683,22 @@ void vectorRand( arraySlice1d< real64 > const & X,
   GEOSX_dlarnv( &IDIST, ISEED, &N, X.dataIfContiguous());
 }
 
-void matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
-                 RandomNumberDistribution const & idist )
+void BlasLapackLA::matrixRand( arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & A,
+                               RandomNumberDistribution const & idist )
 {
   detail::matrixRand( A, idist );
 }
 
-void matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
-                 RandomNumberDistribution const & idist )
+void BlasLapackLA::matrixRand( arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & A,
+                               RandomNumberDistribution const & idist )
 {
   detail::matrixRand( A, idist );
 }
 
-void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
-                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
-                arraySlice1d< real64 > const & S,
-                arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
+void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
+                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & U,
+                              arraySlice1d< real64 > const & S,
+                              arraySlice2d< real64, MatrixLayout::COL_MAJOR > const & VT )
 {
   int const minDim = (A.size( 0 ) < A.size( 1 ))
                    ? LvArray::integerConversion< int >( A.size( 0 ) )
@@ -669,10 +752,10 @@ void matrixSVD( arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & A,
   GEOSX_ASSERT_MSG( INFO == 0, "The algorithm computing SVD failed to converge." );
 }
 
-void matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
-                arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & U,
-                arraySlice1d< real64 > const & S,
-                arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT )
+void BlasLapackLA::matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
+                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & U,
+                              arraySlice1d< real64 > const & S,
+                              arraySlice2d< real64, MatrixLayout::ROW_MAJOR > const & VT )
 {
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > AT( A.size( 0 ), A.size( 1 ) );
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > UT( U.size( 0 ), U.size( 1 ) );
@@ -705,7 +788,5 @@ void matrixSVD( arraySlice2d< real64 const, MatrixLayout::ROW_MAJOR > const & A,
     }
   }
 }
-
-} // end BlasLapackLA namespace
 
 } // end geosx namespace
