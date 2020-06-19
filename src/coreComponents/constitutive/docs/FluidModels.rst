@@ -1,3 +1,5 @@
+.. _FluidModels:
+
 Fluid Models
 =========================
 

@@ -68,7 +68,7 @@ FluxApproximationBase::GetCatalog()
 
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
-  GEOSX_MARK_FUNCTION_SCOPED;
+  GEOSX_MARK_FUNCTION;
 
   DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
 
