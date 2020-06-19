@@ -112,7 +112,7 @@ public:
    * @param[in] k cell index (not used)
    * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const k) const { GEOSX_UNUSED_VAR(k); return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
    * @brief Set the number of nodes per element.
