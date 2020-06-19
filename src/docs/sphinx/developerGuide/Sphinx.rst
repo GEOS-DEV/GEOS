@@ -1,4 +1,4 @@
-Generate Sphinx documentation files
+Sphinx Documentation
 --------------------------------------------------------------------------------
 
 - To generate the documentation files, you will need to install Sphinx using
