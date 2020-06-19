@@ -818,7 +818,7 @@ void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex >
   arrayView1d< globalIndex const > const & dofIndex = nodeManager.getReference< array1d< globalIndex > >( field.key );
 
   {
-    GEOSX_MARK_FUNCTION_TAG( resizing );
+    GEOSX_MARK_SCOPE( resizing );
 
     std::vector< localIndex > nnzPerRow( localDofs );
     forAll< parallelHostPolicy >( numNodes,
@@ -850,7 +850,7 @@ void DofManager::setFiniteElementSparsityPattern( SparsityPattern< globalIndex >
   }
 
   {
-    GEOSX_MARK_FUNCTION_TAG( inserting );
+    GEOSX_MARK_SCOPE( inserting );
 
     SparsityPatternView< globalIndex > sparsityView = pattern.toView();
     forAll< parallelHostPolicy >( numNodes,
