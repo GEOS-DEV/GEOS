@@ -1,3 +1,5 @@
+.. _RelativePermeabilityModels:
+
 Relative Permeability Models
 ============================
 
