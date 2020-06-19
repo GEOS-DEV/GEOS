@@ -68,7 +68,7 @@ Applying the divergence theorem to the second term leads to
 
 where :math:`S_i` represents the surface area of the element :math:`V_i` and :math:`\boldsymbol{n}` is a outward unit vector normal to the surface.
 
-For the flux term, the (static) transmissibility is currently computed with a Two-Point Flux Approximation (TPFA) as described in :ref:`FiniteVolume`.
+For the flux term, the (static) transmissibility is currently computed with a Two-Point Flux Approximation (TPFA) as described in :ref:`FiniteVolumeDiscretization`.
 
 The pressure-dependent mobility :math:`\lambda = \frac{\rho}{\mu}` at the interface is approximated using a first-order upwinding on the sign of the potential difference.
 
@@ -94,7 +94,7 @@ The following attributes are supported:
 
 In particular:
 
-* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
+* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolumeDiscretization`)
 * ``fluidName`` must point to a single phase fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``targetRegions`` is used to specify the regions on which the solver is applied
@@ -112,4 +112,4 @@ Input example
   :start-after: <!-- SPHINX_TUT_INT_HEX_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_INT_HEX_SOLVERS_END -->
 
-We refer the reader to :ref:`this page <TutorialSinglePhaseFlow>` for a complete tutorial illustrating the use of this solver.
+We refer the reader to :ref:`this page <TutorialSinglePhaseFlowWithInternalMesh>` for a complete tutorial illustrating the use of this solver.

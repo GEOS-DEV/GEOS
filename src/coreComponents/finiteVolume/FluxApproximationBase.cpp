@@ -67,7 +67,7 @@ FluxApproximationBase::GetCatalog()
 
 void FluxApproximationBase::compute( DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION_SCOPED;
+  GEOSX_MARK_FUNCTION;
 
   computeCellStencil( domain );
 

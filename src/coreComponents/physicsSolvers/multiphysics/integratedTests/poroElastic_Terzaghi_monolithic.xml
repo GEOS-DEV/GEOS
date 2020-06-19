@@ -43,6 +43,7 @@
   </Solvers>
   <!-- SPHINX_POROELASTIC_SOLVER_END -->
 
+  <!-- SPHINX_POROELASTIC_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -54,7 +55,7 @@
                   nz="{1}"
                   cellBlockNames="{cb1}" />
   </Mesh>
-
+<!-- SPHINX_POROELASTIC_MESH_END -->
   <Geometry>
     <Box name="boundaryBot"
          xMin="-0.1, -0.01, -0.01"
@@ -94,6 +95,7 @@
 
   </Events>
 
+  <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   <NumericalMethods>
     <BasisFunctions>
       <LagrangeBasis3 name="linearBasis"
@@ -118,7 +120,7 @@
                                  coefficientName="permeability" />
     </FiniteVolume>
   </NumericalMethods>
-
+<!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
   <ElementRegions>
     <CellElementRegion name="Region2"
                        cellBlocks="{cb1}"
