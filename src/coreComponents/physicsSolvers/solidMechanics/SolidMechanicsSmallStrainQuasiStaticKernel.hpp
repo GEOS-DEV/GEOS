@@ -364,12 +364,12 @@ public:
         localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                       stack.localRowDofIndex,
-                                                                       stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
-                                                                     NUM_NODES_PER_ELEM * numDofPerTrialSupportPoint );
+                                                                                stack.localRowDofIndex,
+                                                                                stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                                NUM_NODES_PER_ELEM * numDofPerTrialSupportPoint );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
-        maxForce = fmax( maxForce, fabs(stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ]) );
+        maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
       }
     }
 

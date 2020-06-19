@@ -939,7 +939,7 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
   dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( keys::TotalDisplacement ) );
 
   SparsityPattern< globalIndex > pattern( dofManager.numLocalDofs(), dofManager.numGlobalDofs() );
-  array1d<localIndex> rowSizes( dofManager.numLocalDofs() );
+  array1d< localIndex > rowSizes( dofManager.numLocalDofs() );
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString )
   {

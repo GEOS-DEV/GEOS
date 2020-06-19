@@ -227,7 +227,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
   for( localIndex k=0; k<numFluxElems; ++k )
   {
 
-#define PERM_CALC 1
+    #define PERM_CALC 1
 //      real64 const aperAdd = aperture0[stencilElementIndices[k]] < 0.09e-3 ? ( 0.09e-3 -
 // aperture0[stencilElementIndices[k]] ) : 0.0;
 #if PERM_CALC==1

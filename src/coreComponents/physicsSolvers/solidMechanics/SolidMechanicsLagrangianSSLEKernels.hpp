@@ -294,18 +294,18 @@ struct ImplicitKernel
         #define DETJ detJ( k, q )
       #endif //defined(CALCFEMSHAPE)
 
-          real64 stress0[ 6 ] = LVARRAY_TENSOROPS_INIT_LOCAL_6( DETJ * stress[ k ][ q ] );
-          if( !fluidPressure.empty() )
-          {
-            LvArray::tensorOps::addIdentityToSymmetric< 3 >( stress0, -DETJ * biotCoefficient * (fluidPressure[ k ] + deltaFluidPressure[ k ]) );
-          }
+        real64 stress0[ 6 ] = LVARRAY_TENSOROPS_INIT_LOCAL_6( DETJ * stress[ k ][ q ] );
+        if( !fluidPressure.empty() )
+        {
+          LvArray::tensorOps::addIdentityToSymmetric< 3 >( stress0, -DETJ * biotCoefficient * (fluidPressure[ k ] + deltaFluidPressure[ k ]) );
+        }
 
-          for( integer a = 0; a < NUM_NODES_PER_ELEM; ++a )
-          {
-            real64 temp[ 3 ];
-            LvArray::tensorOps::symAijBj< 3 >( temp, stress0, DNDX[ a ] );
+        for( integer a = 0; a < NUM_NODES_PER_ELEM; ++a )
+        {
+          real64 temp[ 3 ];
+          LvArray::tensorOps::symAijBj< 3 >( temp, stress0, DNDX[ a ] );
 
-            maxForce.max( LvArray::tensorOps::maxAbsoluteEntry< 3 >( temp ) );
+          maxForce.max( LvArray::tensorOps::maxAbsoluteEntry< 3 >( temp ) );
 
           R[ a * NDIM + 0 ] -= temp[ 0 ];
           R[ a * NDIM + 1 ] -= temp[ 1 ];

@@ -307,7 +307,7 @@ void SinglePhaseBase::SetupSystem( DomainPartition & domain,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  ResetViews( *(domain.getMeshBody(0)->getMeshLevel(0)) );
+  ResetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 )) );
 
   SolverBase::SetupSystem( domain,
                            dofManager,

@@ -381,14 +381,14 @@ AssemblerKernel::Compute( localIndex const er,
                                                              dUpwMobility_dp,
                                                              upwDofNumber );
 
-  /*
-   * perform assembly in this element in two steps:
-   * 1) mass conservation equations
-   * 2) face constraints
-   */
+    /*
+     * perform assembly in this element in two steps:
+     * 1) mass conservation equations
+     * 2) face constraints
+     */
 
-  // use the computed one sided vol fluxes and the upwinded mobilities
-  // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
+    // use the computed one sided vol fluxes and the upwinded mobilities
+    // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
     AssemblerKernelHelper::AssembleOneSidedMassFluxes< NF >( faceDofNumber,
                                                              elemToFaces,
                                                              elemDofNumber[er][esr][ei],
@@ -403,7 +403,7 @@ AssemblerKernel::Compute( localIndex const er,
                                                              localMatrix,
                                                              localRhs );
   }
-  
+
   // use the computed one sided vol fluxes to assemble the constraints
   // enforcing flux continuity at this element's faces
   AssemblerKernelHelper::AssembleConstraints< NF >( faceDofNumber,
@@ -450,7 +450,7 @@ FluxKernel::Launch( localIndex er,
   // get the cell-centered DOF numbers and ghost rank for the assembly
   arrayView1d< integer const > const & elemGhostRank =
     subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
-  
+
   // get the map from elem to faces
   arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
 

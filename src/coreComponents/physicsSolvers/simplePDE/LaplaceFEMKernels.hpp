@@ -278,15 +278,15 @@ public:
 
     for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
-        if( dof < 0 || dof >= m_matrix.numRows() ) continue;
-        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localColDofIndex,
-                                                                                stack.localJacobian[ a ],
-                                                                                NUM_NODES_PER_ELEM );
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
+      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.localColDofIndex,
+                                                                              stack.localJacobian[ a ],
+                                                                              NUM_NODES_PER_ELEM );
 
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
-        maxForce = fmax( maxForce, fabs(stack.localResidual[ a ]) );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
     }
 
     return maxForce;
