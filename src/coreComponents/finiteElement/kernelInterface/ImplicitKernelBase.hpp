@@ -77,6 +77,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param inputDofNumber The dof number for the primary field.
+   * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.
    * @param inputRhs Reference to the RHS vector.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase

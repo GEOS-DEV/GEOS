@@ -195,10 +195,10 @@ protected:
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
 
   /**
-   * @brief Actual computation of the boundary stencil, to be overridden by implementations.
-   * @param[in] domain the domain on which to perform the computation
-   * @param[in] faceSet set of faces
-   * @param[out] stencil the boundary stencil
+   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @param domain the target domain
+   * @param setName name of the face set, to be used as wrapper name for the produced stencil
+   * @param faceSet set of face indices to use
    */
   virtual void computeBoundaryStencil( DomainPartition const & domain,
                                        string const & setName,

@@ -227,7 +227,7 @@ public:
                                   LAMBDA && lambda ) const;
 
   /**
-   * @brief Function to zero matrix rows to apply boundary conditions
+   * @brief Zero matrix rows to apply boundary conditions.
    * @tparam LAI The linear algebra interface
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
    * @param[in] dofMap The map from the local index of the primary field to the global degree of
@@ -241,7 +241,26 @@ public:
                                            arrayView1d< globalIndex const > const & dofMap,
                                            typename LAI::ParallelMatrix & matrix ) const;
 
-
+  /**
+   * @brief Apply a boundary condition to a system of equations.
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over the target set.
+   * @tparam T Data type of the field.
+   * @tparam NDIM Number of dimensions in the field array.
+   * @tparam USD Unit stride dimension of the field array.
+   * @param targetSet The set of indices which the boundary condition will be applied.
+   * @param time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param dofMap The map from the local index of the primary field to the global degree of freedom number.
+   * @param dofRankOffset Offset of dof indices on current rank.
+   * @param matrix Local part of the system matrix.
+   * @param rhs Local part of the system rhs vector.
+   * @param fieldView Array view of the field data.
+   *
+   * @note This function is rarely used directly. More often it is called by other ApplyBoundaryCondition functions.
+   */
   template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
   void ApplyBoundaryConditionToSystemKernel( SortedArrayView< localIndex const > const & targetSet,
                                              real64 const time,
@@ -252,6 +271,25 @@ public:
                                              arrayView1d< real64 > const & rhs,
                                              ArrayView< T const, NDIM, USD > const & fieldView ) const;
 
+  /**
+   * @brief Apply a boundary condition to a system of equations.
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *            application of the boundary condition.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param[in] fieldName The name of the field to apply the boundary condition to.
+   * @param[in] dofMapName The name of the map from the local index of the primary field to the
+   *                       global degree of freedom number.
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[in,out] matrix Local part of the system matrix.
+   * @param[in,out] rhs Local part of the system rhs vector.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
+   */
   template< typename FIELD_OP, typename POLICY >
   void ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
@@ -262,6 +300,28 @@ public:
                                        CRSMatrixView< real64, globalIndex const > const & matrix,
                                        arrayView1d< real64 > const & rhs ) const;
 
+  /**
+   * @brief Apply a boundary condition to a system of equations.
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[inout] matrix Local part of the system matrix.
+   * @param[inout] rhs Local part of the system rhs vector.
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                   provided by the FIELD_OP templated type.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -273,6 +333,29 @@ public:
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
+  /**
+   * @brief Apply a boundary condition to a system of equations.
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[inout] matrix Local part of the system matrix.
+   * @param[inout] rhs Local part of the system rhs vector.
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                   provided by the FIELD_OP templated type.
+   *
+   * This function applies the boundary condition to a linear system of equations. This function is
+   * typically called from within the lambda to a call to
+   * BoundaryConditionManager::ApplyBoundaryCondition().
+   */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
   ApplyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -285,6 +368,16 @@ public:
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
+  /**
+   * @brief Function to zero matrix rows to apply boundary conditions
+   * @tparam POLICY the execution policy to use when zeroing rows
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[inout] matrix the local system matrix
+   *
+   * This function zeroes the rows of the matrix that correspond to boundary conditions.
+   */
   template< typename POLICY >
   void ZeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                            arrayView1d< globalIndex const > const & dofMap,

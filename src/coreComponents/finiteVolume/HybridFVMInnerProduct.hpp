@@ -55,7 +55,14 @@ struct HybridFVMInnerProductHelper
     result[ 2 ][ 2 ] = values[ 2 ];
   }
 
-
+  /**
+   * @brief Orthonormalize a set of three vectors
+   * @tparam NF vector space dimensionality
+   * @param[in,out] q0 first vector
+   * @param[in,out] q1 second vector
+   * @param[in,out] q2 third vector
+   * @param[out] cellToFaceMat a copy of in/out vectors stacked into a matrix
+   */
   template< localIndex NF >
   GEOSX_HOST_DEVICE
   static
@@ -194,7 +201,6 @@ struct QTPFACellInnerProductKernel
    * @param[in] elemPerm the permeability in the element
    * @param[in] tParam parameter used in the transmissibility matrix computations
    * @param[in] lengthTolerance the tolerance used in the trans calculations
-   * @param[in] orthonormalizeWithSVD flag to choose is use orthonormalizing through SVD
    * @param[inout] transMatrix the output
    *
    * When tParam = 2, we obtain a scheme that reduces to TPFA

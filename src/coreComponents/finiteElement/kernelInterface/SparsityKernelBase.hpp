@@ -69,7 +69,15 @@ public:
   using Base::setup;
 
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @brief Constructor
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param inputDofNumber The dof number for the primary field.
+   * @param rankOffset dof index offset of current rank
+   * @param inputSparsity The sparsity pattern to fill.
+   * @param rowSizes The array that will be filled with row sizes.
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
@@ -186,8 +194,9 @@ struct SparsityHelper
  * @param feDiscretization A pointer to the finite element discretization/space
  *                         object.
  * @param inputDofNumber The global degree of freedom numbers.
- * @param inputMatrix The global Jacobian Matrix.
- * @param inputRhs The global residual vector (unused)....perhaps remove?
+ * @param rankOffset Offset of dof indices on curren rank.
+ * @param inputSparsityPattern The local sparsity pattern to fill.
+ * @param rowSizes The array of local row sizes to be populated
  * @return 0
  *
  * Fills matrix sparsity using information from physics specific implementation

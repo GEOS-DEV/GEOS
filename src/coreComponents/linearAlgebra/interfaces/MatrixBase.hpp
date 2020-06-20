@@ -217,20 +217,15 @@ protected:
   /**
    * @brief Create parallel matrix from a local CRS matrix.
    * @param localMatrix The input local matrix.
-   * @param dofRankOffset The starting global row of @p localMatrix.
    * @param comm The MPI communicator to use.
    *
    * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
-   *
    * @todo Replace generic implementation with more efficient ones in each package.
    */
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        MPI_Comm const & comm )
   {
     localMatrix.move( LvArray::MemorySpace::CPU, false );
-
-//    std::cout<<" ******************** localMatrix ********************"<<std::endl;
-//    std::cout<<localMatrix<<std::endl;
 
     localIndex maxEntriesPerRow = 0;
     for( localIndex i = 0; i < localMatrix.numRows(); ++i )

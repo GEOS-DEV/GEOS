@@ -446,6 +446,24 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     }
   }
 
+  /**
+   * @brief Function to apply a Dirichlet like boundary condition to a single dof in a system of
+   *        equations.
+   * @param[in] dof The degree of freedom that is to be set.
+   * @param[in] dofRankOffset offset of dof indices on current rank
+   * @param[in,out] matrix the local part of the system matrix
+   * @param[out] rhs The rhs contribution resulting from the application of the BC.
+   * @param[in] bcValue The target value of the Boundary Condition
+   * @param[in] fieldValue The current value of the variable to be set.
+   *
+   * This function clears the matrix row for the specified \p dof, sets the diagonal to some
+   * appropriately scaled value, and sets \p rhs to the negative product of the scaled value
+   * of the diagonal and the difference between \p bcValue and \p fieldValue.
+   *
+   * @note This function assumes the user is doing a Newton-type nonlinear solve and will
+   * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
+   * update for the field. For a linear problem, this may lead to unexpected results.
+   */
   static inline void GEOSX_HOST_DEVICE
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
@@ -500,6 +518,14 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
     }
   }
 
+  /**
+   * @brief Function to add some values of a vector.
+   * @tparam POLICY the execution policy to use when setting values
+   * @param rhs the target right-hand side vector
+   * @param dof a list of global DOF indices to be set
+   * @param dofRankOffset offset of dof indices on current rank
+   * @param values a list of values corresponding to \p dof that will be added to \p rhs.
+   */
   template< typename POLICY >
   static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,
@@ -530,6 +556,7 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
   /**
    * @brief Function to apply a value to a vector field for a single dof.
    * @param[in] dof The degree of freedom that is to be modified.
+   * @param[in] dofRankOffset offset of dof indices on current rank
    * @param[in] matrix A ParalleMatrix object: the system matrix.
    * @param[out] rhs The rhs contribution to be modified
    * @param[in] bcValue The value to add to rhs
@@ -567,6 +594,14 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
     rhs.add( dof, values, num );
   }
 
+  /**
+   * @brief Function to add some values of a vector.
+   * @tparam POLICY the execution policy to use when setting values
+   * @param rhs the target right-hand side vector
+   * @param dof a list of global DOF indices to be set
+   * @param dofRankOffset offset of dof indices on current rank
+   * @param values a list of values corresponding to \p dof that will be added to \p rhs.
+   */
   template< typename POLICY >
   static inline void PrescribeRhsValues( arrayView1d< real64 > const & rhs,
                                          arrayView1d< globalIndex const > const & dof,

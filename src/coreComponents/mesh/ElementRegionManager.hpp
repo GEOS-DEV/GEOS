@@ -857,6 +857,16 @@ public:
                                  arrayView1d< string const > const & materialNames,
                                  bool const allowMissingViews = false );
 
+  /**
+   * @brief Construct a view accessor for material data, assuming array as storage type
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
+   * @return MaterialViewAccessor that contains the data views
+   */
   template< typename T, int NDIM >
   ElementViewAccessor< ArrayView< T const, NDIM > >
   ConstructMaterialArrayViewAccessor( string const & viewName,

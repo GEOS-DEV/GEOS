@@ -25,9 +25,8 @@ namespace geosx
 {
 
 /**
- * @struct CellElementStencilTPFA_Traits
- * Struct to predeclare the types and consexpr values of CellElementStencilTPFA so that they may be used in
- * StencilBase.
+ * @struct BoundaryStencil_Traits
+ * Struct to predeclare the types and consexpr values of BoundaryStencil so that they may be used in StencilBase.
  */
 struct BoundaryStencil_Traits
 {
@@ -56,6 +55,12 @@ struct BoundaryStencil_Traits
   static constexpr localIndex MAX_STENCIL_SIZE = 2;
 };
 
+/**
+ * @class BoundaryStencil
+ *
+ * Provides management of the boundary stencil points
+ * (stencils used to prescribe boundary conditions on domain boundaries, i.e. faces)
+ */
 class BoundaryStencil : public StencilBase< BoundaryStencil_Traits, BoundaryStencil >,
   public BoundaryStencil_Traits
 {
@@ -66,8 +71,8 @@ public:
    */
   struct Order
   {
-    static constexpr localIndex ELEM = 0;
-    static constexpr localIndex FACE = 1;
+    static constexpr localIndex ELEM = 0; ///< Order of element index in stencil
+    static constexpr localIndex FACE = 1; ///< Order of face index in stencil
   };
 
   /// default constructor
@@ -88,8 +93,11 @@ public:
    * @param[in] index of the stencil entry for which to query the size
    * @return the size of a stencil entry
    */
-  constexpr localIndex stencilSize( localIndex GEOSX_UNUSED_PARAM( index ) ) const
-  { return MAX_STENCIL_SIZE; }
+  constexpr localIndex stencilSize( localIndex const index ) const
+  {
+    GEOSX_UNUSED_VAR( index )
+    return MAX_STENCIL_SIZE;
+  }
 
 };
 
