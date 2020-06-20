@@ -35,6 +35,7 @@ or_die python scripts/config-build.py \
 
 or_die cd ${GEOSX_BUILD_DIR}
 #or_die make geosx_doxygen VERBOSE=1
+or_die make -j $(nproc) physicsSolvers VERBOSE=1
 or_die make -j $(nproc) VERBOSE=1
 or_die make install VERBOSE=1
 
