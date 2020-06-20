@@ -203,7 +203,7 @@ void DofManager::createIndexArray( FieldDescription & field )
 
     // step 4. synchronize across ranks
     std::map< string, string_array > fieldNames;
-    fieldNames[ MeshHelper< LOC >::syncObjName ].push_back( field.key );
+    fieldNames[ MeshHelper< LOC >::syncObjName ].emplace_back( field.key );
 
     CommunicationTools::
       SynchronizeFields( fieldNames, m_mesh,
@@ -283,7 +283,7 @@ void DofManager::addField( string const & fieldName,
   {
     elemManager->forElementRegions( [&]( ElementRegionBase const & region )
     {
-      field.regions.push_back( region.getName() );
+      field.regions.emplace_back( region.getName() );
     } );
   }
   else
@@ -342,7 +342,7 @@ struct ConnLocPatternBuilder
                      DofManager::FieldDescription const & field,
                      std::vector< std::string > const & regions,
                      localIndex const rowOffset,
-                     LvArray::SparsityPattern< globalIndex > & connLocPattern )
+                     SparsityPattern< globalIndex > & connLocPattern )
   {
     using ArrayHelper = IndexArrayHelper< globalIndex const, LOC >;
     typename ArrayHelper::Accessor dofIndexArray = ArrayHelper::get( mesh, field.key );
@@ -389,7 +389,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
                      DofManager::FieldDescription const & field,
                      std::vector< std::string > const & regions,
                      localIndex const rowOffset,
-                     LvArray::SparsityPattern< globalIndex > & connLocPattern )
+                     SparsityPattern< globalIndex > & connLocPattern )
   {
     DofManager::Location constexpr ELEM  = DofManager::Location::Elem;
     DofManager::Location constexpr EDGE = DofManager::Location::Edge;
@@ -430,7 +430,7 @@ template< DofManager::Location LOC, DofManager::Location CONN >
 void makeConnLocPattern( MeshLevel * const mesh,
                          DofManager::FieldDescription const & field,
                          std::vector< std::string > const & regions,
-                         LvArray::SparsityPattern< globalIndex > & connLocPattern )
+                         SparsityPattern< globalIndex > & connLocPattern )
 {
   using Loc = DofManager::Location;
 
@@ -555,7 +555,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
     return;
   }
 
-  LvArray::SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
+  SparsityPattern< globalIndex > connLocRow( 0, 0, 0 ), connLocCol( 0, 0, 0 );
 
   localIndex maxDofRow = 0;
   LocationSwitch( rowField.location, static_cast< Location >( conn ),
@@ -1046,7 +1046,7 @@ void DofManager::reorderByRank()
         ArrayHelper::reference( indexArray, locIdx ) += adjustment;
       } );
 
-      fieldToSync[MeshHelper< LOC >::syncObjName].push_back( field.key );
+      fieldToSync[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
     } );
   }
 

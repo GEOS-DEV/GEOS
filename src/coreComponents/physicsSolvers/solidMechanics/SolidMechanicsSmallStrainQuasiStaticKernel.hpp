@@ -138,13 +138,13 @@ public:
     {}
 
     /// Stack storage for the element local nodal displacement
-    R1Tensor u_local[numNodesPerElem];
+    real64 u_local[ numNodesPerElem ][ 3 ];
 
     /// Stack storage for the element local nodal incremental displacement
-    R1Tensor uhat_local[numNodesPerElem];
+    real64 uhat_local[ numNodesPerElem ][ 3 ];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[6][6];
+    real64 constitutiveStiffness[ 6 ][ 6 ];
   };
   //*****************************************************************************
 
@@ -399,5 +399,7 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif // GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINQUASISTATIC_HPP_

@@ -129,11 +129,11 @@ void ContactRelationBase::InitializePreSubGroups( Group * const )
 
     real64 m_apertureTransition = (yvals[n] - slope * xvals[n] ) / ( 1.0 - slope );
 
-    xvals.push_back( m_apertureTransition );
-    yvals.push_back( m_apertureTransition );
+    xvals.emplace_back( m_apertureTransition );
+    yvals.emplace_back( m_apertureTransition );
 
-    xvals.push_back( m_apertureTransition*10e9 );
-    yvals.push_back( m_apertureTransition*10e9 );
+    xvals.emplace_back( m_apertureTransition*10e9 );
+    yvals.emplace_back( m_apertureTransition*10e9 );
 
     apertureTable->reInitializeFunction();
   }
