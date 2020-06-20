@@ -5,16 +5,18 @@ Contributing
 .. toctree::
    :maxdepth: 2
 
-   DeveloperGuidelines.rst
-
-   UnitTests.rst
+   CodeStyle.rst
 
    GitWorkflow.rst
 
-   GenerateSphinxDoc.rst
+   Sphinx.rst
 
    Doxygen.rst
 
+   UnitTests.rst
+
    IntegratedTests.rst
+
+   Benchmarks.rst
 
    caliper_link.rst

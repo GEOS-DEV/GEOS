@@ -2,19 +2,21 @@
 Key Components
 ###############################################################################
 
+.. toctree::
+   :maxdepth: 2
 
-dataRepo_link.rst
+   dataRepo_link.rst
 
-XML_and_classes.rst
+   XML.rst
 
-ProblemManager_link.rst
+   ProblemManager_link.rst
 
-mesh_link.rst
+   mesh_link.rst
 
-dofManager_link.rst
+   dofManager_link.rst
 
-fem_link.rst
+   fem_link.rst
 
-WorkingWithData
+   WorkingWithData
 
-AddingNewSolver.rst
+   AddingNewSolver.rst
