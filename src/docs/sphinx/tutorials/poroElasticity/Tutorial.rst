@@ -2,7 +2,7 @@
 
 
 ##############################################
-Poroelasticity : Terzaghi Poroelasticity
+Tutorial 9: Poroelasticity
 ##############################################
 
 
@@ -126,10 +126,10 @@ As we have seen before, the coupling solver and the solid mechanics solver requi
 This discretization method is defined here as a finite element method
 using linear basis functions and Gaussian quadrature rules.
 For more information on defining finite elements numerical schemes,
-please see the dedicated :ref:`FiniteElement` section.
+please see the dedicated :ref:`FiniteElementDiscretization` section.
 
 The finite volume method requires the specification of a discretization scheme.
-Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
+Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolumeDiscretization`).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/poroElastic_Terzaghi_monolithic.xml
   :language: xml

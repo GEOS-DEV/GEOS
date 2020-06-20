@@ -11,12 +11,18 @@ Welcome to the GEOSX developer guide.
 
    KeyComponents/index_KeyComponents.rst
 
-
 Overview of the code structure
+
 Managed Groups
+
 Arrays
+
 Data Repository
+
 Physics Solvers
+
 Constitutive Models
+
 Linear Algebra Interface
+
 Portable Programming: RAJA and CHAI
