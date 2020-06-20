@@ -225,7 +225,7 @@ struct ImplicitKernel
           CRSMatrixView< real64, globalIndex const > const & matrix,
           arrayView1d< real64 > const & rhs )
   {
-    GEOSX_MARK_FUNCTION_TAG( CRSMatrix );
+    GEOSX_MARK_FUNCTION;
     constexpr int NDIM = 3;
 
     // if the following is not static, then gcc8.1 gives a "error: use of 'this' in a constant expression"

@@ -278,9 +278,8 @@ struct QTPFACellInnerProductKernel
     // 5) compute P_Q = I - QQ'
     // note: we compute -P_Q and then at 6) ( - P_Q ) D ( - P_Q )
     LvArray::tensorOps::addIdentity< NF >( worka_numFacesByNumFaces, -1 );
-    LvArray::tensorOps::plusAikBjk< NF, NF, 3 >( worka_numFacesByNumFaces,
-                                                 cellToFaceMat,
-                                                 cellToFaceMat );
+    LvArray::tensorOps::plusAikAjk< NF, 3 >( worka_numFacesByNumFaces,
+                                             cellToFaceMat );
 
     // 6) compute P_Q D P_Q where D = diag(diag(N K N'))
     // 7) compute T = ( N K N' + t U diag(diag(N K N')) U ) / elemVolume
