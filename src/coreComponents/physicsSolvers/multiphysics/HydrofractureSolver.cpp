@@ -452,7 +452,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  real64 const tipBCLocation = tipElmtCenter[1] - 0.5 * tipElmtSize;
 
 	  localIndex_array myChildIndex = nodeManager.getReference<localIndex_array>("childIndex");
-	  localIndex refNodeIndex;
+	  localIndex refNodeIndex=-1;
 	  for(localIndex i=0; i<nodeMap[m_tipElement].size(); i++)
 	  {
 	    localIndex node = nodeMap[m_tipElement][i];
@@ -1576,7 +1576,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   NodeManager const * const nodeManager = mesh->getNodeManager();
 
   //TJ: test whether m_nodesWithAssignedDisp is passed here correctly
-  {
+/*  {
     SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
     SortedArray< localIndex > const & nodesWithAssignedDisp =
     mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
@@ -1585,7 +1585,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       std::cout << item << ", ";
     std::cout << std::endl;
   }
-
+*/
   //TJ: test whether the displacement field at newly splitted nodes are passed correctly
   {
 /*    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
