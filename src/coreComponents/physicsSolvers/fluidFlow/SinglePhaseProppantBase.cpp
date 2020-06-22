@@ -59,6 +59,11 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString )->getDefaultValue() };
 }
 
+arrayView1d< real64 const > const & SinglePhaseProppantBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
+{
+  return subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::poroMultiplierString );
+}
+
 void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -120,10 +125,6 @@ void SinglePhaseProppantBase::ResetViewsPrivate( ElementRegionManager const & el
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SlurryFluidBase::viewKeyStruct::dVisc_dPresString );
-
-  m_poroMultiplier.clear();
-  m_poroMultiplier = elemManager.ConstructArrayViewAccessor< real64, 1 >( ProppantTransport::viewKeyStruct::poroMultiplierString );
-  m_poroMultiplier.setName( getName() + "/accessors/" + ProppantTransport::viewKeyStruct::poroMultiplierString );
 
   m_transTMultiplier.clear();
   m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( ProppantTransport::viewKeyStruct::transTMultiplierString );

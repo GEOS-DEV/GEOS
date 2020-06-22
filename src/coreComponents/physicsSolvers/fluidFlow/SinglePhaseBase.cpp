@@ -136,6 +136,11 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
+arrayView1d< real64 const > const & SinglePhaseBase::getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const
+{
+  return subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString );
+}
+
 void SinglePhaseBase::InitializePreSubGroups( Group * const rootGroup )
 {
   FlowSolverBase::InitializePreSubGroups( rootGroup );
@@ -520,10 +525,10 @@ void SinglePhaseBase::AccumulationLaunch( localIndex const targetIndex,
   arrayView1d< real64 const > const & densityOld = subRegion.getReference< array1d< real64 > >( viewKeyStruct::densityOldString );
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
   arrayView1d< real64 const > const & deltaVolume = subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString );
-  arrayView1d< real64 const > const & poroMult = subRegion.getReference< array1d< real64 > >( viewKeyStruct::poroMultString );
+  arrayView1d< real64 const > const & poroMult = getPoreVolumeMult( subRegion );
 
   ConstitutiveBase const & fluid = GetConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
-  FluidPropViews fluidProps = getFluidProperties( fluid );
+  FluidPropViews const fluidProps = getFluidProperties( fluid );
   arrayView2d< real64 const > const & density = fluidProps.dens;
   arrayView2d< real64 const > const & dDens_dPres = fluidProps.dDens_dPres;
 
@@ -792,10 +797,6 @@ void SinglePhaseBase::ResetViewsPrivate( ElementRegionManager const & elemManage
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
   m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString );
-
-  m_poroMultiplier.clear();
-  m_poroMultiplier = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::poroMultString );
-  m_poroMultiplier.setName( getName() + "/accessors/" + viewKeyStruct::poroMultString );
 
   m_transTMultiplier.clear();
   m_transTMultiplier = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::transTMultString );

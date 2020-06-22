@@ -274,6 +274,18 @@ protected:
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
   /**
+   * @brief Extract pore volume multiplier array from a subregion.
+   * @param subRegion the subregion reference
+   * @return array view for pore volume multiplier
+   *
+   * This function allows derived solvers to specialize access to pore volume multiplier that
+   * is used in accumulation kernel. For example, it is used by SinglePhaseProppantBase to use
+   * multiplier produced by ProppantTransport solver, which we otherwise don't know about.
+   * This design should DEFINITELY be revisited.
+   */
+  virtual arrayView1d< real64 const > const & getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const;
+
+  /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
@@ -304,7 +316,6 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_poroMultiplier;
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
 
 private:

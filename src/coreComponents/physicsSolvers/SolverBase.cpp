@@ -679,8 +679,8 @@ namespace
  * @param obj                the object to output
  * @param cycleNumber        event cycle number
  * @param nonlinearIteration nonlinear iteration number
- * @param shortName          short filename prefix (e.g. "mat")
- * @param longName           long name for screen output (e.g. "System matrix")
+ * @param filePrefix          short filename prefix (e.g. "mat")
+ * @param screenName           long name for screen output (e.g. "System matrix")
  * @param toScreen           whether to print on screen
  * @param toFile             whether to write to file
  */
@@ -689,24 +689,24 @@ void debugOutputLAObject( T const & obj,
                           real64 const & GEOSX_UNUSED_PARAM( time ),
                           integer const cycleNumber,
                           integer const nonlinearIteration,
-                          string const & shortName,
-                          string const & longName,
+                          string const & filePrefix,
+                          string const & screenName,
                           bool const toScreen,
                           bool const toFile )
 {
   if( toScreen )
   {
-    string const frame( longName.size() + 1, '=' );
-    GEOSX_LOG_RANK_0( frame << "\n" << longName << ":\n" << frame );
+    string const frame( screenName.size() + 1, '=' );
+    GEOSX_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
     GEOSX_LOG( obj );
   }
 
   if( toFile )
   {
     char filename[200] = { 0 };
-    snprintf( filename, 200, "%s_%06d_%02d.mtx", shortName.c_str(), cycleNumber, nonlinearIteration );
+    snprintf( filename, 200, "%s_%06d_%02d.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-    GEOSX_LOG_RANK_0( longName << " written to " << filename );
+    GEOSX_LOG_RANK_0( screenName << " written to " << filename );
   }
 }
 
@@ -722,7 +722,7 @@ void SolverBase::DebugOutputSystem( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       "mat",
+                       getName() + "_mat",
                        "System matrix",
                        getLogLevel() == 2,
                        getLogLevel() >= 3 );
@@ -731,7 +731,7 @@ void SolverBase::DebugOutputSystem( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       "rhs",
+                       getName() + "_rhs",
                        "System right-hand side",
                        getLogLevel() == 2,
                        getLogLevel() >= 3 );
@@ -746,7 +746,7 @@ void SolverBase::DebugOutputSolution( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       "sol",
+                       getName() + "_sol",
                        "System solution",
                        getLogLevel() == 2,
                        getLogLevel() >= 3 );

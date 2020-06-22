@@ -54,24 +54,8 @@ void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition & domain )
 {
-  m_flowSolver->SetupSystem( domain,
-                             m_flowSolver->getDofManager(),
-                             m_flowSolver->getLocalMatrix(),
-                             m_flowSolver->getLocalRhs(),
-                             m_flowSolver->getLocalSolution() );
-
-
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
-
-  m_proppantSolver->SetupSystem( domain,
-                                 m_proppantSolver->getDofManager(),
-                                 m_proppantSolver->getLocalMatrix(),
-                                 m_proppantSolver->getLocalRhs(),
-                                 m_proppantSolver->getLocalSolution() );
-
-
   m_proppantSolver->ImplicitStepSetup( time_n, dt, domain );
-
   m_proppantSolver->PreStepUpdate( time_n, dt, domain );
 }
 
@@ -116,6 +100,18 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
     FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
     boundaryConditionManager.ApplyInitialConditions( &domain );
   }
+
+  m_flowSolver->SetupSystem( domain,
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getLocalMatrix(),
+                             m_flowSolver->getLocalRhs(),
+                             m_flowSolver->getLocalSolution() );
+
+  m_proppantSolver->SetupSystem( domain,
+                                 m_proppantSolver->getDofManager(),
+                                 m_proppantSolver->getLocalMatrix(),
+                                 m_proppantSolver->getLocalRhs(),
+                                 m_proppantSolver->getLocalSolution() );
 
   ImplicitStepSetup( time_n, dt, domain );
 
