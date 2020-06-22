@@ -355,7 +355,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
 
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[i]( j ) = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 8.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffApprox[i]( j ) = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
 
             averageYoungModulus += 0.5*E;
@@ -562,8 +562,6 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
 
   bool isActiveSetConverged = false;
 
-  bool useElasticStep = !IsFractureAllInStickCondition( domain );
-
   // outer loop attempts to apply full timestep, and managed the cutting of the timestep if
   // required.
   for( dtAttempt = 0; dtAttempt < maxNumberDtCuts; ++dtAttempt )
@@ -575,6 +573,8 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
       globalIndex numStick, numSlip, numOpen;
       ComputeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
     }
+
+    bool useElasticStep = !IsFractureAllInStickCondition( domain );
 
     integer & activeSetIter = m_activeSetIter;
     for( activeSetIter = 0; activeSetIter < m_activeSetMaxIter; ++activeSetIter )
@@ -1532,7 +1532,9 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
 
         // First index: face element. Second index: node
         real64_array2d nodalArea( 2, 2 );
-        real64 rotatedInvStiffApprox[ 2 ][ 3 ][ 3 ];
+
+        // first index: face, second index: element (T/B), third index: dof (x, y, z)
+        real64 stiffApprox[ 2 ][ 2 ][ 3 ];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1544,7 +1546,6 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
 
-          real64 stiffApprox[ 2 ][ 3 ];
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
@@ -1587,50 +1588,37 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
-            // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
-
-          real64 invStiffApproxTotal[ 3 ][ 3 ] = { { 0 } };
-          for( localIndex i = 0; i < 2; ++i )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              invStiffApproxTotal[ j ][ j ] += stiffApprox[ i ][ j ];
-            }
-          }
-          for( localIndex j = 0; j < 3; ++j )
-          {
-            invStiffApproxTotal[ j ][ j ] = 1.0 / invStiffApproxTotal[ j ][ j ];
-          }
-
-          // Compute R^T * (invK) * R
-          real64 temp[ 3 ][ 3 ];
-          LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ sei[iconn][0] ], invStiffApproxTotal );
-          LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox[ kf ], temp, faceRotationMatrix[ sei[iconn][0] ] );
         }
 
-        // Compose local nodal-based local stiffness matrices
-        stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );
-        for( localIndex kf = 0; kf < 2; ++kf )
+        real64 invTotStiffApprox[ 3 ][ 3 ] = { { 0 } };
+        for( localIndex i = 0; i < 3; ++i )
         {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              rotatedInvStiffApprox[ kf ][ i ][ j ] *= nodalArea[0][kf] * nodalArea[1][kf];
-            }
-          }
+          // K(i,i)^-1 = Ka(i,i)^-1 + Kb(i,i)^-1
+          // T -> top (index 0), B -> bottom (index 1)
+          // Ka(i,i) = KT(i,i) + KB(i,i)
+          // Kb(i,i) = KT(i,i) + KB(i,i)
+          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 0 ][ 1 ][ i ] )
+                                        + 1.0 / ( stiffApprox[ 1 ][ 0 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
         }
-        // Local assembly
+
+        // Compute R^T * (invK) * R
+        real64 temp[ 3 ][ 3 ];
+        real64 rotatedInvStiffApprox[ 3 ][ 3 ];
+        LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ sei[iconn][0] ], invTotStiffApprox );
+        LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ sei[iconn][0] ] );
+
+        // Add nodal area contribution
+        stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );
         for( localIndex i = 0; i < 3; ++i )
         {
           for( localIndex j = 0; j < 3; ++j )
           {
-            totalInvStiffApprox( i, j ) = -( rotatedInvStiffApprox[ 0 ][ i ][ j ] + rotatedInvStiffApprox[ 1 ][ i ][ j ] );
+            totalInvStiffApprox( i, j ) = -rotatedInvStiffApprox[ i ][ j ] * ( nodalArea[0][0]*nodalArea[1][0] + nodalArea[0][1]*nodalArea[1][1] );
           }
         }
 
@@ -2104,17 +2092,17 @@ void LagrangianContactSolver::SolveSystem( DofManager const & dofManager,
     solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
-//  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-//  if( rank == 0 )
-//  {
-//    string str;
-//    std::getline( std::cin, str );
-//    if( str.length() > 0 )
-//    {
-//      GEOSX_ERROR( "STOP" );
-//    }
-//  }
-//  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  // int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  // if( rank == 0 )
+  // {
+  //   string str;
+  //   std::getline( std::cin, str );
+  //   if( str.length() > 0 )
+  //   {
+  //     GEOSX_ERROR( "STOP" );
+  //   }
+  // }
+  // MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 
 void LagrangianContactSolver::SetNextDt( real64 const & currentDt,
