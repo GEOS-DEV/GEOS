@@ -218,6 +218,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
@@ -233,6 +235,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
@@ -248,6 +252,8 @@
 		</xsd:choice>
 		<!--currentSubEvent => Index of the current subevent-->
 		<xsd:attribute name="currentSubEvent" type="integer" />
+		<!--eventForecast => Indicates when the event is expected to execute-->
+		<xsd:attribute name="eventForecast" type="integer" />
 		<!--isTargetExecuting => Index of the current subevent-->
 		<xsd:attribute name="isTargetExecuting" type="integer" />
 		<!--lastCycle => Last event occurrence (cycle)-->
