@@ -91,13 +91,13 @@ public:
    * @brief Set the symbolic variable names
    * @param variableNames An array of variable names used in the expression
    */
-  void setSymbolicVariableNames(string_array variableNames) { m_variableNames = variableNames; }
+  void setSymbolicVariableNames( string_array variableNames ) { m_variableNames = variableNames; }
 
   /**
    * @brief Set the symbolic expression
    * @param expression A string containing the symbolic expression
    */
-  void setSymbolicExpression(string expression) { m_expression = expression; }
+  void setSymbolicExpression( string expression ) { m_expression = expression; }
 
 
 

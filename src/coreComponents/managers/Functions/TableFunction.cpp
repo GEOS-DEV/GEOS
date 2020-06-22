@@ -116,7 +116,7 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
 }
 
 
-void TableFunction::setInterpolationMethod(string interpolationMethodString)
+void TableFunction::setInterpolationMethod( string interpolationMethodString )
 {
   // Parse the interpolation method string
   if( interpolationMethodString == "linear" )
@@ -170,14 +170,14 @@ void TableFunction::InitializeFunction()
     }
   }
 
-  setInterpolationMethod(m_interpolationMethodString);
+  setInterpolationMethod( m_interpolationMethodString );
   reInitializeFunction();
 }
 
 void TableFunction::reInitializeFunction()
 {
-  m_dimensions = LvArray::integerConversion< localIndex >(m_coordinates.size());
-  m_size.resize(m_dimensions);
+  m_dimensions = LvArray::integerConversion< localIndex >( m_coordinates.size());
+  m_size.resize( m_dimensions );
 
   // Setup index increment (assume data is in Fortran array order)
   localIndex increment = 1;

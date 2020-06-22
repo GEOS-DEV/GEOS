@@ -121,9 +121,9 @@ public:
    * @brief Set the input variable names
    * @param inputVarNames A list of input variable names
    */
-  void setInputVarNames(string_array inputVarNames) { m_inputVarNames = inputVarNames; }
+  void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = inputVarNames; }
 
-  
+
 protected:
   /// names for the input variables
   string_array m_inputVarNames;
@@ -171,13 +171,13 @@ void FunctionBase::EvaluateT( dataRepository::Group const * const group,
       timeVar[varIndex] = 0;
       ++totalVarSize;
     }
-    else if (groupSize > 0)
+    else if( groupSize > 0 )
     {
       // Should we throw a warning if the group is zero-length?
       dataRepository::WrapperBase const * wrapper = group->getWrapperBase( varName );
       input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper->voidPointer() );
-      
-      localIndex wrapperSize = LvArray::integerConversion< localIndex >(wrapper->size());
+
+      localIndex wrapperSize = LvArray::integerConversion< localIndex >( wrapper->size());
       varSize[varIndex] = wrapperSize / groupSize;
       totalVarSize += varSize[varIndex];
     }
