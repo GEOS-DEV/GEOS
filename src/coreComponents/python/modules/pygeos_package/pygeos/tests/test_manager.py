@@ -235,7 +235,8 @@ class TestXMLProcessor(unittest.TestCase):
     # Create a directory to hold tests
     cls.pwd = os.getcwd()
     rand_name = xml_processor.generate_random_name(suffix='')[:10]
-    os.makedirs('./pygeos_tests_%s/included' % (rand_name), exist_ok=True)
+    # os.makedirs('./pygeos_tests_%s/included' % (rand_name), exist_ok=True)
+    os.makedirs('./pygeos_tests_%s/included' % (rand_name))
     os.chdir('./pygeos_tests_%s' % (rand_name))
 
     # Generate test xml files to process

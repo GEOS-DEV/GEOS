@@ -24,7 +24,7 @@
 
     <!-- Etc. -->
     <Parameter name="table_root" value="./tables"/>
-    <Parameter name="t_allocation" value="`18 [hrs] - 5 [min]`"/>
+    <Parameter name="t_allocation" value="28 [min]"/>
   </Parameters>
 
   <Mesh>

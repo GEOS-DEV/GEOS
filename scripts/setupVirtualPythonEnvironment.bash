@@ -12,8 +12,9 @@ do
 key="$1"
 
 case $key in
-    -p|--python_root)
-    PYTHON_ROOT="$2"
+    -p|--python_target)
+    echo $2
+    PYTHON_ROOT="$(dirname $2)/.."
     shift # past argument
     ;;
     -o|--output_path)
@@ -32,7 +33,7 @@ case $key in
     echo ""
     echo "Virtual Python environment setup options:"
     echo "-m/--miniconda_build \"Fetch and build miniconda for the virtual environment (default = false)\""
-    echo "-p/--python_root \"Root path of the parent python environment (default = system python3.6.4 on LC)\""
+    echo "-p/--python_target \"Target parent python (default = system python3.6.4 on LC)\""
     echo "-o/--output_path \"Path to store the new python environment (default = ~/Python/virtual)\""
     echo "-v/--virtual_name \"Virtual environment name (default = geosx)\""
     echo ""
