@@ -42,6 +42,8 @@
 //TJ: access tip quantities in the SurfaceGenerator class
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "managers/FieldSpecification/SourceFluxBoundaryCondition.hpp"
+
 
 namespace geosx
 {
@@ -401,12 +403,28 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		                         ->GetGroup("rock")
 				         ->getReference<real64>("defaultBulkModulus");
         real64 const toughness = mySurface->getReference<real64>("rockToughness");
+        real64 const viscosity = domain->GetGroup("Constitutive")
+                                       ->GetGroup("water")
+				       ->getReference<real64>("defaultViscosity");
+
+
+        // The unit of injectionRate is kg per second
+        real64 const injectionRate = domain->getParent()
+                                           ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+                                           ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					   ->getReference<real64>("scale");
+
+        // The injectionRate is only for half domain of the KGD problem,
+        // to retrieve the full injection rate, we need to multiply it by 2.0
+        real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+        real64 const total_time = dt + time_n;
 
 	real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
 	real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
         real64 const Eprime = E/(1.0-nu*nu);
         real64 const PI = 2 * acos(0.0);
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+        real64 const mup = 12.0 * viscosity;
 //	int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
 	//TJ: find the location of the tip boundary
@@ -463,9 +481,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	  }
 
-	  //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	  //TJ: use the displacement gap at the newly split node pair for the tip asymptotic relation
-
 	  real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
@@ -475,7 +491,26 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 				       << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
 				       << std::endl;
 */
-	  real64 tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
+	  real64 tipX = 0.0;
+	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  {
+	    //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+	    tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
+	  }
+	  else // Viscosity-dominated case
+	  {
+/*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+	    real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
+            tipX = tipBCLocation / ( pow(coeff_viscous/refDisp, 3.0/2.0) - 1.0 );
+*/
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+            tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
+	  }
 	  m_newTipLocation = tipX + tipBCLocation;
 	  m_convergedTipLoc = m_newTipLocation;
 /*	  std::cout << "Rank " << rank
@@ -860,11 +895,28 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 					     ->getReference<real64>("defaultBulkModulus");
 	    real64 const toughness = mySurface->getReference<real64>("rockToughness");
 
+	    real64 const viscosity = domain->GetGroup("Constitutive")
+					   ->GetGroup("water")
+					   ->getReference<real64>("defaultViscosity");
+
+	    // The unit of injectionRate is kg per second
+	    real64 const injectionRate = domain->getParent()
+					       ->GetGroup<FieldSpecificationManager>("FieldSpecifications")
+					       ->GetGroup<SourceFluxBoundaryCondition>("sourceTerm")
+					       ->getReference<real64>("scale");
+
+	    // The injectionRate is only for half domain of the KGD problem,
+	    // to retrieve the full injection rate, we need to multiply it by 2.0
+	    real64 const q0 = 2.0 * std::abs(injectionRate) /1.0e3;
+	    real64 total_time = dt + time_n;
+
 	    real64 const nu = ( 1.5 * bulkModulus - shearModulus ) / ( 3.0 * bulkModulus + shearModulus );
 	    real64 const E = ( 9.0 * bulkModulus * shearModulus )/ ( 3.0 * bulkModulus + shearModulus );
 	    real64 const Eprime = E/(1.0-nu*nu);
 	    real64 const PI = 2 * acos(0.0);
 	    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
+	    real64 const mup = 12.0 * viscosity;
+
 	    // initial magnitude of the essential B.C. at the newly splited nodes
 	    // this initial value can not be zero, since the sign of the displacement
 	    // will be used in the later update.
@@ -913,9 +965,33 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	      GEOSX_ASSERT_MSG( relativeDist > 0.0,
 			      "Tip location falls behind the edge of the newly generated face element!" );
-	      // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
-	      // based on symmetry
-	      real64 refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
+
+
+	      real64 refValue = 0.0;
+	      if (viscosity < 2.0e-3) // Toughness-dominated case
+	      {
+		//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+		// 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+		// based on symmetry
+		refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
+	      }
+	      else // Viscosity-dominated case
+	      {
+/*		real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
+		// 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+		// based on symmetry
+		refValue = 0.5 * coeff_viscous * pow(relativeDist/m_convergedTipLoc, 2.0/3.0);
+*/
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+		refValue = 0.5 * Betam
+		               * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
+	      }
 
 //	      refValue = 5.0*refValue;
 	      //Find which nodes' displacement need to be manipulated
