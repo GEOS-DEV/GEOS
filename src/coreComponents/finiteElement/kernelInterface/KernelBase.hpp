@@ -127,11 +127,11 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-    case 4:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-      break;
-    }
+//    case 4:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
+//      break;
+//    }
     case 5:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );

@@ -340,7 +340,7 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
     arrayView2d< real64 const > const & faceNormals = faceManager->faceNormal();
 
     //TODO: roughness to KIC should be made a material constitutive relationship.
-    array1d< R1Tensor > & KIC = faceManager->getReference< r1_array >( "K_IC" );
+    arrayView1d< R1Tensor > const & KIC = faceManager->getReference< r1_array >( "K_IC" );
 
     for( localIndex kf=0; kf<faceManager->size(); ++kf )
     {
@@ -2796,8 +2796,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager & elementManager )
 {
-  real64_array & SIFNode = nodeManager.getReference< real64_array >( "SIFNode" );
-  real64_array & SIFonFace = faceManager.getReference< real64_array >( "SIFonFace" );
+  arrayView1d<real64> const & SIFNode = nodeManager.getReference< real64_array >( "SIFNode" );
+  arrayView1d<real64> const & SIFonFace = faceManager.getReference< real64_array >( "SIFonFace" );
 
   std::vector< std::vector< realT > > SIFNode_All, SIFonFace_All;
   std::vector< realT > SIFOnEdge;
@@ -2806,15 +2806,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   SIFOnEdge.resize( edgeManager.size() );
 
 
-  for( localIndex i = 0; i < SIFNode.size(); i++ )
-  {
-    SIFNode[i] = 0.0;
-  }
-
-  for( localIndex i = 0; i < SIFonFace.size(); i++ )
-  {
-    SIFonFace[i] = 0.0;
-  }
+  SIFNode.setValues< parallelHostPolicy >( 0 );
+  SIFonFace.setValues< parallelHostPolicy >( 0 );
 
   arrayView1d< R1Tensor > const &
   fext = nodeManager.getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -2882,10 +2875,14 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
-    subRegion.GetConstitutiveModels()->GetGroup( m_solidMaterialNames[0] )->
-      getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU, false );
+    for( localIndex mat=0 ; mat<m_solidMaterialNames.size() ; ++mat )
+    {
+      subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
+          getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
+                                                                                                                       false );
+    }
   } );
-
+  displacement.move( LvArray::MemorySpace::CPU, false );
 
 
   for( localIndex const trailingFaceIndex : m_trailingFaces )

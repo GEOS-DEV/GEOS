@@ -768,14 +768,15 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  static int count = 0;
-  if( count < 4 )
-  {
+//  Keep for debugging comparisons
+//  static int count = 0;
+//  if( count < 2 )
+//  {
 //  std::cout<<"************************* MATRIX *************************"<<std::endl;
 //  std::cout<<matrix<<std::endl<<std::endl;
 //  std::cout<<"************************* RHS *************************"<<std::endl;
 //  std::cout<<rhs<<std::endl<<std::endl;
-  }
+//  }
 
   LinearSolverParameters const & params = m_linearSolverParameters.get();
 
@@ -797,12 +798,13 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
     m_linearSolverResult = solver->result();
   }
 
-  if( count < 4 )
-  {
+  //  Keep for debugging comparisons
+//  if( count < 2 )
+//  {
 //  std::cout<<"************************* SOLUTION *************************"<<std::endl;
 //  std::cout<<solution<<std::endl<<std::endl;
-  }
-  ++count;
+//  }
+//  ++count;
 
 
   GEOSX_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed" );
