@@ -42,7 +42,7 @@ Linear (or more) algebra solvers
 - `superlu_dist <https://portal.nersc.gov/project/sparse/superlu>`_ (General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations).
 - `trilinos <https://trilinos.github.io>`_ (Collection of reusable scientific software libraries, known in particular for linear solvers, non-linear solvers, transient solvers, optimization solvers, and uncertainty quantification (UQ) solvers.)
 Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
-If you do not have access to internet, you shall modify the `./configure` step of petsc in the `CMakeLists.txt` file,
+If you do not have access to internet, you should modify the `./configure` step of petsc in the `CMakeLists.txt` file,
 and change the ``--download-ptscotch`` option accordingly. 
 
 A graph partitioning tool

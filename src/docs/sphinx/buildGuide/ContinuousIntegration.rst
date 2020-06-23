@@ -21,7 +21,7 @@ Note that the ``TRAVIS_PULL_REQUEST``, ``TRAVIS_BUILD_NUMBER`` and ``TRAVIS_COMM
 (have a look at the OSX build section of `GEOSX's .travis.yml <https://github.com/GEOSX/GEOSX/blob/develop/.travis.yml>`_ to see how to retrieve these informations).
 
 There thus is only one unique identifier for both dockers and mac osx builds for one TPL code base.
-It is needed to define the global environment ``GEOSX_TPL_TAG`` (`e.g.` something like ``82-254``) to build against one selected version of the TPL.
+It is necessary to define the global environment ``GEOSX_TPL_TAG`` (`e.g.` something like ``82-254``) to build against one selected version of the TPL.
 
 It must be mentioned that one and only one version of the compiled TPL tarball is stored per pull request (older ones are removed automatically).
 Therefore, a client building against a work in progress PR may experience a 404 error sooner or later.
