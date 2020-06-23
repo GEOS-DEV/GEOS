@@ -1181,7 +1181,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 */
 
       }
-    }
+    }  //for( solveIter=0; solveIter<maxIter; ++solveIter )
+
+    if (solveIter == maxIter)
+      std::cout << "maxIter = " << maxIter << std::endl;
+
+    GEOSX_ASSERT_MSG( solveIter < maxIter,
+	              "Number of max resolve is achieved, but the fracture still propagates"
+	              ". Increase maxNumResolves." );
 
     // final step for completion of timestep. typically secondary variable updates and cleanup.
     /* TJ: in the flowSolver, pressure += delta_pressure, volume += delta_volume
