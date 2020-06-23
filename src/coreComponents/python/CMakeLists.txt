@@ -14,11 +14,13 @@ blt_register_library( NAME python_interp
 
 add_custom_target( pygeos
                    COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
+                   COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/pygeos ${CMAKE_BINARY_DIR}/bin/pygeos
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    )
 
 add_custom_target( pygeos_test
-                   COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_pygeos; rm -r ./pygeos_tests_*
-                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                   COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_pygeos
+                   COMMAND rm -r ${CMAKE_BINARY_DIR}/python/pygeos_tests*
+                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/python
                    DEPENDS pygeos
                    )
