@@ -95,14 +95,22 @@ static PyObject * parse_file(PyObject *self, PyObject *args, PyObject *keywords)
   db_result = DBSetDir(db, field_type);
   if (db_result == 0)
   {
+    DBtoc * toc = DBGetToc (db);
+
     // Check the available keys
     for (size_t ii=0; ii<field_names_requested.size(); ++ii)
     {
-      // Grab the field
-      DBmultivar* var = DBGetMultivar(db, field_names_requested[ii].c_str());
-      if (var != NULL)
+      for (int jj=0; jj<toc->nmultivar; ++jj)
       {
-        field_names_available.push_back(field_names_requested[ii]);
+        std::string target(toc->multivar_names[jj]);
+        if (target.find(field_names_requested[ii]) != std::string::npos)
+        {
+          DBmultivar* var = DBGetMultivar(db, toc->multivar_names[jj]);
+          if (var != NULL)
+          {
+            field_names_available.push_back(toc->multivar_names[jj]);
+          }
+        }
       }
     }
 
