@@ -32,7 +32,7 @@ def merge_xml_nodes(existingNode, targetNode, level):
     insertCurrentLevel = True
 
     # Check to see if a node with the appropriate type
-    #  exists at this level 
+    # exists at this level
     if (currentTag != target.tag):
       currentTag = target.tag
       matchingSubNodes = existingNode.findall(target.tag)
@@ -259,4 +259,5 @@ def validate_xml(fname, schema, verbose):
 
   if verbose:
     print('Done!')
+
 
