@@ -1,1 +1,1 @@
-   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
+.. include::  ../../../../coreComponents/finiteElement/kernelInterface/kernelInterface.rst

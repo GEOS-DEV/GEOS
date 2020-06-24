@@ -1,1 +1,1 @@
-   /coreComponents/managers/docs/ProblemManager.rst
+.. include::  ../../../../coreComponents/managers/docs/ProblemManager.rst
