@@ -420,11 +420,17 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( int ndims, localIndex const * const dims ) override
-  { wrapperHelpers::resizeDimensions( *m_data, ndims, dims ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void reserve( localIndex const newCapacity ) override
-  { wrapperHelpers::reserve( reference(), newCapacity ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::reserve( reference(), newCapacity );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual localIndex capacity() const override
@@ -435,7 +441,10 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void resize( localIndex const newSize ) override
-  { wrapperHelpers::resizeDefault( reference(), newSize, m_default ); }
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
+  }
 
   /// @cond DO_NOT_DOCUMENT
   struct copy_wrapper
