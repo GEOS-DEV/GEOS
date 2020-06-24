@@ -1,7 +1,7 @@
 .. _TutorialDeadOilBottomLayersSPE10:
 
 ####################################################################
-Tutorial 5: Multiphase Simulation with Wells
+Tutorial 4: Multiphase flow simulation with wells
 ####################################################################
 
 **Context**
