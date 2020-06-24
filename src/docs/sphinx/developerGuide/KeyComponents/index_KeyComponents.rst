@@ -17,6 +17,6 @@ Code Components
 
    fem_link.rst
 
-   WorkingWithData
+   WorkingWithData.rst
 
    AddingNewSolver.rst

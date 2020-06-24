@@ -1,8 +1,6 @@
-.. _meshDeveloperGuide:
-
-********************
+################################################################################
 Mesh Hierarchy
-********************
+################################################################################
 
 In GEOSX, the mesh structure consists of a hierarchy of classes intended to encapsulate data and
 functionality for each topological type.
@@ -49,7 +47,7 @@ For instance, the model presented as example can be split into two different dom
 (:numref:`domainPartFig`).
 
 .. _domainPartFig:
-.. figure:: ../../../../../coreComponents/mesh/docs/mesh_domain.png
+.. figure:: ../../../../coreComponents/mesh/docs/mesh_domain.png
    :align: center
    :width: 500
    :figclass: align-center
