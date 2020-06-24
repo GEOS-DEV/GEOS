@@ -29,8 +29,7 @@ This tutorial uses a set of input files and table files located at:
   examples/hydraulicFracturing/heterogeneousInSituProperties
 
 Note: because these files use the advanced xml features, they must be preprocessed using pygeos.
-To install pygeos, see :ref:`_advanced_xml_features`
-
+To install pygeos, see :ref:`advanced_xml_features`
 
 ------------------------------------------------------------------
 Description of the case
@@ -80,8 +79,8 @@ Explain types of parameters (string, real64, etc.), units, symbolic math, how pa
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_singleFracture.xml
   :language: xml
-  :start-after: <!-- SPHINX_HYDROFRACTURE_INCLUDED -->
-  :end-before: <!-- SPHINX_HYDROFRACTURE_INCLUDED_END -->
+  :start-after: <!-- SPHINX_HYDROFRACTURE_PARAMETERS -->
+  :end-before: <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
 
 
 Mesh: building a mesh with biased boundaries
@@ -123,8 +122,8 @@ Solvers: setting up the coupled hydraulic fracturing solver
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVER -->
-  :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVER_END -->
+  :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
+  :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
 
 
 Events: setting up flexible events
@@ -143,8 +142,8 @@ Functions: building functions to set in-situ properties
 
 .. literalinclude:: ../../../../../examples/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVER -->
-  :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVER_END -->
+  :start-after: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS -->
+  :end-before: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
 
 
 
@@ -205,7 +204,7 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
 **For more details**
 
-  - More on advanced xml features, please see :ref:`_advanced_xml_features`.
+  - More on advanced xml features, please see :ref:`advanced_xml_features`.
   - More on functions, please see :ref:`FunctionManager`.
 
 
