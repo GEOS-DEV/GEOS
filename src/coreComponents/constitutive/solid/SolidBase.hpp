@@ -121,6 +121,8 @@ private:
     GEOSX_UNUSED_VAR(q);
   }
   
+  //////////////// LEGACY INTERFACE BELOW -- TO REVISIT ////////////////////////
+  
   /**
    * accessor to return the stiffness at a given element
    * @param k the element number
@@ -144,7 +146,13 @@ private:
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
                                    real64 const ( &voigtStrain )[ 6 ],
-                                   real64 ( &stress )[ 6 ] ) const = 0;
+                                   real64 ( &stress )[ 6 ] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(voigtStrain);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR("SolidBase::SmallStrainNoState not implemented");
+  }
 
   /**
    * @brief Update the constitutive state using input generated under small
@@ -157,7 +165,13 @@ private:
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
-                            real64 const ( &voigtStrainInc )[ 6 ] ) const = 0;
+                            real64 const ( &voigtStrainInc )[ 6 ] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(voigtStrainInc);
+    GEOSX_ERROR("SolidBase::SmallStrain not implemented");
+  }
 
   /**
    * @brief Hypoelastic update to the constitutive state using input generated
@@ -172,7 +186,14 @@ private:
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
                             real64 const ( &Ddt )[ 6 ],
-                            real64 const ( &Rot )[ 3 ][ 3 ] ) const = 0;
+                            real64 const ( &Rot )[ 3 ][ 3 ] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(q);
+    GEOSX_UNUSED_VAR(Ddt);
+    GEOSX_UNUSED_VAR(Rot);
+    GEOSX_ERROR("SolidBase::HypoElastic not implemented");
+  }
 
   /**
    * @brief Hyper-elastic stress update
@@ -183,7 +204,13 @@ private:
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 ( &stress )[ 6 ] ) const = 0;
+                             real64 ( &stress )[ 6 ] ) const
+  {
+    GEOSX_UNUSED_VAR(k);
+    GEOSX_UNUSED_VAR(FmI);
+    GEOSX_UNUSED_VAR(stress);
+    GEOSX_ERROR("SolidBase::HyperElastic() not implemented");
+  }
 
   /**
    * @brief Hyper-elastic state update

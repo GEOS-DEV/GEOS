@@ -21,8 +21,7 @@
 
 #include "SolidBase.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
-#include "math/TensorT/R1TensorT.h"
-#include "math/TensorT/R2TensorT.h"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -226,8 +225,8 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     // for GPU we can simplify the DP model to avoid Newton, but Cam-Clay and
     // others will need it.
     
-    R1Tensor solution,residual,delta;
-    R2Tensor jacobian,jacobianInv;
+    array1d< real64 > solution(3), residual(3), delta(3);
+    array2d< real64 > jacobian(3,3), jacobianInv(3,3);
     
     solution[0] = trialP; // initial guess for newP
     solution[1] = trialQ; // initial guess for newQ
@@ -258,7 +257,9 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
       
       // check for convergence (can be avoided for linear model)
       
-      norm = residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
+      norm = LvArray::tensorOps::l2Norm<3>(residual);
+      
+      //residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
       
       if(iter==0)
       {
@@ -280,10 +281,13 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
       jacobian(2,1) = 1;
       jacobian(2,2) = cohesionDeriv;
       
-      jacobianInv.Inverse(jacobian);
- 
-      delta.AijBj(jacobianInv,residual);
-      solution -= delta;
+      LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
+      LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
+     
+      for(localIndex i=0; i<3; ++i)
+      {
+        solution[i] -= delta[i];
+      }
     }
     
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
@@ -536,3 +540,5 @@ private:
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DRUCKERPRAGER_HPP_ */
+
+

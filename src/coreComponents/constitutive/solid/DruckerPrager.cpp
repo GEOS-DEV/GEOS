@@ -59,7 +59,7 @@ DruckerPrager::DruckerPrager( std::string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Yield surface slope parameter tan(phi)" );
   
-    registerWrapper( viewKeyStruct::defaultTanDilationAngleString, &m_defaultTanDilationAngle )->
+  registerWrapper( viewKeyStruct::defaultTanDilationAngleString, &m_defaultTanDilationAngle )->
     setApplyDefaultValue( 0.5 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Plastic potential slope parameter tan(psi)" );
