@@ -1,8 +1,10 @@
 .. _TutorialDeadOilEgg:
 
-##################################################
-Tutorial 6: Dead-Oil simulation in the Egg model  
-##################################################
+########################################################
+Tutorial 5: Multiphase flow simulation in the Egg model  
+########################################################
+
+This tutorial is in-progress.  Check back soon!
 
 **Context**
 
