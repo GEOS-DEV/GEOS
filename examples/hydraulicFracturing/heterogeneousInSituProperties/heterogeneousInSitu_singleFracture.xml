@@ -1,9 +1,13 @@
 
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/g/g17/sherman/GEOS/geosx/GEOSX/src/coreComponents/fileIO/schema/schema.xsd">
+  
+  <!-- SPHINX_HYDROFRACTURE_INCLUDED -->
   <Included>
     <File name="./heterogeneousInSitu_base.xml"/>
   </Included>
+  <!-- SPHINX_HYDROFRACTURE_INCLUDED_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_PARAMETERS -->
   <Parameters>
     <!-- Use the swarm upscaling law -->
     <Parameter name="Nperf" value="5"/>
@@ -26,7 +30,9 @@
     <Parameter name="table_root" value="./tables"/>
     <Parameter name="t_allocation" value="28 [min]"/>
   </Parameters>
+  <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_MESH -->
   <Mesh>
     <InternalMesh name="mesh1"
                   xCoords="{0, 200, 250}"
@@ -41,7 +47,9 @@
                   cellBlockNames="{cb1}"
                   elementTypes="{C3D8}" />
   </Mesh>
+  <!-- SPHINX_HYDROFRACTURE_MESH_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_GEOMETRY -->
   <Geometry>
     <Box name="source_a"
          xMin="-0.1, -0.1, -0.1"
@@ -54,7 +62,9 @@
                 origin="0, 0, 0"
                 thickness="0.1"/>
   </Geometry>
+  <!-- SPHINX_HYDROFRACTURE_GEOMETRY_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_BC -->
   <FieldSpecifications>
     <!-- Fracture-related nodesets -->
     <FieldSpecification name="frac"
@@ -86,5 +96,6 @@
                 functionName="flow_rate"
                 setNames="{source_a}"/>
   </FieldSpecifications>
+  <!-- SPHINX_HYDROFRACTURE_BC_END -->
 
 </Problem>

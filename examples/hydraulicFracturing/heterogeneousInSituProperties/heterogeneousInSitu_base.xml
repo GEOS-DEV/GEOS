@@ -1,6 +1,7 @@
 
 <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="/g/g17/sherman/GEOS/geosx/GEOSX/src/coreComponents/fileIO/schema/schema.xsd">
 
+  <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
   <Solvers gravityVector="0.0,0.0,-9.81">
     <Hydrofracture 
       name="hydrofracture" 
@@ -61,6 +62,7 @@
       nodeBasedSIF="1"
       mpiCommOrder="1" />
   </Solvers>
+  <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
 
   <Outputs>
     <Silo name="siloOutput"
@@ -69,6 +71,7 @@
     <Restart name="restartOutput"/>
   </Outputs>
 
+  <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   <Events maxTime="$t_max$">
     <!-- Generate the initial fractures -->
     <SoloEvent name="preFracture"
@@ -101,6 +104,7 @@
                maxRuntime="$t_allocation$"
                target="/Outputs/restartOutput"/>
   </Events>
+  <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
 
   <ElementRegions>
     <CellElementRegion name="Region2"
@@ -160,6 +164,7 @@
     </FiniteVolume>
   </NumericalMethods>
 
+  <!-- SPHINX_HYDROFRACTURE_FUNCTIONS -->
   <Functions>
     <!-- Pumping Schedule -->
     <TableFunction name="flow_rate"
@@ -205,7 +210,9 @@
                    voxelFile="$table_root$/shearModulus.csv"
                    interpolation="nearest"/>
   </Functions>
+  <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_BC_BASE -->
   <FieldSpecifications>
     <FieldSpecification name="bulk_modulus"
                initialCondition="1"  
@@ -267,5 +274,6 @@
                         scale="0.0"
                         setNames="{zneg, zpos}"/>
   </FieldSpecifications>
+  <!-- SPHINX_HYDROFRACTURE_BC_BASE_END -->
 
 </Problem>

@@ -1,3 +1,6 @@
+
+.. _advanced_xml_features:
+
 ###############################################################################
 Advanced XML Features (pygeos)
 ###############################################################################
@@ -8,29 +11,13 @@ It allows users to include child files, parameters, units, and symbolic math.
 
 Setup
 =================================
-The pygeos module is located in the GEOSX repository: `src/coreComponents/python/modules/pygeos_package`.
-The module is compabitable with python 2/3, and depends on the `lxml`, `numpy`, and `re` packages.
-It can be installed into an existing python distribution via pip:
+The source of the pygeos module is located in the GEOSX repository: `src/coreComponents/python/modules/pygeos_package`.
+It can be installed within the GEOSX build directory via the `make pygeos` command.
+The pygeos executable will be located in the bin directory.
 
-`pip install src/coreComponents/python/modules/pygeos_package`
-
-
-Virtual Python Environment
----------------------------------
-
-On systems with a shared python installation, we recommend that users install the package within a virtual python environment.
-A script designed to automatically setup a virtual environment, install the dependencies, and install pygeos is included in `scripts/setupVirtualPythonEnvironment.bash`.
-The options for the script include:
-
-- ``-p/--python_root``: This specifies the root path for the parent python environment
-- ``-o/--output_path``: This specifies location where the virtual environment will be installed
-
-The default settings for the script will build a virtual environment for the python-3.6.4 installation on LC systems, and will place the environment in `~/Python/virtual/geosx`.  The script will also install pygeos and its pre-requisites.
-
-To use the virtual environment, do one of the following:
-
-1) Load the startup script: `source ~/Python/virtual/geosx/bin/activate`.  This will add the (geosx) decorator to your shell, and will set the proper aliases for python, pip, etc.  To exit the environment, run `deactivate`.
-2) Access the bin directory of the virtual python environment directly (e.g. `~/Python/virtual/geosx/bin/python some_script.py`).
+Notes: The above command creates a virtual python environment derived from the version of python used with cmake.
+To build the environment, the `virtualenv` package must be installed.
+The environment can also be constructed by calling `scripts/setupVirtualPythonEnvironment.bash`.
 
 
 
