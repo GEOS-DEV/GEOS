@@ -37,6 +37,7 @@ set(mesh_sources
     ElementSubRegionBase.cpp
     ElementRegionBase.cpp
     ElementRegionManager.cpp
+    ExtrinsicMeshData.cpp
     FaceElementRegion.cpp
     FaceElementSubRegion.cpp
     EmbeddedSurfaceRegion.cpp

@@ -19,6 +19,8 @@
 #ifndef GEOSX_EXTRINSIC_MESH_DATA_HPP_
 #define GEOSX_EXTRINSIC_MESH_DATA_HPP_
 
+#include "codingUtilities/traits.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "common/DataTypes.hpp"
 
 /**
@@ -33,34 +35,32 @@
  * @param DESCRIPTION A string literal that contains a description of the data for
  *   use in sphinx documentation.
  */
-#define EXTRINSIC_MESH_DATA_TRAIT( NAME,                                        \
-                                   KEY,                                         \
-                                   TYPE,                                        \
-                                   DEFAULT,                                     \
-                                   PLOTLEVEL,                                   \
-                                   RESTARTFLAG,                                 \
-                                   DESCRIPTION )                                \
-/** @struct NAME                                                              */ \
-/** @brief Trait struct for NAME data                                         */ \
-  struct NAME                                                                     \
-  {                                                                               \
+#define EXTRINSIC_MESH_DATA_TRAIT( NAME,                                           \
+                                   KEY,                                            \
+                                   TYPE,                                           \
+                                   DEFAULT,                                        \
+                                   PLOTLEVEL,                                      \
+                                   RESTARTFLAG,                                    \
+                                   DESCRIPTION )                                   \
+/** @struct NAME                                                                */ \
+/** @brief Trait struct for NAME data                                           */ \
+  struct NAME                                                                      \
+  {                                                                                \
     /** The key for registration with the data repository.                      */ \
-    static constexpr auto key = KEY;                                              \
+    static constexpr auto key = KEY;                                               \
     /** The actual type to be registered.                                       */ \
-    using type = TYPE;                                                            \
+    using type = TYPE;                                                             \
     /** The template type T for registration of a container<T>.                 */ \
-    using dataType = internal::typeHelper_t< TYPE >;                                \
+    using dataType = internal::typeHelper_t< TYPE >;                               \
     /** The dataRepository::DefaultValue for NAME.                              */ \
-    static constexpr dataType defaultValue = DEFAULT;                             \
+    static constexpr dataType defaultValue = DEFAULT;                              \
     /** The default dataRepository::PlotLevel for NAME.                         */ \
-    static constexpr auto plotLevel = dataRepository::PlotLevel::PLOTLEVEL;       \
+    static constexpr auto plotLevel = dataRepository::PlotLevel::PLOTLEVEL;        \
     /** The default dataRepository::RestartFlags for NAME.                      */ \
     static constexpr auto restartFlag = dataRepository::RestartFlags::RESTARTFLAG; \
     /** Description of the NAME data for use in sphinx documentation            */ \
-    static constexpr auto description = DESCRIPTION;                              \
+    static constexpr auto description = DESCRIPTION;                               \
   }
-
-
 
 namespace geosx
 {

@@ -628,6 +628,19 @@ public:
     return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
   }
 
+  /**
+   * @brief Checks if an extrinsic data has been registered.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return @p true if the data has been registered, @p false otherwise.
+   */
+  template< typename MESH_DATA_TRAIT >
+  bool hasExtrinsicData() const
+  {
+    return this->hasWrapper( MESH_DATA_TRAIT::key );
+    // return nullptr != this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key );
+  }
+
 #if 0
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
@@ -688,16 +701,12 @@ public:
   {
     /// String key to adjacency list
     static constexpr auto adjacencyListString = "adjacencyList";
-    /// String key to child indices
-    static constexpr auto childIndexString = "childIndex";
     /// String key to domain boundary indicator
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
     /// String key to external set
     static constexpr auto externalSetString = "externalSet";
     /// String key to ghost ranks
     static constexpr auto ghostRankString = "ghostRank";
-    /// String key to ghosts to send
-    static constexpr auto ghostsToSendString = "ghostsToSend";
     /// String key to ghosts to receive
     static constexpr auto ghostsToReceiveString = "ghostsToReceive";
     /// String key to global->local mao
@@ -706,13 +715,7 @@ public:
     static constexpr auto isExternalString = "isExternal";
     /// String key to the local->global map
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
-    /// String key to the matched partition boundary objects
-    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
-    /// String key to parent indices
-    static constexpr auto parentIndexString = "parentIndex";
 
-    /// View key to child indices
-    dataRepository::ViewKey childIndex = { childIndexString };
     /// View key to domain boundary indicator
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     /// View key to external set
@@ -721,14 +724,8 @@ public:
     dataRepository::ViewKey ghostRank = { ghostRankString };
     /// View key to global->local mao
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
-    /// View key to the 'is external' vector
-    dataRepository::ViewKey isExternal = { isExternalString };
     /// View key to the local->global map
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
-    /// View key to the matched partition boundary objects
-    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
-    /// View key to parent indices
-    dataRepository::ViewKey parentIndex = { parentIndexString };
   }
   /// viewKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseViewKeys;
