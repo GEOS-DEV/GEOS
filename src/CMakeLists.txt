@@ -126,6 +126,12 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA
                      DEPENDS geosx
                      )
 
+  add_custom_target( geosx_format_all_xml_files
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/coreComponents/python/modules/pygeos_package/pygeos/xml_formatter.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                     DEPENDS geosx_update_rst_tables
+                     )
+
   add_custom_target( geosx_validate_all_xml_files
                      ALL
                      COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/validateXMLFiles.bash -g ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/schema/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
@@ -134,7 +140,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT APPLE AND NOT ENABLE_CUDA
                      )
 endif()
 
-if( ${SPHINX_FOUND} )
+if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
 endif()
 

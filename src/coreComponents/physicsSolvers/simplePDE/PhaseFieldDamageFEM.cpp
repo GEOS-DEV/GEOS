@@ -33,6 +33,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/NumericalMethodsManager.hpp"
@@ -239,10 +240,14 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
   ConstitutiveManager * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  NumericalMethodsManager const *
-    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const *
-    feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView1d< globalIndex const > const & dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
@@ -263,9 +268,6 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
 
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                            CellElementSubRegion const & elementSubRegion )
     {
@@ -284,16 +286,14 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
 #else
 #define strainEnergy( k, q ) m_coeff[k]
 #endif
-      arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
+      arrayView4d< real64 const > const &
+      dNdX = elementSubRegion.dNdX();
 
       arrayView2d< real64 const > const &
-      detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
+      detJ = elementSubRegion.detJ();
 
-      localIndex const numNodesPerElement =
-        elementSubRegion.numNodesPerElement();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
-      elemNodes = elementSubRegion.nodeList();
+      localIndex const numNodesPerElement =  elementSubRegion.numNodesPerElement();
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
 
       // arrayView1d<real64 const> const &
       // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffName);
@@ -303,7 +303,8 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+      std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+      localIndex const n_q_points = finiteElement->n_quadrature_points();
 
       real64 ell = m_lengthScale;                                 //phase-field length scale
       real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
@@ -335,7 +336,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
             for( localIndex a = 0; a < numNodesPerElement; ++a )
             {
               qp_damage +=
-                feDiscretization->m_finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
+                finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
               temp = dNdX[k][q][a];
               temp *= nodalDamage[elemNodes( k, a )];
               qp_grad_damage +=
@@ -348,34 +349,34 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
             {
               elemDofIndex[a] = dofIndex[elemNodes( k, a )];
               //real64 diffusion = 1.0;
-              real64 Na = feDiscretization->m_finiteElement->value( a, q );
+              real64 Na = finiteElement->value( a, q );
               //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
               if( m_localDissipationOption == "Linear" )
               {
                 element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
-                                                  0.375*pow( ell, 2 ) * Dot( qp_grad_damage, dNdX[k][q][a] ) -
+                                                  0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
                                                   (ell * D/Gc) * Na * qp_damage);
               }
               else
               {
                 element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergy( k, q ) / Gc -
-                                                  (pow( ell, 2 ) * Dot( qp_grad_damage, dNdX[k][q][a] ) +
+                                                  (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
                                                    Na * qp_damage * (1 + 2 * ell*strainEnergy( k, q )/Gc)) );
               }
               for( localIndex b = 0; b < numNodesPerElement; ++b )
               {
-                real64 Nb = feDiscretization->m_finiteElement->value( b, q );
+                real64 Nb = finiteElement->value( b, q );
                 if( m_localDissipationOption == "Linear" )
                 {
                   element_matrix( a, b ) -= detJ[k][q] *
-                                            (0.375*pow( ell, 2 ) * Dot( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                            (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
                                              (ell * D/Gc) * Na * Nb);
                 }
                 else
                 {
                   element_matrix( a, b ) -=
                     detJ[k][q] *
-                    (pow( ell, 2 ) * Dot( dNdX[k][q][a], dNdX[k][q][b] ) +
+                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
                      Na * Nb * (1 + 2 * ell*strainEnergy( k, q )/Gc));
                 }
               }
@@ -432,7 +433,7 @@ void PhaseFieldDamageFEM::ApplySystemSolution( DofManager const & dofManager,
 
   // Syncronize ghost nodes
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( m_fieldName );
+  fieldNames["node"].emplace_back( m_fieldName );
 
   CommunicationTools::SynchronizeFields( fieldNames,
                                          mesh,

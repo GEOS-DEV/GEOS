@@ -40,9 +40,6 @@ public:
 
   static string CatalogName() { return "SolidMechanicsLagrangianSSLE"; }
 
-  virtual void
-  updateStress( DomainPartition * const domain ) override;
-
 
   virtual void ApplySystemSolution( DofManager const & dofManager,
                                     ParallelVector const & solution,
@@ -55,7 +52,7 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                SortedArrayView< localIndex const > const & elementList,
                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
                                arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
@@ -85,7 +82,7 @@ public:
                                constitutive::ConstitutiveBase * const constitutiveRelation,
                                localIndex const numElems,
                                real64 const dt,
-                               arrayView3d< R1Tensor const > const & dNdX,
+                               arrayView4d< real64 const > const & dNdX,
                                arrayView2d< real64 const > const & detJ,
                                FiniteElementBase const * const fe,
                                arrayView1d< integer const > const & elemGhostRank,

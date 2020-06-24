@@ -324,8 +324,8 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-  fieldNames["elems"].push_back( viewKeyStruct::componentConcentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::componentConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -876,13 +876,11 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::proppantConcentrationString );
 
@@ -1249,8 +1247,8 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   }
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaComponentConcentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaProppantConcentrationString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaComponentConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -1472,13 +1470,11 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres               = m_pressure.toViewConst();
   //FluxKernel::ElementViewConst < arrayView1d<real64 const> > const & dPres               =
@@ -1509,7 +1505,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::cellBasedFluxString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::cellBasedFluxString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -1524,13 +1520,11 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc       = m_proppantConcentration.toView();
   ProppantPackVolumeKernel::ElementView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
@@ -1577,10 +1571,10 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantExcessPackVolumeString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantLiftFluxString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantExcessPackVolumeString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantLiftFluxString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
@@ -1606,8 +1600,8 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
@@ -1630,7 +1624,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::isInterfaceElementString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::isInterfaceElementString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }

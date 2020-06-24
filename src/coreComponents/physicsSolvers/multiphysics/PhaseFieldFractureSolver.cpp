@@ -254,8 +254,6 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                            solidSolver.getSystemRhs(),
                                                            solidSolver.getSystemSolution() );
 
-    solidSolver.updateStress( domain );
-
     std::cout << dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
@@ -333,14 +331,13 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
 
   ConstitutiveManager * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-  NumericalMethodsManager const * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteElementDiscretizationManager const * const
-  feDiscretizationManager = numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >( keys::finiteElementDiscretizations );
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager->GetGroup< FiniteElementDiscretization >( m_discretizationName );
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
   constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
@@ -364,7 +361,8 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
 
     globalIndex_array elemDofIndex( numNodesPerElement );
 
-    localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+    std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+    localIndex const n_q_points = finiteElement->n_quadrature_points();
 
     for( localIndex k = 0; k < elementSubRegion.size(); ++k )
     {
@@ -373,7 +371,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
         damageFieldOnMaterial( k, q ) = 0;
         for( localIndex a = 0; a < numNodesPerElement; ++a )
         {
-          damageFieldOnMaterial( k, q ) += feDiscretization->m_finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
+          damageFieldOnMaterial( k, q ) += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
           //solution is probably not going to work because the solution of the coupled solver
           //has both damage and displacements. Using the damageResult field from the Damage solver
           //is probably better

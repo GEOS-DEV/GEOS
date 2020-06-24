@@ -74,12 +74,11 @@ void TestMeshImport( string const & inputStringMesh,
       elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
       for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
       {
-        R1Tensor center = elemSubRegion.getElementCenter()[ ei ];
-        R1Tensor centerFromProperty( centerProperty[er][esr][ei][0],
-                                     centerProperty[er][esr][ei][1],
-                                     centerProperty[er][esr][ei][2] );
-        center -= centerFromProperty;
-        GEOSX_ERROR_IF_GT_MSG( center.L2_Norm(), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemSubRegion.getElementCenter()[ ei ] );
+        // TODO Remove the INIT_LOCAL once centerProperty isn't an R1Tensor.
+        real64 const centerFromProperty[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centerProperty[er][esr][ei] );
+        LvArray::tensorOps::subtract< 3 >( center, centerFromProperty );
+        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );
   }

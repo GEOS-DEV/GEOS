@@ -48,9 +48,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
-{
-  delete m_finiteElement;
-}
+{}
 
 localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
 {
@@ -65,29 +63,6 @@ std::unique_ptr< FiniteElementBase > FiniteElementDiscretization::getFiniteEleme
                                                        0 );
 }
 
-void FiniteElementDiscretization::ApplySpaceToTargetCells( ElementSubRegionBase * const cellBlock ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  // TODO THis crap needs to get cleaned up and worked out in the data structure
-  // much better than this.
-  // Need to provide some mechanism to set the sizedFromParent during the
-  // registration, or only allow documentation node
-  // registration.
-
-  //TODO: wu40: Temporarily use the parent space (read from xml) to assign element type for finite element calculation
-  // (for C3D6 mesh).
-  //Need to do this in a more natural way.
-  std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
-
-  // dNdX holds a lot of POD data and it gets set in the method below so there's no need to zero initialize it.
-  array3d< R1Tensor > & dNdX = cellBlock->registerWrapper< array3d< R1Tensor > >( keys::dNdX )->reference();
-  dNdX.resizeWithoutInitializationOrDestruction( cellBlock->size(), m_quadrature->size(), fe->dofs_per_element() );
-
-  array2d< real64 > & detJ = cellBlock->registerWrapper< array2d< real64 > >( keys::detJ )->reference();
-  detJ.resize( cellBlock->size(), m_quadrature->size() );
-}
-
 void FiniteElementDiscretization::PostProcessInput()
 {
   auto const & basisName = this->getReference< string >( keys::basis );
@@ -96,13 +71,12 @@ void FiniteElementDiscretization::PostProcessInput()
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  Group const *  numericalMethods = this->getParent()->getParent();
-  Group const *  basisManager = numericalMethods->GetGroup( keys::basisFunctions );
-  Group const *  quadratureManager = numericalMethods->GetGroup( keys::quadratureRules );
+  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
+  Group const & basisManager = numericalMethods.getBasisFunctions();
+  Group const & quadratureManager = numericalMethods.getQuadratureRules();
 
-  m_basis = basisManager->GetGroup< BasisBase >( basisName );
-  m_quadrature = quadratureManager->GetGroup< QuadratureBase >( quadratureName );
-  m_finiteElement = new FiniteElement< 3 >( *m_basis, *m_quadrature, 0 );
+  m_basis = basisManager.GetGroup< BasisBase >( basisName );
+  m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
 }
 
 

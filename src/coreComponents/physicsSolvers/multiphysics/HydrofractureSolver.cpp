@@ -39,7 +39,6 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
-
 namespace geosx
 {
 
@@ -248,7 +247,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
-      m_solidSolver->updateStress( domain );
+//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -269,10 +268,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       else
       {
         std::map< string, string_array > fieldNames;
-        fieldNames["node"].push_back( keys::IncrementalDisplacement );
-        fieldNames["node"].push_back( keys::TotalDisplacement );
-        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
-        fieldNames["elems"].push_back( "elementAperture" );
+        fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
+        fieldNames["node"].emplace_back( keys::TotalDisplacement );
+        fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
+        fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain->getMeshBody( 0 )->getMeshLevel( 0 ),
@@ -304,7 +303,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
   FaceManager * const faceManager = meshLevel->getFaceManager();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   // arrayView1d<real64 const> const & faceArea = faceManager->faceArea();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
@@ -341,15 +340,15 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const kf1 = elemsToFaces[kfe][1];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-      R1Tensor temp;
+      real64 temp[ 3 ] = { 0 };
       for( localIndex a=0; a<numNodesPerFace; ++a )
       {
-        temp += u[faceToNodeMap( kf0, a )];
-        temp -= u[faceToNodeMap( kf1, a )];
+        LvArray::tensorOps::add< 3 >( temp, u[ faceToNodeMap( kf0, a ) ] );
+        LvArray::tensorOps::subtract< 3 >( temp, u[ faceToNodeMap( kf1, a ) ] );
       }
 
       // TODO this needs a proper contact based strategy for aperture
-      aperture[kfe] = -Dot( temp, faceNormal[kf0] ) / numNodesPerFace;
+      aperture[kfe] = -LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ kf0 ] ) / numNodesPerFace;
 
       effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
 
@@ -514,7 +513,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
   string_array fractureRegions;
   elemManager->forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
   {
-    fractureRegions.push_back( elementRegion.getName() );
+    fractureRegions.emplace_back( elementRegion.getName() );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -527,7 +526,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -536,13 +536,15 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                               m_solidSolver->getDofManager(),
                               m_solidSolver->getSystemMatrix(),
                               m_solidSolver->getSystemRhs(),
-                              m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getSystemSolution(),
+                              false );
 
   m_flowSolver->SetupSystem( domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getSystemMatrix(),
                              m_flowSolver->getSystemRhs(),
-                             m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getSystemSolution(),
+                             setSparsity );
 
   // setup coupled DofManager
   m_dofManager.setMesh( domain, 0, 0 );
@@ -625,13 +627,11 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
     }
   } );
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
@@ -958,7 +958,7 @@ HydrofractureSolver::
   NodeManager * const nodeManager = mesh->getNodeManager();
   ElementRegionManager * const elemManager = mesh->getElemManager();
 
-  arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
   arrayView1d< R1Tensor > const &
@@ -1109,7 +1109,7 @@ HydrofractureSolver::
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
     ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager->nodeList().toViewConst();
 
-    arrayView1d< R1Tensor const > const & faceNormal = faceManager->faceNormal();
+    arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
 
 //    arrayView1d< real64 const > const & separationCoeff = subRegion.getSeparationCoefficient();
 //    arrayView1d<real64 const> const &
@@ -1225,7 +1225,12 @@ HydrofractureSolver::
 
 }
 
-#ifdef USING_TRILINOS
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
+
+// For some reason this needs to be defined when using cuda
+#if defined( __CUDACC__)
+#define KOKKOS_ENABLE_SERIAL_ATOMICS
+#endif
 
 #include "Epetra_FEVector.h"
 #include "Epetra_FECrsMatrix.h"
@@ -1256,7 +1261,6 @@ HydrofractureSolver::
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Time.hpp"
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
-
 #endif
 
 namespace geosx
@@ -1269,8 +1273,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
 {
   GEOSX_MARK_FUNCTION;
 
-#ifdef USING_TRILINOS
-
+#if defined( GEOSX_LA_INTERFACE_TRILINOS )
   /*
      globalIndex numU = m_solidSolver->getSystemRhs().globalSize();
      globalIndex numP = m_flowSolver->getSystemRhs().globalSize();
@@ -1322,8 +1325,10 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   //    BiCGstab sometimes shows better parallel performance.
   //    false is probably better.
 
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+
   const bool use_diagonal_prec = true;
-  const bool use_bicgstab      = (m_linearSolverParameters.solverType == "bicgstab");
+  const bool use_bicgstab      = (linParams.solverType == "bicgstab");
 
   // set initial guess to zero
 
@@ -1335,8 +1340,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   clock.start( true );
   if( newtonIter==0 )
   {
-    m_blockDiagUU.reset( new ParallelMatrix());
-    LAIHelperFunctions::SeparateComponentFilter< TrilinosInterface >( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
+    m_blockDiagUU.reset( new ParallelMatrix() );
+    LAIHelperFunctions::SeparateComponentFilter( m_solidSolver->getSystemMatrix(), *m_blockDiagUU, 3 );
   }
 
   // create schur complement approximation matrix
@@ -1462,7 +1467,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
   {
     RCP< Teuchos::ParameterList > list = rcp( new Teuchos::ParameterList( "precond_list" ), true );
 
-    if( m_linearSolverParameters.preconditionerType == "amg" )
+    if( linParams.preconditionerType == "amg" )
     {
       list->set( "Preconditioner Type", "ML" );
       list->sublist( "Preconditioner Types" ).sublist( "ML" ).set( "Base Method Defaults", "SA" );
@@ -1562,15 +1567,15 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     list->set( "Linear Solver Type", "AztecOO" );
     list->set( "Preconditioner Type", "None" ); // will use user-defined P
     list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Max Iterations",
-                                                                                                m_linearSolverParameters.krylov.maxIterations );
-    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", m_linearSolverParameters.krylov.relTolerance );
+                                                                                                linParams.krylov.maxIterations );
+    list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).set( "Tolerance", linParams.krylov.relTolerance );
 
     if( use_bicgstab )
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "BiCGStab" );
     else
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Aztec Solver", "GMRES" );
 
-    if( m_linearSolverParameters.logLevel > 1 )
+    if( linParams.logLevel > 1 )
       list->sublist( "Linear Solver Types" ).sublist( "AztecOO" ).sublist( "Forward Solve" ).sublist( "AztecOO Settings" ).set( "Output Frequency", 1 );
 
     Stratimikos::DefaultLinearSolverBuilder builder;
@@ -1599,7 +1604,7 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     if( getLogLevel()>=2 )
     {
       GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numKrylovIter <<
-                        " | TargetReduction " << m_linearSolverParameters.krylov.relTolerance <<
+                        " | TargetReduction " << linParams.krylov.relTolerance <<
                         " | AuxTime " << auxTime <<
                         " | SetupTime " << setupTime <<
                         " | SolveTime " << solveTime );
@@ -1642,6 +1647,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     p_solution[1]->Print( std::cout );
 
   }
+#else
+  GEOSX_ERROR( "Only implemented for trilinos." );
 #endif
 }
 

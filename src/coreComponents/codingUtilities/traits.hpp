@@ -43,7 +43,7 @@ HAS_MEMBER_FUNCTION( data, void const *, );
 
 /**
  * @brief Defines a static constexpr bool HasMemberFunction_move< @p CLASS >
- *        that is true iff the method @p CLASS ::move(chai::ExecutionSpace, bool) exists.
+ *        that is true iff the method @p CLASS ::move(LvArray::MemorySpace, bool) exists.
  * @tparam CLASS The type to test.
  */
 template< typename CLASS >
@@ -144,7 +144,7 @@ using ViewTypeConst = typename LvArray::GetViewTypeConst< T >::type &;
 
 /// True if T is or inherits from std::string.
 template< typename T >
-constexpr bool is_string = std::is_base_of_v< std::string, T >;
+constexpr bool is_string = std::is_base_of< std::string, T >::value;
 
 /// True if T is an instantiation of LvArray::Array.
 template< typename T >
@@ -152,9 +152,7 @@ constexpr bool is_array = LvArray::isArray< T >;
 
 /// True if T is a Tensor class.
 template< typename T >
-constexpr bool is_tensorT = std::is_same_v< std::remove_const_t< T >, R1Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2Tensor > ||
-                            std::is_same_v< std::remove_const_t< T >, R2SymTensor >;
+constexpr bool is_tensorT = std::is_same< std::remove_const_t< T >, R1Tensor >::value;
 
 } /* namespace traits */
 

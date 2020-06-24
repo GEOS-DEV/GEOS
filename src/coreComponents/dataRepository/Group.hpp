@@ -82,6 +82,8 @@ public:
   ///@{
 
   /**
+   * @brief Constructor
+   *
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
@@ -1262,9 +1264,9 @@ public:
 
   /**
    * @brief Resize the group and all contained wrappers that resize with parent.
-   * @param newsize the new size of the group
+   * @param newSize the new size of the group
    */
-  virtual void resize( localIndex const newsize );
+  virtual void resize( localIndex const newSize );
 
   /**
    * @brief Set the new capacity and reserve it in all wrappers that resize with parent.

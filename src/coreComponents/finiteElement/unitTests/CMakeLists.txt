@@ -25,7 +25,7 @@ foreach(test ${testSources})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON gtest finiteElement managers ${dependencyList} )
+                        DEPENDS_ON gtest geosx_core ${dependencyList} )
 
     blt_add_test( NAME ${test_name} 
                   COMMAND ${test_name}

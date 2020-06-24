@@ -31,6 +31,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/NumericalMethodsManager.hpp"
@@ -217,16 +218,19 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs )
 {
-  MeshLevel * const mesh =
-    domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
+  MeshLevel * const mesh = domain->getMeshBody(0)->getMeshLevel(0);
+
   NodeManager * const nodeManager = mesh->getNodeManager();
+
   ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const *numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >(
-      keys::numericalMethodsManager );
-  FiniteElementDiscretizationManager const *feDiscretizationManager =
-    numericalMethodManager->GetGroup< FiniteElementDiscretizationManager >(
-      keys::finiteElementDiscretizations );
+
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+
+  FiniteElementDiscretizationManager const &
+  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+
+  FiniteElementDiscretization const * const
+  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   arrayView1d< globalIndex const > const & dofIndex =
     nodeManager->getReference< array1d< globalIndex > >(
@@ -246,18 +250,12 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
   {
     ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
 
-    FiniteElementDiscretization const *feDiscretization =
-      feDiscretizationManager->GetGroup< FiniteElementDiscretization >(
-        m_discretizationName );
-
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
                                                                            CellElementSubRegion const & elementSubRegion )
     {
-      arrayView3d< R1Tensor const > const &
-      dNdX = elementSubRegion.getReference< array3d< R1Tensor > >( keys::dNdX );
+      arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-      arrayView2d< real64 const > const &
-      detJ = elementSubRegion.getReference< array2d< real64 > >( keys::detJ );
+      arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
       localIndex const numNodesPerElement =  elementSubRegion.numNodesPerElement();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
@@ -272,7 +270,9 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
       real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      localIndex const n_q_points = feDiscretization->m_finiteElement->n_quadrature_points();
+
+      std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+      localIndex const n_q_points = finiteElement->n_quadrature_points();
 
       real64 reaction = 1.0;
       real64 diffusion = 1.0;
@@ -290,20 +290,17 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
             real64 Zq = 0;
             for( localIndex a = 0; a < numNodesPerElement; ++a )
             {
-              Xq = Xq + feDiscretization->m_finiteElement->value( a, q ) *
-                   X[elemNodes( k, a )][0];
+              Xq = Xq + finiteElement->value( a, q ) * X[elemNodes( k, a )][0];
 
-              Yq = Yq + feDiscretization->m_finiteElement->value( a, q ) *
-                   X[elemNodes( k, a )][1];
+              Yq = Yq + finiteElement->value( a, q ) * X[elemNodes( k, a )][1];
 
-              Zq = Zq + feDiscretization->m_finiteElement->value( a, q ) *
-                   X[elemNodes( k, a )][2];
+              Zq = Zq + finiteElement->value( a, q ) * X[elemNodes( k, a )][2];
             }
             for( localIndex a = 0; a < numNodesPerElement; ++a )
             {
               elemDofIndex[a] = dofIndex[elemNodes( k, a )];
 
-              real64 Na = feDiscretization->m_finiteElement->value( a, q );
+              real64 Na = finiteElement->value( a, q );
               //may need a minus sign here
               element_rhs( a ) += -detJ[k][q] * Na * myFunc( Xq, Yq, Zq );                                                              //older
                                                                                                                                         // reaction
@@ -311,10 +308,10 @@ void ReactionDiffusionFEM::AssembleSystem( real64 const time_n,
                                                                                                                                         // solver
               for( localIndex b = 0; b < numNodesPerElement; ++b )
               {
-                real64 Nb = feDiscretization->m_finiteElement->value( b, q );
+                real64 Nb = finiteElement->value( b, q );
                 element_matrix( a, b ) +=
                   detJ[k][q] *
-                  (diffusion * -Dot( dNdX[k][q][a], dNdX[k][q][b] ) + reaction * Na * Nb);
+                  (diffusion * - LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) + reaction * Na * Nb);
 
               }
             }
@@ -370,7 +367,7 @@ void ReactionDiffusionFEM::ApplySystemSolution( DofManager const & dofManager,
 
   // Syncronize ghost nodes
   std::map< string, string_array > fieldNames;
-  fieldNames["node"].push_back( m_fieldName );
+  fieldNames["node"].emplace_back( m_fieldName );
 
   CommunicationTools::SynchronizeFields(
     fieldNames,

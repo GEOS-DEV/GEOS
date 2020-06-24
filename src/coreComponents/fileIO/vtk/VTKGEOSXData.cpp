@@ -27,18 +27,5 @@ void VTKGEOSXData::CustomInsertValue< R1Tensor >( localIndex index, R1Tensor con
     this->InsertValue( 3 * index + j, val[j] );
   }
 }
-
-template<>
-void VTKGEOSXData::CustomInsertValue< R2Tensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2Tensor const & GEOSX_UNUSED_PARAM( val ) )
-{
-  GEOSX_WARNING( "Can't output R2Tensor with VTK export" );
-}
-
-
-template<>
-void VTKGEOSXData::CustomInsertValue< R2SymTensor >( localIndex GEOSX_UNUSED_PARAM( index ), R2SymTensor const & GEOSX_UNUSED_PARAM ( val ) )
-{
-  GEOSX_WARNING( "Can't output R2Tensor with VTK export" );
-}
 }
 }
