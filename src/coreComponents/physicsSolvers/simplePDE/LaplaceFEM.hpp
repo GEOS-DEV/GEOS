@@ -155,6 +155,7 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
+  //START_SPHINX_INCLUDE_05
   inline ParallelVector const * getSolution() const
   {
     return &m_solution;
@@ -164,6 +165,7 @@ public:
   {
     return m_matrix.numGlobalRows();
   }
+  //END_SPHINX_INCLUDE_05
 
 protected:
   virtual void PostProcessInput() override final;
