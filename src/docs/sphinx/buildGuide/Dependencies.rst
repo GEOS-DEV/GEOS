@@ -24,37 +24,51 @@ The GEOSX software makes use of multiple libraries.
 You may want to check the `CMakeLists.txt <https://github.com/GEOSX/thirdPartyLibs/blob/master/CMakeLists.txt>`_ that contains the versions of the dependencies.
 
 LLNL HPC libraries and tool boxes...
+
 - `axom <https://github.com/LLNL/axom>`_
 - `Adiak <https://github.com/LLNL/Adiak>`_ (Library for collecting metadata from HPC application runs, and distributing that metadata to subscriber tools.)
 - `caliper <https://github.com/LLNL/Caliper>`_ (Performance analysis toolbox.)
 - `conduit <https://github.com/LLNL/conduit>`_ (Simplified data exchange tool for HPC simulations.)
 - `CHAI <https://github.com/LLNL/CHAI>`_ (Library that handles automatic data migration to different memory spaces behind an array-style interface.)
 - `RAJA <https://github.com/LLNL/RAJA>`_ (Collection of C++ software abstractions that enable architecture portability for HPC applications.)
+
 ... and more mainstream C++ stuff.
+
 - `asmjit <https://github.com/asmjit/asmjit>`_ (Lightweight library for machine code just in time generation.)
 - `camp <https://github.com/llnl/camp>`_ (Macros and metaprogramming facilities for C++.)
 - `fparser <http://warp.povusers.org/FunctionParser>`_ (Parse and evaluate a mathematical function from a string.)
 - `mathpresso <https://github.com/kobalicek/mathpresso>`_ (Mathematical expression parser and JIT compiler.)
-- `pugixml <https://pugixml.org\>`_ (Light-weight, simple and fast XML parser for C++ with XPath support.)
+- `pugixml <https://pugixml.org>`_ (Light-weight, simple and fast XML parser for C++ with XPath support.)
+
 Linear (or more) algebra solvers
+
 - `hypre <https://github.com/hypre-space/hypre>`_ (Library of high performance preconditioners and solvers featuring multigrid methods for the solution of large, sparse linear systems of equations on massively parallel computers.)
 - `petsc <https://www.mcs.anl.gov/petsc>`_ (Suite of data structures and routines for the scalable (parallel) solution of scientific applications modeled by partial differential equations)
 - `superlu_dist <https://portal.nersc.gov/project/sparse/superlu>`_ (General purpose library for the direct solution of large, sparse, nonsymmetric systems of linear equations).
 - `trilinos <https://trilinos.github.io>`_ (Collection of reusable scientific software libraries, known in particular for linear solvers, non-linear solvers, transient solvers, optimization solvers, and uncertainty quantification (UQ) solvers.)
+
 Note that petsc currently downloads `pt-scotch <https://www.labri.fr/perso/pelegrin/scotch/scotch_en.html>`_ from the internet.
 If you do not have access to internet, you should modify the `./configure` step of petsc in the `CMakeLists.txt` file,
 and change the ``--download-ptscotch`` option accordingly. 
 
 A graph partitioning tool
+
 - `parmetis <http://glaros.dtc.umn.edu/gkhome/metis/parmetis/overview>`_
+
 A large and complex data collection library
+
 - `hdf5 <https://bitbucket.hdfgroup.org/scm/hdffv/hdf5.git>`_ or its `clone on github <https://github.com/live-clones/hdf5>`_ and `its project page <https://portal.hdfgroup.org/display/knowledge>`_
+
 Visualisation tools and libraries
+
 - `silo <https://wci.llnl.gov/simulation/computer-codes/silo>`_
 - `VTK <https://vtk.org/>`_
+
 Code formatters & linters
+
 - `astyle <http://astyle.sourceforge.net>`_
 - `uncrustify <http://uncrustify.sourceforge.net>`_
+
 Some of these libraries rely on blas, lapack & MPI implementations.
 As well as the zlib compression library.
 **It is the developer's responsibility to provide them.**
