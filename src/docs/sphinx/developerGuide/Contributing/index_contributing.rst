@@ -19,4 +19,4 @@ Contributing
 
    Benchmarks.rst
 
-   caliper_link.rst
+   Caliper.rst

@@ -1,1 +1,1 @@
-   /coreComponents/linearAlgebra/docs/DofManager.rst
+.. include:: ../../../../coreComponents/linearAlgebra/docs/DofManager.rst

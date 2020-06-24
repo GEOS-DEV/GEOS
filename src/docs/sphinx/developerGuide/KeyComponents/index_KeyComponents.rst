@@ -1,9 +1,9 @@
 ###############################################################################
-Key Components
+Code Components
 ###############################################################################
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    dataRepo_link.rst
 
@@ -17,6 +17,6 @@ Key Components
 
    fem_link.rst
 
-   WorkingWithData
+   WorkingWithData.rst
 
    AddingNewSolver.rst

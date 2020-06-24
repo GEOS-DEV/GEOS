@@ -1,1 +1,1 @@
-   /coreComponents/mesh/docs/meshDeveloperGuide.rst
+.. include::  ../../../../coreComponents/mesh/docs/meshDeveloperGuide.rst
