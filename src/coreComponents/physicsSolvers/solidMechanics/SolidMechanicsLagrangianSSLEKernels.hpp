@@ -32,66 +32,6 @@ namespace geosx
 namespace SolidMechanicsLagrangianSSLEKernels
 {
 
-struct StressCalculationKernel
-{
-  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
-  static inline real64
-  Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          localIndex const numElems,
-          arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView3d< R1Tensor const > const & dNdX,
-          arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
-          arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & uhat )
-  {
-    GEOSX_MARK_FUNCTION;
-
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
-
-    arrayView3d< real64, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
-
-
-//    using KERNEL_POLICY = parallelDevicePolicy< 256 >;
-    using KERNEL_POLICY = parallelHostPolicy;
-    RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, numElems ),
-                                   [&] ( localIndex const k )
-    {
-      real64 uhat_local[ NUM_NODES_PER_ELEM ][ 3 ];
-
-      for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-      {
-        for( int b = 0; b < 3; ++b )
-        {
-          uhat_local[ a ][ b ] = uhat( elemsToNodes( k, a ), b );
-        }
-      }
-
-      real64 c[ 6 ][ 6 ];
-      constitutive.GetStiffness( k, c );
-
-      //Compute Quadrature
-      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
-      {
-        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
-        {
-          real64 const v0_x_dNdXa0 = uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 0 ];
-          real64 const v1_x_dNdXa1 = uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 1 ];
-          real64 const v2_x_dNdXa2 = uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 2 ];
-
-          stress( k, q, 0 ) += ( v0_x_dNdXa0 * c[ 0 ][ 0 ] + v1_x_dNdXa1 * c[ 0 ][ 1 ] + v2_x_dNdXa2*c[ 0 ][ 2 ] );
-          stress( k, q, 1 ) += ( v0_x_dNdXa0 * c[ 1 ][ 0 ] + v1_x_dNdXa1 * c[ 1 ][ 1 ] + v2_x_dNdXa2*c[ 1 ][ 2 ] );
-          stress( k, q, 2 ) += ( v0_x_dNdXa0 * c[ 2 ][ 0 ] + v1_x_dNdXa1 * c[ 2 ][ 1 ] + v2_x_dNdXa2*c[ 2 ][ 2 ] );
-          stress( k, q, 3 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 1 ] + uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 3 ][ 3 ];
-          stress( k, q, 4 ) += ( uhat_local[ a ][ 2 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 2 ] ) * c[ 4 ][ 4 ];
-          stress( k, q, 5 ) += ( uhat_local[ a ][ 1 ] * dNdX[ k ][ q ][ a ][ 0 ] + uhat_local[ a ][ 0 ] * dNdX[ k ][ q ][ a ][ 1 ] ) * c[ 5 ][ 5 ];
-        }
-      }//quadrature loop
-
-    } );
-
-    return 0.0;
-  }
-};
-
 /**
  * @struct Structure to wrap templated function that implements the explicit time integration kernels.
  */
@@ -124,9 +64,9 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
+          SortedArrayView< localIndex const > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView3d< R1Tensor const > const & dNdX,
+          arrayView4d< real64 const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
@@ -136,7 +76,7 @@ struct ExplicitKernel
   {
     GEOSX_MARK_FUNCTION;
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
 #if defined(CALCFEMSHAPE)
     GEOSX_UNUSED_VAR( dNdX );
@@ -161,24 +101,21 @@ struct ExplicitKernel
       real64 varLocal[ NUM_NODES_PER_ELEM ][ 3 ];
 
 #if defined(CALCFEMSHAPE)
-      real64 xLocal[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 xLocal[ 8 ][ 3 ];
 #endif
 
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nodeIndex = elemsToNodes( k, a );
-        for( int i=0; i<3; ++i )
-        {
 #if defined(CALCFEMSHAPE)
-          xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        LvArray::tensorOps::copy< 3 >( xLocal[ a ], X[ nodeIndex ] );
 #endif
 
 #if UPDATE_STRESS==2
-          varLocal[ a ][ i ] = vel[ nodeIndex ][ i ] * dt;
+        LvArray::tensorOps::scaledCopy< 3 >( varLocal[ a ], vel[ nodeIndex ], dt );
 #else
-          varLocal[ a ][ i ] = u[ nodeIndex ][ i ];
+        LvArray::tensorOps::copy< 3 >( varLocal[ a ], u[ nodeIndex ] );
 #endif
-        }
       }
 
       //Compute Quadrature
@@ -188,48 +125,44 @@ struct ExplicitKernel
 #if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
         real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, xLocal, dNdX );
-  #define DNDX dNdX
-  #define DETJ detJ
+        #define DNDX dNdX
+        #define DETJ detJ
 #else //defined(CALCFEMSHAPE)
-  #define DNDX dNdX[k][q]
-  #define DETJ detJ( k, q )
+        #define DNDX dNdX[k][q]
+        #define DETJ detJ( k, q )
 #endif //defined(CALCFEMSHAPE)
 
-        real64 stressLocal[ 6 ] = {0};
         real64 strain[6] = {0};
         for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
         {
-          strain[0] = strain[0] + DNDX[ a ][0] * varLocal[ a ][0];
-          strain[1] = strain[1] + DNDX[ a ][1] * varLocal[ a ][1];
-          strain[2] = strain[2] + DNDX[ a ][2] * varLocal[ a ][2];
-          strain[3] = strain[3] + DNDX[ a ][2] * varLocal[ a ][1] + DNDX[ a ][1] * varLocal[ a ][2];
-          strain[4] = strain[4] + DNDX[ a ][2] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][2];
-          strain[5] = strain[5] + DNDX[ a ][1] * varLocal[ a ][0] + DNDX[ a ][0] * varLocal[ a ][1];
+          strain[ 0 ] = strain[ 0 ] + DNDX[ a ][ 0 ] * varLocal[ a ][ 0 ];
+          strain[ 1 ] = strain[ 1 ] + DNDX[ a ][ 1 ] * varLocal[ a ][ 1 ];
+          strain[ 2 ] = strain[ 2 ] + DNDX[ a ][ 2 ] * varLocal[ a ][ 2 ];
+          strain[ 3 ] = strain[ 3 ] + DNDX[ a ][ 2 ] * varLocal[ a ][ 1 ] + DNDX[ a ][ 1 ] * varLocal[ a ][ 2 ];
+          strain[ 4 ] = strain[ 4 ] + DNDX[ a ][ 2 ] * varLocal[ a ][ 0 ] + DNDX[ a ][ 0 ] * varLocal[ a ][ 2 ];
+          strain[ 5 ] = strain[ 5 ] + DNDX[ a ][ 1 ] * varLocal[ a ][ 0 ] + DNDX[ a ][ 0 ] * varLocal[ a ][ 1 ];
         }
 
 #if UPDATE_STRESS == 2
         constitutive.SmallStrain( k, q, strain );
 #else
+        real64 stressLocal[ 6 ] = {0};
         constitutive.SmallStrainNoState( k, strain, stressLocal );
 #endif
 
-        for( localIndex c = 0; c < 6; ++c )
-        {
 #if UPDATE_STRESS == 2
-          stressLocal[ c ] =  constitutive.m_stress( k, q, c ) * (-DETJ);
+        LvArray::tensorOps::scaledCopy< 6 >( strain, constitutive.m_stress[ k ][ q ], -DETJ );
 #elif UPDATE_STRESS == 1
-          stressLocal[ c ] = ( stressLocal[ c ] + constitutive.m_stress( k, q, c ) ) *(-DETJ);
+        LvArray::tensorOps::copy< 6 >( strain, stressLocal );
+        LvArray::tensorOps::add< 6 >( strain, constitutive.m_stress[ k ][ q ] );
+        LvArray::tensorOps::scale< 6 >( strain, -DETJ );
 #else
-          stressLocal[ c ] *= -DETJ;
+        LvArray::tensorOps::scaledCopy< 6 >( strain, stressLocal, -DETJ );
 #endif
-        }
-
 
         for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
         {
-          fLocal[ a ][ 0 ] = fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
-          fLocal[ a ][ 1 ] = fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
-          fLocal[ a ][ 2 ] = fLocal[ a ][ 2 ] + stressLocal[ 4 ] * DNDX[ a ][ 0 ] + stressLocal[ 3 ] * DNDX[ a ][ 1 ] + stressLocal[ 2 ] * DNDX[ a ][ 2 ];
+          LvArray::tensorOps::plusSymAijBj< 3 >( fLocal[ a ], strain, DNDX[ a ] );
         }
       }    //quadrature loop
 
@@ -294,7 +227,7 @@ struct ImplicitKernel
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
           localIndex const numElems,
           real64 const dt,
-          arrayView3d< R1Tensor const > const & dNdX,
+          arrayView4d< real64 const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
           FiniteElementBase const * const fe,
           arrayView1d< integer const > const & elemGhostRank,
@@ -325,7 +258,7 @@ struct ImplicitKernel
     static constexpr int ndof = dim * NUM_NODES_PER_ELEM;
     RAJA::ReduceMax< serialReduce, double > maxForce( 0 );
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
     arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
 
@@ -447,27 +380,21 @@ struct ImplicitKernel
           }
         }
 
-
-        R1Tensor temp;
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          R2SymTensor referenceStress = stress[ k ][ q ];
+          const realT detJq = detJ( k, q );
+          real64 stress0[ 6 ] = LVARRAY_TENSOROPS_INIT_LOCAL_6( detJq * stress[ k ][ q ] );
           if( !fluidPressure.empty() )
           {
-            referenceStress.PlusIdentity( -biotCoefficient * (fluidPressure[k] + deltaFluidPressure[k]));
+            LvArray::tensorOps::addIdentityToSymmetric< 3 >( stress0, -detJq * biotCoefficient * (fluidPressure[ k ] + deltaFluidPressure[ k ]) );
           }
-
-          const realT detJq = detJ[k][q];
-          R2SymTensor stress0 = referenceStress;
-          stress0 *= detJq;
 
           for( integer a=0; a<NUM_NODES_PER_ELEM; ++a )
           {
-            dNdXa = dNdX[k][q][a];
+            real64 temp[ 3 ];
+            LvArray::tensorOps::symAijBj< 3 >( temp, stress0, dNdX[ k ][ q ][ a ] );
 
-            temp.AijBj( stress0, dNdXa );
-            realT maxF = temp.MaxVal();
-            maxForce.max( maxF );
+            maxForce.max( LvArray::tensorOps::maxAbsoluteEntry< 3 >( temp ) );
 
             R( a*dim+0 ) -= temp[0];
             R( a*dim+1 ) -= temp[1];

@@ -324,8 +324,8 @@ void ProppantTransport::InitializePostInitialConditions_PreSubGroups( Group * co
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-  fieldNames["elems"].push_back( viewKeyStruct::componentConcentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::componentConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -1247,8 +1247,8 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
   }
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaProppantConcentrationString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaComponentConcentrationString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaProppantConcentrationString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaComponentConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -1505,7 +1505,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::cellBasedFluxString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::cellBasedFluxString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -1571,10 +1571,10 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantExcessPackVolumeString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantLiftFluxString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantExcessPackVolumeString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantLiftFluxString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
@@ -1600,8 +1600,8 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::proppantConcentrationString );
-    fieldNames["elems"].push_back( viewKeyStruct::proppantPackVolumeFractionString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
@@ -1624,7 +1624,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].push_back( viewKeyStruct::isInterfaceElementString );
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::isInterfaceElementString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }

@@ -55,9 +55,6 @@ PartitionBase::PartitionBase( const unsigned int numPartitions, const unsigned i
 PartitionBase::~PartitionBase()
 {}
 
-/**
- * @brief Call SetDomain on each neighbor
- */
 void PartitionBase::SetDomain( DomainPartition * domain )
 {
   // set the const pointer "m_domain" by casting away the the const

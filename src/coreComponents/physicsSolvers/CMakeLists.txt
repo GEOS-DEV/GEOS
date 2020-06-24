@@ -38,6 +38,10 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
+     solidMechanics/SolidMechanicsPoroElasticKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      solidMechanics/TimeIntegrationOption.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp

@@ -57,18 +57,11 @@
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion name="Region1" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion name="Region1" cellBlocks="{cb1}" materialList="{nullModel}" />
   </ElementRegions>
 
   <Constitutive>
-    <LinearElasticIsotropic name="granite"
-                            defaultDensity="2700"
-                            defaultBulkModulus="5.5556e9"
-                            defaultShearModulus="4.16667e9"/>
-    <LinearElasticIsotropic name="shale"
-                            defaultDensity="2700"
-                            defaultBulkModulus="5.5556e9"
-                            defaultShearModulus="4.16667e9"/>
+    <NullModel name="nullModel"/>
   </Constitutive>
 
   <FieldSpecifications>

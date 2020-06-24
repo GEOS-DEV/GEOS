@@ -5,6 +5,7 @@ set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
      ExponentialRelation.hpp
+     NullModel.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
@@ -47,6 +48,7 @@ set( constitutive_headers
 set( constitutive_sources
      ConstitutiveManager.cpp
      ConstitutiveBase.cpp
+     NullModel.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp

@@ -34,22 +34,22 @@
 ///@{
 
 #if defined(__CUDACC__)
-  #define GEOSX_HOST __host__
-  #define GEOSX_DEVICE __device__
-  #define GEOSX_HOST_DEVICE __host__ __device__
-  #define GEOSX_FORCE_INLINE __forceinline__
-  #define PRAGMA_UNROLL _Pragma("unroll")
+#define GEOSX_HOST __host__
+#define GEOSX_DEVICE __device__
+#define GEOSX_HOST_DEVICE __host__ __device__
+#define GEOSX_FORCE_INLINE __forceinline__
+#define PRAGMA_UNROLL _Pragma("unroll")
 #else
 /// Marks a host-only function.
-  #define GEOSX_HOST
+#define GEOSX_HOST
 /// Marks a device-only function.
-  #define GEOSX_DEVICE
+#define GEOSX_DEVICE
 /// Marks a host-device function.
-  #define GEOSX_HOST_DEVICE
+#define GEOSX_HOST_DEVICE
 /// Marks a function or lambda for inlining
-  #define GEOSX_FORCE_INLINE inline
+#define GEOSX_FORCE_INLINE inline
 /// Compiler directive specifying to unroll the loop.
-  #define PRAGMA_UNROLL
+#define PRAGMA_UNROLL
 #endif
 
 ///@}
@@ -66,25 +66,25 @@
 #define GEOSX_UNUSED_PARAM( X )
 
 /// Used to silence unused variable warnings, cuda doesn't respect casting to void.
-template< typename T >
+template< typename ... ARGS >
 GEOSX_HOST_DEVICE inline constexpr
-void i_g_n_o_r_e( T & ) {}
+void i_g_n_o_r_e( ARGS const & ... ) {}
 
 /// Mark an unused variable and silence compiler warnings.
-#define GEOSX_UNUSED_VAR( X ) i_g_n_o_r_e( X );
+#define GEOSX_UNUSED_VAR( ... ) i_g_n_o_r_e( __VA_ARGS__ );
 
 /// Mark a debug variable and silence compiler warnings.
-#define GEOSX_DEBUG_VAR( X ) GEOSX_UNUSED_VAR( X )
+#define GEOSX_DEBUG_VAR( ... ) GEOSX_UNUSED_VAR( __VA_ARGS__ )
 
 ///@}
 
 #if defined(GEOSX_USE_OPENMP)
 /// Wrap a pragma clause in the _Pragma statement. We seek to make this include the omp portion of the clause.
-  #define PRAGMA_OMP( clause ) _Pragma( clause )
+#define PRAGMA_OMP( clause ) _Pragma( clause )
 //  #define PRAGMA_OMP( clause ) _Pragma( STRINGIZE( omp clause ) )
 #else
 /// No-op version of PRAGMA_OMP
-  #define PRAGMA_OMP( clause )
+#define PRAGMA_OMP( clause )
 #endif
 
 /// preprocessor variable for the C99 restrict keyword for use with pointers

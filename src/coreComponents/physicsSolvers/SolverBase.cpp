@@ -568,7 +568,8 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
                               DofManager & dofManager,
                               ParallelMatrix & matrix,
                               ParallelVector & rhs,
-                              ParallelVector & solution )
+                              ParallelVector & solution,
+                              bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -583,7 +584,10 @@ void SolverBase::SetupSystem( DomainPartition * const domain,
   rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
   solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
 
-  dofManager.setSparsityPattern( matrix );
+  if( setSparsity )
+  {
+    dofManager.setSparsityPattern( matrix );
+  }
 }
 
 void SolverBase::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),

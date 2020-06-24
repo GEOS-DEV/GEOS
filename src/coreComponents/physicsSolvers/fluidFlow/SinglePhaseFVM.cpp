@@ -72,14 +72,16 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
                                           DofManager & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs,
-                                          ParallelVector & solution )
+                                          ParallelVector & solution,
+                                          bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   BASE::SetupSystem( domain,
                      dofManager,
                      matrix,
                      rhs,
-                     solution );
+                     solution,
+                     setSparsity );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -220,7 +222,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -447,8 +449,8 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   ElementRegionManager & elemManager = *mesh.getElemManager();
   FaceManager & faceManager = *mesh.getFaceManager();
 
-  arrayView2d< localIndex > const & elemRegionList     = faceManager.elementRegionList();
-  arrayView2d< localIndex > const & elemSubRegionList  = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager.elementSubRegionList();
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );

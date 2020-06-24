@@ -67,9 +67,9 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
   AggregateElementSubRegion * const aggregateSubRegion =
     elementSubRegions->RegisterGroup< AggregateElementSubRegion >( "coarse" );
 
-  array2d< localIndex > const & elemRegionList     = faceManager->elementRegionList();
-  array2d< localIndex > const & elemSubRegionList  = faceManager->elementSubRegionList();
-  array2d< localIndex > const & elemList           = faceManager->elementList();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager->elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager->elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList           = faceManager->elementList();
 
   // Counting the total number of cell and number of vertices
   localIndex nbCellElements = 0;
@@ -94,8 +94,8 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 
 
   // Compute the connectivity graph
-  LvArray::SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
-                                                  LvArray::integerConversion< idx_t >( nbCellElements ) );
+  SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
+                                         LvArray::integerConversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )
@@ -163,9 +163,17 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
     {
       if( ghostRank[cellIndex] >= 0 )
         continue;
-      R1Tensor center = elementSubRegion.getElementCenter()[cellIndex];
-      center *= normalizeVolumes[cellIndex + offsetSubRegions[subRegionIndex]];
-      aggregateBarycenters[parts[cellIndex + offsetSubRegions[subRegionIndex]]] += center;
+
+      // TODO Change the rest of this to
+      // LvArray::tensorOps::scaledAdd< 3 >( aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ]
+      // ] ],
+      //                                     elementSubRegion.getElementCenter()[ cellIndex ],
+      //                                     normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] )
+      real64 const center[ 3 ] =
+        LVARRAY_TENSOROPS_INIT_LOCAL_3( normalizeVolumes[ cellIndex + offsetSubRegions[ subRegionIndex ] ] * elementSubRegion.getElementCenter()[ cellIndex ] );
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 0 ] += center[ 0 ];
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 1 ] += center[ 1 ];
+      aggregateBarycenters[ parts[ cellIndex + offsetSubRegions[ subRegionIndex ] ] ][ 2 ] += center[ 2 ];
     }
   } );
 

@@ -13,6 +13,8 @@ set( finiteElement_headers
      quadrature/GaussQuadrature.hpp
      quadrature/QuadratureBase.hpp
      quadrature/QuadratureRuleManager.hpp
+     kernelInterface/KernelBase.hpp
+     kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
    )
@@ -24,7 +26,6 @@ set( finiteElement_sources
      ElementLibrary/FiniteElement.cpp
      ElementLibrary/FiniteElementBase.cpp
      ElementLibrary/TetrahedralElement.cpp
-     Kinematics.cpp
      basis/BasisBase.cpp
      basis/LagrangeBasis.cpp
      basis/Polynomial.cpp

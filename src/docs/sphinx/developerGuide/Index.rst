@@ -16,7 +16,9 @@ Welcome to the GEOSX developer guide.
    Doxygen
 
    /coreComponents/dataRepository/dataRepository.rst
-
+   
+   WorkingWithData
+   
    /coreComponents/mesh/docs/meshDeveloperGuide.rst
 
    UnitTests
@@ -30,6 +32,8 @@ Welcome to the GEOSX developer guide.
    /coreComponents/managers/docs/ProblemManager.rst
 
    /coreComponents/linearAlgebra/docs/DofManager.rst
+
+   /coreComponents/finiteElement/kernelInterface/kernelInterface.rst
 
    AddingNewSolver
 

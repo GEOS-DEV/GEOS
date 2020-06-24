@@ -408,6 +408,13 @@ Element: NonlinearSolverParameters
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
 
 
+.. _XML_NullModel:
+
+Element: NullModel
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel.rst
+
+
 .. _XML_NumericalMethods:
 
 Element: NumericalMethods
@@ -1131,6 +1138,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 Datastructure: NonlinearSolverParameters
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_NullModel:
+
+Datastructure: NullModel
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel_other.rst
 
 
 .. _DATASTRUCTURE_NumericalMethods:
