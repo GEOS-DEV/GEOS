@@ -1,7 +1,7 @@
 GEOSX Documentation
 =================================
 
-Welcome to the our documentation pages!
+Welcome to our documentation pages!
 
 GEOSX is a code framework focused on enabling streamlined development of
 physics simulations on high performance computing platforms.  Our documentation
