@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report to help us improve
 title: ''
-labels: 'type: bug'
+labels: 'type: bug', 'new'
 assignees: ''
 
 ---
@@ -25,7 +25,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Platform (please complete the following information):**
 - Machine [e.g. LLNL/Quartz] 
-- Compiler: [e.g. gcc 7.0.0]
+- Compiler: [e.g. gcc 8.1.0]
 - Version [e.g. 0.2]
 
 **Additional context**
