@@ -7,18 +7,20 @@ Tutorial 5: Multiphase flow in the Egg model
 **Context**
 
 In this tutorial, we illustrate the concepts presented in :ref:`TutorialDeadOilBottomLayersSPE10`
-using the `Egg model <https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.21>`_.
+using the three-dimensional `Egg model <https://rmets.onlinelibrary.wiley.com/doi/full/10.1002/gdj3.21>`_.
 We show how to set up a water injection problem relying on a Dead-Oil thermodynamic model.
-The wells are placed following the description of the original test case. 
+The twelve wells (four producers and eight injectors) are placed according to the description
+of the original test case.
 
 **Objectives**
 
 In this tutorial, we re-use many GEOSX features already presented in
-:ref:`TutorialDeadOilBottomLayersSPE10`, with a focus on
+:ref:`TutorialDeadOilBottomLayersSPE10`, with a focus on:
 
 - how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
-- how to tune the parameters of the linear and nonlinear solvers.
-
+- how to choose constitutive parameters matching those of the original test case, 
+- how to tune the time stepping strategy and the nonlinear solver parameters.
+  
 **Input file**
 
 This tutorial is based on the XML file located at
@@ -54,20 +56,38 @@ Solvers: tuning the solution strategy
 
 In this tutorial, we use the approach described in :ref:`TutorialDeadOilBottomLayersSPE10`
 to couple reservoir flow with wells.
-That is, we define a coupling solver of type **CompositionalMultiphaseReservoir**
+That is, we define a *coupling solver* of type **CompositionalMultiphaseReservoir**
 named ``coupledFlowAndWells``. 
 This coupling solver drives the simulation and is in charge of binding the following
 single-physics solvers:
 
- - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFlow** named ``compositionalMultiphaseFlow`` and documented at :ref:`CompositionalMultiphaseFlow`,
- - the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` and documented at :ref:`CompositionalMultiphaseWell`).
+- the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFlow** named ``compositionalMultiphaseFlow`` and documented at :ref:`CompositionalMultiphaseFlow`,
+- the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` and documented at :ref:`CompositionalMultiphaseWell`).
 
+The **Solvers** XML block is shown below.
+The coupling solver points to the two single-physics solvers using the attributes
+``flowSolverName`` and ``wellSolverName``.
+We use the same names as in :ref:`TutorialDeadOilBottomLayersSPE10` for simplicity, but
+these names can be chosen by the user and are not imposed by GEOSX.
+The flow solver is applied to the reservoir and the well solver is applied to the wells,
+as specified by their respective ``targetRegions`` attributes.
+  
 The solver information is specified in the **NonlinearSolverParameters** and
 **LinearSolverParameters** XML blocks.
-It should be specified within the **CompositionalMultiphaseReservoir** XML block since
+These blocks should be nested in the **CompositionalMultiphaseReservoir** XML block since
 the coupling solver drives the solution strategy.
 Note that any solver information specified in the single-phase physics XML blocks will
 not be taken into account.
+
+Here, we instruct GEOSX to perform at least ``newtonMinIter = 1`` Newton iterations and
+at most ``newtonMaxIter = 10``. GEOSX will adjust the time step size as follows:
+
+- if the Newton solver converges in ``dtIncIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
+- if the Newton solver converges in ``dtCutIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
+- if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOSX will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged step.
+
+The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts``.
+Note that a backtracking line search can be activated by setting the attribute ``lineSearchAction`` to 1 or 2.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -92,15 +112,21 @@ for the well geometry and square meters for the permeability field.
 We note that the mesh file only contains the active cells, so there is no keyword
 needed in the XML file  to define them.
 
-As in :ref:`TutorialDeadOilBottomLayersSPE10`, the geometry of the wells is defined
+As in :ref:`TutorialDeadOilBottomLayersSPE10`, the geometry of the twelve wells is defined
 internally using the description provided in the **InternalWell** XML blocks.
-We remind the user that this block must point to the reservoir mesh
+We remind the user that each block **InternalWell** must point to the reservoir mesh
 (using the attribute ``meshName``), the corresponding well region (using
 the attribute ``wellRegionName``), and the corresponding well control
 (using the attribute ``wellControlName``).
+Each well is defined using a vertical polyline going through the seven layers of the
+mesh, with a perforation in each layer.
+The well transmissibility factors employer to compute the perforation rates are calculated
+internally using the Peaceman formulation.
 The well placement implemented here follows the pattern of the original test case.
-Additional details about the specification of the well geometry can be
-found in :ref:`TutorialDeadOilBottomLayersSPE10`.
+
+.. image:: egg_model.png
+   :width: 400px
+   :align: center 	   
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -188,6 +214,25 @@ defined in the **Constitutive** XML block.
 Defining material properties with constitutive laws
 ---------------------------------------------------------------------
 
+The **CompositionalMultiphaseFlow** physics solver relies on at least three types of constitutive
+models listed in the **Constitutive** XML block:
+
+- a fluid model describing the thermodynamics behavior of the fluid mixture,
+- a relative permeability model,
+- a rock compressibility model.
+
+All the parameters must be provided using the SI unit system.
+
+Although the original Egg test case only involves two phases, the Dead-Oil model currently
+implemented in GEOSX requires the definition of three phases (oil, gas, and water).
+This is done in the **BlackOilFluid** XML block. The same is true for the relative permeability
+model introduced in the **BrooksCoreyRelativePermeability** block. The names and order of the
+phases listed for the attribute ``phaseNames`` must be identical in the fluid model and the
+relative permeability model. The rock compressibility is defined in the
+**PoreVolumeCompressibleSolid** block.
+The parameters of these three blocks have been chosen to be close to the original specifications
+of the Egg test case.
+
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE -->
@@ -198,6 +243,22 @@ Defining material properties with constitutive laws
 
 Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
+
+We are ready to specify the reservoir initial conditions of the problem in the **FieldSpecifications**
+XML block.
+The well variables do not have to be initialized here since they will be defined internally.
+
+The formulation of the **CompositionalMultiphaseFlow** physics solver (documented
+at :ref:`CompositionalMultiphaseFlow`) requires the definition of the initial pressure field
+and initial global component fractions.
+We define here a uniform pressure field that does not satisfy the hydrostatic equilibrium,
+but a hydrostatic initialization of the pressure field is possible using :ref:`FunctionManager`:.
+For the initialization of the global component fractions, we remind the user that their ``component``
+attribute (here, 0, 1, or 2) is used to point to a specific entry of the ``phaseNames`` attribute
+in the **BlackOilFluid** block. 
+
+Note that we also define the uniform porosity field here since it is not included in the mesh file
+imported by the **PAMELAMeshGenerator**.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -222,7 +283,7 @@ Note that the names defined here must match the names used in the **Events** XML
 All elements are now in place to run GEOSX.
 
 ------------------------------------
-Runnning GEOSX
+Running GEOSX
 ------------------------------------
 
 In progress

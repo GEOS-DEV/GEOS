@@ -272,7 +272,7 @@ The initial pressure and diagonal term of the permeability tensor are also set t
   The varying values imposed in *values* or passed through *voxelFile* are premultiplied by the *scale* attribute from **FieldSpecifications**.
 
 ------------------------------------
-Runnning GEOSX
+Running GEOSX
 ------------------------------------
 ..
         Launching the simulation
