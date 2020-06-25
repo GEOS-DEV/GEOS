@@ -7,4 +7,4 @@ linked below.
 
 .. raw:: html
 
-   <a href="doxygen_output/html/index.html">GEOSX Doxygen Pages</a>
+   <a href="../../doxygen_output/html/index.html">GEOSX Doxygen Pages</a>
