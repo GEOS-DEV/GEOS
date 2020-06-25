@@ -30,7 +30,7 @@ class LinearTetrahedronShapeFunctionKernel
 {
 public:
   constexpr static localIndex numNodes = 4;
-  constexpr static real64 weight = 1.0 / 1.6; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
+  constexpr static real64 weight = 1.0 / 6.0; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -42,8 +42,8 @@ public:
 
     // Jacobian determinant of the isoparametric mapping
     real64 det =   ( X[1][0] - X[0][0] )*( ( X[2][1] - X[0][1] )*( X[3][2] - X[0][2] ) - ( X[3][1] - X[0][1] )*( X[2][2] - X[0][2] ) )
-                    + ( X[1][1] - X[0][1] )*( ( X[3][0] - X[0][0] )*( X[2][2] - X[0][2] ) - ( X[2][0] - X[0][0] )*( X[3][2] - X[0][2] ) )
-                    + ( X[1][2] - X[0][2] )*( ( X[2][0] - X[0][0] )*( X[3][1] - X[0][1] ) - ( X[3][0] - X[0][0] )*( X[2][1] - X[0][1] ) );
+                 + ( X[1][1] - X[0][1] )*( ( X[3][0] - X[0][0] )*( X[2][2] - X[0][2] ) - ( X[2][0] - X[0][0] )*( X[3][2] - X[0][2] ) )
+                 + ( X[1][2] - X[0][2] )*( ( X[2][0] - X[0][0] )*( X[3][1] - X[0][1] ) - ( X[3][0] - X[0][0] )*( X[2][1] - X[0][1] ) );
 
     // Shape function derivatives
     dNdX[0][0] =   X[1][1]*( X[3][2] - X[2][2] ) - X[2][1]*( X[3][2] - X[1][2] ) + X[3][1]*( X[2][2] - X[1][2] );
