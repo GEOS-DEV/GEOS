@@ -680,6 +680,32 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   if( ruptureRate > 0 )
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
+
+  if( rval>0 )
+  {
+    elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
+    {
+      elemSubRegion.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.edgeList().registerTouch( LvArray::MemorySpace::CPU );
+      elemSubRegion.faceList().registerTouch( LvArray::MemorySpace::CPU );
+    } );
+
+
+    faceManager.nodeList().toView().registerTouch( LvArray::MemorySpace::CPU );
+//    faceManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
+    faceManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
+    faceManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
+    faceManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+
+    edgeManager.nodeList().registerTouch( LvArray::MemorySpace::CPU );
+
+//    nodeManager.edgeList().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.faceList()().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
+//    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+  }
+
   return rval;
 }
 
@@ -2796,8 +2822,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager & elementManager )
 {
-  arrayView1d<real64> const & SIFNode = nodeManager.getReference< real64_array >( "SIFNode" );
-  arrayView1d<real64> const & SIFonFace = faceManager.getReference< real64_array >( "SIFonFace" );
+  arrayView1d< real64 > const & SIFNode = nodeManager.getReference< real64_array >( "SIFNode" );
+  arrayView1d< real64 > const & SIFonFace = faceManager.getReference< real64_array >( "SIFonFace" );
 
   std::vector< std::vector< realT > > SIFNode_All, SIFonFace_All;
   std::vector< realT > SIFOnEdge;
@@ -2875,11 +2901,11 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   nodeManager.totalDisplacement().move( LvArray::MemorySpace::CPU, false );
   elementManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
   {
-    for( localIndex mat=0 ; mat<m_solidMaterialNames.size() ; ++mat )
+    for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
     {
       subRegion.getConstitutiveModel( m_solidMaterialNames[mat] )->
-          getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
-                                                                                                                       false );
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString ).move( LvArray::MemorySpace::CPU,
+                                                                                                                     false );
     }
   } );
   displacement.move( LvArray::MemorySpace::CPU, false );

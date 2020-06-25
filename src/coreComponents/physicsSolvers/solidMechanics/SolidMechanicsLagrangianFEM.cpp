@@ -1077,7 +1077,14 @@ SolidMechanicsLagrangianFEM::
                                                                       localRhs );
   } );
 
+//  std::cout<<" ******************** localRHS 0 ********************"<<std::endl;
+//  forAll<serialPolicy>( localRhs.size(), [=]( localIndex const i )
+//  {
+//    printf( "%ld, %8.3f \n", i, localRhs[i] );
+//  });
+
   CRSApplyTractionBC( time_n + dt, dofManager, domain, localRhs );
+
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
@@ -1086,6 +1093,7 @@ SolidMechanicsLagrangianFEM::
   }
 
   ApplyDisplacementBC_implicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
+
 }
 
 real64
