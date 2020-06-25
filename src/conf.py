@@ -41,7 +41,7 @@ if read_the_docs_build:
     config_dst = os.path.join(common_path, "GeosxConfig.hpp")
 
     input_dirs = ["coreComponents/common",
-                  "coreComponents/dataRepository"
+                  "coreComponents/dataRepository",
                   "coreComponents/fileIO",
                   "coreComponents/linearAlgebra",
                   "coreComponents/wells",
