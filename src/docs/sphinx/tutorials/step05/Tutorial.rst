@@ -1,8 +1,8 @@
 .. _TutorialDeadOilEgg:
 
-##################################################
-Tutorial 6: Dead-Oil simulation in the Egg model  
-##################################################
+########################################################
+Tutorial 5: Multiphase flow in the Egg model  
+########################################################
 
 **Context**
 
@@ -15,8 +15,9 @@ The wells are placed following the description of the original test case.
 
 In this tutorial, we re-use many GEOSX features already presented in
 :ref:`TutorialDeadOilBottomLayersSPE10`, with a focus on
-  - how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
-  - how to tune the parameters of the linear and nonlinear solvers.
+
+- how to import an external mesh with embedded geological properties (permeability) in the GMSH format (``.msh``),
+- how to tune the parameters of the linear and nonlinear solvers.
 
 **Input file**
 
@@ -219,8 +220,6 @@ Note that the names defined here must match the names used in the **Events** XML
 
 
 All elements are now in place to run GEOSX.
-
-
 
 ------------------------------------
 Runnning GEOSX

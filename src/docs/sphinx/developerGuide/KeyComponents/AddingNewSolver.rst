@@ -37,7 +37,7 @@ The four included headers are:
 
 Right after that, a struct is designed to store the maximal stable timestep.
 
-   .. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+   .. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
       :language: c++
       :start-after: //START_SPHINX_INCLUDE_00
       :end-before: //END_SPHINX_INCLUDE_00
@@ -62,14 +62,14 @@ The class exhibits three member variables:
 between *SteadyState*, *ImplicitTransient* and *ExplicitTransient* depending on whether we are interested
 in the transient state and whether we want it to be discretized as a backward or a forward Euler scheme.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
 
 Once explained the main variables and enum, let us start reading through the different member functions:
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: //END_SPHINX_INCLUDE_02
@@ -83,7 +83,7 @@ automatic generation and user misuse.
 The next method ``CatalogName()`` is static and return the key to be added to the *Catalog* for this type of solver
 (see :ref:`ObjectCatalogPar` for details). It has to be paired with the following macro in the implementation file.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: //END_SPHINX_INCLUDE_00
@@ -94,7 +94,7 @@ will be further discussed in the :ref:`Implementation` section.
 The next block consists in solver interface functions. These member functions are meant to set up
 and specialized every step towards the system matrix assembly and the solver stage.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_03
    :end-before: //END_SPHINX_INCLUDE_03
@@ -108,7 +108,7 @@ either ``SolverBase::LinearImplicitStep()`` or ``SolverBase::NonLinearImplicitSt
 
 The next couple of methods are inlined getters whose name are self-explanatory.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_05
    :end-before: //END_SPHINX_INCLUDE_05
@@ -128,14 +128,14 @@ This embedded instantiated structure is a common pattern shared by all solvers.
 It stores ``dataRepository::ViewKey`` type objects that are used as binding data
 between the input XML file and the source code.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_04
    :end-before: //END_SPHINX_INCLUDE_04
 
 We can check that in the *LaplaceFEM* companion integratedTest
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/integratedTests/10x10x10_LaplaceFEM.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/integratedTests/10x10x10_LaplaceFEM.xml
    :language: xml
    :start-after: <Solvers>
    :end-before: </Solvers>
@@ -149,7 +149,7 @@ Implementation File
 Switching to implementation, we will focus on few implementations, leaving details
 to other tutorials.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: //END_SPHINX_INCLUDE_01
@@ -162,7 +162,7 @@ allow us to register the key value from the `enum` ``viewKeyStruct`` defining th
 
 and their associated descriptions for auto-generated docs.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: //END_SPHINX_INCLUDE_02
@@ -175,7 +175,7 @@ for all nodes in the sub group:
  - set the output verbosity level (here ``PlotLevel::LEVEL_0``);
  - set the field associated description for auto generated docs.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_03
    :end-before: //END_SPHINX_INCLUDE_03
@@ -185,7 +185,7 @@ to the deepest derived class. In the base class *BaseSolver*, it will set the gr
 In *LaplaceFEM* implementation, it will assign the ``m_timeIntegrationOption``
 to the read value and throw a runtime error if it not among the `enum` values.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_04
    :end-before: //END_SPHINX_INCLUDE_04

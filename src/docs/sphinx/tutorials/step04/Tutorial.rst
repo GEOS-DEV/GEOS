@@ -1,7 +1,7 @@
 .. _TutorialDeadOilBottomLayersSPE10:
 
 ####################################################################
-Tutorial 5: Multiphase simulation with wells
+Tutorial 4: Multiphase flow with wells
 ####################################################################
 
 **Context**
@@ -25,7 +25,7 @@ This tutorial is based on the XML file located at
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
 
 The mesh file used in this tutorial is not stored in the main GEOSX repository.
 To run the test case specified in the XML file, you must first download the GEOSXDATA repository.  
@@ -95,7 +95,7 @@ Take note of the specification of well constraints and controls in the single-ph
 well solver with ``control``, ``targetBHP``, ``targetRate``
 and ``injectionStream`` (for the composition of the multiphase injection fluid).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
@@ -131,7 +131,7 @@ It is the responsibility of the user to make sure that there is a perforation in
 of the well mesh otherwise an error will be thrown and the simulation will terminate. The well
 geometry must be specified in meters.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
@@ -143,7 +143,7 @@ Geometry tag
 
 The **Geometry** XML block was used in the previous tutorials to specify boundary conditions.
 Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
-is not needed.
+block is not needed.
 
 .. _Events_tag_dead_oil_bottom_layers_spe10:
 
@@ -183,7 +183,7 @@ of the **Output** XML block (here, ``restartOutput``).
 
 More information about events can be found at :ref:`EventManager`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
@@ -204,7 +204,7 @@ TPFA is currently the only numerical scheme that can be used with a flow solver 
 There is no numerical scheme to specify for the well mesh.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
@@ -239,7 +239,7 @@ and to the constitutive models introduced in the **Constitutive** block.
 As before, this is done using the names chosen by the user when these blocks
 are defined.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
@@ -282,7 +282,7 @@ We remind the reader that the attribute ``name`` of the constitutive models defi
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
@@ -317,7 +317,7 @@ in the **BlackOilFluid** XML block.
 Note that there is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -333,7 +333,7 @@ Specifying the output formats
 In this section, we request an output of the results in VTK format and an output of the restart file.
 Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
