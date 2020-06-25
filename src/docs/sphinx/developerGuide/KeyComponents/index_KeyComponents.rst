@@ -9,14 +9,14 @@ Code Components
 
    XML.rst
 
-   ProblemManager_link.rst
+   WorkingWithData.rst
 
    mesh_link.rst
 
    dofManager_link.rst
 
-   fem_link.rst
+   LvArray_link.rst
 
-   WorkingWithData.rst
+   fem_link.rst
 
    AddingNewSolver.rst
