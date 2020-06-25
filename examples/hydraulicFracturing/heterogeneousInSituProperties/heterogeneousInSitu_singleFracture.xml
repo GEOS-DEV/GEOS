@@ -23,7 +23,7 @@
     <Parameter name="dt_max_a" value="10 [s]"/>
     <Parameter name="t_init_b" value="2 [min]"/>
     <Parameter name="dt_max_b" value="2 [s]"/>
-    <Parameter name="t_max" value="200 [min]"/>
+    <Parameter name="t_max" value="20 [min]"/>
     <Parameter name="dt_max_c" value="4 [s]"/>   
 
     <!-- Etc. -->

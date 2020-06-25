@@ -178,37 +178,37 @@
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/sigma_xx.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
                    
     <TableFunction name="sigma_yy"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/sigma_yy.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
 
     <TableFunction name="sigma_zz"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/sigma_zz.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
 
     <TableFunction name="init_pressure"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/porePressure.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
 
     <TableFunction name="bulk_modulus"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/bulkModulus.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
 
     <TableFunction name="shear_modulus"
                    inputVarNames="{elementCenter}"
                    coordinateFiles="{$table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv}"
                    voxelFile="$table_root$/shearModulus.csv"
-                   interpolation="nearest"/>
+                   interpolation="upper"/>
   </Functions>
   <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
 
