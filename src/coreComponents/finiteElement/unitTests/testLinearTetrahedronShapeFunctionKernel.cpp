@@ -65,7 +65,7 @@ void testKernelDriver()
   array3d< real64 > arrdNdX( numQuadraturePoints, numNodes, 3 );
 
   arrayView1d< real64 > const & viewDetJxW = arrDetJxW;
-//  arrayView2d< real64 > const & viewN = arrN;
+  arrayView2d< real64 > const & viewN = arrN;
   arrayView3d< real64 > const & viewdNdX = arrdNdX;
 
   constexpr real64 xCoords[numNodes][3] = {
@@ -75,20 +75,20 @@ void testKernelDriver()
     { 1.0, 1.0,  2.0 }
   };
 
-//  forAll< POLICY >( 1,
-//                    [=] GEOSX_HOST_DEVICE ( localIndex const )
-//  {
-//
-//    for( localIndex q=0; q<numQuadraturePoints; ++q )
-//    {
-//      real64 N[numNodes] = {0};
-//      FiniteElementShapeKernel::shapeFunctionValues( q, N );
-//      for( localIndex a=0; a<numNodes; ++a )
-//      {
-//        viewN( q, a ) = N[a];
-//      }
-//    }
-//  } );
+  forAll< POLICY >( 1,
+                    [=] GEOSX_HOST_DEVICE ( localIndex const )
+  {
+
+    for( localIndex q=0; q<numQuadraturePoints; ++q )
+    {
+      real64 N[numNodes] = {0};
+      LinearTetrahedronShapeFunctionKernel::shapeFunctionValues( q, N );
+      for( localIndex a=0; a<numNodes; ++a )
+      {
+        viewN( q, a ) = N[a];
+      }
+    }
+  } );
 
   forAll< POLICY >( 1,
                     [=] GEOSX_HOST_DEVICE ( localIndex const )
@@ -110,18 +110,11 @@ void testKernelDriver()
     }
   } );
 
-
-//  constexpr real64 pCoords[3][numNodes] = {
-//    { 0, 1, 0, 0 },
-//    { 0, 0, 1, 0 },
-//    { 0, 0, 0, 1 }
-//  };
-//
-//  constexpr real64 quadratureCoords[3][numQuadraturePoints] = {
-//    { 0.25 },
-//    { 0.25 },
-//    { 0.25 }
-//  };
+  constexpr real64 quadratureCoords[3][numQuadraturePoints] = {
+    { 0.25 },
+    { 0.25 },
+    { 0.25 }
+  };
 
 
   forAll< serialPolicy >( 1,
@@ -129,17 +122,18 @@ void testKernelDriver()
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-//      real64 const xi[3] = { quadratureCoords[0][q],
-//                             quadratureCoords[1][q],
-//                             quadratureCoords[2][q] };
+      real64 const xi[3] = { quadratureCoords[0][q],
+                             quadratureCoords[1][q],
+                             quadratureCoords[2][q] };
 
-//      for( localIndex a=0; a<numNodes; ++a )
-//      {
-//        real64 N = 0.125 * ( 1 + xi[ 0 ]*pCoords[ 0 ][ a ] ) *
-//                   ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] ) *
-//                   ( 1 + xi[ 2 ]*pCoords[ 2 ][ a ] );
-//        EXPECT_FLOAT_EQ( N, viewN[q][a] );
-//      }
+      for( localIndex a=0; a<numNodes; ++a )
+      {
+        real64 N =   static_cast< real64 >( ( a | 0 ) < 1 )
+                   + static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ) * xi[0]
+                   + static_cast< real64 >( ( ( a ^ 2 ) < 1 ) - ( ( a ^ 2 ) == 2 ) ) * xi[1]
+                   + static_cast< real64 >( ( ( a ^ 3 ) < 1 ) - ( ( a ^ 3 ) == 3 ) ) * xi[2];
+        EXPECT_FLOAT_EQ( N, viewN[q][a] );
+      }
 
       real64 J[3][3] = {{0}};
       for( localIndex a=0; a<numNodes; ++a )

@@ -34,6 +34,18 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
+  static void shapeFunctionValues( localIndex const q,
+                                   real64 N[numNodes] )
+  {
+    GEOSX_UNUSED_VAR( q );
+    for( localIndex a=0; a<numNodes; ++a )
+    {
+      N[a] = 0.25;
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static real64 shapeFunctionDerivatives( localIndex const q,
                                           real64 const (&X)[numNodes][3],
                                           real64 (& dNdX)[numNodes][3] )
