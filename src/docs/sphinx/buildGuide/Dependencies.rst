@@ -100,7 +100,7 @@ it is convenient to use the `thirdPartyLibs/scripts/config-build.py <https://git
 This python script runs the proper cmake command line; generating the Makefiles accordingly.
 Then running the ``make`` command (possibly with a specific target) will compile (and deploy) the libraries.
 
-These two scripts are also used to build the docker images (see [Continuous Integration process](#continuous-integration-process)).
+These two scripts are also used to build the docker images (see :ref:`Continuous_Integration_process`).
 
 The most crucial parameters of the python script are ``--installpath``, ``--buildtype``, ``--hostconfig``.
 (Other parameters do exist, check the script).
