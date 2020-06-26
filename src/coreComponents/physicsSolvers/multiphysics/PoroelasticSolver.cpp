@@ -667,7 +667,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
   {
     if( iter == 0 )
     {
-      // reset the states of all slave solvers if any of them has been reset
+      // reset the states of all child solvers if any of them has been reset
       fluidSolver.ResetStateToBeginningOfStep( domain );
       solidSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
