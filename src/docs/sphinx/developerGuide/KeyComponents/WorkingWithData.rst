@@ -50,14 +50,14 @@ Taking the ``NodeManager`` and the ``referencePosition`` as an example, we
 point out that the reference position is actually a member in the
 ``NodeManager``.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.hpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.hpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS
    :end-before: //END_SPHINX_REFPOS
 
 This member is registered in the constructor for the ``NodeManager``.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.cpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.cpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS_REG
    :end-before: //END_SPHINX_REFPOS_REG
@@ -65,7 +65,7 @@ This member is registered in the constructor for the ``NodeManager``.
 Finally in order to access this data, the ``NodeManager`` provides explicit
 accessors.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.hpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.hpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS_ACCESS
    :end-before: //END_SPHINX_REFPOS_ACCESS

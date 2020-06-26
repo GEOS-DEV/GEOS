@@ -291,7 +291,7 @@ When attaching properties (i.e. data ``Wrapper`` s) to a class, a similar regist
 Every property is accessed through its ``ViewKey`` namespace.
 In this namespace, we define ``string`` s that correspond to the tags of XML attributes of the "BrooksCoreyRelativePermeability" block.
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: protected

@@ -6,7 +6,7 @@ Finite Element Method Kernel Interface
 ======================================
 
 The finite element method kernel interface (FEMKI) specifies an API for the
-launching of computational kernels for solving physics discretized using the 
+launching of computational kernels for solving physics discretized using the
 finite element method.
 Using this approach, a set of generic element looping pattens and kernel
 launching functions may be implemented, and reused by various physics solvers
@@ -40,7 +40,7 @@ function.
 
 The contents of the looping function are displayed here:
 
-.. literalinclude:: KernelBase.hpp
+.. literalinclude:: ../../../../coreComponents/finiteElement/kernelInterface/KernelBase.hpp
    :language: c++
    :start-after: //START_regionBasedKernelApplication
    :end-before: //END_regionBasedKernelApplication
@@ -64,7 +64,7 @@ The ``KernelBase::kernelLaunch`` function defines a launching policy, and an
 internal looping pattern over the quadrautre points, and calls the functions
 defined by the ``KernelBase`` as shown here:
 
-.. literalinclude:: KernelBase.hpp
+.. literalinclude:: ../../../../coreComponents/finiteElement/kernelInterface/KernelBase.hpp
    :language: c++
    :start-after: //START_kernelLauncher
    :end-before: //END_kernelLauncher
