@@ -107,6 +107,7 @@ void CreateHypreGMRES( LinearSolverParameters const & params,
 
   // Default for now
   GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, params.logLevel ) ); // print iteration info
+  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
   GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRGMRESSetLogging( solver, 1 ) ); /* needed to get run info later */
 
   solverFuncs.setPrecond = HYPRE_ParCSRGMRESSetPrecond;
@@ -115,6 +116,29 @@ void CreateHypreGMRES( LinearSolverParameters const & params,
   solverFuncs.getNumIter = HYPRE_GMRESGetNumIterations;
   solverFuncs.getFinalNorm = HYPRE_GMRESGetFinalRelativeResidualNorm;
   solverFuncs.destroy = HYPRE_ParCSRGMRESDestroy;
+}
+
+void CreateHypreFlexGMRES( LinearSolverParameters const & params,
+                           MPI_Comm const comm,
+                           HYPRE_Solver & solver,
+                           HypreSolverFuncs & solverFuncs )
+{
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESCreate( comm, &solver ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetMaxIter( solver, params.krylov.maxIterations ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetKDim( solver, params.krylov.maxRestart ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetTol( solver, params.krylov.relTolerance ) );
+
+  // Default for now
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, params.logLevel ) ); // print iteration info
+  //GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetPrintLevel( solver, 0 ) ); // print iteration info
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ParCSRFlexGMRESSetLogging( solver, 1 ) ); /* needed to get run info later */
+
+  solverFuncs.setPrecond = HYPRE_ParCSRFlexGMRESSetPrecond;
+  solverFuncs.setup = HYPRE_ParCSRFlexGMRESSetup;
+  solverFuncs.solve = HYPRE_ParCSRFlexGMRESSolve;
+  solverFuncs.getNumIter = HYPRE_FlexGMRESGetNumIterations;
+  solverFuncs.getFinalNorm = HYPRE_FlexGMRESGetFinalRelativeResidualNorm;
+  solverFuncs.destroy = HYPRE_ParCSRFlexGMRESDestroy;
 }
 
 void CreateHypreBiCGSTAB( LinearSolverParameters const & params,
@@ -169,6 +193,10 @@ void CreateHypreKrylovSolver( LinearSolverParameters const & params,
   {
     CreateHypreGMRES( params, comm, solver, solverFuncs );
   }
+  else if( params.solverType == "fgmres" )
+  {
+    CreateHypreFlexGMRES( params, comm, solver, solverFuncs );
+  }
   else if( params.solverType == "bicgstab" )
   {
     CreateHypreBiCGSTAB( params, comm, solver, solverFuncs );
@@ -216,6 +244,7 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
     HYPRE_BoomerAMGCreate( &uu_amg_solver );
     HYPRE_BoomerAMGSetTol( uu_amg_solver, 0.0 );
     HYPRE_BoomerAMGSetMaxIter( uu_amg_solver, 1 );
+    HYPRE_BoomerAMGSetPrintLevel( uu_amg_solver, 0 );
     HYPRE_BoomerAMGSetRelaxOrder( uu_amg_solver, 1 );
     HYPRE_BoomerAMGSetAggNumLevels( uu_amg_solver, 1 );
     HYPRE_BoomerAMGSetNumFunctions( uu_amg_solver, 3 );
@@ -268,6 +297,11 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   HYPRE_Int numIter;
   GEOSX_LAI_CHECK_ERROR( solverFuncs.getNumIter( solver, &numIter ) );
   m_result.numIterations = numIter;
+
+  GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
+                    " | Final Relative Tol " << finalNorm <<
+                    " | SetupTime " << m_result.setupTime <<
+                    " | SolveTime " << m_result.solveTime );
 
   // Destroy solver
   GEOSX_LAI_CHECK_ERROR( solverFuncs.destroy( solver ) );

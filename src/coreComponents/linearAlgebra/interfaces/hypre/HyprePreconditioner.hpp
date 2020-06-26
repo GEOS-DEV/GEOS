@@ -23,6 +23,10 @@
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
+#include <_hypre_utilities.h>
+#include <_hypre_parcsr_ls.h>
+#include <_hypre_IJ_mv.h>
+
 #include <memory>
 
 /**
@@ -69,6 +73,7 @@ public:
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
   explicit HyprePreconditioner( LinearSolverParameters params,
                                 DofManager const * const dofManager = nullptr );
@@ -127,8 +132,14 @@ private:
   /// Pointer to the Hypre implementation
   HYPRE_Solver m_precond;
 
+  /// Pointer to the auxillary preconditioner used in MGR
+  HYPRE_Solver aux_precond;
+
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
+
+  // Pointer to point_marker_array
+  array1d< HYPRE_Int > point_marker_array;
 };
 
 }

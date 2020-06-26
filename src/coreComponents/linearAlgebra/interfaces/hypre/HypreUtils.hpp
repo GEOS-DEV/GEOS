@@ -84,6 +84,7 @@ struct HyprePrecFuncs
   SetupFunc setup{};     ///< pointer to setup function
   ApplyFunc apply{};     ///< pointer to apply function
   DestroyFunc destroy{}; ///< pointer to destroy function
+  DestroyFunc aux_destroy{}; ///< pointer to auxillary destroy function
 };
 
 /**
