@@ -56,16 +56,16 @@ public:
   // Catalog view keys
   struct viewKeysStruct
   {
-    static constexpr auto slaveDirectoryString = "slaveDirectory";
+    static constexpr auto childDirectoryString = "childDirectory";
     static constexpr auto parallelThreadsString = "parallelThreads";
   } outputBaseViewKeys;
   /// @endcond
 
   /**
-   * @brief Get the path of the slave directory where output will be written
+   * @brief Get the path of the child directory where output will be written
    * @return The directory path
    **/
-  string slaveDirectory() const { return m_slaveDirectory; }
+  string childDirectory() const { return m_childDirectory; }
 
   /**
    * @brief Get the number of parallel threads to use to write plotfiles
@@ -82,7 +82,7 @@ protected:
   virtual void InitializePreSubGroups( Group * const group ) override;
 
 private:
-  string m_slaveDirectory;
+  string m_childDirectory;
   integer m_parallelThreads;
 
 };
