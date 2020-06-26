@@ -1,22 +1,22 @@
 <Problem>
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->  
-  <Solvers gravityVector="0,0,-9.81">
+  <Solvers>
 
     <CompositionalMultiphaseReservoir name="coupledFlowAndWells"
                                       flowSolverName="compositionalMultiphaseFlow"
                                       wellSolverName="compositionalMultiphaseWell"
                                       logLevel="1"
-                                      initialDt="1e-9"
+                                      initialDt="1e3"
                                       targetRegions="{reservoir,wellRegion1,wellRegion2,wellRegion3,wellRegion4,wellRegion5,wellRegion6,wellRegion7,wellRegion8,wellRegion9,wellRegion10,wellRegion11,wellRegion12}">
       <NonlinearSolverParameters newtonTol="1.0e-4"
-				 newtonMaxIter="10"
-				 newtonMinIter="1"
-				 dtCutIterLimit="0.8"
-				 dtIncIterLimit="0.5"
-				 timestepCutFactor="0.1"
-				 maxTimeStepCuts="10"
-				 lineSearchAction="0"/>
+                                 newtonMaxIter="10"
+                                 newtonMinIter="1"
+                                 dtCutIterLimit="0.8"
+                                 dtIncIterLimit="0.5"
+                                 timestepCutFactor="0.1"
+                                 maxTimeStepCuts="10"
+                                 lineSearchAction="0"/>
       <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
     </CompositionalMultiphaseReservoir>
@@ -28,7 +28,7 @@
                                  solidNames="{rock}"
                                  relPermNames="{relperm}"
                                  temperature="297.15"
-				 logLevel="1"
+                                 logLevel="1"
                                  useMass="1">
     </CompositionalMultiphaseFlow>
 
@@ -37,7 +37,7 @@
                                  fluidNames="{fluid}"
                                  relPermNames="{relperm}"
                                  wellTemperature="297.15"
-				 logLevel="1"
+                                 logLevel="1"
                                  useMass="1">
         <WellControls name="wellControls1"
                       type="producer"
@@ -61,52 +61,52 @@
                       targetRate="1e9"/>
         <WellControls name="wellControls5"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.005,0.005,0.99}"/>
         <WellControls name="wellControls6"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.005,0.005,0.99}"/>
         <WellControls name="wellControls7"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
         <WellControls name="wellControls8"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
         <WellControls name="wellControls9"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
         <WellControls name="wellControls10"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
         <WellControls name="wellControls11"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
         <WellControls name="wellControls12"
                       type="injector"
-                      control="liquidRate"
-                      targetBHP="4.2e9"
-                      targetRate="1"
-		      injectionStream="{0.005,0.005,0.99}"/>
+                      control="BHP"
+                      targetBHP="4.2e7"
+                      targetRate="1e9"
+                      injectionStream="{0.0025,0.0025,0.995}"/>
     </CompositionalMultiphaseWell>
  
   </Solvers>
@@ -116,7 +116,7 @@
   <Mesh>
 
     <PAMELAMeshGenerator name="mesh"
-                         file="../../../../../../../GEOSXDATA/DataSets/EggModel/egg.msh"
+                         file="egg.msh"
                          fieldsToImport="{PERM}"
                          fieldNamesInGEOSX="{permeability}"/>
     
@@ -193,7 +193,6 @@
                    distanceFromHead="22"/> 
       <Perforation name="producer3_perf7"
                    distanceFromHead="26"/> 
-      
     </InternalWell>
 
     <InternalWell name="wellProducer4"
@@ -219,7 +218,6 @@
                    distanceFromHead="22"/> 
       <Perforation name="producer4_perf7"
                    distanceFromHead="26"/> 
-      
     </InternalWell>
     
     <InternalWell name="wellInjector1"
@@ -245,7 +243,6 @@
                    distanceFromHead="26"/> 
       <Perforation name="injector1_perf7"
                    distanceFromHead="30"/> 
-     
     </InternalWell>
     
     <InternalWell name="wellInjector2"
@@ -431,18 +428,15 @@
     <PeriodicEvent name="solverApplications"
                    target="/Solvers/coupledFlowAndWells"/>
     <PeriodicEvent name="vtk"
-                   timeFrequency="432000"
+                   timeFrequency="216000"
                    targetExactTimestep="1"
                    target="/Outputs/vtkOutput" />
     <PeriodicEvent name="silo"
-                   timeFrequency="432000"
+                   timeFrequency="216000"
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
-    <PeriodicEvent name="restarts"
-                   timeFrequency="7776000"
-                   targetExactTimestep="1"
-                   target="/Outputs/restartOutput" />
   </Events>
+  
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_NUMERICAL_METHODS -->      
@@ -504,13 +498,13 @@
 
     <BrooksCoreyRelativePermeability name="relperm"
                                      phaseNames="{oil, gas, water}"
-                                     phaseMinVolumeFraction="{0.0, 0.0, 0.0}"
+                                     phaseMinVolumeFraction="{0.0, 0., 0.0}"
                                      phaseRelPermExponent="{4.0, 2.0, 3.0}"
                                      phaseRelPermMaxValue="{0.8, 0.9, 0.75}"/>
     
     <PoreVolumeCompressibleSolid name="rock"
                                  referencePressure="0"
-                                 compressibility="1e-9"/>
+                                 compressibility="1e-13"/>
     
   </Constitutive>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_CONSTITUTIVE_END -->
@@ -546,7 +540,7 @@
                         objectPath="ElementRegions/reservoir/0_HEX"
                         fieldName="globalCompFraction"
                         component="1"
-                        scale="0.005"/>
+                        scale="0.001"/>
 
     <FieldSpecification name="initialComposition_water"
                         initialCondition="1"
@@ -554,7 +548,7 @@
                         objectPath="ElementRegions/reservoir/0_HEX"
                         fieldName="globalCompFraction"
                         component="2"
-                        scale="0.005"/>
+                        scale="0.009"/>
 
   </FieldSpecifications>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_FIELD_SPECS_END -->    
@@ -563,7 +557,6 @@
   <Outputs>
     <Silo name="siloOutput"/>        
     <VTK name="vtkOutput"/>    
-    <Restart name="restartOutput"/>
   </Outputs>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->        
 

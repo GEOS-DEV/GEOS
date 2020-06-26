@@ -126,7 +126,7 @@ The well placement implemented here follows the pattern of the original test cas
 
 .. image:: egg_model.png
    :width: 400px
-   :align: center 	   
+   :align: center          
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -286,8 +286,98 @@ All elements are now in place to run GEOSX.
 Running GEOSX
 ------------------------------------
 
-In progress
+The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
 
+.. code-block:: console
+
+  Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
+  Adding Solver of type CompositionalMultiphaseFlow, named compositionalMultiphaseFlow
+  Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
+  Adding Mesh: PAMELAMeshGenerator, mesh
+  Adding Mesh: InternalWell, wellProducer1
+  Adding Mesh: InternalWell, wellProducer2
+  Adding Mesh: InternalWell, wellProducer3
+  Adding Mesh: InternalWell, wellProducer4
+  Adding Mesh: InternalWell, wellInjector1
+  Adding Mesh: InternalWell, wellInjector2
+  Adding Mesh: InternalWell, wellInjector3
+  Adding Mesh: InternalWell, wellInjector4
+  Adding Mesh: InternalWell, wellInjector5
+  Adding Mesh: InternalWell, wellInjector6
+  Adding Mesh: InternalWell, wellInjector7
+  Adding Mesh: InternalWell, wellInjector8
+  Adding Event: PeriodicEvent, solverApplications
+  Adding Event: PeriodicEvent, vtk
+  Adding Event: PeriodicEvent, silo
+  Adding Output: Silo, siloOutput
+  Adding Output: VTK, vtkOutput
+  Adding Object CellElementRegion named reservoir from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion1 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion2 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion3 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion4 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion5 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion6 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion7 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion8 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion9 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion10 from ObjectManager::Catalog. 
+  Adding Object WellElementRegion named wellRegion11 from ObjectManager::Catalog.
+  Adding Object WellElementRegion named wellRegion12 from ObjectManager::Catalog.
+                
+This is followed by the creation of the 18553 hexahedral cells of the imported mesh:  
+
+.. code-block:: console
+
+  0 >>> **********************************************************************
+  0 >>>                          PAMELA Library Import tool                   
+  0 >>> **********************************************************************
+  0 >>> GMSH FORMAT IDENTIFIED
+  0 >>> *** Importing Gmsh mesh format...
+  0 >>> Reading nodes...
+  0 >>> Done0
+  0 >>> Reading elements...
+  0 >>> Reading element data...
+  0 >>> Number of nodes = 22227
+  0 >>> Number of triangles = 0
+  0 >>> Number of quadrilaterals = 0
+  0 >>> Number of tetrahedra = 0
+  0 >>> Number of hexahedra = 18553
+  0 >>> Number of pyramids = 0
+  0 >>> Number of prisms = 0
+  0 >>> *** Done
+  0 >>> *** Creating Polygons from Polyhedra...
+  0 >>> 59205 polygons have been created
+  0 >>> *** Done
+  0 >>> *** Perform partitioning...
+  0 >>> TRIVIAL partioning...
+  0 >>> Ghost elements...
+  0 >>> Clean mesh...
+  0 >>> *** Done...
+  0 >>> Clean Adjacency...
+  0 >>> *** Done...
+                
+When ``Running simulation`` is shown, we are done with the case set-up and
+the code steps into the execution of the simulation itself:
+
+.. code-block:: console
+
+  Running simulation 
+  Time: 0s, dt:1000s, Cycle: 0
+    Attempt:  0, NewtonIter:  0 ; 
+
+    Attempt:  0, NewtonIter:  1 ; 
+  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
+    Attempt:  0, NewtonIter:  2 ; 
+  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
+    Attempt:  0, NewtonIter:  3 ; 
+  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
+    Attempt:  0, NewtonIter:  4 ; 
+  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
+    Attempt:  0, NewtonIter:  5 ; 
+  Last LinSolve(iter,res) = (  1, 2.22e-16) ; 
+    Attempt:  0, NewtonIter:  6 ; 
+                
 ------------------------------------
 Visualization of results
 ------------------------------------
@@ -296,6 +386,13 @@ A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
 We can load this file into Paraview directly and visualize results:
 
+|pic1| |pic2|
+
+.. |pic1| image:: pressure.gif
+   :width: 45%
+
+.. |pic2| image:: saturation.gif
+   :width: 45%
 
 ------------------------------------
 To go further
