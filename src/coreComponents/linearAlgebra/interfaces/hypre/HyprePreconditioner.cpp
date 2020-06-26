@@ -197,6 +197,7 @@ void HyprePreconditioner::createILU()
   // Hypre's parameters to use ParCSR ILU as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( m_precond, 1 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( m_precond, 0.0 ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( m_precond, 0 ) );
 
   if( m_parameters.ilu.fill >= 0 )
   {
@@ -215,14 +216,19 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
   // Hypre's parameters to use MGR as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTol( m_precond, 0.0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxIter( m_precond, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( m_precond, toHYPRE_Int( m_parameters.logLevel ) ) );;
-
-  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRCreate( &m_precond ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPrintLevel( m_precond, toHYPRE_Int( m_parameters.logLevel ) ) );
 
   array1d< localIndex > numComponentsPerField = dofManager->numComponentsPerField();
   array1d< localIndex > numLocalDofsPerField = dofManager->numLocalDofsPerField();
-  array1d< HYPRE_Int > point_marker_array = computeLocalDofComponentLabels( numComponentsPerField,
-                                                                            numLocalDofsPerField );
+  point_marker_array = computeLocalDofComponentLabels( numComponentsPerField,
+                                                       numLocalDofsPerField );
+  if( m_parameters.logLevel >= 1 )
+    GEOSX_LOG_RANK_0( numComponentsPerField );
+  if( m_parameters.logLevel >= 2 )
+    GEOSX_LOG_RANK_VAR( numLocalDofsPerField );
+  if( m_parameters.logLevel >= 3 )
+    GEOSX_LOG_RANK_VAR( computeLocalDofComponentLabels( numComponentsPerField,
+                                                        numLocalDofsPerField ) );
 
   HYPRE_Int mgr_bsize;
   HYPRE_Int mgr_nlevels;
@@ -233,7 +239,6 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
   std::vector< HYPRE_Int > coarseGridMethod;
   std::vector< HYPRE_Int > interpolationType;
   bool withPointMarkerArray = false;
-
 
   if( m_parameters.mgr.strategy == "Poroelastic" )
   {
@@ -251,37 +256,37 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
     // 3. C-points coarse-grid/Schur complement solver: boomer AMG
     // 4. Global smoother: none
 
-	if( withPointMarkerArray )
-	{
-		mgr_bsize = 4;
-		mgr_nlevels = 1;
+    if( withPointMarkerArray )
+    {
+      mgr_bsize = 4;
+      mgr_nlevels = 1;
 
-		coarseGridMethod.resize( mgr_nlevels );
-		coarseGridMethod[0] = 1; //diagonal sparsification
-		interpolationType.resize( mgr_nlevels );
-		interpolationType[0] = 2;
+      coarseGridMethod.resize( mgr_nlevels );
+      coarseGridMethod[0] = 1; //diagonal sparsification
+      interpolationType.resize( mgr_nlevels );
+      interpolationType[0] = 2;
 
-		num_block_coarse_points.resize( mgr_nlevels );
-		num_block_coarse_points[0];
+      num_block_coarse_points.resize( mgr_nlevels );
+      num_block_coarse_points[0];
 
-		lvl_block_coarse_indexes_data.resize( mgr_nlevels );
-		lvl_block_coarse_indexes_data[0].resize( 1 );
-		lvl_block_coarse_indexes_data[0][0] = 3;
+      lvl_block_coarse_indexes_data.resize( mgr_nlevels );
+      lvl_block_coarse_indexes_data[0].resize( 1 );
+      lvl_block_coarse_indexes_data[0][0] = 3;
 
-		lvl_block_coarse_indexes.resize( mgr_nlevels );
-		for( HYPRE_Int i = 0; i < mgr_nlevels; ++i )
-		{
-		  lvl_block_coarse_indexes[i] = lvl_block_coarse_indexes_data[i].data();
-		}
-		GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond,
-																	  mgr_bsize,
-																	  mgr_nlevels,
-																	  num_block_coarse_points.data(),
-																	  lvl_block_coarse_indexes.data(),
-																	  point_marker_array.data() ) );
-	}
-	else
-	{
+      lvl_block_coarse_indexes.resize( mgr_nlevels );
+      for( HYPRE_Int i = 0; i < mgr_nlevels; ++i )
+      {
+        lvl_block_coarse_indexes[i] = lvl_block_coarse_indexes_data[i].data();
+      }
+      GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCpointsByPointMarkerArray( m_precond,
+                                                                    mgr_bsize,
+                                                                    mgr_nlevels,
+                                                                    num_block_coarse_points.data(),
+                                                                    lvl_block_coarse_indexes.data(),
+                                                                    point_marker_array.data() ) );
+    }
+    else
+    {
       mgr_bsize = 2;
       mgr_nlevels = 1;
 
@@ -300,46 +305,229 @@ void HyprePreconditioner::createMGR( DofManager const * const dofManager )
 
       HYPRE_MGRSetCpointsByContiguousBlock( m_precond, mgr_bsize, mgr_nlevels, idx_array.data(), mgr_num_cindices, mgr_cindices );
 
-	  coarseGridMethod.resize( mgr_nlevels );
-	  coarseGridMethod[0] = 1; //diagonal sparsification
+      coarseGridMethod.resize( mgr_nlevels );
+      coarseGridMethod[0] = 1; //diagonal sparsification
       interpolationType.resize( mgr_nlevels );
       interpolationType[0] = 2;
     }
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( m_precond, 99 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( aux_precond, 0.0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( aux_precond, 1 ) );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( m_precond, 2 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetPMaxElmts( m_precond, 0 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, interpolationType.data() ) );
-//    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, coarseGridMethod.data() ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( m_precond, coarseGridMethod.data() ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_BoomerAMGSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_BoomerAMGDestroy;
   }
   else if( m_parameters.mgr.strategy == "CompositionalMultiphaseFlow" )
   {
-	// Labels description stored in point_marker_array
-	//             0 = pressure
-	//             1 = density
-	//           ... = densities
-	// numLabels - 1 = density
-	HYPRE_Int numLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
-	GEOSX_LOG_RANK_VAR( numLabels );
-    GEOSX_ERROR( "To be implemented" );
+    // Labels description stored in point_marker_array
+    //             0 = pressure
+    //             1 = density
+    //           ... = densities
+    // numLabels - 1 = density
+    //
+    // 2-level MGR reduction strategy which seems to work well for 2 components
+    // 1st level: eliminate the reservoir density associated with the volume constraint
+    // 2nd level: eliminate the pressure
+    // The coarse grid solved with ILU(0)
+    //
+    // TODO:
+    // - Experiment with block Jacobi for F-relaxation/interpolation of the reservoir densities
+    // - Explore ways to reduce onto the pressure variable and use AMG for coarse-grid solve
+    HYPRE_Int numLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+
+    mgr_bsize = numLabels;
+    mgr_nlevels = 2;
+
+    /* options for solvers at each level */
+    HYPRE_Int mgr_gsmooth_type = 16; // ILU(0)
+    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+
+    HYPRE_Int *mgr_level_frelax_method = NULL;
+    mgr_level_frelax_method = hypre_CTAlloc( HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST );
+    mgr_level_frelax_method[0] = 0; // Jacobi
+    mgr_level_frelax_method[1] = 2; // AMG V-cycle
+
+    std::vector< HYPRE_Int > mgr_num_cindexes;
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = mgr_bsize - 1; // eliminate the last density reservoir block
+    mgr_num_cindexes[1] = mgr_bsize - 2; // eliminate pressure
+
+    array1d< HYPRE_Int > lv1;
+    array1d< HYPRE_Int > lv2;
+    for( int cid=0; cid < mgr_bsize; cid++ )
+    {
+      // All points except the last density
+      // which corresponds to the volume constraint equation
+      if( cid < numLabels - 1 )
+      {
+        lv1.emplace_back( cid );
+      }
+    }
+    for( auto & cid : lv1 )
+    {
+      // eliminate pressure
+      if( cid != 0 )
+      {
+        lv2.emplace_back( cid );
+      }
+    }
+
+    std::vector< HYPRE_Int * > mgr_cindexes;
+    mgr_cindexes.resize( mgr_nlevels );
+    mgr_cindexes[0] = lv1.data();
+    mgr_cindexes[1] = lv2.data();
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( aux_precond, 0.0 ) );
+
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
+                                             mgr_num_cindexes.data(),
+                                             mgr_cindexes.data(),
+                                             point_marker_array.data() )
+      );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSetup,
+                                aux_precond )
+      );
+    m_functions->aux_destroy = HYPRE_ILUDestroy;
   }
   else if( m_parameters.mgr.strategy == "CompositionalMultiphaseReservoir" )
   {
     // Labels description stored in point_marker_array
-	//                0 = reservoir pressure
-	//                1 = reservoir density
-	//              ... = ... (reservoir densities)
-	// numResLabels - 1 = reservoir density
+    //                0 = reservoir pressure
+    //                1 = reservoir density
+    //              ... = ... (reservoir densities)
+    // numResLabels - 1 = reservoir density
     //     numResLabels = well pressure
-	// numResLabels + 1 = well density
-	//              ... = ... (well densities)
-	// numResLabels + numWellLabels - 2 = well density
-	// numResLabels + numWellLabels - 1 = well rate
-	HYPRE_Int numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
-	HYPRE_Int numWellLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
-	GEOSX_LOG_RANK_VAR( numResLabels );
-	GEOSX_LOG_RANK_VAR( numWellLabels );
-    GEOSX_ERROR( "To be implemented" );
+    // numResLabels + 1 = well density
+    //              ... = ... (well densities)
+    // numResLabels + numWellLabels - 2 = well density
+    // numResLabels + numWellLabels - 1 = well rate
+    //
+    // 3-level MGR reduction strategy which seems to work well for 2 components
+    // 1st level: eliminate the reservoir density associated with the volume constraint
+    // 2nd level: eliminate the rest of the reservoir densities
+    // 3rd level: eliminate the pressure
+    // The coarse grid is the well block and solved with ILU(0)
+    //
+    // TODO:
+    // - Use block Jacobi for F-relaxation/interpolation of the reservoir densities (2nd level)
+
+    HYPRE_Int numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
+    HYPRE_Int numWellLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+
+    mgr_bsize = numResLabels + numWellLabels;
+    mgr_nlevels = 3;
+
+    /* options for solvers at each level */
+    HYPRE_Int mgr_gsmooth_type = 16; // ILU(0)
+    HYPRE_Int mgr_num_gsmooth_sweeps = 1;
+
+    HYPRE_Int *mgr_level_interp_type = NULL;
+    mgr_level_interp_type = hypre_CTAlloc( HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST );
+    mgr_level_interp_type[0] = 2;
+    mgr_level_interp_type[1] = 2;
+    mgr_level_interp_type[2] = 2;
+
+    HYPRE_Int *mgr_level_frelax_method = NULL;
+    mgr_level_frelax_method = hypre_CTAlloc( HYPRE_Int, mgr_nlevels, HYPRE_MEMORY_HOST );
+    mgr_level_frelax_method[0] = 0; // Jacobi
+    mgr_level_frelax_method[1] = 0; // Jacobi
+    mgr_level_frelax_method[2] = 2; // AMG V-cycle
+
+    std::vector< HYPRE_Int > mgr_num_cindexes;
+    mgr_num_cindexes.resize( mgr_nlevels );
+    mgr_num_cindexes[0] = mgr_bsize - 1; // eliminate the last density in the reservoir block
+    mgr_num_cindexes[1] = mgr_bsize - numResLabels + 1; // eliminate all densities reservoir block
+    mgr_num_cindexes[2] = mgr_bsize - numResLabels; // eliminate reservoir block
+
+    std::vector< HYPRE_Int * > mgr_cindexes;
+    array1d< HYPRE_Int > lv1;
+    array1d< HYPRE_Int > lv2;
+    array1d< HYPRE_Int > lv3;
+    mgr_cindexes.resize( mgr_nlevels );
+    for( int cid=0; cid < mgr_bsize; cid++ )
+    {
+      // All points except the last reservoir density
+      // which corresponds to the volume constraint equation
+      if( cid != numResLabels - 1 )
+      {
+        lv1.emplace_back( cid );
+      }
+    }
+    for( auto & cid : lv1 )
+    {
+      // eliminate the rest of the reservoir densities
+      if( cid == 0 || cid >= numResLabels )
+      {
+        lv2.emplace_back( cid );
+      }
+    }
+    for( auto & cid : lv2 )
+    {
+      // eliminate the reservoir pressure
+      if( cid != 0 )
+      {
+        lv3.emplace_back( cid );
+      }
+    }
+
+    mgr_cindexes[0] = lv1.data();
+    mgr_cindexes[1] = lv2.data();
+    mgr_cindexes[2] = lv3.data();
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUCreate( &aux_precond ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( aux_precond, 0 ) ); // Block Jacobi - ILU
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetLevelOfFill( aux_precond, 0 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( aux_precond, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( aux_precond, 0.0 ) );
+
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCpointsByPointMarkerArray( m_precond, mgr_bsize, mgr_nlevels,
+                                             mgr_num_cindexes.data(),
+                                             mgr_cindexes.data(),
+                                             point_marker_array.data() )
+      );
+
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( m_precond, mgr_level_frelax_method ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( m_precond, 1 ));
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( m_precond, mgr_level_interp_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( m_precond, mgr_gsmooth_type ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( m_precond, mgr_num_gsmooth_sweeps ) );
+    GEOSX_LAI_CHECK_ERROR(
+      HYPRE_MGRSetCoarseSolver( m_precond,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSolve,
+                                (HYPRE_PtrToParSolverFcn)HYPRE_ILUSetup,
+                                aux_precond )
+      );
+
+    m_functions->aux_destroy = HYPRE_ILUDestroy;
   }
   else
   {
@@ -397,6 +585,10 @@ void HyprePreconditioner::clear()
   if( m_precond != nullptr && m_functions && m_functions->destroy != nullptr )
   {
     m_functions->destroy( m_precond );
+  }
+  if( aux_precond != nullptr && m_functions && m_functions->aux_destroy != nullptr )
+  {
+    m_functions->aux_destroy( aux_precond );
   }
   m_functions.reset();
 }

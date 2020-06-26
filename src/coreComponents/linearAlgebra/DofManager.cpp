@@ -136,7 +136,7 @@ array1d< localIndex > DofManager::numLocalDofsPerField() const
   {
     for( const auto & field : m_fields )
     {
-      ret.push_back( field.numLocalDof );
+      ret.emplace_back( field.numLocalDof );
     }
   }
   return ret;
@@ -214,7 +214,7 @@ array1d< localIndex > DofManager::numComponentsPerField() const
   {
     for( const auto & field : m_fields )
     {
-      ret.push_back( field.numComponents );
+      ret.emplace_back( field.numComponents );
     }
   }
   return ret;
