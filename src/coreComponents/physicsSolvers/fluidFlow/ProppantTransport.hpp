@@ -197,7 +197,6 @@ public:
     static constexpr auto componentConcentrationString      = "componentConcentration";
     static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";
     static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
-    static constexpr auto updatedComponentConcentrationString      = "updatedComponentConcentration";
 
     // these are used to store last converged time step values
     static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
@@ -238,11 +237,15 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
+
+  void UpdateProppantMobility( Group & dataGroup );
+
+  void UpdateProppantPackVolume( real64 const time_n, real64 const dt, DomainPartition & domain );
+
 protected:
 
   virtual void PostProcessInput() override;
-
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
 
@@ -261,12 +264,6 @@ private:
 
   void UpdateProppantModel( Group & dataGroup, localIndex const targetIndex );
 
-  void UpdateProppantMobility( Group & dataGroup );
-
-  void UpdateProppantPackVolume( real64 const time_n,
-                                 real64 const dt,
-                                 DomainPartition & domain );
-
   void UpdateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
 
@@ -274,11 +271,11 @@ private:
 
   /// views into primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaProppantConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaProppantConcentration;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_cellBasedFlux;
 
@@ -288,43 +285,43 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantExcessPackVolume;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantBoundaryElement;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantBoundaryElement;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isInterfaceElement;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantMobile;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_transTMultiplier;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > m_transTMultiplier;
 
   /// views into material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dDensity_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dDensity_dComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDensity_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDensity_dProppantConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dDensity_dComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_componentDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dComponentDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dComponentDensity_dComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_componentDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dComponentDensity_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dComponentDensity_dComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_fluidDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dFluidDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dFluidDensity_dComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_fluidDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dFluidDensity_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dFluidDensity_dComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_fluidViscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_fluidViscosity;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dViscosity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dViscosity_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dViscosity_dComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dViscosity_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dViscosity_dProppantConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dViscosity_dComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_settlingFactor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_dSettlingFactor_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_dSettlingFactor_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dSettlingFactor_dComponentConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_settlingFactor;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dSettlingFactor_dPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dSettlingFactor_dProppantConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dSettlingFactor_dComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_collisionFactor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_dCollisionFactor_dProppantConcentration;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_collisionFactor;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dCollisionFactor_dProppantConcentration;
 
   array1d< string > m_proppantModelNames;
 

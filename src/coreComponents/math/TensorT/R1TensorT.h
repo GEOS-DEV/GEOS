@@ -276,6 +276,7 @@ inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const realT & rhs )
  * @return L2 norm of tensor
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 {
   realT norm = 0.0;

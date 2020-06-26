@@ -106,13 +106,11 @@ void SinglePhaseWell::UpdateFluidModel( WellElementSubRegion & subRegion, localI
 
   SingleFluidBase & fluid = GetConstitutiveModel< SingleFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  bool const success =
-    constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     SinglePhaseBaseKernels::FluidUpdateKernel::Launch( fluidWrapper, pres, dPres );
   } );
-  GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
 }
 
 void SinglePhaseWell::UpdateState( WellElementSubRegion & subRegion, localIndex const targetIndex )

@@ -20,7 +20,6 @@
 #define GEOSX_CONSTITUTIVE_FLUID_SINGLEFLUIDBASE_HPP
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -111,9 +110,9 @@ private:
    * @param[out] viscosity fluid viscosity
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pres,
-                        real64 & dens,
-                        real64 & visc ) const = 0;
+  virtual void Compute( real64 const pressure,
+                        real64 & density,
+                        real64 & viscosity ) const = 0;
 
   /**
    * @brief Compute fluid properties and derivatives at a single point.
@@ -124,11 +123,11 @@ private:
    * @param[out] dViscosity_dPressure fluid viscosity derivative w.r.t. pressure
    */
   GEOSX_HOST_DEVICE
-  virtual void Compute( real64 const pres,
-                        real64 & dens,
-                        real64 & dDens_dPres,
-                        real64 & visc,
-                        real64 & dVisc_dPres ) const = 0;
+  virtual void Compute( real64 const pressure,
+                        real64 & density,
+                        real64 & dDensity_dPressure,
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure ) const = 0;
 
   /**
    * @brief Update fluid state at a single point.
@@ -139,7 +138,7 @@ private:
   GEOSX_HOST_DEVICE
   virtual void Update( localIndex const k,
                        localIndex const q,
-                       real64 const pres ) const = 0;
+                       real64 const pressure ) const = 0;
 
 };
 

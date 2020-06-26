@@ -18,6 +18,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_SINGLEPHASESELECTOR_HPP_
 
+#include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/CompressibleSinglePhaseFluid.hpp"
 
 namespace geosx
@@ -27,37 +28,17 @@ namespace constitutive
 {
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( SingleFluidBase const & fluid,
+void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  bool rval = true;
-  if( dynamicCast< CompressibleSinglePhaseFluid const * >( &fluid ) )
-  {
-    lambda( static_cast< CompressibleSinglePhaseFluid const & >( fluid ) );
-  }
-  else
-  {
-    rval = false;
-  }
-
-  return rval;
+  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( SingleFluidBase & fluid,
+void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  bool rval = true;
-  if( dynamicCast< CompressibleSinglePhaseFluid * >( &fluid ) )
-  {
-    lambda( static_cast< CompressibleSinglePhaseFluid & >( fluid ) );
-  }
-  else
-  {
-    rval = false;
-  }
-
-  return rval;
+  ConstitutivePassThruHandler< CompressibleSinglePhaseFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

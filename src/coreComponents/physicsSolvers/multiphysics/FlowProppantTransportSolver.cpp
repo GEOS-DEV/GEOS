@@ -56,7 +56,6 @@ void FlowProppantTransportSolver::ImplicitStepSetup( real64 const & time_n,
 {
   m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
   m_proppantSolver->ImplicitStepSetup( time_n, dt, domain );
-  m_proppantSolver->PreStepUpdate( time_n, dt, domain );
 }
 
 void FlowProppantTransportSolver::ImplicitStepComplete( real64 const & time_n,
@@ -65,7 +64,6 @@ void FlowProppantTransportSolver::ImplicitStepComplete( real64 const & time_n,
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   m_proppantSolver->ImplicitStepComplete( time_n, dt, domain );
-  m_proppantSolver->PostStepUpdate( time_n, dt, domain );
 }
 
 void FlowProppantTransportSolver::PostProcessInput()
@@ -114,6 +112,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
                                  m_proppantSolver->getLocalSolution() );
 
   ImplicitStepSetup( time_n, dt, domain );
+  m_proppantSolver->PreStepUpdate( time_n, dt, domain );
 
   int iter = 0;
   while( iter < this->m_nonlinearSolverParameters.m_maxIterNewton )
@@ -157,6 +156,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   }
 
   ImplicitStepComplete( time_n, dtReturn, domain );
+  m_proppantSolver->PostStepUpdate( time_n, dt, domain );
   return dtReturn;
 }
 

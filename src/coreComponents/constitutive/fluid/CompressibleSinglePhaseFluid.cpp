@@ -86,17 +86,17 @@ CompressibleSinglePhaseFluid::DeliverClone( string const & name,
     clone = std::make_unique< CompressibleSinglePhaseFluid >( name, parent );
   }
   SingleFluidBase::DeliverClone( name, parent, clone );
-  CompressibleSinglePhaseFluid & newConstitutiveRelation = dynamicCast< CompressibleSinglePhaseFluid & >( *clone );
+  CompressibleSinglePhaseFluid & fluid = dynamicCast< CompressibleSinglePhaseFluid & >( *clone );
 
-  newConstitutiveRelation.m_compressibility      = this->m_compressibility;
-  newConstitutiveRelation.m_viscosibility        = this->m_viscosibility;
-  newConstitutiveRelation.m_referencePressure    = this->m_referencePressure;
-  newConstitutiveRelation.m_referenceDensity     = this->m_referenceDensity;
-  newConstitutiveRelation.m_referenceViscosity   = this->m_referenceViscosity;
-  newConstitutiveRelation.m_densityModelString   = this->m_densityModelString;
-  newConstitutiveRelation.m_viscosityModelString = this->m_viscosityModelString;
-  newConstitutiveRelation.m_densityModelType     = this->m_densityModelType;
-  newConstitutiveRelation.m_viscosityModelType   = this->m_viscosityModelType;
+  fluid.m_compressibility      = m_compressibility;
+  fluid.m_viscosibility        = m_viscosibility;
+  fluid.m_referencePressure    = m_referencePressure;
+  fluid.m_referenceDensity     = m_referenceDensity;
+  fluid.m_referenceViscosity   = m_referenceViscosity;
+  fluid.m_densityModelString   = m_densityModelString;
+  fluid.m_viscosityModelString = m_viscosityModelString;
+  fluid.m_densityModelType     = m_densityModelType;
+  fluid.m_viscosityModelType   = m_viscosityModelType;
 
 }
 
@@ -105,16 +105,16 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
   SingleFluidBase::PostProcessInput();
 
   GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
-                         "CompressibleSinglePhaseFluid: invalid value of " << viewKeyStruct::compressibilityString );
+                         getName() << ": invalid value of " << viewKeyStruct::compressibilityString );
 
   GEOSX_ERROR_IF_LT_MSG( m_viscosibility, 0.0,
-                         "CompressibleSinglePhaseFluid: invalid value of " << viewKeyStruct::viscosibilityString );
+                         getName() << ": invalid value of " << viewKeyStruct::viscosibilityString );
 
   GEOSX_ERROR_IF_LE_MSG( m_referenceDensity, 0.0,
-                         "CompressibleSinglePhaseFluid: invalid value of " << viewKeyStruct::referenceDensityString );
+                         getName() << ": invalid value of " << viewKeyStruct::referenceDensityString );
 
   GEOSX_ERROR_IF_LE_MSG( m_referenceViscosity, 0.0,
-                         "CompressibleSinglePhaseFluid: invalid value of " << viewKeyStruct::referenceViscosityString );
+                         getName() << ": invalid value of " << viewKeyStruct::referenceViscosityString );
 
   m_densityModelType   = stringToExponentType( m_densityModelString );
   m_viscosityModelType = stringToExponentType( m_viscosityModelString );
@@ -122,10 +122,10 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
   // Due to the way update wrapper is currently implemented, we can only support one model type
 
   GEOSX_ERROR_IF( m_densityModelType != ExponentApproximationType::Linear,
-                  "CompressibleSinglePhaseFluid: model type currently not supported: " << m_densityModelString );
+                  getName() << ": model type currently not supported: " << m_densityModelString );
 
   GEOSX_ERROR_IF( m_viscosityModelType != ExponentApproximationType::Linear,
-                  "CompressibleSinglePhaseFluid: model type currently not supported: " << m_viscosityModelString );
+                  getName() << ": model type currently not supported: " << m_viscosityModelString );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this
@@ -137,7 +137,8 @@ void CompressibleSinglePhaseFluid::PostProcessInput()
   this->getWrapper< array2d< real64 > >( viewKeyStruct::dVisc_dPresString )->setDefaultValue( dVisc_dP );
 }
 
-CompressibleSinglePhaseFluid::KernelWrapper CompressibleSinglePhaseFluid::createKernelWrapper()
+CompressibleSinglePhaseFluid::KernelWrapper
+CompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),

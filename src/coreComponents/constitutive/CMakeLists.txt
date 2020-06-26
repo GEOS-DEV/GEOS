@@ -4,6 +4,7 @@
 set( constitutive_headers
      ConstitutiveManager.hpp
      ConstitutiveBase.hpp
+     ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
      capillaryPressure/CapillaryPressureBase.hpp
@@ -28,8 +29,10 @@ set( constitutive_headers
      fluid/MultiFluidUtils.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/SlurryFluidBase.hpp
+     fluid/slurryFluidSelector.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
+     fluid/particleFluidSelector.hpp
      fluid/ParticleFluid.hpp          
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp

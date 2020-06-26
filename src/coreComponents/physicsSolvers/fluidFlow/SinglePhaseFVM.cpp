@@ -351,7 +351,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
     //       Then we can forget about capturing the fluid model.
     SingleFluidBase & fluidBase = *constitutiveManager.GetConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
 
-    bool const success = constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
       // create the fluid compute wrapper suitable for capturing in a kernel lambda
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
@@ -374,7 +374,6 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
                                      localMatrix,
                                      localRhs );
     } );
-    GEOSX_ERROR_IF( !success, "Kernel not launched due to unknown fluid type" );
   } );
 }
 

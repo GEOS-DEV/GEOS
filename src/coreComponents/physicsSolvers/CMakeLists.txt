@@ -26,6 +26,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseWell.hpp
      fluidFlow/SinglePhaseWellKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
+     fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/WellSolverBase.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/FlowProppantTransportSolver.hpp

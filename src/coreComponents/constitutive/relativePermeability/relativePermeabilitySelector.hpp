@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
 #define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYSELECTOR_HPP
 
+#include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
 #include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
@@ -38,23 +39,21 @@ namespace constitutive
   }
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
+void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
                                  LAMBDA && lambda )
 {
-  PASSTHROUGH_HANDLE_CASE( BrooksCoreyRelativePermeability const )
-  PASSTHROUGH_HANDLE_CASE( BrooksCoreyBakerRelativePermeability const )
-  PASSTHROUGH_HANDLE_CASE( VanGenuchtenBakerRelativePermeability const )
-  return false;
+  ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
+                               BrooksCoreyBakerRelativePermeability,
+                               VanGenuchtenBakerRelativePermeability >::Execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
-bool constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
+void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
                                  LAMBDA && lambda )
 {
-  PASSTHROUGH_HANDLE_CASE( BrooksCoreyRelativePermeability )
-  PASSTHROUGH_HANDLE_CASE( BrooksCoreyBakerRelativePermeability )
-  PASSTHROUGH_HANDLE_CASE( VanGenuchtenBakerRelativePermeability )
-  return false;
+  ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
+                               BrooksCoreyBakerRelativePermeability,
+                               VanGenuchtenBakerRelativePermeability >::Execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
 #undef PASSTHROUGH_HANDLE_CASE

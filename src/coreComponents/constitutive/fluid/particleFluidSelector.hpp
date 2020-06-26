@@ -13,15 +13,13 @@
  */
 
 /**
- * @file multiFluidSelector.hpp
+ * @file particleFluidSelector.hpp
  */
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#ifndef GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
+#include "constitutive/fluid/ParticleFluid.hpp"
 
 namespace geosx
 {
@@ -30,25 +28,21 @@ namespace constitutive
 {
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
+void constitutiveUpdatePassThru( ParticleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
-                               CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ParticleFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( MultiFluidBase & fluid,
+void constitutiveUpdatePassThru( ParticleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< BlackOilFluid,
-                               CompositionalMultiphaseFluid,
-                               MultiPhaseMultiComponentFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< ParticleFluid >::Execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDSELECTOR_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_PARTICLEFLUIDSELECTOR_HPP_

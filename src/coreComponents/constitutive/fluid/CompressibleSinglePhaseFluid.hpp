@@ -70,33 +70,33 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( real64 const pres,
-                        real64 & dens,
-                        real64 & visc ) const override
+  virtual void Compute( real64 const pressure,
+                        real64 & density,
+                        real64 & viscosity ) const override
   {
-    m_densRelation.Compute( pres, dens );
-    m_viscRelation.Compute( pres, visc );
+    m_densRelation.Compute( pressure, density );
+    m_viscRelation.Compute( pressure, viscosity );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  virtual void Compute( real64 const pres,
-                        real64 & dens,
-                        real64 & dDens_dPres,
-                        real64 & visc,
-                        real64 & dVisc_dPres ) const override
+  virtual void Compute( real64 const pressure,
+                        real64 & density,
+                        real64 & dDensity_dPressure,
+                        real64 & viscosity,
+                        real64 & dViscosity_dPressure ) const override
   {
-    m_densRelation.Compute( pres, dens, dDens_dPres );
-    m_viscRelation.Compute( pres, visc, dVisc_dPres );
+    m_densRelation.Compute( pressure, density, dDensity_dPressure );
+    m_viscRelation.Compute( pressure, viscosity, dViscosity_dPressure );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   virtual void Update( localIndex const k,
                        localIndex const q,
-                       real64 const pres ) const override
+                       real64 const pressure ) const override
   {
-    Compute( pres,
+    Compute( pressure,
              m_density[k][q],
              m_dDens_dPres[k][q],
              m_viscosity[k][q],

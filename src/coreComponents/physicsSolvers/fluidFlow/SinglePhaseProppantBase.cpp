@@ -19,9 +19,9 @@
 
 #include "SinglePhaseProppantBase.hpp"
 
-#include "ProppantTransport.hpp"
-
-#include "constitutive/fluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/slurryFluidSelector.hpp"
+#include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
 namespace geosx
 {
@@ -70,10 +70,9 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
 
   arrayView1d< real64 const > const & pres =
     dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+
   arrayView1d< real64 const > const & dPres =
     dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString );
-
-  SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
   arrayView1d< real64 const > const & proppantConcentration =
     dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantConcentrationString );
@@ -90,13 +89,19 @@ void SinglePhaseProppantBase::UpdateFluidModel( Group & dataGroup, localIndex co
   arrayView1d< integer const > const & isProppantBoundaryElement =
     dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString );
 
-  forAll< parallelHostPolicy >( dataGroup.size(), [&] ( localIndex const a )
+  SlurryFluidBase & fluid = GetConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+
+  constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
-    fluid.PointUpdate( pres[a] + dPres[a],
-                       proppantConcentration[a] + dProppantConcentration[a],
-                       componentConcentration[a],
-                       cellBasedFlux[a].L2_Norm(),
-                       isProppantBoundaryElement[a], a, 0 );
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    SinglePhaseProppantBaseKernels::FluidUpdateKernel::Launch( fluidWrapper,
+                                                               pres,
+                                                               dPres,
+                                                               proppantConcentration,
+                                                               dProppantConcentration,
+                                                               componentConcentration,
+                                                               cellBasedFlux,
+                                                               isProppantBoundaryElement );
   } );
 }
 

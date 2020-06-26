@@ -16,11 +16,10 @@
  * @file MultiFluidBase.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
-#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
+#define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
 
 #include "constitutive/ConstitutiveBase.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -371,4 +370,4 @@ protected:
 
 } //namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP
+#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDBASE_HPP_
