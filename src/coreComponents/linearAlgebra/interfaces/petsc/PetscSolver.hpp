@@ -53,6 +53,7 @@ public:
    * @param[in,out] mat the matrix
    * @param[in,out] sol the solution
    * @param[in,out] rhs the right-hand side
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    *
    * Solve Ax=b with A an PetscMatrix, x and b PetscVector.
    */

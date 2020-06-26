@@ -73,7 +73,7 @@ public:
     integer separateComponents = false;      ///< Apply a separate component filter before AMG construction
     string nullSpaceType = "constantModes";  ///< Null space type [constantModes,rigidBodyModes]
   }
-  amg;                                       //!< Algebraic Multigrid (AMG) parameters
+  amg;                                       ///< Algebraic Multigrid (AMG) parameters
 
   /// Multigrid reduction parameters
   struct MGR
@@ -82,7 +82,7 @@ public:
     integer separateComponents = false; ///< Apply a separate displacement component (SDC) filter before AMG construction
     string displacementFieldName;       ///< Displacement field name need for SDC filter
   }
-  mgr;
+  mgr;                                  ///< Multigrid reduction (MGR) parameters
 
   /// Incomplete factorization parameters
   struct ILU
