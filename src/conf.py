@@ -41,19 +41,23 @@ if read_the_docs_build:
     config_dst = os.path.join(common_path, "GeosxConfig.hpp")
 
     input_dirs = ["coreComponents/common",
-                  "coreComponents/dataRepository"
+                  "coreComponents/dataRepository",
                   "coreComponents/fileIO",
                   "coreComponents/linearAlgebra",
-                  "coreComponents/wells",
-                  "coreComponents/meshUtilities",
                   "coreComponents/LvArray/src",
+                  "coreComponents/mesh",
+                  "coreComponents/managers",
+                  "coreComponents/meshUtilities",
+                  "coreComponents/wells",
                   "coreComponents/finiteElement/kernelInterface",
+                  "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp",
                   "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp",
-                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"]
+                  "coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp",
+                  "coreComponents/finiteVolume"]
 
     # Write correct ReadtheDocs path and input directories
     shutil.copy(doxyfile_src, doxyfile_dst)
