@@ -5,6 +5,7 @@
 set(testSources
     testLinearTetrahedronShapeFunctionKernel.cpp
     testShapeFunctionKernel.cpp
+    testSixNodeWedgeShapeFunctionKernel.cpp
    )
 
 if( ENABLE_OPENMP )
