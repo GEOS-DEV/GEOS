@@ -13,6 +13,7 @@ At the end of this tutorial you will know:
 
  - how to set up a Co2 injection scenario
  - how to add well coupling into the domain 
+ - how to run a case using mpi-parallelism
 
 **Input file**
 
@@ -220,12 +221,96 @@ The simulation can be launched with on 8-cores using MPI-parallelism:
 
   mpirun -np 8 geosx -i FieldCaseCo2InjTutorial.xml -x 2 -y 2 -z 2
 
+Then, the multicore loading will rank-prefix the usual GEOSX mesh pre-treatment output as
+
+.. code-block:: console
+
+        1 >>> **********************************************************************
+        1 >>>                          PAMELA Library Import tool                   
+        1 >>> **********************************************************************
+        1 >>> GMSH FORMAT IDENTIFIED
+        1 >>> *** Importing Gmsh mesh format...
+        3 >>> **********************************************************************
+        6 >>> **********************************************************************
+        6 >>>                          PAMELA Library Import tool                   
+        6 >>> **********************************************************************
+        6 >>> GMSH FORMAT IDENTIFIED
+        3 >>>                          PAMELA Library Import tool                   
+        3 >>> **********************************************************************
+        3 >>> GMSH FORMAT IDENTIFIED
+        6 >>> *** Importing Gmsh mesh format...
+        3 >>> *** Importing Gmsh mesh format...
+        7 >>> **********************************************************************
+        7 >>>                          PAMELA Library Import tool                   
+        7 >>> **********************************************************************
+        7 >>> GMSH FORMAT IDENTIFIED
+        7 >>> *** Importing Gmsh mesh format...
+        0 >>> **********************************************************************
+        0 >>>                          PAMELA Library Import tool                   
+        0 >>> **********************************************************************
+        0 >>> GMSH FORMAT IDENTIFIED
+        0 >>> *** Importing Gmsh mesh format...
+        5 >>> **********************************************************************
+        5 >>>                          PAMELA Library Import tool                   
+        5 >>> **********************************************************************
+        5 >>> GMSH FORMAT IDENTIFIED
+        5 >>> *** Importing Gmsh mesh format...
+        4 >>> **********************************************************************
+        4 >>>                          PAMELA Library Import tool                   
+        4 >>> **********************************************************************
+        4 >>> GMSH FORMAT IDENTIFIED
+        4 >>> *** Importing Gmsh mesh format...
+        2 >>> **********************************************************************
+        2 >>>                          PAMELA Library Import tool                   
+        2 >>> **********************************************************************
+        2 >>> GMSH FORMAT IDENTIFIED
+        2 >>> *** Importing Gmsh mesh format...
+        7 >>> Reading nodes...
+        4 >>> Reading nodes...
+        1 >>> Reading nodes...
+        5 >>> Reading nodes...
+        0 >>> Reading nodes...
+        6 >>> Reading nodes...
+        3 >>> Reading nodes...
+        2 >>> Reading nodes...
+        6 >>> Done0
+        6 >>> Reading elements...
+        5 >>> Done0
+        5 >>> Reading elements...
+        4 >>> Done0
+        4 >>> Reading elements...
+        3 >>> Done0
+        3 >>> Reading elements...
+        1 >>> Done0
+        1 >>> Reading elements...
+        7 >>> Done0
+        7 >>> Reading elements...
+        0 >>> Done0
+        0 >>> Reading elements...
+        2 >>> Done0
+
 A restart from a checkpoint file `FieldCaseCo2InjTutorial_restart_000000015.root` is always available thanks to the following command line :
 
 .. code-block:: console
 
   mpirun -np 8 geosx -i FieldCaseCo2InjTutorial.xml -x 2 -y 2 -z 2 -r FieldCaseCo2InjTutorial_restart_000000015  
-  
+
+The output then shows the loading of HDF5 restart files by each core. 
+
+.. code-block:: console
+
+        Loading restart file /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015
+        Rank 0: rankFilePattern = /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_%07d.hdf5
+        Rank 0: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000000.hdf5
+        Rank 4: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000004.hdf5
+        Rank 5: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000005.hdf5
+        Rank 7: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000007.hdf5
+        Rank 1: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000001.hdf5
+        Rank 3: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000003.hdf5
+        Rank 2: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000002.hdf5
+        Rank 6: Reading in restart file at /work/simu/geosx/test/FieldCaseCo2InjTutorial_restart_000000015/rank_0000006.hdf5
+
+
 ------------------------------------
 Visualization of results
 ------------------------------------
