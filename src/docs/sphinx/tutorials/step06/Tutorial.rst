@@ -1,8 +1,8 @@
 .. _TutorialCO2FieldCaseUnstructuredGrid:
 
-#########################################################
-Tutorial 6: CO :sub:`2` injection into unstructured grid 
-#########################################################
+##################################################################
+Tutorial 6: CO :sub:`2` injection into an unstructured grid 
+##################################################################
 
 **Context**
 

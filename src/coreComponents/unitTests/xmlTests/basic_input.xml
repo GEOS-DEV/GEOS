@@ -100,7 +100,7 @@
   </Functions>
  
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" slaveDirectory="sub" />
+    <Silo name="siloOutput" parallelThreads="1" plotFileRoot="plot" childDirectory="sub" />
   </Outputs>
 
   <Geometry>

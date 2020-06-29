@@ -2,21 +2,23 @@
 Code Components
 ###############################################################################
 
+The main code components are described here.
+
 .. toctree::
    :maxdepth: 1
 
-   dataRepo_link.rst
+   ./dataRepo_link
 
-   XML.rst
+   ./XML
 
-   ProblemManager_link.rst
+   ./WorkingWithData
 
-   mesh_link.rst
+   ./mesh_link
 
-   dofManager_link.rst
+   ./dofManager_link
 
-   fem_link.rst
+   ./LvArray_link
 
-   WorkingWithData.rst
+   ./fem_link
 
-   AddingNewSolver.rst
+   ./AddingNewSolver
