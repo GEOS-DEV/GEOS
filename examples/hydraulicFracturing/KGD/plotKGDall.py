@@ -152,7 +152,7 @@ plt.plot(solns[0],w_tough[0]*1000,'k-', label='$\mu$ => 0' )
 #plt.xlabel('Radius (m)')
 plt.ylabel('Aperture(t=100s) \n (mm)', multialignment='center')
 #plt.legend(loc='upper right')
-plt.xlim([0, 1 ])
+plt.xlim([0, 1.1 ])
 #plt.ylim([ 0.0  , 2.0 ])
   
 #print Pressure[i][1::N1]
@@ -165,7 +165,7 @@ plt.plot(solns[0],p_viscous[0]/1.0e6,'r-', label='$K_{Ic}$ => 0' )
 plt.plot(solns[0],p_tough[0]/1.0e6,'k-', label='$\mu$ => 0' )
 plt.xlabel('Length Coordinate') 
 plt.ylabel('Pressure(t=100s) \n (MPa)', multialignment='center')
-plt.xlim([0, 1 ])
+plt.xlim([0, 1.1 ])
 #plt.yticks(np.arange(-0.2, 0.501, 0.1))
 #plt.ylim([ -0.3 , 0.31 ])
 #  

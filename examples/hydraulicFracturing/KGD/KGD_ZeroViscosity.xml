@@ -15,14 +15,14 @@
       name="hydrofracture" 
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      couplingTypeOption="TightlyCoupled"
+      couplingTypeOption="FIM"
       logLevel="1"
       targetRegions="{Region2, Fracture}"
       contactRelationName="fractureContact"
-      maxNumResolves="2"
+      maxNumResolves="20"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
-                                 newtonMaxIter="50"
+                                 newtonMaxIter="20"
                                  lineSearchAction="1"
                                  lineSearchMaxCuts="3"/>
       <LinearSolverParameters
@@ -70,7 +70,7 @@
     
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
+      logLevel="1"
       discretization="FE1"
       fractureRegion="Fracture"
       targetRegions="{Region2}"
@@ -88,7 +88,7 @@
                    materialList="{water, rock}"/>
                    
     <FaceElementRegion name="Fracture"
-                       defaultAperture="0.02e-3"
+                       defaultAperture="5.0e-5"
                        materialList="{water, rock}"/>
   </ElementRegions>
 
@@ -102,11 +102,19 @@
                                   referenceViscosity="1.0e-6"
                                   viscosibility="0.0"/>
 
-    <LinearElasticIsotropic name="rock"
+    <!--LinearElasticIsotropic name="rock"
                             defaultDensity="2700"
                             defaultBulkModulus="20.0e9"
                             defaultShearModulus="12.0e9"
-                            />
+                            /-->
+    <PoroLinearElasticIsotropic name="rock"
+                                defaultDensity="2700"
+                                defaultBulkModulus="20.0e9"
+                                defaultShearModulus="12.0e9"
+                                BiotCoefficient="1"
+                                compressibility="1.6155088853e-18"
+                                referencePressure="2.125e6"
+                                />         
                                 
     <Contact name="fractureContact"
       penaltyStiffness="1.0e0" >
