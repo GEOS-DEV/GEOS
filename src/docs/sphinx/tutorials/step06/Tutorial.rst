@@ -23,20 +23,6 @@ The xml file for this test case is located at :
 
   src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
 
-It contains the following tags:
-
- #. :ref:`Solver <Solver_tag_co2_field_case>`
- #. :ref:`Mesh <Mesh_tag_co2_field_case>`
- #. :ref:`Geometry <Geometry_tag_co2_field_case>`
- #. :ref:`Events <Events_tag_co2_field_case>`
- #. :ref:`NumericalMethods <NumericalMethods_tag_co2_field_case>`
- #. :ref:`ElementRegions <ElementRegions_tag_co2_field_case>`
- #. :ref:`Constitutive <Constitutive_tag_co2_field_case>`
- #. :ref:`FieldSpecifications <FieldSpecifications_tag_co2_field_case>`
- #. :ref:`Outputs <Outputs_tag_co2_field_case>`
-
-Domain definition
---------------------
 
 We consider the field case mesh as a numerical support to the simulations with a single injection point:
 
@@ -55,6 +41,19 @@ A single injection wellbore will be at the center of the reservoir. The picture 
 ------------------------------------
 GEOSX input file
 ------------------------------------
+
+The XML file considered here follows the typical structure of the GEOSX input files:
+
+ #. :ref:`Solver <Solver_tag_co2_field_case>`
+ #. :ref:`Mesh <Mesh_tag_co2_field_case>`
+ #. :ref:`Geometry <Geometry_tag_co2_field_case>`
+ #. :ref:`Events <Events_tag_co2_field_case>`
+ #. :ref:`NumericalMethods <NumericalMethods_tag_co2_field_case>`
+ #. :ref:`ElementRegions <ElementRegions_tag_co2_field_case>`
+ #. :ref:`Constitutive <Constitutive_tag_co2_field_case>`
+ #. :ref:`FieldSpecifications <FieldSpecifications_tag_co2_field_case>`
+ #. :ref:`Outputs <Outputs_tag_co2_field_case>`
+
 
 .. _Solver_tag_co2_field_case:
 
