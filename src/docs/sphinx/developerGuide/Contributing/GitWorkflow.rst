@@ -4,6 +4,10 @@
 Git Workflow
 **************************************
 
+The GEOSX project is hosted on github `here <https://github.com/GEOSX>`__.
+For instuctions on how to clone and build GEOSX, please refer to the :ref:`GettingStartedWithGEOSX`.
+Consider consulting `https://try.github.io/ <https://try.github.io/> `_ for practical references on how to use git.
+
 Git credentials
 =======================================
 
@@ -34,10 +38,6 @@ their authentication settings.
 
 Working on the main code
 =======================================
-
-Here, we provide only a few basic git commands that are useful to start working with
-geosx. This is not at all an exhaustive guide to git and we encourage to explore the
-git manual for specific doubts.
 
 Once you have cloned the geosx repository, you can start developing by creating your
 own branch.
@@ -82,12 +82,13 @@ Move to the folder of the ``submodule`` that you intend to modify.
 
   cd submodule-folder
 
-Currently the ``submodule`` is in detached head mode, so you first need to move to the branch ``develop`` on the
+Currently the ``submodule`` is in detached head mode, so you first need to move
+to the main branch (either ``develop`` or ``master``) on the
 submodule repository, pull the latest changes, and then create a new branch.
 
 .. code-block:: sh
 
-  git checkout develop
+  git checkout <main-branch>
   git pull
   git checkout -b <branch-name>
 
@@ -98,3 +99,18 @@ create a pull request.
 .. code-block:: sh
 
   git push --set-upstream origin <branch-name>
+
+
+The name of the main branch of each submodule is presented in the table below.
+
+================    ================
+Submodule           Main branch
+================    ================
+blt                 develop
+LvArray             develop
+integratedTests     develop
+GEOSX_PTP           master
+hdf5_interface      master
+PAMELA              master
+PVTPackage          master
+================    ================
