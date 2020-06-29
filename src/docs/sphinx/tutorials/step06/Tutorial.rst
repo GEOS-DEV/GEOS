@@ -1,7 +1,7 @@
 .. _TutorialCO2FieldCaseUnstructuredGrid:
 
 ##################################################################
-Tutorial 6: CO2 injection into an unstructured grid 
+Tutorial 6: CO :sub:`2` injection into an unstructured grid 
 ##################################################################
 
 This tutorial is in progress.  Check back soon!
