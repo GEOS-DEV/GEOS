@@ -32,7 +32,10 @@ This tutorial is based on the XML file located at
 The mesh file corresponding to the Egg model is stored in the GEOSXDATA repository.
 Therefore, you must first download the GEOSXDATA repository in the same folder
 as the GEOSX repository to run this test case.
-  
+
+.. note::
+        GEOSXDATA is a separate repository in which we store large mesh files in order to keep the main GEOSX repository lightweight.
+   
 ------------------------------------
 GEOSX input file
 ------------------------------------
@@ -51,8 +54,8 @@ The XML file considered here follows the typical structure of the GEOSX input fi
 
 .. _Solver_tag_dead_oil_egg_model:
 
-Solvers: tuning the solution strategy
--------------------------------------
+Solvers
+-------
 
 In this tutorial, we use the approach described in :ref:`TutorialDeadOilBottomLayersSPE10`
 to couple reservoir flow with wells.
@@ -62,7 +65,7 @@ This coupling solver drives the simulation and is in charge of binding the follo
 single-physics solvers:
 
 - the single-physics reservoir flow solver, a solver of type **CompositionalMultiphaseFlow** named ``compositionalMultiphaseFlow`` and documented at :ref:`CompositionalMultiphaseFlow`,
-- the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` and documented at :ref:`CompositionalMultiphaseWell`).
+- the single-physics well solver, a solver of type **CompositionalMultiphaseWell** named ``compositionalMultiphaseWell`` and documented at :ref:`CompositionalMultiphaseWell`.
 
 The **Solvers** XML block is shown below.
 The coupling solver points to the two single-physics solvers using the attributes
@@ -84,10 +87,12 @@ at most ``newtonMaxIter = 10``. GEOSX will adjust the time step size as follows:
 
 - if the Newton solver converges in ``dtIncIterLimit x newtonMaxIter = 5`` iterations or fewer, GEOSX will double the time step size for the next time step,
 - if the Newton solver converges in ``dtCutIterLimit x newtonMaxIter = 8`` iterations or more, GEOSX will reduce the time step size for the next time step by a factor ``timestepCutFactor = 0.1``,
-- if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOSX will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged step.
+- if the Newton solver fails to converge in ``newtonMaxIter = 10``, GEOSX will cut the time step size by a factor ``timestepCutFactor = 0.1`` and restart from the previous converged time step.
 
 The maximum number of time step cuts is specified by the attribute ``maxTimeStepCuts``.
 Note that a backtracking line search can be activated by setting the attribute ``lineSearchAction`` to 1 or 2.
+If ``lineSearchAction = 1``, we accept the nonlinear iteration even if the line search does not reduce the residual norm.
+If ``lineSearchAction = 1``, we cut the time step if the line search does not reduce the residual norm. 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -120,7 +125,7 @@ the attribute ``wellRegionName``), and the corresponding well control
 (using the attribute ``wellControlName``).
 Each well is defined using a vertical polyline going through the seven layers of the
 mesh, with a perforation in each layer.
-The well transmissibility factors employer to compute the perforation rates are calculated
+The well transmissibility factors employed to compute the perforation rates are calculated
 internally using the Peaceman formulation.
 The well placement implemented here follows the pattern of the original test case.
 
@@ -196,8 +201,9 @@ regions.
 We associate a **CellElementRegion** named ``reservoir`` to the reservoir mesh.
 Since we have imported a mesh with one region consisting of hexahedral cells, we
 must set the attribute ``cellBlocks`` to ``0_HEX``.
-If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error
-at the beginning of the simulation.
+
+.. note::
+        If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
 
 We also associate a **WellElementRegion** to each well. As the **CellElementRegion**,
 it contains a ``materialList`` that must point (by name) to the constitutive models
@@ -226,9 +232,12 @@ All the parameters must be provided using the SI unit system.
 Although the original Egg test case only involves two phases, the Dead-Oil model currently
 implemented in GEOSX requires the definition of three phases (oil, gas, and water).
 This is done in the **BlackOilFluid** XML block. The same is true for the relative permeability
-model introduced in the **BrooksCoreyRelativePermeability** block. The names and order of the
-phases listed for the attribute ``phaseNames`` must be identical in the fluid model and the
-relative permeability model. The rock compressibility is defined in the
+model introduced in the **BrooksCoreyRelativePermeability** block.
+
+.. note::
+        The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model and the relative permeability model.
+
+The rock compressibility is defined in the
 **PoreVolumeCompressibleSolid** block.
 The parameters of these three blocks have been chosen to be close to the original specifications
 of the Egg test case.
@@ -271,8 +280,8 @@ imported by the **PAMELAMeshGenerator**.
 Specifying the output formats
 ----------------------------------
 
-In this section, we request an output of the results in VTK format and an output of the restart file.
-Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
+In this section, we request an output of the results in VTK format.
+Note that the name defined here must match the name used in the **Events** XML block to define the output frequency.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/Egg/dead_oil_egg.xml
   :language: xml
@@ -384,6 +393,8 @@ Visualization of results
 
 A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
+More details about this file format can be found here
+`here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
 We can load this file into Paraview directly and visualize results:
 
 |pic1| |pic2|

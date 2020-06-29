@@ -23,7 +23,7 @@ The xml file for this test case is located at :
 
   src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
 
-It contains the follwing tags:
+It contains the following tags:
 
  #. :ref:`Solver <Solver_tag_co2_field_case>`
  #. :ref:`Mesh <Mesh_tag_co2_field_case>`
@@ -49,7 +49,7 @@ This mesh contains three continuous regions:
   - a Middle region (reservoir layer, elementary tag = 2)
   - a Bottom region (underburden, elementary tag = 3)
 
-A single injection wellbore will be at the center of the reservoir. The picture shows an example of the 8-core METIS partitioning used to lauch the simulation.
+A single injection wellbore will be at the center of the reservoir. The picture shows an example of the 8-core METIS partitioning used to launch the simulation.
 
 
 ------------------------------------
@@ -68,9 +68,9 @@ It consists in 3 blocks *CompositionalMultiphaseFlow*, *CompositionalMultiphaseW
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
 
-In the *CompositionalMultiphaseFlow* (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver is detailed, including a TPFA discretization, reference to fluid data through *fluidNames*, to solid data through *soldiNames* and to relative permeability model through *relPermNames* attributes.
+In the *CompositionalMultiphaseFlow* (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver is detailed, including a TPFA discretization, reference to fluid data through *fluidNames*, to solid data through *solidNames* and to relative permeability model through *relPermNames* attributes.
 
-The *CompositionalMultiphaseWell* (:ref:`CompositionalMultiphaseWell`)  consists in wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeabilities models, but also defines *WellControls* sub-tag, that can specified injector and producer `control` spliting between BHP-controlled or rate-controlled. Alongside with that attribute are the *targetBHP* and *targetRate*, that specify the maximal admissible pressure and rate for the well. The injector specific attribute, *injectionStream*, descibes the composition of the injected mixture.
+The *CompositionalMultiphaseWell* (:ref:`CompositionalMultiphaseWell`)  consists in wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeabilities models, but also defines *WellControls* sub-tag, that can specified injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the *targetBHP* and *targetRate*, that specify the maximal admissible pressure and rate for the well. The injector specific attribute, *injectionStream*, describes the composition of the injected mixture.
 
 The coupling section *CompositionalMultiphaseReservoir* describes the binding between those two previous element (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to bound to the previously described blocks through *flowSolverName* and *wellSolverName* sub-tags, it contains the *initialDt* starting time-step size value and defined the *NonlinearParameters* and *LinearSolverParameters* that are used to control newton-loop and linear solver behaviors.(see :ref:`LinearSolvers` for a detailed description of linear solvers attributes) 
 
@@ -107,7 +107,7 @@ Geometry tag
 Specifying events
 ------------------------
         
-   The solver is applied as a recurent event, whose target is refered as **Solver/coupledFlowAnWells** name-tag. The outputs are periodically written every 11 days and 24 hours, constraining schedule to match exactly this date. The output path to data is specified as a *target* of this *PeriodicEvent*.
+   The solver is applied as a recurrent event, whose target is referred to as **Solver/coupledFlowAnWells** name-tag. The outputs are periodically written every 11 days and 24 hours, constraining schedule to match exactly this date. The output path to data is specified as a *target* of this *PeriodicEvent*.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
@@ -152,7 +152,7 @@ As in :ref:`TutorialFieldCase`, the **ElementRegions** tag allows us to split ov
 Defining material properties with constitutive laws
 -------------------------------------------------------
 Under the **Constitutive** tag, three items can be found:
-        - *MultiPhaseMultiComponentFluid* which will allow us to define phases names, component molar weights and caracteristic behaviors such as viscosity and density dependecies with respect to pressure and temperature. 
+        - *MultiPhaseMultiComponentFluid* which will allow us to define phases names, component molar weights and characteristic behaviors such as viscosity and density dependencies with respect to pressure and temperature. 
         - *PoreVolumeCompressibleSolid* which contains all the data needed to model rock compressibility behavior.
         - *BrooksCoreyRelativePermeability* which set the relative permeability for each phase along with its end-point value, residual volume fraction and Corey exponent.
           
@@ -161,7 +161,7 @@ Under the **Constitutive** tag, three items can be found:
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-One can notice that PVT data, required by *MultiPhaseMultiComponentFluid*, are brought in to be able to model behavior of Co2 in liquid and gas phase with repect to pressure and temperature variations. These *pvtgas.txt* and *pvtliquid.txt* are composed as follow
+One can notice that PVT data, required by *MultiPhaseMultiComponentFluid*, are brought in to be able to model behavior of Co2 in liquid and gas phase with respect to pressure and temperature variations. These *pvtgas.txt* and *pvtliquid.txt* are composed as follow
 
 .. code:: 
 
@@ -182,7 +182,7 @@ The first keyword is an identifier for either density or viscosity model generat
 
 Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
-As in previous tutorials, **FieldSpecifications** tag is the place where to declare all the scoped fields such as directional permeability, reference porosity, initial pressure and compositions. These can be homogeneously and permanantly fixed or use *TableFunctions* via `functionName` attributes to activate  modifiers and to set them heterogeneously. (see :ref:`TutorialFieldCase` for details)
+As in previous tutorials, **FieldSpecifications** tag is the place where to declare all the scoped fields such as directional permeability, reference porosity, initial pressure and compositions. These can be homogeneously and permanently fixed or use *TableFunctions* via `functionName` attributes to activate  modifiers and to set them heterogeneously. (see :ref:`TutorialFieldCase` for details)
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
   :language: xml
@@ -212,7 +212,7 @@ A *Restart* tag can also be specified. In conjunction with a *PeriodicEvent*, it
 
 
 ------------------------------------
-Runnning GEOSX
+Running GEOSX
 ------------------------------------
 
 The simulation can be launched with on 8-cores using MPI-parallelism: 
@@ -315,7 +315,7 @@ The output then shows the loading of HDF5 restart files by each core.
 Visualization of results
 ------------------------------------
 
-Post-treating under Paraview, we can isolate the *Reservoir* block and focus on planes othogonal to the injection wellbore.  
+Post-treating under Paraview, we can isolate the *Reservoir* block and focus on planes orthogonal to the injection wellbore.  
 
 .. image:: fcCo2_saturation-1.png
    :width: 600px

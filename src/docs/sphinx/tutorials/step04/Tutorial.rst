@@ -32,6 +32,10 @@ To run the test case specified in the XML file, you must first download the GEOS
 The XML file that we are going to describe assumes that the GEOSXDATA repository has been
 cloned in the same folder as the GEOSX repository.
 
+.. note::
+        GEOSXDATA is a separate repository in which we store large mesh files in order to keep the main GEOSX repository lightweight.
+
+
 ------------------------------------
 GEOSX input file
 ------------------------------------
@@ -228,6 +232,10 @@ Note that ``0_HEX`` is a name internally defined by the mesh importer to denote 
 We refer to :ref:`TutorialSinglePhaseFlowExternalMesh` for a discussion on
 hexahedral meshes in GEOSX.
 
+.. note::
+        If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+
+
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
 The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
@@ -270,9 +278,9 @@ solver, as explained in :ref:`FluidModels`.
 With the tag **BrooksCoreyRelativePermeability**, we define a relative permeability model.
 A list of available relative permeability models can be found at
 :ref:`RelativePermeabilityModels`.
-The names and order of the phases listed for the attribute ``phaseNames`` must be identical
-in the fluid model (here, **BlackOilFluid**) and the relative permeability model
-(here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
+
+.. note::
+        The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model (here, **BlackOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
 
 We also introduce a model to define the rock compressibility. This step is similar
 to what is described in the previous tutorials (see for instance
@@ -432,6 +440,8 @@ Visualization of results
 
 A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
+More details about this file format can be found here
+`here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
 We can load this file into Paraview directly and visualize results:
 
 |pic1| |pic2|

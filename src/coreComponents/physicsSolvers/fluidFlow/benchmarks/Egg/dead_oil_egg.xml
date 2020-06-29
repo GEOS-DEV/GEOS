@@ -431,10 +431,6 @@
                    timeFrequency="216000"
                    targetExactTimestep="1"
                    target="/Outputs/vtkOutput" />
-    <PeriodicEvent name="silo"
-                   timeFrequency="216000"
-                   targetExactTimestep="1"
-                   target="/Outputs/siloOutput" />
   </Events>
   
   <!-- SPHINX_TUT_DEAD_OIL_EGG_EVENTS_END -->
@@ -555,7 +551,6 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT -->      
   <Outputs>
-    <Silo name="siloOutput"/>        
     <VTK name="vtkOutput"/>    
   </Outputs>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_OUTPUT_END -->        
