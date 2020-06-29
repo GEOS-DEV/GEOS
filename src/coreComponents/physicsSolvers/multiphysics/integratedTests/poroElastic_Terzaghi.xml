@@ -228,7 +228,7 @@
   <Outputs>
     <Silo name="siloOutput"/>
     <Restart name="restartOutput"/>
-    <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
+    <!-- Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" childDirectory="sub" writeFEMEdges="0" writeFEMFaces="1" writePlot="1" writeRestart="0"/ >-->
   </Outputs>
   
 </Problem>
