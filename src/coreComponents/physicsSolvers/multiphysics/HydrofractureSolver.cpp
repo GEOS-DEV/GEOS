@@ -287,7 +287,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	}
 
 	//TJ: print out surface aperture before newton solve
-/*	{
+	{
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "before newton solve: "
@@ -334,7 +334,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	  }
 	} // print statements
-*/
+
         MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
         NodeManager & nodeManager = *mesh.getNodeManager();
         SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
@@ -354,7 +354,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 						m_solution );
 
 	//TJ: print out surface aperture after newton solve
-/*	{
+	{
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "after newton solve: "
@@ -394,7 +394,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	  }
 	} // print statements
-*/
+
 	//TJ: calculate some material parameters
 	real64 const shearModulus = domain->GetGroup("Constitutive")
 			                  ->GetGroup("rock")
@@ -1106,7 +1106,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                                domain->getNeighbors() );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
-/*        {
+        {
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank
 	            << ": Face element info (after manipulating disp, before "
@@ -1132,12 +1132,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
-*/
+
         //TJ: 5. update the elmt aperture due to the change of disp field at the newly splitted nodes
         this->UpdateDeformationForCoupling( domain );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
-/*        {
+        {
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank "<< rank
 	            << " Face element info (after manipulating disp, after "
@@ -1163,7 +1163,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
-*/
+
         if( getLogLevel() >= 1 )
         {
           GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
