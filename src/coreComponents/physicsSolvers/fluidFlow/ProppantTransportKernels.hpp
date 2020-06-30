@@ -315,7 +315,7 @@ struct FluxKernel
     real64 aperTerm;
     real64 sumOfWeights = 0;
 
-    real64 stencilEdgeToFaceDownDistance;
+    real64 stencilEdgeToFaceDownDistance = 0;
     real64 edgeLength;
 
     for( localIndex i=0; i<numElems; ++i )
