@@ -70,15 +70,15 @@ It consists of 3 blocks **CompositionalMultiphaseFlow**, **CompositionalMultipha
 
 In the **CompositionalMultiphaseFlow** (:ref:`CompositionalMultiphaseFlow`), a classical multiphase compositional solver is detailed, including a TPFA discretization, reference to fluid data through ``fluidNames``, to solid data through ``solidNames`` and to relative permeability models through ``relPermNames`` attributes.
 
-The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines **WellControls** sub-tag, that can specified injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the ``targetBHP`` and ``targetRate`` that specify the maximal admissible pressure and rate for the well. The injector specific attribute, ``injectionStream``, describes the composition of the injected mixture.
+The **CompositionalMultiphaseWell** (:ref:`CompositionalMultiphaseWell`)  consists of wellbore specifications (see :ref:`TutorialDeadOilBottomLayersSPE10` for detailed tutorial on wells integration). As its reservoir counterpart, it includes references to fluid and relative permeability models, but also defines a  **WellControls** sub-tag, that can specified injector and producer `control` splitting between BHP-controlled or rate-controlled. Alongside with that attribute are the ``targetBHP`` and ``targetRate`` that specify the maximal admissible pressure and rate for the well. The injector-specific attribute, ``injectionStream``, describes the composition of the injected mixture.
 
-The coupling section **CompositionalMultiphaseReservoir** describes the binding between those two previous element (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
+The coupling section **CompositionalMultiphaseReservoir** describes the binding between those two previous elements (see :ref:`TutorialPoroelasticity` for detailed tutorial on coupling physics in GEOSX). In addition to being bound to the previously described blocks through ``flowSolverName`` and ``wellSolverName`` sub-tags, it contains the ``initialDt`` starting time-step size value and defines the **NonlinearSolverParameters** and **LinearSolverParameters** that are used to control Newton-loop and linear solver behaviors (see :ref:`LinearSolvers` for a detailed description of linear solvers attributes). 
 
 .. _Mesh_tag_co2_field_case:
 
 Specifying a computational mesh
 ---------------------------------
-The **Mesh** tag is used as in previous tutorials to import field mesh either internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`) or externally (:ref:`TutorialSinglePhaseFlowExternalMesh`). In the current tutorial, it is also of paramount importance as it is where the **InternalWell** multi-segmented wells are defined. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define path of the wellbore and connection between those nodes. The ``numElementsPerSegment`` is discretizing the wellbore's segments while the ``radius`` attribute stands for the wellbore radius (:ref:`TutorialDeadOilBottomLayersSPE10` for details on wellbore use). Once the wellbore is defined and discretized, the place for different **Perforations** can be defined using curvilinear distance from the head of the wellbore (``distanceFromHead``).
+The **Mesh** tag is used as in previous tutorials to import the field mesh either internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`) or externally (:ref:`TutorialSinglePhaseFlowExternalMesh`). In the current tutorial, this tag is also of paramount importance as it is where the **InternalWell** multi-segmented wells are defined. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` is discretizing the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilBottomLayersSPE10` for details on wellbore use). Once the wellbore is defined and discretized, the position of **Perforations** is defined using curvilinear distance from the head of the wellbore (``distanceFromHead``).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
   :language: xml
@@ -86,7 +86,7 @@ The **Mesh** tag is used as in previous tutorials to import field mesh either in
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_MESH_END -->
 
 .. note::
-        It is the responsibility of the user to make sure that there is a perforation in the bottom cell of the well mesh otherwise an error will be thrown and the simulation will terminate.
+        It is the responsibility of the user to make sure that there is a perforation in the bottom cell of the well mesh, otherwise an error will be thrown and the simulation will terminate.
 
 
 .. _Geometry_tag_co2_field_case:
@@ -94,7 +94,7 @@ The **Mesh** tag is used as in previous tutorials to import field mesh either in
 Geometry tag
 ----------------
 
-The **Geometry** XML block was used in the single-phase tutorials to specify boundary conditions.
+The **Geometry** XML block was used in single-phase tutorials to specify boundary conditions.
 Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
 block is not needed.
 
@@ -104,7 +104,7 @@ block is not needed.
 Specifying events
 ------------------------
         
-   The solver is applied as a recurrent event, whose target is referred to as **Solvers/coupledFlowAndWells** name-tag. The outputs are periodically written every 11 days and 24 hours, constraining schedule to match exactly this date. The output path to data is specified as a ``target`` of this **PeriodicEvent**.
+   The solver is applied as a recurrent event whose target is referred to as **Solvers/coupledFlowAndWells** name-tag. The outputs are periodically written every 11 days and 24 hours, constraining the solver schedule to match exactly these dates. The output path to data is specified as a ``target`` of this **PeriodicEvent**.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
@@ -119,13 +119,13 @@ An other periodic event is also defined under the name ``restarts``. It consists
 Defining Numerical Methods
 ----------------------------------
 
-The ``TwoPointFluxApproximation`` is chosen as our fluid equation discretization. The node should specify:
+The ``TwoPointFluxApproximation`` is chosen as our fluid equation discretization. The tag specifies:
 
-- the primary field to solve for as ``fieldName``. For a flow problem, this field is the pressure. 
-- the ``boundaryFieldName`` is used to specify boundary object for imposing boundary conditions.
-- the ``coefficientName`` is used during TPFA transmissibilities construction.
+- A primary field to solve for as ``fieldName``. For a flow problem, this field is pressure. 
+- A ``boundaryFieldName`` used to specify boundary objects with boundary conditions.
+- A ``coefficientName`` used for TPFA transmissibilities constructions.
 
-Here we specified ``targetRegions`` as we only solve flow for reservoir.
+Here, we specify ``targetRegions`` (we only solve flow equations in the reservoir portion of our model).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
   :language: xml
@@ -136,7 +136,8 @@ Here we specified ``targetRegions`` as we only solve flow for reservoir.
 
 Defining regions in the mesh
 -----------------------------------
-As in :ref:`TutorialFieldCase`, the **ElementRegions** tag allows us to split over-and-under burden and reservoir into two different entities. What's new here is the addition of **WellElementRegions** that are not bound to a cellBlock and contain a list of materials present.
+
+As in :ref:`TutorialFieldCase`, the **ElementRegions** tag allows us to distinguish the over- and underburden from the reservoir. The novelty here is the addition of **WellElementRegions** that are not bound to a cellBlock and contain a list of modeled materials.
 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
@@ -152,16 +153,16 @@ Defining material properties with constitutive laws
 
 Under the **Constitutive** tag, three items can be found:
 
-- **MultiPhaseMultiComponentFluid** which allows us to define phase names, component molar weights and characteristic behaviors such as viscosity and density dependencies with respect to pressure and temperature. 
-- **PoreVolumeCompressibleSolid** which contains all the data needed to model rock compressibility behavior.
-- **BrooksCoreyRelativePermeability** which sets the relative permeability for each phase along with its end-point value, residual volume fraction, and Corey exponent.
+- **MultiPhaseMultiComponentFluid** : this tag defines phase names, component molar weights and characteristic behaviors such as viscosity and density dependencies with respect to pressure and temperature. 
+- **PoreVolumeCompressibleSolid** : this tag contains all the data needed to model rock compressibility.
+- **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions, and Corey exponents.
           
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-One can notice that PVT data, required by **MultiPhaseMultiComponentFluid**, are brought in to be able to model behavior of Co2 in liquid and gas phase with respect to pressure and temperature variations. These *pvtgas.txt* and *pvtliquid.txt* are composed as follows
+One can notice that PVT data, required by **MultiPhaseMultiComponentFluid**, are required here to model the behavior of Co2 in liquid and gas phase with respect to the pressure and temperature variations. These *pvtgas.txt* and *pvtliquid.txt* files are composed as follows:
 
 .. code:: 
 
@@ -173,7 +174,7 @@ One can notice that PVT data, required by **MultiPhaseMultiComponentFluid**, are
         DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0
         ViscosityFun BrineViscosity 0
 
-The first keyword is an identifier for either density or viscosity model generated in GEOSX at runtime. It is followed by an identifier for the type of the model (see :ref:`FluidModels`) before the lower, upper and step increment values for pressure and temperature range. The trailing 0 for BrineCO2Density entry is the salinity of the brine (see :ref:`CO2-EOS`).
+The first keyword is an identifier for either a density or a viscosity model, generated by GEOSX at runtime. It is followed by an identifier for the type of model (see :ref:`FluidModels`). Then, the lower, upper and step increment values for pressure and temperature range are specified. The trailing 0 for BrineCO2Density entry is the salinity of the brine (see :ref:`CO2-EOS`).
 
 .. note::
   The *0* value for *BrineViscosity* indicates that liquid CO :sub:`2` viscosity is constant with respect to pressure and temperature. 
@@ -182,7 +183,8 @@ The first keyword is an identifier for either density or viscosity model generat
 
 Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
-As in previous tutorials, **FieldSpecifications** tag is the place where to declare all the scoped fields such as directional permeability, reference porosity, initial pressure, and compositions. Here these fields fields are homogeneous but one can use **TableFunctions** via ``functionName`` attributes to set them heterogeneously (see :ref:`TutorialFieldCase` for details).
+
+As in previous tutorials, the **FieldSpecifications** tag is used to declare fields such as directional permeability, reference porosity, initial pressure, and compositions. Here, for simplicity, these fields are homogeneous (see **TableFunctions** via ``functionName`` to make these fields functions of space or time, as explained in :ref:`TutorialFieldCase`).
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
   :language: xml
@@ -191,10 +193,10 @@ As in previous tutorials, **FieldSpecifications** tag is the place where to decl
 
 .. _Outputs_tag_co2_field_case:
 
-Specifying the output formats
+Specifying output formats
 ----------------------------------
 
-The **Outputs** XML tag is used to trigger the writing of visualization and restart files.
+The **Outputs** XML tag is used to write visualization and restart files.
 Here, we write files in a format natively readable by Paraview under the tag **VTK**. 
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
@@ -202,7 +204,8 @@ Here, we write files in a format natively readable by Paraview under the tag **V
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
 
-A **Restart** tag can also be specified. In conjunction with a **PeriodicEvent**, it allows resuming computation from a checkpoint in time. 
+A **Restart** tag can also be specified. In conjunction with a **PeriodicEvent**,
+a restart file allows to resume computations from a set checkpoint in time. 
 
 .. 
         ------------------------------------------------
