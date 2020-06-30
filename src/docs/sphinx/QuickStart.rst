@@ -188,15 +188,21 @@ We maintain host configs (ending in ``.cmake``) for HPC systems at various insti
   set(CONFIG_NAME "your-platform" CACHE PATH "")
   message( "CONFIG_NAME = ${CONFIG_NAME}" )
 
-  # set paths to C, C++, and Fortran compilers
+  # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code, 
+  # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
   set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
   set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
+  set(CMAKE_Fortran_COMPILER "/usr/local/bin/gfortran" CACHE PATH "")
   set(ENABLE_FORTRAN OFF CACHE BOOL "" FORCE)
 
-  # enable MPI and set paths to compilers and executable
+  # enable MPI and set paths to compilers and executable.
+  # Note that the MPI compilers are wrappers around standard serial compilers.
+  # Therefore, the MPI compilers must wrap the appropriate serial compilers specified 
+  # in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
   set(ENABLE_MPI ON CACHE PATH "")
   set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
   set(MPI_CXX_COMPILER "/usr/local/bin/mpicxx" CACHE PATH "")
+  set(MPI_Fortran_COMPILER "/usr/local/bin/mpifort" CACHE PATH "")
   set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
   # disable CUDA and OpenMP
