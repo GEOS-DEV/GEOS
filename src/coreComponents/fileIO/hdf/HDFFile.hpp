@@ -1,7 +1,7 @@
 #ifndef GEOSX_HDFFILE_HPP_
 #define GEOSX_HDFFILE_HPP_
 
-#include "cxx-utilities/src/Array.hpp"
+#include "LvArray/src/Array.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 
@@ -93,7 +93,7 @@ public:
 class HDFFile : public HDFTarget
 {
 public:
-  HDFFile(string const & fnm, MPI_Comm comm = MPI_COMM_GEOSX) :
+  HDFFile(string const & fnm, bool delete_existing = false, MPI_Comm comm = MPI_COMM_GEOSX) :
     filename(fnm),
     file_id(0),
     fapl_id(0),
@@ -107,17 +107,19 @@ public:
     } H5E_END_TRY
     fapl_id = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(fapl_id, m_comm, MPI_INFO_NULL);
-    if( exists > 0 )
+    if( exists > 0 && !delete_existing )
     {
-      // file create access property
       file_id = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl_id);
+    }
+    else if ( exists > 0 && delete_existing )
+    {
+      file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, fapl_id);
     }
     else if ( exists < 0 )
     {
-      // this will fail if the file exists already
       file_id = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, fapl_id);
     }
-    GEOSX_ERROR_IF( exists == 0, string("Existing file ") + fnm + string(" is not and HDF5 final, cannot use for HDF5 output.") );
+    GEOSX_ERROR_IF( exists == 0, string("Existing file ") + fnm + string(" is not an HDF5 file, cannot use for HDF5 output.") );
 
     // use indepent parallel io to access the file
     dxpl_id = H5Pcreate(H5P_DATASET_XFER);
@@ -159,14 +161,14 @@ class HDFHistIO : public BufferedHistoryIO
     m_hdf_type(GetHDFDataType(type_id)),
     m_type_size(H5Tget_size(m_hdf_type)),
     m_type_count(1),
-    m_rank(integer_conversion<hsize_t>(rank)),
+    m_rank(LvArray::integerConversion<hsize_t>(rank)),
     m_dims(rank),
     m_name(name),
     m_comm(comm)
   {
     for(hsize_t dd = 0; dd < m_rank; ++dd)
     {
-      m_dims[dd] = integer_conversion<hsize_t>( dims[dd] );
+      m_dims[dd] = LvArray::integerConversion<hsize_t>( dims[dd] );
       m_type_count *= m_dims[dd];
     }
   }
@@ -180,7 +182,7 @@ class HDFHistIO : public BufferedHistoryIO
   virtual void Init( bool exists_okay ) override
   {
     array1d<hsize_t> history_file_dims(m_rank+1);
-    history_file_dims[0] = integer_conversion<hsize_t>(m_write_limit);
+    history_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
 
     array1d<hsize_t> dim_chunks(m_rank+1);
     dim_chunks[0] = 1;
@@ -191,15 +193,15 @@ class HDFHistIO : public BufferedHistoryIO
       dim_chunks[dd] = history_file_dims[dd] = m_dims[dd-1];
     }
 
-    globalIndex local_idx_count = integer_conversion<globalIndex>(m_dims[0]);
+    globalIndex local_idx_count = LvArray::integerConversion<globalIndex>(m_dims[0]);
 
     MpiWrapper::allReduce(&local_idx_count,&m_global_idx_count,1,MPI_SUM,m_comm);
     MpiWrapper::exscan(&local_idx_count,&m_global_idx_offset,1,MPI_SUM,m_comm);
 
-    history_file_dims[1] = integer_conversion<hsize_t>(m_global_idx_count);
+    history_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
 
-    // create a dataset in the file if needed
-    HDFFile target( m_filename, m_comm );
+    // create a dataset in the file if needed, also recreate file if needed
+    HDFFile target( m_filename, (m_write_head == 0), m_comm );
     bool in_target = target.CheckInTarget( m_name );
     if( !in_target )
     {
@@ -217,6 +219,7 @@ class HDFHistIO : public BufferedHistoryIO
     }
     else if ( exists_okay )
     {
+      // todo:
       // hid_t dataset = H5Dopen(target, m_name.c_str( ), H5P_DEFAULT);
       // check that the extent of the filespace is compatible with the data
     }
@@ -226,21 +229,23 @@ class HDFHistIO : public BufferedHistoryIO
   virtual void Write( ) override
   {
     // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
-    if( m_buffered_count > 0 )
+    localIndex max_buffered = 0;
+    MpiWrapper::allReduce(&m_buffered_count,&max_buffered,1,MPI_MAX,m_comm);
+    if( max_buffered > 0 )
     {
-      ResizeFileIfNeeded( );
-      HDFFile target( m_filename, m_comm );
+      ResizeFileIfNeeded( max_buffered );
+      HDFFile target( m_filename, false,  m_comm );
 
       hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
       hid_t filespace = H5Dget_space(dataset);
 
       array1d<hsize_t> file_offset(m_rank+1);
       forValuesInSlice(file_offset.toSlice(),[]( hsize_t & val ) { val = 0; });
-      file_offset[0] = integer_conversion<hsize_t>(m_write_head);
-      file_offset[1] = integer_conversion<hsize_t>(m_global_idx_offset);
+      file_offset[0] = LvArray::integerConversion<hsize_t>(m_write_head);
+      file_offset[1] = LvArray::integerConversion<hsize_t>(m_global_idx_offset);
 
       array1d<hsize_t> buffered_counts(m_rank+1);
-      buffered_counts[0] = integer_conversion<hsize_t>(m_buffered_count);
+      buffered_counts[0] = LvArray::integerConversion<hsize_t>(max_buffered);
       for( hsize_t dd = 1; dd < m_rank+1; ++dd )
       {
         buffered_counts[dd] = m_dims[dd-1];
@@ -256,17 +261,17 @@ class HDFHistIO : public BufferedHistoryIO
       H5Sclose(filespace);
       H5Dclose(dataset);
 
-      m_write_head += m_buffered_count;
+      m_write_head += max_buffered;
       EmptyBuffer( );
     }
   }
 
   virtual void CompressInFile( ) override
   {
-    HDFFile target( m_filename, m_comm );
+    HDFFile target( m_filename, false, m_comm );
     array1d<hsize_t> max_file_dims(m_rank+1);
-    max_file_dims[0] = integer_conversion<hsize_t>(m_write_head);
-    max_file_dims[1] = integer_conversion<hsize_t>(m_global_idx_count);
+    max_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_head);
+    max_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
     for( hsize_t dd = 2; dd < m_rank+1; ++dd )
     {
       max_file_dims[dd] = m_dims[dd-1];
@@ -277,18 +282,18 @@ class HDFHistIO : public BufferedHistoryIO
     m_write_limit = m_write_head;
   }
 
-  inline void ResizeFileIfNeeded( )
+  inline void ResizeFileIfNeeded( localIndex buffered_count )
   {
-    HDFFile target( m_filename, m_comm );
-    if( m_write_head + m_buffered_count > m_write_limit )
+    HDFFile target( m_filename, false, m_comm );
+    if( m_write_head + buffered_count > m_write_limit )
     {
-      while( m_write_head + m_buffered_count > m_write_limit )
+      while( m_write_head + buffered_count > m_write_limit )
       {
         m_write_limit *= m_overalloc_multiple;
       }
       array1d<hsize_t> max_file_dims(m_rank+1);
-      max_file_dims[0] = integer_conversion<hsize_t>(m_write_limit);
-      max_file_dims[1] = integer_conversion<hsize_t>(m_global_idx_count);
+      max_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
+      max_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
       for( hsize_t dd = 2; dd < m_rank+1; ++dd )
       {
         max_file_dims[dd] = m_dims[dd-1];

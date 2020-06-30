@@ -20,7 +20,7 @@
 #include "managers/initialization.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 
-#include "dataRepository/WrapperHelpers.hpp"
+#include "dataRepository/wrapperHelpers.hpp"
 
 #include <ctime>
 #include <cstdlib>

@@ -723,7 +723,7 @@ void ProblemManager::ApplyNumericalMethods()
 
 void ProblemManager::RunSimulation()
 {
-  DomainPartition * domain  = getDomainPartition();
+  DomainPartition * domain = getDomainPartition();
   m_eventManager->Run( domain );
 }
 

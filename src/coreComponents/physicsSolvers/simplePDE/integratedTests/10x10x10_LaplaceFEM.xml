@@ -93,12 +93,12 @@
   <Outputs>
     <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot"/>
     <Restart name="restartOutput"/>
-    <TimeHistory name="timeHistoryOutput" source="/Tasks/temperaturePackCollection" filename="temperature_history.hdf" />
+    <TimeHistory name="timeHistoryOutput" sources="{/Tasks/temperaturePackCollection}" filename="temperature_history.hdf" />
   </Outputs>
 
   <Tasks>
     <!-- <PackCollection name="temperaturePackCollection" group="/Solvers/laplace" wrapper="Temperature" /> -->
-    <PackCollection name="temperaturePackCollection" objectPath="nodeManager" fieldName="Temperature" />
+    <PackCollection name="temperaturePackCollection" objectPath="nodeManager" fieldName="Temperature" setNames="{sink, source}" />
   </Tasks>
 
   <Geometry>

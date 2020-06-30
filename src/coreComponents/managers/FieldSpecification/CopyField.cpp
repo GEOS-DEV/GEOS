@@ -29,15 +29,15 @@ CopyField::CopyField( std::string const & name,
                         Group * const parent ):
   TaskBase( name, parent )
 {
-  registerWrapper(viewKeyStruct::fromString, &m_from, false )->
+  registerWrapper(viewKeyStruct::fromString, &m_from )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Name of the field to copy.");
 
-  registerWrapper(viewKeyStruct::toString, &m_to, false )->
+  registerWrapper(viewKeyStruct::toString, &m_to )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Name of the field that will be created and filled.");
 
-  registerWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions, false )->
+  registerWrapper(viewKeyStruct::targetRegionsString, &m_targetRegions )->
     setInputFlag(InputFlags::REQUIRED)->
     setDescription( "Regions on which the copy will be done.");
 }

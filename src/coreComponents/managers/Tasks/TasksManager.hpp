@@ -16,8 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_TOOLSMANAGER_TOOLSMANAGER_HPP_
-#define SRC_COMPONENTS_CORE_SRC_TOOLSMANAGER_TOOLSMANAGER_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_TASKSMANAGER_TASKSMANAGER_HPP_
+#define SRC_COMPONENTS_CORE_SRC_TASKSMANAGER_TASKSMANAGER_HPP_
 
 #include "dataRepository/Group.hpp"
 

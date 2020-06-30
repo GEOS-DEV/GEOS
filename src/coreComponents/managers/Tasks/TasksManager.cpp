@@ -23,17 +23,15 @@ namespace geosx
 {
 
 using namespace dataRepository;
-using namespace cxx_utilities;
+using namespace LvArray;
 
 TasksManager::TasksManager( std::string const & name,
                             Group * const parent ):
-  Group( name, parent)
-{
-}
+  Group( name, parent )
+{ }
 
 TasksManager::~TasksManager()
-{}
-
+{ }
 
 Group * TasksManager::CreateChild( string const & childKey, string const & childName )
 {
@@ -50,6 +48,5 @@ void TasksManager::ExpandObjectCatalogs()
     CreateChild( catalogIter.first, catalogIter.first );
   }
 }
-
 
 } /* namespace geosx */

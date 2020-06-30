@@ -781,8 +781,8 @@
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--slaveDirectory => slave directory path-->
 		<xsd:attribute name="slaveDirectory" type="string" default="" />
-		<!--source => A collector from which to collect and output time history information.-->
-		<xsd:attribute name="source" type="string" use="required" />
+		<!--sources => A list of collectors from which to collect and output time history information.-->
+		<xsd:attribute name="sources" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

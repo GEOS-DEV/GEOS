@@ -143,7 +143,8 @@ public:
   void ProblemSetup();
 
   /**
-   * @brief Run the events in the scheduler.
+   * @brief Run
+   the events in the scheduler.
    */
   void RunSimulation();
 

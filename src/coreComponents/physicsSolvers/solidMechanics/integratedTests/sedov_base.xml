@@ -148,7 +148,7 @@
 
 
 <!-- =========================================================== -->
-    <TimeHistory name="timeHistoryOutput" source="/Tasks/velocityCollection" filename="veloc_history.hdf" />
+    <TimeHistory name="timeHistoryOutput" sources="{/Tasks/velocityCollection}" filename="veloc_history.hdf" />
   </Outputs>
 
   <Tasks>

@@ -16,10 +16,8 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifndef TOOLBASE_HPP_
-#define TOOLBASE_HPP_
-
-
+#ifndef TASKBASE_HPP_
+#define TASKBASE_HPP_
 
 #include <string>
 #include <limits>
@@ -57,5 +55,4 @@ public:
 
 } /* namespace */
 
-
-#endif /* TOOLBASE_HPP_ */
+#endif /* TASKBASE_HPP_ */

@@ -1385,6 +1385,13 @@ Datastructure: TableFunction
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
 
 
+.. _DATASTRUCTURE_TaskBase:
+
+Datastructure: TaskBase
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/TaskBase_other.rst
+
+
 .. _DATASTRUCTURE_Tasks:
 
 Datastructure: Tasks

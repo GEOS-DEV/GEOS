@@ -220,7 +220,7 @@ public:
 
   ///@}
 
-  virtual HistoryMetadata getBufferedIOMetadata() const = 0;
+  virtual HistoryMetadata getBufferedIOMetadata( localIndex const packCount ) const = 0;
 
   /**
    * @name Methods for buffer packing/unpacking

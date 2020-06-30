@@ -255,9 +255,9 @@ public:
   ///@}
 
   virtual
-  HistoryMetadata getBufferedIOMetadata() const override final
+  HistoryMetadata getBufferedIOMetadata( localIndex const packCount = -1 ) const override final
   {
-    return getHistoryMetadata< T >( getName(), *this->m_data );
+    return getHistoryMetadata< T >( getName(), *this->m_data, packCount );
   }
 
   /**
