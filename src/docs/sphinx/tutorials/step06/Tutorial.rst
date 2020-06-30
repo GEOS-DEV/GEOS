@@ -94,12 +94,9 @@ The **Mesh** tag is used as in previous tutorials to import field mesh either in
 Geometry tag
 ----------------
 
-  Here we use the usual "infinity" box to put all the domain in the *all* set.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseCo2InjTutorial.xml
-  :language: xml
-  :start-after: <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY -->
-  :end-before: <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY_END -->
+The **Geometry** XML block was used in the single-phase tutorials to specify boundary conditions.
+Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
+block is not needed.
 
 
 .. _Events_tag_co2_field_case:

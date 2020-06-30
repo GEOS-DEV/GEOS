@@ -121,7 +121,6 @@
   
   <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY -->
   <Geometry>
-    <Box name="all" xMin="-1e9, -1e9, -1e9" xMax="1e9, 1e9, 1e9"/>
   </Geometry>
   <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY_END -->
   
