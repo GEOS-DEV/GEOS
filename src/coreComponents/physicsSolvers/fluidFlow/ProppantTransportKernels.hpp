@@ -47,7 +47,7 @@ struct AccumulationKernel
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
            real64 const & volume,
            real64 const & packPoreVolume,
-           real64 const & proppantLiftVolume,           
+           real64 const & proppantLiftVolume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian )
   {
@@ -875,7 +875,7 @@ struct FluxKernel
 
       localIndex idx1 = i * numDofPerCell; // proppant
 
-      if( isProppantMob[i] == 1 && !(numElems == 1 && stencilEdgeToFaceDownDistance > TINY) )      
+      if( isProppantMob[i] == 1 && !(numElems == 1 && stencilEdgeToFaceDownDistance > TINY) )
       {
 
         if( edgeToFaceProppantFlux[i] >= 0.0 )
@@ -1305,23 +1305,23 @@ struct ProppantPackVolumeKernel
           proppantLiftFlux[ei] = 0.0;
 
         real64 liftH = proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
-        
+
         real64 Vf = proppantPackVf[ei];
 
         Vf += (dH - liftH) / L;
 
-        if(Vf < 0.0)
+        if( Vf < 0.0 )
         {
 
           Vf = 0.0;
 
           liftH = dH + proppantPackVf[ei] * L;
-          if(liftH > L)
+          if( liftH > L )
             liftH = L;
 
-          proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;          
+          proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
 
-          
+
         }
 
         if( Vf >= 1.0 )

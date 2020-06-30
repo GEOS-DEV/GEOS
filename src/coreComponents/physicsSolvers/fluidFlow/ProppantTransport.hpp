@@ -199,7 +199,7 @@ public:
     static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
 
     // these are used to store last converged time step values
-  
+
     static constexpr auto oldComponentDensityString  = "oldComponentDensity";
 
     static constexpr auto updateProppantPackingString  = "updateProppantPacking";

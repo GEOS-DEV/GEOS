@@ -447,7 +447,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
       arrayView1d< integer > const & isProppantMobile = m_isProppantMobile[er][esr];
 
       arrayView1d< real64 > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
-      
+
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
       {
 
@@ -459,7 +459,7 @@ void ProppantTransport::PreStepUpdate( real64 const & time,
         isProppantMobile[ei] = 1;
 
         proppantLiftFlux[ei] = 0.0;
-        
+
       } );
     } );
   }
@@ -677,7 +677,7 @@ void ProppantTransport::AssembleAccumulationTerms( real64 const dt,
 
     arrayView1d< real64 const > const & proppantPackVf = m_proppantPackVolumeFraction[er][esr];
     arrayView1d< real64 const > const & proppantLiftFlux = m_proppantLiftFlux[er][esr];
-    
+
     forAll< serialPolicy >( subRegion.size(), [=]( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
@@ -686,7 +686,7 @@ void ProppantTransport::AssembleAccumulationTerms( real64 const dt,
         stackArray1d< real64, MAX_NUM_COMPONENTS > localAccum( m_numDofPerCell );
         stackArray2d< real64, MAX_NUM_COMPONENTS * MAX_NUM_COMPONENTS > localAccumJacobian( m_numDofPerCell, m_numDofPerCell );
 
-        real64 proppantLiftVolume = proppantLiftFlux[ei] * dt;        
+        real64 proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
         real64 effectiveVolume = volume[ei];
         real64 packPoreVolume = 0.0;
@@ -1112,7 +1112,7 @@ void ProppantTransport::ApplySystemSolution( DofManager const & dofManager,
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaProppantConcentrationString ) );
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaComponentConcentrationString ) );  
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaComponentConcentrationString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -1363,7 +1363,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::cellBasedFluxString ) );  
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::cellBasedFluxString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -1463,7 +1463,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   {
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantConcentrationString ) );
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );    
+    fieldNames["elems"].emplace_back( string( viewKeyStruct::proppantPackVolumeFractionString ) );
 
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
