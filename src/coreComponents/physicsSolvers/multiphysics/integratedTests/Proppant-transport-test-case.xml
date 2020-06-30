@@ -25,7 +25,7 @@
                 newtonMinIter="1"/>
             <LinearSolverParameters
                 solverType="gmres"
-                krylovTol="1.0e-12"/>
+                krylovTol="1.0e-7"/>
 
     
     </ProppantTransport>    
@@ -51,13 +51,13 @@
                      solidNames="{rock}">
 
             <NonlinearSolverParameters
-                newtonTol="1.0e-8"
+                newtonTol="1.0e-6"
                 newtonMaxIter="8"
                 lineSearchAction="0"
                 newtonMinIter="0"/>
             <LinearSolverParameters
                 solverType="gmres"
-                krylovTol="1.0e-12"/>
+                krylovTol="1.0e-7"/>
 
 
     </SinglePhaseProppantFVM>
@@ -163,7 +163,7 @@
 
     <ParticleFluid name="sand"
                    particleSettlingModel="Stokes"
-		   hinderedSettlingCoefficient="5.0"
+		   hinderedSettlingCoefficient="5.9"
                    isCollisionalSlip="0"
                    proppantDensity="2550.0"
                    proppantDiameter="4.5e-4"                   
@@ -240,7 +240,7 @@
     <SourceFlux name="left1a"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="-0.14"
+               scale="-0.1262"
                component="0" 	       	       
 	       setNames="{left1}"/>
 
@@ -254,7 +254,7 @@
     <SourceFlux name="left2a"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="-0.14"
+               scale="-0.1262"
                component="0" 	       	       
 	       setNames="{left2}"/>
 
@@ -269,7 +269,7 @@
     <SourceFlux name="left3a"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
-               scale="-0.14"
+               scale="-0.1262"
                component="0" 	       	       
 	       setNames="{left3}"/>
 

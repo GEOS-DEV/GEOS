@@ -259,16 +259,7 @@ void ProppantSlurryFluid::ComputeFluidViscosity( arraySlice1d< real64 const > co
     dFluidViscosity_dPressure +=
       (dComponentDensity_dPressure[c1] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dPressure) *
       (m_defaultViscosity[c1] - m_referenceViscosity);
-    /*
-       for(localIndex c2 = 0; c2 < NC; ++c2)
-       {
 
-        dFluidViscosity_dComponentConcentration[c2] += (dComponentDensity_dComponentConcentration[c1][c2] / fluidDensity
-           - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dComponentConcentration[c2]) *
-           (m_defaultViscosity[c1] - m_referenceViscosity);
-
-       }
-     */
   }
 
 }
@@ -304,17 +295,6 @@ void ProppantSlurryFluid::Compute( real64 const & proppantConcentration,
 
   dDensity_dPressure = (1.0 - effectiveConcentration) * dFluidDensity_dPressure;
 
-  /*
-     dDensity_dProppantConcentration = -fluidDensity + m_referenceProppantDensity;
-
-     for(localIndex c = 0; c < NC; ++c)
-     {
-
-      dDensity_dComponentConcentration[c] = (1.0 - effectiveConcentration) * dFluidDensity_dComponentConcentration[c];
-
-     }
-   */
-
   dDensity_dProppantConcentration = 0.0;
 
   for( localIndex c = 0; c < NC; ++c )
@@ -330,16 +310,6 @@ void ProppantSlurryFluid::Compute( real64 const & proppantConcentration,
   viscosity = fluidViscosity * coef;
 
   dViscosity_dPressure = dFluidViscosity_dPressure * coef;
-
-  /*
-     dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + 1.25 *  effectiveConcentration / (1.0 -
-        effectiveConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration *
-        m_maxProppantConcentration / (m_maxProppantConcentration - effectiveConcentration) / (m_maxProppantConcentration
-        - effectiveConcentration);
-
-     for(localIndex c = 0; c < NC; ++c)
-     dViscosity_dComponentConcentration[c] = dFluidViscosity_dComponentConcentration[c] * coef;
-   */
 
   dViscosity_dProppantConcentration = 0.0;
 
