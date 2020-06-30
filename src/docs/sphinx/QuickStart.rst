@@ -188,7 +188,8 @@ We maintain host configs (ending in ``.cmake``) for HPC systems at various insti
   set(CONFIG_NAME "your-platform" CACHE PATH "")
   message( "CONFIG_NAME = ${CONFIG_NAME}" )
 
-  # set paths to C, C++, and Fortran compilers
+  # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code, 
+  # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
   set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE PATH "")
   set(CMAKE_CXX_COMPILER "/usr/bin/clang++" CACHE PATH "")
   set(CMAKE_Fortran_COMPILER "/usr/local/bin/gfortran" CACHE PATH "")
