@@ -327,9 +327,9 @@ public:
 
     stressModifier( stress );
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density(k,q),
-                                     m_gravityVector[1] * m_density(k,q),
-                                     m_gravityVector[2] * m_density(k,q) };
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q ),
+                                     m_gravityVector[1] * m_density( k, q ),
+                                     m_gravityVector[2] * m_density( k, q ) };
 
     real64 N[NUM_NODES_PER_ELEM];
     FiniteElementShapeKernel::shapeFunctionValues( q, N );
