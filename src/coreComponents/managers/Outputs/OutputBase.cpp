@@ -28,14 +28,14 @@ using namespace dataRepository;
 OutputBase::OutputBase( std::string const & name,
                         Group * const parent ):
   ExecutableGroup( name, parent ),
-  m_slaveDirectory(),
+  m_childDirectory(),
   m_parallelThreads( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeysStruct::slaveDirectoryString, &m_slaveDirectory )->
+  registerWrapper( viewKeysStruct::childDirectoryString, &m_childDirectory )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "slave directory path" );
+    setDescription( "Child directory path" );
 
   registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads )->
     setApplyDefaultValue( 1 )->
@@ -63,14 +63,14 @@ void OutputBase::InitializePreSubGroups( Group * const GEOSX_UNUSED_PARAM( group
 
 void OutputBase::SetupDirectoryStructure()
 {
-  string slaveDirectory = m_slaveDirectory;
+  string childDirectory = m_childDirectory;
 
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   if( rank  == 0 )
   {
-    if( !slaveDirectory.empty())
+    if( !childDirectory.empty())
     {
-      string cmd = "mkdir -p " + slaveDirectory;
+      string cmd = "mkdir -p " + childDirectory;
       int ret = std::system( cmd.c_str());
       GEOSX_ERROR_IF( ret != 0, "Command '" << cmd << "' exited with code " << std::to_string( ret ));
     }
