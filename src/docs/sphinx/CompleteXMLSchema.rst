@@ -148,6 +148,13 @@ Element: Cylinder
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder.rst
 
 
+.. _XML_DamageLinearElasticIsotropic:
+
+Element: DamageLinearElasticIsotropic
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic.rst
+
+
 .. _XML_Dirichlet:
 
 Element: Dirichlet
@@ -871,6 +878,13 @@ Datastructure: Contact
 Datastructure: Cylinder
 =======================
 .. include:: ../../coreComponents/fileIO/schema/docs/Cylinder_other.rst
+
+
+.. _DATASTRUCTURE_DamageLinearElasticIsotropic:
+
+Datastructure: DamageLinearElasticIsotropic
+===========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/DamageLinearElasticIsotropic_other.rst
 
 
 .. _DATASTRUCTURE_Dirichlet:

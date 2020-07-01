@@ -31,7 +31,6 @@ namespace constitutive
 SolidBase::SolidBase( string const & name,
                       Group * const parent ):
   ConstitutiveBase( name, parent ),
-  m_damage{},
   m_defaultDensity( 0 ),
   m_density(),
   m_stress( 0, 0, 6 ),
@@ -48,17 +47,6 @@ SolidBase::SolidBase( string const & name,
   registerWrapper( viewKeyStruct::stressString, &m_stress )->
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Material Stress" );
-
-  registerWrapper( viewKeyStruct::damageString, &m_damage )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Material Damage Variable" );
-
-  registerWrapper( viewKeyStruct::strainEnergyDensityString, &m_strainEnergyDensity )->
-    setApplyDefaultValue( 0.0 )->
-    setPlotLevel( PlotLevel::LEVEL_0 )->
-    setDescription( "Stress Deviator" );
-
 }
 
 SolidBase::~SolidBase()
@@ -71,11 +59,9 @@ SolidBase::DeliverClone( string const & GEOSX_UNUSED_PARAM( name ),
 {
   SolidBase * const newConstitutiveRelation = dynamic_cast< SolidBase * >(clone.get());
 
-  newConstitutiveRelation->m_damage = m_damage;
   newConstitutiveRelation->m_defaultDensity = m_defaultDensity;
   newConstitutiveRelation->m_density = m_density;
   newConstitutiveRelation->m_stress = m_stress;
-  newConstitutiveRelation->m_strainEnergyDensity = m_strainEnergyDensity;
 }
 
 
@@ -85,17 +71,11 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent->size() );
-  m_damage.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_density = m_defaultDensity;
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
-  m_strainEnergyDensity.resize( parent->size(), numConstitutivePointsPerParentIndex );
 }
 
-void SolidBase::calculateStrainEnergyDensity()
-{
-  GEOSX_ERROR( "SolidBase::calculateStrainEnergyDensity() called. Should be overridden." );
-}
 
 }
 } /* namespace geosx */

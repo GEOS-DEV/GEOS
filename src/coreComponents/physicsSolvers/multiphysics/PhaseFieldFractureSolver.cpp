@@ -350,37 +350,44 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition * const do
                                                                    ElementRegionBase &,
                                                                    CellElementSubRegion & elementSubRegion )
   {
-    SolidBase & solidModel = GetConstitutiveModel< SolidBase >( elementSubRegion, solidSolver.solidMaterialNames()[targetIndex] );
+    constitutive::ConstitutiveBase * const
+    solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
 
-    arrayView2d< real64 > const & damageFieldOnMaterial = solidModel.getDamage();
-
-    localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
-
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
-    elemNodes = elementSubRegion.nodeList();
-
-    globalIndex_array elemDofIndex( numNodesPerElement );
-
-    std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
-    localIndex const n_q_points = finiteElement->n_quadrature_points();
-
-    for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+    ConstitutivePassThru< DamageBase >::Execute( solidModel, [&]( auto * const damageModel )
     {
-      for( localIndex q = 0; q < n_q_points; ++q )
+      using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
+      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+
+      arrayView2d< real64 > const & damageFieldOnMaterial = constitutiveUpdate.m_damage;
+
+      localIndex const numNodesPerElement = elementSubRegion.numNodesPerElement();
+
+      arrayView2d< localIndex const, cells::NODE_MAP_USD > const &
+      elemNodes = elementSubRegion.nodeList();
+
+      globalIndex_array elemDofIndex( numNodesPerElement );
+
+      std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+      localIndex const n_q_points = finiteElement->n_quadrature_points();
+
+      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
-        damageFieldOnMaterial( k, q ) = 0;
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        for( localIndex q = 0; q < n_q_points; ++q )
         {
-          damageFieldOnMaterial( k, q ) += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
-          //solution is probably not going to work because the solution of the coupled solver
-          //has both damage and displacements. Using the damageResult field from the Damage solver
-          //is probably better
-          //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-          // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+          damageFieldOnMaterial( k, q ) = 0;
+          for( localIndex a = 0; a < numNodesPerElement; ++a )
+          {
+            damageFieldOnMaterial( k, q ) += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
+            //solution is probably not going to work because the solution of the coupled solver
+            //has both damage and displacements. Using the damageResult field from the Damage solver
+            //is probably better
+            //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
+            // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+          }
+          //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
         }
-        //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
       }
-    }
+    } );
   } );
 
 

@@ -27,6 +27,7 @@ set( constitutive_headers
      fluid/ProppantSlurryFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ParticleFluid.hpp          
+     solid/Damage.hpp
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
@@ -68,6 +69,7 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/ParticleFluidBase.cpp
      fluid/ParticleFluid.cpp               
+     solid/Damage.cpp
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
      solid/LinearElasticTransverseIsotropic.cpp

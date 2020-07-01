@@ -31,6 +31,8 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -269,123 +271,118 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
     ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
 
     elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
-                                                                           CellElementSubRegion const & elementSubRegion )
+                                                                           CellElementSubRegion & elementSubRegion )
     {
 
-//          localIndex m_solidMaterialFullIndex = 0;
-//          SolidBase * solidModel =
-//  constitutiveRelations[er][esr][m_solidMaterialFullIndex]->group_cast<SolidBase*>();
+      constitutive::ConstitutiveBase * const
+      solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( m_solidModelName );
 
-#if 1
-      arrayView2d< real64 const > const &
-      strainEnergy = elementSubRegion.
-                       GetConstitutiveModels()->
-                       GetGroup( m_solidModelName )->getReference< array2d< real64 > >( SolidBase::
-                                                                                          viewKeyStruct::
-                                                                                          strainEnergyDensityString );
-#else
-#define strainEnergy( k, q ) m_coeff[k]
-#endif
-      arrayView4d< real64 const > const &
-      dNdX = elementSubRegion.dNdX();
-
-      arrayView2d< real64 const > const &
-      detJ = elementSubRegion.detJ();
-
-      localIndex const numNodesPerElement =  elementSubRegion.numNodesPerElement();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
-
-      // arrayView1d<real64 const> const &
-      // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffName);
-
-      globalIndex_array elemDofIndex( numNodesPerElement );
-      real64_array element_rhs( numNodesPerElement );
-      real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
-
-      arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
-      localIndex const n_q_points = finiteElement->n_quadrature_points();
-
-      real64 ell = m_lengthScale;                                 //phase-field length scale
-      real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
-      double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
-                                                                                                                                                                                      // Linear
-      arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
-      //real64 diffusion = 1.0;
-      // begin element loop, skipping ghost elements
-      for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+      constitutive::ConstitutivePassThru< constitutive::DamageBase >::Execute( solidModel,
+                                                                               [&]( auto * const damageModel )
       {
-        if( elemGhostRank[k] < 0 )
+        using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+
+        arrayView4d< real64 const > const &
+        dNdX = elementSubRegion.dNdX();
+
+        arrayView2d< real64 const > const &
+        detJ = elementSubRegion.detJ();
+
+        localIndex const numNodesPerElement =  elementSubRegion.numNodesPerElement();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
+
+        // arrayView1d<real64 const> const &
+        // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffName);
+
+        globalIndex_array elemDofIndex( numNodesPerElement );
+        real64_array element_rhs( numNodesPerElement );
+        real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
+
+        arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
+        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+        localIndex const n_q_points = finiteElement->n_quadrature_points();
+
+        real64 ell = m_lengthScale;                                 //phase-field length scale
+        real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
+        double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
+
+        arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
+        //real64 diffusion = 1.0;
+        // begin element loop, skipping ghost elements
+        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
         {
-          element_rhs = 0.0;
-          element_matrix = 0.0;
-          for( localIndex q = 0; q < n_q_points; ++q )
+          if( elemGhostRank[k] < 0 )
           {
-            double D = 0;                                                                   //max between threshold and
-                                                                                            // Elastic energy
-            if( m_localDissipationOption == "Linear" )
+            element_rhs = 0.0;
+            element_matrix = 0.0;
+            for( localIndex q = 0; q < n_q_points; ++q )
             {
-              D = std::max( threshold, strainEnergy( k, q ));
-              //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
-            }
-            //Interpolate d and grad_d
-
-            real64 qp_damage = 0.0;
-            R1Tensor qp_grad_damage;
-            R1Tensor temp;
-            for( localIndex a = 0; a < numNodesPerElement; ++a )
-            {
-              qp_damage +=
-                finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
-              temp = dNdX[k][q][a];
-              temp *= nodalDamage[elemNodes( k, a )];
-              qp_grad_damage +=
-                temp;
-
-            }
-            //std::cout << "Damage: " << qp_damage <<std::endl;
-            //std::cout << "GradDamage: " << qp_grad_damage <<std::endl;
-            for( localIndex a = 0; a < numNodesPerElement; ++a )
-            {
-              elemDofIndex[a] = dofIndex[elemNodes( k, a )];
-              //real64 diffusion = 1.0;
-              real64 Na = finiteElement->value( a, q );
-              //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
+              real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k,q );
+              double D = 0;                                                                   //max between threshold and
+                                                                                              // Elastic energy
               if( m_localDissipationOption == "Linear" )
               {
-                element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
-                                                  0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
-                                                  (ell * D/Gc) * Na * qp_damage);
+                D = std::max( threshold, strainEnergyDensity );
+                //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
               }
-              else
+              //Interpolate d and grad_d
+
+              real64 qp_damage = 0.0;
+              R1Tensor qp_grad_damage;
+              R1Tensor temp;
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
               {
-                element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergy( k, q ) / Gc -
-                                                  (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
-                                                   Na * qp_damage * (1 + 2 * ell*strainEnergy( k, q )/Gc)) );
+                qp_damage += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
+                temp = dNdX[k][q][a];
+                temp *= nodalDamage[elemNodes( k, a )];
+                qp_grad_damage += temp;
+
               }
-              for( localIndex b = 0; b < numNodesPerElement; ++b )
+              //std::cout << "Damage: " << qp_damage <<std::endl;
+              //std::cout << "GradDamage: " << qp_grad_damage <<std::endl;
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
               {
-                real64 Nb = finiteElement->value( b, q );
+                elemDofIndex[a] = dofIndex[elemNodes( k, a )];
+                //real64 diffusion = 1.0;
+                real64 Na = finiteElement->value( a, q );
+                //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
                 if( m_localDissipationOption == "Linear" )
                 {
-                  element_matrix( a, b ) -= detJ[k][q] *
-                                            (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                             (ell * D/Gc) * Na * Nb);
+                  element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
+                                                    0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
+                                                    (ell * D/Gc) * Na * qp_damage);
                 }
                 else
                 {
-                  element_matrix( a, b ) -=
-                    detJ[k][q] *
-                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                     Na * Nb * (1 + 2 * ell*strainEnergy( k, q )/Gc));
+                  element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergyDensity / Gc -
+                                                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
+                                                     Na * qp_damage * (1 + 2 * ell*strainEnergyDensity/Gc)) );
+                }
+                for( localIndex b = 0; b < numNodesPerElement; ++b )
+                {
+                  real64 Nb = finiteElement->value( b, q );
+                  if( m_localDissipationOption == "Linear" )
+                  {
+                    element_matrix( a, b ) -= detJ[k][q] *
+                                              (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                               (ell * D/Gc) * Na * Nb);
+                  }
+                  else
+                  {
+                    element_matrix( a, b ) -= detJ[k][q] *
+                                              ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                                  Na * Nb * (1 + 2 * ell*strainEnergyDensity/Gc )
+                                              );
+                  }
                 }
               }
             }
+            matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+            rhs.add( elemDofIndex, element_rhs );
           }
-          matrix.add( elemDofIndex, elemDofIndex, element_matrix );
-          rhs.add( elemDofIndex, element_rhs );
         }
-      }
+      } );
     } );
   }
   matrix.close();

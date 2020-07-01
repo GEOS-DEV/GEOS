@@ -80,19 +80,37 @@ protected:
   /// Deleted move assignment operator
   SolidBaseUpdates & operator=( SolidBaseUpdates && ) =  delete;
 
+
+
+
 public:
+  GEOSX_HOST_DEVICE
+  virtual void getStress( localIndex const k,
+                          localIndex const q,
+                          real64 (&stress)[6] ) const
+  {
+    stress[0] = this->m_stress(k,q,0);
+    stress[1] = this->m_stress(k,q,1);
+    stress[2] = this->m_stress(k,q,2);
+    stress[3] = this->m_stress(k,q,3);
+    stress[4] = this->m_stress(k,q,4);
+    stress[5] = this->m_stress(k,q,5);
+  }
 
   /// A reference the material stress at quadrature points.
   arrayView3d< real64, solid::STRESS_USD > const m_stress;
 
 private:
   /**
-   * accessor to return the stiffness at a given element
-   * @param k the element number
-   * @param c the stiffness array
+   * Return the stiffness at a given element and quadrature point.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param c The stiffness array in Voigt notation.
    */
   GEOSX_HOST_DEVICE
-  virtual void GetStiffness( localIndex const k, real64 ( &c )[6][6] ) const = 0;
+  virtual void GetStiffness( localIndex const k,
+                             localIndex const q,
+                             real64 ( &c )[6][6] ) const = 0;
 
   /**
    * @brief Calculate stress using input generated under small strain
@@ -156,6 +174,10 @@ private:
                              localIndex const q,
                              real64 const (&FmI)[3][3] ) const = 0;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 calculateStrainEnergyDensity( localIndex const k,
+                                               localIndex const q ) const = 0;
+
 
 };
 
@@ -187,14 +209,11 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  virtual void calculateStrainEnergyDensity();
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto damageString  = "damage";
     static constexpr auto defaultDensityString  = "defaultDensity";
     static constexpr auto densityString  = "density";
-    static constexpr auto strainEnergyDensityString = "strainEnergyDensity";
     static constexpr auto stressString = "stress";
   };
 
@@ -202,9 +221,6 @@ public:
    * @name Accessors
    */
   ///@{
-
-  arrayView2d< real64 >       const & getDamage()       { return m_damage; }
-  arrayView2d< real64 const > const & getDamage() const { return m_damage; }
 
   /**
    * Getter for default density
@@ -230,9 +246,6 @@ public:
   /// Const/non-mutable accessor for density
   arrayView2d< real64 const > const & getDensity() const { return m_density; }
 
-  arrayView2d< real64 >       const & getStrainEnergyDensity()       { return m_strainEnergyDensity; }
-  arrayView2d< real64 const > const & getStrainEnergyDensity() const { return m_strainEnergyDensity; }
-
   /// Non-const/mutable accessor for stress
   arrayView3d< real64, solid::STRESS_USD >       const & getStress()       { return m_stress; }
 
@@ -242,8 +255,6 @@ public:
   ///@}
 
 protected:
-  array2d< real64 > m_damage;
-  array2d< real64 > m_strainEnergyDensity;
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;

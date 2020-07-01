@@ -260,7 +260,7 @@ struct ImplicitKernel
 
     typename CONSTITUTIVE_TYPE::KernelWrapper const & constitutive = constitutiveRelation->createKernelUpdates();
 
-    arrayView2d< real64 const > const & damage = constitutiveRelation->getDamage();
+//    arrayView2d< real64 const > const & damage = constitutiveRelation->getDamage();
 //    std::cout << "Arbitrary Gauss point damage value = " << damage(100,0) << "\n";
 //    arrayView2d<real64> const & strainEnergyDensity = constitutiveRelation->getStrainEnergyDensity();
     arrayView3d< real64 const, solid::STRESS_USD > const & stress = constitutiveRelation->getStress();
@@ -291,8 +291,7 @@ struct ImplicitKernel
       dRdU_StiffnessDamping = 0.0;
       R_StiffnessDamping = 0.0;
 
-      real64 c[6][6];
-      constitutive.GetStiffness( k, c );
+
 
       if( elemGhostRank[k] < 0 )
       {
@@ -339,7 +338,9 @@ struct ImplicitKernel
 
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          real64 damageFactor = ( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
+          real64 c[6][6];
+          constitutive.GetStiffness( k, q, c );
+          real64 damageFactor = 1.0;//( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
 //          if( damageFactor > 0.00000000001 )
 //          {
 //            damageFactor = 1.0;
@@ -397,7 +398,7 @@ struct ImplicitKernel
 
         for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
         {
-          real64 const damageFactor = ( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
+          real64 const damageFactor = 1.0;//( 1.0 - damage( k, q ) )*( 1.0 - damage( k, q ) );
           const realT detJq = detJ( k, q );
           real64 stress0[ 6 ] = LVARRAY_TENSOROPS_INIT_LOCAL_6( damageFactor * detJq * stress[ k ][ q ] );
 
