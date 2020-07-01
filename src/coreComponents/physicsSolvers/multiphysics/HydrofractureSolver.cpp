@@ -286,114 +286,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  m_solidSolver->ResetStressToBeginningOfStep( domain );
 	}
 
-	//TJ: print out surface aperture before newton solve
-	{
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
-		       "before newton solve: "
-		    << std::endl;
-	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
-	  if (subRegion->size() == 0)
-	    std::cout << "No face element yet" << "\n";
-	  else
-	  {
-	    std::cout << "Face element info: " << std::endl;
-	    for(localIndex i=0; i<nodeMap.size(); i++)
-	    {
-	      std::cout << "Face (node) " << i << ": ";
-	      for(localIndex j=0; j<nodeMap[i].size(); j++)
-		std::cout << nodeMap[i][j] << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<edgeMap.size(); i++)
-	    {
-	      std::cout << "Face (edge) " << i << ": ";
-	      for(localIndex j=0; j<edgeMap[i].size(); j++)
-		std::cout << edgeMap[i][j] << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<faceMap.size(0); i++)
-	    {
-	      std::cout << "Face (face) " << i << ": ";
-	      for(localIndex j=0; j<faceMap.size(1); j++)
-		std::cout << faceMap[i][j] << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
-	    {
-	      std::cout << "Face (center) " << i << ": ";
-	      for(auto & item : subRegion->getElementCenter()[i])
-		std::cout << item << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
-	    {
-	      std::cout << "Face (aperture) " << i << ": "
-			<< subRegion->getElementAperture()[i]
-			<< std::endl;
-	    }
-	  }
-	} // print statements
-
         MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
         NodeManager & nodeManager = *mesh.getNodeManager();
         SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
 
         array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
-//        array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
+        array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
 //        std::cout << dispIncre.size() << std::endl;
-
-	// currently the only method is implicit time integration
-	dtReturn = this->NonlinearImplicitStep( time_n,
-						dt,
-						cycleNumber,
-						domain,
-						m_dofManager,
-						m_matrix,
-						m_rhs,
-						m_solution );
-
-	//TJ: print out surface aperture after newton solve
-	{
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
-		       "after newton solve: "
-		    << std::endl;
-	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
-	  if (subRegion->size() == 0)
-	    std::cout << "No face element yet" << "\n";
-	  else
-	  {
-	    std::cout << "Face element info: " << std::endl;
-	    for(localIndex i=0; i<nodeMap.size(); i++)
-	    {
-	      std::cout << "Face (node) " << i << ": ";
-	      for(localIndex j=0; j<nodeMap[i].size(); j++)
-		std::cout << nodeMap[i][j] << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<edgeMap.size(); i++)
-	    {
-	      std::cout << "Face (edge) " << i << ": ";
-	      for(localIndex j=0; j<edgeMap[i].size(); j++)
-		std::cout << edgeMap[i][j] << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
-	    {
-	      std::cout << "Face (center) " << i << ": ";
-	      for(auto & item : subRegion->getElementCenter()[i])
-		std::cout << item << " ";
-	      std::cout << "\n";
-	    }
-	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
-	    {
-	      std::cout << "Face (aperture) " << i << ": "
-			<< subRegion->getElementAperture()[i]
-			<< std::endl;
-	    }
-	  }
-	} // print statements
 
 	//TJ: calculate some material parameters
 	real64 const shearModulus = domain->GetGroup("Constitutive")
@@ -455,6 +354,177 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 //	  std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
 	}
 
+        // First time step
+        if (time_n < 1.0e-6 && solveIter == 0)
+        {
+          std::cout << "Tip element in the first time step: " << m_tipElement << std::endl;
+          real64 refDispFirstStep = 0.0;
+          real64 volume = std::abs(injectionRate) / 1.0e3 * dt;
+	  FaceManager & faceManager = *mesh.getFaceManager();
+	  r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
+	  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
+
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+
+          if (viscosity < 2.0e-3) // Toughness-dominated case
+          {
+            refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
+          }
+          else  // Viscosity-dominated case
+          {
+	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	    real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
+			         	  pow(Eprime/(mup*velocity),1.0/3.0)
+	                                 ,3.0/5.0);
+            refDispFirstStep = 0.5 * Betam *
+        	               pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
+//            refDispFirstStep = 0.00019;
+          }
+
+	  for (auto const & node : nodeMap[m_tipElement])
+	  {
+	    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+	    {
+	      // Insert node to the set for B.C. manipulation
+//		  nodesWithAssignedDisp.insert(node);
+	      for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+	      {
+		auto const & face = faceMap[m_tipElement][i];
+		for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+		{
+		  auto const & nodeOnFace = faceManager.nodeList()(face,j);
+		  if (node == nodeOnFace)
+		  {
+		    disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
+		    dispIncre(node,0) = disp(node,0) - 0.0;
+		    std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
+		  }
+		} // for localIndex j
+	      } // for localIndex i
+	    } // if (not found)
+	  }  // for auto node
+
+	  std::map< string, string_array > fieldNames;
+	  fieldNames["node"].push_back( keys::IncrementalDisplacement );
+	  fieldNames["node"].push_back( keys::TotalDisplacement );
+	  fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
+	  fieldNames["elems"].push_back( "elementAperture" );
+
+	  CommunicationTools::SynchronizeFields( fieldNames,
+						 domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+						 domain->getNeighbors() );
+
+	  //TJ: update the elmt aperture due to the change of disp field at the newly splitted nodes
+	  //    in the first time step
+	  this->UpdateDeformationForCoupling( domain );
+
+	  m_flowSolver->ResetViews( domain );
+        } // if (time_n < 1.0e-6 && solveIter == 0)
+
+
+	//TJ: print out surface aperture before newton solve
+	{
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
+		       "before newton solve: "
+		    << std::endl;
+	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  if (subRegion->size() == 0)
+	    std::cout << "No face element yet" << "\n";
+	  else
+	  {
+	    std::cout << "Face element info: " << std::endl;
+	    for(localIndex i=0; i<nodeMap.size(); i++)
+	    {
+	      std::cout << "Face (node) " << i << ": ";
+	      for(localIndex j=0; j<nodeMap[i].size(); j++)
+		std::cout << nodeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<edgeMap.size(); i++)
+	    {
+	      std::cout << "Face (edge) " << i << ": ";
+	      for(localIndex j=0; j<edgeMap[i].size(); j++)
+		std::cout << edgeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<faceMap.size(0); i++)
+	    {
+	      std::cout << "Face (face) " << i << ": ";
+	      for(localIndex j=0; j<faceMap.size(1); j++)
+		std::cout << faceMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	    {
+	      std::cout << "Face (center) " << i << ": ";
+	      for(auto & item : subRegion->getElementCenter()[i])
+		std::cout << item << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	    {
+	      std::cout << "Face (aperture) " << i << ": "
+			<< subRegion->getElementAperture()[i]
+			<< std::endl;
+	    }
+	  }
+	} // print statements
+
+	// currently the only method is implicit time integration
+	dtReturn = this->NonlinearImplicitStep( time_n,
+						dt,
+						cycleNumber,
+						domain,
+						m_dofManager,
+						m_matrix,
+						m_rhs,
+						m_solution );
+
+	//TJ: print out surface aperture after newton solve
+	{
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
+		       "after newton solve: "
+		    << std::endl;
+	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  if (subRegion->size() == 0)
+	    std::cout << "No face element yet" << "\n";
+	  else
+	  {
+	    std::cout << "Face element info: " << std::endl;
+	    for(localIndex i=0; i<nodeMap.size(); i++)
+	    {
+	      std::cout << "Face (node) " << i << ": ";
+	      for(localIndex j=0; j<nodeMap[i].size(); j++)
+		std::cout << nodeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<edgeMap.size(); i++)
+	    {
+	      std::cout << "Face (edge) " << i << ": ";
+	      for(localIndex j=0; j<edgeMap[i].size(); j++)
+		std::cout << edgeMap[i][j] << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
+	    {
+	      std::cout << "Face (center) " << i << ": ";
+	      for(auto & item : subRegion->getElementCenter()[i])
+		std::cout << item << " ";
+	      std::cout << "\n";
+	    }
+	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
+	    {
+	      std::cout << "Face (aperture) " << i << ": "
+			<< subRegion->getElementAperture()[i]
+			<< std::endl;
+	    }
+	  }
+	} // print statements
 
 /*        if (time_n < 1.0e-6) //first step
           m_tipElement = 0;
@@ -485,12 +555,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
-/*	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
 					 << myChildIndex[refNodeIndex] << std::endl;
 	  std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
 				       << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
 				       << std::endl;
-*/
+
 	  real64 tipX = 0.0;
 	  if (viscosity < 2.0e-3) // Toughness-dominated case
 	  {
@@ -992,6 +1063,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		refValue = 0.5 * Betam
 		               * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
 	      }
+//	      refValue = 0.0001;
 
 //	      refValue = 5.0*refValue;
 	      //Find which nodes' displacement need to be manipulated
@@ -1260,6 +1332,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       aperture[kfe] = -Dot( temp, faceNormal[kf0] ) / numNodesPerFace;
       //TJ: Do we use effectiveAperture as the actual aperture?
       effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+/*
+      if (effectiveAperture[kfe] < 0.0)
+	effectiveAperture[kfe] = contactRelation->effectiveAperture( aperture[kfe] );
+      else
+	effectiveAperture[kfe] = aperture[kfe];
+*/
 
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
