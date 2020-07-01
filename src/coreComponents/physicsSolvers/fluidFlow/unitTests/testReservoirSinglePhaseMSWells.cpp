@@ -63,7 +63,7 @@ char const * xmlInput =
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
   "                      control=\"liquidRate\" \n"
-  "                      targetBHP=\"1e7\"\n"
+  "                      targetBHP=\"2e7\"\n"
   "                      targetRate=\"1e-4\"/>\n"
   "    </SinglePhaseWell>\n"
   "  </Solvers>\n"
@@ -417,21 +417,6 @@ TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Flux )
                                arrayView1d< real64 > const & localRhs )
   {
     solver->GetWellSolver()->AssembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
-}
-
-TEST_F( SinglePhaseReservoirSolverTest, jacobianNumericalCheck_Control )
-{
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = *problemManager->getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->GetWellSolver()->FormControlEquation( domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 

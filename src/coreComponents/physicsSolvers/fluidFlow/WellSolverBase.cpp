@@ -133,10 +133,6 @@ void WellSolverBase::AssembleSystem( real64 const time,
                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                      arrayView1d< real64 > const & localRhs )
 {
-
-  // first deal with the well control and switch if necessary
-  CheckWellControlSwitch( domain );
-
   // then assemble the mass balance equations
   AssembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
@@ -145,9 +141,6 @@ void WellSolverBase::AssembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   FormPressureRelations( domain, dofManager, localMatrix, localRhs );
-
-  // finally assemble the well control equation
-  FormControlEquation( domain, dofManager, localMatrix, localRhs );
 }
 
 void WellSolverBase::UpdateStateAll( DomainPartition & domain )
@@ -256,10 +249,12 @@ void WellSolverBase::PrecomputeData( DomainPartition & domain )
 void WellSolverBase::ResetViews( DomainPartition & domain )
 {
   MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  ElementRegionManager const & elemManager = *mesh->getElemManager();
 
-  m_resGravCoef =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( FlowSolverBase::viewKeyStruct::gravityCoefString );
+  m_resGravCoef.clear();
+  m_resGravCoef = elemManager.ConstructArrayViewAccessor< real64, 1 >( FlowSolverBase::viewKeyStruct::gravityCoefString );
+  m_resGravCoef.setName( getName() + "/accessors/" + FlowSolverBase::viewKeyStruct::gravityCoefString );
+
 }
 
 WellControls & WellSolverBase::GetWellControls( WellElementSubRegion const & subRegion )
