@@ -194,19 +194,6 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
-  /**
-   * @brief assembles the control equation for the well head (first connection)
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void FormControlEquation( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs ) override;
-
-
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr auto dofFieldString = "singlePhaseWellVars";
@@ -252,26 +239,20 @@ private:
    */
   void InitializeWells( DomainPartition & domain ) override;
 
-  /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void CheckWellControlSwitch( DomainPartition & domain ) override;
-
 private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDens_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resViscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resViscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResVisc_dPres;
 
 };
 

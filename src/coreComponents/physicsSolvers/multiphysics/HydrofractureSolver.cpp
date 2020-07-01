@@ -388,7 +388,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //  {
 //    if (iter == 0)
 //    {
-//      // reset the states of all slave solvers if any of them has been reset
+//      // reset the states of all child solvers if any of them has been reset
 //      m_flowSolver->ResetStateToBeginningOfStep( domain );
 //      m_solidSolver->ResetStateToBeginningOfStep( domain );
 //      ResetStateToBeginningOfStep( domain );

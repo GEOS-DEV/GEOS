@@ -176,20 +176,14 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // loop over the perforations and add the rates to the residual and jacobian
-    forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
+    forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
       // local working variables and arrays
-      stackArray1d< localIndex, 2 >  eqnRowIndices( 2 );
-      stackArray1d< globalIndex, 2 > dofColIndices( 2 );
+      localIndex eqnRowIndices[ 2 ] = { -1 };
+      globalIndex dofColIndices[ 2 ] = { -1 };
 
-      stackArray1d< real64, 2 > localPerf( 2 );
-      stackArray2d< real64, 4 > localPerfJacobian( 2, 2 );
-
-      eqnRowIndices = -1;
-      dofColIndices = -1;
-
-      localPerf = 0;
-      localPerfJacobian = 0;
+      real64 localPerf[ 2 ] = { 0.0 };
+      real64 localPerfJacobian[ 2 ][ 2 ] = {{ 0.0 }};
 
       // get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
@@ -222,15 +216,15 @@ void SinglePhaseReservoir::AssembleCouplingTerms( real64 const GEOSX_UNUSED_PARA
         localPerfJacobian[WellSolverBase::SubRegionTag::WELL][ke] = -localPerfJacobian[WellSolverBase::SubRegionTag::RES][ke];
       }
 
-      for( localIndex i = 0; i < localPerf.size(); ++i )
+      for( localIndex i = 0; i < 2; ++i )
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
         {
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndices[i],
-                                                                    dofColIndices.data(),
-                                                                    localPerfJacobian.data() + 2 * i,
-                                                                    2 );
-          atomicAdd( serialAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                            &dofColIndices[0],
+                                                                            &localPerfJacobian[0][0] + 2 * i,
+                                                                            2 );
+          atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
         }
       }
     } );

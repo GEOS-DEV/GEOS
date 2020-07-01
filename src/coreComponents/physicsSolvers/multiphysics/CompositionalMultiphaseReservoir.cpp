@@ -196,7 +196,7 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString );
 
     // loop over the perforations and add the rates to the residual and jacobian
-    forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
+    forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
       // local working variables and arrays
       stackArray1d< localIndex, 2 * maxNumComp > eqnRowIndices( 2 * NC );
@@ -204,13 +204,6 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
 
       stackArray1d< real64, 2 * maxNumComp > localPerf( 2 * NC );
       stackArray2d< real64, 2 * maxNumComp * 2 * maxNumDof > localPerfJacobian( 2 * NC, 2 * resNDOF );
-
-      // local working variables and arrays
-      eqnRowIndices = -1;
-      dofColIndices = -1;
-
-      localPerf = 0;
-      localPerfJacobian = 0;
 
       // get the reservoir (sub)region and element indices
       localIndex const er  = resElementRegion[iperf];
@@ -265,11 +258,11 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
         {
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndices[i],
-                                                                    dofColIndices.data(),
-                                                                    localPerfJacobian[i].dataIfContiguous(),
-                                                                    2 * resNDOF );
-          atomicAdd( serialAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                            dofColIndices.data(),
+                                                                            localPerfJacobian[i].dataIfContiguous(),
+                                                                            2 * resNDOF );
+          atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
         }
       }
     } );
