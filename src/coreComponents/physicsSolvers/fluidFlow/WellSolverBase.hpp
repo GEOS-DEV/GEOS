@@ -231,18 +231,6 @@ public:
                                       arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
-   * @brief assembles the control equation for the first connection
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void FormControlEquation( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs ) = 0;
-
-  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
@@ -299,7 +287,7 @@ protected:
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
    */
-  virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
+  //virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;
@@ -314,7 +302,7 @@ protected:
   localIndex m_numDofPerResElement;
 
   /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_resGravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_resGravCoef;
 };
 
 }

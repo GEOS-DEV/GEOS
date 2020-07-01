@@ -134,12 +134,6 @@ public:
   /**@}*/
 
   /**
-   * @brief Recompute mixture densities using current values of pressure and composition
-   * @param subRegion the well subregion containing all the primary and dependent fields
-   */
-  void UpdateMixtureDensity( WellElementSubRegion & subRegion, localIndex const targetIndex );
-
-  /**
    * @brief Recompute component fractions from primary variables (component densities)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
@@ -215,17 +209,6 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
-  /**
-   * @brief assembles the control equation for the first connection
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void FormControlEquation( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs ) override;
 
   arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
 
@@ -317,12 +300,6 @@ private:
   void InitializeWells( DomainPartition & domain ) override;
 
   /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void CheckWellControlSwitch( DomainPartition & domain ) override;
-
-  /**
    * @brief Resize the allocated multidimensional fields
    * @param well the well for which the fields are resized
    */
@@ -352,37 +329,37 @@ private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resGlobalCompDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resGlobalCompDensity;
 
   /// views into other reservoir variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseVolFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseVolFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVolFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResCompFrac_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResCompFrac_dCompDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resPhaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseMob_dCompDens;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resPhaseMob;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResPhaseMob_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseMob_dCompDens;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseDens;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseDens;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseVisc_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseVisc;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dResPhaseVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseVisc_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 > > m_dResPhaseCompFrac_dComp;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_resPhaseCompFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseCompFrac_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const > > m_dResPhaseCompFrac_dComp;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 > > m_dResPhaseRelPerm_dPhaseVolFrac;
+  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_resPhaseRelPerm;
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 

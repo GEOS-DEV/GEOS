@@ -475,7 +475,10 @@ void SinglePhaseHybridFVM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  CommunicationTools::SynchronizeFields( fieldNames,
+                                         &mesh,
+                                         domain.getNeighbors(),
+                                         true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )

@@ -69,7 +69,7 @@ char const * xmlInput =
   "        <WellControls name=\"wellControls2\"\n"
   "                      type=\"injector\"\n"
   "                      control=\"liquidRate\" \n"
-  "                      targetBHP=\"1e7\"\n"
+  "                      targetBHP=\"2e7\"\n"
   "                      targetRate=\"1e-5\" \n"
   "                      injectionStream=\"{0.1, 0.1, 0.1, 0.7}\"/>\n"
   "    </CompositionalMultiphaseWell>\n"
@@ -212,111 +212,6 @@ char const * xmlInput =
   "               scale=\"0.001\"/>\n"
   "  </FieldSpecifications>\n"
   "</Problem>";
-
-
-void testMixtureDensityNumericalDerivatives( CompositionalMultiphaseWell & solver,
-                                             DomainPartition & domain,
-                                             real64 const perturbParameter,
-                                             real64 const relTol )
-{
-  localIndex const NC = solver.NumFluidComponents();
-
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
-  ConstitutiveManager * constitutiveManager = domain.getConstitutiveManager();
-  CompositionalMultiphaseFlow const & flowSolver = *solver.getParent()->GetGroup< CompositionalMultiphaseFlow >( "compositionalMultiphaseFlow" );
-  MultiFluidBase const & fluid = *constitutiveManager->GetGroup< MultiFluidBase >( flowSolver.fluidModelNames()[0] );
-  arrayView1d< string const > const & components = fluid.componentNames();
-
-  // bind the stored reservoir views to the current domain
-  //solver->ImplicitStepSetup( 0, 0, domain, nullptr );
-
-  solver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                                 WellElementSubRegion & subRegion )
-  {
-
-    SCOPED_TRACE( "Well " + subRegion.getName() );
-
-    arrayView1d< real64 > & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::pressureString );
-    arrayView1d< real64 > & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaPressureString );
-
-    arrayView2d< real64 > & compDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::globalCompDensityString );
-    arrayView2d< real64 > & dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::deltaGlobalCompDensityString );
-
-    arrayView1d< real64 > const & wellElemMixtureDensity =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::mixtureDensityString );
-    arrayView1d< real64 > const & dWellElemMixtureDensity_dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dPressureString );
-    arrayView2d< real64 > const & dWellElemMixtureDensity_dCompDens =
-      subRegion.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dMixtureDensity_dGlobalCompDensityString );
-
-    // reset the solver state to zero out variable updates
-    solver.ResetStateToBeginningOfStep( domain );
-
-    // make a copy of unperturbed values of component fractions
-    array1d< real64 > wellElemMixtureDensityOrig( subRegion.size() );
-    for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
-    {
-      wellElemMixtureDensityOrig[iwelem] = wellElemMixtureDensity[iwelem];
-    }
-
-    // update pressure and check derivatives
-    {
-      // perturb pressure in each cell
-      for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
-      {
-        real64 const dP = perturbParameter * ( pres[iwelem] + perturbParameter );
-        dPres[iwelem] = dP;
-      }
-
-      // recompute component fractions
-      solver.UpdateState( subRegion, targetIndex );
-
-      // check values in each cell
-      for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
-      {
-        SCOPED_TRACE( "Element " + std::to_string( iwelem ) );
-
-        checkDerivative( wellElemMixtureDensity[iwelem], wellElemMixtureDensityOrig[iwelem],
-                         dWellElemMixtureDensity_dPres[iwelem], dPres[iwelem], relTol,
-                         "wellElemMixtureDensity", "Pres" );
-      }
-
-      // update component density and check derivatives
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
-        solver.ResetStateToBeginningOfStep( domain );
-
-        // perturb a single component density in each cell
-        for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
-        {
-          real64 const dRho = perturbParameter * ( compDens[iwelem][jc] + perturbParameter );
-          dCompDens[iwelem][jc] = dRho;
-        }
-
-        // recompute component fractions
-        solver.UpdateState( subRegion, targetIndex );
-
-        // check values in each cell
-        for( localIndex iwelem = 0; iwelem < subRegion.size(); ++iwelem )
-        {
-          SCOPED_TRACE( "Element " + std::to_string( iwelem ) );
-
-          string var = "compDens[" + components[jc] + "]";
-
-          checkDerivative( wellElemMixtureDensity[iwelem], wellElemMixtureDensityOrig[iwelem],
-                           dWellElemMixtureDensity_dCompDens[iwelem][jc], dCompDens[iwelem][jc],
-                           relTol, "wellElemMixtureDensity", var );
-        }
-      }
-    }
-  } );
-}
 
 
 template< typename LAMBDA >
@@ -612,18 +507,6 @@ real64 constexpr CompositionalMultiphaseReservoirSolverTest::eps;
 
 #if 0
 
-TEST_F( CompositionalMultiphaseReservoirSolverTest, derivativeNumericalCheck_mixtureDensity )
-{
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-4;
-
-  DomainPartition & domain = *problemManager->getDomainPartition();
-  CompositionalMultiphaseWell & wellSolver = *solver->GetWellSolver()->group_cast< CompositionalMultiphaseWell * >();
-
-  testMixtureDensityNumericalDerivatives( wellSolver, domain, perturb, tol );
-}
-
-
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
 {
   real64 const perturb = std::sqrt( eps );
@@ -641,6 +524,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
 
 #endif
 
+
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux )
 {
   real64 const perturb = std::sqrt( eps );
@@ -656,21 +540,6 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
   } );
 }
 
-
-TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Control )
-{
-  real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1; // 10% error margin
-
-  DomainPartition & domain = *problemManager->getDomainPartition();
-
-  testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs )
-  {
-    solver->GetWellSolver()->FormControlEquation( domain, solver->getDofManager(), localMatrix, localRhs );
-  } );
-}
 
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_VolumeBalance )
 {

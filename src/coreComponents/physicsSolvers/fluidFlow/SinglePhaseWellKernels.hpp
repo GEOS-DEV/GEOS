@@ -37,32 +37,82 @@ namespace SinglePhaseWellKernels
 struct ControlEquationHelper
 {
 
+  GEOSX_HOST_DEVICE
   static void
-  ComputeJacobianEntry( globalIndex const rankOffset,
-                        WellControls const & wellControls,
-                        globalIndex const wellElemDofNumber,
-                        real64 const & wellElemPressure,
-                        real64 const & dWellElemPressure,
-                        real64 const & connRate,
-                        real64 const & dConnRate,
-                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                        arrayView1d< real64 > const & localRhs )
+  Switch( WellControls::Type const & wellType,
+          WellControls::Control const & currentControl,
+          real64 const & targetBHP,
+          real64 const & targetConnRate,
+          real64 const & wellElemPressure,
+          real64 const & dWellElemPressure,
+          real64 const & connRate,
+          real64 const & dConnRate,
+          WellControls::Control & newControl )
+  {
+    // if isViable is true at the end of the following checks, no need to switch
+    bool controlIsViable = false;
+
+    real64 const refRate = connRate + dConnRate;
+    real64 const refPressure = wellElemPressure + dWellElemPressure;
+
+    // BHP control
+    if( currentControl == WellControls::Control::BHP )
+    {
+      // the control is viable if the reference rate is below the max rate
+      controlIsViable = ( fabs( refRate ) <= fabs( targetConnRate ) );
+    }
+    else // rate control
+    {
+      // the control is viable if the reference pressure is below/above the max/min pressure
+      if( wellType == WellControls::Type::PRODUCER )
+      {
+        // targetBHP specifies a min pressure here
+        controlIsViable = ( refPressure >= targetBHP );
+      }
+      else
+      {
+        // targetBHP specifies a max pressure here
+        controlIsViable = ( refPressure <= targetBHP );
+      }
+    }
+
+    if( controlIsViable )
+    {
+      newControl = currentControl;
+    }
+    else
+    {
+      newControl = ( currentControl == WellControls::Control::BHP )
+                 ? WellControls::Control::LIQUIDRATE
+                 : WellControls::Control::BHP;
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  static void
+  Compute( globalIndex const rankOffset,
+           WellControls::Control const currentControl,
+           real64 const & targetBHP,
+           real64 const & targetConnRate,
+           globalIndex const wellElemDofNumber,
+           real64 const & wellElemPressure,
+           real64 const & dWellElemPressure,
+           real64 const & connRate,
+           real64 const & dConnRate,
+           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           arrayView1d< real64 > const & localRhs )
   {
     globalIndex eqnRowIndex = 0;
     globalIndex dofColIndex = 0;
     real64 controlEqn = 0;
     real64 dControlEqn_dX = 0;
 
-    // get well control and type
-    WellControls::Control const currentControl = wellControls.GetControl();
-
     // BHP control
     if( currentControl == WellControls::Control::BHP )
     {
       // get pressures and compute normalizer
       real64 const currentBHP = wellElemPressure + dWellElemPressure;
-      real64 const targetBHP  = wellControls.GetTargetBHP();
-      real64 const normalizer = targetBHP > std::numeric_limits< real64 >::epsilon()
+      real64 const normalizer = targetBHP > 1e-13
                                 ? 1.0 / targetBHP
                                 : 1.0;
 
@@ -78,8 +128,7 @@ struct ControlEquationHelper
 
       // get rates and compute normalizer
       real64 const currentConnRate = connRate + dConnRate;
-      real64 const & targetConnRate = wellControls.GetTargetRate();
-      real64 const normalizer = fabs( targetConnRate ) > std::numeric_limits< real64 >::min()
+      real64 const normalizer = fabs( targetConnRate ) > 1e-13
                                 ? 1.0 / ( 1e-2 * fabs( targetConnRate ) ) // hard-coded value comes from AD-GPRS
                                 : 1.0;
 
@@ -119,7 +168,7 @@ struct FluxKernel
           arrayView1d< real64 > const & localRhs )
   {
     // loop over the well elements to compute the fluxes between elements
-    forAll< POLICY >( size, [=]( localIndex const iwelem )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
 
       // 1) Compute the flux and its derivatives
@@ -152,20 +201,20 @@ struct FluxKernel
 
         if( oneSidedEqnRowIndex >= 0 && oneSidedEqnRowIndex < localMatrix.numRows() )
         {
-          localMatrix.addToRow< serialAtomic >( oneSidedEqnRowIndex,
-                                                &oneSidedDofColIndex_dRate,
-                                                &oneSidedLocalFluxJacobian_dRate,
-                                                1 );
-          atomicAdd( serialAtomic{}, &localRhs[oneSidedEqnRowIndex], oneSidedLocalFlux );
+          localMatrix.addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndex,
+                                                        &oneSidedDofColIndex_dRate,
+                                                        &oneSidedLocalFluxJacobian_dRate,
+                                                        1 );
+          atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndex], oneSidedLocalFlux );
         }
       }
       else
       {
         // local working variables and arrays
-        stackArray1d< globalIndex, 2 > eqnRowIndices( 2 );
+        globalIndex eqnRowIndices[ 2 ] = { 0 };
 
-        stackArray1d< real64, 2 > localFlux( 2 );
-        stackArray1d< real64, 2 > localFluxJacobian_dRate( 2 );
+        real64 localFlux[ 2 ] = { 0 };
+        real64 localFluxJacobian_dRate[ 2 ] = { 0 };
 
         // flux terms
         localFlux[SinglePhaseWell::ElemTag::NEXT] = flux;
@@ -183,15 +232,15 @@ struct FluxKernel
                                                         + SinglePhaseWell::RowOffset::MASSBAL - rankOffset;
         globalIndex const dofColIndex_dRate = offsetCurrent + SinglePhaseWell::ColOffset::DRATE;
 
-        for( localIndex i = 0; i < localFlux.size(); ++i )
+        for( localIndex i = 0; i < 2; ++i )
         {
           if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
           {
-            localMatrix.addToRow< serialAtomic >( eqnRowIndices[i],
-                                                  &dofColIndex_dRate,
-                                                  &localFluxJacobian_dRate[i],
-                                                  1 );
-            atomicAdd( serialAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
+            localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                          &dofColIndex_dRate,
+                                                          &localFluxJacobian_dRate[i],
+                                                          1 );
+            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
           }
         }
       }
@@ -205,36 +254,73 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  template< typename POLICY >
-  static void
+  template< typename POLICY, typename REDUCE_POLICY >
+  static localIndex
   Launch( localIndex const size,
           globalIndex const rankOffset,
+          bool const isLocallyOwned,
+          WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
+          arrayView1d< real64 const > const & connRate,
+          arrayView1d< real64 const > const & dConnRate,
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          real64 const & targetBHP,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
+    real64 const targetBHP = wellControls.GetTargetBHP();
+    real64 const targetRate = wellControls.GetTargetRate();
+    WellControls::Control const currentControl = wellControls.GetControl();
+    WellControls::Type const wellType = wellControls.GetType();
+    localIndex const iwelemControl = wellControls.GetReferenceWellElementIndex();
+
+    RAJA::ReduceMax< REDUCE_POLICY, localIndex > switchControl( 0 );
+
     // loop over the well elements to compute the pressure relations between well elements
-    forAll< POLICY >( size, [=]( localIndex const iwelem )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
 
       localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
-      if( iwelemNext >= 0 ) // if iwelemNext < 0, form control equation, not momentum
+      if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
+      {
+        WellControls::Control newControl = currentControl;
+        ControlEquationHelper::Switch( wellType,
+                                       currentControl,
+                                       targetBHP,
+                                       targetRate,
+                                       wellElemPressure[iwelemControl],
+                                       dWellElemPressure[iwelemControl],
+                                       connRate[iwelemControl],
+                                       dConnRate[iwelemControl],
+                                       newControl );
+        if( currentControl != newControl )
+        {
+          switchControl.max( 1 );
+        }
+
+        ControlEquationHelper::Compute( rankOffset,
+                                        newControl,
+                                        targetBHP,
+                                        targetRate,
+                                        wellElemDofNumber[iwelemControl],
+                                        wellElemPressure[iwelemControl],
+                                        dWellElemPressure[iwelemControl],
+                                        connRate[iwelemControl],
+                                        dConnRate[iwelemControl],
+                                        localMatrix,
+                                        localRhs );
+      }
+      else if( iwelemNext >= 0 )  // if iwelemNext >= 0, form momentum equation
       {
 
         // local working variables and arrays
-        stackArray1d< globalIndex, 2 > dofColIndices( 2 );
-        stackArray1d< real64, 2 > localPresRelJacobian( 2 );
-
-        dofColIndices = -1;
-        localPresRelJacobian = 0;
+        globalIndex dofColIndices[ 2 ] = { -1 };
+        real64 localPresRelJacobian[ 2 ] = { 0 };
 
         // compute avg density
         real64 const avgDensity = 0.5 * ( wellElemDensity[iwelem][0] + wellElemDensity[iwelemNext][0] );
@@ -249,7 +335,7 @@ struct PressureRelationKernel
         real64 const pressureNext = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
 
         // compute a coefficient to normalize the momentum equation
-        real64 const normalizer = targetBHP > std::numeric_limits< real64 >::epsilon()
+        real64 const normalizer = targetBHP > 1e-13
                                   ? 1.0 / targetBHP
                                   : 1.0;
 
@@ -269,14 +355,15 @@ struct PressureRelationKernel
 
         if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
         {
-          localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                                    dofColIndices.data(),
-                                                                    localPresRelJacobian.data(),
-                                                                    2 );
-          atomicAdd( serialAtomic{}, &localRhs[eqnRowIndex], localPresRel );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
+                                                                            &dofColIndices[0],
+                                                                            &localPresRelJacobian[0],
+                                                                            2 );
+          atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
         }
       }
     } );
+    return switchControl.get();
   }
 
 };
@@ -322,15 +409,12 @@ struct PerforationKernel
           arrayView1d< real64 > const & perfRate,
           arrayView2d< real64 > const & dPerfRate_dPres )
   {
-    forAll< POLICY >( size, [=]( localIndex const iperf )
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
     {
       // local working variables and arrays
-      stackArray1d< real64, 2 > pressure( 2 );
-      stackArray1d< real64, 2 > dPressure_dP( 2 );
-      stackArray1d< localIndex, 2 > multiplier( 2 );
-      pressure = 0;
-      dPressure_dP = 0;
-      multiplier = 0;
+      real64 pressure[2] = { 0. };
+      real64 dPressure_dP[2] = { 0. };
+      real64 multiplier[2] = { 0. };
 
       // 1) Reservoir side
 
@@ -419,6 +503,135 @@ struct PerforationKernel
   }
 };
 
+/******************************** PressureInitializationKernel ********************************/
+
+struct PresInitializationKernel
+{
+
+  /**
+   * @brief The type for element-based non-constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementRegionManager::ElementViewAccessor< VIEWTYPE >::ViewTypeConst;
+
+  template< typename POLICY >
+  static void
+  Launch( localIndex const perforationSize,
+          localIndex const subRegionSize,
+          bool const isLocallyOwned,
+          int const topRank,
+          localIndex const numPerforations,
+          WellControls const & wellControls,
+          ElementView< arrayView1d< real64 const > > const & resPressure,
+          ElementView< arrayView2d< real64 const > > const & resDensity,
+          arrayView1d< localIndex const > const & resElementRegion,
+          arrayView1d< localIndex const > const & resElementSubRegion,
+          arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & wellElemGravCoef,
+          arrayView1d< real64 > const & wellElemPressure )
+  {
+    real64 const targetBHP = wellControls.GetTargetBHP();
+    WellControls::Control const currentControl = wellControls.GetControl();
+    WellControls::Type const wellType = wellControls.GetType();
+    localIndex const iwelemControl = wellControls.GetReferenceWellElementIndex();
+
+    // loop over all perforations to compute an average density
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPressure( 1e10 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPressure( 0 );
+    forAll< POLICY >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    {
+
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
+
+      sumDensity += resDensity[er][esr][ei][0];
+      minResPressure.min( resPressure[er][esr][ei] );
+      maxResPressure.max( resPressure[er][esr][ei] );
+    } );
+    real64 const pres = ( wellControls.GetType() == WellControls::Type::PRODUCER )
+                        ? MpiWrapper::Min( minResPressure.get() )
+                        : MpiWrapper::Max( maxResPressure.get() );
+    real64 const avgDensity = MpiWrapper::Sum( sumDensity.get() ) / numPerforations;
+
+    real64 pressureControl = 0.0;
+    real64 gravCoefControl = 0.0;
+    if( isLocallyOwned )
+    {
+      // initialize the reference pressure
+      if( currentControl == WellControls::Control::BHP )
+      {
+        // if pressure constraint, set the ref pressure at the constraint
+        pressureControl = targetBHP;
+      }
+      else // rate control
+      {
+        // if rate constraint, set the ref pressure slightly
+        // above/below the target pressure depending on well type
+        pressureControl = ( wellType == WellControls::Type::PRODUCER )
+                        ? 0.5 * pres
+                        : 2.0 * pres;
+      }
+      gravCoefControl = wellElemGravCoef[iwelemControl];
+      wellElemPressure[iwelemControl] = pressureControl;
+    }
+
+    MpiWrapper::Broadcast( pressureControl, topRank );
+    MpiWrapper::Broadcast( gravCoefControl, topRank );
+
+    GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
+
+    // estimate the pressures in the well elements using this avgDensity
+    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      wellElemPressure[iwelem] = pressureControl
+                                 + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    } );
+  }
+
+};
+
+/******************************** RateInitializationKernel ********************************/
+
+struct RateInitializationKernel
+{
+
+  template< typename POLICY >
+  static void
+  Launch( localIndex const subRegionSize,
+          WellControls const & wellControls,
+          arrayView1d< real64 > const & connRate )
+  {
+    real64 const targetRate = wellControls.GetTargetRate();
+    WellControls::Control const control = wellControls.GetControl();
+    WellControls::Type const wellType = wellControls.GetType();
+
+    // Estimate the connection rates
+    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( control == WellControls::Control::BHP )
+      {
+        // if BHP constraint set rate below the absolute max rate
+        // with the appropriate sign (negative for prod, positive for inj)
+        connRate[iwelem] = ( wellType == WellControls::Type::PRODUCER )
+                     ? LvArray::max( 0.1 * targetRate, -1e3 )
+             : LvArray::min( 0.1 * targetRate, 1e3 );
+      }
+      else
+      {
+        connRate[iwelem] = targetRate;
+      }
+    } );
+  }
+
+};
+
 
 /******************************** ResidualNormKernel ********************************/
 
@@ -426,17 +639,18 @@ struct ResidualNormKernel
 {
 
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static void Launch( LOCAL_VECTOR const localResidual,
-                      globalIndex const rankOffset,
-                      arrayView1d< globalIndex const > const & wellElemDofNumber,
-                      arrayView1d< integer const > const & wellElemGhostRank,
-                      arrayView1d< real64 const > const & wellElemVolume,
-                      arrayView2d< real64 const > const & wellElemDensity,
-                      real64 * localResidualNorm )
+  static void
+  Launch( LOCAL_VECTOR const localResidual,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & wellElemDofNumber,
+          arrayView1d< integer const > const & wellElemGhostRank,
+          arrayView1d< real64 const > const & wellElemVolume,
+          arrayView2d< real64 const > const & wellElemDensity,
+          real64 * localResidualNorm )
   {
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
 
-    forAll< POLICY >( wellElemDofNumber.size(), [=] ( localIndex const iwelem )
+    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
       if( wellElemGhostRank[iwelem] < 0 )
       {
@@ -461,17 +675,18 @@ struct ResidualNormKernel
 struct SolutionCheckKernel
 {
   template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static localIndex Launch( LOCAL_VECTOR const localSolution,
-                            globalIndex const rankOffset,
-                            arrayView1d< globalIndex const > const & presDofNumber,
-                            arrayView1d< integer const > const & ghostRank,
-                            arrayView1d< real64 const > const & pres,
-                            arrayView1d< real64 const > const & dPres,
-                            real64 const scalingFactor )
+  static localIndex
+  Launch( LOCAL_VECTOR const localSolution,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & presDofNumber,
+          arrayView1d< integer const > const & ghostRank,
+          arrayView1d< real64 const > const & pres,
+          arrayView1d< real64 const > const & dPres,
+          real64 const scalingFactor )
   {
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
 
-    forAll< POLICY >( presDofNumber.size(), [=] ( localIndex const ei )
+    forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
