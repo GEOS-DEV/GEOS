@@ -70,14 +70,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( -1.0 )->
     setDescription( "The area of each EmbeddedSurface element." );
 
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setDescription( "The center of each EmbeddedSurface element." );
-
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The volume of each EmbeddedSurface element." );
-
   m_numNodesPerElement = 4; // Let s assume it's a plane for now
 }
 
@@ -104,8 +96,8 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
                                                        R1Tensor normalVector )
 {
-  m_embeddedSurfaceToCell.push_back( cellIndex );
-  m_normalVector.push_back( normalVector );
+  m_embeddedSurfaceToCell.emplace_back( cellIndex );
+  m_normalVector.emplace_back( normalVector );
 
   // resize
   this->resize( this->size() + 1 );
@@ -176,18 +168,18 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       {
         addEmbeddedElem = false;
       }
-      intersectionPoints.push_back( point );
+      intersectionPoints.emplace_back( point );
     }
   } //end of edge loop
 
   if( addEmbeddedElem )
   {
-    m_embeddedSurfaceToCell.push_back( cellIndex );
-    m_embeddedSurfaceToRegion.push_back( regionIndex );
-    m_embeddedSurfaceToSubRegion.push_back( subRegionIndex );
-    m_normalVector.push_back( normalVector );
-    m_tangentVector1.push_back( fracture->getWidthVector());
-    m_tangentVector2.push_back( fracture->getLengthVector());
+    m_embeddedSurfaceToCell.emplace_back( cellIndex );
+    m_embeddedSurfaceToRegion.emplace_back( regionIndex );
+    m_embeddedSurfaceToSubRegion.emplace_back( subRegionIndex );
+    m_normalVector.emplace_back( normalVector );
+    m_tangentVector1.emplace_back( fracture->getWidthVector());
+    m_tangentVector2.emplace_back( fracture->getLengthVector());
     // resize
     this->resize( this->size() + 1 );
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
@@ -200,11 +192,15 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1T
 {
   for( localIndex p = 0; p < intersectionPoints.size(); p++ )
   {
-    m_elementCenter[k] += intersectionPoints[p];
+    // TODO change to LvArray::tensorOps::add
+    m_elementCenter( k, 0 ) += intersectionPoints[ p ][ 0 ];
+    m_elementCenter( k, 1 ) += intersectionPoints[ p ][ 1 ];
+    m_elementCenter( k, 2 ) += intersectionPoints[ p ][ 2 ];
   }
 
-  m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
-  m_elementCenter[k] /= intersectionPoints.size();
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
+
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
   this->CalculateElementGeometricQuantities( k );
 }
 

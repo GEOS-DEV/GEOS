@@ -85,7 +85,7 @@ void addUmpireHighWaterMarks()
   constexpr int MAX_NAME_LENGTH = 100;
   char allocatorNameBuffer[ MAX_NAME_LENGTH + 1 ];
   char allocatorNameMinCharsBuffer[ MAX_NAME_LENGTH + 1 ];
-  for( std::string const allocatorName : allocatorNames )
+  for( string const & allocatorName : allocatorNames )
   {
     // Skip umpire internal allocators.
     if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
@@ -440,6 +440,7 @@ void overrideInputFileName( std::string const & inputFileName )
 ///////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
+  LvArray::resetSignalHandling();
   finalizeLAI();
   finalizeLogger();
   internal::addUmpireHighWaterMarks();

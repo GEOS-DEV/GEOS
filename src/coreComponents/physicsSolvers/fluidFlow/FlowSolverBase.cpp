@@ -141,13 +141,11 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   }
 
   // fill stencil targetRegions
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   array1d< string > & stencilTargetRegions = fluxApprox->targetRegions();
   std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
   for( auto const & targetRegion : targetRegionNames() )
@@ -158,7 +156,7 @@ void FlowSolverBase::InitializePreSubGroups( Group * const rootGroup )
   stencilTargetRegions.clear();
   for( auto const & targetRegion : stencilTargetRegionsSet )
   {
-    stencilTargetRegions.push_back( targetRegion );
+    stencilTargetRegions.emplace_back( targetRegion );
   }
 }
 
@@ -184,28 +182,29 @@ void FlowSolverBase::PrecomputeData( DomainPartition * const domain )
   forTargetSubRegions( mesh, [&]( localIndex const,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView1d< R1Tensor const > const & elemCenter =
-      subRegion.getReference< array1d< R1Tensor > >( CellBlock::viewKeyStruct::elementCenterString );
+    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< serialPolicy >( subRegion.size(), [=]( localIndex a )
     {
-      gravityCoef[a] = Dot( elemCenter[a], gravVector );
+      gravityCoef[ a ] = elemCenter( a, 0 ) * gravVector[ 0 ] + elemCenter( a, 1 ) * gravVector[ 1 ] + elemCenter( a, 2 ) * gravVector[ 2 ];
     } );
   } );
 
   {
-    arrayView1d< R1Tensor const > const & faceCenter =
-      faceManager.getReference< array1d< R1Tensor > >( FaceManager::viewKeyStruct::faceCenterString );
+    arrayView2d< real64 const > const & faceCenter = faceManager.faceCenter();
 
     arrayView1d< real64 > const & gravityCoef =
       faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
 
     forAll< serialPolicy >( faceManager.size(), [=] ( localIndex a )
     {
-      gravityCoef[a] = Dot( faceCenter[a], gravVector );
+      // TODO change to LvArray::tensorOps::AiBi once gravVector is a c-array.
+      gravityCoef[ a ] = faceCenter[ a ][ 0 ] * gravVector[ 0 ];
+      gravityCoef[ a ] += faceCenter[ a ][ 1 ] * gravVector[ 1 ];
+      gravityCoef[ a ] += faceCenter[ a ][ 2 ] * gravVector[ 2 ];
     } );
   }
 }

@@ -25,24 +25,60 @@
 namespace geosx
 {
 
+/**
+ * @class Cylinder
+ * @brief Class to represent a geometric cylinder in GEOSX.
+ */
 class Cylinder : public SimpleGeometricObjectBase
 {
 public:
+
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor.
+   * @param name name of the object in the data hierarchy.
+   * @param parent pointer to the parent group in the data hierarchy.
+   */
   Cylinder( const std::string & name,
             Group * const parent );
 
+  /**
+   * @brief Default destructor.
+   */
   virtual ~Cylinder() override;
 
+  ///@}
+
+  /**
+   * @name Static Factory Catalog Functions
+   */
+  ///@{
+
+  /**
+   * @brief Get the catalog name.
+   * @return the name of this class in the catalog
+   */
   static string CatalogName() { return "Cylinder"; }
+
+  ///@}
 
   bool IsCoordInObject( const R1Tensor & coord ) const override final;
 
 
 private:
 
+  /// Center point of one (upper or lower) face of the cylinder
   R1Tensor m_point1;
+  /// Center point of the other face of the cylinder
   R1Tensor m_point2;
+  /// Radius of the cylinder
   realT m_radius = 0.0;
+
+  /// @cond DO_NOT_DOCUMENT
 
   struct viewKeyStruct
   {
@@ -52,6 +88,7 @@ private:
 
   };
 
+  /// @endcond
 
 };
 } /* namespace geosx */

@@ -1,10 +1,9 @@
 ======================
-GEOSX Data Structure
+Data Structure Guide
 ======================
 
-********************************
 Input Schema Definitions
-********************************
+========================
 
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
@@ -331,6 +330,13 @@ Element: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3.rst
 
 
+.. _XML_LagrangianContact:
+
+Element: LagrangianContact
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact.rst
+
+
 .. _XML_LaplaceFEM:
 
 Element: LaplaceFEM
@@ -359,11 +365,25 @@ Element: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic.rst
 
 
+.. _XML_LinearSolverParameters:
+
+Element: LinearSolverParameters
+===============================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters.rst
+
+
 .. _XML_Mesh:
 
 Element: Mesh
 =============
 .. include:: ../../coreComponents/fileIO/schema/docs/Mesh.rst
+
+
+.. _XML_MohrCoulomb:
+
+Element: MohrCoulomb
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb.rst
 
 
 .. _XML_MultiPhaseMultiComponentFluid:
@@ -378,6 +398,13 @@ Element: MultiPhaseMultiComponentFluid
 Element: NonlinearSolverParameters
 ==================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
+
+
+.. _XML_NullModel:
+
+Element: NullModel
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel.rst
 
 
 .. _XML_NumericalMethods:
@@ -609,13 +636,6 @@ Element: SurfaceGenerator
 Element: SymbolicFunction
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction.rst
-
-
-.. _XML_SystemSolverParameters:
-
-Element: SystemSolverParameters
-===============================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters.rst
 
 
 .. _XML_TableFunction:
@@ -1028,6 +1048,13 @@ Datastructure: LagrangeBasis3
 .. include:: ../../coreComponents/fileIO/schema/docs/LagrangeBasis3_other.rst
 
 
+.. _DATASTRUCTURE_LagrangianContact:
+
+Datastructure: LagrangianContact
+================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LagrangianContact_other.rst
+
+
 .. _DATASTRUCTURE_LaplaceFEM:
 
 Datastructure: LaplaceFEM
@@ -1063,6 +1090,13 @@ Datastructure: LinearElasticTransverseIsotropic
 .. include:: ../../coreComponents/fileIO/schema/docs/LinearElasticTransverseIsotropic_other.rst
 
 
+.. _DATASTRUCTURE_LinearSolverParameters:
+
+Datastructure: LinearSolverParameters
+=====================================
+.. include:: ../../coreComponents/fileIO/schema/docs/LinearSolverParameters_other.rst
+
+
 .. _DATASTRUCTURE_Mesh:
 
 Datastructure: Mesh
@@ -1077,6 +1111,13 @@ Datastructure: MeshBodies
 .. include:: ../../coreComponents/fileIO/schema/docs/MeshBodies_other.rst
 
 
+.. _DATASTRUCTURE_MohrCoulomb:
+
+Datastructure: MohrCoulomb
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/MohrCoulomb_other.rst
+
+
 .. _DATASTRUCTURE_MultiPhaseMultiComponentFluid:
 
 Datastructure: MultiPhaseMultiComponentFluid
@@ -1089,6 +1130,13 @@ Datastructure: MultiPhaseMultiComponentFluid
 Datastructure: NonlinearSolverParameters
 ========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
+
+
+.. _DATASTRUCTURE_NullModel:
+
+Datastructure: NullModel
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel_other.rst
 
 
 .. _DATASTRUCTURE_NumericalMethods:
@@ -1320,13 +1368,6 @@ Datastructure: SurfaceGenerator
 Datastructure: SymbolicFunction
 ===============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SymbolicFunction_other.rst
-
-
-.. _DATASTRUCTURE_SystemSolverParameters:
-
-Datastructure: SystemSolverParameters
-=====================================
-.. include:: ../../coreComponents/fileIO/schema/docs/SystemSolverParameters_other.rst
 
 
 .. _DATASTRUCTURE_TableFunction:

@@ -17,13 +17,15 @@
 #ifndef GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 #define GEOSX_DATAREPOSITORY_WRAPPERBASE_HPP_
 
-#include <string>
-#include <memory>
 #include "common/DataTypes.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+
+#include <string>
+#include <memory>
+#include <set>
 
 namespace conduit
 {
@@ -140,7 +142,7 @@ public:
    * @param[in] space A CHAI execution space to move the data into
    * @param[in] touch whether to register a touch in target space
    */
-  virtual void move( chai::ExecutionSpace const space, bool const touch ) const = 0;
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) const = 0;
 
   ///@}
 
@@ -420,7 +422,7 @@ public:
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
-  std::vector< string > const & getRegisteringObjects() const
+  std::set< string > const & getRegisteringObjects() const
   {
     return m_registeringObjects;
   }
@@ -432,7 +434,7 @@ public:
    */
   WrapperBase * setRegisteringObjects( string const & objectName )
   {
-    m_registeringObjects.push_back( objectName );
+    m_registeringObjects.insert( objectName );
     return this;
   }
 
@@ -521,7 +523,7 @@ protected:
   string m_description;
 
   /// A vector of the names of the objects that created this Wrapper.
-  std::vector< string > m_registeringObjects;
+  std::set< string > m_registeringObjects;
 
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;

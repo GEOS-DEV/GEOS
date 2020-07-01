@@ -529,8 +529,8 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::pressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::globalCompDensityString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -646,13 +646,11 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const * const domai
                        m_numDofPerCell,
                        targetRegionNames() );
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * const fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
@@ -817,13 +815,11 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const GEOSX_UNUSED_P
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager = mesh->getElemManager();
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * const fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::dofFieldString );
 
@@ -1425,8 +1421,8 @@ CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofManager,
                                1, m_numDofPerCell );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
-  fieldNames["elems"].push_back( viewKeyStruct::deltaGlobalCompDensityString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,

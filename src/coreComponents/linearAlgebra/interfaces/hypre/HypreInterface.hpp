@@ -19,26 +19,48 @@
 #ifndef GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 #define GEOSX_LINEARALGEBRA_INTERFACES_HYPREINTERFACE_HPP_
 
-#include "HypreSolver.hpp"
-#include "HypreMatrix.hpp"
-#include "HypreVector.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreVector.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+
+#include <memory>
 
 namespace geosx
 {
 
 /**
- * \class HypreInterface
- * \brief This class holds aliases based on the Hypre library.
+ * @class HypreInterface
+ * @brief This class holds aliases based on the Hypre library.
  */
-
 struct HypreInterface
 {
-  static void initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) ) {}
+  /**
+   * @brief Initializes the MPI environment for the Hypre library
+   *
+   * @param[in] argc standard argc as in any C main
+   * @param[in] argv standard argv as in any C main
+   */
+  static void initialize( int & argc, char * * & argv );
 
-  static void finalize() {}
+  /**
+   * @brief Finalizes the MPI environment for the Hypre library
+   */
+  static void finalize();
 
+  /**
+   * @brief Create a hypre-based preconditioner object.
+   * @param params the preconditioner parameters
+   * @return owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< HypreInterface > >
+  createPreconditioner( LinearSolverParameters params );
+
+  /// Alias for HypreMatrix
   using ParallelMatrix = HypreMatrix;
+  /// Alias for HypreVector
   using ParallelVector = HypreVector;
+  /// Alias for HypreSolver
   using LinearSolver   = HypreSolver;
 
 };

@@ -56,7 +56,8 @@ public:
                             DofManager & dofManager,
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
-                            ParallelVector & solution ) override;
+                            ParallelVector & solution,
+                            bool const setSparsity = true ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -188,8 +189,10 @@ private:
   SolidMechanicsLagrangianFEM * m_solidSolver;
   FlowSolverBase * m_flowSolver;
 
+#ifdef GEOSX_LA_INTERFACE_TRILINOS
   real64 m_densityScaling;
   real64 m_pressureScaling;
+#endif
 
   std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 

@@ -188,7 +188,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   MeshLevel * mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::pressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, mesh, domain->getNeighbors() );
 
@@ -291,7 +291,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
                                    DofManager & dofManager,
                                    ParallelMatrix & matrix,
                                    ParallelVector & rhs,
-                                   ParallelVector & solution )
+                                   ParallelVector & solution,
+                                   bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   ResetViews( domain );
@@ -300,7 +301,8 @@ void SinglePhaseBase::SetupSystem( DomainPartition * const domain,
                            dofManager,
                            matrix,
                            rhs,
-                           solution );
+                           solution,
+                           setSparsity );
 }
 
 void SinglePhaseBase::ImplicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),

@@ -21,24 +21,46 @@
 
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
-#include "TrilinosSolver.hpp"
+#include "linearAlgebra/interfaces/trilinos/TrilinosSolver.hpp"
+#include "linearAlgebra/solvers/PreconditionerBase.hpp"
+
+#include <memory>
 
 namespace geosx
 {
 
 /**
- * \class TrilinosInterface
- * \brief This class holds aliases based on the Trilinos library.
+ * @class TrilinosInterface
+ * @brief This class holds aliases based on the Trilinos library.
  */
-
 struct TrilinosInterface
 {
-  static void initialize( int & GEOSX_UNUSED_PARAM( argc ), char * * & GEOSX_UNUSED_PARAM( argv ) ) {}
+  /**
+   * @brief Initializes the MPI environment for the Trilinos library
+   *
+   * @param[in] argc standard argc as in any C main
+   * @param[in] argv standard argv as in any C main
+   */
+  static void initialize( int & argc, char * * & argv );
 
-  static void finalize() {}
+  /**
+   * @brief Finalizes the MPI environment for the Trilinos library
+   */
+  static void finalize();
 
+  /**
+   * @brief Create a Trilinos-based preconditioner object.
+   * @param params the preconditioner parameters
+   * @return an owning pointer to the newly created preconditioner
+   */
+  static std::unique_ptr< PreconditionerBase< TrilinosInterface > >
+  createPreconditioner( LinearSolverParameters params );
+
+  /// Alias for EpetraMatrix
   using ParallelMatrix = EpetraMatrix;
+  /// Alias for EpetraVector
   using ParallelVector = EpetraVector;
+  /// Alias for TrilinosSolver
   using LinearSolver   = TrilinosSolver;
 };
 

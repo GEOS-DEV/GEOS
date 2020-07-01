@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
+#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
@@ -84,6 +84,14 @@ public:
              DofManager & dofManager ) const override;
 
   virtual void
+  SetupSystem( DomainPartition * const domain,
+               DofManager & dofManager,
+               ParallelMatrix & matrix,
+               ParallelVector & rhs,
+               ParallelVector & solution,
+               bool const setSparsity = false ) override;
+
+  virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
                   DomainPartition * const domain,
@@ -147,6 +155,7 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
+  //START_SPHINX_INCLUDE_05
   inline ParallelVector const * getSolution() const
   {
     return &m_solution;
@@ -156,6 +165,7 @@ public:
   {
     return m_matrix.numGlobalRows();
   }
+  //END_SPHINX_INCLUDE_05
 
 protected:
   virtual void PostProcessInput() override final;
@@ -169,4 +179,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */

@@ -9,7 +9,7 @@
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
       <NonlinearSolverParameters newtonMaxIter="40"/>
-      <SystemSolverParameters useDirectSolver="1"
+      <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
     </CompositionalMultiphaseReservoir>
     
@@ -43,9 +43,9 @@
                       targetRate="1"/>
         <WellControls name="wellControls3"
                       type="injector"
-                      control="BHP" 
-                      targetBHP="1e7"
-                      targetRate="1e-3" 
+                      control="liquidRate" 
+                      targetBHP="1e8"
+                      targetRate="1e-4" 
                       injectionStream="{0.1, 0.1, 0.8}"/>
     </CompositionalMultiphaseWell>
 
@@ -186,7 +186,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/cb1"
                fieldName="permeability"
-               scale="2.0e-13"/>
+               scale="2.0e-16"/>
 
     <FieldSpecification name="permy"
                component="1"
@@ -194,7 +194,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/cb1"
                fieldName="permeability"
-               scale="2.0e-13"/>
+               scale="2.0e-16"/>
 
     <FieldSpecification name="permz"
                component="2"
@@ -202,7 +202,7 @@
                setNames="{all}"
                objectPath="ElementRegions/Region1/cb1"
                fieldName="permeability"
-               scale="2.0e-13"/>
+               scale="2.0e-16"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"

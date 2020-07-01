@@ -56,13 +56,13 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const * const domain,
                        DofManager::Location::Elem,
                        targetRegionNames() );
 
-  NumericalMethodsManager const * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const * const
+  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
 
-  FiniteVolumeManager const * const fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const &
+  fvManager = numericalMethodManager->getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
 }
@@ -72,14 +72,16 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
                                           DofManager & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs,
-                                          ParallelVector & solution )
+                                          ParallelVector & solution,
+                                          bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   BASE::SetupSystem( domain,
                      dofManager,
                      matrix,
                      rhs,
-                     solution );
+                     solution,
+                     setSparsity );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -113,13 +115,11 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
 
   string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
-  NumericalMethodsManager const *
-    numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const *
-    fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( this->getDiscretization() );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
 
 
   fluxApprox->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
@@ -222,7 +222,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
@@ -253,13 +253,11 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
   MeshLevel const * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager const * const elemManager=  mesh->getElemManager();
 
-  NumericalMethodsManager const * numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager const * fvManager =
-    numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager->getKey( viewKeyStruct::pressureString );
 
@@ -451,18 +449,17 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC_implicit( real64 const time_n,
   ElementRegionManager & elemManager = *mesh.getElemManager();
   FaceManager & faceManager = *mesh.getFaceManager();
 
-  arrayView2d< localIndex > const & elemRegionList     = faceManager.elementRegionList();
-  arrayView2d< localIndex > const & elemSubRegionList  = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemRegionList     = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList  = faceManager.elementSubRegionList();
 
   ConstitutiveManager * const constitutiveManager =
     domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
-  NumericalMethodsManager * const numericalMethodManager =
-    domain->getParent()->GetGroup< NumericalMethodsManager >( keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  FluxApproximationBase const * const fluxApprox = fvManager->getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const * const fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   // make a list of region indices to be included
   map< localIndex, localIndex > regionFluidMap;

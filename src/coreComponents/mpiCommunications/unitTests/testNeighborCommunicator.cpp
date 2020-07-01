@@ -121,7 +121,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
     MPI_Request request;
     if( rnk == 0 )
     {
-      veloc.move( chai::GPU );
+      veloc.move( LvArray::MemorySpace::GPU );
       auto veloc_view = veloc.toViewConst();
       pack( buf, veloc_view, size );
       MpiWrapper::iSend( buf, byte_size, 1, 0, MPI_COMM_GEOSX, &request );
@@ -135,7 +135,7 @@ TEST( TestNeighborComms, testMPICommunication_fromPinnedSetOnDevice )
       EXPECT_EQ( err, MPI_SUCCESS );
       auto veloc_view = veloc.toView();
       unpack( buf, veloc_view, size );
-      veloc.move( chai::CPU );
+      veloc.move( LvArray::MemorySpace::CPU );
       for( int ii = 0; ii < size; ++ii )
         EXPECT_EQ( veloc[ii], ii );
     }

@@ -1,6 +1,6 @@
 [submodule "src/coreComponents/LvArray"]
 	path = src/coreComponents/LvArray
-	url = ../cxx-utilities.git
+	url = ../LvArray.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git
@@ -13,6 +13,7 @@
 [submodule "src/externalComponents/PAMELA"]
 	path = src/externalComponents/PAMELA
 	url = ../PAMELA.git
+	shallow = true
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
 	url = ../hdf5_interface.git

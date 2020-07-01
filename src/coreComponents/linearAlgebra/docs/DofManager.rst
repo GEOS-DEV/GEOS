@@ -69,7 +69,7 @@ The main methods of ``DoF Manager`` are:
   void addField( string const & fieldName,
                  Location const location,
                  localIndex const components,
-                 string_array const & regions );
+                 arrayView1d< string const > const & regions );
 
 * ``addCoupling``: creates a coupling between two fields (``rowField`` and
   ``colField``) according to a given ``connectivity`` in the regions defined by ``regions``.
@@ -83,8 +83,8 @@ The main methods of ``DoF Manager`` are:
   void addCoupling( string const & rowField,
                     string const & colField,
                     Connectivity const connectivity,
-                    string_array const & regions,
-                    bool const symmetric = true );
+                    arrayView1d< string const > const & regions,
+                    bool const symmetric );
 
 * ``reorderByRank``: finish populating field and coupling information and apply DoF
   re-numbering
@@ -106,22 +106,22 @@ The main methods of ``DoF Manager`` are:
   void clear();
 
 * ``setSparsityPattern``: populates the sparsity for the given
-  ``rowField`` and ``colField`` into ``pattern``.
+  ``rowField`` and ``colField`` into ``matrix``.
   Closes the matrix if ``closePattern`` is ``true``.
 
  .. code-block:: c
 
-  void setSparsityPattern( SparsityPattern & pattern,
+  void setSparsityPattern( MATRIX & matrix,
                            string const & rowField,
                            string const & colField,
                            bool closePattern = true) const;
 
-* ``setSparsityPattern``: populates the sparsity for the full system matrix into ``pattern``.
+* ``setSparsityPattern``: populates the sparsity for the full system matrix into ``matrix``.
   Closes the matrix if ``closePattern`` is ``true``.
 
  .. code-block:: c
 
-  void setSparsityPattern( SparsityPattern & pattern,
+  void setSparsityPattern( MATRIX & matrix,
                            bool closePattern = true ) const;
 
 * ``numGlobalDofs``: returns the total number of DoFs across all processors for
@@ -142,7 +142,7 @@ The main methods of ``DoF Manager`` are:
 
  .. code-block:: c
 
-  void printFieldInfo( std::ostream & os ) const;
+  void printFieldInfo( std::ostream & os = std::cout ) const;
 
 Example
 =======

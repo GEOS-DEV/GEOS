@@ -23,14 +23,38 @@
 namespace geosx
 {
 
+/**
+ * @class ChomboCoupler
+ *
+ * A class managing data exchange with CHOMBO.
+ */
+
 class ChomboCoupler
 {
 public:
 
+  /**
+   * @brief Main Constructor.
+   *
+   * @param comm communicator used in reading/writing from/to file.
+   * @param outputPath filename the name of the file to write out to
+   * @param inputPath filename the name of the file to read from
+   * @param mesh refererence to the mesh
+   */
   ChomboCoupler( MPI_Comm const comm, const std::string & outputPath, const std::string & inputPath, MeshLevel & mesh );
 
+  /**
+   * @brief Write data to file.
+   *
+   * @param dt the current time step.
+   */
   void write( double dt );
 
+  /**
+   * @brief Read data from file.
+   *
+   * @param usePressures if @p true, pressure are read in from file
+   */
   void read( bool usePressures );
 
 private:

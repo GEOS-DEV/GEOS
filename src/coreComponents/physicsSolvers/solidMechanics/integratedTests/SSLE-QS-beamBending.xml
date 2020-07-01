@@ -1,24 +1,27 @@
 
 <Problem>
-  
+  <!-- SPHINX_Gravity -->
   <Solvers gravityVector="0.0,0.0,0.0">
-    
+  <!-- SPHINX_GravityEnd -->
+
+    <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE name="lagsolve" 
                                   timeIntegrationOption="QuasiStatic"
                                   discretization="FE1"
+                                  logLevel="0"
                                   targetRegions="{Region2}"
                                   solidMaterialNames="{shale}"
                                   >
+    <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"/>
-      <SystemSolverParameters useMLPrecond="1"
-                              scalingOption="0"
+      <LinearSolverParameters solverType="gmres"
                               krylovTol="1.0e-12"
-                              logLevel="0"/>
+                              preconditionerType="amg"/>
      </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
-  
+  <!-- SPHINX_BeamBendingMesh -->
   <Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}" 
@@ -30,14 +33,17 @@
                   nz="{4}"
                   cellBlockNames="{cb1}"/>
   </Mesh>
-
+  <!-- SPHINX_BeamBendingMeshEnd -->
 
   <Events maxTime="10.0">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
+
+    <!-- SPHINX_Execution -->
     <PeriodicEvent name="solverApplications"
                    forceDt="1.0"
                    target="/Solvers/lagsolve" />
+    <!-- SPHINX_ExecutionEnd -->
 
     <!-- This event is applied every 5.0e-5s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -54,7 +60,7 @@
                    />
   </Events>
 
-
+  <!-- SPHINX_FEDiscretization -->
   <NumericalMethods>
 
     <BasisFunctions> 
@@ -69,6 +75,7 @@
         <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
     </FiniteElements>
   </NumericalMethods>
+  <!-- SPHINX_FEDiscretizationEnd -->
 
   <ElementRegions>
     <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
@@ -79,13 +86,15 @@
                               defaultDensity="2700"
                               defaultBulkModulus="5.5556e9"
                               defaultShearModulus="4.16667e9"/>
+  <!-- SPHINX_Material -->
       <LinearElasticIsotropic name="shale"
                               defaultDensity="2700"
                               defaultBulkModulus="5.5556e9"
                               defaultShearModulus="4.16667e9"/>
+  <!-- SPHINX_MaterialEnd -->
   </Constitutive>
 
-
+  <!-- SPHINX_BoundaryConditions -->
   <FieldSpecifications>
 
     <FieldSpecification name="xnegconstraint" 
@@ -119,14 +128,15 @@
 
 
   </FieldSpecifications>
+  <!-- SPHINX_BoundaryConditionsEnd -->
 
-
+  <!-- SPHINX_TableFunction -->
   <Functions>
     <TableFunction     name="timeFunction"         inputVarNames="{time}"  coordinates="{0.0, 10.0}" values="{0.0, 10.0}" />
   </Functions>
-
+  <!-- SPHINX_TableFunctionEnd -->
   <Outputs>
-    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" slaveDirectory="sub"/>
+    <Silo name="siloOutput" parallelThreads="32" plotFileRoot="plot" childDirectory="sub"/>
     <Restart name="restartOutput"/>
   </Outputs>
 

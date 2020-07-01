@@ -6,10 +6,10 @@ add_subdirectory (GEOSX_PTP)
 # Specify solver headers
 #
 set( physicsSolvers_headers
+     LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
-     SystemSolverParameters.hpp
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
@@ -28,6 +28,7 @@ set( physicsSolvers_headers
      fluidFlow/WellSolverBase.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
+     multiphysics/LagrangianContactSolver.hpp
      multiphysics/PoroelasticSolver.hpp
      multiphysics/ReservoirSolverBase.hpp
      multiphysics/SinglePhaseReservoir.hpp
@@ -38,6 +39,10 @@ set( physicsSolvers_headers
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianSSLEKernels.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
+     solidMechanics/SolidMechanicsPoroElasticKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp
+     solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp
      solidMechanics/TimeIntegrationOption.hpp
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
@@ -47,10 +52,10 @@ set( physicsSolvers_headers
 # Specify solver sources
 #
 set( physicsSolvers_sources
+     LinearSolverParameters.cpp
+     NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
-     NonlinearSolverParameters.cpp
-     SystemSolverParameters.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
      fluidFlow/CompositionalMultiphaseWell.cpp
@@ -68,6 +73,7 @@ set( physicsSolvers_sources
      fluidFlow/WellSolverBase.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
+     multiphysics/LagrangianContactSolver.cpp
      multiphysics/PoroelasticSolver.cpp
      multiphysics/ReservoirSolverBase.cpp
      multiphysics/SinglePhaseReservoir.cpp
