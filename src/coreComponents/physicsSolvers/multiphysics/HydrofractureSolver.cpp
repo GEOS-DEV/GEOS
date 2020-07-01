@@ -357,55 +357,58 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         // First time step
         if (time_n < 1.0e-6 && solveIter == 0)
         {
-          std::cout << "Tip element in the first time step: " << m_tipElement << std::endl;
-          real64 refDispFirstStep = 0.0;
-          real64 volume = std::abs(injectionRate) / 1.0e3 * dt;
-	  FaceManager & faceManager = *mesh.getFaceManager();
-	  r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
-	  SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
-
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-
-          if (viscosity < 2.0e-3) // Toughness-dominated case
+          if (subRegion->size() > 0)
           {
-            refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
-          }
-          else  // Viscosity-dominated case
-          {
-	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
-            real64 gamma_m0 = 0.616;
-	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
-	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-	    real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
-			         	  pow(Eprime/(mup*velocity),1.0/3.0)
-	                                 ,3.0/5.0);
-            refDispFirstStep = 0.5 * Betam *
-        	               pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
-//            refDispFirstStep = 0.00019;
-          }
+	    std::cout << "Tip element in the first time step: " << m_tipElement << std::endl;
+	    real64 refDispFirstStep = 0.0;
+	    real64 volume = std::abs(injectionRate) / 1.0e3 * dt;
+	    FaceManager & faceManager = *mesh.getFaceManager();
+	    r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
+	    SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
 
-	  for (auto const & node : nodeMap[m_tipElement])
-	  {
-	    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+	    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+
+	    if (viscosity < 2.0e-3) // Toughness-dominated case
 	    {
-	      // Insert node to the set for B.C. manipulation
-//		  nodesWithAssignedDisp.insert(node);
-	      for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+	      refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
+	    }
+	    else  // Viscosity-dominated case
+	    {
+	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+	      real64 gamma_m0 = 0.616;
+	      real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+	      real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
+					    pow(Eprime/(mup*velocity),1.0/3.0)
+					   ,3.0/5.0);
+	      refDispFirstStep = 0.5 * Betam *
+				 pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
+  //            refDispFirstStep = 0.00019;
+	    }
+
+	    for (auto const & node : nodeMap[m_tipElement])
+	    {
+	      if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
 	      {
-		auto const & face = faceMap[m_tipElement][i];
-		for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+		// Insert node to the set for B.C. manipulation
+  //		  nodesWithAssignedDisp.insert(node);
+		for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
 		{
-		  auto const & nodeOnFace = faceManager.nodeList()(face,j);
-		  if (node == nodeOnFace)
+		  auto const & face = faceMap[m_tipElement][i];
+		  for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
 		  {
-		    disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
-		    dispIncre(node,0) = disp(node,0) - 0.0;
-		    std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
-		  }
-		} // for localIndex j
-	      } // for localIndex i
-	    } // if (not found)
-	  }  // for auto node
+		    auto const & nodeOnFace = faceManager.nodeList()(face,j);
+		    if (node == nodeOnFace)
+		    {
+		      disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
+		      dispIncre(node,0) = disp(node,0) - 0.0;
+		      std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
+		    }
+		  } // for localIndex j
+		} // for localIndex i
+	      } // if (not found)
+	    }  // for auto node
+          } // if (subRegion->size() > 0)
 
 	  std::map< string, string_array > fieldNames;
 	  fieldNames["node"].push_back( keys::IncrementalDisplacement );
