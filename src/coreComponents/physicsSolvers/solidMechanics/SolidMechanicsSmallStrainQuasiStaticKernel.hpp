@@ -331,21 +331,22 @@ public:
                                      m_gravityVector[1] * m_density(k,q),
                                      m_gravityVector[2] * m_density(k,q) };
 
+    real64 N[NUM_NODES_PER_ELEM];
+    FiniteElementShapeKernel::shapeFunctionValues( q, N );
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
-      real64 const Na = 0.125; // this is obviously incorrect.
       stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 5 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 4 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[0] * Na ) * m_detJ( k, q );
+                                            gravityForce[0] * N[a] ) * m_detJ( k, q );
       stack.localResidual[ a * 3 + 1 ] -= ( stress[ 5 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 1 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 3 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[1] * Na ) * m_detJ( k, q );
+                                            gravityForce[1] * N[a] ) * m_detJ( k, q );
       stack.localResidual[ a * 3 + 2 ] -= ( stress[ 4 ] * m_dNdX( k, q, a, 0 ) +
                                             stress[ 3 ] * m_dNdX( k, q, a, 1 ) +
                                             stress[ 2 ] * m_dNdX( k, q, a, 2 ) -
-                                            gravityForce[2] * Na ) * m_detJ( k, q );
+                                            gravityForce[2] * N[a] ) * m_detJ( k, q );
     }
   }
 
