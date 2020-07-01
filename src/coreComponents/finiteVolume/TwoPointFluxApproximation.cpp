@@ -225,14 +225,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
   localIndex constexpr maxElems = FaceElementStencil::MAX_STENCIL_SIZE;
 
-  stackArray1d< localIndex, maxElems > stencilCellsRegionIndex;
-  stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex;
-  stackArray1d< localIndex, maxElems > stencilCellsIndex;
-  stackArray1d< real64, maxElems > stencilWeights;
-
-  stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters;
-  stackArray1d< integer, maxElems > isGhostConnectors;
-
   arrayView1d< integer const > const & edgeGhostRank = edgeManager->ghostRank();
 
   // TODO Note that all of this initialization should be performed elsewhere. This is just here because it was
@@ -266,8 +258,10 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   arrayView1d< real64 > const &
   fluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "pressure" );
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
-  for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+  SortedArrayView< localIndex const> const & newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
+  forAll<serialPolicy>( fractureSubRegion->m_newFaceElements.size(), [=]( localIndex const k )
   {
+    localIndex const kfe = newFaceElements[k];
 #if !defined(SET_CREATION_PRESSURE)
     static_assert( true, "must have SET_CREATION_PRESSURE defined" );
 #endif
@@ -289,30 +283,50 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
       aperture[kfe] = 1.0e99;
     }
 #endif
-  }
-#endif
-  std::set< localIndex > allNewElems( fractureSubRegion->m_newFaceElements.begin(),
-                                      fractureSubRegion->m_newFaceElements.end() );
+  } );
 
+#endif
+  SortedArray< localIndex > allNewElems;
+  allNewElems.insert( fractureSubRegion->m_newFaceElements.begin(),
+                      fractureSubRegion->m_newFaceElements.end() );
+  SortedArrayView< localIndex const > const &
+  recalculateFractureConnectorEdges = edgeManager->m_recalculateFractureConnectorEdges.toViewConst();
 
   // add new connectors/connections between face elements to the fracture stencil
-  for( auto const fci : edgeManager->m_recalculateFractureConnectorEdges )
+  forAll< serialPolicy >( recalculateFractureConnectorEdges.size(),
+                          [ &allNewElems,
+                            recalculateFractureConnectorEdges,
+                            fractureConnectorsToFaceElements,
+                            fractureConnectorsToEdges,
+                            edgeManager,
+                            X,
+                            &faceMap,
+                            faceCenter,
+                            fractureRegionIndex,
+                            edgeGhostRank,
+                            fluidPressure,
+                            fractureSubRegion,
+                            initFlag,
+                            &fractureStencil]
+                            ( localIndex const k )
   {
+    localIndex const fci = recalculateFractureConnectorEdges[k];
     localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( fci );
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
     //    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
-
       GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
-      stencilCellsRegionIndex.resize( numElems );
-      stencilCellsSubRegionIndex.resize( numElems );
-      stencilCellsIndex.resize( numElems );
-      stencilWeights.resize( numElems );
 
-      stencilCellCenterToEdgeCenters.resize( numElems );
-      isGhostConnectors.resize( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
+      stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
+      stackArray1d< real64, maxElems > stencilWeights( numElems );
+      stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
+      stackArray1d< integer, maxElems > isGhostConnectors( numElems );
+
+
 
       // get edge geometry
       R1Tensor const edgeCenter = edgeManager->calculateCenter( edgeIndex, X );
@@ -420,13 +434,24 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                            isGhostConnectors.data(),
                            fci );
     }
-  }
+  } );
+
+#define RAJAFY 1
 
   if( initFlag )
   {
     SortedArray< localIndex > touchedNodes;
+#if RAJAFY==1
+    forAll<serialPolicy>( allNewElems.size(),
+                          [ &allNewElems,
+                            fluidPressure ]( localIndex const k )
+    {
+      localIndex const newElemIndex = allNewElems[k];
+
+#else
     for( localIndex const newElemIndex : allNewElems )
     {
+#endif
       // if the value of pressure was not set, then set it to zero and punt.
       if( fluidPressure[newElemIndex] > 1.0e98 )
       {
@@ -479,6 +504,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
       }
 #endif
     }
+#if RAJAFY==1
+);
+#endif
   }
 
   // add connections for FaceElements to/from CellElements.
@@ -486,18 +514,37 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     arrayView2d< localIndex const > const & elemRegionList = faceElementsToCells.m_toElementRegion;
     arrayView2d< localIndex const > const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d< localIndex const > const & elemList = faceElementsToCells.m_toElementIndex;
-    for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
-//    for( localIndex kfe=0 ; kfe<faceElementsToCells.size(0) ; ++kfe )
+
+#if RAJAFY==1
+    forAll<serialPolicy>( newFaceElements.size(),
+                          [ newFaceElements,
+                            &faceElementsToCells,
+                            &cellStencil,
+                            &faceMap,
+                            elemRegionList,
+                            elemSubRegionList,
+                            elemList,
+                            faceCenter,
+                            elemCenter,
+                            faceNormal,
+                            faceArea,
+                            coefficient,
+                            fractureRegionIndex ] ( localIndex const k )
     {
+      localIndex const kfe = newFaceElements[k];
+#else
+    for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
+    {
+#endif
       // if( ghostRank[kfe] < 0 )
       {
         localIndex const numElems = faceElementsToCells.size( 1 );
 
         GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
-        stencilCellsRegionIndex.resize( numElems );
-        stencilCellsSubRegionIndex.resize( numElems );
-        stencilCellsIndex.resize( numElems );
-        stencilWeights.resize( numElems );
+        stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
+        stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
+        stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
+        stackArray1d< real64, maxElems > stencilWeights( numElems );
 
         R1Tensor cellToFaceVec;
         R1Tensor faceConormal;
@@ -541,7 +588,30 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
         }
       }
     }
+#if RAJAFY==1
+    );
+#endif
   }
+
+  {
+  typename FaceElementStencil::IndexContainerViewConstType const & seri = fractureStencil.getElementRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sesri = fractureStencil.getElementSubRegionIndices();
+  typename FaceElementStencil::IndexContainerViewConstType const & sei = fractureStencil.getElementIndices();
+  typename FaceElementStencil::WeightContainerViewConstType const & weights = fractureStencil.getWeights();
+  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = fractureStencil.getCellCenterToEdgeCenters();
+
+  std::cout<<"ElementRegions"<<std::endl;
+  std::cout<<seri<<std::endl;
+  std::cout<<"ElementSubRegions"<<std::endl;
+  std::cout<<sesri<<std::endl;
+  std::cout<<"ElementIndex"<<std::endl;
+  std::cout<<sei<<std::endl;
+  std::cout<<"Weights"<<std::endl;
+  std::cout<<weights<<std::endl;
+  std::cout<<"cellCenterToEdgeCenters"<<std::endl;
+  std::cout<<cellCenterToEdgeCenters<<std::endl;
+  }
+
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,

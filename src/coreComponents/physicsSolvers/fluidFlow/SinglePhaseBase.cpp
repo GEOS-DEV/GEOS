@@ -436,6 +436,7 @@ void SinglePhaseBase::AssembleSystem( real64 const time_n,
                      dofManager,
                      localMatrix,
                      localRhs );
+
 }
 
 template< bool ISPORO, typename POLICY >

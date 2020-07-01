@@ -236,6 +236,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
                                               aperture[stencilElementIndices[k]],
                                               aperTerm[k],
                                               dAperTerm_dAper[k] );
+
 #elif PERM_CALC==2
 
     if( s[k] >= 1.0 )
@@ -303,6 +304,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
       real64 const potDif =  ( ( pres[ei[0]] + dPres[ei[0]] ) - ( pres[ei[1]] + dPres[ei[1]] ) -
                                densMean * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) );
 
+
       // upwinding of fluid properties (make this an option?)
       localIndex const k_up = (potDif >= 0) ? 0 : 1;
 
@@ -315,6 +317,7 @@ FluxKernel::ComputeJunction( localIndex const numFluxElems,
       real64 const fluxVal = mobility * weight * potDif * dt;
       flux[k[0]] += fluxVal;
       flux[k[1]] -= fluxVal;
+
 
       // compute and fill dFlux_dP
       dFlux_dP[0] = mobility * weight * (  1 - dDensMean_dP[0] * ( gravCoef[ei[0]] - gravCoef[ei[1]] ) ) * dt;
@@ -451,7 +454,6 @@ void FluxKernel::
   constexpr localIndex maxNumFluxElems = FaceElementStencil::NUM_POINT_IN_FLUX;
   constexpr localIndex maxStencilSize = FaceElementStencil::MAX_STENCIL_SIZE;
 
-
   typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
   typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
@@ -463,7 +465,7 @@ void FluxKernel::
 
   static constexpr real64 TINY = 1e-10;
 
-  forAll< parallelDevicePolicy< 256 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+  forAll< parallelDevicePolicy< 32 > >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     localIndex const numFluxElems = seri.sizeOfArray( iconn );
     localIndex const stencilSize  = numFluxElems;
@@ -559,6 +561,7 @@ void FluxKernel::
       }
     }
   } );
+
 }
 
 
