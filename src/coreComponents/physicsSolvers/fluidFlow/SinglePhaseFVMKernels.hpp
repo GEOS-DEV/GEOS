@@ -213,7 +213,7 @@ struct FluxKernel
   Compute( localIndex const stencilSize,
            arraySlice1d< localIndex const > const &,
            arraySlice1d< localIndex const > const &,
-           arraySlice1d< localIndex const > const & stencilElementIndices,
+           arraySlice1d< localIndex const > const & sei,
            arraySlice1d< real64 const > const & stencilWeights,
            arrayView1d< real64 const > const & pres,
            arrayView1d< real64 const > const & dPres,
