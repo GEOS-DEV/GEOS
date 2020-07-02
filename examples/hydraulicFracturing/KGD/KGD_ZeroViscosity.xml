@@ -58,6 +58,7 @@
       fluidNames="{water}"
       solidNames="{rock}"
       inputFluxEstimate="1"
+      meanPermCoeff="0.8"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
                                  newtonMaxIter="10"/>
