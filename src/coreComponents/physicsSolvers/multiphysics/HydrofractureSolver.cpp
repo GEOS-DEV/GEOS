@@ -351,65 +351,67 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  } // for localIndex i
 	  GEOSX_ASSERT_MSG( found == true,
 			"Trailing face is not found among the fracture face elements" );
+	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 //	  std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
-	}
 
-        // First time step
-        if (time_n < 1.0e-6 && solveIter == 0)
-        {
-          if (subRegion->size() > 0)
-          {
-	    std::cout << "Tip element in the first time step: " << m_tipElement << std::endl;
-	    real64 refDispFirstStep = 0.0;
-	    real64 volume = std::abs(injectionRate) / 1.0e3 * dt;
-	    FaceManager & faceManager = *mesh.getFaceManager();
-	    r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
-	    SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
-
-	    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-
-	    if (viscosity < 2.0e-3) // Toughness-dominated case
+	  // First time step
+	  if (time_n < 1.0e-6 && solveIter == 0)
+	  {
+	    if (subRegion->size() > 0)
 	    {
-	      refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
-	    }
-	    else  // Viscosity-dominated case
-	    {
-	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
-	      real64 gamma_m0 = 0.616;
-	      real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
-	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-	      real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
-					    pow(Eprime/(mup*velocity),1.0/3.0)
-					   ,3.0/5.0);
-	      refDispFirstStep = 0.5 * Betam *
-				 pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
-  //            refDispFirstStep = 0.00019;
-	    }
+	      std::cout << "Rank " << rank << ": Tip element " << m_tipElement << " in the first time step"  << std::endl;
+	      real64 refDispFirstStep = 0.0;
+	      real64 volume = std::abs(injectionRate) / 1.0e3 * dt;
+	      FaceManager & faceManager = *mesh.getFaceManager();
+	      r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
+	      SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
 
-	    for (auto const & node : nodeMap[m_tipElement])
-	    {
-	      if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+	      if (viscosity < 2.0e-3) // Toughness-dominated case
 	      {
-		// Insert node to the set for B.C. manipulation
-  //		  nodesWithAssignedDisp.insert(node);
-		for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
-		{
-		  auto const & face = faceMap[m_tipElement][i];
-		  for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
-		  {
-		    auto const & nodeOnFace = faceManager.nodeList()(face,j);
-		    if (node == nodeOnFace)
-		    {
-		      disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
-		      dispIncre(node,0) = disp(node,0) - 0.0;
-		      std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
-		    }
-		  } // for localIndex j
-		} // for localIndex i
-	      } // if (not found)
-	    }  // for auto node
-          } // if (subRegion->size() > 0)
+		refDispFirstStep = 0.5 * pow(3.0/2.0*Eprime/Kprime*volume, 2.0/3.0);
+	      }
+	      else  // Viscosity-dominated case
+	      {
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+		real64 lengthFirstStep = pow( 5.0/3.0*volume/Betam*
+					      pow(Eprime/(mup*velocity),1.0/3.0)
+					     ,3.0/5.0);
+		refDispFirstStep = 0.5 * Betam *
+				   pow(mup*velocity*lengthFirstStep*lengthFirstStep/Eprime , 1.0/3.0);
+    //            refDispFirstStep = 0.00019;
+	      }
 
+	      for (auto const & node : nodeMap[m_tipElement])
+	      {
+		if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+		{
+		  // Insert node to the set for B.C. manipulation
+    //		  nodesWithAssignedDisp.insert(node);
+		  for (localIndex i=0; i<faceMap[m_tipElement].size(); i++)
+		  {
+		    auto const & face = faceMap[m_tipElement][i];
+		    for (localIndex j=0; j<faceManager.nodeList()[face].size(); j++)
+		    {
+		      auto const & nodeOnFace = faceManager.nodeList()(face,j);
+		      if (node == nodeOnFace)
+		      {
+			disp(node, 0) = faceNormal(face)[0] > 0 ? -refDispFirstStep : refDispFirstStep;
+			dispIncre(node,0) = disp(node,0) - 0.0;
+			std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
+		      }
+		    } // for localIndex j
+		  } // for localIndex i
+		} // if (not found)
+	      }  // for auto node
+	    } // if (subRegion->size() > 0)
+	  } // if (time_n < 1.0e-6 && solveIter == 0)
+	}  // 	for(auto const & trailingFace : trailingFaces)
+
+	if (time_n < 1.0e-6 && solveIter == 0)
+	{
 	  std::map< string, string_array > fieldNames;
 	  fieldNames["node"].push_back( keys::IncrementalDisplacement );
 	  fieldNames["node"].push_back( keys::TotalDisplacement );
@@ -425,12 +427,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  this->UpdateDeformationForCoupling( domain );
 
 	  m_flowSolver->ResetViews( domain );
-        } // if (time_n < 1.0e-6 && solveIter == 0)
-
+	} //	if (time_n < 1.0e-6 && solveIter == 0)
 
 	//TJ: print out surface aperture before newton solve
+
 	{
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+/*	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "before newton solve: "
 		    << std::endl;
@@ -475,7 +477,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			<< std::endl;
 	    }
 	  }
+*/
 	} // print statements
+
 
 	// currently the only method is implicit time integration
 	dtReturn = this->NonlinearImplicitStep( time_n,
@@ -488,7 +492,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 						m_solution );
 
 	//TJ: print out surface aperture after newton solve
+
 	{
+/*
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
 		       "after newton solve: "
@@ -527,9 +533,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			<< std::endl;
 	    }
 	  }
+*/
 	} // print statements
 
-/*        if (time_n < 1.0e-6) //first step
+/*
+        if (time_n < 1.0e-6) //first step
           m_tipElement = 0;
 */
         if (subRegion->size() > 0)
@@ -558,13 +566,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
+/*
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
 					 << myChildIndex[refNodeIndex] << std::endl;
 	  std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
 				       << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
 				       << std::endl;
-
+*/
 	  real64 tipX = 0.0;
 	  if (viscosity < 2.0e-3) // Toughness-dominated case
 	  {
@@ -1181,6 +1190,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                                domain->getNeighbors() );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
+/*
         {
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank
@@ -1207,11 +1217,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
-
+*/
         //TJ: 5. update the elmt aperture due to the change of disp field at the newly splitted nodes
         this->UpdateDeformationForCoupling( domain );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
+/*
         {
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank "<< rank
@@ -1238,6 +1249,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
+*/
 
         if( getLogLevel() >= 1 )
         {
