@@ -235,7 +235,6 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
 
 
-
   fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
     FluxKernel::Launch( stencil,

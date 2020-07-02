@@ -688,7 +688,7 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 //  rhs1.move( LvArray::MemorySpace::CPU );
 //  std::cout<<rhs1<<std::endl;
 
-  m_flowSolver->ResetViews( *(domain.getMeshBody(0)->getMeshLevel(0) ) );
+  m_flowSolver->ResetViews( *(domain.getMeshBody( 0 )->getMeshLevel( 0 ) ) );
 
   m_flowSolver->AssembleSystem( time,
                                 dt,
@@ -710,7 +710,6 @@ void HydrofractureSolver::AssembleSystem( real64 const time,
 //  GEOSX_LOG_RANK_0( "***********************************************************" );
 //  rhs1.move( LvArray::MemorySpace::CPU );
 //  std::cout<<rhs1<<std::endl;
-
 
 
 
@@ -862,8 +861,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
 
 
-
-
     m_solidSolver->getSystemMatrix().create( m_solidSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
     m_solidSolver->getSystemRhs().create( m_solidSolver->getLocalRhs().toViewConst(), MPI_COMM_GEOSX );
     m_flowSolver->getSystemMatrix().create( m_flowSolver->getLocalMatrix().toViewConst(), MPI_COMM_GEOSX );
@@ -897,11 +894,11 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     m_flowSolver->getSystemMatrix().print( std::cout );
     MpiWrapper::Barrier();
 
-    GEOSX_LOG_RANK_0("***********************************************************");
-    GEOSX_LOG_RANK_0("residual0");
-    GEOSX_LOG_RANK_0("***********************************************************");
+    GEOSX_LOG_RANK_0( "***********************************************************" );
+    GEOSX_LOG_RANK_0( "residual0" );
+    GEOSX_LOG_RANK_0( "***********************************************************" );
 //    LAIHelperFunctions::PrintPermutedVector(m_solidSolver->getSystemRhs(), m_permutationMatrix0, std::cout);
-    m_solidSolver->getSystemRhs().print(std::cout);
+    m_solidSolver->getSystemRhs().print( std::cout );
     MpiWrapper::Barrier();
 
     GEOSX_LOG_RANK_0( "***********************************************************" );
@@ -1650,12 +1647,12 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
        permutedSol.close();
      */
 
-       GEOSX_LOG_RANK_0("***********************************************************");
-       GEOSX_LOG_RANK_0("solution0");
-       GEOSX_LOG_RANK_0("***********************************************************");
-       p_solution[0]->Print(std::cout);
-       std::cout<<std::endl;
-       MPI_Barrier(MPI_COMM_GEOSX);
+    GEOSX_LOG_RANK_0( "***********************************************************" );
+    GEOSX_LOG_RANK_0( "solution0" );
+    GEOSX_LOG_RANK_0( "***********************************************************" );
+    p_solution[0]->Print( std::cout );
+    std::cout<<std::endl;
+    MPI_Barrier( MPI_COMM_GEOSX );
 
     GEOSX_LOG_RANK_0( "***********************************************************" );
     GEOSX_LOG_RANK_0( "solution1" );

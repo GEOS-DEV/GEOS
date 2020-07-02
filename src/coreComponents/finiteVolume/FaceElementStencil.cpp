@@ -25,6 +25,12 @@ FaceElementStencil::FaceElementStencil():
   StencilBase< FaceElementStencil_Traits, FaceElementStencil >()
 {}
 
+void FaceElementStencil::move( LvArray::MemorySpace const space )
+{
+  StencilBase< FaceElementStencil_Traits, FaceElementStencil >::move( space );
+  m_cellCenterToEdgeCenters.move( space, true );
+  m_isGhostConnectors.move( space, true );
+}
 
 void FaceElementStencil::add( localIndex const numPts,
                               localIndex const * const elementRegionIndices,

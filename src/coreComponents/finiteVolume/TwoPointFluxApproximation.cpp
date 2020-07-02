@@ -202,6 +202,9 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
 
   FaceElementStencil & fractureStencil = getReference< FaceElementStencil >( viewKeyStruct::fractureStencilString );
   CellElementStencilTPFA & cellStencil = getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
+  fractureStencil.move( LvArray::MemorySpace::CPU );
+  cellStencil.move( LvArray::MemorySpace::CPU );
+
 
   FaceElementRegion * const fractureRegion = elemManager->GetRegion< FaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion->getIndexInParent();
@@ -258,8 +261,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   arrayView1d< real64 > const &
   fluidPressure = fractureSubRegion->getReference< array1d< real64 > >( "pressure" );
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
-  SortedArrayView< localIndex const> const & newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
-  forAll<serialPolicy>( fractureSubRegion->m_newFaceElements.size(), [=]( localIndex const k )
+  SortedArrayView< localIndex const > const & newFaceElements = fractureSubRegion->m_newFaceElements.toViewConst();
+  forAll< serialPolicy >( fractureSubRegion->m_newFaceElements.size(), [=]( localIndex const k )
   {
     localIndex const kfe = newFaceElements[k];
 #if !defined(SET_CREATION_PRESSURE)
@@ -436,22 +439,14 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     }
   } );
 
-#define RAJAFY 1
-
   if( initFlag )
   {
     SortedArray< localIndex > touchedNodes;
-#if RAJAFY==1
-    forAll<serialPolicy>( allNewElems.size(),
-                          [ &allNewElems,
-                            fluidPressure ]( localIndex const k )
+    forAll< serialPolicy >( allNewElems.size(),
+                            [ &allNewElems,
+                              fluidPressure ]( localIndex const k )
     {
       localIndex const newElemIndex = allNewElems[k];
-
-#else
-    for( localIndex const newElemIndex : allNewElems )
-    {
-#endif
       // if the value of pressure was not set, then set it to zero and punt.
       if( fluidPressure[newElemIndex] > 1.0e98 )
       {
@@ -503,10 +498,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
                 fluidPressure[newElemIndex] );
       }
 #endif
-    }
-#if RAJAFY==1
-);
-#endif
+    } );
   }
 
   // add connections for FaceElements to/from CellElements.
@@ -515,27 +507,22 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     arrayView2d< localIndex const > const & elemSubRegionList = faceElementsToCells.m_toElementSubRegion;
     arrayView2d< localIndex const > const & elemList = faceElementsToCells.m_toElementIndex;
 
-#if RAJAFY==1
-    forAll<serialPolicy>( newFaceElements.size(),
-                          [ newFaceElements,
-                            &faceElementsToCells,
-                            &cellStencil,
-                            &faceMap,
-                            elemRegionList,
-                            elemSubRegionList,
-                            elemList,
-                            faceCenter,
-                            elemCenter,
-                            faceNormal,
-                            faceArea,
-                            coefficient,
-                            fractureRegionIndex ] ( localIndex const k )
+    forAll< serialPolicy >( newFaceElements.size(),
+                            [ newFaceElements,
+                              &faceElementsToCells,
+                              &cellStencil,
+                              &faceMap,
+                              elemRegionList,
+                              elemSubRegionList,
+                              elemList,
+                              faceCenter,
+                              elemCenter,
+                              faceNormal,
+                              faceArea,
+                              coefficient,
+                              fractureRegionIndex ] ( localIndex const k )
     {
       localIndex const kfe = newFaceElements[k];
-#else
-    for( localIndex const kfe : fractureSubRegion->m_newFaceElements )
-    {
-#endif
       // if( ghostRank[kfe] < 0 )
       {
         localIndex const numElems = faceElementsToCells.size( 1 );
@@ -587,31 +574,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
           }
         }
       }
-    }
-#if RAJAFY==1
-    );
-#endif
+    } );
   }
-
-  {
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = fractureStencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = fractureStencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = fractureStencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = fractureStencil.getWeights();
-  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = fractureStencil.getCellCenterToEdgeCenters();
-
-  std::cout<<"ElementRegions"<<std::endl;
-  std::cout<<seri<<std::endl;
-  std::cout<<"ElementSubRegions"<<std::endl;
-  std::cout<<sesri<<std::endl;
-  std::cout<<"ElementIndex"<<std::endl;
-  std::cout<<sei<<std::endl;
-  std::cout<<"Weights"<<std::endl;
-  std::cout<<weights<<std::endl;
-  std::cout<<"cellCenterToEdgeCenters"<<std::endl;
-  std::cout<<cellCenterToEdgeCenters<<std::endl;
-  }
-
 }
 
 void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,

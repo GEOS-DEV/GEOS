@@ -90,6 +90,8 @@ public:
    */
   FaceElementStencil();
 
+  virtual void move( LvArray::MemorySpace const space ) override final;
+
   virtual void add( localIndex const numPts,
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
