@@ -119,11 +119,11 @@
   <Constitutive>
     <CompressibleSinglePhaseFluid name="water"
                                   defaultDensity="1000"
-                                  defaultViscosity="0.001"
+                                  defaultViscosity="$mu_upscaled$"
                                   referencePressure="0.0"
                                   referenceDensity="1000"
                                   compressibility="5e-10"
-                                  referenceViscosity="1.0e-3"
+                                  referenceViscosity="$mu_upscaled$"
                                   viscosibility="0.0"/>
 
     <PoroLinearElasticIsotropic name="rock"
