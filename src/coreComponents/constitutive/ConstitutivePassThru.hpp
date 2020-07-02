@@ -58,7 +58,11 @@ struct ConstitutivePassThru< SolidBase >
   {
     GEOSX_ERROR_IF( constitutiveRelation == nullptr, "ConstitutiveBase* == nullptr" );
 
-    if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
+    if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
+    {
+      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
+    }
+    else if( dynamic_cast< LinearElasticIsotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticIsotropic * >( constitutiveRelation) );
     }
@@ -69,10 +73,6 @@ struct ConstitutivePassThru< SolidBase >
     else if( dynamic_cast< LinearElasticAnisotropic * >( constitutiveRelation ) )
     {
       lambda( static_cast< LinearElasticAnisotropic * >( constitutiveRelation) );
-    }
-    else if( dynamic_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation ) )
-    {
-      lambda( static_cast< Damage< LinearElasticIsotropic > * >( constitutiveRelation) );
     }
     else
     {
