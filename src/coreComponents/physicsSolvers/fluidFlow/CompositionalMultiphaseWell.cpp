@@ -811,6 +811,7 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
 void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  localIndex const NC = m_numComponents;
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
@@ -829,7 +830,7 @@ void CompositionalMultiphaseWell::ResetStateToBeginningOfStep( DomainPartition &
       // extract solution and apply to dP
       dWellElemPressure[iwelem] = 0;
       dConnRate[iwelem] = 0;
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         dWellElemGlobalCompDensity[iwelem][ic] = 0;
       }
@@ -1045,6 +1046,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNU
                                                         DomainPartition & domain )
 {
   MeshLevel & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  localIndex const NC = m_numComponents;
 
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
@@ -1069,7 +1071,7 @@ void CompositionalMultiphaseWell::ImplicitStepComplete( real64 const & GEOSX_UNU
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] += dWellElemPressure[iwelem];
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      for( localIndex ic = 0; ic < NC; ++ic )
       {
         wellElemGlobalCompDensity[iwelem][ic] += dWellElemGlobalCompDensity[iwelem][ic];
       }

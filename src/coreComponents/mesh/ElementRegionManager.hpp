@@ -1101,7 +1101,7 @@ ElementRegionManager::ConstructViewAccessor( string const & viewName, string con
         group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->get_typeid() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }
@@ -1132,7 +1132,7 @@ ElementRegionManager::
         group = group->GetGroup( ObjectManagerBase::groupKeyStruct::neighborDataString )->GetGroup( neighborName );
       }
 
-      if( group->hasWrapper( viewName ) )
+      if( group->hasWrapper( viewName ) && group->getWrapperBase( viewName )->get_typeid() == typeid( VIEWTYPE ) )
       {
         viewAccessor[kReg][kSubReg] = group->getReference< VIEWTYPE >( viewName );
       }

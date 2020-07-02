@@ -30,6 +30,7 @@ class SolidMechanicsLagrangianFEM;
 class LagrangianContactSolver : public SolverBase
 {
 public:
+
   LagrangianContactSolver( const std::string & name,
                            Group * const parent );
 
@@ -212,10 +213,9 @@ private:
   struct FractureState
   {
     static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
-    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding
-                                           ///< is allowed for
-    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity,
-                                           ///< but sliding is allowed for
+    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
+    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed
+                                           ///< for
     static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
   };
 
@@ -248,25 +248,6 @@ private:
     return stringState;
   }
 
-  bool CompareFractureStates( integer const & state0, integer const & state1 ) const
-  {
-    if( state0 == state1 )
-    {
-      return true;
-    }
-    else if( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
-    {
-      return true;
-    }
-    else if( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP )
-    {
-      return true;
-    }
-    return false;
-  }
-
-  void ComputeTolerances( DomainPartition & domain ) const;
-
 public:
 
   void InitializeFractureState( MeshLevel & mesh,
@@ -285,6 +266,18 @@ public:
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
+
+  void ComputeTolerances( DomainPartition & domain ) const;
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static bool CompareFractureStates( integer const state0,
+                                     integer const state1 )
+  {
+    return state0 == state1
+           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
+           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
+  }
 };
 
 } /* namespace geosx */
