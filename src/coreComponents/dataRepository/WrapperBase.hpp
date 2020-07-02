@@ -246,7 +246,7 @@ public:
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata = true, bool onDevice = false ) const = 0;
+  localIndex Pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice = false ) const = 0;
 
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
@@ -258,7 +258,7 @@ public:
    * @return               the number of @p buffer_unit_type units packed
    */
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata = true, bool onDevice = false ) const = 0;
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice = false ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
@@ -269,7 +269,7 @@ public:
    * @return the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackSize( bool withMetdata = true, bool onDevice = false ) const = 0;
+  localIndex PackSize( bool withMetadata, bool onDevice = false ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
@@ -280,7 +280,7 @@ public:
    * @return             the number of @p buffer_unit_type units needed to pack
    */
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata = true, bool onDevice = false ) const = 0;
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice = false ) const = 0;
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
@@ -291,7 +291,7 @@ public:
    * @return               the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetdata = true, bool onDevice = false ) = 0;
+  localIndex Unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice = false ) = 0;
 
   /**
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
@@ -303,7 +303,7 @@ public:
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetdata = true, bool onDevice = false ) = 0;
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetdata, bool onDevice = false ) = 0;
 
   ///@}
 

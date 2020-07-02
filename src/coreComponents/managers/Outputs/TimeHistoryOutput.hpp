@@ -78,10 +78,7 @@ namespace geosx
         {
           // do any 1-time metadata output
           localIndex meta_collector_count = collector->GetNumMetaCollectors( );
-          ProblemManager const * pm = dynamicCast< ProblemManager const * >( group );
-          DomainPartition const * domain = pm->getDomainPartition( );
-          // todo: do the set id write without this const_cast
-          Group * domain_group = dynamicCast< Group * >( const_cast< DomainPartition* >( domain ) );
+          Group * domain_group = dynamicCast< Group * >( dynamicCast< ProblemManager * >( group )->getDomainPartition( ) );
           for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
           {
             std::unique_ptr<HistoryCollection> meta_collector = collector->GetMetaCollector( group, meta_idx );

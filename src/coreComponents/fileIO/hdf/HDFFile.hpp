@@ -184,13 +184,13 @@ class HDFHistIO : public BufferedHistoryIO
     array1d<hsize_t> history_file_dims(m_rank+1);
     history_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
 
-    array1d<hsize_t> dim_chunks(m_rank+1);
-    dim_chunks[0] = 1;
+    //array1d<hsize_t> dim_chunks(m_rank+1);
+    //dim_chunks[0] = 1;
 
-    // should verify that all dims other than 0 and 1 are identical across the comm
     for(hsize_t dd = 1; dd < m_rank+1; ++dd)
     {
-      dim_chunks[dd] = history_file_dims[dd] = m_dims[dd-1];
+      //dim_chunks[dd] = m_dims[dd-1]; // == 0 ? 1 : m_dims[dd-1];
+      history_file_dims[dd] = m_dims[dd-1];
     }
 
     globalIndex local_idx_count = LvArray::integerConversion<globalIndex>(m_dims[0]);
@@ -206,7 +206,7 @@ class HDFHistIO : public BufferedHistoryIO
     if( !in_target )
     {
       hid_t dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-      H5Pset_chunk(dcpl_id, m_rank+1, &dim_chunks[0]);
+      //H5Pset_chunk(dcpl_id, m_rank+1, &dim_chunks[0]);
 
       array1d<hsize_t> max_file_dims(history_file_dims);
       max_file_dims[0] = H5S_UNLIMITED;

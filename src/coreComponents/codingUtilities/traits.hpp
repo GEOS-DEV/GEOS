@@ -150,8 +150,17 @@ constexpr bool is_string = std::is_base_of_v< std::string, T >;
 template< typename T >
 constexpr bool is_array = LvArray::isArray< T >;
 
+/// True if T is an instantiation of LvArray::ArrayView.
 template< typename T >
 constexpr bool is_array_view = LvArray::isArrayView< T >;
+
+/// True if T is an instantiation of LvArray::SortedArray.
+template< typename T >
+constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
+
+/// True if T is an instantiation of LvArray:SortedArrayView.
+template < typename T >
+constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
 
 /// True if T is a Tensor class.
 template< typename T >

@@ -73,10 +73,18 @@ namespace geosx
     std::type_index m_type;
   };
 
+  template < typename T >
+  constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+  template < typename T >
+  constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || traits::is_sorted_array< T >;
+
+  template < typename T >
+  constexpr bool can_history_io_container = is_array_type< T > || is_sorted_array_type< T >;
+
   template < typename ARRAY_T >
   inline
-  typename std::enable_if < (traits::is_array_view<ARRAY_T> || traits::is_array<ARRAY_T>) && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
-  getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+  HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1)
   {
     localIndex size = size_override < 0 ? arr.size( ) : size_override;
     size_t sz = LvArray::integerConversion<size_t>(size);
@@ -85,7 +93,23 @@ namespace geosx
 
   template < typename ARRAY_T >
   inline
-  typename std::enable_if < (traits::is_array_view<ARRAY_T> || traits::is_array<ARRAY_T>) && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
+  typename std::enable_if < is_array_type< ARRAY_T > && (ARRAY_T::ndim == 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
+  getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+  {
+    return getFlatArrayMetadata< ARRAY_T >( name, arr, size_override );
+  }
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < is_sorted_array_type< ARRAY_T > && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
+  getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+  {
+    return getFlatArrayMetadata< ARRAY_T >( name, arr, size_override );
+  }
+
+  template < typename ARRAY_T >
+  inline
+  typename std::enable_if < ( is_array_type< ARRAY_T >) && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
   getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex size_override = -1 )
   {
     size_t sizes[2] = {size_override < 0 ? LvArray::integerConversion<size_t>(arr.size( ) / arr.size(0)) : size_override, LvArray::integerConversion<size_t>(arr.size( )) };
@@ -101,7 +125,7 @@ namespace geosx
   }
 
   template < typename ARRAY_T >
-  inline typename std::enable_if < ( traits::is_array< ARRAY_T > || traits::is_array_view< ARRAY_T > ) && !can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
+  inline typename std::enable_if < ( can_history_io_container< ARRAY_T > ) && !can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
   getHistoryMetadata( string const & GEOSX_UNUSED_PARAM(name), const ARRAY_T & GEOSX_UNUSED_PARAM(type), localIndex size_override )
   {
     GEOSX_ERROR("Trying to use time history output on an array containing an unsupported type.");
@@ -110,7 +134,7 @@ namespace geosx
   }
 
   template < typename T >
-  inline typename std::enable_if < ! ( traits::is_array< T > || traits::is_array_view< T > ) && ! can_history_io< T >, HistoryMetadata >::type
+  inline typename std::enable_if < ! ( can_history_io_container< T > ) && ! can_history_io< T >, HistoryMetadata >::type
   getHistoryMetadata( string const & GEOSX_UNUSED_PARAM(name), const T & GEOSX_UNUSED_PARAM(type), localIndex size_override )
   {
     GEOSX_ERROR("Trying to use time history output on an unsupported type.");
