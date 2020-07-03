@@ -16,7 +16,6 @@ if [ -z "$1" ]; then
     exit
 fi
 
-PYTHON_EXECUTABLE=$1; shift
 FORMAT_SCRIPT=$1; shift
 LOGFILE=xml_formatting_results.log
 
@@ -28,9 +27,9 @@ else
     XARGS="xargs -r"
 fi
 
-# check if python/xml is present
-if ! $PYTHON_EXECUTABLE -c "import xml" &> /dev/null; then
-    >&2 echo "Error: python xml module is required to format xml files"
+# check to see if the formatting script exists
+if [ ! -f $FORMAT_SCRIPT ]; then
+    >&2 echo "Error: the format_xml script was not found"
     exit
 fi
 
@@ -72,7 +71,7 @@ echo -n > $LOGFILE
 # validate each path separately and write results in the log
 for path in "$@"; do
     for file in $(list_xml_files_$METHOD $path); do
-        $PYTHON_EXECUTABLE $FORMAT_SCRIPT $file &>> $LOGFILE
+        $FORMAT_SCRIPT $file &>> $LOGFILE
     done
 done
 
