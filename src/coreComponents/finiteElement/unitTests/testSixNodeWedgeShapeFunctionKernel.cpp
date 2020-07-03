@@ -116,7 +116,7 @@ void testKernelDriver()
   } );
 
 
-  constexpr real64 parentCoords[3][numQuadraturePoints] = {
+  constexpr real64 parentCoords[3][numNodes] = {
     {  0.0, 1.0, 0.0, 0.0, 1.0, 0.0 },
     {  0.0, 0.0, 1.0, 0.0, 0.0, 1.0 },
     { -1.0, -1.0, -1.0, 1.0, 1.0, 1.0 }
