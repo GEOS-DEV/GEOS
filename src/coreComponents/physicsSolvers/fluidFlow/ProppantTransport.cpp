@@ -1159,7 +1159,7 @@ void ProppantTransport::ResetViews( MeshLevel & mesh )
   m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString );
 
   m_proppantConcentration.clear();
-  m_proppantConcentration = elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  m_proppantConcentration = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantConcentrationString );
   m_proppantConcentration.setName( getName() + "/accessors/" + viewKeyStruct::proppantConcentrationString );
 
   m_deltaProppantConcentration.clear();
@@ -1167,27 +1167,27 @@ void ProppantTransport::ResetViews( MeshLevel & mesh )
   m_deltaProppantConcentration.setName( getName() + "/accessors/" + viewKeyStruct::deltaProppantConcentrationString );
 
   m_cellBasedFlux.clear();
-  m_cellBasedFlux = elemManager.ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( viewKeyStruct::cellBasedFluxString );
+  m_cellBasedFlux = elemManager.ConstructArrayViewAccessor< R1Tensor , 1 >( viewKeyStruct::cellBasedFluxString );
   m_cellBasedFlux.setName( getName() + "/accessors/" + viewKeyStruct::cellBasedFluxString );
 
   m_proppantPackVolumeFraction.clear();
-  m_proppantPackVolumeFraction = elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
+  m_proppantPackVolumeFraction = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantPackVolumeFractionString );
   m_proppantPackVolumeFraction.setName( getName() + "/accessors/" + viewKeyStruct::proppantPackVolumeFractionString );
 
   m_proppantExcessPackVolume.clear();
-  m_proppantExcessPackVolume = elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
+  m_proppantExcessPackVolume = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantExcessPackVolumeString );
   m_proppantExcessPackVolume.setName( getName() + "/accessors/" + viewKeyStruct::proppantExcessPackVolumeString );
 
   m_proppantLiftFlux.clear();
-  m_proppantLiftFlux = elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
+  m_proppantLiftFlux = elemManager.ConstructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantLiftFluxString );
   m_proppantLiftFlux.setName( getName() + "/accessors/" + viewKeyStruct::proppantLiftFluxString );
 
   m_isProppantMobile.clear();
-  m_isProppantMobile = elemManager.ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isProppantMobileString );
+  m_isProppantMobile = elemManager.ConstructArrayViewAccessor< integer, 1 >( viewKeyStruct::isProppantMobileString );
   m_isProppantMobile.setName( getName() + "/accessors/" + viewKeyStruct::isProppantMobileString );
 
   m_isInterfaceElement.clear();
-  m_isInterfaceElement = elemManager.ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isInterfaceElementString );
+  m_isInterfaceElement = elemManager.ConstructArrayViewAccessor< integer, 1 >( viewKeyStruct::isInterfaceElementString );
   m_isInterfaceElement.setName( getName() + "/accessors/" + viewKeyStruct::isInterfaceElementString );
 
   m_isProppantBoundaryElement.clear();
@@ -1360,7 +1360,10 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf     = m_proppantPackVolumeFraction.toViewConst();
   FluxKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & transTMultiplier = m_transTMultiplier.toViewConst();
 
-  FluxKernel::ElementView< arrayView1d< R1Tensor > > const & cellBasedFlux  = m_cellBasedFlux.toView();
+  ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > const & cellBasedFluxAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< R1Tensor >, arrayView1d< R1Tensor > >( viewKeyStruct::cellBasedFluxString );
+
+  FluxKernel::ElementView< arrayView1d< R1Tensor > > const & cellBasedFlux = cellBasedFluxAccessor.toView();
 
   fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
@@ -1396,22 +1399,38 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
 
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & conc = m_proppantConcentration.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
-  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & density = m_density.toViewConst();
-  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
-  ProppantPackVolumeKernel::ElementView< arrayView2d< real64 const > > const & fluidViscosity = m_fluidViscosity.toViewConst();
-
-  ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isProppantMobile = m_isProppantMobile.toView();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer > > const & isProppantBoundaryElement = m_isProppantBoundaryElement.toViewConst();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantPackVf  = m_proppantPackVolumeFraction.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantExcessPackV  = m_proppantExcessPackVolume.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isInterfaceElement = m_isInterfaceElement.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux  = m_cellBasedFlux.toViewConst();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantLiftFlux  = m_proppantLiftFlux.toView();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & volume  = m_volume.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture  = m_elementAperture.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & density = m_density.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidViscosity = m_fluidViscosity.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & cellBasedFlux = m_cellBasedFlux.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantBoundaryElement = m_isProppantBoundaryElement.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & volume = m_volume.toViewConst();
+  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture = m_elementAperture.toViewConst();
   ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
+
+  // For data modified through an accessor, we must create the view accessor
+  // every time in order to ensure the data gets properly touched on device
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantConcAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantPackVfAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantExcessPackVAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantLiftFluxAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const isInterfaceElementAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isInterfaceElementString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const isProppantMobileAccessor =
+    mesh.getElemManager()->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isProppantMobileString );
+
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantConc  = proppantConcAccessor.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantPackVf  = proppantPackVfAccessor.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantExcessPackV  = proppantExcessPackVAccessor.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantLiftFlux  = proppantLiftFluxAccessor.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isInterfaceElement  = isInterfaceElementAccessor.toView();
+  ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isProppantMobile  = isProppantMobileAccessor.toView();
 
   fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
@@ -1423,7 +1442,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
                                                                    m_downVector,
                                                                    m_criticalShieldsNumber,
                                                                    m_frictionCoefficient,
-                                                                   conc,
+                                                                   proppantConc,
                                                                    settlingFactor,
                                                                    density,
                                                                    fluidDensity,
@@ -1461,7 +1480,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
                                                               m_downVector,
                                                               m_maxProppantConcentration,
-                                                              conc,
+                                                              proppantConc,
                                                               isProppantMobile,
                                                               proppantPackVf,
                                                               proppantExcessPackV );
