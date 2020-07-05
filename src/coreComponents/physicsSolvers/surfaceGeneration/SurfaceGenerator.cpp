@@ -529,6 +529,13 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
+  elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
+  {
+    elemSubRegion.moveSets( LvArray::MemorySpace::CPU );
+  } );
+  faceManager.moveSets( LvArray::MemorySpace::CPU );
+  edgeManager.moveSets( LvArray::MemorySpace::CPU );
+  nodeManager.moveSets( LvArray::MemorySpace::CPU );
 
   if( !prefrac )
   {
@@ -681,7 +688,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
     m_nextDt = ruptureRate < 1e99 ? m_cflFactor / ruptureRate : 1e99;
 
 
-  if( rval>0 )
+//  if( rval>0 )
   {
     elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
     {
@@ -704,6 +711,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
 //    nodeManager.elementList().registerTouch( LvArray::MemorySpace::CPU );
 //    nodeManager.elementRegionList().registerTouch( LvArray::MemorySpace::CPU );
 //    nodeManager.elementSubRegionList().registerTouch( LvArray::MemorySpace::CPU );
+
   }
 
   return rval;

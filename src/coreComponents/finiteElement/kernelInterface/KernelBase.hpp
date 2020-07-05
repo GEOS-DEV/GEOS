@@ -128,16 +128,16 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
       break;
     }
-//    case 4:
-//    {
-//      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
-//      break;
-//    }
-    case 5:
+    case 4:
     {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+      lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
       break;
     }
+//    case 5:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+//      break;
+//    }
     case 6:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
@@ -391,6 +391,8 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     forAll< POLICY >( numElems,

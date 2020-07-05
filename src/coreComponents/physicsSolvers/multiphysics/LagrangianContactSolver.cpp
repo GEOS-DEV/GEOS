@@ -1244,7 +1244,7 @@ void LagrangianContactSolver::
                 R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
                 real64 slidingNorm = sqrt( sliding( 0 ) * sliding( 0 ) + sliding( 1 ) * sliding( 1 ) );
 
-                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
+//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
 
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
                     && slidingNorm > slidingTolerance[kfe] )
@@ -1312,7 +1312,7 @@ void LagrangianContactSolver::
               }
             case FractureState::OPEN:
               {
-                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
+//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << localJump[kfe][0] );
 
                 for( localIndex i = 0; i < 3; ++i )
                 {
@@ -1838,12 +1838,12 @@ bool LagrangianContactSolver::UpdateFractureState( DomainPartition & domain ) co
 
           if( originalFractureState != fractureState[kfe] )
           {
-            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-                                                   << " previous state <"
-                                                   << FractureStateToString( originalFractureState )
-                                                   << "> current state <"
-                                                   << FractureStateToString( fractureState[kfe] )
-                                                   << ">" );
+//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
+//                                                   << " previous state <"
+//                                                   << FractureStateToString( originalFractureState )
+//                                                   << "> current state <"
+//                                                   << FractureStateToString( fractureState[kfe] )
+//                                                   << ">" );
           }
           checkActiveSetSub.min( CompareFractureStates( originalFractureState, fractureState[kfe] ) );
         }
@@ -1903,7 +1903,7 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString );
-      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
+//      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString );
 
       RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -1931,10 +1931,10 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
           }
           if( printAll )
           {
-            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-                                                   << " state <"
-                                                   << FractureStateToString( fractureState[kfe] )
-                                                   << ">" );
+//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
+//                                                   << " state <"
+//                                                   << FractureStateToString( fractureState[kfe] )
+//                                                   << ">" );
           }
         }
       } );

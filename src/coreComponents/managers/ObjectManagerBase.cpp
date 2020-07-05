@@ -1037,4 +1037,15 @@ void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set
   }
 }
 
+
+void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
+{
+  m_sets.forWrappers< SortedArray<localIndex> >( [&] ( auto & wrapper )
+  {
+    SortedArray<localIndex> & set = wrapper.reference();
+    set.move( targetSpace );
+  } );
+}
+
+
 } /* namespace geosx */

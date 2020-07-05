@@ -715,7 +715,7 @@ public:
   {
     for( auto & wrapperIter : m_wrappers )
     {
-      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( wrapperIter.second,
+      applyLambdaToContainer< Wrapper< TYPE >, Wrapper< TYPES >... >( *wrapperIter.second,
                                                                       std::forward< LAMBDA >( lambda ));
     }
   }
