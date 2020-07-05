@@ -1167,7 +1167,7 @@ void ProppantTransport::ResetViews( MeshLevel & mesh )
   m_deltaProppantConcentration.setName( getName() + "/accessors/" + viewKeyStruct::deltaProppantConcentrationString );
 
   m_cellBasedFlux.clear();
-  m_cellBasedFlux = elemManager.ConstructArrayViewAccessor< R1Tensor , 1 >( viewKeyStruct::cellBasedFluxString );
+  m_cellBasedFlux = elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( viewKeyStruct::cellBasedFluxString );
   m_cellBasedFlux.setName( getName() + "/accessors/" + viewKeyStruct::cellBasedFluxString );
 
   m_proppantPackVolumeFraction.clear();
