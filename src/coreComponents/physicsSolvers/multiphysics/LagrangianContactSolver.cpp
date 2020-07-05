@@ -1118,9 +1118,9 @@ void LagrangianContactSolver::
             if( localRow >= 0 && localRow < localMatrix.numRows() )
             {
               localMatrix.addToRow< parallelHostAtomic >( localRow,
-                                                            colDOF,
-                                                            dRdT[idof].dataIfContiguous(),
-                                                            3 );
+                                                          colDOF,
+                                                          dRdT[idof].dataIfContiguous(),
+                                                          3 );
               RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], nodeRHS[idof] );
             }
           }
