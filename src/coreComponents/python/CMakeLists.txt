@@ -5,6 +5,15 @@ set(PYTHON_INTERP_INCLUDE_DIRS
     ${PYTHON_DIR}/lib/python2.7/site-packages/numpy/core/include/
     )
 
+
+# If an explicit python post-processing target is not set, then try
+# using the python being used with cmake.  Note: the target python must
+# have the virtualenv package available.
+if( NOT PYTHON_POST_EXECUTABLE )
+    set( PYTHON_POST_EXECUTABLE ${PYTHON_EXECUTABLE} CACHE PATH "" FORCE )
+endif()
+
+
 blt_register_library( NAME python_interp
                       INCLUDES    ${PYTHON_INTERP_INCLUDE_DIRS}
                       HEADERS     ${PYTHON_INTERP_INCLUDE_DIRS}
@@ -13,8 +22,9 @@ blt_register_library( NAME python_interp
                       )
 
 add_custom_target( pygeos
-                   COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
+                   COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/pygeos ${CMAKE_BINARY_DIR}/bin/pygeos
+                   COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                    )
 
