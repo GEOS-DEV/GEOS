@@ -1,19 +1,19 @@
 /*
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * Copyright (c) 2019, Lawrence Livermore National Security, LLC.
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Produced at the Lawrence Livermore National Laboratory
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
  *
- * LLNL-CODE-746361
- *
- * All rights reserved. See COPYRIGHT for details.
- *
- * This file is part of the GEOSX Simulation Framework.
- *
- * GEOSX is a free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License (as published by the
- * Free Software Foundation) version 2.1 dated February 1999.
- *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file TasksBase.hpp
  */
 
 #ifndef TASKBASE_HPP_
@@ -27,30 +27,46 @@
 namespace geosx
 {
 
+  /**
+   * @class TaskBase
+   * @brief A class to execute a task when directed by the TasksManager
+   */
 class TaskBase : public ExecutableGroup
 {
 public:
-
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
   explicit TaskBase( std::string const & name,
                      Group * const parent );
-
+  /**
+   * @brief Universal reference copy constructor
+   * @param The other TaskBase
+   */
   TaskBase( TaskBase && ) = default;
 
+  /// Destructor
   virtual ~TaskBase() override;
 
+  /// Delete default constructor
   TaskBase() = delete;
+  /// Delete copy constructor
   TaskBase( TaskBase const & ) = delete;
+  /// Delete assignment constructor
   TaskBase& operator=( TaskBase const & ) = delete;
+  /// Delete universal reference assignment constructor
   TaskBase& operator=( TaskBase&& ) = delete;
 
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string CatalogName() { return "TaskBase"; }
 
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
+  /// Get the catalog interface for the TaskBase
   static CatalogInterface::CatalogType& GetCatalog();
 
+  /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
   void PostProcessInput() override;
-
-
 };
 
 } /* namespace */
