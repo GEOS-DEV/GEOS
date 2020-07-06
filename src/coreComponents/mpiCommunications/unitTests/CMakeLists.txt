@@ -2,7 +2,13 @@
 set( mpiCommunications_tests
      testNeighborCommunicator.cpp )
 
-set( dependencyList gtest geosx_core )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )
