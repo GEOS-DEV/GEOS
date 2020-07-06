@@ -54,8 +54,8 @@ Open in browser:
 On readthedocs
 ------------------------------------
 
-Go to `GEOSX documentation <https://geosx-geosx.readthedocs-hosted.com/>`__, select the version of interest and
-follow the "Doxygen" link at the bottom of the index page.
+Go to `GEOSX documentation <https://geosx-geosx.readthedocs-hosted.com/>`__, select the version of interest, and follow
+the Doxygen link at the left-hand-side.
 
 Guidelines
 ====================================

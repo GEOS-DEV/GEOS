@@ -1,12 +1,22 @@
 ###############################################################################
-Developer Guide
+Contributing
 ###############################################################################
-
-Welcome to the GEOSX developer guide.
 
 .. toctree::
    :maxdepth: 2
 
-   Contributing/index_contributing.rst
+   CodeStyle.rst
 
-   KeyComponents/index_KeyComponents.rst
+   GitWorkflow.rst
+
+   Sphinx.rst
+
+   Doxygen.rst
+
+   UnitTests.rst
+
+   IntegratedTests.rst
+
+   Benchmarks.rst
+
+   Caliper.rst

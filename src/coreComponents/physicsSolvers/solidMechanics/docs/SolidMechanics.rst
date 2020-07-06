@@ -28,9 +28,6 @@ The following data are allocated and used by the solver:
 .. include:: /coreComponents/fileIO/schema/docs/SolidMechanics_LagrangianFEM_other.rst
 
 
-Theory
-=========================
-
 Definition of Terms
 ===================
 
@@ -61,6 +58,9 @@ Definition of Terms
    \mathbf{x}& \equiv \text { current position} \notag \\
    \mathbf{w}&\equiv \text { aperture, or gap vector} \notag
 
+
+Theory
+=========================
 
 The `SolidMechanics_LagrangianFEM` solves the equations of motion as given by
 

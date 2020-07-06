@@ -11,7 +11,6 @@ Flow solvers and relative permeability are used as examples.
 GEOSX data structure overview
 =============================
 
-
 .. _GroupPar:
 
 Group : the base class of GEOSX
@@ -32,7 +31,7 @@ In the code listing below, we see that each ``Group`` object is at minimum equip
 - The ``m_size`` and ``m_capacity`` members, that are used to set the size and capacity of any objects contained.
 - The name of the ``Group``, stored as a ``string`` in ``m_name``. This name can be seen as the object unique ID.
 
-.. literalinclude:: ../../../coreComponents/dataRepository/Group.hpp
+.. literalinclude:: ../../../../coreComponents/dataRepository/Group.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: RestartFlags
@@ -76,12 +75,12 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    Below, we illustrate this with the ``CompositionalMultiphaseFlow`` solver.
    The first code listing defines the class name, which in this case is the same as the ``catalogName`` shown in the second listing.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
@@ -94,7 +93,7 @@ Internally, this requires adding the derived class information to ``ObjectCatalo
    As a result of this construct, the ``ObjectCatalog`` is not a flat list of ``string`` s mapping the C++ classes.
    Instead, the ``ObjectCatalog`` forms a tree that reproduces locally the structure of the class diagram, from the base class to the derived classes.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: }
@@ -139,12 +138,12 @@ We have deliberately distinguished the class name from the catalog/XML name for 
 It is nevertheless a best practice to use the same name for the class and for the ``catalogName``.
 This is the case below for the existing ``CompositionalMultiphaseFlow`` class.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: public:
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: virtual
@@ -201,7 +200,7 @@ To do this, the method ``CreateChild`` of the ``PhysicsSolverManager`` class is 
     // hasKeyName = bool method to test if the childKey string is present in the Catalog
     // RegisterGroup = method to create a new instance of the solver and add it to the group tree
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/PhysicsSolverManager.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/PhysicsSolverManager.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: void
@@ -230,7 +229,7 @@ Here, the only data (=wrapper) that is defined at the level of our ``CppNameOfMy
 We register a property of temperature, corresponding to the member class ``m_temperature`` of ``CppNameOfMySolver``.
 The registration also checks if a property is required or optional (here, it is required), and provides a brief description that will be used in the auto-generated code documentation.
 
-.. literalinclude:: ../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: Mass
@@ -267,7 +266,7 @@ Implement a ``CatalogName`` function (.hpp):
 
 As explained above we add the class to the ``ObjectCatalog`` in two steps. First we implement the ``CatalogName`` function:
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: virtual
@@ -276,7 +275,7 @@ As explained above we add the class to the ``ObjectCatalog`` in two steps. First
 
 Then in the .cpp file we add the macro to register the catalog entry:
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: }
@@ -292,7 +291,7 @@ When attaching properties (i.e. data ``Wrapper`` s) to a class, a similar regist
 Every property is accessed through its ``ViewKey`` namespace.
 In this namespace, we define ``string`` s that correspond to the tags of XML attributes of the "BrooksCoreyRelativePermeability" block.
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_01
    :end-before: protected
@@ -305,7 +304,7 @@ Declare data members (.hpp):
 The data members are defined in the class.
 They will ultimately contain the data read from the XML file (other data members not read from the XML file can also exist).
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_02
    :end-before: m_satScale;
@@ -322,7 +321,7 @@ We see that this input is not required.
 If it is absent from the XML file, the default value is used instead.
 The short description that completes the registration will be added to the auto-generated documentation.
 
-.. literalinclude:: ../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
+.. literalinclude:: ../../../../coreComponents/constitutive/relativePermeability/BrooksCoreyRelativePermeability.cpp
    :language: c++
    :start-after: //START_SPHINX_INCLUDE_00
    :end-before: }
@@ -352,3 +351,19 @@ We also fill the data members of the values that we want to use for the simulati
 For a simulation with multiple regions, we could define multiple relative permeability models in the "Constitutive" XML block (yielding multiple relperm subgroups in GEOSX), with a unique name attribute for each model.
 
 *For more examples on how to contribute to GEOSX, please read "Adding a new Physics Solver".*
+
+
+Input Schema Generation
+===========================
+
+A schema file is a useful tool for validating input .xml files and constructing user-interfaces.  Rather than manually maintaining the schema during development, GEOSX is designed to automatically generate one by traversing the documentation structure.
+
+To generate the schema, run GEOSX with the input, schema, and the (optional) schema_level arguments, i.e.: ``geosx -i input.xml -s schema.xsd``.  There are two ways to limit the scope of the schema:
+
+1. Setting the verbosity flag for an object in the documentation structure.  If the schema-level argument is used, then only objects (and their children) and attributes with ``(verbosity < schema-level)`` will be output.
+
+2. By supplying a limited input xml file.  When GEOSX builds its data structure, it will only include objects that are listed within the xml (or those that are explicitly appended when those objects are initialized).  The code will add all available *attributes* for these objects to the schema.
+
+To take advantage of this design it is necessary to use the automatic xml parsing approach that relies upon the documentation node.  If values are read in manually, then the schema can not be used to validate xml those inputs.
+
+Note: the lightweight xml parser that is used in GEOSX cannot be used to validate inputs with the schema directly.  As such, it is necessary to use an external tool for validation, such as the geosx_tools python module.

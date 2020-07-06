@@ -10,35 +10,35 @@ Any object that derives from :ref:`Group` may have data registered on it
 through the methods described in :ref:`Group`.
 Simalarly, accessing data from outside the scope of an object is possible
 through one of the various ``Group::get()``.
-Of course, for temporary data that does not need to persist between cycles, 
+Of course, for temporary data that does not need to persist between cycles,
 or across physics packages, you may simply define member or local variabls which
 will not be registered with the :ref:`dataRepository`.
 
 Working with data on the Mesh objects
 =====================================
-the mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``, 
+the mesh objects in ``GEOSX`` such as the ``FaceManager`` or ``NodeManager``,
 are derived from ``ObjectManagerBase``, which in turn derives from :ref:`Group`.
 The important distinction is that ``ObjectManagerBase`` contains various members
 that are useful when defining mesh object managers.
 When considering data that is attached to a mesh object, we group the data into
 two catagories:
 
-* `Intrinsic <https://www.merriam-webster.com/dictionary/intrinsic>`_ data is 
-  data that is required to descibe the object. 
-  For instance, to define a ``Node``, the ``NodeManager`` contains an array of 
-  positions corrosponding to each ``Node`` it contains. 
+* `Intrinsic <https://www.merriam-webster.com/dictionary/intrinsic>`_ data is
+  data that is required to descibe the object.
+  For instance, to define a ``Node``, the ``NodeManager`` contains an array of
+  positions corrosponding to each ``Node`` it contains.
   Thus the ``ReferencePosition`` is ``Intrinsic`` data.
-  ``Intrinsic`` data is almost always a member of the mesh object, and is 
+  ``Intrinsic`` data is almost always a member of the mesh object, and is
   registered on the mesh object in the constructor of mesh object itself.
-* `Extrinsic <https://www.merriam-webster.com/dictionary/extrinsic>`_ data is 
+* `Extrinsic <https://www.merriam-webster.com/dictionary/extrinsic>`_ data is
   data that is not required to define the object.
   For instance, a phsyics package
-  may request that a ``Velocity`` value be stored on the nodes. 
+  may request that a ``Velocity`` value be stored on the nodes.
   Appropriatly the data will be registered on the ``NodeManager``.
-  However, this data is not required to define a ``Node``, and is viewed as 
+  However, this data is not required to define a ``Node``, and is viewed as
   ``Extrinsic``.
-  ``Extrinsic`` data is never a member of the mesh object, and is typically 
-  registered on the mesh object outside of the definition of the mesh object 
+  ``Extrinsic`` data is never a member of the mesh object, and is typically
+  registered on the mesh object outside of the definition of the mesh object
   (i.e. from a physics solver).
 
 
@@ -46,18 +46,18 @@ Registering Intrinsic data on a Mesh Object
 -------------------------------------------
 As mentioned above, ``Intrinsic`` data is typically a member of the mesh object,
 and is registered in the constructor of the mesh Object.
-Taking the ``NodeManager`` and the ``referencePosition`` as an example, we 
-point out that the reference position is actually a member in the 
+Taking the ``NodeManager`` and the ``referencePosition`` as an example, we
+point out that the reference position is actually a member in the
 ``NodeManager``.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.hpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.hpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS
    :end-before: //END_SPHINX_REFPOS
 
 This member is registered in the constructor for the ``NodeManager``.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.cpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.cpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS_REG
    :end-before: //END_SPHINX_REFPOS_REG
@@ -65,24 +65,24 @@ This member is registered in the constructor for the ``NodeManager``.
 Finally in order to access this data, the ``NodeManager`` provides explicit
 accessors.
 
-.. literalinclude:: ../../../coreComponents/mesh/NodeManager.hpp
+.. literalinclude:: ../../../../coreComponents/mesh/NodeManager.hpp
    :language: c++
    :start-after: //START_SPHINX_REFPOS_ACCESS
    :end-before: //END_SPHINX_REFPOS_ACCESS
 
 Thus the interface for ``Intrinsic`` data is set by the object that it is a part
-of, and the developer may only access the data through the accesssors from 
+of, and the developer may only access the data through the accesssors from
 outside of the mesh object class scope.
 
 Registering Extrinsic data on a Mesh Object
 -------------------------------------------
 To register ``Extrinsic`` data, there are many ways a developer may proceed.
 We will use the example of registering a ``TotalDisplacement`` on the ``NodeManager``
-from the ``SolidMechanics`` solver. 
-The most general approach is to define a string key and call one of the 
+from the ``SolidMechanics`` solver.
+The most general approach is to define a string key and call one of the
 `Group::registerWrapper() <../../../doxygen_output/html/classgeosx_1_1data_repository_1_1_group.html#a19a9fa78e05def2d605c94963ff251ea>`_
 functions from ``SolverBase::RegisterMeshData()``.
-Then when you want to use the data, you can call ``Group::getReference()``. 
+Then when you want to use the data, you can call ``Group::getReference()``.
 For example this would look something like:
 
 .. code-block:: c++
@@ -92,7 +92,7 @@ For example this would look something like:
       for( auto & mesh : MeshBodies->GetSubGroups() )
       {
         NodeManager * const nodes = mesh.second->group_cast< MeshBody * >()->getMeshLevel( 0 )->getNodeManager();
-    
+
         nodes->registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement )->
           setPlotLevel( PlotLevel::LEVEL_0 )->
           setRegisteringObjects( this->getName())->
@@ -100,8 +100,8 @@ For example this would look something like:
           reference().resizeDimension< 1 >( 3 );
       }
     }
-    
-and 
+
+and
 
 .. code-block:: c++
 
@@ -110,11 +110,11 @@ and
 
 This approach is flexible and extendible, but is potentially error prone due to
 its verbosity.
-Therefore we also provide a more controlled/uniform method  by which to register 
+Therefore we also provide a more controlled/uniform method  by which to register
 and extract commonly used data on the mesh.
-The ``trait approach`` requires the definition of a ``traits struct`` for each 
+The ``trait approach`` requires the definition of a ``traits struct`` for each
 data object that will be supported.
-To apply the ``trait appraoch`` to the example use case shown above, there 
+To apply the ``trait appraoch`` to the example use case shown above, there
 should be the following definition somewhere in a header file:
 
 .. code-block:: c++
@@ -128,7 +128,7 @@ should be the following definition somewhere in a header file:
       using Type = array2d< DataType, nodes::TOTAL_DISPLACEMENT_PERM >;
       static constexpr DataType defaultValue = 0;
       static constexpr auto plotLevel = dataRepository::PlotLevel::LEVEL_0;
-    
+
       /// Description of the data associated with this trait.
       static constexpr auto description = "An array that holds the total displacements on the nodes.";
     };
@@ -146,7 +146,7 @@ Then the registration is simplified as follows:
         nodes->registerExtrinsicData< extrinsicMeshData::TotalDisplacement >( this->getName() ).resizeDimension< 1 >( 3 );
       }
     }
-    
+
 And to extract the data, the call would be:
 
 .. code-block:: c++
@@ -155,8 +155,5 @@ And to extract the data, the call would be:
     ... do something with u
 
 The end result of the ``trait approach`` to this example is that the developer
-has defined a standard specification for ``TotalDisplacement``, which may be 
+has defined a standard specification for ``TotalDisplacement``, which may be
 used uniformly across the code.
-
-
-
