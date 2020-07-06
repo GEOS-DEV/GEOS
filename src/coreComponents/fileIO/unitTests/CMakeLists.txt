@@ -6,7 +6,19 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO lvarray managers dataRepository geosx_core )
+set( dependencyList gtest fileIO lvarray managers geosx_core dataRepository )
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
+endif()
+
+if ( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
 
 #
 # Add gtest C++ based tests
