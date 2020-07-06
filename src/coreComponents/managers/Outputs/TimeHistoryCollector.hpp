@@ -215,7 +215,7 @@ namespace geosx
           {
             meta_idx[ii] = m_set_index_offset + LvArray::integerConversion< globalIndex >( ii );
           }
-          bufferOps::PackDevice< true >( buffer, meta_idx.toViewConst() );
+          bufferOps::PackDataDevice< true >( buffer, meta_idx.toViewConst() );
         }
       }
     }

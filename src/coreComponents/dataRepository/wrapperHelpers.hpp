@@ -688,6 +688,45 @@ inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
 { return 0; }
 
+
+template< bool DO_PACKING, typename T >
+localIndex
+PackDataDevice( buffer_unit_type * & buffer, T & var )
+{ return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+PackDataByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
+{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+
+template< bool DO_PACKING, typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+PackDataByIndexDevice( buffer_unit_type * &, T &, IDX & )
+{
+  GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable by index." );
+  return 0;
+}
+
+template< typename T >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDataDevice( buffer_unit_type const * & buffer, T & var )
+{ return bufferOps::UnpackDevice( buffer, var ); }
+
+template< typename T >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDataDevice( buffer_unit_type const * &, T & )
+{ return 0; }
+
+template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx ); }
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
+UnpackDataByIndexDevice( buffer_unit_type const * &, T &, IDX & )
+{ return 0; }
+
 } // namespace WrapperHelpers
 } // namespace dataRepository
 } // namespace geosx

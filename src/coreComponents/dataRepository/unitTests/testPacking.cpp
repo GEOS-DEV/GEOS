@@ -166,6 +166,14 @@ TEST( testPacking, testPackingDevice )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
 
+TEST( testPacking, testPackingDevice2 )
+{
+  array1d< globalIndex > test( 0 );
+  buffer_unit_type buffer[1];
+  buffer_unit_type * b = &buffer[0];
+  bufferOps::PackDevice< true >( b, test.toViewConst() );
+}
+
 TEST( testPacking, testPackingDeviceHelper )
 {
   std::srand( std::time( nullptr ));

@@ -293,7 +293,14 @@ public:
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
     if( onDevice )
     {
-      packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
+      if ( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference() );
+      }
     }
     else
     {
@@ -312,7 +319,14 @@ public:
       if ( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
       if( onDevice )
       {
-        packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
+        if ( withMetadata )
+        {
+          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
+        }
+        else
+        {
+          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList );
+        }
       }
       else
       {
@@ -331,7 +345,14 @@ public:
     if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
     if( onDevice )
     {
-      packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
+      if ( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference() );
+      }
     }
     else
     {
@@ -351,7 +372,14 @@ public:
       if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
       if( onDevice )
       {
-        packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
+        if ( withMetadata )
+        {
+          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
+        }
+        else
+        {
+          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList );
+        }
       }
       else
       {
@@ -374,7 +402,14 @@ public:
     }
     if( onDevice )
     {
-      unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
+      if ( withMetadata )
+      {
+        unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
+      }
+      else
+      {
+        unpackedSize += wrapperHelpers::UnpackDataDevice( buffer, referenceAsView() );
+      }
     }
     else
     {
@@ -398,7 +433,14 @@ public:
       }
       if( onDevice )
       {
-        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
+        if ( withMetadata )
+        {
+          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
+        }
+        else
+        {
+          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices );
+        }
       }
       else
       {
