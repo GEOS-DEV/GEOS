@@ -1,7 +1,7 @@
 GEOSX Documentation
 =================================
 
-Welcome to the our documentation pages!
+Welcome to our documentation pages!
 
 GEOSX is a code framework focused on enabling streamlined development of
 physics simulations on high performance computing platforms.  Our documentation
@@ -18,7 +18,7 @@ For those interested in developing new capabilities in GEOSX, we provide a Devel
 The code itself is also documented inline using doyxgen.  The Build Guide
 contains more detailed information about third-party dependencies, the build
 system, and the continuous integration system.  Finally, GEOSX has a self-documenting
-data structure.  The Data Structure Guide is an automatically generated list of
+data structure.  The Datastructure Index is an automatically generated list of
 all available input parameters and data structures in the code.  This is a
 comprehensive resource, but probably not the place to start.
 
