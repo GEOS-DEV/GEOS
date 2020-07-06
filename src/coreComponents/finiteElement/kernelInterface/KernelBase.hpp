@@ -155,7 +155,28 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
 
 
 /**
- * @copydoc integralTypeDispatch
+ * @brief Call a lambda function (callback) with an integral_constant
+ *        conversion of the input integral type to allow for static
+ *        dispatch.
+ * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
+ * @tparam LAMBDA The type of @p lambda to execute.
+ * @param input The integer to convert to an integral_constant.
+ * @param lambda The generic lambda function (takes the integral_constant as
+ *               a parameter) that will be executed.
+ *
+ * Implements a switchyard to convert the value of @p input to an
+ * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
+ * This allows a runtime @p input to be dispatched as a compile time constant.
+ * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
+ * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
+ *
+ *     int value = 1;
+ *     integralTypeDispatch( 1, [&]( auto const constValueType )
+ *     {
+ *       static constexpr int constValue = decltype( constValueType )::value;
+ *
+ *       func< constValue >(...);
+ *     };
  */
 template< typename INTEGRAL_TYPE, typename LAMBDA >
 void
