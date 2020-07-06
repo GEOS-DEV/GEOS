@@ -1,4 +1,3 @@
-
 #
 # Specify all headers
 #
@@ -12,14 +11,21 @@ set(componentSources "NewComponent.cpp" )
 
 blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -I${CMAKE_SOURCE_DIR}/components/core/src)
 
-
+#
+# Specify dependencies
+#
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 message("adding newComponentTemplate library")
 
 blt_add_library( NAME             newComponentTemplate
                  SOURCES          ${componentSources}
                  HEADERS          ${componentHeaders}
-                 DEPENDS_ON       geosx_core
+                 DEPENDS_ON       ${dependencyList}
                )
 
 target_include_directories( newComponentTemplate PUBLIC ${CMAKE_CURRENT_LIST_DIR} )

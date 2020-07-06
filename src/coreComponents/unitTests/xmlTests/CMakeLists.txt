@@ -9,13 +9,13 @@ set(gtest_geosx_tests
 #
 # Add gtest C++ based tests
 #
-set(componentlist geosx_core )
-set(componentlistlink "")
-foreach(component ${componentlist})
-  set( componentlistlink ${componentlistlink} ${GEOSX_LINK_PREPEND_FLAG} ${component} ${GEOSX_LINK_POSTPEND_FLAG} ) 
-endforeach()
+set( dependencyList gtest optionparser)
 
-set( dependencyList geosx_core gtest optionparser )
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )
