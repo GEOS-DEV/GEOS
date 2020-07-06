@@ -46,7 +46,7 @@ TEST( testHDFIO, ArrayHistory )
     io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
+    bufferOps::PackDataDevice<true>(buffer,arr.toViewConst( ));
 
     io.Write( );
 
@@ -67,7 +67,7 @@ TEST( testHDFIO, ArrayHistory )
     io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
+    bufferOps::PackDataDevice<true>(buffer,arr.toViewConst( ));
 
     io.Write( );
 
@@ -98,7 +98,7 @@ TEST( testHDFIO, IdxArrayHistory )
     io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackByIndexDevice<true>(buffer,arr.toViewConst( ),idx.toViewConst( ) );
+    bufferOps::PackDataByIndexDevice<true>(buffer,arr.toViewConst( ),idx.toViewConst( ) );
 
     io.Write( );
   }
