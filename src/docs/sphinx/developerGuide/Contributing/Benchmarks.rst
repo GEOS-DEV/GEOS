@@ -3,7 +3,7 @@
 Benchmarks
 ##########
 
-In addition to the integrated tests which track code correctness we have a suite of benchmarks that track performance. 
+In addition to the integrated tests which track code correctness we have a suite of benchmarks that track performance.
 
 
 Running the benchmarks
@@ -11,7 +11,7 @@ Running the benchmarks
 
 Because performance is system specific we currently only support running the benchmarks on the LLNL machines Quartz and Lassen. If you are on either of these machines the script ``benchmarks/runBenchmarks.py`` can be used to run the benchmarks.
 
-:: 
+::
 
     > python ../benchmarks/runBenchmarks.py --help
     usage: runBenchmarks.py [-h] [-t TIMELIMIT] [-o TIMINGCOLLECTIONDIR]
@@ -44,7 +44,7 @@ Specifying a benchmark
 
 A group of benchmarks is specified with a standard GEOSX input XML file with an extra ``Benchmarks`` block added at the top level. This block is ignored by GEOSX itself and only used by the ``runBenchmarks.py`` script.
 
-.. literalinclude:: ../../../../benchmarks/SSLE-small.xml
+.. literalinclude:: ../../../../../benchmarks/SSLE-small.xml
    :language: xml
    :start-after: <Problem>
    :end-before: <Solvers>
@@ -62,8 +62,8 @@ Each machine block contains a number of ``Run`` blocks each of which specify a f
   - ``name``: The name of the family of benchmarks, must be unique among all the other ``Run`` blocks on that system.
   - ``nodes``: An integer which specifies the base number of nodes to run the benchmark with.
   - ``tasksPerNode``: An integer that specifies the number of tasks to launch per node.
-  
-Each ``Run`` block may contain the following optional attributes 
+
+Each ``Run`` block may contain the following optional attributes
 
   - ``threadsPerTask``: An integer specifying the number of threads to allocate each task.
   - ``timeLimit``: An integer specifying the time limit in minutes to pass to the system scheduler when submitting the benchmark.
@@ -94,4 +94,3 @@ If you want to run the benchmarks on your local branch and compare the results w
 
 .. _NightlyTests: https://github.com/GEOSX/NightlyTests
 .. _Spot: https://lc.llnl.gov/spot2/?sf=/usr/gapps/GEOSX/timingFiles
-

@@ -7,8 +7,8 @@ Tutorial 1: First steps
 **Context**
 
 In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
-from GEOSX to solve for pressure propagation on a simple discretized 10x10x10 cube mesh.
-A pressure source term will be set on one side of the cube, along a face, and
+from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh.
+A pressure source term will be set on one face of the cube, and
 a sink term will be set on the opposite face of the cube.
 
 **Objectives**
@@ -19,7 +19,6 @@ At the end of this tutorial you will know:
   - how to run GEOSX on a simple case requiring no external input files,
   - the basic syntax of a solver block for single-phase problems,
   - how to control output and visualize results.
-
 
 **Input file**
 
@@ -36,16 +35,15 @@ The xml input file for this test case is located at:
 GEOSX input files
 ------------------------------------
 
-GEOSX runs by reading user input information from one or several XML files.
+GEOSX runs by reading user input information from one or more XML files.
 For instance, if everything we need to run is contained in a file called ``my_input.xml``,
 GEOSX runs this file by executing:
 
 .. code-block:: console
 
-  /your/path/to/GEOSX -i /your/path/to/my_input.xml
+  /path/to/GEOSX -i /path/to/my_input.xml
   
 The ``-i`` flag indicates the path to the XML input file.
-
 
 XML files store information in a tree-like structure using nested blocks of information called *elements*.
 In GEOSX, the root of this tree structure is an element called *Problem*. It defines the problem we wish to solve.
@@ -65,8 +63,8 @@ A typical GEOSX input file contains the following XML tags:
 
 
 In addition to the data required to solve the problem,
-it is a best practice to start an XML files with an optional file (called a *schema*)
-that specifies the writing conventions used in the XML file.
+it is a best practice to start an XML files with an optional header (called a *schema*)
+that specifies the naming conventions used in the XML file.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -74,7 +72,7 @@ that specifies the writing conventions used in the XML file.
   :end-before: <!-- SPHINX_TUT_INT_HEX_PROBLEM_OPEN_END -->
 
 The attributes ``xmlns:xsi`` and ``xsi:noNamespaceSchemaLocation`` are used to define the file format and schema.
-While optional, they may be used to configure various xml validation tools.
+This header is optional, but it can be used to configure various xml validation tools.
 
 
 .. _Solver_tag_single_phase_internal_mesh:
@@ -82,10 +80,10 @@ While optional, they may be used to configure various xml validation tools.
 Defining a solver
 -----------------
 
-GEOSX is a multi-physics tool. To find solution to different categories of physical problem
-(diffusion, convection, deformation, etc.), GEOSX uses combinations of numerical solvers.
+GEOSX is a multi-physics tool. To find the solution to different physical problems
+(diffusion, deformation, etc.), GEOSX uses one or more physics solvers.
 The XML **Solvers** tag is used to list and parameterize these solvers.
-In GEOSX, different combinations of solvers can be applied
+Note that different combinations of solvers can be applied
 in different regions of the mesh at different moments of the simulation.
 
 
@@ -109,19 +107,19 @@ some parameters that are optional. Optional values are usually set with sensible
 To start, we see that our solver is registered with a user-chosen name
 (here ``SinglePhaseFlow``, but it could be anything).
 This is a common practice in GEOSX: users need to give names to objects they define.
-This is analogous to instantiating a class in C++ code.
 From now on, this unique name will be used as the *handle* to this specific flow solver instance.
 This handle will also be used inside the code
 to point to this specific instance of a SinglePhaseFVM solver.
 
 
-Then, we set a solver-specific level of on-console logging (``logLevel`` set to 1 here).
+Then, we set a solver-specific level of console logging (``logLevel`` set to 1 here).
 Higher values will lead to more console output and/or intermediate results saved to files.
-
+When debugging, higher verbosity is useful, while in production runs you may want to suppress
+most of the output.
 
 For solvers of the ``SinglePhaseFVM`` family, we must specify a discretization scheme.
 Here, we use a Two-Point Flux Approximation (TPFA) finite volume discretization scheme, a typical discretization scheme
-used in cartesian cell-centered finite volume methods.
+used in finite volume methods.
 
 We have also specified a collection of fluids, rocks, and
 target regions of the mesh on which this solver will be applied (``Region2``).
@@ -141,9 +139,8 @@ and for the maximum number of iterations allowed to reach convergence.
 Specifying a computational mesh
 ----------------------------------
 
-The single-phase flow solver in GEOSX uses cell-centered finite volume computations.
-We must thus a define a mesh (or grid) to perform numerical calculations on.
-The **Mesh** element allows users to specify this support.
+We need to define a mesh (or grid) to perform numerical calculations on.
+The **Mesh** element allows users to specify this grid.
 
 There are two approaches to specifying meshes in GEOSX: internal or external.
 The external approach consists of importing mesh files created outside of GEOSX, such as a
@@ -152,11 +149,13 @@ This external approach is generally used when using real data and
 geological models with complex shapes and structures.
 
 
-The internal approach uses a convenient tool in GEOSX called the internal mesh generator.
-The internal mesh generator creates simple geometric grids directly inside GEOSX
+The internal approach uses a simple internal mesh generator.
+The internal mesh generator creates geometric grids directly inside GEOSX
 from a small number of parameters. It does not require any external file information.
+The geometric complexity available is obviously limited, but many practical problems
+can be solved on relatively simple grids.
 
-In this tutorial, to keep things as simple and self-contained as possible,
+In this tutorial, to keep things self-contained,
 we use the internal mesh generator. We parameterize it with the **InternalMesh** element.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
@@ -173,8 +172,8 @@ Tetrahedra, hexahedra, wedges, prisms are examples of element types.
 If a mesh contains different types of elements (a hybrid mesh),
 we should indicate this here by listing all unique types of elements in curly brackets.
 Keeping things simple, our element collection has only one type of element: a ``C3D8`` type.
-This value is a code taken from the usual finite
-element nomenclature. It represents a general purpose linear 8-node brick element (linear hexahedron).
+This nomenclature is taken from the finite
+element community. It represents hexahedral element.
 
 
 Last, we specify the spatial arrangement of the mesh elements.
@@ -221,12 +220,12 @@ Specifying events
 ------------------------
 
 In GEOSX, we call **Events** anything that happens at a set time, or a set frequency (**PeriodicEvents**).
-Events are very important and useful elements in GEOSX,
+Events are central element in GEOSX,
 and a dedicated section just for events is necessary to gives them the treatment they deserve.
 
 
-But for now, we focus on three simple types of events: the time at which we wish the simulation to end (``maxTime``),
-the times at which we want the solver to perform computations,
+For now, we focus on three simple events: the time at which we wish the simulation to end (``maxTime``),
+the times at which we want the solver to perform updates,
 and the times we wish to have simulation output values reported.
 
 
@@ -235,8 +234,8 @@ In GEOSX, all times are specified in **seconds**, so here ``maxTime=5000.0`` mea
 
 If we focus on the two periodic events, we see :
 
- #. A periodic solver application: this event is registered here as ``solverApplications`` (user-defined name). With the attribute ``forceDt=20``, it forces the solver to compute results at every 20 second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). Also note that if the solver needs to take smaller time steps than 20 seconds (for numerical convergence, for instance) it is allowed to do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps required.
- #. An output event: this event is used for reporting purposes and forces GEOSX to write out results at specific frequencies. Here, we need to see results at every 100 seconds increments. The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this output event must be always be done jointly with a full application of solvers at the output time, even if the solvers were not synchronized with the outputs. In other words, with this flag set to 1, an output event will force an application of solvers, possibly in addition to the periodic events requested directly by solvers.
+ #. A periodic solver application: this event is registered here as ``solverApplications`` (user-defined name). With the attribute ``forceDt=20``, it forces the solver to compute results at 20 second time intervals. We know what this event does by looking at its ``target`` attribute: here, from time 0 to ``maxTime`` and with a forced time step of 20 seconds, we instruct GEOSX to call the solver registered as ``SinglePhaseFlow``. Note the hierarchical structure of the target formulation, using '/' to indicate a specific named instance (``SinglePhaseFlow``) of an element (``Solvers``). Also note that if the solver needs to take smaller time steps than 20 seconds (for numerical convergence, for instance) it is allowed to do so. But it will have to compute results for every 20 seconds increments between time zero and ``maxTime`` regardless of possible intermediate time steps required.
+ #. An output event: this event is used for reporting purposes and forces GEOSX to write out results at specific frequencies. Here, we need to see results at every 100 second increment. The ``targetExactTimestep=1`` flag is used to instruct GEOSX that this output event must be always be done jointly with a full application of solvers at the output time, even if the solvers were not synchronized with the outputs. In other words, with this flag set to 1, an output event will force an application of solvers, possibly in addition to the periodic events requested directly by solvers.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -266,9 +265,9 @@ the``boundaryFieldName`` attribute specifies that for Dirichlet boundary conditi
 the pressure at the element face value is used.
 Last, the ``coefficientName`` attribute is used for the stencil transmissibility computations.
 
-Note that in GEOSX, we are distinguishing solvers from numerical methods,
-and their parameterization are independent. We can thus solve have
-multiple solvers using the same numerical scheme but with different tolerances, for instance.
+Note that in GEOSX, we are distinguish solvers from numerical methods,
+and their parameterizations are independent. We can thus solve have
+multiple solvers using the same numerical scheme, but with different tolerances, for instance.
 
 
 
@@ -297,12 +296,12 @@ We must also specify the material contained in that region (here, two materials 
 Defining material properties with constitutive laws
 ---------------------------------------------------------------------
 
-The **Constitutive** element allows to list all materials
-contained in the simulated domain
-and assign physical properties to them: density, viscosity, compressibility...
+The **Constitutive** element lists all materials
+contained in the simulated domain,
+and assigns physical properties to them: density, viscosity, compressibility...
 
 
-In this tutorial, the physical properties of the elements
+In this tutorial, the physical properties of the materials
 defined as ``water`` and ``rock`` are provided here,
 each material being derived from a different material type:
 a ``CompressibleSinglePhaseFluid``
@@ -360,13 +359,13 @@ This makes it possible, for instance, to externally assign pressure values
 on a set of elements at a specific time and
 override pressure values computed internally.
 In another use case, this allows for fields usually considered
-static to be modified by physical solvers, such as porosity with poroelastic solvers.
+static to be modified by physical solvers.
 
 
 By default, if fields are specified without begin and end times, GEOSX assumes
 that these field values are to be imposed at all simulated times, effectively making this property static.
-To avoid this issue, and make it simple to define initial values for properties
-that evolve with time, the ``initialCondition`` flag was created. If this flag is set to 1,
+To avoid this behavior and make it simple to define initial values for properties
+that can then evolve with time, the ``initialCondition`` flag was created. If this flag is set to 1,
 the values of this field are set at time 0, and are left free to change during the simulation.
 
 
@@ -393,16 +392,15 @@ All units again are S.I. units; a permeability set to 1.0e-12 m\ :sup:`2` corres
 Specifying the output formats
 ----------------------------------
 
-In order to get the results from simulation written to visualization and all post-processing files,
+In order to get the results from simulation written to visualization and post-processing files,
 we need to instantiate an output object that will serve as our container for output information.
 We have actually referred to this object before in the Events section as the target of a periodic output event called ``outputs``.
 We are now registering this output object as an instance of the **Outputs** class called ``siloOutput`` (user-defined name).
 You can verify that the Events section is using this object as a target, and it does so by pointing to ``/Outputs/siloOutput``.
 
-The output formats proposed by GEOSX are subject to change in future versions of the code
-but as baseline, GEOSX currently supports outputs that are readable by `VisIt
-<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ and Kitware's Paraview.
-In this example, we only request the VisIt compatible output files (the Silo format).
+GEOSX currently supports outputs that are readable by `VisIt
+<https://wci.llnl.gov/simulation/computer-codes/visit/>`_ and Kitware's Paraview, as well as other visualization tools.
+In this example, we only request a Silo format compatible with VisIt.
 
 .. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/integratedTests/singlePhaseFlow/3D_10x10x10_compressible.xml
   :language: xml
@@ -450,8 +448,8 @@ When ``Running simulation`` is shown, we are done with the case set up and go in
   Running simulation
   Time: 0s, dt:20s, Cycle: 0
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.68e+00) ;
-      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.08e-04) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
-      Attempt:  0, NewtonIter:  2 ; ( Rfluid ) = (9.91e-11) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.08e-04) ; Last LinSolve(iter,tol) = ( 1, 1.00e-16) ;
+      Attempt:  0, NewtonIter:  2 ; ( Rfluid ) = (9.91e-11) ; Last LinSolve(iter,tol) = ( 1, 1.00e-16) ;
 
 
 Each time iteration at every 20s interval is logged to console, until the end of the simulation at ``maxTime=5000``:
@@ -460,15 +458,15 @@ Each time iteration at every 20s interval is logged to console, until the end of
 
   Time: 4940s, dt:20s, Cycle: 247
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (5.06e-09) ;
-      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.33e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.33e-14) ; Last LinSolve(iter,tol) = ( 1, 1.00e-16) ;
   SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Time: 4960s, dt:20s, Cycle: 248
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (4.91e-09) ;
-      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.16e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.16e-14) ; Last LinSolve(iter,tol) = ( 1, 1.00e-16) ;
   SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Time: 4980s, dt:20s, Cycle: 249
       Attempt:  0, NewtonIter:  0 ; ( Rfluid ) = (4.77e-09) ;
-      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.13e-14) ; Last LinSolve(iter,tol) = ( 100, 1.00e-10) ;
+      Attempt:  0, NewtonIter:  1 ; ( Rfluid ) = (2.13e-14) ; Last LinSolve(iter,tol) = ( 1, 1.00e-16) ;
   SinglePhaseFlow: Newton solver converged in less than 4 iterations, time-step required will be doubled.
   Cleaning up events
 
@@ -476,6 +474,7 @@ Each time iteration at every 20s interval is logged to console, until the end of
   Umpire            HOST high water mark:    8.7 MB
 
 
+Note that by default a direct linear solver is used, so the ``LinSolve`` information is not so meaningful.
 Information on run times, initialization times, and maximum amounts of
 memory (high water mark) are given at the end of the simulation, if successful.
 
@@ -489,7 +488,7 @@ Visualization of results
 ------------------------------------
 
 
-Here, we have requested results to be written in SIlo, a format compatible with `VisIt
+Here, we have requested results to be written in Silo, a format compatible with `VisIt
 <https://wci.llnl.gov/simulation/computer-codes/visit/>`_. To visualize results, you can open VisIt
 and load the database of simulation output files. For more help on how to use VisIt, please check their website directly.
 
