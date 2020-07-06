@@ -241,7 +241,7 @@ namespace geosx
             if ( sz > 0 )
             {
               array1d< localIndex > set_idxs;
-              set_idxs.insert( 0, set.begin( ), sz );
+              set_idxs.insert( 0, set.begin( ), set.end( ) );
               target->PackByIndex( buffer, set_idxs, false, true );
             }
           }

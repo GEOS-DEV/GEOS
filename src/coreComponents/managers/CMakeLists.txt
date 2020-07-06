@@ -37,6 +37,7 @@ set(managers_headers
 #
 # Specify all sources
 #
+
 set(managers_sources
     DomainPartition.cpp
     EventManager.cpp
@@ -50,9 +51,9 @@ set(managers_sources
     Outputs/RestartOutput.cpp
     Outputs/TimeHistoryCollector.cpp
     Outputs/TimeHistoryOutput.cpp
+    Outputs/BlueprintOutput.cpp
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
-    Outputs/BlueprintOutput.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp

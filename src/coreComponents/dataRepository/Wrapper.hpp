@@ -54,7 +54,7 @@ namespace dataRepository
  * @tparam T is any type that is to be wrapped by Wrapper
  */
 template< typename T >
-class Wrapper : public WrapperBase
+class Wrapper final : public WrapperBase
 {
 public:
 
@@ -137,7 +137,7 @@ public:
    *
    * Deletes wrapped object if the wrapper is owning
    */
-  virtual ~Wrapper() noexcept override final
+  virtual ~Wrapper() noexcept override
   {
     if( m_ownsData )
     {
@@ -197,7 +197,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual const std::type_info & get_typeid() const noexcept override final
+  virtual const std::type_info & get_typeid() const noexcept override
   {
     return typeid(T);
   }
@@ -267,7 +267,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  bool isPackable( bool onDevice ) const override final
+  bool isPackable( bool onDevice ) const override
   {
     if( onDevice )
     {
@@ -411,11 +411,11 @@ public:
   ///@}
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void const * voidPointer() const override final
+  void const * voidPointer() const override
   { return wrapperHelpers::dataPtr( reference() ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex elementByteSize() const override final
+  virtual localIndex elementByteSize() const override
   { return wrapperHelpers::byteSizeOfElement< T >(); }
 
   /**
@@ -427,57 +427,59 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex size() const override final
+  virtual localIndex size() const override
   { return wrapperHelpers::size( *m_data ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void resize( int ndims, localIndex const * const dims ) override final
+  virtual void resize( int ndims, localIndex const * const dims ) override
   { wrapperHelpers::resizeDimensions( *m_data, ndims, dims ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void reserve( localIndex const newCapacity ) override final
+  virtual void reserve( localIndex const newCapacity ) override
   { wrapperHelpers::reserve( reference(), newCapacity ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex capacity() const override final
+  virtual localIndex capacity() const override
   {
     // We don't use reference() here because that would return an ArrayView which has no capacity method.
     return wrapperHelpers::capacity( *m_data );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void resize( localIndex const newSize ) override final
+  virtual void resize( localIndex const newSize ) override
   { wrapperHelpers::resizeDefault( reference(), newSize, m_default ); }
 
   /// @cond DO_NOT_DOCUMENT
   struct copy_wrapper
   {
-    template< class U=T >
-    static typename std::enable_if< traits::is_array< U >, void >::type
-    copy( T * const data, localIndex const sourceIndex, localIndex const destIndex )
+    template< typename U, int NDIM, typename PERMUTATION >
+    static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
-      data->copy( destIndex, sourceIndex );
+      LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
+                                            [destIndex, &array]( U const & sourceVal, auto const ... indices )
+      {
+        array( destIndex, indices ... ) = sourceVal;
+      } );
     }
 
-    template< class U=T >
-    static typename std::enable_if< !traits::is_array< U >, void >::type
-    copy( T * const GEOSX_UNUSED_PARAM( data ), localIndex const GEOSX_UNUSED_PARAM( sourceIndex ), localIndex const GEOSX_UNUSED_PARAM( destIndex ) )
+    template< typename U >
+    static void copy( U const &, localIndex const, localIndex const )
     {}
 
   };
   /// @endcond
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
     if( this->sizedFromParent() )
     {
-      copy_wrapper::copy( this->m_data, sourceIndex, destIndex );
+      copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void move( chai::ExecutionSpace const space, bool const touch ) const override
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) const override
   { return wrapperHelpers::move( reference(), space, touch ); }
 
   ///@}
@@ -653,7 +655,7 @@ public:
     return default_string;
   }
 
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override final
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
@@ -726,7 +728,7 @@ public:
       return;
     }
 
-    move( chai::CPU, false );
+    move( LvArray::MemorySpace::CPU, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 
@@ -826,12 +828,12 @@ public:
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)
-  virtual string totalviewTypeName() const override final
+  virtual string totalviewTypeName() const override
   {
     return LvArray::demangle( typeid( Wrapper< T > ).name() );
   }
 
-  virtual int setTotalviewDisplay() const override final
+  virtual int setTotalviewDisplay() const override
   {
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();

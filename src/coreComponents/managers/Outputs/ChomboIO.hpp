@@ -30,38 +30,48 @@ namespace geosx
  *
  * A class for coupling to CHOMBO
  */
-class ChomboIO : public OutputBase
+class ChomboIO final : public OutputBase
 {
 public:
-  /// Main constructor
+  /// @copydoc geosx::dataRepository::Group::Group( std::string const & name, Group * const parent )
   ChomboIO( std::string const & name, Group * const parent );
 
   /// Destructor
-  virtual ~ChomboIO() final override;
+  virtual ~ChomboIO() override;
 
-  /// Catalog name interface
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string CatalogName()
   { return "ChomboIO"; }
 
-  /// This method will be called by the event manager if triggered
+  /**
+   * @brief Writes out a Chombo plot file.
+   * @copydetails EventBase::Execute()
+   */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override;
+                        dataRepository::Group * const domain ) override;
 
-  /// Write one final output as the code exits
+  /**
+   * @brief Writes out a Chombo plot file at the end of the simulation.
+   * @copydetails ExecutableGroup::Cleanup()
+   */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
-                        dataRepository::Group * const domain ) final override
+                        dataRepository::Group * const domain ) override
   {
     m_waitForInput = 0;
     Execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto outputPathString = "outputPath";
@@ -76,6 +86,7 @@ public:
     dataRepository::ViewKey waitForInput = { waitForInputString };
     dataRepository::ViewKey useChomboPressures = { useChomboPressuresString };
   } viewKeys;
+  /// @endcond
 
 private:
   ChomboCoupler * m_coupler;

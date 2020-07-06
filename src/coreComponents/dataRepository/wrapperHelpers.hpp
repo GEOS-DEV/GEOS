@@ -230,13 +230,13 @@ setName( T & GEOSX_UNUSED_PARAM( value ), std::string const & GEOSX_UNUSED_PARAM
 
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_move< T > >
-move( T & value, chai::ExecutionSpace const space, bool const touch )
+move( T & value, LvArray::MemorySpace const space, bool const touch )
 { value.move( space, touch ); }
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_move< T > >
 move( T & GEOSX_UNUSED_PARAM( value ),
-      chai::ExecutionSpace const GEOSX_UNUSED_PARAM( space ),
+      LvArray::MemorySpace const GEOSX_UNUSED_PARAM( space ),
       bool const GEOSX_UNUSED_PARAM( touch ) )
 {}
 
@@ -468,7 +468,7 @@ addBlueprintField( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), totalNumberOfComponents );
   }
 
-  var.move( chai::CPU, false );
+  var.move( LvArray::MemorySpace::CPU, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -536,7 +536,7 @@ populateMCArray( ArrayView< T const, NDIM, USD > const & var,
     GEOSX_ERROR_IF_NE( localIndex( componentNames.size() ), numComponentsPerValue * var.size() / var.size( 0 ) );
   }
 
-  var.move( chai::CPU, false );
+  var.move( LvArray::MemorySpace::CPU, false );
 
   conduit::DataType dtype( conduitTypeID, var.size( 0 ) );
   dtype.set_stride( sizeof( ConduitType ) * numComponentsPerValue * var.strides()[ 0 ] );
@@ -566,7 +566,9 @@ void populateMCArray( T const &,
 }
 
 template< typename T, int NDIM, int USD >
-std::enable_if_t< ( NDIM > 1 ) && ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ), std::unique_ptr< Array< T, NDIM - 1 > > >
+std::enable_if_t< ( NDIM > 1 ) &&
+                  ( std::is_arithmetic< T >::value || traits::is_tensorT< T > ),
+                  std::unique_ptr< Array< T, NDIM - 1 > > >
 averageOverSecondDim( ArrayView< T const, NDIM, USD > const & var )
 {
   std::unique_ptr< Array< T, NDIM - 1 > > ret = std::make_unique< Array< T, NDIM - 1 > >();

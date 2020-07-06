@@ -6,7 +6,7 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO lvarray managers dataRepository )
+set( dependencyList gtest fileIO lvarray managers dataRepository geosx_core )
 
 #
 # Add gtest C++ based tests

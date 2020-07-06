@@ -1,10 +1,9 @@
 ======================
-GEOSX Data Structure
+Data Structure Guide
 ======================
 
-********************************
 Input Schema Definitions
-********************************
+========================
 
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
@@ -644,13 +643,6 @@ Element: TableFunction
 Element: ThickPlane
 ===================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane.rst
-
-
-.. _XML_TimeHistory:
-
-Element: TimeHistory
-====================
-.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
 
 
 .. _XML_TwoPointFluxApproximation:
@@ -1404,13 +1396,6 @@ Datastructure: Tasks
 Datastructure: ThickPlane
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane_other.rst
-
-
-.. _DATASTRUCTURE_TimeHistory:
-
-Datastructure: TimeHistory
-==========================
-.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

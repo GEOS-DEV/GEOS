@@ -3,7 +3,6 @@
 
 #include "OutputBase.hpp"
 #include "TimeHistoryCollector.hpp"
-#include "TimeHistory.hpp"
 #include "managers/TimeHistory/HistoryIO.hpp"
 #include "fileIO/hdf/HDFFile.hpp"
 

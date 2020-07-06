@@ -145,7 +145,7 @@ real64 FlowProppantTransportSolver::SolverStep( real64 const & time_n,
   {
     if( iter == 0 )
     {
-      // reset the states of all slave solvers if any of them has been reset
+      // reset the states of all child solvers if any of them has been reset
       flowSolver.ResetStateToBeginningOfStep( domain );
       proppantSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );

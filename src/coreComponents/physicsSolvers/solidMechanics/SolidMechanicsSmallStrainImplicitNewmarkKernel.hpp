@@ -69,6 +69,7 @@ public:
   using Base::m_disp;
   using Base::m_uhat;
   using Base::m_detJ;
+  using Base::m_density;
 
   /**
    * @brief Constructor
@@ -106,7 +107,6 @@ public:
           inputGravityVector ),
     m_vtilde( nodeManager.totalDisplacement()),
     m_uhattilde( nodeManager.totalDisplacement()),
-    m_density( inputConstitutiveType->getDensity()),
     m_newmarkGamma( inputNewmarkGamma ),
     m_newmarkBeta( inputNewmarkBeta ),
     m_massDamping( inputMassDamping ),
@@ -266,9 +266,6 @@ protected:
   /// The rank-global incremental displacement predictor
   arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhattilde;
 
-  /// The rank global density
-  arrayView2d< real64 const > const m_density;
-
   /// The Gamma parameter for Newmark's method.
   real64 const m_newmarkGamma;
 
@@ -289,5 +286,7 @@ protected:
 } // namespace SolidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
+
+#include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
 #endif //GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSSMALLSTRAINIMPLICITNEWMARK_HPP_

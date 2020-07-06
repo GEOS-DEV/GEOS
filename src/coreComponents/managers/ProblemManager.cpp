@@ -83,7 +83,7 @@ ProblemManager::ProblemManager( const std::string & name,
   RegisterGroup<MeshManager>(groupKeys.meshManager);
   RegisterGroup<OutputManager>(groupKeys.outputManager);
   m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
-  RegisterGroup<TasksManager>(groupKeys.taskManager);
+  RegisterGroup<TasksManager>(groupKeys.tasksManager);
 
   // The function manager is handled separately
   m_functionManager = &FunctionManager::Instance();
@@ -540,25 +540,25 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
   {
-    order.push_back( groupKeys.numericalMethodsManager.Key());
-    usedNames.insert( groupKeys.numericalMethodsManager.Key());
+    order.emplace_back( groupKeys.numericalMethodsManager.Key() );
+    usedNames.insert( groupKeys.numericalMethodsManager.Key() );
   }
 
   {
-    order.push_back( groupKeys.domain.Key());
-    usedNames.insert( groupKeys.domain.Key());
+    order.emplace_back( groupKeys.domain.Key() );
+    usedNames.insert( groupKeys.domain.Key() );
   }
 
   {
-    order.push_back( groupKeys.eventManager.Key());
-    usedNames.insert( groupKeys.eventManager.Key());
+    order.emplace_back( groupKeys.eventManager.Key() );
+    usedNames.insert( groupKeys.eventManager.Key() );
   }
 
   for( auto const & subGroup : this->GetSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
-      order.push_back( subGroup.first );
+      order.emplace_back( subGroup.first );
     }
   }
 }
