@@ -76,10 +76,9 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
-option ( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
+option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
 
-#set( BUILD_SHARED_LIBS ON CACHE PATH "" FORCE)
-#set( ENABLE_SHARED_LIBS ON CACHE PATH "" FORCE )
+option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
@@ -128,14 +127,19 @@ if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/
 endif()
 
 if( CMAKE_HOST_APPLE )
-    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE PATH "")
-    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE PATH "")
-else( )
-    set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE PATH "")
-    set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE PATH "")
+    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
+    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
+elseif( CUDA_ENABLED )
+    set(GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "")
+    set(GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "")
+else()
+    set(GEOSX_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "")
+    set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "")
 endif()
+
 
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 message( "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
+message( "GEOSX_LINK_POSTPEND_FLAG=${GEOSX_LINK_POSTPEND_FLAG}" )
 
 message("Leaving geosxOptions.cmake\n")
