@@ -153,6 +153,31 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
   }
 }
 
+
+/**
+ * @copydoc integralTypeDispatch
+ */
+template< typename INTEGRAL_TYPE, typename LAMBDA >
+void
+quadtratureDispatch( INTEGRAL_TYPE const input,
+                     LAMBDA && lambda )
+{
+  switch( input )
+  {
+    case 1:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
+      break;
+    }
+    case 8:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
+      break;
+    }
+    default:
+      GEOSX_ERROR( "quadtratureDispatch() is not implemented for value of: "<<input );
+  }
+}
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -605,7 +630,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       // and number of quadrature points per element to a compile time constant.
       integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
       {
-        integralTypeDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
+        quadtratureDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
         {
           // Compile time values!
           static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
