@@ -30,10 +30,11 @@ namespace geosx
     }
 
     virtual localIndex GetNumMetaCollectors( ) const { return 0; }
-    virtual std::unique_ptr<HistoryCollection> GetMetaCollector( Group * problem_group, localIndex meta_idx ) const
+    virtual std::unique_ptr<HistoryCollection> GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset ) const
     {
       GEOSX_UNUSED_VAR( problem_group );
       GEOSX_UNUSED_VAR( meta_idx );
+      GEOSX_UNUSED_VAR( meta_rank_offset );
       return std::unique_ptr<HistoryCollection>(nullptr);
     }
 
@@ -61,7 +62,7 @@ namespace geosx
       Collect( domain, time_n, dt, buffer );
 
       int rank = MpiWrapper::Comm_rank();
-      if ( rank == 0 )
+      if ( rank == 0 && m_time_buffer_call )
       {
         buffer_unit_type * time_buffer = m_time_buffer_call();
         memcpy( time_buffer, &time_n, sizeof(decltype(time_n)) );
@@ -92,15 +93,12 @@ namespace geosx
   class SetMetaCollection : public HistoryCollection
   {
   public:
-    SetMetaCollection( string const & object_path, string const & set_name, localIndex set_index_offset ) :
+    SetMetaCollection( string const & object_path, string const & set_name, globalIndex set_index_offset ) :
       HistoryCollection( "SetMetaCollection", nullptr ),
       m_object_path( object_path ),
       m_set_name( set_name ),
-      m_local_index_offset( set_index_offset ),
-      m_global_index_offset( 0 )
+      m_set_index_offset( set_index_offset )
     { }
-
-    void SetGlobalOffset( localIndex offset ) { m_global_index_offset = offset; }
 
     virtual HistoryMetadata GetMetadata( Group * problem_group ) const override
     {
@@ -110,7 +108,11 @@ namespace geosx
       Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
       Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
       dataRepository::Wrapper< SortedArray< localIndex > > const * const set_wrapper = set_group->getWrapper< SortedArray< localIndex > >( m_set_name );
-      return set_wrapper->getBufferedIOMetadata( );
+      HistoryMetadata meta = set_wrapper->getBufferedIOMetadata( );
+      string outname = meta.getName( );
+      meta.setName( outname + " Indices" );
+      meta.setType( std::type_index(typeid(globalIndex)) );
+      return meta;
     }
 
     virtual void Collect( Group * domain_group,
@@ -126,21 +128,23 @@ namespace geosx
       if( set_wrapper != nullptr )
       {
         SortedArrayView< localIndex const > const & set = set_wrapper->reference();
-        localIndex sz = set.size( );
-        array1d< localIndex > meta_idx( sz );
-        for( localIndex ii = 0; ii < sz; ++ii )
+        globalIndex sz = set.size( );
+        if ( sz != 0 )
         {
-          meta_idx[ii] = m_global_index_offset + m_local_index_offset + ii;
+          array1d< globalIndex > meta_idx( sz );
+          for( localIndex ii = 0; ii < sz; ++ii )
+          {
+            meta_idx[ii] = m_set_index_offset + LvArray::integerConversion< globalIndex >( ii );
+          }
+          bufferOps::PackDevice< true >( buffer, meta_idx.toViewConst() );
         }
-        bufferOps::PackDevice< true >( buffer, meta_idx.toView() );
       }
     }
   protected:
     string m_object_path;
     string m_set_name;
 
-    localIndex m_local_index_offset;
-    localIndex m_global_index_offset;
+    globalIndex m_set_index_offset;
   };
 
   class PackCollection : public HistoryCollection
@@ -213,10 +217,10 @@ namespace geosx
       return m_set_names.size( );
     }
 
-    virtual std::unique_ptr<HistoryCollection> GetMetaCollector( Group * problem_group, localIndex meta_idx ) const override
+    virtual std::unique_ptr<HistoryCollection> GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset ) const override
     {
-      localIndex set_idx_off = CountLocalSetIndicesExclusive( problem_group, meta_idx );
-      return std::unique_ptr<HistoryCollection>(new SetMetaCollection(m_object_path,m_set_names[meta_idx],set_idx_off));
+      globalIndex local_set_offset = LvArray::integerConversion<globalIndex>( CountLocalSetIndicesExclusive( problem_group, meta_idx ) );
+      return std::unique_ptr<HistoryCollection>(new SetMetaCollection(m_object_path,m_set_names[meta_idx],meta_rank_offset + local_set_offset));
     }
 
     virtual void Collect( Group * domain_group,

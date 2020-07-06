@@ -49,6 +49,12 @@ namespace geosx
 
     virtual void InitializePostSubGroups( Group * const group ) override
     {
+      // handle recreating the file up front to avoid issues with creating/adding multiple datasets to the file on seperate file accesses
+      {
+        // if the record count is zero, this isn't a restart, so delete any existing data
+        // this is supposed to be filetype agnostic, so using system interfaces to delete the file would be preferable
+        HDFFile( m_filename, (m_record_count == 0) );
+      }
       for( auto collector_path : m_collector_paths )
       {
         Group * tmp = this->GetGroupByPath( collector_path );
@@ -64,27 +70,29 @@ namespace geosx
           m_io.emplace_back( std::make_pair( std::make_unique<HDFHistIO>( m_filename, metadata, m_record_count ),
                                              std::make_unique<HDFHistIO>( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
           collector->RegisterTimeBufferCall([this]() { return this->m_io.back().second->GetBufferHead( ); });
-          m_io.back().second->Init( m_record_count > 0 );
+          m_io.back().second->Init( ( m_record_count > 0 ), false );
         }
         else
         {
           m_io.emplace_back( std::make_pair( std::make_unique<HDFHistIO>( m_filename, metadata, m_record_count ), std::unique_ptr<HDFHistIO>(nullptr) ) );
         }
         collector->RegisterBufferCall([this]() { return this->m_io.back().first->GetBufferHead( ); });
-        m_io.back().first->Init( m_record_count > 0 );
+        m_io.back().first->Init( ( m_record_count > 0 ), false );
 
         if ( m_record_count == 0 )
         {
           // do any 1-time metadata output
+          globalIndex global_rank_offset = m_io.back().first->GetRankOffset( );
           localIndex meta_collector_count = collector->GetNumMetaCollectors( );
           Group * domain_group = dynamicCast< Group * >( dynamicCast< ProblemManager * >( group )->getDomainPartition( ) );
           for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
           {
-            std::unique_ptr<HistoryCollection> meta_collector = collector->GetMetaCollector( group, meta_idx );
+            std::unique_ptr<HistoryCollection> meta_collector = collector->GetMetaCollector( group, meta_idx, global_rank_offset );
             HistoryMetadata meta_metadata = meta_collector->GetMetadata( group );
-            std::unique_ptr<HDFHistIO> meta_io = std::make_unique<HDFHistIO>( m_filename, meta_metadata );
+            meta_metadata.setName(metadata.getName() + " " +meta_metadata.getName());
+            std::unique_ptr<HDFHistIO> meta_io = std::make_unique<HDFHistIO>( m_filename, meta_metadata, 0, 1 );
             meta_collector->RegisterBufferCall([&meta_io] () { return meta_io->GetBufferHead( ); });
-            meta_io->Init( false );
+            meta_io->Init( false, true );
             meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
             meta_io->Write( );
           }

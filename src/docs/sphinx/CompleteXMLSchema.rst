@@ -645,6 +645,13 @@ Element: ThickPlane
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane.rst
 
 
+.. _XML_TimeHistory:
+
+Element: TimeHistory
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory.rst
+
+
 .. _XML_TwoPointFluxApproximation:
 
 Element: TwoPointFluxApproximation
@@ -1396,6 +1403,13 @@ Datastructure: Tasks
 Datastructure: ThickPlane
 =========================
 .. include:: ../../coreComponents/fileIO/schema/docs/ThickPlane_other.rst
+
+
+.. _DATASTRUCTURE_TimeHistory:
+
+Datastructure: TimeHistory
+==========================
+.. include:: ../../coreComponents/fileIO/schema/docs/TimeHistory_other.rst
 
 
 .. _DATASTRUCTURE_TwoPointFluxApproximation:

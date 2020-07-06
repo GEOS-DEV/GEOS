@@ -41,6 +41,10 @@ namespace geosx
     {
       return m_name;
     }
+    void setType( std::type_index type )
+    {
+      m_type = type;
+    }
     std::type_index getType( ) const
     {
       return m_type;

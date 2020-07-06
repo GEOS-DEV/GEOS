@@ -20,12 +20,19 @@ namespace geosx
       size_t osize = m_data_buffer.size();
       resizeBuffer();
       m_buffered_count++;
-      return &m_data_buffer[osize];
+      buffer_unit_type * head = nullptr;
+      if ( m_data_buffer.size( ) )
+      {
+        head = &m_data_buffer[osize];
+      }
+      return head;
     }
 
-    virtual void Init( bool exists_okay ) = 0;
+    virtual void Init( bool exists_okay, bool once ) = 0;
     virtual void Write( ) = 0;
     virtual void CompressInFile( ) = 0;
+
+    virtual globalIndex GetRankOffset( ) = 0;
 
     localIndex GetBufferedCount( ) { return m_buffered_count; }
   protected:

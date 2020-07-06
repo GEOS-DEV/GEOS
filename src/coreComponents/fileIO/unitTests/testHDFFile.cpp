@@ -14,7 +14,7 @@ TEST( testHDFIO, SingleValueHistory )
 
   real64 time = 0.0;
   HDFHistIO io( filename, spec );
-  io.Init( true );
+  io.Init( true, false );
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
     time += 0.333;
@@ -43,7 +43,7 @@ TEST( testHDFIO, ArrayHistory )
 
     HistoryMetadata spec = getHistoryMetadata("Array1d History",arr);
     HDFHistIO io( filename, spec );
-    io.Init( true );
+    io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
     bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
@@ -64,7 +64,7 @@ TEST( testHDFIO, ArrayHistory )
 
     HistoryMetadata spec = getHistoryMetadata("Array2d History",arr);
     HDFHistIO io(filename,spec);
-    io.Init( true );
+    io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
     bufferOps::PackDevice<true>(buffer,arr.toViewConst( ));
@@ -95,7 +95,7 @@ TEST( testHDFIO, IdxArrayHistory )
 
     HistoryMetadata spec = getHistoryMetadata("Array1d Idx History",arr,idx.size( ));
     HDFHistIO io( filename, spec );
-    io.Init( true );
+    io.Init( true, false );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
     bufferOps::PackByIndexDevice<true>(buffer,arr.toViewConst( ),idx.toViewConst( ) );

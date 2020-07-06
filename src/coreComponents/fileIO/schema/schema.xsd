@@ -710,6 +710,7 @@
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
+			<xsd:element name="TimeHistory" type="TimeHistoryType" />
 			<xsd:element name="VTK" type="VTKType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -768,6 +769,20 @@
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--writeFaceElementMesh => (no description available)-->
 		<xsd:attribute name="writeFaceElementMesh" type="integer" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TimeHistoryType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--filename => The filename to which to write time history output.-->
+		<xsd:attribute name="filename" type="string" default="TimeHistory" />
+		<!--format => The output file format for time history output.-->
+		<xsd:attribute name="format" type="string" default="hdf" />
+		<!--parallelThreads => Number of plot files.-->
+		<xsd:attribute name="parallelThreads" type="integer" default="1" />
+		<!--sources => A list of collectors from which to collect and output time history information.-->
+		<xsd:attribute name="sources" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
