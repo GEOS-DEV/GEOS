@@ -116,7 +116,7 @@
   <Mesh>
 
     <PAMELAMeshGenerator name="mesh"
-                         file="egg.msh"
+                         file="../../../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
                          fieldsToImport="{PERM}"
                          fieldNamesInGEOSX="{permeability}"/>
     
