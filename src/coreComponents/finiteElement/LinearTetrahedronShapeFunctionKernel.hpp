@@ -16,21 +16,26 @@
  * @file LinearTetrahedronShapeFunctionKernel.hpp
  */
 
-#ifndef LINEAR_TETRAHEDRON_SHAPE_FUNCTION_KERNEL
-#define LINEAR_TETRAHEDRON_SHAPE_FUNCTION_KERNEL
+#ifndef GEOSX_CORE_FINITEELEMENT_LINEARTETRAHEDRONSHAPEFUNCTIONKERNEL
+#define GEOSX_CORE_FINITEELEMENT_LINEARTETRAHEDRONSHAPEFUNCTIONKERNEL
 
-#include "common/DataTypes.hpp"
-#include "common/GeosxMacros.hpp"
+#include "FiniteElementShapeFunctionKernelBase.hpp"
 
 
 namespace geosx
 {
 
-class LinearTetrahedronShapeFunctionKernel
+using LinearTetrahedronShapeFunctionKernelBaseClass = FiniteElementShapeFunctionKernelBase< 4, 1 >;
+
+class LinearTetrahedronShapeFunctionKernel : public LinearTetrahedronShapeFunctionKernelBaseClass
 {
 public:
-  constexpr static localIndex numNodes = 4;
-  constexpr static real64 weight = 1.0 / 6.0; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
+  using BaseClass = LinearTetrahedronShapeFunctionKernelBaseClass;
+
+  using BaseClass::numNodes;
+  using BaseClass::numQuadraturePoints;
+  constexpr static real64 parentVolume = 1.0 / 6.0 ;
+  constexpr static real64 weight = parentVolume / numQuadraturePoints; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -93,4 +98,4 @@ private:
 
 }
 
-#endif //LINEAR_TETRAHEDRON_SHAPE_FUNCTION_KERNEL
+#endif //GEOSX_CORE_FINITEELEMENT_LINEARTETRAHEDRONSHAPEFUNCTIONKERNEL

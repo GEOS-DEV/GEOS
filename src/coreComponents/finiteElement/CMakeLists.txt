@@ -17,6 +17,10 @@ set( finiteElement_headers
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
+     FiniteElementShapeFunctionKernelBase.hpp
+     LinearTetrahedronShapeFunctionKernel.hpp
+     BiLinearWedgeShapeFunctionKernel.hpp
+     TrilinearHexahedronShapeFunctionKernel.hpp
    )
 #
 # Specify all sources

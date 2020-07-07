@@ -44,6 +44,7 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
           int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
@@ -51,6 +52,7 @@ template< typename SUBREGION_TYPE,
           typename CRS_TYPE = ParallelMatrix >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
+                                              FE_TYPE,
                                               NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                               NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                               NUM_DOF_PER_TEST_SP,
@@ -60,6 +62,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
   using Base = KernelBase< SUBREGION_TYPE,
                            CONSTITUTIVE_TYPE,
+                           FE_TYPE,
                            NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                            NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                            NUM_DOF_PER_TEST_SP,

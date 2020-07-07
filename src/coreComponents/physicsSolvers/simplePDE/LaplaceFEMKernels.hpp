@@ -49,11 +49,13 @@ namespace geosx
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_NODES_PER_ELEM,
           int UNUSED >
 class LaplaceFEMKernel :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
+                                            FE_TYPE,
                                             NUM_NODES_PER_ELEM,
                                             NUM_NODES_PER_ELEM,
                                             1,
@@ -63,6 +65,7 @@ public:
   /// An alias for the base class.
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
+                                                  FE_TYPE,
                                                   NUM_NODES_PER_ELEM,
                                                   NUM_NODES_PER_ELEM,
                                                   1,
