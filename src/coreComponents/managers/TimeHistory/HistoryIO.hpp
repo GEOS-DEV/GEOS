@@ -34,7 +34,11 @@ namespace geosx
   public:
 
     /// Constructor
-    BufferedHistoryIO(): m_buffered_count(0), m_data_buffer(0) {}
+    BufferedHistoryIO():
+      m_buffered_count(0),
+      m_buffer_head(nullptr),
+      m_data_buffer(0)
+    {}
 
     /// Destructor
     virtual ~BufferedHistoryIO() {}
@@ -47,15 +51,9 @@ namespace geosx
      */
     buffer_unit_type * GetBufferHead( )
     {
-      size_t osize = m_data_buffer.size();
       resizeBuffer();
       m_buffered_count++;
-      buffer_unit_type * head = nullptr;
-      if ( m_data_buffer.size( ) )
-      {
-        head = &m_data_buffer[osize];
-      }
-      return head;
+      return m_buffer_head;
     }
 
     /**
@@ -94,12 +92,12 @@ namespace geosx
     void EmptyBuffer( )
     {
       m_buffered_count = 0;
-      m_data_buffer = 0;
-      m_data_buffer.resize( 0 );
+      m_buffer_head = &m_data_buffer[0];
     }
 
     localIndex m_buffered_count;
-    array1d<buffer_unit_type> m_data_buffer;
+    buffer_unit_type * m_buffer_head;
+    buffer_type m_data_buffer;
   };
 
 }

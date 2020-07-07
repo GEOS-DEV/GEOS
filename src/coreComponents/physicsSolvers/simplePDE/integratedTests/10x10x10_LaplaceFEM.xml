@@ -97,7 +97,6 @@
   </Outputs>
 
   <Tasks>
-    <!-- <PackCollection name="temperaturePackCollection" group="/Solvers/laplace" wrapper="Temperature" /> -->
     <PackCollection name="temperaturePackCollection" objectPath="nodeManager" fieldName="Temperature" setNames="{sink, source}" />
   </Tasks>
 

@@ -281,6 +281,7 @@ class HDFHistIO : public BufferedHistoryIO
       m_dims[dd] = LvArray::integerConversion<hsize_t>( dims[dd] );
       m_type_count *= m_dims[dd];
     }
+    m_data_buffer.resize( m_overalloc_multiple * m_type_size * m_type_count );
   }
 
   /**
@@ -459,7 +460,13 @@ class HDFHistIO : public BufferedHistoryIO
   virtual void resizeBuffer( ) override
   {
     size_t osize = m_data_buffer.size();
-    m_data_buffer.resize(osize + m_type_count * m_type_size);
+    // if needed, resize the buffer
+    if ( (m_buffered_count + 1) * (m_type_count * m_type_size) > osize )
+    {
+      m_data_buffer.resize( osize + ( m_type_count * m_type_size ) * m_overalloc_multiple );
+    }
+    // advance the buffer head
+    m_buffer_head = (&m_data_buffer[0]) + m_buffered_count * ( m_type_count * m_type_size );
   }
 
   private:

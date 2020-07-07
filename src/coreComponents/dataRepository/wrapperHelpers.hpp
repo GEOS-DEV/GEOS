@@ -679,12 +679,12 @@ UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
 template< bool DO_PACKING, typename T >
 localIndex
 PackDataDevice( buffer_unit_type * & buffer, T & var )
-{ return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
+{ return bufferOps::PackDataDevice< DO_PACKING >( buffer, var ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 PackDataByIndexDevice( buffer_unit_type * & buffer, T & var, IDX & idx )
-{ return bufferOps::PackByIndexDevice< DO_PACKING >( buffer, var, idx ); }
+{ return bufferOps::PackDataByIndexDevice< DO_PACKING >( buffer, var, idx ); }
 
 template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
@@ -697,7 +697,7 @@ PackDataByIndexDevice( buffer_unit_type * &, T &, IDX & )
 template< typename T >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDataDevice( buffer_unit_type const * & buffer, T & var )
-{ return bufferOps::UnpackDevice( buffer, var ); }
+{ return bufferOps::UnpackDataDevice( buffer, var ); }
 
 template< typename T >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
@@ -707,7 +707,7 @@ UnpackDataDevice( buffer_unit_type const * &, T & )
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T & var, IDX & idx )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx ); }
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >

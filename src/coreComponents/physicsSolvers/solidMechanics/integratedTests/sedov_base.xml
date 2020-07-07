@@ -27,7 +27,7 @@
 <!-- =========================================================== -->
     <PeriodicEvent name="timeHistoryCollection"
                    timeFrequency="1.0e-5"
-                   targetExactTimestep="0"
+                   targetExactTimestep="1"
                    target="/Tasks/velocityCollection" />
 
     <PeriodicEvent name="timeHistoryOutput"
