@@ -160,6 +160,7 @@ public:
   template< typename CONSTITUTIVE_BASE,
             template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
+                      typename FE_TYPE,
                       int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                       int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
             typename ... PARAMS >
@@ -302,6 +303,7 @@ protected:
 template< typename CONSTITUTIVE_BASE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
           typename ... PARAMS >

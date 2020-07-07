@@ -22,7 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+#include "finiteElement/TrilinearHexahedronShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -125,7 +125,7 @@ struct ExplicitKernel
 
 #if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
-        real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, xLocal, dNdX );
+        real64 const detJ = TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( q, xLocal, dNdX );
         #define DNDX dNdX
         #define DETJ detJ
 #else //defined(CALCFEMSHAPE)

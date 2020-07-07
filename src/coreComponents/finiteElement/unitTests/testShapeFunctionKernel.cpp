@@ -16,13 +16,13 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"
 
 #include <chrono>
+#include "../TrilinearHexahedronShapeFunctionKernel.hpp"
 
 using namespace geosx;
 
@@ -84,7 +84,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      FiniteElementShapeKernel::shapeFunctionValues( q, N );
+      TrilinearHexahedronShapeFunctionKernel::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -99,7 +99,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = FiniteElementShapeKernel::shapeFunctionDerivatives( q,
+      viewDetJ[q] = TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( q,
                                                                         xCoords,
                                                                         dNdX );
 

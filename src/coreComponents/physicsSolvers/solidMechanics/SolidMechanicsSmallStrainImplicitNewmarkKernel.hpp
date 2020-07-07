@@ -42,10 +42,12 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_NODES_PER_ELEM,
           int >
 class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
+                                            FE_TYPE,
                                             NUM_NODES_PER_ELEM,
                                             NUM_NODES_PER_ELEM >
 {
@@ -53,6 +55,7 @@ public:
   /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
+                            FE_TYPE,
                             NUM_NODES_PER_ELEM,
                             NUM_NODES_PER_ELEM >;
 
@@ -190,7 +193,7 @@ public:
   {
 
     real64 N[numNodesPerElem];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
+    FE_TYPE::shapeFunctionValues( q, N );
 
     Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
                                                                                localIndex const b ) mutable

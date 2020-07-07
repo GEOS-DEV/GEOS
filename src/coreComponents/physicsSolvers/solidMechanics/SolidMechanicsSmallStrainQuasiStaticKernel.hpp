@@ -53,11 +53,13 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_NODES_PER_ELEM,
           int UNUSED >
 class QuasiStatic :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
+                                            FE_TYPE,
                                             NUM_NODES_PER_ELEM,
                                             NUM_NODES_PER_ELEM,
                                             3,
@@ -67,6 +69,7 @@ public:
   /// Alias for the base class;
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
+                                                  FE_TYPE,
                                                   NUM_NODES_PER_ELEM,
                                                   NUM_NODES_PER_ELEM,
                                                   3,

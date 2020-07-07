@@ -28,11 +28,11 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(GEOSX_USE_CUDA)
+//#if defined(GEOSX_USE_CUDA)
 /// Macro variable to indicate whether or not to calculate the shape function
 /// derivatives in the kernel instead of using a pre-calculated value.
 #define CALCFEMSHAPE
-#endif
+//#endif
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
 /// updated at all.
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
@@ -58,7 +58,7 @@ GEOSX_FORCE_INLINE
 static
 void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
  #if defined(CALCFEMSHAPE)
-                real64 const (&dNdX)[ 8 ][ 3 ],
+                real64 const (&dNdX)[ N ][ 3 ],
  #else
                 arraySlice2d< real64 const > const & dNdX,
  #endif
@@ -91,10 +91,12 @@ void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_NODES_PER_ELEM,
           int >
 class ExplicitFiniteStrain : public ExplicitSmallStrain< SUBREGION_TYPE,
                                                          CONSTITUTIVE_TYPE,
+                                                         FE_TYPE,
                                                          NUM_NODES_PER_ELEM,
                                                          NUM_NODES_PER_ELEM >
 {
@@ -102,6 +104,7 @@ public:
   /// Alias for the base class;
   using Base = ExplicitSmallStrain< SUBREGION_TYPE,
                                     CONSTITUTIVE_TYPE,
+                                    FE_TYPE,
                                     NUM_NODES_PER_ELEM,
                                     NUM_NODES_PER_ELEM >;
 
@@ -209,8 +212,8 @@ public:
                                    StackVariables & stack ) const
   {
 #if defined(CALCFEMSHAPE)
-    real64 dNdX[ 8 ][ 3 ];
-    real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
+    real64 dNdX[ NUM_NODES_PER_ELEM ][ 3 ];
+    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
     /// Macro to substitute in the shape function derivatives.
     #define DNDX dNdX
