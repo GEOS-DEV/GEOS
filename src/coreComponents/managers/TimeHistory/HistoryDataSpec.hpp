@@ -183,7 +183,7 @@ namespace geosx
   {
     localIndex size = size_override < 0 ? arr.size( ) : size_override;
     size_t sz = LvArray::integerConversion<size_t>(size);
-    return HistoryMetadata(name, 1, &sz, std::type_index(typeid(typename ARRAY_T::value_type)));
+    return HistoryMetadata(name, sz, std::type_index(typeid(typename ARRAY_T::value_type)));
   }
 
   /**
@@ -219,7 +219,9 @@ namespace geosx
   typename std::enable_if < ( is_array_type< ARRAY_T >) && (ARRAY_T::ndim > 1) && can_history_io<typename ARRAY_T::value_type>, HistoryMetadata >::type
   getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex size_override = -1 )
   {
-    size_t sizes[2] = {size_override < 0 ? LvArray::integerConversion<size_t>(arr.size( ) / arr.size(0)) : size_override, LvArray::integerConversion<size_t>(arr.size( )) };
+    size_t per_index_size = arr[ 0 ].size( );
+    size_t num_indices = ( size_override >= 0 ? LvArray::integerConversion<size_t>( size_override ) : LvArray::integerConversion<size_t>( arr.size( ) / per_index_size ) );
+    size_t sizes[2] = { num_indices, per_index_size };
     return HistoryMetadata(name, 2, &sizes[0], std::type_index(typeid(typename ARRAY_T::value_type)));
   }
 

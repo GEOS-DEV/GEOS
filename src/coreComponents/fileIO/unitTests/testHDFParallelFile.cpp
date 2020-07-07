@@ -15,7 +15,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
   int rank = MpiWrapper::Comm_rank( );
 
   HDFHistIO io( filename, spec );
-  io.Init( true, false );
+  io.Init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {

@@ -61,7 +61,7 @@ namespace geosx
      * @param exists_okay Whether it is acceptable for the intended output target to already exist ( false on start from scratch, true on restart ).
      * @param once Whether the data being written will only be written once or will be written repeatedly ( metadata vs actual time-history data).
      */
-    virtual void Init( bool exists_okay, bool once ) = 0;
+    virtual void Init( bool exists_okay ) = 0;
 
     /**
      * @brief Write the buffered history data to the output target.

@@ -110,14 +110,14 @@ namespace geosx
           m_io.emplace_back( std::make_pair( std::make_unique<HDFHistIO>( m_filename, metadata, m_record_count ),
                                              std::make_unique<HDFHistIO>( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
           collector->RegisterTimeBufferCall([this]() { return this->m_io.back().second->GetBufferHead( ); });
-          m_io.back().second->Init( ( m_record_count > 0 ), false );
+          m_io.back().second->Init( ( m_record_count > 0 ) );
         }
         else
         {
           m_io.emplace_back( std::make_pair( std::make_unique<HDFHistIO>( m_filename, metadata, m_record_count ), std::unique_ptr<HDFHistIO>(nullptr) ) );
         }
         collector->RegisterBufferCall([this]() { return this->m_io.back().first->GetBufferHead( ); });
-        m_io.back().first->Init( ( m_record_count > 0 ), false );
+        m_io.back().first->Init( ( m_record_count > 0 ) );
 
         if ( m_record_count == 0 )
         {
@@ -132,7 +132,7 @@ namespace geosx
             meta_metadata.setName(metadata.getName() + " " +meta_metadata.getName());
             std::unique_ptr<HDFHistIO> meta_io = std::make_unique<HDFHistIO>( m_filename, meta_metadata, 0, 1 );
             meta_collector->RegisterBufferCall([&meta_io] () { return meta_io->GetBufferHead( ); });
-            meta_io->Init( false, true );
+            meta_io->Init( false );
             meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
             meta_io->Write( );
           }

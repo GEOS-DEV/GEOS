@@ -301,7 +301,7 @@ class HDFHistIO : public BufferedHistoryIO
   virtual ~HDFHistIO() { }
 
   /// @copydoc BufferedHistoryIO::Init( )
-  virtual void Init( bool exists_okay, bool once ) override
+  virtual void Init( bool exists_okay ) override
   {
     array1d<hsize_t> history_file_dims(m_rank+1);
     history_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
@@ -341,7 +341,7 @@ class HDFHistIO : public BufferedHistoryIO
       {
         m_global_idx_offset = m_global_idx_count;
       }
-      m_global_idx_offset += counts[ii];
+      m_global_idx_count += counts[ii];
     }
 
     history_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
@@ -357,19 +357,10 @@ class HDFHistIO : public BufferedHistoryIO
       {
         hid_t dcpl_id = 0;
         array1d<hsize_t> max_file_dims(history_file_dims);
-        if ( ! once )
-        {
-          // chunking is required to create an extensible dataset
-          dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
-          H5Pset_chunk(dcpl_id, m_rank+1, &dim_chunks[0]);
-          max_file_dims[0] = H5S_UNLIMITED;
-        }
-        else
-        {
-          // chunking can't be used to create a dataset with zero chunk size on one processor
-          //  if the data is only being written once ( this makes no sense but seems to be the case )
-          dcpl_id = H5P_DEFAULT;
-        }
+        // chunking is required to create an extensible dataset
+        dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
+        H5Pset_chunk(dcpl_id, m_rank+1, &dim_chunks[0]);
+        max_file_dims[0] = H5S_UNLIMITED;
         hid_t space = H5Screate_simple(m_rank+1,&history_file_dims[0],&max_file_dims[0]);
         hid_t dataset = H5Dcreate(target,m_name.c_str(),m_hdf_type,space,H5P_DEFAULT,dcpl_id,H5P_DEFAULT);
         H5Dclose(dataset);
