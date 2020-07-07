@@ -2,7 +2,7 @@
 
 
 ##############################################
-Tutorial 9: Poroelasticity
+Tutorial 8: Terzaghi's poroelastic problem
 ##############################################
 
 
