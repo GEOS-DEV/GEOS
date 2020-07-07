@@ -29,11 +29,11 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-#if defined(GEOSX_USE_CUDA)
+//#if defined(GEOSX_USE_CUDA)
 /// Macro variable to indicate whether or not to calculate the shape function
 /// derivatives in the kernel instead of using a pre-calculated value.
 #define CALCFEMSHAPE
-#endif
+//#endif
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
 /// updated at all.
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
@@ -65,10 +65,12 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_NODES_PER_ELEM,
           int UNUSED >
 class ExplicitSmallStrain : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                               CONSTITUTIVE_TYPE,
+                                                              FE_TYPE,
                                                               NUM_NODES_PER_ELEM,
                                                               NUM_NODES_PER_ELEM,
                                                               3,
@@ -79,6 +81,7 @@ public:
   /// Alias for the base class;
   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
                                           CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
                                           NUM_NODES_PER_ELEM,
                                           NUM_NODES_PER_ELEM,
                                           3,
@@ -160,14 +163,11 @@ public:
     /// C-array stack storage for element local primary variable values.
     real64 varLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
   #if defined(CALCFEMSHAPE)
-// This needs to be returned to service when the FEM kernels are expanded properly
-//    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
-//    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ 8 ][ numDofPerTestSupportPoint ];
+    real64 xLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
 
     /// C-array stack storage for shape function derivatives at a point.
-    real64 dNdX[ 8 ][ numDofPerTestSupportPoint ];
+    real64 dNdX[ numNodesPerElem ][ numDofPerTestSupportPoint ];
 
     /// C-array stack storage for the jacobian of the parent space mapping.
     real64 detJ;
@@ -221,8 +221,8 @@ public:
   {
 
 #if defined(CALCFEMSHAPE)
-    real64 dNdX[ 8 ][ 3 ];
-    real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
+    real64 dNdX[ NUM_NODES_PER_ELEM ][ 3 ];
+    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
     /// Macro to substitute in the shape function derivatives.
     #define DNDX dNdX

@@ -42,12 +42,14 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
           int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
+                                                      FE_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_DOF_PER_TEST_SP,
@@ -57,6 +59,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::ImplicitKernelBase)
   using Base = ImplicitKernelBase< SUBREGION_TYPE,
                                    CONSTITUTIVE_TYPE,
+                                   FE_TYPE,
                                    NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                    NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                    NUM_DOF_PER_TEST_SP,
@@ -146,6 +149,7 @@ private:
  */
 template< template< typename,
                     typename,
+                    typename,
                     int,
                     int > class KERNEL_TEMPLATE >
 struct SparsityHelper
@@ -160,18 +164,22 @@ struct SparsityHelper
    */
   template< typename SUBREGION_TYPE,
             typename CONSTITUTIVE_TYPE,
+            typename FE_TYPE,
             int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
             int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >
   using Kernel = SparsityKernelBase< SUBREGION_TYPE,
                                      CONSTITUTIVE_TYPE,
+                                     FE_TYPE,
                                      NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
+                                                      FE_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTestSupportPoint,
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
+                                                      FE_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint
                                      >;
@@ -209,6 +217,7 @@ template< typename POLICY,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE >
 static
