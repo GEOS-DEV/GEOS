@@ -239,6 +239,8 @@ public:
    */
   virtual void SetElementType( string const & elementType );
 
+//  virtual void getElementType() const
+
   /**
    * @brief Get the VTK ordering for this subregion.
    * @return the VTK node ordering
