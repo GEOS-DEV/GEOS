@@ -71,10 +71,10 @@ void testKernelDriver()
 
   constexpr real64 xCoords[numNodes][3] = {
     { 0.0, 0.0, -0.9 },
-    { 1.0, 0.0, -1.0 },
-    { 0.0, 1.0, -1.0 },
     { 2.0, 0.0, 1.1 },
+    { 1.0, 0.0, -1.0 },
     { 3.3, 0.0, 1.0 },
+    { 0.0, 1.0, -1.0 },
     { 1.9, 1.0, 1.8 }
   };
 
@@ -117,9 +117,9 @@ void testKernelDriver()
 
 
   constexpr real64 parentCoords[3][numNodes] = {
-    {  0.0, 1.0, 0.0, 0.0, 1.0, 0.0 },
-    {  0.0, 0.0, 1.0, 0.0, 0.0, 1.0 },
-    { -1.0, -1.0, -1.0, 1.0, 1.0, 1.0 }
+    {  0.0, 0.0,  1.0, 1.0,  0.0, 0.0 },
+    {  0.0, 0.0,  0.0, 0.0,  1.0, 1.0 },
+    { -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 }
   };
 
   forAll< serialPolicy >( 1,
@@ -132,7 +132,8 @@ void testKernelDriver()
                              quadratureLongitudinalCoord*parentCoords[2][q] };
       for( localIndex a=0; a<numNodes; ++a )
       {
-        real64 N = 1.0 - parentCoords[0][a] - parentCoords[1][a];
+        real64
+        N = 1.0 - parentCoords[0][a] - parentCoords[1][a];
         N = N + ( -1.0 + 2.0*parentCoords[0][a] + parentCoords[1][a] )*xi[0];
         N = N + ( -1.0 + parentCoords[0][a] + 2.0*parentCoords[1][a] )*xi[1];
         N = 0.5*N*( 1.0 + xi[2] * parentCoords[2][a] );
@@ -208,6 +209,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
+  testing::InitGoogleTest() ;
 
   basicSetup( argc, argv, false );
 

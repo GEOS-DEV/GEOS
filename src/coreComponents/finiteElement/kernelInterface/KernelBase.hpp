@@ -24,7 +24,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+#include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -37,6 +37,7 @@
 /// Use std::tuple to hold constructor params.
 #define CONSTRUCTOR_PARAM_OPTION 1
 #endif
+
 #if CONSTRUCTOR_PARAM_OPTION==1
 namespace std
 {
@@ -237,6 +238,7 @@ quadtratureDispatch( INTEGRAL_TYPE const input,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
           int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
           int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
@@ -577,6 +579,7 @@ template< typename POLICY,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE,
                     int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                     int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
@@ -622,10 +625,10 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
     }
 
-    localIndex const
-    numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
-                                 1 :
-                                 finiteElementSpace->n_quadrature_points();
+//    localIndex const
+//    numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
+//                                 1 :
+//                                 finiteElementSpace->n_quadrature_points();
 
     // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
@@ -649,17 +652,24 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
       // Apply a sequence of integer dispatch functions to convert the number of nodes per element,
       // and number of quadrature points per element to a compile time constant.
-      integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
+//      integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
+//      {
+//        integralTypeDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
+//        {
+
+      string const elementTypeString = elementSubRegion.GetElementTypeString();
+      finiteElement::dispatch( elementTypeString,
+                               [&] ( auto const finiteElement )
       {
-        quadtratureDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
-        {
+          using FE_TYPE = TYPEOFREF(finiteElement);
           // Compile time values!
-          static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
-          static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
+          static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
+          static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
 
           // Define an alias for the kernel type for easy use.
           using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
                                                CONSTITUTIVE_TYPE,
+                                               FE_TYPE,
                                                NUM_NODES_PER_ELEM,
                                                NUM_NODES_PER_ELEM >;
 
@@ -703,7 +713,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                           >( numElems,
                                                              kernelComponent ) );
         } );
-      } );
+//      } );
     } );
 
     // Remove the null constitutive model (not required, but cleaner)
