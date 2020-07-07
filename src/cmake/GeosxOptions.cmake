@@ -1,12 +1,10 @@
-message("\nProcessing geosxOptions.cmake")
-
+message("\nProcessing GeosxOptions.cmake")
 message("CMAKE_HOST_SYSTEM_NAME = ${CMAKE_HOST_SYSTEM_NAME}")
 message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}")
 
+### OPTIONS ###
 
-
-# OPTIONS
 option( ENABLE_CALIPER "" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
@@ -31,24 +29,25 @@ option( ENABLE_XML_UPDATES "" ON )
 
 option( ENABLE_FORTRAN "Enables Fortran support" OFF)
 
-option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_METIS "Enables METIS" ON )
 option( ENABLE_PARMETIS "Enables PARMETIS" ON )
-option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
-option( ENABLE_HYPRE "Enables HYPRE" ON )
+
 option( ENABLE_VTK "Enables VTK" ON )
-
-if ( "${CMAKE_HOST_APPLE}" )
-  option( ENABLE_PETSC "Enables PETSC" OFF )
-else()
-  option( ENABLE_PETSC "Enables PETSC" ON )
-endif()
-
-
 
 option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 
-# LAI setup
+option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
+option( ENABLE_TRILINOS "Enables TRILINOS" ON )
+option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_PETSC "Enables PETSC" OFF )
+
+#if ( "${CMAKE_HOST_APPLE}" )
+#  option( ENABLE_PETSC "Enables PETSC" OFF )
+#else()
+#  option( ENABLE_PETSC "Enables PETSC" ON )
+#endif()
+
+### LAI SETUP ###
 
 set( supported_LAI Trilinos Hypre Petsc )
 set( GEOSX_LA_INTERFACE "Trilinos" CACHE STRING "Linear algebra interface to use in solvers" )
@@ -64,7 +63,7 @@ if( NOT ENABLE_${upper_LAI} )
 endif()
 option( GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON )
 
-# MPI/OMP/CUDA setup
+### MPI/OMP/CUDA SETUP ###
 
 option( ENABLE_MPI "" ON )
 
@@ -76,6 +75,8 @@ else()
   option(ENABLE_OPENMP     "Enables OpenMP compiler support" ON)
 endif()
 
+### BUILD & BLT SETUP ###
+
 option( BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" OFF)
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
@@ -84,14 +85,11 @@ option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " ON )
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
 
-
-
 set( GEOSX_TPL_ROOT_DIR "../../thirdPartyLibs/" CACHE PATH "" )
 
 message( "GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
 get_filename_component(GEOSX_TPL_ROOT_DIR ${GEOSX_TPL_ROOT_DIR} ABSOLUTE)
 message( "Absolute GEOSX_TPL_ROOT_DIR = ${GEOSX_TPL_ROOT_DIR}" )
-
 
 #set(SPHINX_EXECUTABLE "sphinx-build" CACHE PATH "")
 #include(cmake/blt/cmake/thirdparty/FindSphinx.cmake)
@@ -103,7 +101,6 @@ if(NOT BLT_CXX_STD STREQUAL c++14)
 endif(NOT BLT_CXX_STD STREQUAL c++14)
 
 message("CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
-
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}")
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
@@ -137,9 +134,7 @@ else()
     set(GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "")
 endif()
 
-
 message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 message( "GEOSX_LINK_PREPEND_FLAG=${GEOSX_LINK_PREPEND_FLAG}" )
 message( "GEOSX_LINK_POSTPEND_FLAG=${GEOSX_LINK_POSTPEND_FLAG}" )
-
-message("Leaving geosxOptions.cmake\n")
+message("Leaving GeosxOptions.cmake\n")
