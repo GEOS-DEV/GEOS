@@ -13,8 +13,7 @@
         newtonTol="1.0e-6"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
-        <SystemSolverParameters 
-        useDirectSolver="1"
+        <LinearSolverParameters 
         solverType="direct"
         logLevel="0"/>
 		</SolidMechanicsEmbeddedFractures>

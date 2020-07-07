@@ -41,7 +41,7 @@ namespace computationalGeometry
 R1Tensor LinePlaneIntersection( R1Tensor lineDir,
                                 R1Tensor linePoint,
                                 R1Tensor planeNormal,
-                                R1Tensor planeOrigin );
+								R1Tensor planeOrigin );
 
 /**
  * @brief Calculate the area of a polygon given the set of points defining it.

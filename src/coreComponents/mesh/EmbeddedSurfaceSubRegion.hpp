@@ -138,8 +138,6 @@ public:
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );
 
-  void CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
-                                            localIndex const k );
 
   real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, 0 >  const nodeCoord,
                                    localIndex const k );
@@ -252,16 +250,22 @@ public:
    */
   ///@{
 
-<<<<<<< HEAD
+  /**
+   * @brief Get number of jump enrichments.
+   * @return a reference to the number of jump enrichments
+   */
   localIndex & numOfJumpEnrichments()       {return m_numOfJumpEnrichments;}
+
+  /**
+   * @brief Get number of jump enrichments.
+   * @return  a constant reference to the number of jump enrichments
+   */
   localIndex const & numOfJumpEnrichments() const {return m_numOfJumpEnrichments;}
 
-=======
   /**
    * @brief Get face element aperture.
    * @return the aperture of the embedded surface elements
    */
->>>>>>> origin/develop
   arrayView1d< real64 > const & getElementAperture()       { return m_elementAperture; }
 
   /**
