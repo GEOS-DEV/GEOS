@@ -10,7 +10,7 @@
 namespace geosx
 {
 
-class SixNodeWedgeShapeFunctionKernel
+class BiLinearWedgeShapeFunctionKernel
 {
 public:
   constexpr static localIndex numNodes = 6;

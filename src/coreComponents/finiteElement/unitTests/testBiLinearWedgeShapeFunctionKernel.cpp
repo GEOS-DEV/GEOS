@@ -16,7 +16,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "finiteElement/SixNodeWedgeShapeFunctionKernel.hpp"
+#include <finiteElement/BiLinearWedgeShapeFunctionKernel.hpp>
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -85,7 +85,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      SixNodeWedgeShapeFunctionKernel::shapeFunctionValues( q, N );
+      BiLinearWedgeShapeFunctionKernel::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -100,7 +100,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = SixNodeWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
+      viewDetJ[q] = BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
                                                                                xCoords,
                                                                                dNdX );
 
