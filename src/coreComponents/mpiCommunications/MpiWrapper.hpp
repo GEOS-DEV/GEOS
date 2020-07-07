@@ -184,6 +184,7 @@ public:
 
   static MPI_Comm Comm_dup( MPI_Comm const comm );
 
+  static MPI_Comm Comm_split( MPI_Comm const comm, int color, int key );
 
   static int Test( MPI_Request * request, int * flag, MPI_Status * status );
 

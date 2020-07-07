@@ -152,7 +152,7 @@
   </Outputs>
 
   <Tasks>
-    <PackCollection name="velocityCollection" objectPath="nodeManager" fieldName="Velocity" />
+    <PackCollection name="velocityCollection" objectPath="nodeManager" fieldName="Velocity" setNames="{source}"/>
   </Tasks>
 <!-- =========================================================== -->
 

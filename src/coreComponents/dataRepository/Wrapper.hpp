@@ -271,6 +271,7 @@ public:
   {
     if( onDevice )
     {
+      // this isn't accurate if array/arraview return false for this, which I think they do
       return bufferOps::can_memcpy< T >;
     }
     else

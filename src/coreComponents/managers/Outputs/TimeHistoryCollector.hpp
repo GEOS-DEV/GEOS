@@ -293,7 +293,7 @@ namespace geosx
       MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
       Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
       WrapperBase const * target = target_object->getWrapperBase( m_field_name );
-      GEOSX_ERROR_IF( ! target->isPackable(), "The object targeted for collection must be packable!" );
+      GEOSX_ERROR_IF( ! target->isPackable( false ), "The object targeted for collection must be packable!" );
       localIndex num_indices = -1;
       if ( m_set_names.size( ) > 0 )
       {
