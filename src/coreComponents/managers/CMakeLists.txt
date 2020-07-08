@@ -12,10 +12,12 @@ set(managers_headers
     Outputs/OutputBase.hpp
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
-    Outputs/TimeHistoryCollector.hpp
     Outputs/TimeHistoryOutput.hpp
     Tasks/TaskBase.hpp
     Tasks/TasksManager.hpp
+    TimeHistory/TimeHistoryCollector.hpp
+    TimeHistory/HistoryIO.hpp
+    TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
     Functions/FunctionBase.hpp
     Functions/SymbolicFunction.hpp
@@ -49,11 +51,11 @@ set(managers_sources
     Outputs/OutputBase.cpp
     Outputs/SiloOutput.cpp
     Outputs/RestartOutput.cpp
-    Outputs/TimeHistoryCollector.cpp
     Outputs/TimeHistoryOutput.cpp
     Outputs/BlueprintOutput.cpp
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
+    TimeHistory/TimeHistoryCollector.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp
