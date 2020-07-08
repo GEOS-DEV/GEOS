@@ -76,12 +76,12 @@
     solver time-step request -->
     <PeriodicEvent name="solverApplication0"
                    beginTime="0"
-                   endTime="0.0000001e-03"   
-                   forceDt="0.0000001e-03"   
+                   endTime="1.e-10"
+                   forceDt="1.e-10"
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="solverApplication1"
-                   beginTime="0.0000001e-03"   
+                   beginTime="1.e-10"
                    endTime="4.5000000e-03"   
                    forceDt="4.4999999e-03"   
                    target="/Solvers/poroSolve" />
@@ -93,7 +93,7 @@
                    target="/Solvers/poroSolve" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
+                   cycleFrequency="20"
                    target="/Outputs/restartOutput"/>
 
   </Events>
