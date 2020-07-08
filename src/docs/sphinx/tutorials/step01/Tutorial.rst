@@ -412,7 +412,7 @@ All elements are now in place to run GEOSX.
 
 
 ------------------------------------
-Runnning GEOSX
+Running GEOSX
 ------------------------------------
 
 The command to run GEOSX is
