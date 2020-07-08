@@ -159,7 +159,7 @@ template< typename T >
 constexpr bool is_sorted_array = LvArray::isSortedArray< T >;
 
 /// True if T is an instantiation of LvArray:SortedArrayView.
-template < typename T >
+template< typename T >
 constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
 
 /// True if T is a Tensor class.

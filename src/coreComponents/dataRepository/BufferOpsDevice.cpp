@@ -6,12 +6,12 @@ namespace geosx
 namespace bufferOps
 {
 
-template < bool DO_PACKING, typename T >
+template< bool DO_PACKING, typename T >
 GEOSX_HOST_DEVICE
 localIndex
 PackPointerDataDevice( buffer_unit_type * & buffer,
                        T const * const GEOSX_RESTRICT var,
-                       localIndex const length)
+                       localIndex const length )
 {
   localIndex const sizeOfPackedChars = length * sizeof( T );
   if( DO_PACKING )
@@ -106,9 +106,9 @@ UnpackDataDevice( buffer_unit_type const * & buffer,
                   ArrayView< T, NDIM, USD > const & var )
 {
   forAll< parallelDevicePolicy<> >( var.size(), [=] GEOSX_DEVICE ( localIndex ii )
-      {
-        var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
-      } );
+  {
+    var.data()[ ii ] = reinterpret_cast< const T * >( buffer )[ ii ];
+  } );
   localIndex packedSize = var.size() * sizeof(T);
   buffer += var.size() * sizeof(T);
   return packedSize;
@@ -123,7 +123,7 @@ UnpackDevice( buffer_unit_type const * & buffer,
   localIndex packedSize = UnpackPointerDevice( buffer, dims, NDIM );
   localIndex strides[NDIM];
   packedSize += UnpackPointerDevice( buffer, strides, NDIM );
-  for( int dd = 0 ; dd < NDIM ; ++dd )
+  for( int dd = 0; dd < NDIM; ++dd )
   {
     GEOSX_ERROR_IF_NE( strides[dd], var.strides()[dd] );
   }

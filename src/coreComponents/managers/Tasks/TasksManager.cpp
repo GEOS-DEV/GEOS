@@ -35,7 +35,7 @@ TasksManager::~TasksManager()
 
 Group * TasksManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr<TaskBase> tool = TaskBase::CatalogInterface::Factory( childKey, childName, this );
+  std::unique_ptr< TaskBase > tool = TaskBase::CatalogInterface::Factory( childKey, childName, this );
   return this->RegisterGroup( childName, std::move( tool ) );
 }
 
@@ -43,7 +43,7 @@ Group * TasksManager::CreateChild( string const & childKey, string const & child
 void TasksManager::ExpandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from SolverBase here
-  for (auto& catalogIter: TaskBase::GetCatalog())
+  for( auto & catalogIter: TaskBase::GetCatalog())
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

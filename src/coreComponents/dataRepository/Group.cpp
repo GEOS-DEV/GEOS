@@ -322,7 +322,7 @@ localIndex Group::PackSize( string_array const & wrapperNames,
       packedSize += bufferOps::PackSize( wrapperName );
       if( packList.empty() )
       {
-        packedSize += wrapper->PackSize( true,  on_device );
+        packedSize += wrapper->PackSize( true, on_device );
       }
       else
       {

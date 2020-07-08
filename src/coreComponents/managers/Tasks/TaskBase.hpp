@@ -27,10 +27,10 @@
 namespace geosx
 {
 
-  /**
-   * @class TaskBase
-   * @brief A class to execute a task when directed by the TasksManager
-   */
+/**
+ * @class TaskBase
+ * @brief A class to execute a task when directed by the TasksManager
+ */
 class TaskBase : public ExecutableGroup
 {
 public:
@@ -51,9 +51,9 @@ public:
   /// Delete copy constructor
   TaskBase( TaskBase const & ) = delete;
   /// Delete assignment constructor
-  TaskBase& operator=( TaskBase const & ) = delete;
+  TaskBase & operator=( TaskBase const & ) = delete;
   /// Delete universal reference assignment constructor
-  TaskBase& operator=( TaskBase&& ) = delete;
+  TaskBase & operator=( TaskBase && ) = delete;
 
   /**
    * @brief Catalog name interface
@@ -63,7 +63,7 @@ public:
 
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
   /// Get the catalog interface for the TaskBase
-  static CatalogInterface::CatalogType& GetCatalog();
+  static CatalogInterface::CatalogType & GetCatalog();
 
   /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
   void PostProcessInput() override;

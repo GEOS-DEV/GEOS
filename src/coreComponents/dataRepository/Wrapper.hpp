@@ -294,7 +294,7 @@ public:
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
     if( onDevice )
     {
-      if ( withMetadata )
+      if( withMetadata )
       {
         packedSize += wrapperHelpers::PackDevice< true >( buffer, reference() );
       }
@@ -317,10 +317,10 @@ public:
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
     {
-      if ( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
+      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, this->getName() );
       if( onDevice )
       {
-        if ( withMetadata )
+        if( withMetadata )
         {
           packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList );
         }
@@ -346,7 +346,7 @@ public:
     if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
     if( onDevice )
     {
-      if ( withMetadata )
+      if( withMetadata )
       {
         packedSize += wrapperHelpers::PackDevice< false >( buffer, reference() );
       }
@@ -373,7 +373,7 @@ public:
       if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, this->getName() );
       if( onDevice )
       {
-        if ( withMetadata )
+        if( withMetadata )
         {
           packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList );
         }
@@ -403,7 +403,7 @@ public:
     }
     if( onDevice )
     {
-      if ( withMetadata )
+      if( withMetadata )
       {
         unpackedSize += wrapperHelpers::UnpackDevice( buffer, referenceAsView() );
       }
@@ -434,7 +434,7 @@ public:
       }
       if( onDevice )
       {
-        if ( withMetadata )
+        if( withMetadata )
         {
           unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices );
         }

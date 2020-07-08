@@ -183,7 +183,7 @@ TEST( testPacking, testPackingDeviceHelper )
 
   for( localIndex ii = 0; ii < size; ++ii )
     //for( localIndex jj = 0; jj < 3; ++jj )
-      veloc[ii] = drand();
+    veloc[ii] = drand();
 
   buffer_unit_type * null_buf = NULL;
   localIndex calc_size = bufferOps::PackDevice< false >( null_buf, veloc.toViewConst() );

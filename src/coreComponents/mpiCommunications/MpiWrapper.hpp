@@ -81,7 +81,7 @@ typedef int MPI_Op;
 typedef int MPI_Request;
 
 typedef int MPI_Info;
-  #define MPI_INFO_NULL (MPI_Info)(0x60000000)
+#define MPI_INFO_NULL (MPI_Info)(0x60000000)
 
 struct MPI_Status
 {
@@ -322,10 +322,10 @@ public:
 
 
   template< typename T >
-  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm);
+  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
   template< typename T >
-  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm);
+  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
   /**
    * @brief Strongly typed wrapper around MPI_Bcast.
@@ -644,10 +644,10 @@ int MpiWrapper::scan( T const * const sendbuf,
 
 template< typename T >
 int MpiWrapper::exscan( T const * const MPI_PARAM( sendbuf ),
-                      T * const recvbuf,
-                      int count,
-                      MPI_Op MPI_PARAM( op ),
-                      MPI_Comm MPI_PARAM( comm ) )
+                        T * const recvbuf,
+                        int count,
+                        MPI_Op MPI_PARAM( op ),
+                        MPI_Comm MPI_PARAM( comm ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = getMpiType< T >();

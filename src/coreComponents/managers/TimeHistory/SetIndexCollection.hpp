@@ -35,24 +35,25 @@ class SetIndexCollection : public HistoryCollection
 public:
 /**
  * @brief Constructor
- * @param set_index_offset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set indices.
+ * @param set_index_offset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set
+ * indices.
  * @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
  */
-SetIndexCollection( string const & object_path, string const & set_name, globalIndex set_index_offset ) ;
+  SetIndexCollection( string const & object_path, string const & set_name, globalIndex set_index_offset );
 
 /// @copydoc HistoryCollection::GetMetadata
-virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
+  virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
 
 /// @copydoc HistoryCollection::Collect
-virtual void Collect( Group * domain_group,
-			real64 const GEOSX_UNUSED_PARAM(time_n),
-			real64 const GEOSX_UNUSED_PARAM(dt),
-			buffer_unit_type*& buffer ) override;
+  virtual void Collect( Group * domain_group,
+                        real64 const GEOSX_UNUSED_PARAM( time_n ),
+                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                        buffer_unit_type * & buffer ) override;
 
 protected:
-string m_object_path;
-string m_set_name;
-globalIndex m_set_index_offset;
+  string m_object_path;
+  string m_set_name;
+  globalIndex m_set_index_offset;
 };
 }
 #endif

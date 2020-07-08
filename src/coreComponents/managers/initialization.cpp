@@ -495,18 +495,18 @@ void setupMPI( int argc, char * argv[] )
 
   int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int wait_for_debugger = 0;
-  MPI_Barrier(MPI_COMM_GEOSX);
-  if ( rank == 0 ) 
+  MPI_Barrier( MPI_COMM_GEOSX );
+  if( rank == 0 )
   {
-    if (wait_for_debugger) 
+    if( wait_for_debugger )
     {
-      printf("Waiting for debugger to attach \n");
-      fflush(0);
-      while (wait_for_debugger)
-	sleep(1);
+      printf( "Waiting for debugger to attach \n" );
+      fflush( 0 );
+      while( wait_for_debugger )
+        sleep( 1 );
     }
   }
-  MPI_Barrier(MPI_COMM_GEOSX);
+  MPI_Barrier( MPI_COMM_GEOSX );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

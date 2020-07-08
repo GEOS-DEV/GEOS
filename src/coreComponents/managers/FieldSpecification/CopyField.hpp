@@ -48,8 +48,8 @@ public:
 
   CopyField() = delete;
   CopyField( CopyField const & ) = delete;
-  CopyField& operator=( CopyField const & ) = delete;
-  CopyField& operator=( CopyField&& ) = delete;
+  CopyField & operator=( CopyField const & ) = delete;
+  CopyField & operator=( CopyField && ) = delete;
 
   static string CatalogName() { return "CopyField"; }
   void Execute( real64 const time_n,
@@ -59,7 +59,8 @@ public:
                 real64 const eventProgress,
                 Group * domain ) override;
 
-  struct viewKeyStruct {
+  struct viewKeyStruct
+  {
     static constexpr auto fromString = "from";
     static constexpr auto toString = "to";
     static constexpr auto targetRegionsString = "targetRegions";

@@ -3,5 +3,5 @@
 
 namespace geosx
 {
-  REGISTER_CATALOG_ENTRY( TaskBase, HistoryCollection, std::string const &, Group * const );
+REGISTER_CATALOG_ENTRY( TaskBase, HistoryCollection, std::string const &, Group * const );
 }

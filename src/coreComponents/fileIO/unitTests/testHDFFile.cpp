@@ -15,8 +15,8 @@ TEST( testHDFIO, HDFFile )
 
 TEST( testHDFIO, SingleValueHistory )
 {
-  string filename("single_value");
-  HistoryMetadata spec("Time History", 1, std::type_index(typeid(real64)));
+  string filename( "single_value" );
+  HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   real64 time = 0.0;
   HDFHistIO io( filename, spec );
@@ -25,30 +25,30 @@ TEST( testHDFIO, SingleValueHistory )
   {
     time += 0.333;
     buffer_unit_type * buffer = io.GetBufferHead( );
-    memcpy(buffer,&time,sizeof(real64));
+    memcpy( buffer, &time, sizeof(real64));
   }
   io.Write( );
 }
 
 TEST( testHDFIO, ArrayHistory )
 {
-  srand(time(NULL));
+  srand( time( NULL ));
 
   {
-    string filename("array1d_history");
-    Array<real64, 1> arr(4096);
+    string filename( "array1d_history" );
+    Array< real64, 1 > arr( 4096 );
     real64 count = 0.0;
-    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
-      {
-        value = count++;
-      });
+    forValuesInSlice( arr.toSlice(), [&count]( real64 & value )
+    {
+      value = count++;
+    } );
 
-    HistoryMetadata spec = getHistoryMetadata("Array1d History",arr);
+    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr );
     HDFHistIO io( filename, spec );
     io.Init( true );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackDataDevice<true>(buffer,arr.toViewConst( ));
+    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
 
     io.Write( );
 
@@ -56,20 +56,20 @@ TEST( testHDFIO, ArrayHistory )
     // remove( filename.c_str() );
   }
   {
-    string filename("array2d_history");
-    Array<real64, 2> arr(1024,4);
+    string filename( "array2d_history" );
+    Array< real64, 2 > arr( 1024, 4 );
     real64 count = 0.0;
-    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
-      {
-        value = count++;
-      });
+    forValuesInSlice( arr.toSlice(), [&count]( real64 & value )
+    {
+      value = count++;
+    } );
 
-    HistoryMetadata spec = getHistoryMetadata("Array2d History",arr);
-    HDFHistIO io(filename,spec);
+    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr );
+    HDFHistIO io( filename, spec );
     io.Init( true );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackDataDevice<true>(buffer,arr.toViewConst( ));
+    bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
 
     io.Write( );
 
@@ -80,27 +80,27 @@ TEST( testHDFIO, ArrayHistory )
 
 TEST( testHDFIO, IdxArrayHistory )
 {
-  srand(time(NULL));
+  srand( time( NULL ));
   {
-    string filename("array1d_idx_history");
-    Array<localIndex, 1> idx(256);
-    Array<real64, 2> arr(1024,4);
+    string filename( "array1d_idx_history" );
+    Array< localIndex, 1 > idx( 256 );
+    Array< real64, 2 > arr( 1024, 4 );
     real64 count = 0.0;
-    forValuesInSlice(arr.toSlice(),[&count](real64 & value)
-      {
-        value = count++;
-      });
-    forValuesInSlice(idx.toSlice(),[](localIndex & value)
-      {
-        value = rand() % 1024;
-      });
+    forValuesInSlice( arr.toSlice(), [&count]( real64 & value )
+    {
+      value = count++;
+    } );
+    forValuesInSlice( idx.toSlice(), []( localIndex & value )
+    {
+      value = rand() % 1024;
+    } );
 
-    HistoryMetadata spec = getHistoryMetadata("Array1d Idx History",arr,idx.size( ));
+    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr, idx.size( ));
     HDFHistIO io( filename, spec );
     io.Init( true );
 
     buffer_unit_type * buffer = io.GetBufferHead( );
-    bufferOps::PackDataByIndexDevice<true>(buffer,arr.toViewConst( ),idx.toViewConst( ) );
+    bufferOps::PackDataByIndexDevice< true >( buffer, arr.toViewConst( ), idx.toViewConst( ) );
 
     io.Write( );
   }

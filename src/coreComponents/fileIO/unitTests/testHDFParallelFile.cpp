@@ -9,8 +9,8 @@ using namespace geosx;
 
 TEST( testHDFIO_parallel, SingleValueHistory )
 {
-  string filename("single_value_parallel");
-  HistoryMetadata spec("Time History", 1, std::type_index(typeid(real64)));
+  string filename( "single_value_parallel" );
+  HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   int rank = MpiWrapper::Comm_rank( );
 
@@ -21,7 +21,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
   {
     val += 0.5 * (rank+1);
     buffer_unit_type * buffer = io.GetBufferHead( );
-    memcpy(buffer,&val,sizeof(real64));
+    memcpy( buffer, &val, sizeof(real64));
   }
 
   io.Write( );

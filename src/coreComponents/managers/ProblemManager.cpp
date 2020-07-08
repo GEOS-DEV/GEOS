@@ -77,13 +77,13 @@ ProblemManager::ProblemManager( const std::string & name,
   // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
   // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
 
-  m_eventManager = RegisterGroup<EventManager>(groupKeys.eventManager);
-  RegisterGroup<NumericalMethodsManager>(groupKeys.numericalMethodsManager);
-  RegisterGroup<GeometricObjectManager>(groupKeys.geometricObjectManager);
-  RegisterGroup<MeshManager>(groupKeys.meshManager);
-  RegisterGroup<OutputManager>(groupKeys.outputManager);
-  m_physicsSolverManager = RegisterGroup<PhysicsSolverManager>(groupKeys.physicsSolverManager);
-  RegisterGroup<TasksManager>(groupKeys.tasksManager);
+  m_eventManager = RegisterGroup< EventManager >( groupKeys.eventManager );
+  RegisterGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
+  RegisterGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+  RegisterGroup< MeshManager >( groupKeys.meshManager );
+  RegisterGroup< OutputManager >( groupKeys.outputManager );
+  m_physicsSolverManager = RegisterGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
+  RegisterGroup< TasksManager >( groupKeys.tasksManager );
 
   // The function manager is handled separately
   m_functionManager = &FunctionManager::Instance();

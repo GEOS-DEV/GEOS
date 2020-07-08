@@ -26,13 +26,12 @@ using namespace dataRepository;
 TaskBase::TaskBase( std::string const & name,
                     Group * const parent ):
   ExecutableGroup( name, parent )
-{
-}
+{}
 
 TaskBase::~TaskBase()
 { }
 
-TaskBase::CatalogInterface::CatalogType& TaskBase::GetCatalog()
+TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
 {
   static TaskBase::CatalogInterface::CatalogType catalog;
   return catalog;

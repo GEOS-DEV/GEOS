@@ -54,7 +54,7 @@ public:
   {
     htri_t exists = 0;
     H5E_BEGIN_TRY {
-      exists = H5Gget_objinfo(this->operator hid_t(), name.c_str(), 0, NULL);
+      exists = H5Gget_objinfo( this->operator hid_t(), name.c_str(), 0, NULL );
     } H5E_END_TRY
     return (exists == 0);
   }
@@ -73,7 +73,7 @@ public:
    * @param delete_existing Whether to remove/recreate if a file with the same name exists.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile(string const & fnm, bool delete_existing = false, MPI_Comm comm = MPI_COMM_GEOSX);
+  HDFFile( string const & fnm, bool delete_existing = false, MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * Destructor -- Close the file and acccessors.
@@ -99,7 +99,7 @@ private:
  */
 class HDFHistIO : public BufferedHistoryIO
 {
-  public:
+public:
   /**
    * @brief Constructor
    * @param filename The filename to perform history output to.
@@ -118,7 +118,7 @@ class HDFHistIO : public BufferedHistoryIO
              std::type_index type_id,
              localIndex write_head = 0,
              localIndex init_alloc = 4,
-             MPI_Comm comm = MPI_COMM_GEOSX);
+             MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Constructor
@@ -128,7 +128,7 @@ class HDFHistIO : public BufferedHistoryIO
    * @param init_alloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ) :
+  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
     HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc, comm )
   { }
 
@@ -153,26 +153,26 @@ class HDFHistIO : public BufferedHistoryIO
   /// @copydoc BufferedHistoryIO::GetRankOffset( )
   virtual globalIndex GetRankOffset( ) override;
 
-  protected:
+protected:
   virtual void resizeBuffer( ) override;
 
-  private:
-    // file io params
-    string m_filename;
-    const localIndex m_overalloc_multiple;
-    globalIndex m_global_idx_offset;
-    globalIndex m_global_idx_count;
-    localIndex m_write_limit;
-    localIndex m_write_head;
-    // history metadata
-    hsize_t m_hdf_type;
-    size_t m_type_size;
-    hsize_t m_type_count; // prod(dims[0:n])
-    hsize_t m_rank;
-    std::vector< hsize_t > m_dims;
-    string m_name;
-    MPI_Comm m_comm;
-    MPI_Comm m_subcomm;
+private:
+  // file io params
+  string m_filename;
+  const localIndex m_overalloc_multiple;
+  globalIndex m_global_idx_offset;
+  globalIndex m_global_idx_count;
+  localIndex m_write_limit;
+  localIndex m_write_head;
+  // history metadata
+  hsize_t m_hdf_type;
+  size_t m_type_size;
+  hsize_t m_type_count;   // prod(dims[0:n])
+  hsize_t m_rank;
+  std::vector< hsize_t > m_dims;
+  string m_name;
+  MPI_Comm m_comm;
+  MPI_Comm m_subcomm;
 };
 
 }
