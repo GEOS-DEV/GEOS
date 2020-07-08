@@ -25,12 +25,16 @@ This tutorial is based on the XML file located at
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
 
 The mesh file used in this tutorial is not stored in the main GEOSX repository.
 To run the test case specified in the XML file, you must first download the GEOSXDATA repository.  
 The XML file that we are going to describe assumes that the GEOSXDATA repository has been
 cloned in the same folder as the GEOSX repository.
+
+.. note::
+        GEOSXDATA is a separate repository in which we store large mesh files in order to keep the main GEOSX repository lightweight.
+
 
 ------------------------------------
 GEOSX input file
@@ -95,7 +99,7 @@ Take note of the specification of well constraints and controls in the single-ph
 well solver with ``control``, ``targetBHP``, ``targetRate``
 and ``injectionStream`` (for the composition of the multiphase injection fluid).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
@@ -131,7 +135,7 @@ It is the responsibility of the user to make sure that there is a perforation in
 of the well mesh otherwise an error will be thrown and the simulation will terminate. The well
 geometry must be specified in meters.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
@@ -143,7 +147,7 @@ Geometry tag
 
 The **Geometry** XML block was used in the previous tutorials to specify boundary conditions.
 Since we use wells and assume no-flow boundary conditions in this tutorial, the **Geometry**
-is not needed.
+block is not needed.
 
 .. _Events_tag_dead_oil_bottom_layers_spe10:
 
@@ -183,7 +187,7 @@ of the **Output** XML block (here, ``restartOutput``).
 
 More information about events can be found at :ref:`EventManager`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
@@ -204,7 +208,7 @@ TPFA is currently the only numerical scheme that can be used with a flow solver 
 There is no numerical scheme to specify for the well mesh.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
@@ -228,6 +232,10 @@ Note that ``0_HEX`` is a name internally defined by the mesh importer to denote 
 We refer to :ref:`TutorialSinglePhaseFlowExternalMesh` for a discussion on
 hexahedral meshes in GEOSX.
 
+.. note::
+        If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+
+
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
 The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
@@ -239,7 +247,7 @@ and to the constitutive models introduced in the **Constitutive** block.
 As before, this is done using the names chosen by the user when these blocks
 are defined.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
@@ -270,9 +278,9 @@ solver, as explained in :ref:`FluidModels`.
 With the tag **BrooksCoreyRelativePermeability**, we define a relative permeability model.
 A list of available relative permeability models can be found at
 :ref:`RelativePermeabilityModels`.
-The names and order of the phases listed for the attribute ``phaseNames`` must be identical
-in the fluid model (here, **BlackOilFluid**) and the relative permeability model
-(here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
+
+.. note::
+        The names and order of the phases listed for the attribute ``phaseNames`` must be identical in the fluid model (here, **BlackOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**). Otherwise, GEOSX will throw an error and terminate. 
 
 We also introduce a model to define the rock compressibility. This step is similar
 to what is described in the previous tutorials (see for instance
@@ -282,7 +290,7 @@ We remind the reader that the attribute ``name`` of the constitutive models defi
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
@@ -317,7 +325,7 @@ in the **BlackOilFluid** XML block.
 Note that there is no initialization to perform in the wells since the well
 properties are initialized internally using the reservoir initial conditions.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -333,7 +341,7 @@ Specifying the output formats
 In this section, we request an output of the results in VTK format and an output of the restart file.
 Note that the names defined here must match the names used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/dead_oil_spe10_layers_83_84_85.xml
+.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_83_84_85.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUT_END -->
@@ -432,6 +440,8 @@ Visualization of results
 
 A file compatible with Paraview is produced in this tutorial.
 It is found in the output folder, and usually has the extension `.pvd`.
+More details about this file format can be found here
+`here <https://www.paraview.org/Wiki/ParaView/Data_formats#PVD_File_Format>`_.
 We can load this file into Paraview directly and visualize results:
 
 |pic1| |pic2|
