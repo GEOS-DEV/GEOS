@@ -36,28 +36,28 @@
 		<InternalMesh 
 		name="mesh1" 
 		elementTypes="{C3D8}" 
-		xCoords="{0, 10}"
-		yCoords="{0, 10}" 
-		zCoords="{0, 10}" 
-		nx="{9}" ny="{9}" nz="{1}"
+		xCoords="{0, 3}"
+		yCoords="{0, 3}" 
+		zCoords="{0, 3}" 
+		nx="{3}" ny="{3}" nz="{1}"
 		cellBlockNames="{cb1}" />
 	</Mesh>
 
 	<Geometry>
-		<Box name="xneg" xMin="-0.01, -0.01, -0.01" xMax=" 0.01,  10.01, 10.01" />
-		<Box name="xpos" xMin=" 9.99, -0.01, -0.01" xMax="10.01,  10.01, 10.01" />
-		<Box name="yneg" xMin="-0.01, -0.01, -0.01" xMax="10.01,  0.01, 10.01" />
-		<Box name="ypos" xMin="-0.01,  9.99, -0.01" xMax="10.01, 10.01, 10.01" />
-		<Box name="zneg" xMin="-0.01, -0.01, -0.01" xMax="10.01,  10.01, 0.01" />
-		<Box name="zpos" xMin="-0.01, -0.01,  9.99" xMax="10.01, 10.01, 10.01" />
+		<Box name="xneg" xMin="-0.01, -0.01, -0.01" xMax="0.01, 3.01, 3.01" />
+		<Box name="xpos" xMin=" 2.99, -0.01, -0.01" xMax="3.01, 3.01, 3.01" />
+		<Box name="yneg" xMin="-0.01, -0.01, -0.01" xMax="3.01, 0.01, 3.01" />
+		<Box name="ypos" xMin="-0.01,  2.99, -0.01" xMax="3.01, 3.01, 3.01" />
+		<Box name="zneg" xMin="-0.01, -0.01, -0.01" xMax="3.01, 3.01, 0.01" />
+		<Box name="zpos" xMin="-0.01, -0.01,  2.99" xMax="3.01, 3.01, 3.01" />
 		
 		<BoundedPlane 
 		name="FracturePlane" 
 		normal="0, 1, 0"
-		origin="5, 5, 5" 
+		origin="1.5, 1.5, 1.5" 
 		lengthVector="1, 0, 0" 
 		widthVector="0, 0, 1"
-		dimensions="{5, 30}" />
+		dimensions="{1.1, 4}" />
 	</Geometry>
 
 

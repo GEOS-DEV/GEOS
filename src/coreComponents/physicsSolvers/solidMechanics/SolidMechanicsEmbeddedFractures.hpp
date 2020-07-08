@@ -129,13 +129,13 @@ protected:
                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
                                       arrayView1d< localIndex const > const & embeddedSurfaceToCell,
                                       localIndex const numNodesPerElement,
-                                      arrayView3d< R1Tensor const > const & dNdX );
+									  arrayView4d< real64 const > const & dNdX );
 
   void AssembleStrainOperator( array2d< real64 > & strainMatrix,
                                localIndex const elIndex,
                                localIndex const q,
                                localIndex const numNodesPerElement,
-                               arrayView3d< R1Tensor const > const & dNdX );
+							   arrayView4d< real64 const > const & dNdX );
 
   void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
                         array1d< real64 >  const & dispJump,

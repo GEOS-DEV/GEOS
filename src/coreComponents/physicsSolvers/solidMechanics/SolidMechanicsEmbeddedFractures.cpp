@@ -381,7 +381,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
       for( localIndex k=0; k<numEmbeddedElems; ++k )
       {
         // Get rock matrix element subregion
-        CellBlock const * const elementSubRegion = Group::group_cast< CellBlock const * const >( elemManager->GetRegion( embeddedSurfaceToRegion[k] )->
+        CellElementSubRegion const * const elementSubRegion = Group::group_cast< CellElementSubRegion const * const >( elemManager->GetRegion( embeddedSurfaceToRegion[k] )->
                                                                                                    GetSubRegion( embeddedSurfaceToSubRegion[k] ));
         CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
         // Get the number of nodes per element
@@ -419,11 +419,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
 
         // Basis functions derivatives
-        arrayView3d< R1Tensor const > const &
-        dNdX = elementSubRegion->getReference< array3d< R1Tensor > >( keys::dNdX );
+        arrayView4d< real64 const > const & dNdX = elementSubRegion->dNdX();
 
         // transformation determinant
-        arrayView2d< real64 const > const & detJ = elementSubRegion->getReference< array2d< real64 > >( keys::detJ );
+        arrayView2d< real64 const > const & detJ = elementSubRegion->detJ();
 
         // Fill in equilibrium operator
         arrayView1d< real64 const > const & cellVolume = elementSubRegion->getElementVolume();
@@ -613,7 +612,7 @@ SolidMechanicsEmbeddedFractures::
                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
                                  arrayView1d< localIndex const > const & embeddedSurfaceToCell,
                                  localIndex const numNodesPerElement,
-                                 arrayView3d< R1Tensor const > const & dNdX )
+								 arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
   // Normal and tangent unit vectors
@@ -625,20 +624,17 @@ SolidMechanicsEmbeddedFractures::
 
   // 1. construct mvector sum(dNdX(a) * H(a)) value for each Gauss point
   R1Tensor mVec;
-  R1Tensor dNdXa;
   real64 heavisideFun;
   mVec = 0.0;
   for( integer a=0; a<numNodesPerElement; ++a )
   {
-    // Shape function derivatives
-    dNdXa = dNdX[embeddedSurfaceToCell[k]][q][a];
     // Heaviside
     heavisideFun = embeddedSurfaceSubRegion.
                      ComputeHeavisideFunction( nodesCoord[ elemsToNodes[embeddedSurfaceToCell[k]][a] ], k );
     // sum contribution of each node
-    mVec[0] -= dNdXa[0] * heavisideFun;
-    mVec[1] -= dNdXa[1] * heavisideFun;
-    mVec[2] -= dNdXa[2] * heavisideFun;
+    mVec[0] -= dNdX(embeddedSurfaceToCell[k], q, a, 0) * heavisideFun;
+    mVec[1] -= dNdX(embeddedSurfaceToCell[k], q, a, 1) * heavisideFun;
+    mVec[2] -= dNdX(embeddedSurfaceToCell[k], q, a, 2) * heavisideFun;
   }
 
   BlasLapackLA::matrixScale( 0, compMatrix );
@@ -699,29 +695,26 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
                                                               localIndex const elIndex,
                                                               localIndex const q,
                                                               localIndex const numNodesPerElement,
-                                                              arrayView3d< R1Tensor const > const & dNdX )
+															  arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
   strainMatrix = 0.0; // make 0
 
-  R1Tensor dNdXa;
-
   for( integer a=0; a<numNodesPerElement; ++a )
   {
-    dNdXa = dNdX[elIndex][q][a];
 
-    strainMatrix( 0, a*3 + 0 ) = dNdXa[0];
-    strainMatrix( 1, a*3 + 1 ) = dNdXa[1];
-    strainMatrix( 2, a*3 + 2 ) = dNdXa[2];
+    strainMatrix( 0, a*3 + 0 ) = dNdX(elIndex, q, a, 0);
+    strainMatrix( 1, a*3 + 1 ) = dNdX(elIndex, q, a, 1);
+    strainMatrix( 2, a*3 + 2 ) = dNdX(elIndex, q, a, 2);
 
-    strainMatrix( 3, a*3 + 1 ) = dNdXa[2];
-    strainMatrix( 3, a*3 + 2 ) = dNdXa[1];
+    strainMatrix( 3, a*3 + 1 ) = dNdX(elIndex, q, a, 2);
+    strainMatrix( 3, a*3 + 2 ) = dNdX(elIndex, q, a, 1);
 
-    strainMatrix( 4, a*3 + 0 ) = dNdXa[2];
-    strainMatrix( 4, a*3 + 2 ) = dNdXa[0];
+    strainMatrix( 4, a*3 + 0 ) = dNdX(elIndex, q, a, 2);
+    strainMatrix( 4, a*3 + 2 ) = dNdX(elIndex, q, a, 0);
 
-    strainMatrix( 5, a*3 + 0 ) = dNdXa[1];
-    strainMatrix( 5, a*3 + 1 ) = dNdXa[0];
+    strainMatrix( 5, a*3 + 0 ) = dNdX(elIndex, q, a, 1);
+    strainMatrix( 5, a*3 + 1 ) = dNdX(elIndex, q, a, 0);
   }
 
 

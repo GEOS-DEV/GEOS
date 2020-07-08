@@ -149,17 +149,19 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][0]] );
     LvArray::tensorOps::subtract< 3 > (dist, origin);
     prodScalarProd = LvArray::tensorOps::AiBi< 3 > ( dist, normalVector );
-    dist = LVARRAY_TENSOROPS_INIT_LOCAL_3( nodesCoord[edgeToNodes[edgeIndex][1]] );
     LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][1]] );
+    LvArray::tensorOps::subtract< 3 > (dist, origin);
     prodScalarProd *= LvArray::tensorOps::AiBi< 3 > ( dist, normalVector );
 
+    // check if the plane intersects the edge
     if( prodScalarProd < 0 )
     {
       lineDir = LVARRAY_TENSOROPS_INIT_LOCAL_3( nodesCoord[edgeToNodes[edgeIndex][0]] );
       LvArray::tensorOps::subtract< 3 > ( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
       LvArray::tensorOps::normalize< 3 >( lineDir );
+      //find the intersection point
       point = computationalGeometry::LinePlaneIntersection( lineDir,
-                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
+    		                                                nodesCoord[edgeToNodes[edgeIndex][0]],
                                                             normalVector,
                                                             origin );
 
