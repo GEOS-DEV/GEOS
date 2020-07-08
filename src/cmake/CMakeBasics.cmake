@@ -39,7 +39,7 @@
 ################################
 # Setup build options and their default values
 ################################
-include("${CMAKE_CURRENT_LIST_DIR}/geosxOptions.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/GeosxOptions.cmake")
 
 ################################
 # Setup toolkit generate targets
