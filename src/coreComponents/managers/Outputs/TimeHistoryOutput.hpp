@@ -20,7 +20,7 @@
 #define GEOSX_TIME_HISTORY_OUTPUT_HPP_
 
 #include "OutputBase.hpp"
-#include "TimeHistoryCollector.hpp"
+#include "managers/TimeHistory/TimeHistoryCollection.hpp"
 #include "managers/TimeHistory/HistoryIO.hpp"
 #include "fileIO/hdf/HDFFile.hpp"
 
