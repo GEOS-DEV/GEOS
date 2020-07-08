@@ -629,13 +629,13 @@ UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 
 
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< bufferOps::is_container< T > && bufferOps::can_memcpy< T >, localIndex >
+inline std::enable_if_t< bufferOps::is_container< T > || bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * & buffer, T & var )
 { return bufferOps::PackDevice< DO_PACKING >( buffer, var ); }
 
 
 template< bool DO_PACKING, typename T >
-inline std::enable_if_t< !bufferOps::is_container< T > || !bufferOps::can_memcpy< T >, localIndex >
+inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T & )
 {
   GEOSX_ERROR( "Trying to pack data type ("<<typeid(T).name()<<") on device but type is not packable on device." );

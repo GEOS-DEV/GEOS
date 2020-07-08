@@ -225,6 +225,25 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
   template localIndex UnpackByIndexDevice< TYPE, NDIM, USD > \
     ( buffer_unit_type const * & buffer, \
     ArrayView< TYPE, NDIM, USD > const & var, \
+    arrayView1d< const localIndex > const & indices ); \
+    \
+  template localIndex PackDataDevice< true, TYPE, NDIM, USD > \
+    ( buffer_unit_type * &buffer, ArrayView< TYPE const, NDIM, USD > const & var ); \
+  template localIndex PackDataDevice< false, TYPE, NDIM, USD > \
+    ( buffer_unit_type * &buffer, ArrayView< TYPE const, NDIM, USD > const & var ); \
+  template localIndex UnpackDataDevice< TYPE, NDIM, USD > \
+    ( buffer_unit_type const * & buffer, ArrayView< TYPE, NDIM, USD > const & var ); \
+  template localIndex PackDataByIndexDevice< true, TYPE, NDIM, USD > \
+    ( buffer_unit_type * &buffer, \
+    ArrayView< TYPE const, NDIM, USD > const & var, \
+    arrayView1d< const localIndex > const & indices ); \
+  template localIndex PackDataByIndexDevice< false, TYPE, NDIM, USD > \
+    ( buffer_unit_type * &buffer, \
+    ArrayView< TYPE const, NDIM, USD > const & var, \
+    arrayView1d< const localIndex > const & indices ); \
+  template localIndex UnpackDataByIndexDevice< TYPE, NDIM, USD > \
+    ( buffer_unit_type const * & buffer, \
+    ArrayView< TYPE, NDIM, USD > const & var, \
     arrayView1d< const localIndex > const & indices )
 
 #define DECLARE_PACK_UNPACK_UP_TO_2D( TYPE ) \

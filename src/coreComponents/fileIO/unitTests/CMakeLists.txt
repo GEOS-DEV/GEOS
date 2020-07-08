@@ -6,7 +6,7 @@ set(geosx_fileio_tests
    testHDFFile.cpp
    )
 
-set( dependencyList gtest fileIO lvarray managers geosx_core dataRepository )
+set( dependencyList gtest geosx_core )
 
 if ( ENABLE_OPENMP )
   set( dependencyList ${dependencyList} openmp )

@@ -210,6 +210,7 @@ namespace geosx
         globalIndex sz = set.size( );
         if ( sz != 0 )
         {
+	  // this might wind up having to move the meta_idx array back and forth to device a lot
           array1d< globalIndex > meta_idx( sz );
           for( localIndex ii = 0; ii < sz; ++ii )
           {
@@ -350,6 +351,7 @@ namespace geosx
             localIndex sz = set.size( );
             if ( sz > 0 )
             {
+	      // if we could directly transfer a sorted array to an array1d including on device this wouldn't require data movement
               array1d< localIndex > set_idxs;
               set_idxs.insert( 0, set.begin( ), set.end( ) );
               target->PackByIndex( buffer, set_idxs, false, true );

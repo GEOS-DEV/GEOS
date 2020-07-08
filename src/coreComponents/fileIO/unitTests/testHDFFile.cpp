@@ -7,6 +7,12 @@
 
 using namespace geosx;
 
+TEST( testHDFIO, HDFFile )
+{
+  GEOSX_MARK_FUNCTION;
+  HDFFile file( "empty", true );
+}
+
 TEST( testHDFIO, SingleValueHistory )
 {
   string filename("single_value");
@@ -21,11 +27,7 @@ TEST( testHDFIO, SingleValueHistory )
     buffer_unit_type * buffer = io.GetBufferHead( );
     memcpy(buffer,&time,sizeof(real64));
   }
-
   io.Write( );
-
-  //read and check the data using hdf api
-  // remove( filename.c_str() );
 }
 
 TEST( testHDFIO, ArrayHistory )

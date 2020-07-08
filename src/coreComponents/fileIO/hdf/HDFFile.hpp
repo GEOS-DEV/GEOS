@@ -303,10 +303,10 @@ class HDFHistIO : public BufferedHistoryIO
   /// @copydoc BufferedHistoryIO::Init( )
   virtual void Init( bool exists_okay ) override
   {
-    array1d<hsize_t> history_file_dims(m_rank+1);
+    std::vector<hsize_t> history_file_dims(m_rank+1);
     history_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
 
-    array1d<hsize_t> dim_chunks(m_rank+1);
+    std::vector<hsize_t> dim_chunks(m_rank+1);
     dim_chunks[0] = 1;
 
     for(hsize_t dd = 1; dd < m_rank+1; ++dd)
@@ -347,16 +347,17 @@ class HDFHistIO : public BufferedHistoryIO
     history_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
 
     m_subcomm = MpiWrapper::Comm_split( m_comm, color, key );
-
     // create a dataset in the file if needed, don't erase file
     if ( m_subcomm != MPI_COMM_NULL )
     {
+      // why is this killing things, only in this context, only on lassen?
       HDFFile target( m_filename, false, m_subcomm );
+      //
       bool in_target = target.CheckInTarget( m_name );
       if( !in_target )
       {
         hid_t dcpl_id = 0;
-        array1d<hsize_t> max_file_dims(history_file_dims);
+	std::vector<hsize_t> max_file_dims(history_file_dims);
         // chunking is required to create an extensible dataset
         dcpl_id = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_chunk(dcpl_id, m_rank+1, &dim_chunks[0]);
@@ -392,12 +393,11 @@ class HDFHistIO : public BufferedHistoryIO
         hid_t dataset = H5Dopen(target, m_name.c_str(), H5P_DEFAULT);
         hid_t filespace = H5Dget_space(dataset);
 
-        array1d<hsize_t> file_offset(m_rank+1);
-        forValuesInSlice(file_offset.toSlice(),[]( hsize_t & val ) { val = 0; });
+	std::vector<hsize_t> file_offset(m_rank+1);
         file_offset[0] = LvArray::integerConversion<hsize_t>(m_write_head);
         file_offset[1] = LvArray::integerConversion<hsize_t>(m_global_idx_offset);
 
-        array1d<hsize_t> buffered_counts(m_rank+1);
+	std::vector<hsize_t> buffered_counts(m_rank+1);
         buffered_counts[0] = LvArray::integerConversion<hsize_t>(max_buffered);
         for( hsize_t dd = 1; dd < m_rank+1; ++dd )
         {
@@ -432,7 +432,7 @@ class HDFHistIO : public BufferedHistoryIO
     if ( m_subcomm != MPI_COMM_NULL )
     {
       HDFFile target( m_filename, false, m_subcomm );
-      array1d<hsize_t> max_file_dims(m_rank+1);
+      std::vector<hsize_t> max_file_dims(m_rank+1);
       max_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_head);
       max_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
       for( hsize_t dd = 2; dd < m_rank+1; ++dd )
@@ -461,7 +461,7 @@ class HDFHistIO : public BufferedHistoryIO
         {
           m_write_limit *= m_overalloc_multiple;
         }
-        array1d<hsize_t> max_file_dims(m_rank+1);
+	std::vector<hsize_t> max_file_dims(m_rank+1);
         max_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
         max_file_dims[1] = LvArray::integerConversion<hsize_t>(m_global_idx_count);
         for( hsize_t dd = 2; dd < m_rank+1; ++dd )
@@ -507,7 +507,7 @@ class HDFHistIO : public BufferedHistoryIO
     size_t m_type_size;
     hsize_t m_type_count; // prod(dims[0:n])
     hsize_t m_rank;
-    array1d<hsize_t> m_dims;
+    std::vector< hsize_t > m_dims;
     string m_name;
     MPI_Comm m_comm;
     MPI_Comm m_subcomm;
