@@ -12,6 +12,7 @@ set( fileIO_headers
 # Specify all sources
 #
 set( fileIO_sources
+     hdf/HDFFile.cpp
      silo/SiloFile.cpp
      schema/schemaUtilities.cpp )
 
