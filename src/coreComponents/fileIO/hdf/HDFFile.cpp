@@ -1,5 +1,21 @@
+#include "HDFFile.hpp"
+
+#include "managers/Outputs/TimeHistoryOutput.hpp"
+
+#include "mpiCommunications/MpiWrapper.hpp"
+
+#include <hdf5.h>
+
 namespace geosx
 {
+
+/**
+ * @brief Get the HDF data type for the specified type
+ * @tparam T the type to get info for
+ * @return The HDF-specific data type info for T.
+ */
+template < typename T >
+inline hid_t GetHDFDataType();
 template <>
 inline hid_t GetHDFDataType<char>() { return H5T_NATIVE_CHAR; }
 template <>
@@ -15,7 +31,59 @@ inline hid_t GetHDFDataType<localIndex>() { return H5T_NATIVE_LONG; }
 template <>
 inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
 
-  HDFFile::HDFFile(string const & fnm, bool delete_existing = false, MPI_Comm comm = MPI_COMM_GEOSX) :
+/**
+ * @brief Get the HDF data type from the type_index of the type.
+ * @param type the std::type_index(typeid(T)) of the type T
+ * @return The HDF data type.
+ */
+inline hid_t GetHDFDataType(std::type_index const & type)
+{
+  if ( type == std::type_index(typeid(char)) )
+  {
+    return GetHDFDataType<char>();
+  }
+  else if ( type == std::type_index(typeid(signed char)) )
+  {
+    return GetHDFDataType<signed char>();
+  }
+  else if ( type == std::type_index(typeid(real32)) )
+  {
+    return GetHDFDataType<real32>();
+  }
+  else if ( type == std::type_index(typeid(real64)) )
+  {
+    return GetHDFDataType<real64>();
+  }
+  else if ( type == std::type_index(typeid(integer)) )
+  {
+    return GetHDFDataType<integer>();
+  }
+  else if ( type == std::type_index(typeid(localIndex)) )
+  {
+    return GetHDFDataType<localIndex>();
+  }
+  else if ( type == std::type_index(typeid(globalIndex)) )
+  {
+    return GetHDFDataType<globalIndex>();
+  }
+  else
+  {
+    return GetHDFDataType<char>();
+  }
+}
+
+/**
+ * @brief Get an HDF array data type.
+ * @param type The std::type_index(typeid(T)) of the type T inside the array
+ * @param rank The rank of the array.
+ * @param dims The extent of each dimension of the array.
+ */
+inline hid_t GetHDFArrayDataType(std::type_index const & type, hsize_t const rank, hsize_t const * dims)
+{
+  return H5Tarray_create(GetHDFDataType(type),rank,dims);
+}
+
+  HDFFile::HDFFile(string const & fnm, bool delete_existing, MPI_Comm comm) :
     m_filename(fnm),
     m_file_id(0),
     m_fapl_id(0),
@@ -60,9 +128,9 @@ inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
 			const localIndex * dims,
 			string const & name,
 			std::type_index type_id,
-			localIndex write_head = 0,
-			localIndex init_alloc = 4,
-			MPI_Comm comm = MPI_COMM_GEOSX) :
+			localIndex write_head,
+			localIndex init_alloc,
+			MPI_Comm comm) :
     BufferedHistoryIO(),
     m_filename(filename),
     m_overalloc_multiple(init_alloc),
@@ -84,10 +152,10 @@ inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
       m_dims[dd] = LvArray::integerConversion<hsize_t>( dims[dd] );
       m_type_count *= m_dims[dd];
     }
-    m_data_buffer.resize( m_overalloc_multiple * m_type_size * m_type_count );
+    m_data_buffer.resize( init_alloc * m_type_size * m_type_count );
   }
 
-  virtual void HDFHistIO::Init( bool exists_okay ) override
+  void HDFHistIO::Init( bool exists_okay )
   {
     std::vector<hsize_t> history_file_dims(m_rank+1);
     history_file_dims[0] = LvArray::integerConversion<hsize_t>(m_write_limit);
@@ -163,7 +231,7 @@ inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
     }
   }
 
-  virtual void HDFHistIO::Write( ) override
+  void HDFHistIO::Write( )
   {
     // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
     if( m_subcomm != MPI_COMM_NULL )
@@ -211,7 +279,7 @@ inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
     }
   }
 
-  virtual void HDFHistIO::CompressInFile( ) override
+  void HDFHistIO::CompressInFile( )
   {
     if ( m_subcomm != MPI_COMM_NULL )
     {
@@ -255,12 +323,12 @@ inline hid_t GetHDFDataType<globalIndex>() { return H5T_NATIVE_LLONG; }
     }
   }
 
-  virtual globalIndex HDFHistIO::GetRankOffset( ) override
+  globalIndex HDFHistIO::GetRankOffset( )
   {
     return m_global_idx_offset;
   }
 
-  virtual void HDFHistIO::resizeBuffer( ) override
+  void HDFHistIO::resizeBuffer( )
   {
     size_t osize = m_data_buffer.size();
     // if needed, resize the buffer

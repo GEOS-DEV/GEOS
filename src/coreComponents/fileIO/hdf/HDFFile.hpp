@@ -24,77 +24,13 @@
 #include "common/DataTypes.hpp"
 
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
-#include "managers/Outputs/TimeHistoryOutput.hpp"
-
-#include "mpiCommunications/MpiWrapper.hpp"
-
+#include "managers/TimeHistory/HistoryIO.hpp"
 #include <hdf5.h>
-#include <hdf5_hl.h>
 
 #include <string>
 
 namespace geosx
 {
-
-/**
- * @brief Get the HDF data type for the specified type
- * @tparam T the type to get info for
- * @return The HDF-specific data type info for T.
- */
-template < typename T >
-inline hid_t GetHDFDataType();
-
-/**
- * @brief Get the HDF data type from the type_index of the type.
- * @param type the std::type_index(typeid(T)) of the type T
- * @return The HDF data type.
- */
-inline hid_t GetHDFDataType(std::type_index const & type)
-{
-  if ( type == std::type_index(typeid(char)) )
-  {
-    return GetHDFDataType<char>();
-  }
-  else if ( type == std::type_index(typeid(signed char)) )
-  {
-    return GetHDFDataType<signed char>();
-  }
-  else if ( type == std::type_index(typeid(real32)) )
-  {
-    return GetHDFDataType<real32>();
-  }
-  else if ( type == std::type_index(typeid(real64)) )
-  {
-    return GetHDFDataType<real64>();
-  }
-  else if ( type == std::type_index(typeid(integer)) )
-  {
-    return GetHDFDataType<integer>();
-  }
-  else if ( type == std::type_index(typeid(localIndex)) )
-  {
-    return GetHDFDataType<localIndex>();
-  }
-  else if ( type == std::type_index(typeid(globalIndex)) )
-  {
-    return GetHDFDataType<globalIndex>();
-  }
-  else
-  {
-    return GetHDFDataType<char>();
-  }
-}
-
-/**
- * @brief Get an HDF array data type.
- * @param type The std::type_index(typeid(T)) of the type T inside the array
- * @param rank The rank of the array.
- * @param dims The extent of each dimension of the array.
- */
-inline hid_t GetHDFArrayDataType(std::type_index const & type, hsize_t const rank, hsize_t const * dims)
-{
-  return H5Tarray_create(GetHDFDataType(type),rank,dims);
-}
 
 /**
  * @class HDFTarget

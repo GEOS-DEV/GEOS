@@ -93,7 +93,7 @@ namespace geosx
       {
         // if the record count is zero, this isn't a restart, so delete any existing data
         // this is supposed to be filetype agnostic, so using system interfaces to delete the file would be preferable
-        HDFFile( m_filename, (m_record_count == 0) );
+	HDFFile( m_filename, (m_record_count == 0) );
       }
       for( auto collector_path : m_collector_paths )
       {
