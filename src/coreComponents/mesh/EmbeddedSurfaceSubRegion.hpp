@@ -138,17 +138,40 @@ public:
                               FixedOneToManyRelation const & cellToEdges,
                               BoundedPlane const * fracture );
 
-
-  real64 ComputeHeavisideFunction( R1Tensor nodeCoord,
+  /**
+   * @brief Computes Heaviside function.
+   * @param nodeCoord coordinate of the node
+   * @param k embedded surface cell index
+   * @return value of the Heaviside
+   */
+  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k );
 
+  /**
+   * @brief Get list of intersection points, offset and connectivity list
+   * @param nodeManager the node manager
+   * @param edgeManager the edged manager
+   * @param elemManager the element region manager
+   * @param intersectionPoints coordinates of the intersection points
+   * @param connectivityList connectivity list
+   * @param offSet offset
+   */
   void getIntersectionPoints( NodeManager const & nodeManager,
                               EdgeManager const & edgeManager,
                               ElementRegionManager const & elemManager,
                               array1d< R1Tensor > & intersectionPoints,
                               array1d< localIndex > & connectivityList,
                               array1d< int > & offSet ) const;
-
+  /**
+   * @brief Computeintersection points, offset and connectivity list
+   * @param nodeManager the node manager
+   * @param edgeManager the edged manager
+   * @param elemManager the element region manager
+   * @param intersectionPoints coordinates of the intersection points
+   * @param connectivityList connectivity list
+   * @param offSet offset
+   * @param k embedded surface cell index
+   */
   void ComputeIntersectionPoints( NodeManager const & nodeManager,
                                   EdgeManager const & edgeManager,
                                   ElementRegionManager const & elemManager,

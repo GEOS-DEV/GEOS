@@ -184,11 +184,11 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domai
                                                    ParallelMatrix & matrix,
                                                    ParallelVector & rhs,
                                                    ParallelVector & solution,
-												   bool const setSparsity )
+                                                   bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR(setSparsity);
+  GEOSX_UNUSED_VAR( setSparsity );
   // By not calling dofManager.reorderByRank(), we keep separate dof numbering for each field,
   // which allows constructing separate sparsity patterns for off-diagonal blocks of the matrix.
   // Once the solver moves to monolithic matrix, we can remove this method and just use SolverBase::SetupSystem.
@@ -382,7 +382,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
       {
         // Get rock matrix element subregion
         CellElementSubRegion const * const elementSubRegion = Group::group_cast< CellElementSubRegion const * const >( elemManager->GetRegion( embeddedSurfaceToRegion[k] )->
-                                                                                                   GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+                                                                                                                         GetSubRegion( embeddedSurfaceToSubRegion[k] ));
         CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
         // Get the number of nodes per element
         localIndex const numNodesPerElement = elemsToNodes.size( 1 );
@@ -415,7 +415,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         // Get mechanical moduli tensor
         LinearElasticIsotropic::KernelWrapper const & solidConstitutive =
           Group::group_cast< LinearElasticIsotropic * const >( constitutiveRelations[embeddedSurfaceToRegion[k]][embeddedSurfaceToSubRegion[k]][0] )->
-		  createKernelUpdates();
+            createKernelUpdates();
         solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
 
         // Basis functions derivatives
@@ -560,16 +560,16 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
   real64 nDn[3][3], t1DnSym[3][3], t2DnSym[3][3];
 
   // n dyadic n
-  LvArray::tensorOps::AiBj<3, 3>(nDn, nVec, nVec);
+  LvArray::tensorOps::AiBj< 3, 3 >( nDn, nVec, nVec );
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj<3,3>(t1DnSym, nVec, tVec1);
-  LvArray::tensorOps::plusAiBj<3,3>(t1DnSym, tVec1, nVec);
-  LvArray::tensorOps::scale<3,3>(t1DnSym, 0.5);
+  LvArray::tensorOps::AiBj< 3, 3 >( t1DnSym, nVec, tVec1 );
+  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DnSym, tVec1, nVec );
+  LvArray::tensorOps::scale< 3, 3 >( t1DnSym, 0.5 );
 
-  LvArray::tensorOps::AiBj<3,3>(t2DnSym, nVec, tVec2);
-  LvArray::tensorOps::plusAiBj<3,3>(t2DnSym, tVec2, nVec);
-  LvArray::tensorOps::scale<3,3>(t2DnSym, 0.5);
+  LvArray::tensorOps::AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
+  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DnSym, tVec2, nVec );
+  LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
 
 //  t1DnSym.dyadic_ab( nVec, tVec1 );
 //  t2DnSym.dyadic_ab( nVec, tVec2 );
@@ -612,7 +612,7 @@ SolidMechanicsEmbeddedFractures::
                                  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
                                  arrayView1d< localIndex const > const & embeddedSurfaceToCell,
                                  localIndex const numNodesPerElement,
-								 arrayView4d< real64 const > const & dNdX )
+                                 arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -633,9 +633,9 @@ SolidMechanicsEmbeddedFractures::
     heavisideFun = embeddedSurfaceSubRegion.
                      ComputeHeavisideFunction( nodesCoord[ elemsToNodes[embeddedSurfaceToCell[k]][a] ], k );
     // sum contribution of each node
-    mVec[0] -= dNdX(embeddedSurfaceToCell[k], q, a, 0) * heavisideFun;
-    mVec[1] -= dNdX(embeddedSurfaceToCell[k], q, a, 1) * heavisideFun;
-    mVec[2] -= dNdX(embeddedSurfaceToCell[k], q, a, 2) * heavisideFun;
+    mVec[0] -= dNdX( embeddedSurfaceToCell[k], q, a, 0 ) * heavisideFun;
+    mVec[1] -= dNdX( embeddedSurfaceToCell[k], q, a, 1 ) * heavisideFun;
+    mVec[2] -= dNdX( embeddedSurfaceToCell[k], q, a, 2 ) * heavisideFun;
   }
 
   BlasLapackLA::matrixScale( 0, compMatrix );
@@ -645,22 +645,22 @@ SolidMechanicsEmbeddedFractures::
   real64 nDmSym[3][3], t1DmSym[3][3], t2DmSym[3][3];
 
   // sym(n dyadic m)
-  LvArray::tensorOps::AiBj<3,3>(nDmSym, mVec, nVec);
-  LvArray::tensorOps::plusAiBj<3,3>(nDmSym, nVec, mVec);
-  LvArray::tensorOps::scale<3,3>(nDmSym, 0.5);
+  LvArray::tensorOps::AiBj< 3, 3 >( nDmSym, mVec, nVec );
+  LvArray::tensorOps::plusAiBj< 3, 3 >( nDmSym, nVec, mVec );
+  LvArray::tensorOps::scale< 3, 3 >( nDmSym, 0.5 );
 //  nDmSym.dyadic_ab( mVec, nVec );
 //  nDm.dyadic_ab( nVec, mVec );
 //  nDmSym += nDm;
 //  nDmSym *= 0.5;
 
   // sym(n dyadic t1) and sym (n dyadic t2)
-  LvArray::tensorOps::AiBj<3,3>(t1DmSym, mVec, tVec1);
-  LvArray::tensorOps::plusAiBj<3,3>(t1DmSym, tVec1, mVec);
-  LvArray::tensorOps::scale<3,3>(t1DmSym, 0.5);
+  LvArray::tensorOps::AiBj< 3, 3 >( t1DmSym, mVec, tVec1 );
+  LvArray::tensorOps::plusAiBj< 3, 3 >( t1DmSym, tVec1, mVec );
+  LvArray::tensorOps::scale< 3, 3 >( t1DmSym, 0.5 );
 
-  LvArray::tensorOps::AiBj<3,3>(t2DmSym, mVec, tVec2);
-  LvArray::tensorOps::plusAiBj<3,3>(t2DmSym, tVec2, mVec);
-  LvArray::tensorOps::scale<3,3>(t2DmSym, 0.5);
+  LvArray::tensorOps::AiBj< 3, 3 >( t2DmSym, mVec, tVec2 );
+  LvArray::tensorOps::plusAiBj< 3, 3 >( t2DmSym, tVec2, mVec );
+  LvArray::tensorOps::scale< 3, 3 >( t2DmSym, 0.5 );
 
 //  t1DmSym.dyadic_ab( mVec, tVec1 );
 //  t2DmSym.dyadic_ab( mVec, tVec2 );
@@ -696,7 +696,7 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
                                                               localIndex const elIndex,
                                                               localIndex const q,
                                                               localIndex const numNodesPerElement,
-															  arrayView4d< real64 const > const & dNdX )
+                                                              arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
   strainMatrix = 0.0; // make 0
@@ -704,18 +704,18 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
   for( integer a=0; a<numNodesPerElement; ++a )
   {
 
-    strainMatrix( 0, a*3 + 0 ) = dNdX(elIndex, q, a, 0);
-    strainMatrix( 1, a*3 + 1 ) = dNdX(elIndex, q, a, 1);
-    strainMatrix( 2, a*3 + 2 ) = dNdX(elIndex, q, a, 2);
+    strainMatrix( 0, a*3 + 0 ) = dNdX( elIndex, q, a, 0 );
+    strainMatrix( 1, a*3 + 1 ) = dNdX( elIndex, q, a, 1 );
+    strainMatrix( 2, a*3 + 2 ) = dNdX( elIndex, q, a, 2 );
 
-    strainMatrix( 3, a*3 + 1 ) = dNdX(elIndex, q, a, 2);
-    strainMatrix( 3, a*3 + 2 ) = dNdX(elIndex, q, a, 1);
+    strainMatrix( 3, a*3 + 1 ) = dNdX( elIndex, q, a, 2 );
+    strainMatrix( 3, a*3 + 2 ) = dNdX( elIndex, q, a, 1 );
 
-    strainMatrix( 4, a*3 + 0 ) = dNdX(elIndex, q, a, 2);
-    strainMatrix( 4, a*3 + 2 ) = dNdX(elIndex, q, a, 0);
+    strainMatrix( 4, a*3 + 0 ) = dNdX( elIndex, q, a, 2 );
+    strainMatrix( 4, a*3 + 2 ) = dNdX( elIndex, q, a, 0 );
 
-    strainMatrix( 5, a*3 + 0 ) = dNdX(elIndex, q, a, 1);
-    strainMatrix( 5, a*3 + 1 ) = dNdX(elIndex, q, a, 0);
+    strainMatrix( 5, a*3 + 0 ) = dNdX( elIndex, q, a, 1 );
+    strainMatrix( 5, a*3 + 1 ) = dNdX( elIndex, q, a, 0 );
   }
 
 

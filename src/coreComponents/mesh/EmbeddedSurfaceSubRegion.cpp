@@ -147,21 +147,21 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
   {
     edgeIndex = cellToEdges[cellIndex][ke];
     LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][0]] );
-    LvArray::tensorOps::subtract< 3 > (dist, origin);
-    prodScalarProd = LvArray::tensorOps::AiBi< 3 > ( dist, normalVector );
+    LvArray::tensorOps::subtract< 3 >( dist, origin );
+    prodScalarProd = LvArray::tensorOps::AiBi< 3 >( dist, normalVector );
     LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][1]] );
-    LvArray::tensorOps::subtract< 3 > (dist, origin);
-    prodScalarProd *= LvArray::tensorOps::AiBi< 3 > ( dist, normalVector );
+    LvArray::tensorOps::subtract< 3 >( dist, origin );
+    prodScalarProd *= LvArray::tensorOps::AiBi< 3 >( dist, normalVector );
 
     // check if the plane intersects the edge
     if( prodScalarProd < 0 )
     {
       lineDir = LVARRAY_TENSOROPS_INIT_LOCAL_3( nodesCoord[edgeToNodes[edgeIndex][0]] );
-      LvArray::tensorOps::subtract< 3 > ( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
+      LvArray::tensorOps::subtract< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
       LvArray::tensorOps::normalize< 3 >( lineDir );
       //find the intersection point
       point = computationalGeometry::LinePlaneIntersection( lineDir,
-    		                                                nodesCoord[edgeToNodes[edgeIndex][0]],
+                                                            nodesCoord[edgeToNodes[edgeIndex][0]],
                                                             normalVector,
                                                             origin );
 
@@ -211,12 +211,12 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
 
-real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( R1Tensor nodeCoord,
+real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                                            localIndex const k )
 {
   real64 heaviside;
   R1Tensor distanceVector;
-  LvArray::tensorOps::copy< 3 >(distanceVector, nodeCoord);
+  LvArray::tensorOps::copy< 3 >( distanceVector, nodeCoord );
   LvArray::tensorOps::subtract< 3 >( distanceVector, m_elementCenter[k] );
 
   heaviside = LvArray::tensorOps::AiBi< 3 >( distanceVector, m_normalVector[k] ) > 0 ? 1 : 0;
@@ -291,15 +291,15 @@ void EmbeddedSurfaceSubRegion::ComputeIntersectionPoints( NodeManager const & no
       point = computationalGeometry::LinePlaneIntersection( lineDir,
                                                             nodesCoord[edgeToNodes[edgeIndex][0]],
                                                             m_normalVector[k],
-															planeCentre );
+                                                            planeCentre );
 
       localPoints.emplace_back( point );
 
       isNew = true;
       for( int i=0; i < intersectionPoints.size(); i++ )
       {
-    	LvArray::tensorOps::copy< 3 >( distance, point );
-    	LvArray::tensorOps::subtract< 3 >( distance, intersectionPoints[i] );
+        LvArray::tensorOps::copy< 3 >( distance, point );
+        LvArray::tensorOps::subtract< 3 >( distance, intersectionPoints[i] );
         if( LvArray::tensorOps::l2Norm< 3 >( distance ) < 1e-9 )
         {
           isNew = false;

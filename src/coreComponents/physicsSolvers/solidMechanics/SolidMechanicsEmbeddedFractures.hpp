@@ -55,7 +55,7 @@ public:
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
                             ParallelVector & solution,
-							bool const setSparsity = true ) override;
+                            bool const setSparsity = true ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -116,11 +116,29 @@ public:
 
 protected:
 
+  /*
+   * @brief Assemble Equilibrium operator
+   * @param eqMatrix Equilibrium operator
+   * @param embeddedSurfaceSubRegion subRegion
+   * @param k cell index
+   * @param hInv scaling coefficient
+   */
   void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
                                     EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
                                     const localIndex k,
                                     const real64 hInv );
-
+  /*
+   * @brief Assemble Compatibility operator
+   * @param compMatrix
+   * @param embeddedSurfaceSubRegion
+   * @param k cell index
+   * @param q quadrature point index
+   * @param elemsToNodes element to node map
+   * @param nodesCoord nodes coordinates
+   * @param embeddedSurfaceToCell embedded surface to cell maps
+   * @param numNodesPerElement number of nodes per element
+   * @param dNdX shape functions derivatives
+   */
   void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
                                       EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
                                       localIndex const k,
@@ -129,14 +147,28 @@ protected:
                                       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord,
                                       arrayView1d< localIndex const > const & embeddedSurfaceToCell,
                                       localIndex const numNodesPerElement,
-									  arrayView4d< real64 const > const & dNdX );
+                                      arrayView4d< real64 const > const & dNdX );
 
+  /*
+   * @brief Assemble Compatibility operator
+   * @param strainMatrix strain matrix (B)
+   * @param elIndex element index
+   * @param q quadrature point index
+   * @param numNodesPerElement number of nodes per element
+   * @param dNdX shape functions derivatives
+   */
   void AssembleStrainOperator( array2d< real64 > & strainMatrix,
                                localIndex const elIndex,
                                localIndex const q,
                                localIndex const numNodesPerElement,
-							   arrayView4d< real64 const > const & dNdX );
-
+                               arrayView4d< real64 const > const & dNdX );
+  /*
+   * @brief Computes traction and derivative on each fracture segment.
+   * @param constitutiveManager constant pointer to the constitutive mamanger
+   * @param dispJump displacement jump
+   * @param tractionVector traction vector
+   * @param dTdw Derivative of the traction w.r.t. the jump.
+   */
   void ComputeTraction( ConstitutiveManager const * const constitutiveManager,
                         array1d< real64 >  const & dispJump,
                         array1d< real64 > & tractionVector,
@@ -145,10 +177,13 @@ protected:
 
 private:
 
+  /// Solid mechanics solver name
   string m_solidSolverName;
 
+  /// pointer to the solid mechanics solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
+  /// contact relation name string
   string m_contactRelationName;
 
 };
