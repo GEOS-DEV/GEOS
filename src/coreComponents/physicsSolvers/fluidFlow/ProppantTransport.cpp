@@ -1468,6 +1468,11 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
   }
 
+  forTargetSubRegions( mesh, [&]( localIndex const,
+                                  ElementSubRegionBase & subRegion )
+  {
+    UpdateProppantMobility( subRegion );
+  } );
 
   // update poroMultiplier and transTMultiplier
 

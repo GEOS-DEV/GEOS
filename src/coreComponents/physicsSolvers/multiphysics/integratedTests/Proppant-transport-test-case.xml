@@ -10,7 +10,7 @@
                        proppantDiameter="4.5e-4"
                        frictionCoefficient="0.04"
                        criticalShieldsNumber="0.0"
-                       maxProppantConcentration="0.6"
+                       maxProppantConcentration="0.56"
                        discretization="singlePhaseTPFA"
                        targetRegions="{Fracture}"
                        fluidNames="{water}"
@@ -157,7 +157,7 @@
                          referencePressure="1e5"
                          referenceDensity="1000"
                          compressibility="0.0"
-                         maxProppantConcentration="0.6"
+                         maxProppantConcentration="0.56"
                          referenceViscosity="0.001"
                          referenceProppantDensity="2550.0"/>
 
@@ -167,7 +167,7 @@
                    isCollisionalSlip="0"
                    proppantDensity="2550.0"
                    proppantDiameter="4.5e-4"                   
-                   maxProppantConcentration="0.6"
+                   maxProppantConcentration="0.56"
                                            />
 
     <!-- Below are some dummy parameters that are not used in simulation, but required by silo output  -->

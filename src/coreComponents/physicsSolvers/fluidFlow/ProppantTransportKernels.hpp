@@ -318,6 +318,8 @@ struct FluxKernel
     real64 stencilEdgeToFaceDownDistance = 0;
     real64 edgeLength;
 
+    localIndex numberOfMobileProppantElems = 0;
+    
     for( localIndex i=0; i<numElems; ++i )
     {
 
@@ -355,10 +357,11 @@ struct FluxKernel
       }
 
     }
-
+  
     for( localIndex i=0; i<numElems; ++i )
       weight[i] /= sumOfWeights;
 
+  
     //get averaged edgeDensity and edgeViscosity
 
     for( localIndex i = 0; i < numElems; ++i )
@@ -393,6 +396,9 @@ struct FluxKernel
 
       isProppantMob[i] = isProppantMobile[ei];
 
+      if(isProppantMob[i] == 1)
+        numberOfMobileProppantElems++;        
+      
       for( localIndex c = 0; c < NC; ++c )
       {
 
@@ -417,6 +423,13 @@ struct FluxKernel
 
     }
 
+  
+    real64 proppantFluxCoef = 1.0;
+
+    if( numberOfMobileProppantElems <= 1 )
+      proppantFluxCoef = 0.0;
+    
+  
     real64 transTSum = 0.0;
     real64 Pe = 0.0;
     dPe_dP = 0.0;
@@ -512,7 +525,7 @@ struct FluxKernel
         }
 
       }
-
+    
 
       if( fabs( coefs[i] ) > TINY )
       {
@@ -524,17 +537,17 @@ struct FluxKernel
         dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i] * fluidDens[i] / mixDens[i];
 
 
-        edgeToFaceProppantFlux[i] += edgeToFaceFlux[i];
+        edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
 
         for( localIndex j = 0; j < numElems; ++j )
         {
 
-          dEdgeToFaceProppantFlux_dProppantC[i][j] += dEdgeToFaceFlux_dProppantC[i][j];
+          dEdgeToFaceProppantFlux_dProppantC[i][j] += proppantFluxCoef *dEdgeToFaceFlux_dProppantC[i][j];
 
           for( localIndex c = 0; c < NC; ++c )
           {
 
-            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += dEdgeToFaceFlux_dComponentC[i][j][c];
+            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
 
           }
         }
@@ -544,22 +557,19 @@ struct FluxKernel
 
         // horizontal
 
-        edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * edgeToFaceFlux[i];
+        edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * edgeToFaceFlux[i];
 
-        dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) *
-                                                   edgeToFaceFlux[i];
+        dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) * proppantFluxCoef * edgeToFaceFlux[i];
 
         for( localIndex j = 0; j < numElems; ++j )
         {
 
-          dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
-                                                      dEdgeToFaceFlux_dProppantC[i][j];
+          dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
 
           for( localIndex c = 0; c < NC; ++c )
           {
 
-            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
-                                                            dEdgeToFaceFlux_dComponentC[i][j][c];
+            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
 
           }
 
@@ -583,7 +593,7 @@ struct FluxKernel
         }
 
       }
-
+   
       // note that all the fluid properties are from previous time step
 
       real64 fluidFluxCoef = 1.0;
@@ -875,7 +885,7 @@ struct FluxKernel
 
       localIndex idx1 = i * numDofPerCell; // proppant
 
-      if( isProppantMob[i] == 1 && !(numElems == 1 && stencilEdgeToFaceDownDistance > TINY) )
+      if( isProppantMob[i] == 1 && !(numElems == 1 && coefs[i] > TINY) )
       {
 
         if( edgeToFaceProppantFlux[i] >= 0.0 )
@@ -1316,18 +1326,13 @@ struct ProppantPackVolumeKernel
           Vf = 0.0;
 
           liftH = dH + proppantPackVf[ei] * L;
-          if( liftH > L )
-            liftH = L;
-
+          
           proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
-
 
         }
 
         if( Vf >= 1.0 )
         {
-
-          isProppantMobile[ei] = 0;
 
           proppantExcessPackV[ei] = (Vf - 1.0) * L;
 
@@ -1418,8 +1423,6 @@ struct ProppantPackVolumeKernel
 
       if( Vf >= 1.0 )
       {
-
-        isProppantMobile[ei] = 0;
 
         proppantPackVf[ei] = 1.0;
 
