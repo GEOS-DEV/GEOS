@@ -57,7 +57,6 @@ set(managers_sources
     Outputs/BlueprintOutput.cpp
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
-    TimeHistory/TimeHistoryCollection.cpp
     TimeHistory/PackCollection.cpp
     TimeHistory/SetIndexCollection.cpp
     Functions/FunctionBase.cpp
