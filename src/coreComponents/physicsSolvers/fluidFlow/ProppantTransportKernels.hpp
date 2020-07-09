@@ -319,7 +319,7 @@ struct FluxKernel
     real64 edgeLength;
 
     localIndex numberOfMobileProppantElems = 0;
-    
+
     for( localIndex i=0; i<numElems; ++i )
     {
 
@@ -357,11 +357,11 @@ struct FluxKernel
       }
 
     }
-  
+
     for( localIndex i=0; i<numElems; ++i )
       weight[i] /= sumOfWeights;
 
-  
+
     //get averaged edgeDensity and edgeViscosity
 
     for( localIndex i = 0; i < numElems; ++i )
@@ -396,9 +396,9 @@ struct FluxKernel
 
       isProppantMob[i] = isProppantMobile[ei];
 
-      if(isProppantMob[i] == 1)
-        numberOfMobileProppantElems++;        
-      
+      if( isProppantMob[i] == 1 )
+        numberOfMobileProppantElems++;
+
       for( localIndex c = 0; c < NC; ++c )
       {
 
@@ -423,13 +423,13 @@ struct FluxKernel
 
     }
 
-  
+
     real64 proppantFluxCoef = 1.0;
 
     if( numberOfMobileProppantElems <= 1 )
       proppantFluxCoef = 0.0;
-    
-  
+
+
     real64 transTSum = 0.0;
     real64 Pe = 0.0;
     dPe_dP = 0.0;
@@ -525,7 +525,7 @@ struct FluxKernel
         }
 
       }
-    
+
 
       if( fabs( coefs[i] ) > TINY )
       {
@@ -593,7 +593,7 @@ struct FluxKernel
         }
 
       }
-   
+
       // note that all the fluid properties are from previous time step
 
       real64 fluidFluxCoef = 1.0;
@@ -1326,7 +1326,7 @@ struct ProppantPackVolumeKernel
           Vf = 0.0;
 
           liftH = dH + proppantPackVf[ei] * L;
-          
+
           proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
 
         }
