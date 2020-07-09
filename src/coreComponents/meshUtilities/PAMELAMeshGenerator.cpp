@@ -20,7 +20,6 @@
 
 #include "managers/DomainPartition.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
 #include <math.h>
 
 #include "mpiCommunications/PartitionBase.hpp"
@@ -171,7 +170,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D8" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -214,7 +213,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -249,7 +248,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D6" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -288,7 +287,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( regionName + "_" + cellBlockName );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D5" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -366,9 +365,8 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   for( auto const & polygonPart : polygonPartMap )
   {
     auto const surfacePtr = polygonPart.second;
-    auto const splitLabel = stringutilities::Tokenize( surfacePtr->Label, "_" );
-    string surfaceName = splitLabel[splitLabel.size() -2 ];
 
+    string surfaceName = RetrieveSurfaceName( surfacePtr->Label );
     SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
     for( auto const & subPart : surfacePtr->SubParts )
     {
