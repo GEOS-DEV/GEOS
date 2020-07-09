@@ -62,7 +62,7 @@
 
 
   <ElementRegions>
-    <CellElementRegion name="Domain" cellBlocks="{0_PYRAMID}" materialList="{water, rock}"/>
+    <CellElementRegion name="Domain" cellBlocks="{DEFAULT_PYRAMID}" materialList="{water, rock}"/>
   </ElementRegions>
 
   <Constitutive>
@@ -84,7 +84,7 @@
                component="0"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_PYRAMID"
+               objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -92,7 +92,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_PYRAMID"
+               objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -100,21 +100,21 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_PYRAMID"
+               objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_PYRAMID"
+               objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_PYRAMID"
+               objectPath="ElementRegions/Domain/DEFAULT_PYRAMID"
                fieldName="pressure"
                scale="1e3"/>
     <FieldSpecification name="boundaryPressure"

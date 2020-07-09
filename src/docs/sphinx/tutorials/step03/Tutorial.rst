@@ -26,9 +26,6 @@ The xml input file for this test case is located at:
 
   src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
 
-Domain definition
---------------------
-
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
 .. image:: mesh.png
@@ -36,30 +33,35 @@ We consider the following mesh as a numerical support to the simulations in this
 
 This mesh contains three continuous regions:
 
-  - a Top region (overburden, elementary tag = 1)
-  - a Middle region (reservoir layer, elementary tag = 2)
-  - a Bottom region (underburden, elementary tag = 3)
-
+  - a Top region (overburden, elementary tag = `Overburden`)
+  - a Middle region (reservoir layer, elementary tag = `Reservoir`)
+  - a Bottom region (underburden, elementary tag = `Underburden`)
 
 The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
-
-.. note::
-
-  The GMSH file format starts numbering tags from 1. In GEOSX, the numbering
-  of ``CellElementRegion`` starts from 0. As a consequence, when regions
-  are defined in GEOSX, we substract 1 from the GMSH tag to refer
-  to the same region. The next sections of this tutorial illustrate this.
 
 ------------------------------------
 GEOSX input files
 ------------------------------------
 
+The XML file considered here follows the typical structure of the GEOSX input files:
+
+ #. :ref:`Solver <Solver_tag_field_case>`
+ #. :ref:`Mesh <Mesh_tag_field_case>`
+ #. :ref:`Geometry <Geometry_tag_field_case>`
+ #. :ref:`Events <Events_tag_field_case>`
+ #. :ref:`NumericalMethods <NumericalMethods_tag_field_case>`
+ #. :ref:`ElementRegions <ElementRegions_tag_field_case>`
+ #. :ref:`Constitutive <Constitutive_tag_field_case>`
+ #. :ref:`FieldSpecifications <FieldSpecifications_tag_field_case>`
+ #. :ref:`Outputs <Outputs_tag_field_case>`
+ #. :ref:`Functions <Functions_tag_field_case>`
+
+
+.. _Solver_tag_field_case:
+ 
 Defining a solver
 -----------------
-.. 
-        Solver settings
-        ---------------
 
 Let us inspect the **Solver** XML tags.
 
@@ -82,13 +84,10 @@ The ``NonlinearSolverParameters`` and ``LinearSolverParameters`` are used to set
 numerical solver parameters such as the linear and nonlinear tolerances, the preconditioner and solver types or the maximum number of nonlinear iterations.
 
 
+.. _Mesh_tag_field_case:
 
 Specifying a computational mesh
 ----------------------------------
-.. 
-        ***************************
-        Importing the mesh in GEOSX
-        ***************************
 
 Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
@@ -99,11 +98,11 @@ the mesh ``file`` is included with its relative or absolute path to the location
   :start-after: <!-- SPHINX_FIELD_CASE_MESH -->
   :end-before: <!-- SPHINX_FIELD_CASE_MESH_END -->
 
+
+.. _Geometry_tag_field_case:
+
 Geometry tag
 -----------------
-.. 
-        Defining geometry boxes
-        -------------------------
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
 
@@ -114,11 +113,10 @@ Geometry tag
 
 In order to define a box, the user defines ``xMax`` and ``xMin``, two diagonally opposite nodes of the box.
 
+.. _Events_tag_field_case:
+
 Specifying events
 ------------------------
-..
-        Triggering events
-        -----------------
 
 The events are used here to guide the simulation through time,
 and specify when outputs must be triggered.
@@ -136,11 +134,10 @@ Two ``PeriodicEvent`` are defined.
 - The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds). The ``targetExactTimestep`` is set to 1, meaning that the Event Manager will impose this event will be triggered exactly every 116 days, constraining schedulde decided by application to match this date.
   
 
+.. _NumericalMethods_tag_field_case:
+
 Defining Numerical Methods
 ----------------------------------
-..
-        Numerical methods
-        --------------------------
 
 Defining the numerical method used in the solver, we will provide information on how to discretize our equations. Here a classical two-point flux approximation (TPFA) scheme is used to discretize water fluxes over faces.
 
@@ -155,12 +152,10 @@ For a flow problem, this field is the pressure.
 Here we specified ``targetRegions`` as we only solve flow for reservoir.
 The field under ``coefficientName`` is used during TPFA Transmissibilities construction.
 
+.. _ElementRegions_tag_field_case:
+
 Defining regions in the mesh
 -----------------------------------
-..
-        ************************
-        Running flow simulations
-        ************************
 
 Assuming that the overburden and the underburden are impermeable,
 and flow only happen in the reservoir, we need to define regions.
@@ -173,7 +168,7 @@ There are two methods to achieve this regional solve.
 
                 <ElementRegion>
                 <CellElementRegion name="ReservoirLayer"
-                               cellBlocks="{1_TETRA}"
+                               cellBlocks="{Reservoir_TETRA}"
                                 materialList="{water, rock}">
                 </ElementRegion>
 
@@ -190,11 +185,10 @@ We opt for the latest as it allows to visialize over- and underburdens and to ch
   The material list here was set for a single phase flow problem. This list is subject
   to change if the problem is not a single phase flow problem.
 
+.. _Constitutive_tag_field_case:
+
 Defining material properties with constitutive laws
 -------------------------------------------------------
-..
-        Material definition
-        -------------------
 
 We simulate a single phase flow in the reservoir layer, hence with two types of materials, a fluid (water) and solid (rock).
 
@@ -208,11 +202,10 @@ The constitutive parameters such as the density, the viscosity, and the compress
 .. note::
   To consider an incompressible fluid, the user has to set the compressibility to 0.
 
+.. _FieldSpecifications_tag_field_case:
+
 Defining properties with the FieldSpecifications
 ---------------------------------------------------------------------
-.. 
-        Field specification
-        -------------------
 
 The next step is to specify fields, including:
 
@@ -235,11 +228,10 @@ You may note :
 .. note::
   GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
  
+.. _Outputs_tag_field_case:
+
 Specifying the output formats
 ----------------------------------
-..
-        Defining output
-        ---------------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
 Here, we write files in a format natively readable by Paraview under the tar *VTK*
@@ -252,6 +244,7 @@ Here, we write files in a format natively readable by Paraview under the tar *VT
 .. note::
   The ``name`` keyword defines the name of the output file.
 
+.. _Functions_tag_field_case:
 
 ------------------------------------------------
 Using Functions to specify dependent properties
@@ -272,17 +265,34 @@ The initial pressure and diagonal term of the permeability tensor are also set t
   The varying values imposed in *values* or passed through *voxelFile* are premultiplied by the *scale* attribute from **FieldSpecifications**.
 
 ------------------------------------
-Runnning GEOSX
+Running GEOSX
 ------------------------------------
-..
-        Launching the simulation
-        ---------------------------
 
 The simulation can be launched with:
 
 .. code-block:: console
 
   geosx -i FieldCaseTutorial1.xml
+
+One can notice the correct load of the field function among the starting output messages 
+
+.. code-block:: console
+
+        Adding Mesh: PAMELAMeshGenerator, SyntheticMesh
+        Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
+        Adding Geometric Object: Box, all
+        Adding Geometric Object: Box, source
+        Adding Geometric Object: Box, sink
+        Adding Output: VTK, syntheticReservoirVizFile
+        Adding Event: PeriodicEvent, solverApplications
+        Adding Event: PeriodicEvent, outputs
+           TableFunction: timeInj
+           TableFunction: initialPressureFunc
+           TableFunction: permxFunc
+           TableFunction: permyFunc
+           TableFunction: permzFunc
+        Adding Object CellElementRegion named Reservoir from ObjectManager::Catalog.
+        Adding Object CellElementRegion named Burden from ObjectManager::Catalog.
 
 ------------------------------------
 Visualization of results

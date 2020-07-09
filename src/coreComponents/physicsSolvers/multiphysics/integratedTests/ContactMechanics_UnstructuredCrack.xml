@@ -136,7 +136,7 @@
 
   <ElementRegions>
     <CellElementRegion name="Region"
-                       cellBlocks="{0_HEX,1_HEX}"
+                       cellBlocks="{South_HEX,North_HEX}"
                        materialList="{rock}"/>
 
     <FaceElementRegion name="Fracture"
