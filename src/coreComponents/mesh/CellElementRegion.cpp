@@ -94,8 +94,8 @@ void CellElementRegion::GenerateAggregates( FaceManager const * const faceManage
 
 
   // Compute the connectivity graph
-  LvArray::SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
-                                                  LvArray::integerConversion< idx_t >( nbCellElements ) );
+  SparsityPattern< idx_t, idx_t > graph( LvArray::integerConversion< idx_t >( nbCellElements ),
+                                         LvArray::integerConversion< idx_t >( nbCellElements ) );
   localIndex nbConnections = 0;
   array1d< localIndex > offsetSubRegions( this->GetSubRegions().size() );
   for( localIndex subRegionIndex = 1; subRegionIndex < offsetSubRegions.size(); subRegionIndex++ )

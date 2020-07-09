@@ -1,7 +1,7 @@
-.. _FiniteVolume:
+.. _FiniteVolumeDiscretization:
 
-Finite Volume Discretization
--------------------------------
+Discretization of Finite Volumes
+---------------------------------
 
 In the current implementation of the :ref:`SinglePhaseFlow` and the :ref:`CompositionalMultiphaseFlow`, the discretization is based on a cell-centered finite-volume scheme.
 
