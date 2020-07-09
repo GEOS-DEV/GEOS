@@ -33,20 +33,12 @@ We consider the following mesh as a numerical support to the simulations in this
 
 This mesh contains three continuous regions:
 
-  - a Top region (overburden, elementary tag = 1)
-  - a Middle region (reservoir layer, elementary tag = 2)
-  - a Bottom region (underburden, elementary tag = 3)
-
+  - a Top region (overburden, elementary tag = `Overburden`)
+  - a Middle region (reservoir layer, elementary tag = `Reservoir`)
+  - a Bottom region (underburden, elementary tag = `Underburden`)
 
 The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
-
-.. note::
-
-  The GMSH file format starts numbering tags from 1. In GEOSX, the numbering
-  of ``CellElementRegion`` starts from 0. As a consequence, when regions
-  are defined in GEOSX, we substract 1 from the GMSH tag to refer
-  to the same region. The next sections of this tutorial illustrate this.
 
 ------------------------------------
 GEOSX input files
@@ -176,7 +168,7 @@ There are two methods to achieve this regional solve.
 
                 <ElementRegion>
                 <CellElementRegion name="ReservoirLayer"
-                               cellBlocks="{1_TETRA}"
+                               cellBlocks="{Reservoir_TETRA}"
                                 materialList="{water, rock}">
                 </ElementRegion>
 

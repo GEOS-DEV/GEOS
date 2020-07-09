@@ -10,11 +10,11 @@
   <!-- SPHINX_FIELD_CASE_REGION -->
   <ElementRegions>
     <CellElementRegion name="Reservoir"
-    cellBlocks="{1_TETRA}"
+    cellBlocks="{Reservoir_TETRA}"
     materialList="{water, rock}"/>
     
     <CellElementRegion name="Burden"
-    cellBlocks="{0_TETRA,2_TETRA}"
+    cellBlocks="{Overburden_TETRA, Underburden_TETRA}"
     materialList="{water, rock}"/>
   </ElementRegions>
   <!-- SPHINX_FIELD_CASE_REGION_END -->
@@ -76,7 +76,7 @@
     initialCondition="1"
     component="0"
     setNames="{all}"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="permeability"
     scale="1e-12" 
     functionName="permxFunc" /> 
@@ -85,7 +85,7 @@
     initialCondition="1"
     component="1"
     setNames="{all}"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="permeability"
     scale="1e-12" 
     functionName="permyFunc" /> 
@@ -94,7 +94,7 @@
     initialCondition="1"
     component="2"
     setNames="{all}"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="permeability"
     scale="1e-15" 
     functionName="permzFunc" /> 
@@ -102,27 +102,27 @@
     <FieldSpecification name="referencePorosity"
     initialCondition="1"
     setNames="{all}"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="referencePorosity"
     scale="0.05" />
     
     <FieldSpecification name="initialPressure"
     initialCondition="1"
     setNames="{all}"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="pressure"
     scale="1" 
     functionName="initialPressureFunc" /> 
     
     <FieldSpecification name="sourceTerm"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="pressure"
     scale="1e7"
     setNames="{source}"
     functionName="timeInj" />
     
     <FieldSpecification name="sinkTerm"
-    objectPath="ElementRegions/Reservoir"
+    objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
     fieldName="pressure"
     scale="0.0"
     setNames="{sink}"/>
