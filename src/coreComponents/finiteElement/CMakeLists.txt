@@ -20,6 +20,7 @@ set( finiteElement_headers
      FiniteElementShapeFunctionKernelBase.hpp
      LinearTetrahedronShapeFunctionKernel.hpp
      BiLinearWedgeShapeFunctionKernel.hpp
+     PyramidShapeFunctionKernel.hpp
      TrilinearHexahedronShapeFunctionKernel.hpp
    )
 #
