@@ -254,6 +254,7 @@ public:
 
   ///@}
 
+  /// @copydoc geosx::WrapperBase::getBufferedIOMetadata
   virtual
   HistoryMetadata getBufferedIOMetadata( localIndex const packCount = -1 ) const override final
   {
@@ -283,6 +284,7 @@ public:
   /**
    * @brief function to pack T
    * @param buffer the buffer in which to pack T
+   * @param[in] withMetadata whether to include metadata in the packing
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return number of packed bytes.

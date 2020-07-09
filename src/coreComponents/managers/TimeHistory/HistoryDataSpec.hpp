@@ -60,7 +60,7 @@ public:
   /**
    * @brief Constructor for one-dimensional array types.
    * @param name A name for the underlying information -- used to specify the data name in time history files.
-   * @param dims The extent of the one-dimensional array.
+   * @param count The extent of the one-dimensional array.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
   HistoryMetadata( const string & name, size_t count, std::type_index type ):
@@ -189,7 +189,7 @@ HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, 
 
 /**
  * @brief Produce a HistoryMetada object for one-dimensional LvArray::Array/ArrayView types.
- * @copydetails getFlatArrayMetadata( )
+ * @copydetails getFlatArrayMetadata
  */
 template< typename ARRAY_T >
 inline
@@ -201,7 +201,7 @@ getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_ov
 
 /**
  * @brief Produce a HistoryMetadata object for LvArray::SortedArray/SortedArrayView types.
- * @copydetails getFlatArrayMetadata( )
+ * @copydetails getFlatArrayMetadata
  */
 template< typename ARRAY_T >
 inline
@@ -213,7 +213,7 @@ getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_ov
 
 /**
  * @brief Produce a HistoryMetadata object for multi-dimensional LvArray::Array/ArrayView types.
- * @copydetails getFlatArrayMetadata( )
+ * @copydetails getFlatArrayMetadata
  */
 template< typename ARRAY_T >
 inline
@@ -232,13 +232,14 @@ getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex size_ov
  * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
  * @param type The data of type T to being used for history collection/output.
  * @param size_override Specified in order to overwrite the actual size of the data. Really only here to make the getHistoryMetadata
- * overloaded function consistent,
- *                       but is still functional.
+ * overloaded function consistent, but is still functional.
+ * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename T >
 inline typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & GEOSX_UNUSED_PARAM( type ), localIndex size_override = -1 )
+getHistoryMetadata( string const & name, const T & type, localIndex size_override = -1 )
 {
+  GEOSX_UNUSED_VAR( type );
   size_t size = size_override < 0 ? 0 : LvArray::integerConversion< size_t >( size_override );
   return HistoryMetadata( name, size, std::type_index( typeid(T)));
 }
@@ -249,7 +250,7 @@ getHistoryMetadata( string const & name, const T & GEOSX_UNUSED_PARAM( type ), l
  * @tparam ARRAY_T A history collection/output supported collection type.
  * @param name Unused
  * @param type Unused
- * @param size_overrid Unused
+ * @param size_override Unused
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename ARRAY_T >
@@ -268,7 +269,7 @@ getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex size_o
  * @tparam T A history collection/output unsupported type.
  * @param name Unused
  * @param type Unused
- * @param size_overrid Unused
+ * @param size_override Unused
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename T >

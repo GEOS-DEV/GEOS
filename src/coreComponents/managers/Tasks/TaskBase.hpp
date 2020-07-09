@@ -13,7 +13,7 @@
  */
 
 /**
- * @file TasksBase.hpp
+ * @file TaskBase.hpp
  */
 
 #ifndef TASKBASE_HPP_
@@ -45,11 +45,15 @@ public:
    */
   static string CatalogName() { return "TaskBase"; }
 
+  /// The catalog interface type for TaskBase
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
-  /// Get the catalog interface for the TaskBase
+  /**
+   * @brief Get the catalog interface for the TaskBase
+   * @return the Catalog for TaskBase.
+   */
   static CatalogInterface::CatalogType & GetCatalog();
 
-  /// @copydoc geosx::dataRepository::ExecutableGroup::Execute( )
+  /// @copydoc geosx::dataRepository::ExecutableGroup::Execute
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,

@@ -46,7 +46,7 @@ public:
   /// @copydoc dataRepository::Group::InitializePostSubGroups
   void InitializePostSubGroups( Group * const group ) override;
 
-  /// @copydoc HistoryCollection::GetMetadata
+  /// @copydoc geosx::HistoryCollection::GetMetadata
   virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
 
   /**
@@ -72,21 +72,21 @@ public:
    * @brief Count the number of indices being collected by this process for all sets up to and
    *        excluding the specified set index (see HistoryCollection::GetNumMetaCollectors).
    * @param problem_group The ProblemManager cast to a Group.
-   * @param set_idx The index of the Set to count all other local indices prior to.
+   * @param last_set_idx The index of the Set to count all other local indices prior to.
    * @return The number of indices associate with all Sets locally prior to the specified Set.
    */
   localIndex CountLocalSetIndicesExclusive( Group * problem_group, localIndex last_set_idx = 0 );
 
-  /// @copydoc HistoryCollection::GetNumMetaCollectors
+  /// @copydoc geosx::HistoryCollection::GetNumMetaCollectors
   virtual localIndex GetNumMetaCollectors( ) const override;
 
-  /// @copydoc HistoryCollection::GetMetaCollector
+  /// @copydoc geosx::HistoryCollection::GetMetaCollector
   virtual std::unique_ptr< HistoryCollection > GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset ) override;
 
-  /// @copydoc HistoryCollection::Collect
+  /// @copydoc geosx::HistoryCollection::Collect
   virtual void Collect( Group * domain_group,
-                        real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                        real64 const time_n,
+                        real64 const dt,
                         buffer_unit_type * & buffer ) override;
 
   /// @cond DO_NOT_DOCUMENT
@@ -101,9 +101,13 @@ public:
 protected:
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
+  /// The indices for the specified sets to pack
   std::vector< array1d< localIndex > > m_sets_indices;
+  /// The dataRepository name/path to get history data from
   string m_object_path;
+  /// The (packable) field associated with the specified object to get data from
   string m_field_name;
+  /// The names of the sets to collect history info from
   string_array m_set_names;
 };
 

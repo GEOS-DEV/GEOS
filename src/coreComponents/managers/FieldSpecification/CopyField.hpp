@@ -35,16 +35,27 @@ namespace dataRepository
 class Group;
 }
 
+/**
+ * @class CopyField
+ * @brief A Task to copy a field.
+ */
 class CopyField : public TaskBase
 {
 public:
-
+  /// @copydoc geosx::dataRepository::Group::Group
   explicit CopyField( std::string const & name,
                       Group * const parent );
 
+  /// Destructor
   virtual ~CopyField() override;
 
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string CatalogName() { return "CopyField"; }
+
+  /// @copydoc geosx::TaskBase::Execute
   void Execute( real64 const time_n,
                 real64 const dt,
                 integer const cycleNumber,
@@ -52,12 +63,14 @@ public:
                 real64 const eventProgress,
                 Group * domain ) override;
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto fromString = "from";
     static constexpr auto toString = "to";
     static constexpr auto targetRegionsString = "targetRegions";
   };
+  /// @endcond
 private:
   /// Name of the field to copy
   string m_from;

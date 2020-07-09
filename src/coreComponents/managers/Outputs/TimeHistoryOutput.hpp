@@ -65,12 +65,12 @@ public:
    * @brief Writes out a time history file.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                        dataRepository::Group * GEOSX_UNUSED_PARAM( domain ) ) override;
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        dataRepository::Group * domain ) override;
   /**
    * @brief Writes out a time history file at the end of the simulation.
    * @copydoc ExecutableGroup::Cleanup()
@@ -92,10 +92,15 @@ public:
   /// @endcond
 
 private:
+  /// The paths of the collectors to collect history from.
   string_array m_collector_paths;
+  /// The file format of the time history file.
   string m_format;
+  /// The filename of the time history file.
   string m_filename;
+  /// The discrete number of time history states expected to be written to the file
   integer m_record_count;
+  /// The buffered time history output objects for each collector to collect data into and to use to configure/write to file.
   std::vector< std::pair< std::unique_ptr< BufferedHistoryIO >, std::unique_ptr< BufferedHistoryIO > > > m_io;
 };
 }

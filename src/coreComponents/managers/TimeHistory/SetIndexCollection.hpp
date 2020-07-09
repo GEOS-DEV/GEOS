@@ -13,7 +13,7 @@
  */
 
 /**
- * @file TimeHistoryCollector.hpp
+ * @file SetIndexCollection.hpp
  */
 
 #ifndef GEOSX_SetIndexCollection_HPP_
@@ -37,7 +37,7 @@ public:
  * @brief Constructor
  * @param set_index_offset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set
  * indices.
- * @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+ * @copydoc geosx::dataRepository::Group::Group
  */
   SetIndexCollection( string const & object_path, string const & set_name, globalIndex set_index_offset );
 
@@ -46,13 +46,16 @@ public:
 
 /// @copydoc HistoryCollection::Collect
   virtual void Collect( Group * domain_group,
-                        real64 const GEOSX_UNUSED_PARAM( time_n ),
-                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                        real64 const time_n,
+                        real64 const dt,
                         buffer_unit_type * & buffer ) override;
 
 protected:
+  /// The path of the object to collect set indices from
   string m_object_path;
+  /// The name of the set to collect indices about
   string m_set_name;
+  /// The offset of this MPI rank for just this index set's indices (assuming densely ordered indices)
   globalIndex m_set_index_offset;
 };
 }

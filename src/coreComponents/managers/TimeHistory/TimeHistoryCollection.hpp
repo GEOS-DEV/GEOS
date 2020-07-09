@@ -48,7 +48,7 @@ public:
   /**
    * @brief Get the metadata for what this collector collects.
    * @param domain The ProblemDomain cast to a group.
-   * @retunr A HistoryMetadata object describing  the history data being collected by this collector.
+   * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
   virtual HistoryMetadata GetMetadata( Group * domain )
   {
@@ -101,11 +101,14 @@ public:
    */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
-                        integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                        integer const cycleNumber,
+                        integer const eventCount,
+                        real64 const eventProgress,
                         Group * domain ) override
   {
+    GEOSX_UNUSED_VAR( cycleNumber );
+    GEOSX_UNUSED_VAR( eventCounter );
+    GEOSX_UNUSED_VAR( eventProgress );
     // std::function defines the == and =! comparable against nullptr_t to check the
     //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
     GEOSX_ERROR_IF( m_buffer_call == nullptr,
@@ -135,7 +138,7 @@ public:
 
   /**
    * @brief Get a metadata object relating the the Time variable itself.
-   * @param A HistroyMetadata object describing the Time variable.
+   * @return A HistroyMetadata object describing the Time variable.
    */
   HistoryMetadata GetTimeMetadata( ) const
   {
@@ -144,7 +147,7 @@ public:
 
   /**
    * @brief Register a callback that gives the current head of the time data buffer.
-   * @param buffer_call A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   * @param time_buffer_call A functional that when invoked returns a pointer to the head of a buffer at least large enough to
    *                    serialize one instance of the Time variable into.
    * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
    */
@@ -154,7 +157,9 @@ public:
   }
 
 private:
+  /// Callbacks to get the current time buffer head to write time data into
   std::function< buffer_unit_type *() > m_time_buffer_call;
+  /// Callbacks to get the current buffer head to write history data into
   std::function< buffer_unit_type *() > m_buffer_call;
 };
 

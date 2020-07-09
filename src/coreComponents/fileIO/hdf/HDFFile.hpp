@@ -86,10 +86,15 @@ public:
    */
   virtual operator hid_t() final { return m_file_id; }
 private:
+  /// The filename
   string m_filename;
+  /// The hdf file id
   hid_t m_file_id;
+  /// The hdf file access properties list id
   hid_t m_fapl_id;
+  /// The data tranfer properties list id
   hid_t m_dxpl_id;
+  /// The comminator to operate on the file collectively over
   MPI_Comm m_comm;
 };
 
@@ -103,7 +108,7 @@ public:
   /**
    * @brief Constructor
    * @param filename The filename to perform history output to.
-   * @paran rank The rank of the history data being collected.
+   * @param rank The rank of the history data being collected.
    * @param dims The dimensional extent for each dimension of the history data being collected.
    * @param name The name to use to create/modify the dataset for the history data.
    * @param type_id The std::type_index(typeid(T)) of the underlying data type.
@@ -135,13 +140,13 @@ public:
   /// Destructor
   virtual ~HDFHistIO() { }
 
-  /// @copydoc BufferedHistoryIO::Init( )
+  /// @copydoc geosx::BufferedHistoryIO::Init
   virtual void Init( bool exists_okay ) override;
 
-  /// @copydoc HistoryMetadataIO::Write( )
+  /// @copydoc geosx::HistoryMetadataIO::Write
   virtual void Write( ) override;
 
-  /// @copydoc BufferedHistoryIO::CompressInFile( )
+  /// @copydoc geosx::BufferedHistoryIO::CompressInFile
   virtual void CompressInFile( ) override;
 
   /**
@@ -150,7 +155,7 @@ public:
    */
   inline void ResizeFileIfNeeded( localIndex buffered_count );
 
-  /// @copydoc BufferedHistoryIO::GetRankOffset( )
+  /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
   virtual globalIndex GetRankOffset( ) override;
 
 protected:
@@ -158,20 +163,35 @@ protected:
 
 private:
   // file io params
+  /// The filename to write to
   string m_filename;
+  /// How much to scale the internal and file allocations by when room runs out
   const localIndex m_overalloc_multiple;
+  /// The global index offset for this mpi rank for this data set
   globalIndex m_global_idx_offset;
+  /// The global index count for this mpi rank for this data set
   globalIndex m_global_idx_count;
+  /// The current limit in discrete history counts for this data set in the file
   localIndex m_write_limit;
+  /// The current history count for this data set in the file
   localIndex m_write_head;
   // history metadata
+  /// The underlying data type for this history data set
   hsize_t m_hdf_type;
+  /// The size in byte of the data type
   size_t m_type_size;
+  /// The number of variables of data type in this data set
   hsize_t m_type_count;   // prod(dims[0:n])
+  /// The rank of the data set
   hsize_t m_rank;
+  /// The dimensions of the data set
   std::vector< hsize_t > m_dims;
+  /// The name of the data set
   string m_name;
+  /// The communicator across which the data set is distributed
   MPI_Comm m_comm;
+  /// The communicator with only members of the m_comm comm which have nonzero ammounts of local data (required for chunking output ->
+  /// growing the data size in the file)
   MPI_Comm m_subcomm;
 };
 

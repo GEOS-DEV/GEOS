@@ -60,7 +60,6 @@ public:
    * @brief Perform and intialization needed for time-history output.
    * @param exists_okay Whether it is acceptable for the intended output target to already exist ( false on start from scratch, true on
    * restart ).
-   * @param once Whether the data being written will only be written once or will be written repeatedly ( metadata vs actual time-history
    * data).
    */
   virtual void Init( bool exists_okay ) = 0;
@@ -84,6 +83,7 @@ public:
 
   /**
    * @brief Query the number of history states currently stored in the internal buffer.
+   * @return The number of discrete time history records buffered to be written.
    */
   localIndex GetBufferedCount( ) { return m_buffered_count; }
 protected:
@@ -97,8 +97,11 @@ protected:
     m_buffer_head = &m_data_buffer[0];
   }
 
+  /// The current number of records in the buffer
   localIndex m_buffered_count;
+  /// The write head of the buffer
   buffer_unit_type * m_buffer_head;
+  /// The data buffer containing the history info
   buffer_type m_data_buffer;
 };
 
