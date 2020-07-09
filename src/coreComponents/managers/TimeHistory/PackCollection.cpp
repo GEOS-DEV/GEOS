@@ -59,7 +59,10 @@ void PackCollection::UpdateSetsIndices( Group * problem_group )
       if( set_wrapper != nullptr )
       {
         SortedArrayView< localIndex const > const & set = set_wrapper->reference();
-        m_sets_indices[ set_idx ].insert( 0, set.begin(), set.end() );
+        if( set.size() > 0 )
+        {
+          m_sets_indices[ set_idx ].insert( 0, set.begin(), set.end() );
+        }
       }
       set_idx++;
     }

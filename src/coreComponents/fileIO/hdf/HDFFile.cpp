@@ -157,19 +157,6 @@ HDFHistIO::HDFHistIO( string const & filename,
 
 void HDFHistIO::Init( bool exists_okay )
 {
-  std::vector< hsize_t > history_file_dims( m_rank+1 );
-  history_file_dims[0] = LvArray::integerConversion< hsize_t >( m_write_limit );
-
-  std::vector< hsize_t > dim_chunks( m_rank+1 );
-  dim_chunks[0] = 1;
-
-  for( hsize_t dd = 1; dd < m_rank+1; ++dd )
-  {
-    // a process with chunk size 0 is considered incorrect by hdf5
-    dim_chunks[dd] = m_dims[dd-1];
-    history_file_dims[dd] = m_dims[dd-1];
-  }
-
   globalIndex local_idx_count = LvArray::integerConversion< globalIndex >( m_dims[0] );
 
   int size = MpiWrapper::Comm_size( m_comm );
@@ -184,6 +171,7 @@ void HDFHistIO::Init( bool exists_okay )
   std::vector< globalIndex > counts( size );
   MpiWrapper::Allgather( &local_idx_count, 1, &counts[0], 1, m_comm );
 
+  hsize_t min_idx_count = std::numeric_limits< hsize_t >::max( );
   int key = 0;
   for( int ii = 0; ii < size; ii++ )
   {
@@ -196,14 +184,32 @@ void HDFHistIO::Init( bool exists_okay )
       m_global_idx_offset = m_global_idx_count;
     }
     m_global_idx_count += counts[ii];
+    if( counts[ii] > 0 &&  LvArray::integerConversion< hsize_t >( counts[ii] ) < min_idx_count )
+    {
+      min_idx_count = counts[ii];
+    }
   }
 
-  history_file_dims[1] = LvArray::integerConversion< hsize_t >( m_global_idx_count );
-
   m_subcomm = MpiWrapper::Comm_split( m_comm, color, key );
+
   // create a dataset in the file if needed, don't erase file
   if( m_subcomm != MPI_COMM_NULL )
   {
+    std::vector< hsize_t > history_file_dims( m_rank+1 );
+    history_file_dims[0] = LvArray::integerConversion< hsize_t >( m_write_limit );
+
+    std::vector< hsize_t > dim_chunks( m_rank+1 );
+    dim_chunks[0] = 1;
+
+    for( hsize_t dd = 1; dd < m_rank+1; ++dd )
+    {
+      // a process with chunk size 0 is considered incorrect by hdf5, hence the subcomm
+      dim_chunks[dd] = m_dims[dd-1];
+      history_file_dims[dd] = m_dims[dd-1];
+    }
+    dim_chunks[1] = min_idx_count;
+    history_file_dims[1] = LvArray::integerConversion< hsize_t >( m_global_idx_count );
+
     // why is this killing things, only in this context, only on lassen?
     HDFFile target( m_filename, false, m_subcomm );
     //

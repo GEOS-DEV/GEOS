@@ -61,7 +61,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     }
     collector->RegisterBufferCall( [this]() { return this->m_io.back().first->GetBufferHead( ); } );
     m_io.back().first->Init( ( m_record_count > 0 ) );
-
+    MpiWrapper::Barrier( MPI_COMM_GEOSX );
     if( m_record_count == 0 )
     {
       // do any 1-time metadata output
@@ -80,6 +80,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
         meta_io->Write( );
       }
     }
+    MpiWrapper::Barrier( MPI_COMM_GEOSX );
   }
 }
 
