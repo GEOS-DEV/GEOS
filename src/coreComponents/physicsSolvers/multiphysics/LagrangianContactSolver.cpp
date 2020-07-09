@@ -1531,7 +1531,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
         typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
         // First index: face element. Second index: node
-        real64_array2d nodalArea( 2, 2 );
+        real64 nodalArea[ 2 ][ 2 ];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
         real64 stiffApprox[ 2 ][ 2 ][ 3 ];
@@ -1602,8 +1602,8 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
           // T -> top (index 0), B -> bottom (index 1)
           // Ka(i,i) = KT(i,i) + KB(i,i)
           // Kb(i,i) = KT(i,i) + KB(i,i)
-          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 0 ][ 1 ][ i ] )
-                                        + 1.0 / ( stiffApprox[ 1 ][ 0 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
+          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 1 ][ 0 ][ i ] )
+                                        + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
         }
 
         // Compute R^T * (invK) * R
