@@ -158,6 +158,16 @@ public:
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
                                                localIndex const q ) const override;
 
+  GEOSX_HOST_DEVICE
+  virtual real64 getBulkModulus( localIndex const k ) const {
+    return m_bulkModulus[k];
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getShearModulus( localIndex const k ) const {
+    return m_shearModulus[k];
+  }
+
 private:
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 const > const m_bulkModulus;
