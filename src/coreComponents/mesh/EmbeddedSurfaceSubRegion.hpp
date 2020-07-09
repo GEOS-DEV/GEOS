@@ -139,7 +139,7 @@ public:
                               BoundedPlane const * fracture );
 
 
-  real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, 0 >  const nodeCoord,
+  real64 ComputeHeavisideFunction( R1Tensor nodeCoord,
                                    localIndex const k );
 
   void getIntersectionPoints( NodeManager const & nodeManager,

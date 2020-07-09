@@ -615,6 +615,7 @@ SolidMechanicsEmbeddedFractures::
 								 arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
+
   // Normal and tangent unit vectors
   R1Tensor const nVec  = embeddedSurfaceSubRegion.getNormalVector( k );
   R1Tensor const tVec1 = embeddedSurfaceSubRegion.getTangentVector1( k );
