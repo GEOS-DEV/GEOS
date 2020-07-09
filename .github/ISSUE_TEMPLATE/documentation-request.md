@@ -1,17 +1,19 @@
 ---
 name: Documentation request
 about: Requests to improve on existing documentation
-title: ''
-labels: 'type: documentation', 'new'
+title: '[Documentation] Your Title'
+labels: new, 'type: documentation'
 assignees: ''
 
 ---
 
 **What needs to be documented?**
-
-**What are the deficiencies of the existing documentation?**
-UserGuide, DeveloperGuide, Doxygen, etc.
+A clear and concise description of what needs to be documented.
 
 **What sort of documentation would help?**
+UserGuide, DeveloperGuide, Doxygen, etc.
+
+**What are the deficiencies of the existing documentation?**
+Can existing docs be improved, or is new documentation required.
 
 **Additional notes or context**
