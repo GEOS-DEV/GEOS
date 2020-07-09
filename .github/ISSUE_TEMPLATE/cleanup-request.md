@@ -1,8 +1,8 @@
 ---
 name: Cleanup request
 about: Request code cleanup or refactoring.
-title: ''
-labels: 'type: cleanup / refactor', 'new'
+title: '[Cleanup] Your Title'
+labels: new
 assignees: ''
 
 ---
