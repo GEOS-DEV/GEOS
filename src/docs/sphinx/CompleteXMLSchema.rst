@@ -141,6 +141,13 @@ Element: Contact
 .. include:: ../../coreComponents/fileIO/schema/docs/Contact.rst
 
 
+.. _XML_CopyField:
+
+Element: CopyField
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/CopyField.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -428,6 +435,13 @@ Element: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
 
 
+.. _XML_PackCollection:
+
+Element: PackCollection
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -636,6 +650,13 @@ Element: SymbolicFunction
 Element: TableFunction
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
+
+
+.. _XML_Tasks:
+
+Element: Tasks
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks.rst
 
 
 .. _XML_ThickPlane:
@@ -1382,13 +1403,6 @@ Datastructure: SymbolicFunction
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
-
-
-.. _DATASTRUCTURE_TaskBase:
-
-Datastructure: TaskBase
-=======================
-.. include:: ../../coreComponents/fileIO/schema/docs/TaskBase_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:

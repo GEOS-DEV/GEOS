@@ -28,22 +28,23 @@ using namespace LvArray;
 TasksManager::TasksManager( std::string const & name,
                             Group * const parent ):
   Group( name, parent )
-{ }
+{
+  setInputFlags( InputFlags::OPTIONAL );
+}
 
 TasksManager::~TasksManager()
 { }
 
 Group * TasksManager::CreateChild( string const & childKey, string const & childName )
 {
-  std::unique_ptr< TaskBase > tool = TaskBase::CatalogInterface::Factory( childKey, childName, this );
-  return this->RegisterGroup( childName, std::move( tool ) );
+  std::unique_ptr< TaskBase > task = TaskBase::CatalogInterface::Factory( childKey, childName, this );
+  return this->RegisterGroup< TaskBase >( childName, std::move( task ) );
 }
-
 
 void TasksManager::ExpandObjectCatalogs()
 {
-  // During schema generation, register one of each type derived from SolverBase here
-  for( auto & catalogIter: TaskBase::GetCatalog())
+  // During schema generation, register one of each type derived from TaskBase here
+  for( auto & catalogIter: TaskBase::GetCatalog() )
   {
     CreateChild( catalogIter.first, catalogIter.first );
   }

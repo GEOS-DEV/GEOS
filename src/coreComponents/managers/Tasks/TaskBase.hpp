@@ -37,23 +37,7 @@ public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
   explicit TaskBase( std::string const & name,
                      Group * const parent );
-  /**
-   * @brief Universal reference copy constructor
-   * @param The other TaskBase
-   */
-  TaskBase( TaskBase && ) = default;
-
-  /// Destructor
-  virtual ~TaskBase() override;
-
-  /// Delete default constructor
-  TaskBase() = delete;
-  /// Delete copy constructor
-  TaskBase( TaskBase const & ) = delete;
-  /// Delete assignment constructor
-  TaskBase & operator=( TaskBase const & ) = delete;
-  /// Delete universal reference assignment constructor
-  TaskBase & operator=( TaskBase && ) = delete;
+  virtual ~TaskBase( ) override;
 
   /**
    * @brief Catalog name interface
@@ -64,6 +48,23 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< TaskBase, std::string const &, Group * const >;
   /// Get the catalog interface for the TaskBase
   static CatalogInterface::CatalogType & GetCatalog();
+
+  /// @copydoc geosx::dataRepository::ExecutableGroup::Execute( )
+  virtual void Execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        dataRepository::Group * domain ) override
+  {
+    GEOSX_UNUSED_VAR( time_n );
+    GEOSX_UNUSED_VAR( dt );
+    GEOSX_UNUSED_VAR( cycleNumber );
+    GEOSX_UNUSED_VAR( eventCounter );
+    GEOSX_UNUSED_VAR( eventProgress );
+    GEOSX_UNUSED_VAR( domain );
+    GEOSX_ERROR( "NOT IMPLEMENTED" );
+  }
 
   /// @copydoc geosx::dataRepository::Group::PostProcessInput( )
   void PostProcessInput() override;

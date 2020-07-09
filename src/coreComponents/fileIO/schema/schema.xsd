@@ -169,6 +169,7 @@
 			<xsd:element name="NumericalMethods" type="NumericalMethodsType" maxOccurs="1" />
 			<xsd:element name="Outputs" type="OutputsType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="Solvers" type="SolversType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />
@@ -1345,6 +1346,32 @@
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="TasksType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CopyField" type="CopyFieldType" />
+			<xsd:element name="PackCollection" type="PackCollectionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CopyFieldType">
+		<!--from => Name of the field to copy.-->
+		<xsd:attribute name="from" type="string" use="required" />
+		<!--targetRegions => Regions on which the copy will be done.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--to => Name of the field that will be created and filled.-->
+		<xsd:attribute name="to" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PackCollectionType">
+		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->
+		<xsd:attribute name="fieldName" type="string" use="required" />
+		<!--objectPath => The name of the object from which to retrieve field values.-->
+		<xsd:attribute name="objectPath" type="string" use="required" />
+		<!--setNames => The set(s) for which to retrieve data.-->
+		<xsd:attribute name="setNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

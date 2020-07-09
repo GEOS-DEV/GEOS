@@ -13,8 +13,8 @@ set(managers_headers
     Outputs/SiloOutput.hpp
     Outputs/RestartOutput.hpp
     Outputs/TimeHistoryOutput.hpp
-    Tasks/TaskBase.hpp
     Tasks/TasksManager.hpp
+    Tasks/TaskBase.hpp
     TimeHistory/TimeHistoryCollection.hpp
     TimeHistory/PackCollection.hpp
     TimeHistory/SetIndexCollection.hpp

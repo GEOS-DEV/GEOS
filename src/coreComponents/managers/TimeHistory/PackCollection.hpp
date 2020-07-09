@@ -31,6 +31,10 @@ namespace geosx
 class PackCollection : public HistoryCollection
 {
 public:
+  /**
+   * @brief Constructor
+   * @copydetails dataRepository::Group::Group( string const & name, Group * parent );
+   */
   PackCollection ( string const & name, Group * parent );
 
   /**
@@ -39,11 +43,22 @@ public:
    */
   static string CatalogName() { return "PackCollection"; }
 
+  /// @copydoc dataRepository::Group::InitializePostSubGroups
   void InitializePostSubGroups( Group * const group ) override;
 
   /// @copydoc HistoryCollection::GetMetadata
   virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
 
+  /**
+   * @brief Update the indices related to the sets being collected.
+   * @param problem_group The problem manager cast to a group.
+   * @note This is only required because we don't want to copy/move the
+   *       indices each collection execution, becuase that causes data movement
+   *       when collecting data from the device.
+   * @note Refactoring the packing functions to allow direct usage of set indices
+   *       from SortedArrayView instead of only ArrayViews will remove this
+   *       duplication.
+   */
   void UpdateSetsIndices( Group * problem_group );
 
   /**

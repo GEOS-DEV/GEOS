@@ -42,14 +42,7 @@ public:
   explicit CopyField( std::string const & name,
                       Group * const parent );
 
-  CopyField( CopyField && ) = default;
-
   virtual ~CopyField() override;
-
-  CopyField() = delete;
-  CopyField( CopyField const & ) = delete;
-  CopyField & operator=( CopyField const & ) = delete;
-  CopyField & operator=( CopyField && ) = delete;
 
   static string CatalogName() { return "CopyField"; }
   void Execute( real64 const time_n,

@@ -72,7 +72,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
       {
         std::unique_ptr< HistoryCollection > meta_collector = collector->GetMetaCollector( group, meta_idx, global_rank_offset );
         HistoryMetadata meta_metadata = meta_collector->GetMetadata( group );
-        meta_metadata.setName( metadata.getName() + " " +meta_metadata.getName());
+        meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
         std::unique_ptr< HDFHistIO > meta_io = std::make_unique< HDFHistIO >( m_filename, meta_metadata, 0, 1 );
         meta_collector->RegisterBufferCall( [&meta_io] () { return meta_io->GetBufferHead( ); } );
         meta_io->Init( false );
@@ -118,5 +118,6 @@ void TimeHistoryOutput::Cleanup( real64 const time_n,
     }
   }
 }
-REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, std::string const &, Group * const );
+
+REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, std::string const &, Group * const )
 }

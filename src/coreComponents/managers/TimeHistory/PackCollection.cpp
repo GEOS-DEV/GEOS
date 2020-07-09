@@ -28,7 +28,6 @@ void PackCollection::InitializePostSubGroups( Group * const group )
   UpdateSetsIndices( group );
 }
 
-/// @copydoc HistoryCollection::GetMetadata
 HistoryMetadata PackCollection::GetMetadata( Group * problem_group )
 {
   localIndex num_indices = CountLocalSetIndices( problem_group );
@@ -134,5 +133,5 @@ void PackCollection::Collect( Group * domain_group,
   }
 }
 
-REGISTER_CATALOG_ENTRY( TaskBase, PackCollection, std::string const &, Group * const );
+REGISTER_CATALOG_ENTRY( TaskBase, PackCollection, std::string const &, Group * const )
 }

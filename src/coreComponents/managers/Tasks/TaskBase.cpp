@@ -26,7 +26,9 @@ using namespace dataRepository;
 TaskBase::TaskBase( std::string const & name,
                     Group * const parent ):
   ExecutableGroup( name, parent )
-{}
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+}
 
 TaskBase::~TaskBase()
 { }
@@ -37,9 +39,7 @@ TaskBase::CatalogInterface::CatalogType & TaskBase::GetCatalog()
   return catalog;
 }
 
-
 void TaskBase::PostProcessInput()
 { }
-
 
 } /* namespace */
