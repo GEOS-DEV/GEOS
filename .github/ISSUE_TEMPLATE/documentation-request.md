@@ -2,7 +2,7 @@
 name: Documentation request
 about: Requests to improve on existing documentation
 title: '[Documentation] Your Title'
-labels: new, 'type: documentation'
+labels: new
 assignees: ''
 
 ---
