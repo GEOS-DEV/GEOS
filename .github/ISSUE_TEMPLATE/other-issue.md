@@ -1,7 +1,7 @@
 ---
 name: Other issue
 about: For all other issues
-title: ''
+title: '[Other] Your Title'
 labels: new
 assignees: ''
 
