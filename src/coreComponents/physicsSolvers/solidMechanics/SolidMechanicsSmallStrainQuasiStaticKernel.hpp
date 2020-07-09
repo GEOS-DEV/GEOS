@@ -338,7 +338,7 @@ public:
                                      m_gravityVector[2] * m_density( k, q ) };
 
     real64 N[NUM_NODES_PER_ELEM];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
+    FE_TYPE::shapeFunctionValues( q, N );
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       stack.localResidual[ a * 3 + 0 ] -= ( stress[ 0 ] * m_dNdX( k, q, a, 0 ) +
