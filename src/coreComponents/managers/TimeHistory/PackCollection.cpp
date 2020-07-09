@@ -121,7 +121,7 @@ void PackCollection::Collect( Group * domain_group,
         localIndex sz = set.size( );
         if( sz > 0 )
         {
-          // if we could directly transfer a sorted array to an array1d including on device this wouldn't require data movement
+          // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the indices internally
           target->PackByIndex( buffer, m_sets_indices[ set_idx ], false, true );
         }
       }

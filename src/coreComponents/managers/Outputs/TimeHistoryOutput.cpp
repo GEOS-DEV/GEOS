@@ -34,10 +34,8 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
 {
-  // handle recreating the file up front to avoid issues with creating/adding multiple datasets to the file on seperate file accesses
   {
-    // if the record count is zero, this isn't a restart, so delete any existing data
-    // this is supposed to be filetype agnostic, so using system interfaces to delete the file would be preferable
+    // check whether to truncate or append to the file up front so we don't have to bother during later accesses
     HDFFile( m_filename, (m_record_count == 0) );
   }
   for( auto collector_path : m_collector_paths )
