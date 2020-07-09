@@ -4,7 +4,7 @@
     <LagrangianContact name="lagrangiancontact"
                        solidSolverName="lagsolve"
                        stabilizationName="TPFAstabilization"
-                       logLevel="1"
+                       logLevel="0"
                        activeSetMaxIter="10"
                        targetRegions="{Region, Fracture}"
                        contactRelationName="fractureMaterial">
@@ -14,8 +14,8 @@
                                  lineSearchAction="2"
                                  lineSearchMaxCuts="2"
                                  maxTimeStepCuts="2"/>
-      <LinearSolverParameters solverType="direct"
-                              logLevel="0"/>
+      <SystemSolverParameters logLevel="0"
+                              useDirectSolver="1"/>
     </LagrangianContact>
 
     <SolidMechanicsLagrangianSSLE name="lagsolve"
@@ -26,7 +26,7 @@
                                   solidMaterialNames="{rock}">
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
-      <LinearSolverParameters krylovTol="1.0e-10"
+      <SystemSolverParameters krylovTol="1.0e-10"
                               logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
@@ -36,8 +36,7 @@
                       fractureRegion="Fracture"
                       targetRegions="{Region}"
                       solidMaterialNames="{rock}"
-                      rockToughness="1.0e6"
-                      mpiCommOrder="1">
+                      rockToughness="1.0e6">
     </SurfaceGenerator>
   </Solvers>
 
@@ -74,21 +73,31 @@
          xMax=" 4.01, 20.01,  0.01"/>
   </Geometry>
 
-  <Events maxTime="20.0">
+  <Events maxTime="10.0">
     <SoloEvent name="initialPlot"
               target="/Outputs/siloOutput"/>
+
+    <!--SoloEvent
+      name="initialPlot"
+      target="/Outputs/vtkOutput"
+      /-->
 
     <SoloEvent name="preFracture"
                target="/Solvers/SurfaceGen" />
 
+    <!--SoloEvent name="preFracturePlot"
+               target="/Outputs/siloOutput" /-->
+
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
     <PeriodicEvent name="solverApplications"
                    beginTime="0.0"
-                   endTime="20.0"
+                   endTime="80.0"
                    forceDt="1.0"
                    target="/Solvers/lagrangiancontact" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="10.0"
+                   timeFrequency="5.0"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
 
@@ -146,7 +155,7 @@
                                 referencePressure="2.125e6" />
     <MohrCoulomb name="fractureMaterial"
                  cohesion="0.0"
-                 frictionCoefficient="0.577350269189626" />
+                 frictionCoefficient="0.577350269" />
   </Constitutive>
 
   <FieldSpecifications>
@@ -210,6 +219,7 @@
                         objectPath="faceManager"
                         fieldName="Traction"
                         component="0"
+                        functionName="ForceTimeFunction"
                         scale="-1.0e0"
                         setNames="{front}"/>
 
@@ -225,8 +235,8 @@
   <Functions>
     <TableFunction name="ForceTimeFunction"
                    inputVarNames="{time}"
-                   coordinates="{0.0, 10.0, 20.0}"
-                   values="{0.0, 5.e0, 0.e0}" />
+                   coordinates="{0.0, 5.0, 10.0}"
+                   values="{0.0, 5.e0, -5.e0}" />
   </Functions>
 
   <Outputs>

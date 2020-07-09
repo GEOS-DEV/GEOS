@@ -21,6 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 //This is an include of PAMELA
 #include "Mesh/Mesh.hpp"
@@ -92,6 +93,33 @@ protected:
    * any other initialization operations.
    */
   void PostProcessInput() override final;
+
+  /*!
+   * @brief Make a region label which is composed of the name of the region and the type
+   * @details Some examples :
+   * If the region names are not specified in the input mesh file, there will one region per type of cells
+   * such as DEFAULT_TETRA, DEFAULT_HEX etc. Otherwise, if the region names are set it will be RESERVOIR_TETRA;
+   * RESERVOIR_HEX etc
+   * @param[in] regionName the name of the region
+   * @param[in] regionCellType the type of the cells (TETRA, HEX, WEDGE or PYRAMID)
+   * @return the region label
+   */
+  string MakeRegionLabel( string const & regionName, string const & regionCellType )
+  {
+    return regionName + "_" + regionCellType;
+  }
+
+  /*!
+   * @brief Knowing the PAMELA Surface label, return a simple unique name for GEOSX
+   * @details surface labels in PAMELA are composed of different informations such as the index, the type of facets etc)
+   * @param[in] pamelaSurfaceLabel the surface label within PAMELA
+   * @return the name of the surface
+   */
+  string RetrieveSurfaceName( string const & pamelaSurfaceLabel )
+  {
+    auto const splitLabel = stringutilities::Tokenize( pamelaSurfaceLabel, "_" );
+    return splitLabel[splitLabel.size() -2 ];
+  }
 
 private:
 

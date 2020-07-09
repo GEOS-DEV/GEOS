@@ -247,7 +247,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                               m_rhs,
                                               m_solution );
 
-      m_solidSolver->updateStress( domain );
+//      m_solidSolver->updateStress( domain );
 
       if( surfaceGenerator!=nullptr )
       {
@@ -268,10 +268,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       else
       {
         std::map< string, string_array > fieldNames;
-        fieldNames["node"].push_back( keys::IncrementalDisplacement );
-        fieldNames["node"].push_back( keys::TotalDisplacement );
-        fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
-        fieldNames["elems"].push_back( "elementAperture" );
+        fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
+        fieldNames["node"].emplace_back( keys::TotalDisplacement );
+        fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
+        fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::SynchronizeFields( fieldNames,
                                                domain->getMeshBody( 0 )->getMeshLevel( 0 ),
@@ -408,7 +408,7 @@ real64 HydrofractureSolver::SplitOperatorStep( real64 const & GEOSX_UNUSED_PARAM
 //  {
 //    if (iter == 0)
 //    {
-//      // reset the states of all slave solvers if any of them has been reset
+//      // reset the states of all child solvers if any of them has been reset
 //      m_flowSolver->ResetStateToBeginningOfStep( domain );
 //      m_solidSolver->ResetStateToBeginningOfStep( domain );
 //      ResetStateToBeginningOfStep( domain );
@@ -513,7 +513,7 @@ void HydrofractureSolver::SetupDofs( DomainPartition const * const domain,
   string_array fractureRegions;
   elemManager->forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
   {
-    fractureRegions.push_back( elementRegion.getName() );
+    fractureRegions.emplace_back( elementRegion.getName() );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -526,7 +526,8 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                                        DofManager & dofManager,
                                        ParallelMatrix & matrix,
                                        ParallelVector & rhs,
-                                       ParallelVector & solution )
+                                       ParallelVector & solution,
+                                       bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -535,13 +536,15 @@ void HydrofractureSolver::SetupSystem( DomainPartition * const domain,
                               m_solidSolver->getDofManager(),
                               m_solidSolver->getSystemMatrix(),
                               m_solidSolver->getSystemRhs(),
-                              m_solidSolver->getSystemSolution() );
+                              m_solidSolver->getSystemSolution(),
+                              false );
 
   m_flowSolver->SetupSystem( domain,
                              m_flowSolver->getDofManager(),
                              m_flowSolver->getSystemMatrix(),
                              m_flowSolver->getSystemRhs(),
-                             m_flowSolver->getSystemSolution() );
+                             m_flowSolver->getSystemSolution(),
+                             setSparsity );
 
   // setup coupled DofManager
   m_dofManager.setMesh( domain, 0, 0 );
@@ -1223,6 +1226,12 @@ HydrofractureSolver::
 }
 
 #ifdef GEOSX_LA_INTERFACE_TRILINOS
+
+// For some reason this needs to be defined when using cuda
+#if defined( __CUDACC__)
+#define KOKKOS_ENABLE_SERIAL_ATOMICS
+#endif
+
 #include "Epetra_FEVector.h"
 #include "Epetra_FECrsMatrix.h"
 #include "EpetraExt_MatrixMatrix.h"
@@ -1638,6 +1647,8 @@ void HydrofractureSolver::SolveSystem( DofManager const & GEOSX_UNUSED_PARAM( do
     p_solution[1]->Print( std::cout );
 
   }
+#else
+  GEOSX_ERROR( "Only implemented for trilinos." );
 #endif
 }
 

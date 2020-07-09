@@ -69,7 +69,7 @@
 
   <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS -->
   <ElementRegions>
-    <CellElementRegion name="Domain" cellBlocks="{0_HEX}" materialList="{water, rock}"/>
+    <CellElementRegion name="Domain" cellBlocks="{DEFAULT_HEX}" materialList="{water, rock}"/>
   </ElementRegions>
   <!-- SPHINX_TUT_EXT_HEX_ELEM_REGIONS_END -->
 
@@ -95,7 +95,7 @@
                component="0"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_HEX"
+               objectPath="ElementRegions/Domain/DEFAULT_HEX"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -103,7 +103,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_HEX"
+               objectPath="ElementRegions/Domain/DEFAULT_HEX"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -111,21 +111,21 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_HEX"
+               objectPath="ElementRegions/Domain/DEFAULT_HEX"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_HEX"
+               objectPath="ElementRegions/Domain/DEFAULT_HEX"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/0_HEX"
+               objectPath="ElementRegions/Domain/DEFAULT_HEX"
                fieldName="pressure"
                scale="1e3"/>
     <FieldSpecification name="boundaryPressure"

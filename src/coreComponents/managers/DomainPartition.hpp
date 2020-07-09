@@ -68,6 +68,7 @@ public:
    * @name Default, copy and assignment constructors are deleted.
    */
   ///@{
+  /// @cond DO_NOT_DOCUMENT
   DomainPartition() = delete;
 
   DomainPartition( DomainPartition const & ) = delete;
@@ -77,6 +78,7 @@ public:
   DomainPartition & operator=( DomainPartition const & ) = delete;
 
   DomainPartition & operator=( DomainPartition && ) = delete;
+  /// @endcond
   ///@}
 
   /**

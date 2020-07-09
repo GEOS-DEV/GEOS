@@ -714,28 +714,28 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--outputFullQuadratureData => If true writes out data associated with every quadrature point.-->
 		<xsd:attribute name="outputFullQuadratureData" type="integer" default="0" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotLevel => Determines which fields to write.-->
 		<xsd:attribute name="plotLevel" type="geosx_dataRepository_PlotLevel" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ChomboIOType">
 		<!--beginCycle => Cycle at which the coupling will commence.-->
 		<xsd:attribute name="beginCycle" type="real64" use="required" />
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--inputPath => Path at which the chombo to geosx file will be written.-->
 		<xsd:attribute name="inputPath" type="string" default="/INVALID_INPUT_PATH" />
 		<!--outputPath => Path at which the geosx to chombo file will be written.-->
 		<xsd:attribute name="outputPath" type="string" use="required" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--useChomboPressures => True iff geosx should use the pressures chombo writes out.-->
 		<xsd:attribute name="useChomboPressures" type="integer" default="0" />
 		<!--waitForInput => True iff geosx should wait for chombo to write out a file. When true the inputPath must be set.-->
@@ -744,22 +744,22 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RestartType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SiloType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => (no description available)-->
 		<xsd:attribute name="plotFileRoot" type="string" default="plot" />
 		<!--plotLevel => (no description available)-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--writeCellElementMesh => (no description available)-->
 		<xsd:attribute name="writeCellElementMesh" type="integer" default="1" />
 		<!--writeEdgeMesh => (no description available)-->
@@ -772,14 +772,14 @@
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VTKType">
+		<!--childDirectory => Child directory path-->
+		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => (no description available)-->
 		<xsd:attribute name="plotFileRoot" type="string" default="" />
 		<!--plotLevel => (no description available)-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
-		<!--slaveDirectory => slave directory path-->
-		<xsd:attribute name="slaveDirectory" type="string" default="" />
 		<!--writeBinaryData => Output the data in binary format-->
 		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
 		<!--writeFEMFaces => (no description available)-->
@@ -1253,6 +1253,8 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
+		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1296,6 +1298,8 @@
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" default="none" />
+		<!--effectiveStress => Apply fluid pressure to produce effective stress when integrating stress.-->
+		<xsd:attribute name="effectiveStress" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
@@ -1370,6 +1374,7 @@
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
 			<xsd:element name="MohrCoulomb" type="MohrCoulombType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
+			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
@@ -1559,6 +1564,10 @@
 		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
 		<!--phasePVTParaFiles => List of the names of the files including PVT function parameters-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="NullModelType">
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

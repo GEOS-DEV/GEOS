@@ -83,6 +83,8 @@ public:
   FaceElementSubRegion( string const & name,
                         dataRepository::Group * const parent );
 
+
+  /// @brief Destructor
   virtual ~FaceElementSubRegion() override;
 
   ///@}
@@ -108,7 +110,7 @@ public:
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
@@ -138,6 +140,7 @@ public:
     /// String key for the derivative of the jacobian.
     static constexpr auto detJString = "detJ";
 
+    /// String key for the element aperture
     static constexpr auto elementApertureString        = "elementAperture";
 
     /// Face element area string.

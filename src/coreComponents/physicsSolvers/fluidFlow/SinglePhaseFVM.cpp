@@ -72,14 +72,16 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition * const domain,
                                           DofManager & dofManager,
                                           ParallelMatrix & matrix,
                                           ParallelVector & rhs,
-                                          ParallelVector & solution )
+                                          ParallelVector & solution,
+                                          bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
   BASE::SetupSystem( domain,
                      dofManager,
                      matrix,
                      rhs,
-                     solution );
+                     solution,
+                     setSparsity );
 
   MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -220,7 +222,7 @@ void SinglePhaseFVM< BASE >::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].push_back( viewKeyStruct::deltaPressureString );
+  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
