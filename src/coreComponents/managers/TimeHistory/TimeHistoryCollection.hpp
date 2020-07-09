@@ -102,7 +102,7 @@ public:
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const eventCount,
+                        integer const eventCounter,
                         real64 const eventProgress,
                         Group * domain ) override
   {
