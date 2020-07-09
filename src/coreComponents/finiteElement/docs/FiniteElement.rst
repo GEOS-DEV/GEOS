@@ -2,4 +2,6 @@
 Finite Element Discretization
 -------------------------------
 
-This section describes the Finite Element methods used by FEM solvers.
+We are currently refactoring the finite element infrastructure, and will update the documentation soon
+to reflect the new structure.
+
