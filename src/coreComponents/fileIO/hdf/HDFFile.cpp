@@ -94,7 +94,7 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   if ( m_mpio_fapl )
   {
     m_fapl_id = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( m_fapl_id, MPI_COMM_GEOSX, MPI_INFO_NULL );
+    H5Pset_fapl_mpio( m_fapl_id, m_comm, MPI_INFO_NULL );
     m_filename = fnm;
   }
   else
