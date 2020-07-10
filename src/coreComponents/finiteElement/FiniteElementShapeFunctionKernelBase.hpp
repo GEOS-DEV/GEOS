@@ -34,30 +34,24 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 inverse( real64 (& J)[3][3], real64 * GEOSX_RESTRICT const scratch )
+  static real64 inverse( real64 (& J)[3][3] )
   {
-    scratch[0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-    scratch[1] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-    scratch[2] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-    scratch[3] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-    scratch[4] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-    scratch[5] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-    scratch[6] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-    scratch[7] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-    scratch[8] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
+    real64 const temp[3][3] = { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
+                                { J[1][2]*J[2][0] - J[1][0]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][2]*J[1][0] - J[0][0]*J[1][2] } ,
+                                { J[1][0]*J[2][1] - J[1][1]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1], J[0][0]*J[1][1] - J[0][1]*J[1][0] } };
 
-    scratch[9] =  J[0][0] * scratch[0] + J[1][0] * scratch[1] + J[2][0] * scratch[2];
-    scratch[10] = 1.0 / scratch[9];
+    real64 const det =  J[0][0] * temp[0][0] + J[1][0] * temp[0][1] + J[2][0] * temp[0][2];
+    real64 const invDet = 1.0 / det;
 
     for( int i=0; i<3; ++i )
     {
       for( int j=0; j<3; ++j )
       {
-        J[i][j] = scratch[3*i+j] * scratch[10];
+        J[i][j] = temp[i][j] * invDet;
       }
     }
 
-    return scratch[9];
+    return det;
   }
 
 
