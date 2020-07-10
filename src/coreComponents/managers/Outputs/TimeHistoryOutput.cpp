@@ -48,7 +48,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     HistoryMetadata time_metadata = collector->GetTimeMetadata( );
     time_metadata.setName( metadata.getName() + string( " " ) + time_metadata.getName());
     m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ),
-                                       std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
+                                       std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count ) ) );
     collector->RegisterTimeBufferCall( [this]() { return this->m_io.back().second->GetBufferHead( ); } );
     m_io.back().second->Init( ( m_record_count > 0 ) );
     collector->RegisterBufferCall( [this]() { return this->m_io.back().first->GetBufferHead( ); } );
