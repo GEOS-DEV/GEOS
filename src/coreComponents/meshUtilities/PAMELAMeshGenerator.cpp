@@ -34,6 +34,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
+string PAMELAMeshGenerator::DecodePAMELALabels::m_separator = "_";
+
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
@@ -154,8 +156,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   for( auto const & polyhedronPart : polyhedronPartMap )
   {
     auto const regionPtr = polyhedronPart.second;
-    string_array labelTokenized = stringutilities::Tokenize( regionPtr->Label, "_" );
-    string regionName = labelTokenized[ labelTokenized.size() - 2 ];
+    string regionName = DecodePAMELALabels::RetrieveSurfaceOrRegionName( regionPtr->Label );
 
     // Iterate on cell types
     for( auto const & subPart : regionPtr->SubParts )
@@ -170,7 +171,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D8" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -213,7 +214,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D4" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -248,7 +249,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D6" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -287,7 +288,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
         if( nbCells == 0 )
           continue;
         cellBlock =
-          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( MakeRegionLabel( regionName, cellBlockName ) );
+          cellBlockManager->GetGroup( keys::cellBlocks )->RegisterGroup< CellBlock >( DecodePAMELALabels::MakeRegionLabel( regionName, cellBlockName ) );
         cellBlock->SetElementType( "C3D5" );
         auto & cellToVertex = cellBlock->nodeList();
         cellBlock->resize( nbCells );
@@ -366,7 +367,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
   {
     auto const surfacePtr = polygonPart.second;
 
-    string surfaceName = RetrieveSurfaceName( surfacePtr->Label );
+    string surfaceName = DecodePAMELALabels::RetrieveSurfaceOrRegionName( surfacePtr->Label );
     SortedArray< localIndex > & curNodeSet  = nodeSets.registerWrapper< SortedArray< localIndex > >( std::string( surfaceName ) )->reference();
     for( auto const & subPart : surfacePtr->SubParts )
     {
