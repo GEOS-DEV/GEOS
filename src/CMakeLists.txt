@@ -99,10 +99,15 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda ) 
 endif()
 
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
+else()
+  set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
+endif()
+
 blt_add_executable(NAME geosx
                    SOURCES main/main.cpp
-                   DEPENDS_ON geosx_core 
-                              ${extraComponentsLinkList}
+                   DEPENDS_ON ${extraComponentsLinkList}
                               ${externalComponentsLinkList}
                   )
 
