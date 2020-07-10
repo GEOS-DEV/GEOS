@@ -91,7 +91,7 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   m_comm( comm )
 {
   int rnk = MpiWrapper::Comm_rank( comm );
-  if ( m_mpio_fapl )
+  if( m_mpio_fapl )
   {
     m_fapl_id = H5Pcreate( H5P_FILE_ACCESS );
     H5Pset_fapl_mpio( m_fapl_id, m_comm, MPI_INFO_NULL );
@@ -99,7 +99,7 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   }
   else
   {
-    m_filename = fnm + "." + std::to_string(rnk) + ".hdf5";
+    m_filename = fnm + "." + std::to_string( rnk ) + ".hdf5";
   }
   // check if file already exists
   htri_t exists = 0;
@@ -123,7 +123,7 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
 
 HDFFile::~HDFFile()
 {
-  if ( m_mpio_fapl )
+  if( m_mpio_fapl )
   {
     H5Pclose( m_fapl_id );
   }
@@ -354,15 +354,14 @@ void HDFHistIO::resizeBuffer( )
 
 
 
-
 HDFSerialHistIO::HDFSerialHistIO( string const & filename,
-                      localIndex rank,
-                      const localIndex * dims,
-                      string const & name,
-                      std::type_index type_id,
-                      localIndex write_head,
-                      localIndex init_alloc,
-                      MPI_Comm comm ):
+                                  localIndex rank,
+                                  const localIndex * dims,
+                                  string const & name,
+                                  std::type_index type_id,
+                                  localIndex write_head,
+                                  localIndex init_alloc,
+                                  MPI_Comm comm ):
   BufferedHistoryIO(),
   m_filename( filename ),
   m_overalloc_multiple( init_alloc ),
@@ -432,7 +431,7 @@ void HDFSerialHistIO::Init( bool exists_okay )
 void HDFSerialHistIO::Write( )
 {
   // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
-  if( m_type_count > 0 && m_buffered_count > 0)
+  if( m_type_count > 0 && m_buffered_count > 0 )
   {
     ResizeFileIfNeeded( m_buffered_count );
     HDFFile target( m_filename, false, false, m_comm );

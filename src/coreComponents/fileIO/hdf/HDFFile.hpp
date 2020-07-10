@@ -71,9 +71,10 @@ public:
    * @brief Constructor -- this creates/opens the target file for read/write.
    * @param fnm The filename.
    * @param delete_existing Whether to remove/recreate if a file with the same name exists.
+   * @param parallel_access Whether to access one file in parallel or one file per rank in the comm.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile( string const & fnm, bool delete_existing, bool parallel_access, MPI_Comm comm);
+  HDFFile( string const & fnm, bool delete_existing, bool parallel_access, MPI_Comm comm );
 
   /**
    * Destructor -- Close the file and acccessors.
