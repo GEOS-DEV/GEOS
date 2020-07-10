@@ -182,8 +182,6 @@ real64 LagrangianContactFlowSolver::SolverStep( real64 const & time_n,
                                           m_rhs,
                                           m_solution );
 
-  m_contactSolver->getSolidSolver()->updateStress( domain );
-
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   ImplicitStepComplete( time_n, dtReturn, domain );
 
@@ -613,7 +611,7 @@ void LagrangianContactFlowSolver::SetupDofs( DomainPartition const * const domai
   string_array fractureRegions;
   elemManager->forElementRegions< FaceElementRegion >( [&]( FaceElementRegion const & elementRegion )
   {
-    fractureRegions.push_back( elementRegion.getName() );
+    fractureRegions.emplace_back( elementRegion.getName() );
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
@@ -626,7 +624,8 @@ void LagrangianContactFlowSolver::SetupSystem( DomainPartition * const domain,
                                                DofManager & dofManager,
                                                ParallelMatrix & matrix,
                                                ParallelVector & rhs,
-                                               ParallelVector & solution )
+                                               ParallelVector & solution,
+                                               bool const GEOSX_UNUSED_PARAM( setSparsity ) )
 {
   GEOSX_MARK_FUNCTION;
   m_flowSolver->ResetViews( domain );
@@ -1233,8 +1232,10 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
         typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
         // First index: face element. Second index: node
-        real64_array2d nodalArea( 2, 2 );
-        real64_array rotatedInvStiffApprox( 2 );
+        real64 nodalArea[ 2 ][ 2 ];
+
+        // first index: face, second index: element (T/B), third index: dof (x, y, z)
+        real64 stiffApprox[ 2 ][ 2 ][ 3 ];
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)
@@ -1242,12 +1243,10 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
 
           localIndex faceIndexRef = faceMap[fractureIndex][0];
           real64 const area = faceArea[faceIndexRef];
-          R1Tensor const & Nbar = faceNormal[faceIndexRef];
           // TODO: use higher order integration scheme
           nodalArea[kf][0] = area / 4.0;
           nodalArea[kf][1] = area / 4.0;
 
-          real64_array2d invStiffApprox( 2, 3 );
           for( localIndex i = 0; i < 2; ++i )
           {
             localIndex faceIndex = faceMap[fractureIndex][i];
@@ -1290,36 +1289,32 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
             real64 const E = 9.0 * K * G / ( 3.0 * K + G );
             real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
-            // The factor is 8/9 / 4 (number of nodes) = 2/9
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[i][j] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              stiffApprox[ kf ][ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
-
-          real64 invStiffApproxTotal[ 3 ][ 3 ] = { { 0 } };
-          for( localIndex i = 0; i < 2; ++i )
-          {
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              invStiffApproxTotal[ j ][ j ] += invStiffApprox[ i ][ j ];
-            }
-          }
-
-          // Compute R^T * (invK) * R
-          real64 temp[ 3 ];
-          LvArray::tensorOps::AijBj< 3, 3 >( temp, invStiffApproxTotal, Nbar );
-          rotatedInvStiffApprox[ kf ] = LvArray::tensorOps::AiBi< 3 >( temp, Nbar );
         }
 
-        // Compose local nodal-based local stiffness matrices
-        stackArray1d< real64, 1 > totalInvStiffApprox( 1 );
-        for( localIndex kf = 0; kf < 2; ++kf )
+        real64 invTotStiffApprox[ 3 ][ 3 ] = { { 0 } };
+        for( localIndex i = 0; i < 3; ++i )
         {
-          rotatedInvStiffApprox[kf] *= nodalArea[0][kf] * nodalArea[1][kf];
+          // K(i,i)^-1 = Ka(i,i)^-1 + Kb(i,i)^-1
+          // T -> top (index 0), B -> bottom (index 1)
+          // Ka(i,i) = KT(i,i) + KB(i,i)
+          // Kb(i,i) = KT(i,i) + KB(i,i)
+          invTotStiffApprox[ i ][ i ] = 1.0 / ( stiffApprox[ 0 ][ 0 ][ i ] + stiffApprox[ 1 ][ 0 ][ i ] )
+                                        + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
         }
-        // Local assembly
-        totalInvStiffApprox( 0 ) = ( rotatedInvStiffApprox[0] + rotatedInvStiffApprox[1] );
+
+        // Compute n^T * (invK) * n
+        real64 temp[ 3 ];
+        LvArray::tensorOps::AijBj< 3, 3 >( temp, invTotStiffApprox, faceNormal[ faceMap[sei[iconn][0]][0] ] );
+        real64 const rotatedInvStiffApprox = LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ faceMap[sei[iconn][0]][0] ] );
+
+        // Add nodal area contribution
+        stackArray1d< real64, 1 > totalInvStiffApprox( 1 );
+        totalInvStiffApprox( 0 ) = -rotatedInvStiffApprox * ( nodalArea[0][0]*nodalArea[1][0] + nodalArea[0][1]*nodalArea[1][1] );
 
         // Get DOF numbering
         localIndex fractureIndex[2];
@@ -1348,42 +1343,39 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
         real64 rhs1 = -rhs0;
 
         // Global matrix and rhs assembly
-        if( std::max( nDof[0], nDof[1] ) > 0 )
-        {
-          matrix->add( elemDOF[0],
-                       elemDOF[0],
-                       totalInvStiffApprox.data(),
-                       nDof[0],
-                       nDof[0] );
+        matrix->add( elemDOF[0],
+                     elemDOF[0],
+                     totalInvStiffApprox.data(),
+                     nDof[0],
+                     nDof[0] );
 
-          matrix->add( elemDOF[1],
-                       elemDOF[1],
-                       totalInvStiffApprox.data(),
-                       nDof[1],
-                       nDof[1] );
+        matrix->add( elemDOF[1],
+                     elemDOF[1],
+                     totalInvStiffApprox.data(),
+                     nDof[1],
+                     nDof[1] );
 
-          // Change sign
-          totalInvStiffApprox( 0 ) *= -1.0;
+        // Change sign
+        totalInvStiffApprox( 0 ) *= -1.0;
 
-          matrix->add( elemDOF[0],
-                       elemDOF[1],
-                       totalInvStiffApprox.data(),
-                       nDof[0],
-                       nDof[1] );
+        matrix->add( elemDOF[0],
+                     elemDOF[1],
+                     totalInvStiffApprox.data(),
+                     nDof[0],
+                     nDof[1] );
 
-          matrix->add( elemDOF[1],
-                       elemDOF[0],
-                       totalInvStiffApprox.data(),
-                       nDof[1],
-                       nDof[0] );
+        matrix->add( elemDOF[1],
+                     elemDOF[0],
+                     totalInvStiffApprox.data(),
+                     nDof[1],
+                     nDof[0] );
 
-          rhs->add( elemDOF[0],
-                    &rhs0,
-                    nDof[0] );
-          rhs->add( elemDOF[1],
-                    &rhs1,
-                    nDof[1] );
-        }
+        rhs->add( elemDOF[0],
+                  &rhs0,
+                  nDof[0] );
+        rhs->add( elemDOF[1],
+                  &rhs1,
+                  nDof[1] );
       }
     }
   } );
