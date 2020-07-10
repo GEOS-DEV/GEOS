@@ -284,6 +284,8 @@ private:
 
   void ComputeTolerances( DomainPartition * const domain ) const;
 
+  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
+
 public:
 
   void InitializeFractureState( MeshLevel * const mesh,

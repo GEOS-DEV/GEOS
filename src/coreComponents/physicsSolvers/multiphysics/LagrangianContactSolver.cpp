@@ -305,7 +305,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
         if( ghostRank[kfe] < 0 )
         {
           real64 const area = faceArea[kfe];
-          R1Tensor stiffApprox[ 2 ];
+          real64 stiffApprox[ 2 ][ 3 ];
           real64 averageYoungModulus = 0.0;
           real64 averageConstrainedModulus = 0.0;
           real64 averageBoxSize0 = 0.0;
@@ -355,7 +355,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
 
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffApprox[i]( j ) = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
 
             averageYoungModulus += 0.5*E;
@@ -366,7 +366,7 @@ void LagrangianContactSolver::ComputeTolerances( DomainPartition * const domain 
           real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
           for( localIndex j = 0; j < 3; ++j )
           {
-            invStiffApprox[ j ][ j ] = ( stiffApprox[0]( j ) + stiffApprox[1]( j ) ) / ( stiffApprox[0]( j ) * stiffApprox[1]( j ) );
+            invStiffApprox[ j ][ j ] = ( stiffApprox[ 0 ][ j ] + stiffApprox[ 1 ][ j ] ) / ( stiffApprox[ 0 ][ j ] * stiffApprox[ 1 ][ j ] );
           }
 
           // Compute R^T * (invK) * R
@@ -1330,17 +1330,17 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                 }
 
                 real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
-                R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
-                real64 slidingNorm = sqrt( sliding( 0 )*sliding( 0 ) + sliding( 1 )*sliding( 1 ) );
+                real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
+                real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
-                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
+                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
 
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
                     && slidingNorm > slidingTolerance[kfe] )
                 {
                   for( localIndex i=1; i<3; ++i )
                   {
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding( i-1 ) / slidingNorm );
+                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1366,19 +1366,19 @@ void LagrangianContactSolver::AssembleTractionResidualDerivativeWrtDisplacementA
                   }
                   for( localIndex i=1; i<3; ++i )
                   {
-                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding( i-1 ) / slidingNorm;
+                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[ i-1 ] / slidingNorm;
                     dRdT( i, i ) = Ja;
                   }
                 }
                 else
                 {
-                  R1TensorT< 2 > vaux( traction[kfe][1], traction[kfe][2] );
-                  real64 vauxNorm = sqrt( vaux( 0 )*vaux( 0 ) + vaux( 1 )*vaux( 1 ) );
+                  real64 vaux[ 2 ] = { traction[kfe][1], traction[kfe][2] };
+                  real64 vauxNorm = sqrt( vaux[ 0 ]*vaux[ 0 ] + vaux[ 1 ]*vaux[ 1 ] );
                   if( vauxNorm > 0.0 )
                   {
                     for( localIndex i=1; i<3; ++i )
                     {
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux( i-1 ) / vauxNorm );
+                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
                     }
                     for( localIndex i=1; i<3; ++i )
                     {
@@ -1606,11 +1606,46 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const * con
                                         + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
         }
 
+        array2d< real64 > avgRotationMatrix( 3, 3 );
+
+        array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
+        Nbar0[ 0 ] = faceRotationMatrix[ sei[iconn][0] ][0][0];
+        Nbar0[ 1 ] = faceRotationMatrix[ sei[iconn][0] ][1][0];
+        Nbar0[ 2 ] = faceRotationMatrix[ sei[iconn][0] ][2][0];
+        Nbar1[ 0 ] = faceRotationMatrix[ sei[iconn][1] ][0][0];
+        Nbar1[ 1 ] = faceRotationMatrix[ sei[iconn][1] ][1][0];
+        Nbar1[ 2 ] = faceRotationMatrix[ sei[iconn][1] ][2][0];
+
+        real64 normalProduct = LvArray::tensorOps::AiBi< 3 >( Nbar0, Nbar1 );
+        // To be able to compute an average rotation matrix, normal has to point in the same direction.
+        // TODO: not sure this is the proper way ...
+        if( normalProduct < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( Nbar1, -1.0 );
+          normalProduct *= -1.0;
+        }
+        // If the surfaces are co-planar, then use the first rotation matrix
+        if( std::abs( normalProduct - 1.0 ) < 1.e+2*machinePrecision )
+        {
+          LvArray::tensorOps::copy< 3, 3 >( avgRotationMatrix, faceRotationMatrix[ sei[iconn][0] ] );
+        }
+        // otherwise, compute the average rotation matrix
+        else
+        {
+          array1d< real64 > avgNbar( 3 );
+          avgNbar[ 0 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[0] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[0];
+          avgNbar[ 1 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[1] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[1];
+          avgNbar[ 2 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[2] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[2];
+          LvArray::tensorOps::normalize< 3 >( avgNbar );
+
+          computationalGeometry::RotationMatrix_3D( avgNbar.toSliceConst(), avgRotationMatrix );
+        }
+
         // Compute R^T * (invK) * R
         real64 temp[ 3 ][ 3 ];
         real64 rotatedInvStiffApprox[ 3 ][ 3 ];
-        LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, faceRotationMatrix[ sei[iconn][0] ], invTotStiffApprox );
-        LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ sei[iconn][0] ] );
+        LvArray::tensorOps::AkiBkj< 3, 3, 3 >( temp, avgRotationMatrix, invTotStiffApprox );
+        LvArray::tensorOps::AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, avgRotationMatrix );
 
         // Add nodal area contribution
         stackArray2d< real64, 3*3 > totalInvStiffApprox( 3, 3 );
