@@ -106,6 +106,12 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   H5E_BEGIN_TRY {
     exists = H5Fis_hdf5( m_filename.c_str() );
   } H5E_END_TRY
+  // if there is an non-hdf file with the same name,
+  // and we're either not using parallel access or we're rank 0
+  if( exists == 0 && ( !m_mpio_fapl || rnk == 0 ) )
+  {
+    remove( m_filename.c_str() );
+  }
   if( exists > 0 && !delete_existing )
   {
     m_file_id = H5Fopen( m_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
@@ -118,7 +124,6 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   {
     m_file_id = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT );
   }
-  GEOSX_ERROR_IF( exists == 0, string( "Existing file " ) + m_filename + string( " is not an HDF5 file, cannot use for HDF5 output." ) );
 }
 
 HDFFile::~HDFFile()

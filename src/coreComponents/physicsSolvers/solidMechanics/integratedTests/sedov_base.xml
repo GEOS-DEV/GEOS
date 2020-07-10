@@ -39,6 +39,16 @@
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
                    target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent name="timeHistoryCollection"
+                   timeFrequency="1.0e-5"
+                   targetExactTimestep="1"
+                   target="/Tasks/velocityCollection" />
+
+    <PeriodicEvent name="timeHistoryOutput"
+                   timeFrequency="5.0e-4"
+                   targetExactTimestep="0"
+                   target="/Outputs/timeHistoryOutput" />
   </Events>
 
 
@@ -129,7 +139,13 @@
     <Blueprint name="blueprint" plotLevel="3"/>
     <Silo name="siloOutput" plotLevel="3"/>
     <Restart name="restartOutput"/>
+    <TimeHistory name="timeHistoryOutput" sources="{/Tasks/velocityCollection}" filename="veloc_history" />
   </Outputs>
+
+  <Tasks>
+    <PackCollection name="velocityCollection" objectPath="nodeManager" fieldName="Velocity" />
+  </Tasks>
+
 
   <Geometry>
     <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
