@@ -36,7 +36,14 @@ HistoryMetadata PackCollection::GetMetadata( Group * problem_group )
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
   WrapperBase const * target = target_object->getWrapperBase( m_field_name );
-  return target->getBufferedIOMetadata( num_indices );
+  if( m_set_names.size() != 0 )
+  {
+    return target->getBufferedIOMetadata( num_indices );
+  }
+  else
+  {
+    return target->getBufferedIOMetadata( -1 );
+  }
 }
 
 void PackCollection::UpdateSetsIndices( Group * problem_group )

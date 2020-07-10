@@ -45,20 +45,12 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
     // todo: switch based on m_format, always hdf for now
     HistoryMetadata metadata = collector->GetMetadata( group );
-    int rank = MpiWrapper::Comm_rank();
-    if( rank == 0 )
-    {
-      HistoryMetadata time_metadata = collector->GetTimeMetadata( );
-      time_metadata.setName( metadata.getName() + string( " " ) + time_metadata.getName());
-      m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ),
-                                         std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
-      collector->RegisterTimeBufferCall( [this]() { return this->m_io.back().second->GetBufferHead( ); } );
-      m_io.back().second->Init( ( m_record_count > 0 ) );
-    }
-    else
-    {
-      m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ), std::unique_ptr< HDFSerialHistIO >( nullptr ) ) );
-    }
+    HistoryMetadata time_metadata = collector->GetTimeMetadata( );
+    time_metadata.setName( metadata.getName() + string( " " ) + time_metadata.getName());
+    m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ),
+                                       std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
+    collector->RegisterTimeBufferCall( [this]() { return this->m_io.back().second->GetBufferHead( ); } );
+    m_io.back().second->Init( ( m_record_count > 0 ) );
     collector->RegisterBufferCall( [this]() { return this->m_io.back().first->GetBufferHead( ); } );
     m_io.back().first->Init( ( m_record_count > 0 ) );
     MpiWrapper::Barrier( MPI_COMM_GEOSX );
