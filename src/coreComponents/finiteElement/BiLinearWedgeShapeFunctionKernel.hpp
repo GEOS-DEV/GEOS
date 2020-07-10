@@ -140,7 +140,7 @@ real64 BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( localIndex co
     }
   }
 
-  real64 const detJ = inverse( J, &(dNdX[0][0]) );
+  real64 const detJ = inverse( J );
 
 
   for( localIndex a=0; a<3; ++a )
