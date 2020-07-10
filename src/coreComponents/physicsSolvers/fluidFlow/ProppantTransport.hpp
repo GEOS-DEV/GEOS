@@ -158,7 +158,8 @@ public:
    * @param dt time step
    */
 
-  void AssembleAccumulationTerms( DomainPartition const * const domain,
+  void AssembleAccumulationTerms( real64 const dt,
+                                  DomainPartition const * const domain,
                                   DofManager const * const dofManager,
                                   ParallelMatrix * const matrix,
                                   ParallelVector * const rhs );
@@ -196,15 +197,14 @@ public:
     static constexpr auto componentConcentrationString      = "componentConcentration";
     static constexpr auto deltaComponentConcentrationString      = "deltaComponentConcentration";
     static constexpr auto bcComponentConcentrationString      = "bcComponentConcentration";
-    static constexpr auto updatedComponentConcentrationString      = "updatedComponentConcentration";
 
     // these are used to store last converged time step values
-    static constexpr auto oldProppantConcentrationString  = "oldProppantConcentration";
+
     static constexpr auto oldComponentDensityString  = "oldComponentDensity";
 
     static constexpr auto updateProppantPackingString  = "updateProppantPacking";
     static constexpr auto cellBasedFluxString  = "cellBasedFlux";
-    static constexpr auto isInterfaceElementString   = "isInterfaceElement";
+
     static constexpr auto isProppantBoundaryString   = "isProppantBoundary";
     static constexpr auto isProppantMobileString   = "isProppantMobile";
 
@@ -251,7 +251,7 @@ private:
   void ResetViews( DomainPartition * const domain ) override;
 
   /**
-   * @brief Function to update all constitutive models
+   * @brief Function to update fluid properties
    * @param domain the domain
    */
   void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex );
@@ -262,13 +262,23 @@ private:
 
   void UpdateProppantMobility( Group & dataGroup );
 
+  /**
+   * @brief Function to update proppant pack volume fraction
+   */
   void UpdateProppantPackVolume( real64 const time_n,
                                  real64 const dt,
                                  DomainPartition * const domain );
 
+  /**
+   * @brief Function to update cell-based fluid flux
+   */
   void UpdateCellBasedFlux( real64 const time_n,
                             DomainPartition * const domain );
 
+  /**
+   * @brief Function to update fluid and proppant properties
+   * @param domain the domain
+   */
   void UpdateState( Group & dataGroup, localIndex const targetIndex );
 
   /// views into primary variable fields
@@ -282,8 +292,6 @@ private:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentConcentration;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_deltaComponentConcentration;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_updatedComponentConcentration;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor > > m_cellBasedFlux;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantLiftFlux;
@@ -294,8 +302,6 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantBoundaryElement;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isInterfaceElement;
-
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_isProppantMobile;
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_poroMultiplier;
@@ -304,7 +310,6 @@ private:
 
   /// views into backup fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_proppantConcentrationOld;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_componentDensityOld;
 
   /// views into material fields
@@ -340,8 +345,6 @@ private:
   array1d< string > m_proppantModelNames;
 
   integer m_numComponents;
-
-  R1Tensor m_downVector;
 
   integer m_updateProppantPacking;
   real64 m_proppantPackPermeability;
