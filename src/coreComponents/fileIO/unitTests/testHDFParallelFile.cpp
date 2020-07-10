@@ -14,7 +14,7 @@ TEST( testHDFIO_parallel, SingleValueHistory )
 
   int rank = MpiWrapper::Comm_rank( );
 
-  HDFHistIO io( filename, spec );
+  HDFSerialHistIO io( filename, spec );
   io.Init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
@@ -25,9 +25,6 @@ TEST( testHDFIO_parallel, SingleValueHistory )
   }
 
   io.Write( );
-
-  //read and check the data using hdf api
-  // remove( filename.c_str() );
 }
 
 int main( int ac, char * av[] )
