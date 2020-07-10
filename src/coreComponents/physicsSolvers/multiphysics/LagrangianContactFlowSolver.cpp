@@ -632,7 +632,7 @@ void LagrangianContactFlowSolver::SetupSystem( DomainPartition * const domain,
 
   // Need this strange call to allow the two physics solvers to initialize internal data structures
   // (like derivativeFluxResidual_dAperture in m_flowSolver) but I need to use my dofManager
-  DofManager localDofManager( "tmp" );
+  DofManager localDofManager( "localDofManager" );
   m_contactSolver->SetupSystem( domain, localDofManager, matrix, rhs, solution );
   m_flowSolver->SetupSystem( domain, localDofManager, matrix, rhs, solution );
   localDofManager.clear();
@@ -950,9 +950,11 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
           localIndex const kf0 = elemsToFaces[kfe][0];
           localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
 
-          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-          Nbar -= faceNormal[elemsToFaces[kfe][1]];
-          Nbar.Normalize();
+          array1d< real64 > Nbar( 3 );
+          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+          LvArray::tensorOps::normalize< 3 >( Nbar );
 
           globalIndex rowDOF[12];
           real64 nodeRHS[12];
@@ -964,8 +966,8 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
           real64 const Ja = area[kfe];
           real64 const nodalArea = Ja / static_cast< real64 >( numNodesPerFace );
           real64 nodalForceMag = ( pressure[kfe] + deltaPressure[kfe] ) * nodalArea;
-          R1Tensor globalNodalForce( Nbar );
-          globalNodalForce *= nodalForceMag;
+          array1d< real64 > globalNodalForce( 3 );
+          LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
           for( localIndex kf=0; kf<2; ++kf )
           {
@@ -981,20 +983,13 @@ void LagrangianContactFlowSolver::AssembleForceResidualDerivativeWrtPressure( Do
                 fext[faceToNodeMap( faceIndex, a )][i] += +globalNodalForce[i] * pow( -1, kf );
 
                 // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
-                dRdP( 3*a+i ) = -nodalArea * Nbar( i ) * pow( -1, kf );
+                dRdP( 3*a+i ) = -nodalArea * Nbar[i] * pow( -1, kf );
               }
             }
 
             rhs->add( rowDOF,
                       nodeRHS,
                       3 * numNodesPerFace );
-
-            //std::stringstream TMP;
-            //TMP << kfe << " " << colDOF[0] << " ";
-            //for(int i=0;i<12;++i)
-            //  TMP << rowDOF[i] << " ";
-            //TMP << dRdP;
-            //GEOSX_LOG_RANK( TMP.str() );
 
             matrix->add( rowDOF,
                          colDOF,
@@ -1067,9 +1062,11 @@ void LagrangianContactFlowSolver::AssembleFluidMassResidualDerivativeWrtDisplace
           elemDOF[0] = presDofNumber[kfe];
 
           real64 const Ja = area[kfe];
-          R1Tensor Nbar = faceNormal[elemsToFaces[kfe][0]];
-          Nbar -= faceNormal[elemsToFaces[kfe][1]];
-          Nbar.Normalize();
+          array1d< real64 > Nbar( 3 );
+          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+          LvArray::tensorOps::normalize< 3 >( Nbar );
 
           real64 const dAccumulationResidualdAperture = density[kfe][0] * Ja;
 
@@ -1307,10 +1304,44 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const *
                                         + 1.0 / ( stiffApprox[ 0 ][ 1 ][ i ] + stiffApprox[ 1 ][ 1 ][ i ] );
         }
 
+        array1d< real64 > avgNbar( 3 );
+
+        array1d< real64 > Nbar0( 3 ), Nbar1( 3 );
+        Nbar0[ 0 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        Nbar0[ 1 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        Nbar0[ 2 ] = faceNormal[ faceMap[sei[iconn][0]][0] ][0] - faceNormal[ faceMap[sei[iconn][0]][1] ][0];
+        LvArray::tensorOps::normalize< 3 >( Nbar0 );
+        Nbar1[ 0 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        Nbar1[ 1 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        Nbar1[ 2 ] = faceNormal[ faceMap[sei[iconn][1]][0] ][0] - faceNormal[ faceMap[sei[iconn][1]][1] ][0];
+        LvArray::tensorOps::normalize< 3 >( Nbar1 );
+
+        real64 normalProduct = LvArray::tensorOps::AiBi< 3 >( Nbar0, Nbar1 );
+        // To be able to compute an average rotation matrix, normal has to point in the same direction.
+        // TODO: not sure this is the proper way ...
+        if( normalProduct < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( Nbar1, -1.0 );
+          normalProduct *= -1.0;
+        }
+        // If the surfaces are co-planar, then use the first rotation matrix
+        if( std::abs( normalProduct - 1.0 ) < 1.e+2*machinePrecision )
+        {
+          LvArray::tensorOps::copy< 3 >( avgNbar, Nbar0 );
+        }
+        // otherwise, compute the average rotation matrix
+        else
+        {
+          avgNbar[ 0 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[0] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[0];
+          avgNbar[ 1 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[1] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[1];
+          avgNbar[ 2 ] = faceArea[faceMap[ sei[iconn][0] ][0]] * Nbar0[2] + faceArea[faceMap[ sei[iconn][1] ][0]] * Nbar1[2];
+          LvArray::tensorOps::normalize< 3 >( avgNbar );
+        }
+
         // Compute n^T * (invK) * n
         real64 temp[ 3 ];
-        LvArray::tensorOps::AijBj< 3, 3 >( temp, invTotStiffApprox, faceNormal[ faceMap[sei[iconn][0]][0] ] );
-        real64 const rotatedInvStiffApprox = LvArray::tensorOps::AiBi< 3 >( temp, faceNormal[ faceMap[sei[iconn][0]][0] ] );
+        LvArray::tensorOps::AijBj< 3, 3 >( temp, invTotStiffApprox, avgNbar );
+        real64 const rotatedInvStiffApprox = LvArray::tensorOps::AiBi< 3 >( temp, avgNbar );
 
         // Add nodal area contribution
         stackArray1d< real64, 1 > totalInvStiffApprox( 1 );

@@ -59,7 +59,7 @@ public:
                             ParallelMatrix & matrix,
                             ParallelVector & rhs,
                             ParallelVector & solution,
-		            bool const setSparsity = true ) override;
+                            bool const setSparsity = true ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
@@ -203,6 +203,8 @@ private:
   string const m_deltaPressureKey = FlowSolverBase::viewKeyStruct::deltaPressureString;
 
   real64 m_initialResidual[4] = {0.0, 0.0, 0.0, 0.0};
+
+  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
 };
 
