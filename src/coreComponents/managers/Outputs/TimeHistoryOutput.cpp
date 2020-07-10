@@ -36,7 +36,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    HDFFile( m_filename, (m_record_count == 0) );
+    HDFFile( m_filename, (m_record_count == 0), false, MPI_COMM_GEOSX );
   }
   for( auto collector_path : m_collector_paths )
   {
@@ -50,14 +50,14 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     {
       HistoryMetadata time_metadata = collector->GetTimeMetadata( );
       time_metadata.setName( metadata.getName() + string( " " ) + time_metadata.getName());
-      m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_record_count ),
-                                         std::make_unique< HDFHistIO >( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
+      m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ),
+                                         std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count, 4, MPI_COMM_SELF ) ) );
       collector->RegisterTimeBufferCall( [this]() { return this->m_io.back().second->GetBufferHead( ); } );
       m_io.back().second->Init( ( m_record_count > 0 ) );
     }
     else
     {
-      m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_record_count ), std::unique_ptr< HDFHistIO >( nullptr ) ) );
+      m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ), std::unique_ptr< HDFSerialHistIO >( nullptr ) ) );
     }
     collector->RegisterBufferCall( [this]() { return this->m_io.back().first->GetBufferHead( ); } );
     m_io.back().first->Init( ( m_record_count > 0 ) );
@@ -73,7 +73,7 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
         std::unique_ptr< HistoryCollection > meta_collector = collector->GetMetaCollector( group, meta_idx, global_rank_offset );
         HistoryMetadata meta_metadata = meta_collector->GetMetadata( group );
         meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
-        std::unique_ptr< HDFHistIO > meta_io = std::make_unique< HDFHistIO >( m_filename, meta_metadata, 0, 1 );
+        std::unique_ptr< HDFSerialHistIO > meta_io = std::make_unique< HDFSerialHistIO >( m_filename, meta_metadata, 0, 1 );
         meta_collector->RegisterBufferCall( [&meta_io] () { return meta_io->GetBufferHead( ); } );
         meta_io->Init( false );
         meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
