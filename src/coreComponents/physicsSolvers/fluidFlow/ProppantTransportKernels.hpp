@@ -47,12 +47,13 @@ struct AccumulationKernel
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
            real64 const & volume,
            real64 const & packPoreVolume,
+           real64 const & proppantLiftVolume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian )
   {
 
     // proppant mass conservation
-    localAccum[0] = (proppantConcNew - proppantConcOld) * volume;
+    localAccum[0] = (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
 
     for( localIndex c1 = 0; c1 < NC; ++c1 )
       for( localIndex c2 = 0; c2 < NC; ++c2 )
@@ -109,20 +110,6 @@ struct FluxKernel
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
-   * @param[in] stencil The stencil object.
-   * @param[in] dt The timestep for the integration step.
-   * @param[in] fluidIndex The index of the fluid being fluxed.
-   * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
-   * @param[in] dofNumber The dofNumbers for each element
-   * @param[in] pres The pressures in each element
-   * @param[in] dPres The change in pressure for each element
-   * @param[in] gravDepth The factor for gravity calculations (g*H)
-   * @param[in] dens The material density in each element
-   * @param[in] dDens_dPres The change in material density for each element
-   * @param[in] mob The fluid mobility in each element
-   * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
-   * @param[out] jacobian The linear system matrix
-   * @param[out] residual The linear system residual
    */
   template< typename STENCIL_TYPE >
   static void
@@ -161,8 +148,6 @@ struct FluxKernel
           ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
           ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
-          ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
-          ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
           ParallelMatrix * const jacobian,
           ParallelVector * const residual );
 
@@ -220,9 +205,6 @@ struct FluxKernel
                    arrayView1d< integer const > const & isProppantMobile,
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
-                   arrayView1d< real64 const > const & proppantLiftFlux,
-                   //                              arrayView1d<integer const> const & isInterfaceElement,
-                   arrayView1d< integer const > const &,
                    R1Tensor const & unitGravityVector,
                    arrayView1d< R1Tensor const > const & transTMultiplier,
                    real64 const dt,
@@ -333,8 +315,10 @@ struct FluxKernel
     real64 aperTerm;
     real64 sumOfWeights = 0;
 
-    real64 stencilEdgeToFaceDownDistance;
+    real64 stencilEdgeToFaceDownDistance = 0;
     real64 edgeLength;
+
+    localIndex numberOfMobileProppantElems = 0;
 
     for( localIndex i=0; i<numElems; ++i )
     {
@@ -377,6 +361,7 @@ struct FluxKernel
     for( localIndex i=0; i<numElems; ++i )
       weight[i] /= sumOfWeights;
 
+
     //get averaged edgeDensity and edgeViscosity
 
     for( localIndex i = 0; i < numElems; ++i )
@@ -411,6 +396,9 @@ struct FluxKernel
 
       isProppantMob[i] = isProppantMobile[ei];
 
+      if( isProppantMob[i] == 1 )
+        numberOfMobileProppantElems++;
+
       for( localIndex c = 0; c < NC; ++c )
       {
 
@@ -434,6 +422,13 @@ struct FluxKernel
       }
 
     }
+
+
+    real64 proppantFluxCoef = 1.0;
+
+    if( numberOfMobileProppantElems <= 1 )
+      proppantFluxCoef = 0.0;
+
 
     real64 transTSum = 0.0;
     real64 Pe = 0.0;
@@ -542,17 +537,17 @@ struct FluxKernel
         dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i] * fluidDens[i] / mixDens[i];
 
 
-        edgeToFaceProppantFlux[i] += edgeToFaceFlux[i];
+        edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
 
         for( localIndex j = 0; j < numElems; ++j )
         {
 
-          dEdgeToFaceProppantFlux_dProppantC[i][j] += dEdgeToFaceFlux_dProppantC[i][j];
+          dEdgeToFaceProppantFlux_dProppantC[i][j] += proppantFluxCoef *dEdgeToFaceFlux_dProppantC[i][j];
 
           for( localIndex c = 0; c < NC; ++c )
           {
 
-            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += dEdgeToFaceFlux_dComponentC[i][j][c];
+            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
 
           }
         }
@@ -562,22 +557,19 @@ struct FluxKernel
 
         // horizontal
 
-        edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * edgeToFaceFlux[i];
+        edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * edgeToFaceFlux[i];
 
-        dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) *
-                                                   edgeToFaceFlux[i];
+        dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) * proppantFluxCoef * edgeToFaceFlux[i];
 
         for( localIndex j = 0; j < numElems; ++j )
         {
 
-          dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
-                                                      dEdgeToFaceFlux_dProppantC[i][j];
+          dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
 
           for( localIndex c = 0; c < NC; ++c )
           {
 
-            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
-                                                            dEdgeToFaceFlux_dComponentC[i][j][c];
+            dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
 
           }
 
@@ -891,24 +883,22 @@ struct FluxKernel
     for( localIndex i = 0; i < numElems; ++i )
     {
 
-      localIndex const ei  = stencilElementIndices[i];
-
       localIndex idx1 = i * numDofPerCell; // proppant
 
-      if( isProppantMob[i] == 1 )
+      if( isProppantMob[i] == 1 && !(numElems == 1 && coefs[i] > TINY) )
       {
 
         if( edgeToFaceProppantFlux[i] >= 0.0 )
         {
 
 
-          localFlux[idx1] = -proppantCe * edgeToFaceProppantFlux[i] * dt- proppantLiftFlux[ei] * dt;
+          localFlux[idx1] = -proppantCe * edgeToFaceProppantFlux[i] * dt;
 
         }
         else
         {
 
-          localFlux[idx1] = -proppantC[i] * edgeToFaceProppantFlux[i] * dt- proppantLiftFlux[ei] * dt;
+          localFlux[idx1] = -proppantC[i] * edgeToFaceProppantFlux[i] * dt;
 
         }
 
@@ -921,18 +911,7 @@ struct FluxKernel
           if( edgeToFaceProppantFlux[i] >= 0.0 )
           {
 
-            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) *
-                                            dt;
-
-            /*
-               for(localIndex c = 0; c < NC; ++c)
-               {
-
-                localFluxJacobian[idx1][idx2 + 1 + c] = -(dProppantCe_dComponentC[j][c] * edgeToFaceProppantFlux[i] +
-                   proppantCe * dEdgeToFaceProppantFlux_dComponentC[i][j][c]) * dt;
-
-               }
-             */
+            localFluxJacobian[idx1][idx2] = -(dProppantCe_dProppantC[j] * edgeToFaceProppantFlux[i] + proppantCe * dEdgeToFaceProppantFlux_dProppantC[i][j]) * dt;
 
           }
           else
@@ -942,16 +921,6 @@ struct FluxKernel
 
             if( i == j )
               localFluxJacobian[idx1][idx2] += -edgeToFaceProppantFlux[i] * dt;
-            /*
-               for(localIndex c = 0; c < NC; ++c)
-               {
-
-                localFluxJacobian[idx1][idx2 + 1 + c] = -proppantC[i] * dEdgeToFaceProppantFlux_dComponentC[i][j][c] *
-                   dt;
-
-               }
-             */
-
           }
 
         }
@@ -1226,14 +1195,6 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantExcessPackV );
 
 
-  template< typename STENCIL_TYPE >
-  static void
-  LaunchInterfaceElementUpdate( STENCIL_TYPE const & stencil,
-                                R1Tensor const unitGravityVector,
-                                ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                ElementView< arrayView1d< integer > > const & isInterfaceElement );
-
-
   inline static void
   ComputeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
@@ -1353,16 +1314,25 @@ struct ProppantPackVolumeKernel
         if( proppantLiftFlux[ei] < 0.0 )
           proppantLiftFlux[ei] = 0.0;
 
-        dH -=  proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
+        real64 liftH = proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
 
         real64 Vf = proppantPackVf[ei];
 
-        Vf += dH / L;
+        Vf += (dH - liftH) / L;
+
+        if( Vf < 0.0 )
+        {
+
+          Vf = 0.0;
+
+          liftH = dH + proppantPackVf[ei] * L;
+
+          proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
+
+        }
 
         if( Vf >= 1.0 )
         {
-
-          isProppantMobile[ei] = 0;
 
           proppantExcessPackV[ei] = (Vf - 1.0) * L;
 
@@ -1376,83 +1346,11 @@ struct ProppantPackVolumeKernel
 
           proppantPackVf[ei] = Vf;
 
-          if( proppantPackVf[ei] < 0.0 )
-            proppantPackVf[ei] = 0.0;
-
         }
 
       }
 
     }
-  }
-
-  inline static void
-  UpdateInterfaceElement( localIndex const numElems,
-                          arraySlice1d< localIndex const > const & stencilElementIndices,
-                          arraySlice1d< real64 const > const & stencilWeights,
-                          arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
-                          R1Tensor const unitGravityVector,
-                          arrayView1d< integer const > const & isProppantMobile,
-                          arrayView1d< integer > const & isInterfaceElement )
-  {
-
-    integer faceIndex = -1;
-
-    static constexpr real64 TINY = 1e-10;
-
-    real64 edgeLength = 12.0 * stencilWeights[0] * stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-    if( numElems == 1 )
-    {
-
-      localIndex const ei  = stencilElementIndices[0];
-
-      real64 stencilEdgeToFaceDownDistance =
-        -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-      if( stencilEdgeToFaceDownDistance < -TINY && isProppantMobile[ei] == 1 )
-        // bottom face element
-        faceIndex = 0;
-
-    }
-    else if( numElems == 2 )
-    {
-
-      localIndex const ei0  = stencilElementIndices[0];
-      localIndex const ei1  = stencilElementIndices[1];
-
-      real64 stencilEdgeToFaceDownDistance0 =
-        -Dot( stencilCellCenterToEdgeCenters[0], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[0].L2_Norm();
-
-      real64 stencilEdgeToFaceDownDistance1 =
-        -Dot( stencilCellCenterToEdgeCenters[1], unitGravityVector ) * edgeLength / stencilCellCenterToEdgeCenters[1].L2_Norm();
-
-      //0: top  1: bottom
-
-      if( stencilEdgeToFaceDownDistance0 < -TINY && stencilEdgeToFaceDownDistance1 > TINY && isProppantMobile[ei0] == 1 && isProppantMobile[ei1] == 0 )
-      {
-
-        faceIndex = 0;
-
-      }
-
-      //0: bottom  1: top
-
-      if( stencilEdgeToFaceDownDistance0 > TINY && stencilEdgeToFaceDownDistance1 < -TINY && isProppantMobile[ei1] == 1 && isProppantMobile[ei0] == 0 )
-      {
-
-        faceIndex = 1;
-
-      }
-    }
-
-    if( faceIndex >= 0 )
-    {
-
-      isInterfaceElement[faceIndex] = 1;
-
-    }
-
   }
 
 
@@ -1525,8 +1423,6 @@ struct ProppantPackVolumeKernel
 
       if( Vf >= 1.0 )
       {
-
-        isProppantMobile[ei] = 0;
 
         proppantPackVf[ei] = 1.0;
 

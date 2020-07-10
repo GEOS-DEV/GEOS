@@ -25,6 +25,9 @@
 namespace geosx
 {
 
+class FlowSolverBase;
+class ProppantTransport;
+
 class FlowProppantTransportSolver : public SolverBase
 {
 public:
@@ -71,6 +74,16 @@ public:
   } flowProppantTransportSolverViewKeys;
 
 
+  void PreStepUpdate( real64 const & time_n,
+                      real64 const & dt,
+                      integer const cycleNumber,
+                      DomainPartition * domain );
+
+  void PostStepUpdate( real64 const & time_n,
+                       real64 const & dt,
+                       integer const cycleNumber,
+                       DomainPartition * domain );
+
 protected:
   virtual void PostProcessInput() override final;
 
@@ -81,6 +94,9 @@ private:
 
   string m_proppantSolverName;
   string m_flowSolverName;
+
+  FlowSolverBase * m_flowSolver;
+  ProppantTransport * m_proppantSolver;
 
 };
 

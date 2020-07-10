@@ -86,8 +86,6 @@ void FluxKernel::
                                     FluxKernel::ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
                                     FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                                     FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
-                                    FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ),
-                                    FluxKernel::ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isInterfaceElement ),
                                     ParallelMatrix * const GEOSX_UNUSED_PARAM( jacobian ),
                                     ParallelVector * const GEOSX_UNUSED_PARAM( residual ) )
 {}
@@ -129,8 +127,6 @@ void FluxKernel::
                                 FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
                                 FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
                                 FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture,
-                                FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
-                                FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
                                 ParallelMatrix * const jacobian,
                                 ParallelVector * const residual )
 {
@@ -204,8 +200,6 @@ void FluxKernel::
                                    isProppantMobile[er][esr],
                                    proppantPackVf[er][esr],
                                    aperture[er][esr],
-                                   proppantLiftFlux[er][esr],
-                                   isInterfaceElement[er][esr],
                                    unitGravityVector,
                                    transTMultiplier[er][esr],
                                    dt,
@@ -483,52 +477,6 @@ void ProppantPackVolumeKernel::
   } );
 
 }
-
-template<>
-void ProppantPackVolumeKernel::
-  LaunchInterfaceElementUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
-                                                          R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
-                                                          ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & GEOSX_UNUSED_PARAM(
-                                                            isProppantMobile ),
-                                                          ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & GEOSX_UNUSED_PARAM(
-                                                            isInterfaceElement ) )
-{}
-
-template<>
-void ProppantPackVolumeKernel::
-  LaunchInterfaceElementUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
-                                                      R1Tensor const unitGravityVector,
-                                                      ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                                      ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isInterfaceElement )
-{
-
-  typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename FaceElementStencil::WeightContainerViewConstType const & weights = stencil.getWeights();
-
-  ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencil.getCellCenterToEdgeCenters();
-
-  forAll< serialPolicy >( stencil.size(), [=] ( localIndex iconn )
-  {
-
-    localIndex const numFluxElems = stencil.stencilSize( iconn );
-
-    localIndex const er = seri[iconn][0];
-    localIndex const esr = sesri[iconn][0];
-
-    ProppantPackVolumeKernel::UpdateInterfaceElement( numFluxElems,
-                                                      sei[iconn],
-                                                      weights[iconn],
-                                                      cellCenterToEdgeCenters[iconn],
-                                                      unitGravityVector,
-                                                      isProppantMobile[er][esr],
-                                                      isInterfaceElement[er][esr] );
-
-  } );
-
-}
-
 
 } // namespace ProppantTransportKernels
 
