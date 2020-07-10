@@ -480,10 +480,9 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
                                                     Group * dataGroup ) const
 {
   integer const component = GetComponent();
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::Instance();
 
-  if( functionName.empty() )
+  if( m_functionName.empty() )
   {
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
@@ -493,9 +492,9 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -589,7 +588,6 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array dof( targetSet.size() );
@@ -615,7 +613,7 @@ FieldSpecificationBase::
     sizeScalingFactor = 1;
   }
 
-  if( functionName.empty() )
+  if( m_functionName.empty() )
   {
 
     integer counter=0;
@@ -633,9 +631,9 @@ FieldSpecificationBase::
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
@@ -690,7 +688,6 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
   FunctionManager & functionManager = FunctionManager::Instance();
 
   globalIndex_array dof( targetSet.size() );
@@ -717,7 +714,7 @@ FieldSpecificationBase::
   }
 
 
-  if( functionName.empty() )
+  if( m_functionName.empty() )
   {
 
     integer counter=0;
@@ -735,9 +732,9 @@ FieldSpecificationBase::
   }
   else
   {
-    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( functionName );
+    FunctionBase const * const function  = functionManager.GetGroup< FunctionBase >( m_functionName );
 
-    GEOSX_ERROR_IF( function == nullptr, "Function '" << functionName << "' not found" );
+    GEOSX_ERROR_IF( function == nullptr, "Function '" << m_functionName << "' not found" );
 
     if( function->isFunctionOfTime()==2 )
     {
