@@ -38,18 +38,20 @@
                    targetExactTimestep="1"
                    target="/Outputs/siloOutput" />
 
+    <!--
     <PeriodicEvent name="timeHistoryCollection"
                    timeFrequency="1.0"
                    targetExactTimestep="1"
                    target="/Tasks/temperaturePackCollection" />
-
+    -->
     <!-- this needs to come *after* the collection event if they happen at the same time
          needs to be resolved -->
+    <!--
     <PeriodicEvent name="timeHistoryOutput"
-                   timeFrequency="1.0"
+                   timeFrequency="2.0"
                    targetExactTimestep="1"
                    target="/Outputs/timeHistoryOutput" />
-
+    -->
     <PeriodicEvent name="restarts"
                    timeFrequency="1.0"
                    targetExactTimestep="0"

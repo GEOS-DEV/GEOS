@@ -30,11 +30,6 @@
 namespace geosx
 {
 
-namespace dataRepository
-{
-class Group;
-}
-
 /**
  * @class CopyField
  * @brief A Task to copy a field.

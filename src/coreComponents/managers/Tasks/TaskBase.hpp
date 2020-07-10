@@ -29,7 +29,7 @@ namespace geosx
 
 /**
  * @class TaskBase
- * @brief A class to execute a task when directed by the TasksManager
+ * A class to execute a task when directed by the TasksManager
  */
 class TaskBase : public ExecutableGroup
 {
@@ -53,7 +53,7 @@ public:
    */
   static CatalogInterface::CatalogType & GetCatalog();
 
-  /// @copydoc geosx::dataRepository::ExecutableGroup::Execute
+  /// @copydoc geosx::ExecutableGroup::Execute
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,

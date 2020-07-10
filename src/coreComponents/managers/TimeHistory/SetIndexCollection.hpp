@@ -35,17 +35,18 @@ class SetIndexCollection : public HistoryCollection
 public:
 /**
  * @brief Constructor
+ * @param object_path The data repository path of the object to collect set index information about
+ * @param set_name The name of the set to collect indices from
  * @param set_index_offset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set
  * indices.
- * @copydoc geosx::dataRepository::Group::Group
  */
   SetIndexCollection( string const & object_path, string const & set_name, globalIndex set_index_offset );
 
-/// @copydoc HistoryCollection::GetMetadata
+/// @copydoc geosx::HistoryCollection::GetMetadata
   virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
 
-/// @copydoc HistoryCollection::Collect
-  virtual void Collect( Group * domain_group,
+/// @copydoc geosx::HistoryCollection::Collect
+  virtual void Collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
                         buffer_unit_type * & buffer ) override;

@@ -84,7 +84,7 @@ public:
   virtual std::unique_ptr< HistoryCollection > GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset ) override;
 
   /// @copydoc geosx::HistoryCollection::Collect
-  virtual void Collect( Group * domain_group,
+  virtual void Collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
                         buffer_unit_type * & buffer ) override;

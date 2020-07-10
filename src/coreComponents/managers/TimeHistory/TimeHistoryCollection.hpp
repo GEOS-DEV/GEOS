@@ -47,12 +47,12 @@ public:
 
   /**
    * @brief Get the metadata for what this collector collects.
-   * @param domain The ProblemDomain cast to a group.
+   * @param problem_group The problem manager cast to a group.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
-  virtual HistoryMetadata GetMetadata( Group * domain )
+  virtual HistoryMetadata GetMetadata( Group * problem_group )
   {
-    GEOSX_UNUSED_VAR( domain );
+    GEOSX_UNUSED_VAR( problem_group );
     return HistoryMetadata( "null", 0, std::type_index( typeid(nullptr)) );
   }
 

@@ -302,14 +302,13 @@ public:
    * @brief For indexable types, unpack selected indices of wrapped object from a buffer.
    * @param[in,out] buffer    the binary buffer pointer, advanced upon completion
    * @param[in] unpackIndices the list of indices to pack
-   * @param[in] withMetadata whether to expect string metadata with the underlying data
    * @param[in] withMetadata whether to include metadata in the packing
    * @param[in] onDevice    whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @return                  the number of @p buffer_unit_type units unpacked
    */
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetdata, bool onDevice ) = 0;
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice ) = 0;
 
   ///@}
 

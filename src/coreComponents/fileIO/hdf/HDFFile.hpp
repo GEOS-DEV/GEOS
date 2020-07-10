@@ -61,8 +61,8 @@ public:
 };
 
 /**
- * @class HDFile
- * @brief A class used to control access to an HDF file target.
+ * @class HDFFile
+ * A class used to control access to an HDF file target.
  */
 class HDFFile : public HDFTarget
 {
@@ -143,7 +143,7 @@ public:
   /// @copydoc geosx::BufferedHistoryIO::Init
   virtual void Init( bool exists_okay ) override;
 
-  /// @copydoc geosx::HistoryMetadataIO::Write
+  /// @copydoc geosx::BufferedHistoryIO::Write
   virtual void Write( ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::CompressInFile
