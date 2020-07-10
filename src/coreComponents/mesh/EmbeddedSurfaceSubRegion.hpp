@@ -127,7 +127,7 @@ public:
    * @param nodeManager the nodemanager group
    * @param edgeManager the edgemanager group
    * @param cellToEdges cellElement to edges map
-   * @param plane the bounded plane which is defining the embedded surface element
+   * @param fracture pointer to the bounded plane which is defining the embedded surface element
    * @return boolean defining whether the embedded element was added or not
    */
   bool AddNewEmbeddedSurface( localIndex const cellIndex,
