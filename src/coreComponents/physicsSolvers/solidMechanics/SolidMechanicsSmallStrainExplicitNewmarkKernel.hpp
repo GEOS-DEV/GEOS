@@ -29,11 +29,11 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-//#if defined(GEOSX_USE_CUDA)
+#if defined(GEOSX_USE_CUDA)
 /// Macro variable to indicate whether or not to calculate the shape function
 /// derivatives in the kernel instead of using a pre-calculated value.
 #define CALCFEMSHAPE
-//#endif
+#endif
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
 /// updated at all.
 /// If UPDATE_STRESS 1, uses total displacement to and adds material stress
