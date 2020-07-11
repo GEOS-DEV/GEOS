@@ -81,14 +81,14 @@ dispatch( string const & input,
   {
     lambda( TrilinearHexahedronShapeFunctionKernel() );
   }
-//  else if( input == ParentElementTypeStrings::Tetrahedal )
-//  {
-//    lambda( LinearTetrahedronShapeFunctionKernel() );
-//  }
-//  else if( input == ParentElementTypeStrings::Prism )
-//  {
-//    lambda( BiLinearWedgeShapeFunctionKernel() );
-//  }
+  else if( input == ParentElementTypeStrings::Tetrahedal )
+  {
+    lambda( LinearTetrahedronShapeFunctionKernel() );
+  }
+  else if( input == ParentElementTypeStrings::Prism )
+  {
+    lambda( BiLinearWedgeShapeFunctionKernel() );
+  }
   else
   {
     GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
