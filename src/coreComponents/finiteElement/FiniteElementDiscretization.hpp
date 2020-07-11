@@ -22,6 +22,7 @@
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "ElementLibrary/FiniteElement.h"
+#include "FiniteElementDispatch.hpp"
 #include "common/TimingMacros.hpp"
 
 namespace geosx
@@ -80,6 +81,45 @@ public:
     array2d< real64 > & detJ = elementSubRegion->detJ();
     auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
+#if 1
+    string const elementTypeString = elementSubRegion->GetElementTypeString();
+    finiteElement::dispatch( elementTypeString,
+                             [&] ( auto const finiteElement )
+    {
+      localIndex const numNodesPerElem = finiteElement.numNodes;
+      localIndex const numQuadraturePointsPerElem = finiteElement.numQuadraturePoints;
+      dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
+      detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
+
+      for( localIndex k = 0; k < elementSubRegion->size(); ++k )
+      {
+        real64 xLocal[numNodesPerElem][3];
+        for( localIndex a=0; a< numNodesPerElem; ++a )
+        {
+          localIndex const nodeIndex = elemsToNodes[ k][ a ];
+          for( int i=0; i<3; ++i )
+          {
+            xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+          }
+        }
+
+
+
+        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+        {
+          real64 dNdXLocal[numNodesPerElem][3];
+          detJ( k, q ) = finiteElement.shapeFunctionDerivatives( q, xLocal, dNdXLocal );
+
+          for( localIndex b = 0; b < numNodesPerElem; ++b )
+          {
+            LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], dNdXLocal[b] );
+          }
+        }
+      }
+
+    });
+#else
+
     {
       std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
       dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), m_quadrature->size(), fe->dofs_per_element(), 3 );
@@ -108,6 +148,7 @@ public:
         }
       }
     }
+#endif
   }
 
   localIndex getNumberOfQuadraturePoints() const;
