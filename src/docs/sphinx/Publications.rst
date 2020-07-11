@@ -52,7 +52,7 @@ Last updated 11-July-2020
       | `doi:10.1137/19M1256117 <https://doi.org/10.1137/19M1256117>`_
 
   * - | **Fully implicit multidimensional hybrid upwind scheme for coupled flow and transport**
-      | Francois Hamon, Brad Mallison
+      | F Hamon, B Mallison
       | Computer Methods in Applied Mechanics and Engineering  358, 112606
       | `doi:10.1016/j.cma.2019.112606 <https://doi.org/10.1016/j.cma.2019.112606>`_
 
