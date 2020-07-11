@@ -43,16 +43,6 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void
-  ImplicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override final;
-
-  virtual void
-  ImplicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition & domain ) override final;
-
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
@@ -70,6 +60,14 @@ public:
   } flowProppantTransportSolverViewKeys;
 
 
+  void PreStepUpdate( real64 const & time_n,
+                      real64 const & dt,
+                      DomainPartition & domain );
+
+  void PostStepUpdate( real64 const & time_n,
+                       real64 const & dt,
+                       DomainPartition & domain );
+
 protected:
 
   virtual void PostProcessInput() override final;
@@ -79,8 +77,8 @@ private:
   string m_proppantSolverName;
   string m_flowSolverName;
 
-  ProppantTransport * m_proppantSolver;
   FlowSolverBase * m_flowSolver;
+  ProppantTransport * m_proppantSolver;
 
 };
 

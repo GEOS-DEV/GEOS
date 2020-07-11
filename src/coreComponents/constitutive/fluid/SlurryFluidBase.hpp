@@ -187,14 +187,14 @@ protected:
 private:
 
   /**
-   * @brief Update fluid state at a single point.
-   * @param[in] k                      element index
-   * @param[in] q                      gauss point index
-   * @param[in] pressure               the target pressure value
-   * @param[in] proppantConcentration
-   * @param[in] componentConcentration
-   * @param[in] shearRate
-   * @param[in] isProppantBoundary
+   * @brief Perform a single point constitutive update.
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure pressure value
+   * @param[in] proppantConcentration proppant concentration value
+   * @param[in] Componentconcentration fluid composition array
+   * @param[in] shearRate shear rate for power-law fluid calculation
+   * @param[in] isProppantBoundary proppant boundary flag
    */
   GEOSX_HOST_DEVICE
   virtual void Update( localIndex const k,
@@ -206,12 +206,12 @@ private:
                        integer const isProppantBoundary ) const = 0;
 
   /**
-   * @brief Update fluid properties at a single point.
-   * @param k
-   * @param q
-   * @param pressure
-   * @param componentConcentration
-   * @param shearRate
+   * @brief Perform a single point fluid property update.
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure pressure value
+   * @param[in] componentconcentration fluid composition array
+   * @param[in] shearRate shear rate for power-law fluid calculation
    */
   GEOSX_HOST_DEVICE
   virtual void UpdateFluidProperty( localIndex const k,
@@ -221,11 +221,11 @@ private:
                                     real64 const shearRate ) const = 0;
 
   /**
-   * @brief Update component densities at a single point.
-   * @param k
-   * @param q
-   * @param pressure
-   * @param componentConcentration
+   * @brief Perform a single point fluid component property update.
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] q second constitutive index (e.g. quadrature index)
+   * @param[in] pressure pressure value
+   * @param[in] componentconcentration fluid composition array
    */
   GEOSX_HOST_DEVICE
   virtual void UpdateComponentDensity( localIndex const k,
@@ -235,6 +235,9 @@ private:
 
 };
 
+/**
+ * Base class for models calculating slurry fluid properties.
+ */
 class SlurryFluidBase : public ConstitutiveBase
 {
 public:

@@ -130,14 +130,15 @@ struct AccumulationKernel
   GEOSX_FORCE_INLINE
   static void
   Compute( localIndex const NC,
-           real64 const & proppantConcOld,
-           real64 const & proppantConcNew,
+           real64 const proppantConcOld,
+           real64 const proppantConcNew,
            arraySlice1d< real64 const > const & componentDensOld,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
-           real64 const & volume,
-           real64 const & packPoreVolume,
+           real64 const volume,
+           real64 const packPoreVolume,
+           real64 const proppantLiftVolume,
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian );
 
@@ -148,7 +149,6 @@ struct AccumulationKernel
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
-          arrayView1d< real64 const > const & proppantConcOld,
           arrayView1d< real64 const > const & proppantConc,
           arrayView1d< real64 const > const & dProppantConc,
           arrayView2d< real64 const > const & componentDensOld,
@@ -157,6 +157,8 @@ struct AccumulationKernel
           arrayView4d< real64 const > const & dCompDens_dCompConc,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & proppantPackVf,
+          arrayView1d< real64 const > const & proppantLiftFlux,
+          real64 const dt,
           real64 const maxProppantConcentration,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
@@ -182,20 +184,6 @@ struct FluxKernel
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam STENCIL_TYPE The type of the stencil that is being used.
-   * @param[in] stencil The stencil object.
-   * @param[in] dt The timestep for the integration step.
-   * @param[in] fluidIndex The index of the fluid being fluxed.
-   * @param[in] gravityFlag Flag to indicate whether or not to use gravity.
-   * @param[in] dofNumber The dofNumbers for each element
-   * @param[in] pres The pressures in each element
-   * @param[in] dPres The change in pressure for each element
-   * @param[in] gravDepth The factor for gravity calculations (g*H)
-   * @param[in] dens The material density in each element
-   * @param[in] dDens_dPres The change in material density for each element
-   * @param[in] mob The fluid mobility in each element
-   * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
-   * @param[out] jacobian The linear system matrix
-   * @param[out] residual The linear system residual
    */
   template< typename STENCIL_TYPE >
   static void
@@ -236,8 +224,6 @@ struct FluxKernel
           ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
           ElementViewConst< arrayView1d< real64 const > > const & proppantPackVf,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
-          ElementViewConst< arrayView1d< real64 const > > const & proppantLiftFlux,
-          ElementViewConst< arrayView1d< integer const > > const & isInterfaceElement,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -297,9 +283,6 @@ struct FluxKernel
                    arrayView1d< integer const > const & isProppantMobile,
                    arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
                    arrayView1d< real64 const > const & aperture,
-                   arrayView1d< real64 const > const & proppantLiftFlux,
-                   //arrayView1d<integer const> const & isInterfaceElement,
-                   arrayView1d< integer const > const &,
                    R1Tensor const & unitGravityVector,
                    arrayView1d< R1Tensor const > const & transTMultiplier,
                    real64 const dt,
@@ -358,7 +341,6 @@ struct ProppantPackVolumeKernel
                                        ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux,
                                        ElementView< arrayView1d< real64 > > const & proppantLiftFlux );
 
-
   template< typename STENCIL_TYPE >
   static void
   LaunchProppantPackVolumeUpdate( STENCIL_TYPE const & stencil,
@@ -368,15 +350,6 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< integer > > const & isProppantMobile,
                                   ElementView< arrayView1d< real64 > > const & proppantPackVf,
                                   ElementView< arrayView1d< real64 > > const & proppantExcessPackV );
-
-
-  template< typename STENCIL_TYPE >
-  static void
-  LaunchInterfaceElementUpdate( STENCIL_TYPE const & stencil,
-                                R1Tensor const unitGravityVector,
-                                ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                ElementView< arrayView1d< integer > > const & isInterfaceElement );
-
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -407,17 +380,6 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantExcessPackV,
                              arrayView1d< R1Tensor const > const & cellBasedFlux,
                              arrayView1d< real64 > const & proppantLiftFlux );
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  UpdateInterfaceElement( localIndex const numElems,
-                          arraySlice1d< localIndex const > const & stencilElementIndices,
-                          arraySlice1d< real64 const > const & stencilWeights,
-                          arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
-                          R1Tensor const unitGravityVector,
-                          arrayView1d< integer const > const & isProppantMobile,
-                          arrayView1d< integer > const & isInterfaceElement );
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

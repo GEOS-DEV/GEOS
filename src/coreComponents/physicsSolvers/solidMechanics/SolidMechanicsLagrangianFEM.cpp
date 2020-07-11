@@ -688,7 +688,7 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
                         Group * const,
                         string const & )
   {
-    string const & functionName = bc->getReference< string >( FieldSpecificationBase::viewKeyStruct::functionNameString );
+    string const & functionName = bc->GetFunctionName();
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;

@@ -116,15 +116,15 @@ protected:
 private:
 
   /**
-   * @brief Update fluid state at a single point.
-   * @param k
-   * @param proppantConcentration
-   * @param fluidDensity
-   * @param dFluidDensity_dPressure
-   * @param dFluidDensity_dComponentConcentration
-   * @param fluidViscosity
-   * @param dFluidViscosity_dPressure
-   * @param dFluidViscosity_dComponentConcentration
+   * @brief Perform a single point constitutive update.
+   * @param[in] k first constitutive index (e.g. elem index)
+   * @param[in] proppantConcentration proppant concentration value
+   * @param[in] fluidDensity fluid density
+   * @param[in] dFluidDensity_dPressure derivatives of the fluid density wrt the pressure
+   * @param[in] dFluidDensity_dComponentConcentration derivatives of the fluid density wrt the composition
+   * @param[in] fluidViscosity fluid viscosity
+   * @param[in] dFluidViscosity_dPressure derivatives of the fluid viscosity wrt the pressure
+   * @param[in] dFluidViscosity_dComponentConcentration derivatives of the fluid viscosity wrt the composition
    */
   GEOSX_HOST_DEVICE
   virtual void Update( localIndex const k,
@@ -137,6 +137,9 @@ private:
                        arraySlice1d< real64 const > const & dFluidViscosity_dComponentConcentration ) const = 0;
 };
 
+/**
+ * Base class for models calculating proppant transport and settling properties
+ */
 class ParticleFluidBase : public ConstitutiveBase
 {
 public:
