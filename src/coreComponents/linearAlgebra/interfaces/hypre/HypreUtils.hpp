@@ -129,6 +129,14 @@ struct HypreSolverFuncs
   DestroyFunc destroy{};       ///< pointer to destroy function
 };
 
+/**
+ * @brief Container for hypre preconditioner auxiliary data.
+ */
+struct HyprePrecAuxData
+{
+  array1d< HYPRE_Int > point_marker_array; ///< array1d of unique tags for local degrees of freedom
+};
+
 }
 
 #endif /*GEOSX_LINEARALGEBRA_INTERFACES_HYPREUTILS_HPP_*/
