@@ -23,10 +23,6 @@
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 
-#include <_hypre_utilities.h>
-#include <_hypre_parcsr_ls.h>
-#include <_hypre_IJ_mv.h>
-
 #include <memory>
 
 /**
@@ -47,6 +43,9 @@ using HYPRE_Solver = hypre_Solver_struct *;
 
 namespace geosx
 {
+
+/// Forward-declared struct that hosts preconditioner auxiliary data
+struct HyprePrecAuxData;
 
 /// Forward-declared struct that hosts pointers to preconditioner functions
 struct HyprePrecFuncs;
@@ -88,8 +87,6 @@ public:
    * @param mat the matrix to precondition.
    */
   virtual void compute( Matrix const & mat ) override;
-
-  using PreconditionerBase< HypreInterface >::compute;
 
   /**
    * @brief Apply operator to a vector
@@ -138,8 +135,8 @@ private:
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
 
-  // Pointer to point_marker_array
-  array1d< HYPRE_Int > point_marker_array;
+  // Pointer to preconditioner auxiliary data
+  std::unique_ptr< HyprePrecAuxData > m_auxData;
 };
 
 }

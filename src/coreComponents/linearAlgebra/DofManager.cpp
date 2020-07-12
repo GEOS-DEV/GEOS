@@ -159,7 +159,7 @@ array1d< localIndex > DofManager::getLocalDofComponentLabels() const
     for( const auto & field : m_fields )
     {
       numComp = field.numComponents;
-      array1d< integer > vectorLabels( numComp );
+      array1d< localIndex > vectorLabels( numComp );
       for( localIndex k = 0; k < numComp; ++k )
       {
         vectorLabels[k] = k + firstLabel;
@@ -167,7 +167,7 @@ array1d< localIndex > DofManager::getLocalDofComponentLabels() const
       iend = istr + field.numLocalDof;
       for( localIndex i = istr; i < iend; i += numComp )
       {
-        for( integer k = 0; k < numComp; ++k )
+        for( localIndex k = 0; k < numComp; ++k )
         {
           ret[i+k] = vectorLabels[k];
         }
