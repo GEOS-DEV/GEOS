@@ -326,19 +326,19 @@ struct ProppantPackVolumeKernel
                                        R1Tensor const unitGravityVector,
                                        real64 const criticalShieldsNumber,
                                        real64 const fricitonCoefficient,
-                                       ElementView< arrayView1d< real64 > > const & conc,
                                        ElementView< arrayView1d< real64 const > > const & settlingFactor,
                                        ElementView< arrayView2d< real64 const > > const & density,
                                        ElementView< arrayView2d< real64 const > > const & fluidDensity,
                                        ElementView< arrayView2d< real64 const > > const & fluidViscosity,
-                                       ElementView< arrayView1d< integer > > const & isProppantMobile,
+                                       ElementView< arrayView1d< integer const > > const & isProppantMobile,
                                        ElementView< arrayView1d< integer const > > const & isProppantBoundaryElement,
-                                       ElementView< arrayView1d< real64 > > const & proppantPackVf,
-                                       ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
                                        ElementView< arrayView1d< real64 const > > const & aperture,
                                        ElementView< arrayView1d< real64 const > > const & volume,
                                        ElementView< arrayView1d< integer const > > const & elemGhostRank,
                                        ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux,
+                                       ElementView< arrayView1d< real64 > > const & conc,
+                                       ElementView< arrayView1d< real64 > > const & proppantPackVf,
+                                       ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
                                        ElementView< arrayView1d< real64 > > const & proppantLiftFlux );
 
   template< typename STENCIL_TYPE >
@@ -346,10 +346,10 @@ struct ProppantPackVolumeKernel
   LaunchProppantPackVolumeUpdate( STENCIL_TYPE const & stencil,
                                   R1Tensor const unitGravityVector,
                                   real64 const maxProppantConcentration,
+                                  ElementView< arrayView1d< integer const > > const & isProppantMobile,
+                                  ElementView< arrayView1d< real64 const > > const & proppantExcessPackV,
                                   ElementView< arrayView1d< real64 > > const & conc,
-                                  ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                  ElementView< arrayView1d< real64 > > const & proppantPackVf,
-                                  ElementView< arrayView1d< real64 > > const & proppantExcessPackV );
+                                  ElementView< arrayView1d< real64 > > const & proppantPackVf );
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -368,17 +368,16 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 const > const & settlingFactor,
                              arrayView2d< real64 const > const & density,
                              arrayView2d< real64 const > const & fluidDensity,
-                             //arrayView2d<real64 const> const & fluidViscosity,
                              arrayView2d< real64 const > const &,
                              arrayView1d< real64 const > const & volume,
                              arrayView1d< real64 const > const & aperture,
                              arrayView1d< integer const > const & elemGhostRank,
                              arrayView1d< integer const > const & isProppantBoundaryElement,
+                             arrayView1d< integer const > const & isProppantMobile,
+                             arrayView1d< R1Tensor const > const & cellBasedFlux,
                              arrayView1d< real64 > const & conc,
-                             arrayView1d< integer > const & isProppantMobile,
                              arrayView1d< real64 > const & proppantPackVf,
                              arrayView1d< real64 > const & proppantExcessPackV,
-                             arrayView1d< R1Tensor const > const & cellBasedFlux,
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
@@ -390,10 +389,10 @@ struct ProppantPackVolumeKernel
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
                             R1Tensor const unitGravityVector,
                             real64 const maxProppantConcentration,
+                            arrayView1d< integer const > const & isProppantMobile,
+                            arrayView1d< real64 const > const & proppantExcessPackV,
                             arrayView1d< real64 > const & conc,
-                            arrayView1d< integer > const & isProppantMobile,
-                            arrayView1d< real64 > const & proppantPackVf,
-                            arrayView1d< real64 > const & proppantExcessPackV );
+                            arrayView1d< real64 > const & proppantPackVf );
 };
 
 } // namespace ProppantTransportKernels

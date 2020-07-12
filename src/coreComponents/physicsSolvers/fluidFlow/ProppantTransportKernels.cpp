@@ -1180,19 +1180,19 @@ void ProppantPackVolumeKernel::
                                                                  R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                                  real64 const GEOSX_UNUSED_PARAM( criticalShieldsNumber ),
                                                                  real64 const GEOSX_UNUSED_PARAM( frictionCoefficient ),
-                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
                                                                  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( settlingFactor ),
                                                                  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( density ),
                                                                  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidDensity ),
                                                                  ElementView< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( fluidViscosity ),
-                                                                 ElementView< arrayView1d< integer > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                                                 ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
                                                                  ElementViewConst< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantBoundaryElement ),
-                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
-                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
                                                                  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
                                                                  ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( volume ),
                                                                  ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
                                                                  ElementView< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( cellBasedFlux ),
+                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
+                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
+                                                                 ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
                                                                  ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantLiftFlux ) )
 {}
 
@@ -1214,17 +1214,16 @@ ProppantPackVolumeKernel::
                              arrayView1d< real64 const > const & settlingFactor,
                              arrayView2d< real64 const > const & density,
                              arrayView2d< real64 const > const & fluidDensity,
-                             //arrayView2d<real64 const> const & fluidViscosity,
                              arrayView2d< real64 const > const &,
                              arrayView1d< real64 const > const & volume,
                              arrayView1d< real64 const > const & aperture,
                              arrayView1d< integer const > const & elemGhostRank,
                              arrayView1d< integer const > const & isProppantBoundaryElement,
+                             arrayView1d< integer const > const & isProppantMobile,
+                             arrayView1d< R1Tensor const > const & cellBasedFlux,
                              arrayView1d< real64 > const & conc,
-                             arrayView1d< integer > const & isProppantMobile,
                              arrayView1d< real64 > const & proppantPackVf,
                              arrayView1d< real64 > const & proppantExcessPackV,
-                             arrayView1d< R1Tensor const > const & cellBasedFlux,
                              arrayView1d< real64 > const & proppantLiftFlux )
 {
 
@@ -1307,7 +1306,9 @@ ProppantPackVolumeKernel::
       }
 
       if( proppantLiftFlux[ei] < 0.0 )
+      {
         proppantLiftFlux[ei] = 0.0;
+      }
 
       real64 liftH =  proppantLiftFlux[ei] / edgeLength / aperture[ei] / maxProppantConcentration * dt;
 
@@ -1316,20 +1317,14 @@ ProppantPackVolumeKernel::
       if( Vf < 0.0 )
       {
         Vf = 0.0;
-
         liftH = dH + proppantPackVf[ei] * L;
-
         proppantLiftFlux[ei] = liftH * edgeLength * aperture[ei] * maxProppantConcentration / dt;
       }
 
       if( Vf >= 1.0 )
       {
-        isProppantMobile[ei] = 0;
-
         proppantExcessPackV[ei] = (Vf - 1.0) * L;
-
         proppantPackVf[ei] = 1.0;
-
         conc[ei] = maxProppantConcentration;
       }
       else
@@ -1350,19 +1345,19 @@ void ProppantPackVolumeKernel::
                                                              R1Tensor const unitGravityVector,
                                                              real64 const criticalShieldsNumber,
                                                              real64 const frictionCoefficient,
-                                                             ElementView< arrayView1d< real64 > > const & conc,
                                                              ElementView< arrayView1d< real64 const > > const & settlingFactor,
                                                              ElementView< arrayView2d< real64 const > > const & density,
                                                              ElementView< arrayView2d< real64 const > > const & fluidDensity,
                                                              ElementView< arrayView2d< real64 const > > const & fluidViscosity,
-                                                             ElementView< arrayView1d< integer > > const & isProppantMobile,
+                                                             ElementView< arrayView1d< integer const > > const & isProppantMobile,
                                                              ElementView< arrayView1d< integer const > > const & isProppantBoundaryElement,
-                                                             ElementView< arrayView1d< real64 > > const & proppantPackVf,
-                                                             ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
                                                              ElementView< arrayView1d< real64 const > > const & aperture,
                                                              ElementView< arrayView1d< real64 const > > const & volume,
                                                              ElementView< arrayView1d< integer const > > const & elemGhostRank,
                                                              ElementView< arrayView1d< R1Tensor const > > const & cellBasedFlux,
+                                                             ElementView< arrayView1d< real64 > > const & conc,
+                                                             ElementView< arrayView1d< real64 > > const & proppantPackVf,
+                                                             ElementView< arrayView1d< real64 > > const & proppantExcessPackV,
                                                              ElementView< arrayView1d< real64 > > const & proppantLiftFlux )
 {
 
@@ -1399,11 +1394,11 @@ void ProppantPackVolumeKernel::
                                aperture[er][esr],
                                elemGhostRank[er][esr],
                                isProppantBoundaryElement[er][esr],
-                               conc[er][esr],
                                isProppantMobile[er][esr],
+                               cellBasedFlux[er][esr],
+                               conc[er][esr],
                                proppantPackVf[er][esr],
                                proppantExcessPackV[er][esr],
-                               cellBasedFlux[er][esr],
                                proppantLiftFlux[er][esr] );
   } );
 }
@@ -1418,10 +1413,10 @@ ProppantPackVolumeKernel::
                             arraySlice1d< R1Tensor const > const & stencilCellCenterToEdgeCenters,
                             R1Tensor const unitGravityVector,
                             real64 const maxProppantConcentration,
+                            arrayView1d< integer const > const & isProppantMobile,
+                            arrayView1d< real64 const > const & proppantExcessPackV,
                             arrayView1d< real64 > const & conc,
-                            arrayView1d< integer > const & isProppantMobile,
-                            arrayView1d< real64 > const & proppantPackVf,
-                            arrayView1d< real64 > const & proppantExcessPackV )
+                            arrayView1d< real64 > const & proppantPackVf )
 {
   integer faceIndex = -1;
   real64 excessV = 0.0;
@@ -1483,10 +1478,10 @@ void ProppantPackVolumeKernel::
   LaunchProppantPackVolumeUpdate< CellElementStencilTPFA >( CellElementStencilTPFA const & GEOSX_UNUSED_PARAM( stencil ),
                                                             R1Tensor const GEOSX_UNUSED_PARAM( unitGravityVector ),
                                                             real64 const GEOSX_UNUSED_PARAM( maxProppantConcentration ),
+                                                            ElementView< arrayView1d< integer const > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
+                                                            ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ),
                                                             ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( conc ),
-                                                            ElementView< arrayView1d< integer > > const & GEOSX_UNUSED_PARAM( isProppantMobile ),
-                                                            ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ),
-                                                            ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantExcessPackV ) )
+                                                            ElementView< arrayView1d< real64 > > const & GEOSX_UNUSED_PARAM( proppantPackVf ) )
 {}
 
 template<>
@@ -1494,10 +1489,10 @@ void ProppantPackVolumeKernel::
   LaunchProppantPackVolumeUpdate< FaceElementStencil >( FaceElementStencil const & stencil,
                                                         R1Tensor const unitGravityVector,
                                                         real64 const maxProppantConcentration,
+                                                        ElementView< arrayView1d< integer const > > const & isProppantMobile,
+                                                        ElementView< arrayView1d< real64 const > > const & proppantExcessPackV,
                                                         ElementView< arrayView1d< real64 > > const & conc,
-                                                        ElementView< arrayView1d< integer > > const & isProppantMobile,
-                                                        ElementView< arrayView1d< real64 > > const & proppantPackVf,
-                                                        ElementView< arrayView1d< real64 > > const & proppantExcessPackV )
+                                                        ElementView< arrayView1d< real64 > > const & proppantPackVf )
 {
 
   typename FaceElementStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -1520,10 +1515,10 @@ void ProppantPackVolumeKernel::
                               cellCenterToEdgeCenters[iconn],
                               unitGravityVector,
                               maxProppantConcentration,
-                              conc[er][esr],
                               isProppantMobile[er][esr],
-                              proppantPackVf[er][esr],
-                              proppantExcessPackV[er][esr] );
+                              proppantExcessPackV[er][esr],
+                              conc[er][esr],
+                              proppantPackVf[er][esr] );
   } );
 }
 

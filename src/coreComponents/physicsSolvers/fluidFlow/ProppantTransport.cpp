@@ -1253,40 +1253,23 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   downVector.Normalize();
 
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager & elemManager = *mesh.getElemManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
 
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & settlingFactor = m_settlingFactor.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & density = m_density.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidDensity = m_fluidDensity.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView2d< real64 const > > const & fluidViscosity = m_fluidViscosity.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< R1Tensor const > > const & cellBasedFlux = m_cellBasedFlux.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantBoundaryElement = m_isProppantBoundaryElement.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & volume = m_volume.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture = m_elementAperture.toViewConst();
-  ProppantPackVolumeKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
-
   // For data modified through an accessor, we must create the view accessor
   // every time in order to ensure the data gets properly touched on device
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantConcAccessor =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantConcentrationString );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantPackVfAccessor =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantExcessPackVAccessor =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantLiftFluxAccessor =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > const isProppantMobileAccessor =
-    mesh.getElemManager()->ConstructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::isProppantMobileString );
-
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantConc  = proppantConcAccessor.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantPackVf  = proppantPackVfAccessor.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantExcessPackV  = proppantExcessPackVAccessor.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< real64 > > const & proppantLiftFlux  = proppantLiftFluxAccessor.toView();
-  ProppantPackVolumeKernel::ElementView< arrayView1d< integer > > const & isProppantMobile  = isProppantMobileAccessor.toView();
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantConc =
+    elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantConcentrationString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantPackVf =
+    elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantExcessPackV =
+    elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantExcessPackVolumeString );
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantLiftFlux =
+    elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
 
   fluxApprox.forAllStencils( [&]( auto const & stencil )
   {
@@ -1298,20 +1281,20 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
                                                                    downVector,
                                                                    m_criticalShieldsNumber,
                                                                    m_frictionCoefficient,
-                                                                   proppantConc,
-                                                                   settlingFactor,
-                                                                   density,
-                                                                   fluidDensity,
-                                                                   fluidViscosity,
-                                                                   isProppantMobile,
-                                                                   isProppantBoundaryElement,
-                                                                   proppantPackVf,
-                                                                   proppantExcessPackV,
-                                                                   aperture,
-                                                                   volume,
-                                                                   elemGhostRank,
-                                                                   cellBasedFlux,
-                                                                   proppantLiftFlux );
+                                                                   m_settlingFactor.toViewConst(),
+                                                                   m_density.toViewConst(),
+                                                                   m_fluidDensity.toViewConst(),
+                                                                   m_fluidViscosity.toViewConst(),
+                                                                   m_isProppantMobile.toViewConst(),
+                                                                   m_isProppantBoundaryElement.toViewConst(),
+                                                                   m_elementAperture.toViewConst(),
+                                                                   m_volume.toViewConst(),
+                                                                   m_elemGhostRank.toViewConst(),
+                                                                   m_cellBasedFlux.toViewConst(),
+                                                                   proppantConc.toView(),
+                                                                   proppantPackVf.toView(),
+                                                                   proppantExcessPackV.toView(),
+                                                                   proppantLiftFlux.toView() );
   } );
 
   {
@@ -1336,10 +1319,10 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
                                                               downVector,
                                                               m_maxProppantConcentration,
-                                                              proppantConc,
-                                                              isProppantMobile,
-                                                              proppantPackVf,
-                                                              proppantExcessPackV );
+                                                              m_isProppantMobile.toViewConst(),
+                                                              m_proppantExcessPackVolume.toView(),
+                                                              proppantConc.toView(),
+                                                              proppantPackVf.toView() );
   } );
 
 
@@ -1361,7 +1344,6 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
   {
-
     arrayView1d< real64 const > const & proppantPackVfNew =
       subRegion.getReference< array1d< real64 > >( viewKeyStruct::proppantPackVolumeFractionString );
     arrayView1d< real64 const > const & aperture0 =
@@ -1377,20 +1359,16 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-
       poroMultiplier[ei] = 1.0 - maxProppantConcentration * proppantPackVfNew[ei];
 
       //K0 horizontal
-
       transTMultiplier[ei][0] = ( 1.0 - proppantPackVfNew[ei] )
                                 + proppantPackVfNew[ei] * proppantPackPermeability * 12.0 / ( aperture0[ei] * aperture0[ei] );
 
       //K1 vertical
-
       transTMultiplier[ei][1] = 1.0 /
                                 ( proppantPackVfNew[ei] * aperture0[ei] * aperture0[ei] / 12.0 / proppantPackPermeability
                                   + ( 1.0 - proppantPackVfNew[ei] ) );
-
     } );
   } );
 }
