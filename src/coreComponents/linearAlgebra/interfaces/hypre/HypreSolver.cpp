@@ -298,10 +298,13 @@ void HypreSolver::solve_krylov( HypreMatrix & mat,
   GEOSX_LAI_CHECK_ERROR( solverFuncs.getNumIter( solver, &numIter ) );
   m_result.numIterations = numIter;
 
-  GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
-                    " | Final Relative Tol " << finalNorm <<
-                    " | SetupTime " << m_result.setupTime <<
-                    " | SolveTime " << m_result.solveTime );
+  if( m_parameters.logLevel >= 1 )
+  {
+    GEOSX_LOG_RANK_0( "\t\tLinear Solver | Iter = " << numIter <<
+                      " | Final Relative Tol " << finalNorm <<
+                      " | SetupTime " << m_result.setupTime <<
+                      " | SolveTime " << m_result.solveTime );
+  }
 
   // Destroy solver
   GEOSX_LAI_CHECK_ERROR( solverFuncs.destroy( solver ) );
