@@ -21,7 +21,7 @@
                                  newtonMinIter="1"
                                  maxTimeStepCuts="5"/>
       <LinearSolverParameters solverType="gmres"
-                              krylovTol="1.0e-12"/>
+                              krylovTol="1.0e-7"/>
     
     </ProppantTransport>    
 
@@ -32,9 +32,6 @@
                            targetRegions="{Fracture}"
                            logLevel="1">
 
-      <NonlinearSolverParameters newtonMinIter="1"
-                                 newtonMaxIter="5"/>
-      <LinearSolverParameters />
     </FlowProppantTransport>
 
 
@@ -47,13 +44,13 @@
                      fluidNames="{water}"
                      solidNames="{rock}">
 
-      <NonlinearSolverParameters newtonTol="1.0e-8"
+      <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="8"
                                  lineSearchAction="0"
-                                 newtonMinIter="1"
+                                 newtonMinIter="0"
                                  maxTimeStepCuts="5"/>
        <LinearSolverParameters solverType="gmres"
-                               krylovTol="1.0e-12"/>
+                               krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
 
 
@@ -83,7 +80,7 @@
 
   <Geometry>
     <Box name="left"       xMin="-0.001, -0.001, -0.001" xMax="0.001,  0.11, 0.3148"/>
-    <Box name="right"       xMin="-0.001, 1.1, -0.001" xMax="0.001, 1.2546, 0.3148"/>        
+    <Box name="right"       xMin="-0.001, 1.1, 0.2" xMax="0.001, 1.2546, 0.3148"/>        
     <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 1.2546, 0.3148"/>
   </Geometry>
 
