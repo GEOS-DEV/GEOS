@@ -62,8 +62,8 @@ The parameter options are listed in the following table:
 
 In order to properly collect and output time history information the following steps must be accomplished:
 
-#. Specify one or more collection tasks using the :ref:`TasksManager`
-#. Specify a time `TimeHistory` targeting the collection task(s)
+#. Specify one or more collection tasks using the :ref:`TasksManager`.
+#. Specify a `TimeHistory Output` using the collection task(s) as source(s).
 #. Specify an event in the :ref:`EventManager` to trigger the collection task(s).
 #. Specify an event in the :ref:`EventManager` to trigger the output.
 
