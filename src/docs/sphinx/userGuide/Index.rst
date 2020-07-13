@@ -15,6 +15,8 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/managers/docs/EventManager
 
+   /coreComponents/managers/docs/TasksManager
+
    /coreComponents/managers/docs/FunctionManager
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
