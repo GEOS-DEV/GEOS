@@ -70,7 +70,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( -1.0 )->
     setDescription( "The area of each EmbeddedSurface element." );
 
-  m_numNodesPerElement = 4; // Let s assume it's a plane for now
+  m_numNodesPerElement = 4; // (it's unused though.)
 }
 
 

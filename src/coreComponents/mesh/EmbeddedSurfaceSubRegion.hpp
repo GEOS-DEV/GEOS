@@ -139,7 +139,7 @@ public:
                               BoundedPlane const * fracture );
 
   /**
-   * @brief Computes Heaviside function.
+   * @brief Given the coordinates of a node, it computes the Heaviside function iside a cut element with respect to the fracture element.
    * @param nodeCoord coordinate of the node
    * @param k embedded surface cell index
    * @return value of the Heaviside
@@ -148,7 +148,7 @@ public:
                                    localIndex const k );
 
   /**
-   * @brief Get list of intersection points, offset and connectivity list
+   * @brief Get list of intersection points (nodes of the embedded plane), offset and connectivity list
    * @param nodeManager the node manager
    * @param edgeManager the edged manager
    * @param elemManager the element region manager
@@ -163,7 +163,7 @@ public:
                               array1d< localIndex > & connectivityList,
                               array1d< int > & offSet ) const;
   /**
-   * @brief Computeintersection points, offset and connectivity list
+   * @brief Compute intersection points (nodes of the embedded plane), offset and connectivity list
    * @param nodeManager the node manager
    * @param edgeManager the edged manager
    * @param elemManager the element region manager
