@@ -176,6 +176,10 @@ void TrilinosPreconditioner::compute( Matrix const & mat )
   {
     m_precond = CreateMLOperator( m_parameters, mat.unwrapped() );
   }
+  else if( m_parameters.preconditionerType == "mgr" )
+  {
+    GEOSX_ERROR( "MGR preconditioner available only through the hypre interface" );
+  }
   else if( m_parameters.preconditionerType == "iluk" ||
            m_parameters.preconditionerType == "ilut" ||
            m_parameters.preconditionerType == "icc" ||

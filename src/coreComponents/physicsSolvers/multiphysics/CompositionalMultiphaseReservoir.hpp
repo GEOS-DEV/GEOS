@@ -83,7 +83,6 @@ public:
                                       DofManager const * const dofManager,
                                       ParallelMatrix * const matrix,
                                       ParallelVector * const rhs ) override;
-
 };
 
 } /* namespace geosx */

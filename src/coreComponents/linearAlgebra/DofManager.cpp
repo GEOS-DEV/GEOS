@@ -128,7 +128,58 @@ localIndex DofManager::numLocalDofs( string const & fieldName ) const
   }
 }
 
-localIndex DofManager::rankOffset( string const & fieldName ) const
+array1d< localIndex > DofManager::numLocalDofsPerField() const
+{
+  array1d< localIndex > ret;
+  localIndex numFields = m_fields.size();
+  if( numFields > 0 )
+  {
+    for( const auto & field : m_fields )
+    {
+      ret.emplace_back( field.numLocalDof );
+    }
+  }
+  return ret;
+}
+
+array1d< localIndex > DofManager::getLocalDofComponentLabels() const
+{
+  array1d< localIndex > ret;
+  if( m_fields.size() > 0 )
+  {
+    localIndex numTotalLocalDof = std::accumulate( m_fields.begin(), m_fields.end(), 0,
+                                                   []( localIndex const & n, FieldDescription const & f ) { return n + f.numLocalDof; } );
+
+    ret.resize( numTotalLocalDof );
+
+    localIndex firstLabel = 0;
+    localIndex istr= 0;
+    localIndex iend;
+    localIndex numComp;
+    for( const auto & field : m_fields )
+    {
+      numComp = field.numComponents;
+      array1d< localIndex > vectorLabels( numComp );
+      for( localIndex k = 0; k < numComp; ++k )
+      {
+        vectorLabels[k] = k + firstLabel;
+      }
+      iend = istr + field.numLocalDof;
+      for( localIndex i = istr; i < iend; i += numComp )
+      {
+        for( localIndex k = 0; k < numComp; ++k )
+        {
+          ret[i+k] = vectorLabels[k];
+        }
+      }
+      istr += iend;
+      firstLabel += numComp;
+    }
+  }
+  return ret;
+}
+
+globalIndex DofManager::rankOffset( string const & fieldName ) const
 {
   if( !fieldName.empty() )
   {
@@ -143,7 +194,30 @@ localIndex DofManager::rankOffset( string const & fieldName ) const
 
 localIndex DofManager::numComponents( string const & fieldName ) const
 {
-  return m_fields[getFieldIndex( fieldName )].numComponents;
+  if( !fieldName.empty() )
+  {
+    return m_fields[getFieldIndex( fieldName )].numComponents;
+  }
+  else
+  {
+    return std::accumulate( m_fields.begin(), m_fields.end(), 0,
+                            []( globalIndex const & n, FieldDescription const & f ) { return n + f.numComponents; } );
+  }
+
+}
+
+array1d< localIndex > DofManager::numComponentsPerField() const
+{
+  array1d< localIndex > ret;
+  localIndex numFields = m_fields.size();
+  if( numFields > 0 )
+  {
+    for( const auto & field : m_fields )
+    {
+      ret.emplace_back( field.numComponents );
+    }
+  }
+  return ret;
 }
 
 localIndex DofManager::numLocalSupport( string const & fieldName ) const
