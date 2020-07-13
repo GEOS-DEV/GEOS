@@ -103,7 +103,7 @@ void LinearSolverParametersInput::PostProcessInput()
 {
   m_parameters.logLevel = getLogLevel();
 
-  static const std::set< string > solverOptions = { "direct", "cg", "gmres", "bicgstab", "preconditioner" };
+  static const std::set< string > solverOptions = { "direct", "cg", "gmres", "fgmres", "bicgstab", "preconditioner" };
   GEOSX_ERROR_IF( solverOptions.count( m_parameters.solverType ) == 0, "Unsupported solver type: " << m_parameters.solverType );
 
   static const std::set< string > precondOptions = { "none", "jacobi", "iluk", "ilut", "icc", "amg", "mgr", "block" };

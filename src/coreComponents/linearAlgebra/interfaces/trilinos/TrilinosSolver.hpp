@@ -25,6 +25,7 @@
 namespace geosx
 {
 
+class DofManager;
 class EpetraVector;
 class EpetraMatrix;
 class LinearSolverParameters;
@@ -54,12 +55,14 @@ public:
    * @param[in,out] mat the matrix
    * @param[in,out] sol the solution
    * @param[in,out] rhs the right-hand side
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    *
    * Solve Ax=b with A an EpetraMatrix, x and b EpetraVector.
    */
   void solve( EpetraMatrix & mat,
               EpetraVector & sol,
-              EpetraVector & rhs );
+              EpetraVector & rhs,
+              DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Get the result of previous solve.
