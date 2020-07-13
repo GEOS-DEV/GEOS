@@ -19,6 +19,7 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PROPPANTTRANSPORT_HPP_
 #define SRC_COMPONENTS_CORE_SRC_PHYSICSSOLVERS_PROPPANTTRANSPORT_HPP_
 
+#include <constitutive/fluid/ParticleFluidBase.hpp>
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 
@@ -236,7 +237,7 @@ public:
   groupKeyStruct & groupKeys() { return groupKeysProppantTransport; }
   groupKeyStruct const & groupKeys() const { return groupKeysProppantTransport; }
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = 3;
+  static constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
   virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 

@@ -176,12 +176,12 @@ FluxKernel::
                    arrayView2d< real64 const > const & dVisc_dProppantConc,
                    arrayView3d< real64 const > const & dVisc_dComponentConc,
                    arrayView2d< real64 const > const & fluidDensity,
-                   arrayView2d< real64 const > const & dFluidDens_dPres,
-                   arrayView3d< real64 const > const & dFluidDens_dComponentConc,
+                   arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dPres ),
+                   arrayView3d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDens_dComponentConc ),
                    arrayView1d< real64 const > const & settlingFactor,
-                   arrayView1d< real64 const > const & dSettlingFactor_dPres,
+                   arrayView1d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dPres ),
                    arrayView1d< real64 const > const & dSettlingFactor_dProppantConc,
-                   arrayView2d< real64 const > const & dSettlingFactor_dComponentConc,
+                   arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( dSettlingFactor_dComponentConc ),
                    arrayView1d< real64 const > const & collisionFactor,
                    arrayView1d< real64 const > const & dCollisionFactor_dProppantConc,
                    arrayView1d< integer const > const & isProppantMobile,
@@ -208,28 +208,11 @@ FluxKernel::
 
   // mixture density and fluid density in each face
   stackArray1d< real64, maxNumFluxElems > mixDens( numElems );
-  stackArray1d< real64, maxNumFluxElems > dMixDens_dP( numElems );
-  stackArray1d< real64, maxNumFluxElems > dMixDens_dProppantC( numElems );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dMixDens_dComponentC( numElems, NC );
-
   stackArray1d< real64, maxNumFluxElems > fluidDens( numElems );
-  stackArray1d< real64, maxNumFluxElems > dFluidDens_dP( numElems );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dFluidDens_dComponentC( numElems, NC );
-
 
   // realted to slip velocity calculation
-  stackArray1d< real64, maxNumFluxElems > settlingFac( numElems );
-  stackArray1d< real64, maxNumFluxElems > dSettlingFac_dP( numElems );
-  stackArray1d< real64, maxNumFluxElems > dSettlingFac_dProppantC( numElems );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dSettlingFac_dComponentC( numElems, NC );
-
-  stackArray1d< real64, maxNumFluxElems > collisionFac( numElems );
-  stackArray1d< real64, maxNumFluxElems > dCollisionFac_dProppantC( numElems );
-
   stackArray1d< real64, maxNumFluxElems > transT( numElems );
   stackArray1d< real64, maxNumFluxElems > coefs( numElems );
-
-  stackArray1d< integer, maxNumFluxElems > isProppantMob( numElems );
 
   real64 edgeDensity = 0.0;
   stackArray1d< real64, maxNumFluxElems > dEdgeDens_dP( numElems );
@@ -245,8 +228,6 @@ FluxKernel::
   stackArray1d< real64, maxNumFluxElems > dPe_dProppantC( numElems );
   stackArray2d< real64, maxNumFluxElems * maxNumComponents > dPe_dComponentC( numElems, NC );
 
-  stackArray1d< R1Tensor, maxNumFluxElems > Up( numElems );
-
   stackArray1d< real64, maxNumFluxElems > edgeToFaceFlux( numElems );
   stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFlux_dP( numElems, numElems );
   stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFlux_dProppantC( numElems, numElems );
@@ -257,18 +238,12 @@ FluxKernel::
   stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceProppantFlux_dProppantC( numElems, numElems );
   stackArray3d< real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents > dEdgeToFaceProppantFlux_dComponentC( numElems, numElems, NC );
 
-
   stackArray1d< real64, maxNumFluxElems > edgeToFaceFluidFlux( numElems );
   stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFluidFlux_dP( numElems, numElems );
   stackArray2d< real64, maxNumFluxElems * maxNumFluxElems > dEdgeToFaceFluidFlux_dProppantC( numElems, numElems );
   stackArray3d< real64, maxNumFluxElems * maxNumFluxElems * maxNumComponents > dEdgeToFaceFluidFlux_dComponentC( numElems, numElems, NC );
 
-  stackArray1d< real64, maxNumFluxElems > P( numElems );
   stackArray1d< real64, maxNumFluxElems > proppantC( numElems );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > componentC( numElems, NC );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dComponentC_dP( numElems, NC );
-  stackArray2d< real64, maxNumFluxElems * maxNumComponents > dComponentC_dProppantC( numElems, NC );
-  stackArray3d< real64, maxNumFluxElems * maxNumComponents * maxNumComponents > dComponentC_dComponentC( numElems, NC, NC );
 
   real64 sumOfWeights = 0.0;
 
@@ -322,51 +297,21 @@ FluxKernel::
     dEdgeVisc_dP[i] = weight[i] * dVisc_dPres[ei][0];
     dEdgeVisc_dProppantC[i] = weight[i] * dVisc_dProppantConc[ei][0];
 
-    P[i] = pres[ei] + dPres[ei];
     proppantC[i] = proppantConc[ei] + dProppantConc[ei];
 
     mixDens[i] = dens[ei][0];
-    dMixDens_dP[i] = dDens_dPres[ei][0];
-    dMixDens_dProppantC[i] = dDens_dProppantConc[ei][0];
-
     fluidDens[i] = fluidDensity[ei][0];
-    dFluidDens_dP[i] = dFluidDens_dPres[ei][0];
 
-    settlingFac[i] = settlingFactor[ei];
-    dSettlingFac_dP[i] = dSettlingFactor_dPres[ei];
-    dSettlingFac_dProppantC[i] = dSettlingFactor_dProppantConc[ei];
-
-    collisionFac[i] = collisionFactor[ei];
-    dCollisionFac_dProppantC[i] = dCollisionFactor_dProppantConc[ei];
-
-    isProppantMob[i] = isProppantMobile[ei];
-
-    if( isProppantMob[i] == 1 )
+    if( isProppantMobile[ei] == 1 )
     {
       numberOfMobileProppantElems++;
     }
 
     for( localIndex c = 0; c < NC; ++c )
     {
-      dMixDens_dComponentC[i][c] = dDens_dComponentConc[ei][0][c];
-      dFluidDens_dComponentC[i][c] = dFluidDens_dComponentConc[ei][0][c];
-
-      dSettlingFac_dComponentC[i][c] = dSettlingFactor_dComponentConc[ei][c];
-
-      componentC[i][c] = componentDens[ei][0][c];
-      dComponentC_dP[i][c] = dComponentDens_dPres[ei][0][c];
-
-      dComponentC_dProppantC[i][c] = 0.0;
-
-      for( localIndex c2 = 0; c2 < NC; ++c2 )
-      {
-        dComponentC_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2];
-      }
-
       dEdgeDens_dComponentC[i][c] = weight[i] * dDens_dComponentConc[ei][0][c];
       dEdgeVisc_dComponentC[i][c] = weight[i] * dVisc_dComponentConc[ei][0][c];
     }
-
   }
 
   real64 const proppantFluxCoef = ( numberOfMobileProppantElems > 1 ) ? 1.0 : 0.0;
@@ -381,7 +326,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    Pe += transT[i] * (P[i] - gravTerm);
+    Pe += transT[i] * (pres[ei] + dPres[ei] - gravTerm);
     transTSum += transT[i];
     dPe_dP[i] += transT[i];
 
@@ -417,7 +362,7 @@ FluxKernel::
     real64 const gravD    = gravDepth[ei];
     real64 const gravTerm = edgeDensity * gravD;
 
-    real64 const fluxTerm = Pe - (P[i] - gravTerm);
+    real64 const fluxTerm = Pe - (pres[ei] + dPres[ei] - gravTerm);
 
     edgeToFaceFlux[i] = transT[i] * fluxTerm / edgeViscosity;
     dEdgeToFaceFlux_dP[i][i] += -transT[i] / edgeViscosity;
@@ -449,9 +394,10 @@ FluxKernel::
     if( fabs( coefs[i] ) > TINY )
     {
       // vertical
-      edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFac[i] * coefs[i] * fluidDens[i] / mixDens[i];
+      edgeToFaceProppantFlux[i] = (1.0 - proppantC[i]) * settlingFactor[ei] * coefs[i] * fluidDens[i] / mixDens[i];
 
-      dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFac[i] + (1 - proppantC[i]) * dSettlingFac_dProppantC[i]) * coefs[i] * fluidDens[i] / mixDens[i];
+      dEdgeToFaceProppantFlux_dProppantC[i][i] = (-settlingFactor[ei] + (1 - proppantC[i]) * dSettlingFactor_dProppantConc[ei]) *
+                                                 coefs[i] * fluidDens[i] / mixDens[i];
 
       edgeToFaceProppantFlux[i] += proppantFluxCoef * edgeToFaceFlux[i];
 
@@ -468,19 +414,19 @@ FluxKernel::
     else
     {
       // horizontal
-      edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) * proppantFluxCoef * edgeToFaceFlux[i];
+      edgeToFaceProppantFlux[i] = (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) * proppantFluxCoef * edgeToFaceFlux[i];
 
-      dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFac[i] - (1.0 - proppantC[i]) * dCollisionFac_dProppantC[i]) *
+      dEdgeToFaceProppantFlux_dProppantC[i][i] = -fluidDens[i] / mixDens[i] * (collisionFactor[ei] - (1.0 - proppantC[i]) * dCollisionFactor_dProppantConc[ei]) *
                                                  proppantFluxCoef * edgeToFaceFlux[i];
 
       for( localIndex j = 0; j < numElems; ++j )
       {
-        dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
+        dEdgeToFaceProppantFlux_dProppantC[i][j] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) *
                                                     proppantFluxCoef * dEdgeToFaceFlux_dProppantC[i][j];
 
         for( localIndex c = 0; c < NC; ++c )
         {
-          dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFac[i]) *
+          dEdgeToFaceProppantFlux_dComponentC[i][j][c] += (1.0 + fluidDens[i] / mixDens[i] * (1.0 - proppantC[i]) * collisionFactor[ei]) *
                                                           proppantFluxCoef * dEdgeToFaceFlux_dComponentC[i][j][c];
         }
       }
@@ -501,7 +447,7 @@ FluxKernel::
 
     // note that all the fluid properties are from previous time step
 
-    real64 const fluidFluxCoef = ( isProppantMob[i] == 0 || numElems == 1 ) ? 0.0 : 1.0;
+    real64 const fluidFluxCoef = ( isProppantMobile[ei] == 0 || numElems == 1 ) ? 0.0 : 1.0;
 
     edgeToFaceFluidFlux[i] = mixDens[i] / fluidDens[i] * edgeToFaceFlux[i] - fluidFluxCoef * (mixDens[i] -  fluidDens[i] * (1.0 - proppantC[i])) /
                              fluidDens[i] * edgeToFaceProppantFlux[i];
@@ -544,7 +490,9 @@ FluxKernel::
 
   for( localIndex i = 0; i < numElems; ++i )
   {
-    if( isProppantMob[i] == 0 )
+    localIndex const ei = stencilElementIndices[i];
+
+    if( isProppantMobile[ei] == 0 )
       continue;
 
     if( edgeToFaceProppantFlux[i] >= 0.0 )
@@ -586,7 +534,9 @@ FluxKernel::
   {
     for( localIndex i = 0; i < numElems; ++i )
     {
-      if( isProppantMob[i] == 0 )
+      localIndex const ei = stencilElementIndices[i];
+
+      if( isProppantMobile[ei] == 0 )
         continue;
 
       dProppantCe_dP[i] =  dProppantCe_dP[i] / downStreamFlux - proppantCe * dDownStreamFlux_dP[i] / (downStreamFlux * downStreamFlux);
@@ -607,7 +557,9 @@ FluxKernel::
     proppantCe = 0.0;
     for( localIndex i = 0; i < numElems; ++i )
     {
-      if( isProppantMob[i] == 0 )
+      localIndex const ei = stencilElementIndices[i];
+
+      if( isProppantMobile[ei] == 0 )
         continue;
 
       dProppantCe_dP[i] = 0.0;
@@ -636,6 +588,8 @@ FluxKernel::
 
   for( localIndex i = 0; i < numElems; ++i )
   {
+    localIndex const ei = stencilElementIndices[i];
+
     if( edgeToFaceFluidFlux[i] >= 0.0 )
     {
       // downstream
@@ -657,22 +611,22 @@ FluxKernel::
       // upstream
       for( localIndex c1 = 0; c1 < NC; ++c1 )
       {
-        componentCe[c1] += -edgeToFaceFluidFlux[i] * componentC[i][c1];
-        dComponentCe_dP[i][c1] += -edgeToFaceFluidFlux[i] * dComponentC_dP[i][c1];
+        componentCe[c1] += -edgeToFaceFluidFlux[i] * componentDens[ei][0][c1];
+        dComponentCe_dP[i][c1] += -edgeToFaceFluidFlux[i] * dComponentDens_dPres[ei][0][c1];
 
         for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
-          dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] * dComponentC_dComponentC[i][c1][c2];
+          dComponentCe_dComponentC[i][c1][c2] += -edgeToFaceFluidFlux[i] * dComponentDens_dComponentConc[ei][0][c1][c2];
         }
 
         for( localIndex j = 0; j < numElems; ++j )
         {
-          dComponentCe_dP[j][c1] += -dEdgeToFaceFluidFlux_dP[i][j] * componentC[i][c1];
-          dComponentCe_dProppantC[j][c1] += -dEdgeToFaceFluidFlux_dProppantC[i][j] * componentC[i][c1];
+          dComponentCe_dP[j][c1] += -dEdgeToFaceFluidFlux_dP[i][j] * componentDens[ei][0][c1];
+          dComponentCe_dProppantC[j][c1] += -dEdgeToFaceFluidFlux_dProppantC[i][j] * componentDens[ei][0][c1];
 
           for( localIndex c2 = 0; c2 < NC; ++c2 )
           {
-            dComponentCe_dComponentC[j][c1][c2] += -dEdgeToFaceFluidFlux_dComponentC[i][j][c2] * componentC[i][c1];
+            dComponentCe_dComponentC[j][c1][c2] += -dEdgeToFaceFluidFlux_dComponentC[i][j][c2] * componentDens[ei][0][c1];
           }
         }
       }
@@ -708,13 +662,14 @@ FluxKernel::
 
       for( localIndex i = 0; i < numElems; ++i )
       {
-        componentCe[c] += componentC[i][c] * weight[i];
-        dComponentCe_dP[i][c] = dComponentC_dP[i][c] * weight[i];
-        dComponentCe_dProppantC[i][c] = dComponentC_dProppantC[i][c] * weight[i];
+        localIndex const ei = stencilElementIndices[i];
+
+        componentCe[c] += componentDens[ei][0][c] * weight[i];
+        dComponentCe_dP[i][c] = dComponentDens_dPres[ei][0][c] * weight[i];
 
         for( localIndex c2 = 0; c2 < NC; ++c2 )
         {
-          dComponentCe_dComponentC[i][c][c2] = dComponentC_dComponentC[i][c][c2] * weight[i];
+          dComponentCe_dComponentC[i][c][c2] = dComponentDens_dComponentConc[ei][0][c][c2] * weight[i];
         }
       }
     }
@@ -722,9 +677,11 @@ FluxKernel::
 
   for( localIndex i = 0; i < numElems; ++i )
   {
+    localIndex const ei = stencilElementIndices[i];
+
     localIndex idx1 = i * numDofPerCell; // proppant
 
-    if( isProppantMob[i] == 1 && !(numElems == 1 && coefs[i] > TINY) )
+    if( isProppantMobile[ei] == 1 && !(numElems == 1 && coefs[i] > TINY) )
     {
       if( edgeToFaceProppantFlux[i] >= 0.0 )
       {
@@ -783,7 +740,7 @@ FluxKernel::
         }
         else
         {
-          localFlux[idx1] = -componentC[i][c1] * edgeToFaceFluidFlux[i] * dt;
+          localFlux[idx1] = -componentDens[ei][0][c1] * edgeToFaceFluidFlux[i] * dt;
         }
 
         for( localIndex j = 0; j < numElems; ++j )
@@ -805,7 +762,7 @@ FluxKernel::
             {
               for( localIndex c2 = 0; c2 < NC; ++c2 )
               {
-                localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentC_dComponentC[i][c1][c2] * edgeToFaceFluidFlux[i] * dt;
+                localFluxJacobian[idx1][idx2 + 1 + c2] += -dComponentDens_dComponentConc[ei][0][c1][c2] * edgeToFaceFluidFlux[i] * dt;
               }
             }
           }

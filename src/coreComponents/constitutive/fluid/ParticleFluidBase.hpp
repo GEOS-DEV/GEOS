@@ -157,7 +157,7 @@ public:
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = 32;
+  static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
   // *** Data repository keys
 
