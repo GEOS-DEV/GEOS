@@ -64,7 +64,7 @@ Most users will never have to worry that these modules are in fact separate proj
 We also rely on several open-source Third-Party Libraries (TPLs) (see `thirdPartyLibs Repository <https://github.com/GEOSX/thirdPartyLibs>`_).
 These are well-respected projects developed externally to GEOSX.  We have found, however, that many compilation issues stem from version incompatibilities between different packages.
 To address this, we provide a mirror of these TPLs, with version combinations we know play nicely together.
-We also provide a building script that conveniently and consistently build those dependencies.
+We also provide a building script that conveniently and consistently builds those dependencies.
 
 Our build system will automatically use the mirror package versions by default.
 You are welcome to tune your configuration, however, to point to different versions installed on your system.
