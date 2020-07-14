@@ -6,12 +6,12 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{fluid1}"
-      solidNames="{rock}"
-      relPermNames="{relperm}"
+      fluidNames="{ fluid1 }"
+      solidNames="{ rock }"
+      relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
-      targetRegions="{Region1}">
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="100"
@@ -26,14 +26,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 30}"
-      yCoords="{0, 30}"
-      zCoords="{0, 30}"
-      nx="{10}"
-      ny="{10}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 30 }"
+      yCoords="{ 0, 30 }"
+      zCoords="{ 0, 30 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -85,17 +85,17 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{cb1}"
-      materialList="{fluid1, rock, relperm}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ fluid1, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
     <MultiPhaseMultiComponentFluid
       name="fluid1"
-      phaseNames="{gas, water}"
-      componentNames="{co2, water}"
-      componentMolarWeight="{44e-3, 18e-3}"
-      phasePVTParaFiles="{pvtgas.txt, pvtliquid.txt}"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
       flashModelParaFile="co2flash.txt"/>
 
     <PoreVolumeCompressibleSolid
@@ -105,10 +105,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{gas, water}"
-      phaseMinVolumeFraction="{0.05, 0.05}"
-      phaseRelPermExponent="{1.5, 1.5}"
-      phaseRelPermMaxValue="{0.9, 0.9}"/>
+      phaseNames="{ gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05 }"
+      phaseRelPermExponent="{ 1.5, 1.5 }"
+      phaseRelPermMaxValue="{ 0.9, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -116,7 +116,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="1.0e-13"/>
@@ -125,7 +125,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="1.0e-13"/>
@@ -134,7 +134,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="1.0e-13"/>
@@ -142,7 +142,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="referencePorosity"
       scale="0.2"/>
@@ -150,7 +150,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="9e6"/>
@@ -159,7 +159,7 @@
     <FieldSpecification
       name="initialComposition_co2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -168,7 +168,7 @@
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -180,7 +180,7 @@
       objectPath="ElementRegions/Region1/cb1"
       component="0"
       scale="-0.03"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
@@ -188,11 +188,11 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="9e6"
-      setNames="{sink1}"/>
+      setNames="{ sink1 }"/>
 
     <FieldSpecification
       name="sinkTermComposition1_co2"
-      setNames="{sink1}"
+      setNames="{ sink1 }"
       objectPath="ElementRegions/Region1/elementSubRegions/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -200,7 +200,7 @@
 
     <FieldSpecification
       name="sinkTermComposition1_water"
-      setNames="{sink1}"
+      setNames="{ sink1 }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -211,12 +211,12 @@
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="9e6"
-      setNames="{sink2}"/>
+      setNames="{ sink2 }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTermComposition2_co2"
-      setNames="{sink2}"
+      setNames="{ sink2 }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -224,7 +224,7 @@
 
     <FieldSpecification
       name="sinkTermComposition2_water"
-      setNames="{sink2}"
+      setNames="{ sink2 }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"

@@ -7,9 +7,9 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      fluidNames="{water}"
-      solidNames="{rock}"
-      targetRegions="{Region1}">
+      fluidNames="{ water }"
+      solidNames="{ rock }"
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -22,14 +22,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 10}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{10}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{block1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block1 }"/>
   </Mesh>
 
   <Geometry>
@@ -76,8 +76,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{block1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ block1 }"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -102,7 +102,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -111,7 +111,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -120,7 +120,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -128,7 +128,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="referencePorosity"
       scale="0.05"/>
@@ -136,7 +136,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="0.0"/>
@@ -146,14 +146,14 @@
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="5e6"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="-5e6"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
   </FieldSpecifications>
 
   <Outputs>

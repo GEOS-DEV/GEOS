@@ -9,7 +9,7 @@
       stabilizationName="TPFAstabilization"
       logLevel="1"
       activeSetMaxIter="10"
-      targetRegions="{Region, Fracture}"
+      targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -28,8 +28,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region}"
-      solidMaterialNames="{rock}">
+      targetRegions="{ Region }"
+      solidMaterialNames="{ rock }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -43,8 +43,8 @@
       logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
-      targetRegions="{Region}"
-      solidMaterialNames="{rock}"
+      targetRegions="{ Region }"
+      solidMaterialNames="{ rock }"
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -52,14 +52,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-4, 4}"
-      yCoords="{ 0, 20}"
-      zCoords="{ 0, 20}"
-      nx="{4}"
-      ny="{10}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -4, 4 }"
+      yCoords="{ 0, 20 }"
+      zCoords="{ 0, 20 }"
+      nx="{ 4 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -91,7 +91,7 @@
     <Box
       name="bottom"
       xMin="-4.01, -0.01, -0.01"
-      xMax=" 4.01, 20.01,  0.01"/>
+      xMax=" 4.01, 20.01, 0.01"/>
   </Geometry>
 
   <Events
@@ -159,13 +159,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{cb1}"
-      materialList="{rock}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ rock }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="0.0"
-      materialList="{fractureMaterial}"/>
+      materialList="{ fractureMaterial }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -188,7 +188,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -196,7 +196,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{core}"
+      setNames="{ core }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -207,7 +207,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{back}"/>
+      setNames="{ back }"/>
 
     <FieldSpecification
       name="yconstraintBack"
@@ -215,7 +215,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{back}"/>
+      setNames="{ back }"/>
 
     <FieldSpecification
       name="zconstraintBack"
@@ -223,7 +223,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{back}"/>
+      setNames="{ back }"/>
 
     <FieldSpecification
       name="xconstraintBottom"
@@ -231,7 +231,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{bottom}"/>
+      setNames="{ bottom }"/>
 
     <FieldSpecification
       name="yconstraintBottom"
@@ -239,7 +239,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{bottom}"/>
+      setNames="{ bottom }"/>
 
     <FieldSpecification
       name="zconstraintBottom"
@@ -247,7 +247,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{bottom}"/>
+      setNames="{ bottom }"/>
 
     <FieldSpecification
       name="xload"
@@ -255,7 +255,7 @@
       fieldName="Traction"
       component="0"
       scale="-1.0e0"
-      setNames="{front}"/>
+      setNames="{ front }"/>
 
     <FieldSpecification
       name="zload"
@@ -264,15 +264,15 @@
       component="2"
       functionName="ForceTimeFunction"
       scale="-3.e0"
-      setNames="{xpos_top}"/>
+      setNames="{ xpos_top }"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="ForceTimeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 10.0, 20.0}"
-      values="{0.0, 5.e0, 0.e0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0, 20.0 }"
+      values="{ 0.0, 5.e0, 0.e0 }"/>
   </Functions>
 
   <Outputs>

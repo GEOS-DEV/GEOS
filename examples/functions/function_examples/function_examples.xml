@@ -7,20 +7,20 @@
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
     <SymbolicFunction
       name="f_a"
-      variableNames="{x, y, z, t}"
+      variableNames="{ x, y, z, t }"
       expression="x+y*z"/>
 
     <SymbolicFunction
       name="f_b"
-      variableNames="{x, y, z, t}"
+      variableNames="{ x, y, z, t }"
       expression="sqrt((x*x)+(y*y)+(z*z))*t"/>
 
     <!-- As a special case, 1D tables may be specified using coordinates and values.
          A 1D table will only evaluate the first entry in evaluate (for the demo solver, this is x) -->
     <TableFunction
       name="f_c"
-      coordinates="{-10, 10}"
-      values="{-10, 10}"/>
+      coordinates="{ -10, 10 }"
+      values="{ -10, 10 }"/>
 
     <!-- More generally, an ND table may be specified by giving a list of coordinate files, and a voxel file (with
          data in Fortran-array order).  Note: Unlike the old code, I do not look for header values in the voxel file.
@@ -30,7 +30,7 @@
        -->
     <TableFunction
       name="f_d"
-      coordinateFiles="{tables/x.geos, tables/y.geos, tables/z.geos}"
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
       voxelFile="tables/poly.geos"/>
   </Functions>
 </Problem>

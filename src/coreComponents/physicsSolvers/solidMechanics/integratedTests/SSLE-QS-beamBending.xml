@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_Gravity -->
   <Solvers
-    gravityVector="0.0,0.0,0.0">
+    gravityVector="0.0, 0.0, 0.0">
     <!-- SPHINX_GravityEnd -->
     <!-- SPHINX_SolidMechanicsSolver -->
     <SolidMechanicsLagrangianSSLE
@@ -11,8 +11,8 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{Region2}"
-      solidMaterialNames="{shale}">
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -28,14 +28,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 80}"
-      yCoords="{0, 8}"
-      zCoords="{0, 4}"
-      nx="{80}"
-      ny="{8}"
-      nz="{4}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 80 }"
+      yCoords="{ 0, 8 }"
+      zCoords="{ 0, 4 }"
+      nx="{ 80 }"
+      ny="{ 8 }"
+      nz="{ 4 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <!-- SPHINX_BeamBendingMeshEnd -->
@@ -93,8 +93,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{shale}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -122,7 +122,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -130,7 +130,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -138,7 +138,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zneg, zpos}"/>
+      setNames="{ zneg, zpos }"/>
 
     <FieldSpecification
       name="xposconstraint"
@@ -147,7 +147,7 @@
       component="1"
       scale="1.0e6"
       functionName="timeFunction"
-      setNames="{xpos}"/>
+      setNames="{ xpos }"/>
   </FieldSpecifications>
 
   <!-- SPHINX_BoundaryConditionsEnd -->
@@ -155,9 +155,9 @@
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 10.0}"
-      values="{0.0, 10.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 10.0 }"/>
   </Functions>
 
   <!-- SPHINX_TableFunctionEnd -->

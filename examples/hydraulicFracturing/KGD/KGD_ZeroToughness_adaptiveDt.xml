@@ -8,14 +8,14 @@
   </Included>
 
   <Solvers
-    gravityVector="0.0,0.0,-0.0">
+    gravityVector="0.0, 0.0, -0.0">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
       logLevel="1"
-      targetRegions="{Region2, Fracture}"
+      targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact"
       maxNumResolves="1"
       initialDt="1">
@@ -34,8 +34,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{rock}"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -50,9 +50,9 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
       inputFluxEstimate="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -68,9 +68,9 @@
       logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
-      targetRegions="{Region2}"
+      targetRegions="{ Region2 }"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
+      solidMaterialNames="{ rock }"
       rockToughness="0.5e6"
       initialDt="1"/>
   </Solvers>
@@ -78,13 +78,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
-      materialList="{water, rock}"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -112,8 +112,8 @@
       penaltyStiffness="1.0e0">
       <TableFunction
         name="aperTable"
-        coordinates="{ -1.0e-3, 0.0}"
-        values="{  1.0e-6, 0.1e-3}"/>
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 0.1e-3 }"/>
     </Contact>
   </Constitutive>
 

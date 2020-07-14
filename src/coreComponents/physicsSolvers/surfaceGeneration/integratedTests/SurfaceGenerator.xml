@@ -8,8 +8,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{granite}">
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ granite }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
@@ -22,8 +22,8 @@
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Region2}"
-      solidMaterialNames="{granite}"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ granite }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -31,14 +31,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-1, 1}"
-      yCoords="{-1, 1}"
-      zCoords="{-1, 1}"
-      nx="{6}"
-      ny="{6}"
-      nz="{6}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 6 }"
+      ny="{ 6 }"
+      nz="{ 6 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -115,13 +115,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{granite}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ granite }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{granite}"/>
+      materialList="{ granite }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -136,7 +136,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracPlaneX, fracPlaneY, fracPlaneZ}"
+      setNames="{ fracPlaneX, fracPlaneY, fracPlaneZ }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -147,7 +147,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="-0.1"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="xpos"
@@ -155,7 +155,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.1"
-      setNames="{xpos}"/>
+      setNames="{ xpos }"/>
 
     <FieldSpecification
       name="zneg"
@@ -163,7 +163,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="-0.1"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
 
     <FieldSpecification
       name="zpos"
@@ -171,7 +171,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.1"
-      setNames="{zpos}"/>
+      setNames="{ zpos }"/>
 
     <FieldSpecification
       name="bot"
@@ -179,7 +179,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="-0.1"
-      setNames="{yneg}"/>
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="top"
@@ -187,15 +187,15 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.1"
-      setNames="{ypos}"/>
+      setNames="{ ypos }"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 1.0, 1.0e9}"
-      values="{0.0, 1.0, 1.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 1.0e9 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
   </Functions>
 
   <Outputs>

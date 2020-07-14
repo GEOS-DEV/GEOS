@@ -7,10 +7,10 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{Channel}"
-      fluidNames="{fluid1}"
-      solidNames="{rock}"
-      relPermNames="{relperm}"
+      targetRegions="{ Channel }"
+      fluidNames="{ fluid1 }"
+      solidNames="{ rock }"
+      relPermNames="{ relperm }"
       temperature="300"
       useMass="0">
       <NonlinearSolverParameters
@@ -28,14 +28,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 5, 10}"
-      yCoords="{0, 5, 10}"
-      zCoords="{0, 2.5, 5, 7.5, 10}"
-      nx="{5, 5}"
-      ny="{5, 5}"
-      nz="{3, 3, 3, 3}"
-      cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 5, 10 }"
+      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 3, 3, 3, 3 }"
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
   </Mesh>
 
   <!-- END_SPHINX_INCLUDE_MESH_BLOCK -->
@@ -43,13 +43,13 @@
   <Geometry>
     <Box
       name="source"
-      xMin=" 8.99, -0.01,  7.49"
-      xMax="10.01,  1.01, 10.01"/>
+      xMin=" 8.99, -0.01, 7.49"
+      xMax="10.01, 1.01, 10.01"/>
 
     <Box
       name="sink"
       xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01,  1.01,  2.51"/>
+      xMax="10.01, 1.01, 2.51"/>
   </Geometry>
 
   <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
@@ -94,13 +94,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
-      cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
-      materialList="{fluid1, rock, relperm}"/>
+      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      materialList="{ fluid1, rock, relperm }"/>
 
     <CellElementRegion
       name="Barrier"
-      cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
-      materialList="{}"/>
+      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
+      materialList="{ }"/>
   </ElementRegions>
 
   <!-- END_SPHINX_INCLUDE_ELEMREG_BLOCK -->
@@ -110,7 +110,7 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         fieldName="pressure"
-        targetRegions="{Channel}"
+        targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -121,10 +121,10 @@
     <BlackOilFluid
       name="fluid1"
       fluidType="DeadOil"
-      phaseNames="{oil, gas, water}"
-      surfaceDensities="{800.0, 0.9907, 1022.0}"
-      componentMolarWeight="{114e-3, 16e-3, 18e-3}"
-      tableFiles="{pvdo.txt, pvdg.txt, pvtw.txt}"/>
+      phaseNames="{ oil, gas, water }"
+      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -133,12 +133,12 @@
 
     <BrooksCoreyBakerRelativePermeability
       name="relperm"
-      phaseNames="{oil, gas, water}"
-      phaseMinVolumeFraction="{0.05, 0.05, 0.05}"
-      waterOilRelPermExponent="{2.5, 1.5}"
-      waterOilRelPermMaxValue="{0.8, 0.9}"
-      gasOilRelPermExponent="{3, 3}"
-      gasOilRelPermMaxValue="{0.4, 0.9}"/>
+      phaseNames="{ oil, gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      waterOilRelPermExponent="{ 2.5, 1.5 }"
+      waterOilRelPermMaxValue="{ 0.8, 0.9 }"
+      gasOilRelPermExponent="{ 3, 3 }"
+      gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
   </Constitutive>
 
   <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
@@ -148,7 +148,7 @@
       name="permx_channel"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="1.0e-15"/>
@@ -157,7 +157,7 @@
       name="permy_channel"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="1.0e-15"/>
@@ -166,7 +166,7 @@
       name="permz_channel"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="1.0e-15"/>
@@ -174,7 +174,7 @@
     <FieldSpecification
       name="porosity_channel"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="referencePorosity"
       scale="0.2"/>
@@ -185,7 +185,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="5e6"/>
@@ -194,7 +194,7 @@
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
@@ -203,7 +203,7 @@
     <FieldSpecification
       name="initialComposition_gas"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
@@ -212,7 +212,7 @@
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"
@@ -226,12 +226,12 @@
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="1e7"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <!-- Injection stream: mostly water -->
     <FieldSpecification
       name="sourceTermComposition_oil"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
@@ -239,7 +239,7 @@
 
     <FieldSpecification
       name="sourceTermComposition_gas"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
@@ -247,7 +247,7 @@
 
     <FieldSpecification
       name="sourceTermComposition_water"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"
@@ -259,12 +259,12 @@
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="2e5"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTermComposition_oil"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="0"
@@ -272,7 +272,7 @@
 
     <FieldSpecification
       name="sinkTermComposition_gas"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="1"
@@ -280,7 +280,7 @@
 
     <FieldSpecification
       name="sinkTermComposition_water"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Channel"
       fieldName="globalCompFraction"
       component="2"

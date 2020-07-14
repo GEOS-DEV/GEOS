@@ -10,7 +10,7 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Region1}">
+      targetRegions="{ Region1 }">
       <NonlinearSolverParameters
         newtonMaxIter="2"
         newtonTol="1.0e-2"
@@ -28,8 +28,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Region1}"
-      solidMaterialNames="{shale}">
+      targetRegions="{ Region1 }"
+      solidMaterialNames="{ shale }">
       <LinearSolverParameters
         preconditionerType="amg"/>
     </SolidMechanicsLagrangianSSLE>
@@ -38,9 +38,9 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{Region1}"
-      fluidNames="{water}"
-      solidNames="{shale}">
+      targetRegions="{ Region1 }"
+      fluidNames="{ water }"
+      solidNames="{ shale }">
       <LinearSolverParameters
         preconditionerType="amg"/>
     </SinglePhaseFVM>
@@ -49,46 +49,46 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0.0, 1.0}"
-      yCoords="{0.0, 0.1}"
-      zCoords="{0.0, 1.0}"
-      nx="{10}"
-      ny="{1}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 1.0 }"
+      yCoords="{ 0.0, 0.1 }"
+      zCoords="{ 0.0, 1.0 }"
+      nx="{ 10 }"
+      ny="{ 1 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
       name="xneg"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01,  0.11,  1.01"/>
+      xMax=" 0.01, 0.11, 1.01"/>
 
     <Box
       name="xpos"
       xMin=" 0.99, -0.01, -0.01"
-      xMax=" 1.01,  0.11,  1.01"/>
+      xMax=" 1.01, 0.11, 1.01"/>
 
     <Box
       name="yneg"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01,  0.01, 10.01"/>
+      xMax=" 1.01, 0.01, 10.01"/>
 
     <Box
       name="ypos"
-      xMin="-0.01,  0.09, -0.01"
-      xMax=" 1.01,  0.11, 10.01"/>
+      xMin="-0.01, 0.09, -0.01"
+      xMax=" 1.01, 0.11, 10.01"/>
 
     <Box
       name="zneg"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01,  0.11 , 0.01"/>
+      xMax=" 1.01, 0.11 , 0.01"/>
 
     <Box
       name="zpos"
-      xMin="-0.01, -0.01,  0.99"
-      xMax=" 1.01,  0.11,  1.01"/>
+      xMin="-0.01, -0.01, 0.99"
+      xMax=" 1.01, 0.11, 1.01"/>
 
     <Box
       name="rigEle"
@@ -109,27 +109,31 @@
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent name="solverApplication0"
-                   beginTime="0"
-                   endTime="1.e-10"
-                   forceDt="1.e-10"
-                   target="/Solvers/poroSolve" />
+    <PeriodicEvent
+      name="solverApplication0"
+      beginTime="0"
+      endTime="1.e-10"
+      forceDt="1.e-10"
+      target="/Solvers/poroSolve"/>
 
-    <PeriodicEvent name="solverApplication1"
-                   beginTime="1.e-10"
-                   endTime="4.5000000e-03"   
-                   forceDt="4.4999999e-03"   
-                   target="/Solvers/poroSolve" />
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1.e-10"
+      endTime="4.5000000e-03"
+      forceDt="4.4999999e-03"
+      target="/Solvers/poroSolve"/>
 
-    <PeriodicEvent name="solverApplication2"
-                   beginTime="4.5000000e-03"   
-                   endTime="1.44000000e-01"   
-                   forceDt="4.5000000e-03"   
-                   target="/Solvers/poroSolve" />
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="4.5000000e-03"
+      endTime="1.44000000e-01"
+      forceDt="4.5000000e-03"
+      target="/Solvers/poroSolve"/>
 
-    <PeriodicEvent name="restarts"
-                   cycleFrequency="20"
-                   target="/Outputs/restartOutput"/>
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="20"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
@@ -165,8 +169,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{cb1}"
-      materialList="{shale, water}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale, water }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -192,7 +196,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="0.0"/>
@@ -207,7 +211,7 @@
     <FieldSpecification
       name="xInitialDisplacement"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="0"
@@ -216,7 +220,7 @@
     <FieldSpecification
       name="yInitialDisplacement"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="1"
@@ -225,7 +229,7 @@
     <FieldSpecification
       name="zInitialDisplacement"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       component="2"
@@ -235,7 +239,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="1.000e-4"/>
@@ -244,7 +248,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="0.0"/>
@@ -253,7 +257,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="1.000e-4"/>
@@ -261,7 +265,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="referencePorosity"
       scale="0.0"/>
@@ -272,7 +276,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -280,7 +284,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{yneg, ypos}"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -288,7 +292,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
 
     <!--
     <FieldSpecification name="zposconstraint" 
@@ -313,7 +317,7 @@
       fieldName="Traction"
       component="2"
       scale="-2.0e0"
-      setNames="{zpos}"
+      setNames="{ zpos }"
       functionName="timeFunction"/>
 
     <!--FieldSpecification name="boundaryPressure"
@@ -326,16 +330,16 @@
       objectPath="faceManager"
       fieldName="boundaryFacePressure"
       scale="0.000e0"
-      setNames="{xpos}"
+      setNames="{ xpos }"
       functionName="timeFunction"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 0.1e-09, 1e7}"
-      values="{0.0, 1.0, 1.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 0.1e-09, 1e7 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
   </Functions>
 
   <Outputs>

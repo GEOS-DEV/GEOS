@@ -7,10 +7,10 @@
       name="compflow"
       logLevel="0"
       discretization="fluidTPFA"
-      targetRegions="{Region2}"
-      fluidNames="{fluid1}"
-      solidNames="{rock}"
-      relPermNames="{relperm}"
+      targetRegions="{ Region2 }"
+      fluidNames="{ fluid1 }"
+      solidNames="{ rock }"
+      relPermNames="{ relperm }"
       temperature="297.15"
       useMass="1">
       <NonlinearSolverParameters
@@ -25,14 +25,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 3}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{3}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 3 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 3 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -98,22 +98,25 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{fluid1, rock, relperm}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ fluid1, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
     <CompositionalMultiphaseFluid
       name="fluid1"
-      phaseNames="{oil, gas}"
-      equationsOfState="{PR, PR}"
-      componentNames="{N2, C10, C20, H2O}"
-      componentCriticalPressure="{34e5, 25.3e5, 14.6e5, 220.5e5}"
-      componentCriticalTemperature="{126.2, 622.0, 782.0, 647.0}"
-      componentAcentricFactor="{0.04, 0.443, 0.816, 0.344}"
-      componentMolarWeight="{28e-3, 134e-3, 275e-3, 18e-3}"
-      componentVolumeShift="{0, 0, 0, 0}"
-      componentBinaryCoeff="{ {0, 0, 0, 0},                                                           {0, 0, 0, 0},                                                           {0, 0, 0, 0},                                                           {0, 0, 0, 0} }"/>
+      phaseNames="{ oil, gas }"
+      equationsOfState="{ PR, PR }"
+      componentNames="{ N2, C10, C20, H2O }"
+      componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
+      componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
+      componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
+      componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
+      componentVolumeShift="{ 0, 0, 0, 0 }"
+      componentBinaryCoeff="{ { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 } }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -122,10 +125,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{oil, gas}"
-      phaseMinVolumeFraction="{0.1, 0.15}"
-      phaseRelPermExponent="{2.0, 2.0}"
-      phaseRelPermMaxValue="{0.8, 0.9}"/>
+      phaseNames="{ oil, gas }"
+      phaseMinVolumeFraction="{ 0.1, 0.15 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -133,7 +136,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -142,7 +145,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -151,7 +154,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -159,7 +162,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="referencePorosity"
       scale="0.05"/>
@@ -168,7 +171,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       functionName="initialPressureFunc"
@@ -178,7 +181,7 @@
     <FieldSpecification
       name="initialComposition_N2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -187,7 +190,7 @@
     <FieldSpecification
       name="initialComposition_C10"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -196,7 +199,7 @@
     <FieldSpecification
       name="initialComposition_C20"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="2"
@@ -205,7 +208,7 @@
     <FieldSpecification
       name="initialComposition_H20"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="3"
@@ -217,12 +220,12 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="1e7"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <!-- Injection stream: mostly water -->
     <FieldSpecification
       name="sourceTermComposition_N2"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -230,7 +233,7 @@
 
     <FieldSpecification
       name="sourceTermComposition_C10"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -238,7 +241,7 @@
 
     <FieldSpecification
       name="sourceTermComposition_C20"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="2"
@@ -246,7 +249,7 @@
 
     <FieldSpecification
       name="sourceTermComposition_H20"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="3"
@@ -258,12 +261,12 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="1e5"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
 
     <!-- Production stream: same as initial (should not matter due to upwinding) -->
     <FieldSpecification
       name="sinkTermComposition_N2"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -271,7 +274,7 @@
 
     <FieldSpecification
       name="sinkTermComposition_C10"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -279,7 +282,7 @@
 
     <FieldSpecification
       name="sinkTermComposition_C20"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="2"
@@ -287,7 +290,7 @@
 
     <FieldSpecification
       name="sinkTermComposition_H20"
-      setNames="{sink}"
+      setNames="{ sink }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="globalCompFraction"
       component="3"
@@ -305,9 +308,9 @@
           than the function are simply ignored. -->
     <TableFunction
       name="initialPressureFunc"
-      inputVarNames="{elementCenter}"
-      coordinates="{0.0, 3.0}"
-      values="{1.0, 0.5}"/>
+      inputVarNames="{ elementCenter }"
+      coordinates="{ 0.0, 3.0 }"
+      values="{ 1.0, 0.5 }"/>
 
     <!-- This is what the equivalent 3D table function would look like -->
     <!-- <TableFunction name="initialPressureFunc"

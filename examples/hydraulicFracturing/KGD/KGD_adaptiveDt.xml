@@ -3,14 +3,14 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0,0.0,-0.0">
+    gravityVector="0.0, 0.0, -0.0">
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="TightlyCoupled"
       logLevel="1"
-      targetRegions="{Region2, Fracture}"
+      targetRegions="{ Region2, Fracture }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
         solverType="gmres"
@@ -23,8 +23,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{rock}"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
         solverType="gmres"
@@ -36,9 +36,9 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
       inputFluxEstimate="1">
       <LinearSolverParameters
         solverType="gmres"
@@ -51,40 +51,40 @@
       logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
-      targetRegions="{Region2}"
+      targetRegions="{ Region2 }"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
+      solidMaterialNames="{ rock }"
       rockToughness="0.01e6"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-180, -40, 40, 180}"
-      yCoords="{0, 100, 180}"
-      zCoords="{0, 1}"
-      nx="{50, 80, 50}"
-      ny="{100, 40}"
-      nz="{2}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -180, -40, 40, 180 }"
+      yCoords="{ 0, 100, 180 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 50, 80, 50 }"
+      ny="{ 100, 40 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
       name="fracture"
-      xMin="-0.01,  -0.01, -0.01"
-      xMax=" 0.01,   4.01,  1.01"/>
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 4.01, 1.01"/>
 
     <Box
       name="source"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01,  1.01, 1.01"/>
+      xMax=" 0.01, 1.01, 1.01"/>
 
     <Box
       name="core"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01,  100.01, 1.01"/>
+      xMax=" 0.01, 100.01, 1.01"/>
   </Geometry>
 
   <Events
@@ -165,13 +165,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="0.1e-3"
-      materialList="{water, rock}"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -199,8 +199,8 @@
       penaltyStiffness="1.0e0">
       <TableFunction
         name="aperTable"
-        coordinates="{ -1.0e-3, 0.0}"
-        values="{  1.0e-6, 0.1e-3}"/>
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 0.1e-3 }"/>
     </Contact>
   </Constitutive>
 
@@ -208,7 +208,7 @@
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="ElementRegions"
       fieldName="water_density"
       scale="1000"/>
@@ -216,7 +216,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{core}"
+      setNames="{ core }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -224,7 +224,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -242,7 +242,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{yneg, ypos}"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -250,7 +250,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{all}"/>
+      setNames="{ all }"/>
 
     <FieldSpecification
       name="left"
@@ -258,7 +258,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="right"
@@ -266,7 +266,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="-0.0"
-      setNames="{xpos}"/>
+      setNames="{ xpos }"/>
 
     <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
@@ -277,7 +277,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-1.0"
-      setNames="{source}"/>
+      setNames="{ source }"/>
   </FieldSpecifications>
 
   <Functions/>

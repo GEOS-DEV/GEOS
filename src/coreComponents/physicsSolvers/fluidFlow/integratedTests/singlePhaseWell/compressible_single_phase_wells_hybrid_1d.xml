@@ -7,7 +7,7 @@
       flowSolverName="singlePhaseFlow"
       wellSolverName="singlePhaseWell"
       logLevel="1"
-      targetRegions="{Region1,wellRegion1,wellRegion2}">
+      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         lineSearchAction="0"
         newtonMaxIter="40"/>
@@ -20,15 +20,15 @@
       name="singlePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      fluidNames="{water}"
-      solidNames="{rock}"
-      targetRegions="{Region1}"/>
+      fluidNames="{ water }"
+      solidNames="{ rock }"
+      targetRegions="{ Region1 }"/>
 
     <SinglePhaseWell
       name="singlePhaseWell"
       logLevel="1"
-      fluidNames="{water}"
-      targetRegions="{wellRegion1,wellRegion2}">
+      fluidNames="{ water }"
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -47,22 +47,23 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 5}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{5}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
 
     <InternalWell
       name="well_producer1"
       wellRegionName="wellRegion1"
       wellControlsName="wellControls1"
       meshName="mesh1"
-      polylineNodeCoords="{ {4.5, 0,  2  },                                         {4.5, 0,  0.5} }"
-      polylineSegmentConn="{ {0, 1} }"
+      polylineNodeCoords="{ { 4.5, 0, 2 },
+                            { 4.5, 0, 0.5 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="2">
       <Perforation
@@ -75,8 +76,9 @@
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"
-      polylineNodeCoords="{ {0.5, 0, 2  },                                         {0.5, 0, 0.5} }"
-      polylineSegmentConn="{ {0, 1} }"
+      polylineNodeCoords="{ { 0.5, 0, 2 },
+                            { 0.5, 0, 0.5 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="3">
       <Perforation
@@ -117,16 +119,16 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{cb1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
 
     <WellElementRegion
       name="wellRegion1"
-      materialList="{water}"/>
+      materialList="{ water }"/>
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{water}"/>
+      materialList="{ water }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -151,7 +153,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -160,7 +162,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -169,7 +171,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -177,7 +179,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="referencePorosity"
       scale="0.05"/>
@@ -185,7 +187,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="5e6"/>
@@ -194,9 +196,9 @@
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{1.0, 2.0, 6e4}"
-      values="{1.0, 2.0, 2.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 1.0, 2.0, 6e4 }"
+      values="{ 1.0, 2.0, 2.0 }"/>
   </Functions>
 
   <Outputs>

@@ -5,14 +5,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
+      elementTypes="{ C3D8 }"
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
       zCoords="{ 0, 10 }"
-      nx="{10}"
-      ny="{10}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <!-- SPHINX_INTERNAL_MESH_END -->
@@ -72,8 +72,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{shale}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -100,7 +100,7 @@
     <FieldSpecification
       name="source0"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="0"
@@ -109,7 +109,7 @@
     <FieldSpecification
       name="source1"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="1"
@@ -118,7 +118,7 @@
     <FieldSpecification
       name="source2"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="2"
@@ -130,7 +130,7 @@
       fieldName="Velocity"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -138,7 +138,7 @@
       fieldName="Velocity"
       component="1"
       scale="0.0"
-      setNames="{yneg}"/>
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -146,7 +146,7 @@
       fieldName="Velocity"
       component="2"
       scale="0.0"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
   </FieldSpecifications>
 
   <Outputs>

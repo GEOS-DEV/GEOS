@@ -8,12 +8,12 @@ def format_attribute(attribute_indent, ka, attribute_value):
   # Make sure that a space follows commas
   attribute_value = re.sub(r",\s*", ", ", attribute_value)
 
+  # Handle external brackets
+  attribute_value = re.sub(r"{\s*", "{ ", attribute_value)
+  attribute_value = re.sub(r"\s*}", " }", attribute_value)
+
   # Consolidate whitespace
   attribute_value = re.sub(r"\s+", " ", attribute_value)
-
-  # Handle external brackets
-  attribute_value = re.sub(r"{\s*{", "{ {", attribute_value)
-  attribute_value = re.sub(r"}\s*}", "} }", attribute_value)
 
   # Identify and split multi-line attributes
   if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):

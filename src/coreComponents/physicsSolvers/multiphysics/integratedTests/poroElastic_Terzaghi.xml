@@ -2,7 +2,7 @@
 
 <Problem>
   <Solvers
-    gravityVector="0,0,0">
+    gravityVector="0, 0, 0">
     <!-- SPHINX_POROELASTIC_SOLVER -->
     <Poroelastic
       name="poroSolve"
@@ -11,7 +11,7 @@
       couplingTypeOption="SIM_FixedStress"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Region2}">
+      targetRegions="{ Region2 }">
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -23,8 +23,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{shale}">
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -38,9 +38,9 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{Region2}"
-      fluidNames="{water}"
-      solidNames="{shale}">
+      targetRegions="{ Region2 }"
+      fluidNames="{ water }"
+      solidNames="{ shale }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
@@ -56,14 +56,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 42}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{21}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 42 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 21 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -146,8 +146,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{shale, water}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale, water }"/>
   </ElementRegions>
 
   <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
@@ -176,7 +176,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
@@ -185,7 +185,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
@@ -194,7 +194,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="permeability"
       scale="4.963e-14"/>
@@ -202,7 +202,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="referencePorosity"
       scale="0.3"/>
@@ -210,7 +210,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="2.125e6"/>
@@ -221,7 +221,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -229,7 +229,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{yneg, ypos}"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -237,7 +237,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zneg, zpos}"/>
+      setNames="{ zneg, zpos }"/>
 
     <FieldSpecification
       name="xposconstraint"
@@ -245,7 +245,7 @@
       fieldName="Traction"
       component="0"
       scale="-2.125e6"
-      setNames="{xpos}"
+      setNames="{ xpos }"
       functionName="timeFunction"/>
 
     <FieldSpecification
@@ -253,15 +253,15 @@
       objectPath="ElementRegions/Region2/cb1"
       fieldName="pressure"
       scale="2.125e6"
-      setNames="{boundaryBot, boundaryTop}"/>
+      setNames="{ boundaryBot, boundaryTop }"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{1.0, 2.0, 6e4}"
-      values="{1.0, 2.0, 2.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 1.0, 2.0, 6e4 }"
+      values="{ 1.0, 2.0, 2.0 }"/>
   </Functions>
 
   <Outputs>

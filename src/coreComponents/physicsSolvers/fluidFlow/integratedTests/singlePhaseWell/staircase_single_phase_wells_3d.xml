@@ -7,7 +7,7 @@
       flowSolverName="SinglePhaseFlow"
       wellSolverName="SinglePhaseWell"
       logLevel="1"
-      targetRegions="{Channel,wellRegion1,wellRegion2}">
+      targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -19,15 +19,15 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      fluidNames="{water}"
-      solidNames="{rock}"
-      targetRegions="{Channel}"/>
+      fluidNames="{ water }"
+      solidNames="{ rock }"
+      targetRegions="{ Channel }"/>
 
     <SinglePhaseWell
       name="SinglePhaseWell"
       logLevel="1"
-      fluidNames="{water}"
-      targetRegions="{wellRegion1,wellRegion2}">
+      fluidNames="{ water }"
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -46,22 +46,23 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 5, 10}"
-      yCoords="{0, 5, 10}"
-      zCoords="{0, 2.5, 5, 7.5, 10}"
-      nx="{5, 5}"
-      ny="{5, 5}"
-      nz="{3, 3, 3, 3}"
-      cellBlockNames="{b00,b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 5, 10 }"
+      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 3, 3, 3, 3 }"
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
 
     <InternalWell
       name="well_producer1"
       wellRegionName="wellRegion1"
       wellControlsName="wellControls1"
       meshName="mesh1"
-      polylineNodeCoords="{ {9.5,  0.5, 12  },                                          {9.5,  0.5, 0.05 } }"
-      polylineSegmentConn="{ {0, 1} }"
+      polylineNodeCoords="{ { 9.5, 0.5, 12 },
+                            { 9.5, 0.5, 0.05 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="20">
       <Perforation
@@ -74,8 +75,9 @@
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"
-      polylineNodeCoords="{ {9.5, 0.2, 12  },                                          {9.5, 0.2, 9.5 } }"
-      polylineSegmentConn="{ {0, 1} }"
+      polylineNodeCoords="{ { 9.5, 0.2, 12 },
+                            { 9.5, 0.2, 9.5 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="30">
       <Perforation
@@ -107,21 +109,21 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
-      cellBlocks="{b08,b00,b01,b05,b06,b14,b15,b11}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      materialList="{ water, rock }"/>
 
     <CellElementRegion
       name="Barrier"
-      cellBlocks="{b04,b12,b13,b09,b10,b02,b03,b07}"
-      materialList="{}"/>
+      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
+      materialList="{ }"/>
 
     <WellElementRegion
       name="wellRegion1"
-      materialList="{water}"/>
+      materialList="{ water }"/>
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{water}"/>
+      materialList="{ water }"/>
   </ElementRegions>
 
   <NumericalMethods>
@@ -130,7 +132,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         boundaryFieldName="facePressure"
-        targetRegions="{Channel}"
+        targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -157,7 +159,7 @@
       name="permx_channel"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -166,7 +168,7 @@
       name="permy_channel"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -175,7 +177,7 @@
       name="permz_channel"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -183,7 +185,7 @@
     <FieldSpecification
       name="porosity_channel"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="referencePorosity"
       scale="0.1"/>
@@ -191,7 +193,7 @@
     <FieldSpecification
       name="initialPressure_channel"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Channel"
       fieldName="pressure"
       scale="1e6"/>

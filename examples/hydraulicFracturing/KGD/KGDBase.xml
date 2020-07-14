@@ -4,14 +4,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-340, -40, 40, 340}"
-      yCoords="{0, 100, 280}"
-      zCoords="{0, 1}"
-      nx="{150, 80, 150}"
-      ny="{100, 80}"
-      nz="{2}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -340, -40, 40, 340 }"
+      yCoords="{ 0, 100, 280 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 150, 80, 150 }"
+      ny="{ 100, 80 }"
+      nz="{ 2 }"
+      cellBlockNames="{ cb1 }"/>
 
     <!-- InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -36,18 +36,18 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="-0.01,  -1.01, -0.01"
-      xMax=" 0.01,   1.01,  1.01"/>
+      xMin="-0.01, -1.01, -0.01"
+      xMax=" 0.01, 1.01, 1.01"/>
 
     <Box
       name="source"
       xMin="-0.01, -1.01, -0.01"
-      xMax=" 0.01,  1.01, 1.01"/>
+      xMax=" 0.01, 1.01, 1.01"/>
 
     <Box
       name="core"
       xMin="-0.01, -100.01, -0.01"
-      xMax=" 0.01,  100.01, 1.01"/>
+      xMax=" 0.01, 100.01, 1.01"/>
   </Geometry>
 
   <Events
@@ -159,7 +159,7 @@
     <FieldSpecification
       name="waterDensity"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="ElementRegions"
       fieldName="water_density"
       scale="1000"/>
@@ -167,7 +167,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{core}"
+      setNames="{ core }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -175,7 +175,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -193,7 +193,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{yneg,ypos}"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -201,7 +201,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{all}"/>
+      setNames="{ all }"/>
 
     <FieldSpecification
       name="xConstraint"
@@ -209,7 +209,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg, xpos}"/>
+      setNames="{ xneg, xpos }"/>
 
     <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
@@ -220,7 +220,7 @@
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
       scale="-1.0"
-      setNames="{source}"/>
+      setNames="{ source }"/>
   </FieldSpecifications>
 
   <Functions/>

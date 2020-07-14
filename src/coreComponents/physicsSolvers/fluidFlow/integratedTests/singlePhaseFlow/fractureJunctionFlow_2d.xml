@@ -6,9 +6,9 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}">
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         newtonMaxIter="8"/>
@@ -21,8 +21,8 @@
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Fracture}"
-      solidMaterialNames="{granite}"
+      targetRegions="{ Fracture }"
+      solidMaterialNames="{ granite }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -30,35 +30,35 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-1, 1}"
-      yCoords="{0, 2}"
-      zCoords="{0, 1}"
-      nx="{2}"
-      ny="{2}"
-      nz="{1}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 2 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 2 }"
+      ny="{ 2 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
     <Box
       name="left"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 1.01,  1.01, 1.01"/>
+      xMax=" 1.01, 1.01, 1.01"/>
 
     <Box
       name="right"
       xMin=" 8.99, -0.01, -0.01"
-      xMax="10.01,  1.01, 1.01"/>
+      xMax="10.01, 1.01, 1.01"/>
 
     <Box
       name="bottom"
       xMin="-0.01, -0.01, -0.01"
-      xMax="10.01,  1.11, 1.01"/>
+      xMax="10.01, 1.11, 1.01"/>
 
     <Box
       name="top"
-      xMin="-0.01,  8.99, -0.01"
+      xMin="-0.01, 8.99, -0.01"
       xMax="10.01, 10.01, 1.01"/>
 
     <Box
@@ -68,13 +68,13 @@
 
     <Box
       name="fracture2"
-      xMin="-2.01,  0.99, -0.01"
-      xMax=" 2.01,  1.01, 1.01"/>
+      xMin="-2.01, 0.99, -0.01"
+      xMax=" 2.01, 1.01, 1.01"/>
 
     <Box
       name="source"
       xMin="-0.01, -0.01, -0.01"
-      xMax=" 0.01,  1.01, 1.01"/>
+      xMax=" 0.01, 1.01, 1.01"/>
   </Geometry>
 
   <Events
@@ -113,13 +113,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-5"
-      materialList="{water, rock}"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -143,7 +143,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture1, fracture2}"
+      setNames="{ fracture1, fracture2 }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -153,7 +153,7 @@
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
       scale="1.0e7"
-      setNames="{source}"/>
+      setNames="{ source }"/>
   </FieldSpecifications>
 
   <Functions/>

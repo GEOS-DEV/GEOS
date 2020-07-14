@@ -33,8 +33,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{block1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ block1 }"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>

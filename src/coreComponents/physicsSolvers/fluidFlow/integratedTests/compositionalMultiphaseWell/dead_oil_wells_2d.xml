@@ -7,7 +7,7 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{Region1,wellRegion1,wellRegion2,wellRegion3}">
+      targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
@@ -19,19 +19,19 @@
       name="compositionalMultiphaseFlow"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{Region1}"
-      fluidNames="{fluid1}"
-      solidNames="{rock}"
-      relPermNames="{relperm}"
+      targetRegions="{ Region1 }"
+      fluidNames="{ fluid1 }"
+      solidNames="{ rock }"
+      relPermNames="{ relperm }"
       temperature="297.15"
       useMass="0"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{wellRegion1,wellRegion2,wellRegion3}"
-      fluidNames="{fluid1}"
-      relPermNames="{relperm}"
+      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
+      fluidNames="{ fluid1 }"
+      relPermNames="{ relperm }"
       wellTemperature="297.15"
       useMass="0">
       <WellControls
@@ -52,29 +52,32 @@
         control="liquidRate"
         targetBHP="1e8"
         targetRate="1e-4"
-        injectionStream="{0.1, 0.1, 0.8}"/>
+        injectionStream="{ 0.1, 0.1, 0.8 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 15}"
-      yCoords="{0, 15}"
-      zCoords="{0, 1}"
-      nx="{20}"
-      ny="{20}"
-      nz="{1}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 15 }"
+      yCoords="{ 0, 15 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 20 }"
+      ny="{ 20 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
 
     <InternalWell
       name="well_producer1"
       wellRegionName="wellRegion1"
       wellControlsName="wellControls1"
       meshName="mesh1"
-      polylineNodeCoords="{ {0.5,  0.5, 0.5  },                                          {7.5,  0.5, 0.35 },                                         {14.5, 0.5, 0.2  } }"
-      polylineSegmentConn="{ {0, 1},                                          {1, 2} }"
+      polylineNodeCoords="{ { 0.5, 0.5, 0.5 },
+                            { 7.5, 0.5, 0.35 },
+                            { 14.5, 0.5, 0.2 } }"
+      polylineSegmentConn="{ { 0, 1 },
+                             { 1, 2 } }"
       radius="0.1"
       numElementsPerSegment="20">
       <Perforation
@@ -93,8 +96,11 @@
       wellRegionName="wellRegion2"
       wellControlsName="wellControls2"
       meshName="mesh1"
-      polylineNodeCoords="{ {14.5, 14.5, 0.5  },                                          { 7.5, 14.5, 0.35 },                                         { 0.5, 14.5, 0.2  } }"
-      polylineSegmentConn="{ {0, 1},                                          {1, 2} }"
+      polylineNodeCoords="{ { 14.5, 14.5, 0.5 },
+                            { 7.5, 14.5, 0.35 },
+                            { 0.5, 14.5, 0.2 } }"
+      polylineSegmentConn="{ { 0, 1 },
+                             { 1, 2 } }"
       radius="0.1"
       numElementsPerSegment="17">
       <Perforation
@@ -113,8 +119,9 @@
       wellRegionName="wellRegion3"
       wellControlsName="wellControls3"
       meshName="mesh1"
-      polylineNodeCoords="{ {0.5,   0.5, 0.5  },                                          {14.5, 14.5, 0.2  } }"
-      polylineSegmentConn="{ {0, 1} }"
+      polylineNodeCoords="{ { 0.5, 0.5, 0.5 },
+                            { 14.5, 14.5, 0.2 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
       numElementsPerSegment="30">
       <Perforation
@@ -158,30 +165,30 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{cb1}"
-      materialList="{fluid1, rock, relperm}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ fluid1, rock, relperm }"/>
 
     <WellElementRegion
       name="wellRegion1"
-      materialList="{fluid1, relperm}"/>
+      materialList="{ fluid1, relperm }"/>
 
     <WellElementRegion
       name="wellRegion2"
-      materialList="{fluid1, relperm}"/>
+      materialList="{ fluid1, relperm }"/>
 
     <WellElementRegion
       name="wellRegion3"
-      materialList="{fluid1, relperm}"/>
+      materialList="{ fluid1, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
     <BlackOilFluid
       name="fluid1"
       fluidType="DeadOil"
-      phaseNames="{oil, gas, water}"
-      surfaceDensities="{800.0, 0.9907, 1022.0}"
-      componentMolarWeight="{114e-3, 16e-3, 18e-3}"
-      tableFiles="{pvdo.txt, pvdg.txt, pvtw.txt}"/>
+      phaseNames="{ oil, gas, water }"
+      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
+      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
+      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -190,10 +197,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{oil, gas, water}"
-      phaseMinVolumeFraction="{0.05, 0.05, 0.05}"
-      phaseRelPermExponent="{2.0, 2.0, 1.5}"
-      phaseRelPermMaxValue="{0.8, 0.9, 0.9}"/>
+      phaseNames="{ oil, gas, water }"
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -201,7 +208,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -210,7 +217,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -219,7 +226,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -227,7 +234,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="referencePorosity"
       scale="0.05"/>
@@ -236,7 +243,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="pressure"
       scale="5e6"/>
@@ -245,7 +252,7 @@
     <FieldSpecification
       name="initialComposition_oil"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
@@ -254,7 +261,7 @@
     <FieldSpecification
       name="initialComposition_gas"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
@@ -263,7 +270,7 @@
     <FieldSpecification
       name="initialComposition_water"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="2"

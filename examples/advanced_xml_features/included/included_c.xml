@@ -6,7 +6,7 @@
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -15,7 +15,7 @@
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -24,7 +24,7 @@
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="2.0e-16"/>
@@ -32,7 +32,7 @@
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="referencePorosity"
       scale="0.05"/>
@@ -40,7 +40,7 @@
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="5e6"/>
@@ -49,13 +49,13 @@
       name="sourceTerm"
       objectPath="ElementRegions/Region1/block1"
       scale="-0.00001"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="5e6"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
   </FieldSpecifications>
 </Problem>

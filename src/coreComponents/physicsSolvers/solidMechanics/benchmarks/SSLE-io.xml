@@ -47,21 +47,21 @@
       name="lagsolve"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{shale}"/>
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
+      elementTypes="{ C3D8 }"
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 10 }"
       zCoords="{ 0, 10 }"
-      nx="{100}"
-      ny="{100}"
-      nz="{100}"
-      cellBlockNames="{cb1}"/>
+      nx="{ 100 }"
+      ny="{ 100 }"
+      nz="{ 100 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
@@ -123,8 +123,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{shale}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -139,7 +139,7 @@
     <FieldSpecification
       name="source0"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="0"
@@ -148,7 +148,7 @@
     <FieldSpecification
       name="source1"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="2"
@@ -157,7 +157,7 @@
     <FieldSpecification
       name="source2"
       initialCondition="1"
-      setNames="{source}"
+      setNames="{ source }"
       objectPath="ElementRegions"
       fieldName="shale_stress"
       component="5"
@@ -169,7 +169,7 @@
       fieldName="Velocity"
       component="0"
       scale="0.0"
-      setNames="{xneg}"/>
+      setNames="{ xneg }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -177,7 +177,7 @@
       fieldName="Velocity"
       component="1"
       scale="0.0"
-      setNames="{yneg}"/>
+      setNames="{ yneg }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -185,7 +185,7 @@
       fieldName="Velocity"
       component="2"
       scale="0.0"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
   </FieldSpecifications>
 
   <Geometry>

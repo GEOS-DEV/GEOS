@@ -46,9 +46,9 @@ XML Symbolic Math:
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
       inputFluxEstimate="1">
       <LinearSolverParameters
         solverType="gmres"
@@ -60,14 +60,14 @@ XML Symbolic Math:
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 10}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{10}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{block1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block1 }"/>
   </Mesh>
 
   <Geometry>
@@ -114,8 +114,8 @@ XML Symbolic Math:
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{block1}"
-      materialList="{water, rock}"/>
+      cellBlocks="{ block1 }"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -148,7 +148,7 @@ XML Symbolic Math:
       name="permx"
       component="0"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="`2*$permeability$`"/>
@@ -157,7 +157,7 @@ XML Symbolic Math:
       name="permy"
       component="1"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="`0.5*$permeability$`"/>
@@ -166,7 +166,7 @@ XML Symbolic Math:
       name="permz"
       component="2"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="permeability"
       scale="`1*$permeability$`"/>
@@ -174,7 +174,7 @@ XML Symbolic Math:
     <FieldSpecification
       name="referencePorosity"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="referencePorosity"
       scale="$porosity$"/>
@@ -182,7 +182,7 @@ XML Symbolic Math:
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
-      setNames="{all}"
+      setNames="{ all }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="5e6"/>
@@ -191,13 +191,13 @@ XML Symbolic Math:
       name="sourceTerm"
       objectPath="ElementRegions/Region1/block1"
       scale="-0.00001"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Region1/block1"
       fieldName="pressure"
       scale="5e6"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
   </FieldSpecifications>
 </Problem>

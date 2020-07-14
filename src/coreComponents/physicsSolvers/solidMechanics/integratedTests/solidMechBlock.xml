@@ -8,8 +8,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{shale}">
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
         newtonMaxIter="8"/>
@@ -23,14 +23,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 0.10}"
-      yCoords="{0, 0.10}"
-      zCoords="{0, 0.10}"
-      nx="{10}"
-      ny="{10}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 0.10 }"
+      yCoords="{ 0, 0.10 }"
+      zCoords="{ 0, 0.10 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
@@ -82,8 +82,8 @@
     <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{shale}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -107,7 +107,7 @@
       fieldName="TotalDisplacement"
       component="0"
       scale="0.0"
-      setNames="{xneg, xpos}"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="yconstraint"
@@ -115,7 +115,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ypos}"/>
+      setNames="{ ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -123,7 +123,7 @@
       fieldName="TotalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{zneg, zpos}"/>
+      setNames="{ zneg, zpos }"/>
 
     <FieldSpecification
       name="xposconstraint"
@@ -132,15 +132,15 @@
       component="1"
       scale="1.0e6"
       functionName="timeFunction"
-      setNames="{source}"/>
+      setNames="{ source }"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 10.0}"
-      values="{0.0, 10.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 10.0 }"
+      values="{ 0.0, 10.0 }"/>
   </Functions>
 
   <!-- <Partition>

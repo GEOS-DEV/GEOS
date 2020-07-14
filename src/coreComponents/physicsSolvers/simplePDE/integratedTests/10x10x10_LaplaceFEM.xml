@@ -8,20 +8,20 @@
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
       logLevel="0"
-      targetRegions="{Region1}"/>
+      targetRegions="{ Region1 }"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 1}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{10}"
-      ny="{10}"
-      nz="{10}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Events
@@ -74,8 +74,8 @@
   <ElementRegions>
     <CellElementRegion
       name="Region1"
-      cellBlocks="{cb1}"
-      materialList="{nullModel}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ nullModel }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -90,14 +90,14 @@
       objectPath="nodeManager"
       functionName="DirichletTimeFunction"
       scale="1.0"
-      setNames="{source}"/>
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       fieldName="Temperature"
       objectPath="nodeManager"
       scale="0.0"
-      setNames="{sink}"/>
+      setNames="{ sink }"/>
   </FieldSpecifications>
 
   <Outputs>
@@ -125,8 +125,8 @@
   <Functions>
     <TableFunction
       name="DirichletTimeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 1.0, 2.0}"
-      values="{0.0, 3.e2, 4.e3}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 0.0, 3.e2, 4.e3 }"/>
   </Functions>
 </Problem>

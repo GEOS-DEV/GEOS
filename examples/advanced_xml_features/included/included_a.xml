@@ -7,9 +7,9 @@
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
       inputFluxEstimate="1">
       <LinearSolverParameters
         solverType="gmres"
@@ -21,14 +21,14 @@
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{0, 10}"
-      yCoords="{0, 1}"
-      zCoords="{0, 1}"
-      nx="{10}"
-      ny="{1}"
-      nz="{1}"
-      cellBlockNames="{block1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block1 }"/>
   </Mesh>
 
   <Geometry>

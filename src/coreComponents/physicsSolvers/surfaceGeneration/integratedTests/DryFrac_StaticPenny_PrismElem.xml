@@ -8,8 +8,8 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{granite}">
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ granite }">
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         newtonMaxIter="8"/>
@@ -20,27 +20,27 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      solidMaterialNames="{granite}"
+      solidMaterialNames="{ granite }"
       rockToughness="0.5e100"
       nodeBasedSIF="1"
       discretization="FE1"
       fractureRegion="Fracture"
       logLevel="1"
-      targetRegions="{Region2}"
+      targetRegions="{ Region2 }"
       mpiCommOrder="1"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D6}"
-      xCoords="{0, 24, 48}"
-      yCoords="{0, 24, 48}"
-      zCoords="{-56, -16, 16, 56}"
-      nx="{12, 6}"
-      ny="{12, 6}"
-      nz="{4, 8, 4}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D6 }"
+      xCoords="{ 0, 24, 48 }"
+      yCoords="{ 0, 24, 48 }"
+      zCoords="{ -56, -16, 16, 56 }"
+      nx="{ 12, 6 }"
+      ny="{ 12, 6 }"
+      nz="{ 4, 8, 4 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -107,13 +107,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{granite}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ granite }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{granite}"/>
+      materialList="{ granite }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -128,7 +128,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracPlane}"
+      setNames="{ fracPlane }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -136,7 +136,7 @@
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
-      setNames="{core}"
+      setNames="{ core }"
       objectPath="faceManager"
       fieldName="isFaceSeparable"
       scale="1"/>
@@ -147,7 +147,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.0"
-      setNames="{xneg, xpos}"/>
+      setNames="{ xneg, xpos }"/>
 
     <FieldSpecification
       name="y"
@@ -155,7 +155,7 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.0"
-      setNames="{yneg, ypos}"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zposConstraint"
@@ -163,7 +163,7 @@
       objectPath="faceManager"
       fieldName="Traction"
       scale="1e6"
-      setNames="{zpos}"/>
+      setNames="{ zpos }"/>
 
     <FieldSpecification
       name="znegconstraint"
@@ -171,7 +171,7 @@
       objectPath="faceManager"
       fieldName="Traction"
       scale="-1e6"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
 
     <FieldSpecification
       name="znegconstraint"
@@ -179,15 +179,15 @@
       objectPath="nodeManager"
       fieldName="TotalDisplacement"
       scale="0.0"
-      setNames="{zneg}"/>
+      setNames="{ zneg }"/>
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
       name="timeFunction"
-      inputVarNames="{time}"
-      coordinates="{0.0, 1.0, 1.0e9}"
-      values="{0.0, 1.0, 1.0}"/>
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 1.0e9 }"
+      values="{ 0.0, 1.0, 1.0 }"/>
   </Functions>
 
   <Outputs>
