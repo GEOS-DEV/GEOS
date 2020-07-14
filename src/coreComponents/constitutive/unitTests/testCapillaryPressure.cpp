@@ -187,7 +187,7 @@ CapillaryPressureBase * makeVanGenuchtenCapPressureThreePhase( string const & na
   auto & phaseCapPressureExpInv = capPressure->getReference< array1d< real64 > >(
     VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString );
   phaseCapPressureExpInv.resize( 3 );
-  phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4; phaseCapPressureExpInv = 0.5;
+  phaseCapPressureExpInv[0] = 0.33; phaseCapPressureExpInv[1] = 0.4; phaseCapPressureExpInv[ 2 ] = 0.5;
 
   auto & phaseCapPressureMultiplier = capPressure->getReference< array1d< real64 > >(
     VanGenuchtenCapillaryPressure::viewKeyStruct::phaseCapPressureMultiplierString );

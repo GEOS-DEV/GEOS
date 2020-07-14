@@ -108,8 +108,7 @@ bool SolverBase::CheckModelNames( array1d< string > & modelNames,
   if( modelNames.size() == 1 )
   {
     string const singleModelName = modelNames[0];
-    modelNames.resize( m_targetRegionNames.size() );
-    modelNames = singleModelName;
+    modelNames.resizeDefault( m_targetRegionNames.size(), singleModelName );
   }
 
   GEOSX_ERROR_IF_NE_MSG( modelNames.size(), m_targetRegionNames.size(),
@@ -860,4 +859,4 @@ R1Tensor const SolverBase::gravityVector() const
 }
 
 
-} /* namespace ANST */
+} // namespace geosx

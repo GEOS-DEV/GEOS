@@ -1157,7 +1157,7 @@
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="externalForce" type="r1_array" />
+		<xsd:attribute name="externalForce" type="real64_array2d" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->

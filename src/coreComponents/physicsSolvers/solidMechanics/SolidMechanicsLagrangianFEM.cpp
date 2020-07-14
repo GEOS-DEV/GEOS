@@ -186,11 +186,12 @@ void SolidMechanicsLagrangianFEM::RegisterDataOnMesh( Group * const MeshBodies )
                       "to hold the summation of nodal forces resulting from the governing equations." )->
       reference().resizeDimension< 1 >( 3 );
 
-    nodes->registerWrapper< array1d< R1Tensor > >( viewKeyStruct::forceExternal )->
+    nodes->registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternal )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->
       setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
-                      " conditions as well as coupling forces such as hydraulic forces." );
+                      " conditions as well as coupling forces such as hydraulic forces." )->
+      reference().resizeDimension< 1 >( 3 );
 
     nodes->registerWrapper< array1d< real64 > >( keys::Mass )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
@@ -300,7 +301,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
   ElementRegionManager const & elementRegionManager = *mesh.getElemManager();
 
   arrayView1d< real64 > & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-  mass = 0.0;
+  mass.setValues< serialPolicy >( 0.0 );
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
@@ -1129,7 +1130,6 @@ SolidMechanicsLagrangianFEM::
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   array1d< real64 > globalValues( size * 2 );
-  globalValues = 0;
 
   // Everything is done on rank 0
   MpiWrapper::gather( localResidualNorm,
@@ -1279,7 +1279,7 @@ void SolidMechanicsLagrangianFEM::ApplyContactConstraint( DofManager const & dof
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager->totalDisplacement();
     arrayView1d< R1Tensor > const & fc = nodeManager->getReference< array1d< R1Tensor > >( viewKeyStruct::contactForceString );
-    fc = {0, 0, 0};
+    fc.setValues< serialPolicy >( {0, 0, 0} );
 
     arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
     ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager->nodeList().toViewConst();

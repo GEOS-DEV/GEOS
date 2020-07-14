@@ -305,9 +305,9 @@ void SurfaceGenerator::InitializePostInitialConditions_PreSubGroups( Group * con
 
     arrayView1d< localIndex > const & childFaceIndex = faceManager->getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
-    parentNodeIndex = -1;
-    parentFaceIndex = -1;
-    childFaceIndex = -1;
+    parentNodeIndex.setValues< serialPolicy >( -1 );
+    parentFaceIndex.setValues< serialPolicy >( -1 );
+    childFaceIndex.setValues< serialPolicy >( -1 );
 
     m_originalNodetoFaces = nodeManager->faceList();
     m_originalNodetoEdges = nodeManager->edgeList();
@@ -2843,8 +2843,8 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition & domain,
   SIFNode.setValues< parallelHostPolicy >( 0 );
   SIFonFace.setValues< parallelHostPolicy >( 0 );
 
-  arrayView1d< R1Tensor > const &
-  fext = nodeManager.getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  arrayView2d< real64 const > const &
+  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & displacement = nodeManager.totalDisplacement();
   ArrayOfArraysView< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList().toViewConst();
   ArrayOfArraysView< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList().toViewConst();

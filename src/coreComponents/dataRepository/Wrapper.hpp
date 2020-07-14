@@ -596,11 +596,25 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  typename std::enable_if< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     *m_data = m_default.value;
+    return this;
+  }
+
+  /**
+   * @brief Set and apply for default value.
+   * @param defaultVal the new default value
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  typename std::enable_if< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
+  {
+    m_default.value = defaultVal;
+    m_data->template setValues< serialPolicy >( m_default.value );
     return this;
   }
 

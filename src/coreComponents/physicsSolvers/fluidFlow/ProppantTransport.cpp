@@ -788,7 +788,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
       string const & subRegionName = subRegion->getName();
       GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
       bcStatusMap[subRegionName][setName].resize( NC );
-      bcStatusMap[subRegionName][setName] = false;
+      bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
     } );
 

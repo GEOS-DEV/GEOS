@@ -982,7 +982,7 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const size = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
   array1d< real64 > globalR2( 2 * size );
-  globalR2 = 0;
+  globalR2.setValues< serialPolicy >( 0 );
 
   // Everything is done on rank 0
   MpiWrapper::gather( localR2,
@@ -1051,9 +1051,9 @@ void LagrangianContactSolver::
 
   FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  arrayView1d< R1Tensor > const &
-  fext = nodeManager.getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-  fext = {0, 0, 0};
+  arrayView2d< real64 > const &
+  fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  fext.setValues< serialPolicy >( 0 );
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -1187,8 +1187,6 @@ void LagrangianContactSolver::
 
           stackArray2d< real64, 2 * 3 * 4 * 3 > dRdU( 3, 2 * 3 * numNodesPerFace );
           stackArray2d< real64, 3 * 3 > dRdT( 3, 3 );
-          dRdU = 0.0;
-          dRdT = 0.0;
 
           switch( fractureState[kfe] )
           {
@@ -1434,7 +1432,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   {
     typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 
-    forAll< parallelHostPolicy >( stencil.size(), [=] ( localIndex const iconn )
+    forAll< serialPolicy >( stencil.size(), [=] ( localIndex const iconn )
     {
       localIndex const numFluxElems = sei.sizeOfArray( iconn );
 
@@ -1898,7 +1896,6 @@ void LagrangianContactSolver::ComputeFractureStateStatistics( DomainPartition co
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   array1d< localIndex > localCounter( 3 );
-  localCounter = 0;
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {

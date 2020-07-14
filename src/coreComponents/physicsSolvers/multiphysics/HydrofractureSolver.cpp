@@ -572,7 +572,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
       localIndex const numNodesPerElement = elemsToNodes[k].size();
       array1d< globalIndex > activeDisplacementDOF( 3 * numNodesPerElement );
       array1d< real64 > values( 3*numNodesPerElement );
-      values = 1;
+      values.setValues< serialPolicy >( 1 );
 
       for( localIndex a=0; a<numNodesPerElement; ++a )
       {
@@ -627,7 +627,7 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
           localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
           array1d< globalIndex > activeDisplacementDOF( 3 * numNodesPerElement );
           array1d< real64 > values( 3*numNodesPerElement );
-          values = 1;
+          values.setValues< serialPolicy >( 1 );
 
           for( localIndex a=0; a<numNodesPerElement; ++a )
           {
@@ -990,9 +990,9 @@ HydrofractureSolver::
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
   ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  arrayView1d< R1Tensor > const & fext =
-    nodeManager.getReference< array1d< R1Tensor > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
-  fext = {0, 0, 0};
+  arrayView2d< real64 > const & fext =
+    nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
+  fext.setValues< serialPolicy >( 0 );
 
   string const presDofKey = m_flowSolver->getDofManager().getKey( FlowSolverBase::viewKeyStruct::pressureString );
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );

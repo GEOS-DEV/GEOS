@@ -77,7 +77,7 @@ void RelativePermeabilityBase::PostProcessInput()
 
   m_phaseTypes.resize( NP );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
-  m_phaseOrder = -1;
+  m_phaseOrder.setValues< serialPolicy >( -1 );
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {

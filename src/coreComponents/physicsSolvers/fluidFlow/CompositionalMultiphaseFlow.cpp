@@ -65,7 +65,6 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setDescription( "Name of the relative permeability constitutive model to use" );
 
   this->registerWrapper( viewKeyStruct::capPressureNamesString, &m_capPressureModelNames )->
-    setApplyDefaultValue( "" )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the capillary pressure constitutive model to use" );
@@ -1002,7 +1001,7 @@ void CompositionalMultiphaseFlow::ApplyDirichletBC( real64 const time,
                     "Conflicting pressure boundary conditions on set " << setName );
 
     bcStatusMap[subRegionName][setName].resize( m_numComponents );
-    bcStatusMap[subRegionName][setName] = false;
+    bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
     // 1.1. Apply BC to set the field values
     fs->ApplyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
@@ -1423,4 +1422,5 @@ void CompositionalMultiphaseFlow::ResetViews( MeshLevel & mesh )
 
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseFlow, string const &, Group * const )
-}// namespace geosx
+
+} // namespace geosx

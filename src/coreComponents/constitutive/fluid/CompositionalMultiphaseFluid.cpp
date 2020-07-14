@@ -132,14 +132,14 @@ void CompositionalMultiphaseFluid::PostProcessInput()
   if( m_componentVolumeShift.empty())
   {
     m_componentVolumeShift.resize( NC );
-    m_componentVolumeShift = 0.0;
+    m_componentVolumeShift.setValues< serialPolicy >( 0.0 );
   }
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString )
   //if (m_componentBinaryCoeff.empty()) TODO needs reading of 2D arrays
   {
     m_componentBinaryCoeff.resize( NC, NC );
-    m_componentBinaryCoeff = 0.0;
+    m_componentBinaryCoeff.setValues< serialPolicy >( 0.0 );
   }
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString )

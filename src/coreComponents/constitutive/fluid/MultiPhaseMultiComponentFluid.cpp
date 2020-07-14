@@ -274,6 +274,11 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
     dTotalDensity_dGlobalCompFraction
   };
 
+#if defined(__CUDACC__)
+  // For some reason nvcc thinks these aren't used.
+  GEOSX_UNUSED_VAR( phaseFrac, phaseDens, phaseVisc, phaseCompFrac, totalDens );
+#endif
+
   localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   localIndex constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   localIndex const NC = numComponents();

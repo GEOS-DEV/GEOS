@@ -72,8 +72,8 @@ void CompressibleSinglePhaseFluid::AllocateConstitutiveData( dataRepository::Gro
 {
   SingleFluidBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_density = m_referenceDensity;
-  m_viscosity = m_referenceViscosity;
+  m_density.setValues< serialPolicy >( m_referenceDensity );
+  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
 
 void

@@ -475,7 +475,7 @@ struct ConnLocPatternBuilder< DofManager::Location::Elem, DofManager::Location::
       elemManager->ConstructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( field.key );
 
     array1d< localIndex > edgeConnectorIndex( edgeManager->size() );
-    edgeConnectorIndex = -1;
+    edgeConnectorIndex.setValues< serialPolicy >( -1 );
 
     localIndex edgeCount = 0;
     forMeshLocation< EDGE, true, SUBREGIONTYPES... >( mesh, regions, [&] ( localIndex const edgeIdx )
@@ -550,7 +550,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
   array1d< globalIndex > rowIndices( NC );
   array1d< globalIndex > colIndices( NC );
   array2d< real64 > values( NC, NC );
-  values = 1.0;
+  values.setValues< serialPolicy >( 1.0 );
 
   // 1. Insert diagonal blocks, in case there are elements not included in stencil
   // (e.g. a single fracture element not connected to any other)
@@ -604,7 +604,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
       }
 
       values.resize( numFluxElems * NC, stencilSize * NC );
-      values = 1.0;
+      values.setValues< serialPolicy >( 1.0 );
 
       pattern_ptr->insert( rowIndices, colIndices, values );
     } );
@@ -694,7 +694,7 @@ void DofManager::setSparsityPatternOneBlock( MATRIX & pattern,
     }
 
     values.resize( numDofRow, numDofCol );
-    values = 1.0;
+    values.setValues< serialPolicy >( 1.0 );
     pattern.insert( dofIndicesRow, dofIndicesCol, values );
   }
 }

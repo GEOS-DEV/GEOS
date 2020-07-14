@@ -112,7 +112,7 @@ void PoroElastic< BASE >::AllocateConstitutiveData( dataRepository::Group * cons
 
   m_poreVolumeMultiplier.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_dPVMult_dPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
-  m_poreVolumeMultiplier = 1.0;
+  m_poreVolumeMultiplier.setValues< serialPolicy >( 1.0 );
 
 }
 
