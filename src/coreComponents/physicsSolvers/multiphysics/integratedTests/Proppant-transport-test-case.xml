@@ -2,83 +2,75 @@
 
 <Problem>
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
-    <ProppantTransport name="ProppantTransport"
-                       logLevel="1"  
-                       updateProppantPacking="1"
-                       proppantDiameter="4.5e-4"
-                       frictionCoefficient="0.04"
-                       criticalShieldsNumber="0.0"
-                       maxProppantConcentration="0.56"
-                       discretization="singlePhaseTPFA"
-                       targetRegions="{Fracture}"
-                       fluidNames="{water}"
-                       proppantNames="{sand}"
-                       solidNames="{rock}">
+    gravityVector="0.0, 0.0, -9.81">
+    <ProppantTransport
+      name="ProppantTransport"
+      logLevel="1"
+      updateProppantPacking="1"
+      proppantDiameter="4.5e-4"
+      frictionCoefficient="0.04"
+      criticalShieldsNumber="0.0"
+      maxProppantConcentration="0.56"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      proppantNames="{ sand }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="0"
+        maxTimeStepCuts="5"
+        newtonMinIter="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-7"/>
+    </ProppantTransport>
 
-            <NonlinearSolverParameters
-                newtonTol="1.0e-6"
-                newtonMaxIter="8"
-                lineSearchAction="0"
-                maxTimeStepCuts="5"
-                newtonMinIter="1"/>
-            <LinearSolverParameters
-                solverType="gmres"
-                krylovTol="1.0e-7"/>
+    <FlowProppantTransport
+      name="FlowProppantTransport"
+      proppantSolverName="ProppantTransport"
+      flowSolverName="SinglePhaseFVM"
+      targetRegions="{ Fracture }"
+      logLevel="1"/>
 
-    
-    </ProppantTransport>    
-
-    
-    <FlowProppantTransport name="FlowProppantTransport"
-                           proppantSolverName="ProppantTransport"
-                           flowSolverName="SinglePhaseFVM"
-                           targetRegions="{Fracture}"
-                           logLevel="1">
-
-
-    </FlowProppantTransport>
-
-
-
-
-    <SinglePhaseProppantFVM name="SinglePhaseFVM"
-                     logLevel="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="{Fracture}"
-                     fluidNames="{water}"
-                     solidNames="{rock}">
-
-            <NonlinearSolverParameters
-                newtonTol="1.0e-6"
-                newtonMaxIter="8"
-                lineSearchAction="0"
-                newtonMinIter="0"/>
-            <LinearSolverParameters
-                solverType="gmres"
-                krylovTol="1.0e-7"/>
+    <SinglePhaseProppantFVM
+      name="SinglePhaseFVM"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="0"
+        newtonMinIter="0"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Fracture}"
-      solidMaterialNames="{granite}"
+      targetRegions="{ Fracture }"
+      solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-1, 1}"
-      yCoords="{0, 1.2319}"
-      zCoords="{0, 0.3048}"
-      nx="{2}"
-      ny="{97}"
-      nz="{24}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 1.2319 }"
+      zCoords="{ 0, 0.3048 }"
+      nx="{ 2 }"
+      ny="{ 97 }"
+      nz="{ 24 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
@@ -86,23 +78,23 @@
     <Box
       name="left0"
       xMin="-0.001, -0.001, -0.001"
-      xMax="0.001,  0.013, 0.3148"/>
+      xMax="0.001, 0.013, 0.3148"/>
 
     <!-- three injection points at the inlet (left) -->
     <Box
       name="left1"
       xMin="-0.001, -0.001, 0.07"
-      xMax="0.001,  0.013, 0.09"/>
+      xMax="0.001, 0.013, 0.09"/>
 
     <Box
       name="left2"
       xMin="-0.001, -0.001, 0.15"
-      xMax="0.001,  0.013, 0.17"/>
+      xMax="0.001, 0.013, 0.17"/>
 
     <Box
       name="left3"
       xMin="-0.001, -0.001, 0.22"
-      xMax="0.001,  0.013, 0.25"/>
+      xMax="0.001, 0.013, 0.25"/>
 
     <!-- the outflow boundary at the outlet (right) -->
     <Box
@@ -156,52 +148,33 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{water, rock, sand}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock, sand }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="7.63e-3"
-      materialList="{water, rock, sand}"/>
+      materialList="{ water, rock, sand }"/>
   </ElementRegions>
 
   <Constitutive>
-<<<<<<< f239d80410269ea477ac37d76399d9a8dfbe9a70
-    <ProppantSlurryFluid name="water"
-                         referencePressure="1e5"
-                         referenceDensity="1000"
-                         compressibility="0.0"
-                         maxProppantConcentration="0.56"
-                         referenceViscosity="0.001"
-                         referenceProppantDensity="2550.0"/>
-
-    <ParticleFluid name="sand"
-                   particleSettlingModel="Stokes"
-		   hinderedSettlingCoefficient="5.9"
-                   isCollisionalSlip="0"
-                   proppantDensity="2550.0"
-                   proppantDiameter="4.5e-4"                   
-                   maxProppantConcentration="0.56"
-                                           />
-=======
     <ProppantSlurryFluid
       name="water"
       referencePressure="1e5"
       referenceDensity="1000"
       compressibility="0.0"
-      maxProppantConcentration="0.6"
+      maxProppantConcentration="0.56"
       referenceViscosity="0.001"
       referenceProppantDensity="2550.0"/>
 
     <ParticleFluid
       name="sand"
       particleSettlingModel="Stokes"
-      hinderedSettlingCoefficient="5.0"
+      hinderedSettlingCoefficient="5.9"
       isCollisionalSlip="0"
       proppantDensity="2550.0"
       proppantDiameter="4.5e-4"
-      maxProppantConcentration="0.6"/>
->>>>>>> Formatting xml files in repo
+      maxProppantConcentration="0.56"/>
 
     <!-- Below are some dummy parameters that are not used in simulation, but required by silo output  -->
     <PoroLinearElasticIsotropic
@@ -218,7 +191,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -229,7 +202,7 @@
       objectPath="ElementRegions/Fracture"
       fieldName="elementAperture"
       scale="7.62e-3"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac1"
@@ -238,7 +211,7 @@
       fieldName="pressure"
       scale="0.0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac2"
@@ -247,7 +220,7 @@
       fieldName="proppantConcentration"
       scale="0.0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac3"
@@ -256,80 +229,9 @@
       fieldName="isProppantBoundary"
       scale="0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <!-- We specify the proppant boundary to approximate proppant injection boundary conditions -->
-<<<<<<< f239d80410269ea477ac37d76399d9a8dfbe9a70
-    
-    <FieldSpecification name="frac4"
-               initialCondition="1"
-               objectPath="ElementRegions/Fracture"
-               fieldName="isProppantBoundary"
-               scale="1"
-               component="0" 	       	       
-	       setNames="{left0}"/>    
-
-    
-    <SourceFlux name="left1a"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="-0.1262"
-               component="0" 	       	       
-	       setNames="{left1}"/>
-
-    <FieldSpecification name="left1b"
-               objectPath="ElementRegions/Fracture"
-               fieldName="proppantConcentration"
-               scale="0.07"
-               component="0" 	       	       
-	       setNames="{left1}"/>        
-
-    <SourceFlux name="left2a"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="-0.1262"
-               component="0" 	       	       
-	       setNames="{left2}"/>
-
-    <FieldSpecification name="left2b"
-               objectPath="ElementRegions/Fracture"
-               fieldName="proppantConcentration"
-               scale="0.07"
-               component="0" 	       	       
-	       setNames="{left2}"/>        
-
-
-    <SourceFlux name="left3a"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="-0.1262"
-               component="0" 	       	       
-	       setNames="{left3}"/>
-
-    <FieldSpecification name="left3b"
-               objectPath="ElementRegions/Fracture"
-               fieldName="proppantConcentration"
-               scale="0.07"
-               component="0" 	       	       
-	       setNames="{left3}"/>        
-    
-    
-    <FieldSpecification name="right1"
-               objectPath="ElementRegions/Fracture"
-               fieldName="pressure"
-               scale="0.0"
-               component="0" 	       	       
-	       setNames="{right}"/>
-
-    <FieldSpecification name="right2"
-               objectPath="ElementRegions/Fracture"
-               fieldName="proppantConcentration"
-               scale="0.0"
-               component="0" 	       	       
-	       setNames="{right}"/>
-    
-
-=======
     <FieldSpecification
       name="frac4"
       initialCondition="1"
@@ -337,15 +239,15 @@
       fieldName="isProppantBoundary"
       scale="1"
       component="0"
-      setNames="{left0}"/>
+      setNames="{ left0 }"/>
 
     <SourceFlux
       name="left1a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.14"
+      scale="-0.1262"
       component="0"
-      setNames="{left1}"/>
+      setNames="{ left1 }"/>
 
     <FieldSpecification
       name="left1b"
@@ -353,15 +255,15 @@
       fieldName="proppantConcentration"
       scale="0.07"
       component="0"
-      setNames="{left1}"/>
+      setNames="{ left1 }"/>
 
     <SourceFlux
       name="left2a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.14"
+      scale="-0.1262"
       component="0"
-      setNames="{left2}"/>
+      setNames="{ left2 }"/>
 
     <FieldSpecification
       name="left2b"
@@ -369,15 +271,15 @@
       fieldName="proppantConcentration"
       scale="0.07"
       component="0"
-      setNames="{left2}"/>
+      setNames="{ left2 }"/>
 
     <SourceFlux
       name="left3a"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="-0.14"
+      scale="-0.1262"
       component="0"
-      setNames="{left3}"/>
+      setNames="{ left3 }"/>
 
     <FieldSpecification
       name="left3b"
@@ -385,7 +287,7 @@
       fieldName="proppantConcentration"
       scale="0.07"
       component="0"
-      setNames="{left3}"/>
+      setNames="{ left3 }"/>
 
     <FieldSpecification
       name="right1"
@@ -393,7 +295,7 @@
       fieldName="pressure"
       scale="0.0"
       component="0"
-      setNames="{right}"/>
+      setNames="{ right }"/>
 
     <FieldSpecification
       name="right2"
@@ -401,8 +303,7 @@
       fieldName="proppantConcentration"
       scale="0.0"
       component="0"
-      setNames="{right}"/>
->>>>>>> Formatting xml files in repo
+      setNames="{ right }"/>
   </FieldSpecifications>
 
   <Functions/>

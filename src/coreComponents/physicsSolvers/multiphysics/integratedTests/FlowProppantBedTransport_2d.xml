@@ -3,97 +3,89 @@
 <!--# # -->
 <Problem>
   <Solvers
-    gravityVector="0.0,0.0,-9.81">
-    <ProppantTransport name="ProppantTransport"
-                       logLevel="1"  
-                       updateProppantPacking="1"
-                       discretization="singlePhaseTPFA"
-                       targetRegions="{Fracture}"
-                       fluidNames="{water}"
-                       proppantNames="{sand}"
-                       solidNames="{rock}">
+    gravityVector="0.0, 0.0, -9.81">
+    <ProppantTransport
+      name="ProppantTransport"
+      logLevel="1"
+      updateProppantPacking="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      proppantNames="{ sand }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="0"
+        newtonMinIter="1"
+        maxTimeStepCuts="5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-7"/>
+    </ProppantTransport>
 
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8"
-                                 lineSearchAction="0"
-                                 newtonMinIter="1"
-                                 maxTimeStepCuts="5"/>
-      <LinearSolverParameters solverType="gmres"
-                              krylovTol="1.0e-7"/>
-    
-    </ProppantTransport>    
+    <FlowProppantTransport
+      name="FlowProppantTransport"
+      proppantSolverName="ProppantTransport"
+      flowSolverName="SinglePhaseFVM"
+      targetRegions="{ Fracture }"
+      logLevel="1"/>
 
-    
-    <FlowProppantTransport name="FlowProppantTransport"
-                           proppantSolverName="ProppantTransport"
-                           flowSolverName="SinglePhaseFVM"
-                           targetRegions="{Fracture}"
-                           logLevel="1">
-
-    </FlowProppantTransport>
-
-
-
-
-    <SinglePhaseProppantFVM name="SinglePhaseFVM"
-                     logLevel="1"
-                     discretization="singlePhaseTPFA"
-                     targetRegions="{Fracture}"
-                     fluidNames="{water}"
-                     solidNames="{rock}">
-
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="8"
-                                 lineSearchAction="0"
-                                 newtonMinIter="0"
-                                 maxTimeStepCuts="5"/>
-       <LinearSolverParameters solverType="gmres"
-                               krylovTol="1.0e-7"/>
+    <SinglePhaseProppantFVM
+      name="SinglePhaseFVM"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="0"
+        newtonMinIter="0"
+        maxTimeStepCuts="5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-7"/>
     </SinglePhaseProppantFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Fracture}"
-      solidMaterialNames="{granite}"
+      targetRegions="{ Fracture }"
+      solidMaterialNames="{ granite }"
       rockToughness="1e6"/>
   </Solvers>
 
   <Mesh>
     <InternalMesh
       name="mesh1"
-      elementTypes="{C3D8}"
-      xCoords="{-1, 1}"
-      yCoords="{0, 1.2446}"
-      zCoords="{0, 0.3048}"
-      nx="{2}"
-      ny="{12}"
-      nz="{3}"
-      cellBlockNames="{cb1}"/>
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 1.2446 }"
+      zCoords="{ 0, 0.3048 }"
+      nx="{ 2 }"
+      ny="{ 12 }"
+      nz="{ 3 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-<<<<<<< f239d80410269ea477ac37d76399d9a8dfbe9a70
-    <Box name="left"       xMin="-0.001, -0.001, -0.001" xMax="0.001,  0.11, 0.3148"/>
-    <Box name="right"       xMin="-0.001, 1.1, 0.2" xMax="0.001, 1.2546, 0.3148"/>        
-    <Box name="fracture"  xMin="-0.01, -0.01, -0.01" xMax=" 0.01, 1.2546, 0.3148"/>
-=======
     <Box
       name="left"
       xMin="-0.001, -0.001, -0.001"
-      xMax="0.001,  0.11, 0.3148"/>
+      xMax="0.001, 0.11, 0.3148"/>
 
     <Box
       name="right"
-      xMin="-0.001, 1.1, -0.001"
+      xMin="-0.001, 1.1, 0.2"
       xMax="0.001, 1.2546, 0.3148"/>
 
     <Box
       name="fracture"
       xMin="-0.01, -0.01, -0.01"
       xMax=" 0.01, 1.2546, 0.3148"/>
->>>>>>> Formatting xml files in repo
   </Geometry>
 
   <Events
@@ -137,13 +129,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{cb1}"
-      materialList="{water, rock, sand}"/>
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock, sand }"/>
 
     <FaceElementRegion
       name="Fracture"
       defaultAperture="7.63e-3"
-      materialList="{water, rock, sand}"/>
+      materialList="{ water, rock, sand }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -172,7 +164,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{fracture}"
+      setNames="{ fracture }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>
@@ -183,7 +175,7 @@
       objectPath="ElementRegions/Fracture"
       fieldName="elementAperture"
       scale="7.63e-3"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac1"
@@ -192,7 +184,7 @@
       fieldName="pressure"
       scale="0.0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac2"
@@ -201,7 +193,7 @@
       fieldName="proppantConcentration"
       scale="0.0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac3"
@@ -210,7 +202,7 @@
       fieldName="isProppantBoundary"
       scale="0"
       component="0"
-      setNames="{fracture}"/>
+      setNames="{ fracture }"/>
 
     <FieldSpecification
       name="frac4"
@@ -219,7 +211,7 @@
       fieldName="isProppantBoundary"
       scale="1"
       component="0"
-      setNames="{left}"/>
+      setNames="{ left }"/>
 
     <SourceFlux
       name="left1a"
@@ -227,7 +219,7 @@
       fieldName="pressure"
       scale="-0.42"
       component="0"
-      setNames="{left}"/>
+      setNames="{ left }"/>
 
     <FieldSpecification
       name="left1b"
@@ -235,7 +227,7 @@
       fieldName="proppantConcentration"
       scale="0.07"
       component="0"
-      setNames="{left}"/>
+      setNames="{ left }"/>
 
     <FieldSpecification
       name="right1"
@@ -243,7 +235,7 @@
       fieldName="pressure"
       scale="0.0"
       component="0"
-      setNames="{right}"/>
+      setNames="{ right }"/>
 
     <FieldSpecification
       name="right2"
@@ -251,7 +243,7 @@
       fieldName="proppantConcentration"
       scale="0.0"
       component="0"
-      setNames="{right}"/>
+      setNames="{ right }"/>
   </FieldSpecifications>
 
   <Functions/>
