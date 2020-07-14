@@ -776,7 +776,7 @@ void SolidMechanicsLagrangianFEM::ApplyTractionBC( real64 const time,
                         Group * const GEOSX_UNUSED_PARAM( targetGroup ),
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    string const & functionName = bc->getReference< string >( FieldSpecificationBase::viewKeyStruct::functionNameString );
+    string const & functionName = bc->GetFunctionName();
 
     globalIndex_array nodeDOF;
     real64_array nodeRHS;

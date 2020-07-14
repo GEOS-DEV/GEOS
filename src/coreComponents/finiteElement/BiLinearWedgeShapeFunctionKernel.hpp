@@ -18,7 +18,7 @@ public:
   using BaseClass::numNodes;
   using BaseClass::numQuadraturePoints;
 
-  constexpr static real64 parentVolume = 1.0 ;
+  constexpr static real64 parentVolume = 1.0;
   constexpr static real64 weight = parentVolume / numQuadraturePoints;
   constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
   constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
@@ -44,7 +44,7 @@ public:
   GEOSX_HOST_DEVICE
   static real64 shapeFunctionDerivatives( localIndex const q,
                                           real64 const (&X)[numNodes][3],
-                                          real64 (& dNdX)[numNodes][3] );
+                                          real64 ( &dNdX )[numNodes][3] );
 
 private:
   template< typename T >
@@ -59,14 +59,14 @@ private:
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords0( localIndex const a )
   {
-    return  0.5 * ( a & 2 );
+    return 0.5 * ( a & 2 );
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 parentCoords1( localIndex const a )
   {
-    return  0.25 * ( a & 4 );
+    return 0.25 * ( a & 4 );
   }
 
   GEOSX_HOST_DEVICE
@@ -94,7 +94,7 @@ private:
   GEOSX_FORCE_INLINE
   constexpr static real64 quadratureParentCoords2( localIndex const q )
   {
-    return parentCoords2(q) * quadratureLongitudinalCoord;
+    return parentCoords2( q ) * quadratureLongitudinalCoord;
   }
 
 
@@ -103,8 +103,8 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
-                                        real64 const (&X)[numNodes][3],
-                                        real64 (& dNdX)[numNodes][3] )
+                                                                   real64 const (&X)[numNodes][3],
+                                                                   real64 (& dNdX)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
