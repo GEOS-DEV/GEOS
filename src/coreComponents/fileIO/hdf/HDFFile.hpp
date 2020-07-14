@@ -142,22 +142,22 @@ public:
   virtual ~HDFHistIO() { }
 
   /// @copydoc geosx::BufferedHistoryIO::Init
-  virtual void Init( bool existsOkay ) override;
+  virtual void init( bool existsOkay ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::Write
-  virtual void Write( ) override;
+  virtual void write( ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::CompressInFile
-  virtual void CompressInFile( ) override;
+  virtual void compressInFile( ) override;
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param buffered_count The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void ResizeFileIfNeeded( localIndex bufferedCount );
+  inline void resizeFileIfNeeded( localIndex bufferedCount );
 
   /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
-  virtual globalIndex GetRankOffset( ) override;
+  virtual globalIndex getRankOffset( ) override;
 
 protected:
   virtual void resizeBuffer( ) override;
@@ -240,22 +240,22 @@ public:
   virtual ~HDFSerialHistIO() { }
 
   /// @copydoc geosx::BufferedHistoryIO::Init
-  virtual void Init( bool existsOkay ) override;
+  virtual void init( bool existsOkay ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::Write
-  virtual void Write( ) override;
+  virtual void write( ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::CompressInFile
-  virtual void CompressInFile( ) override;
+  virtual void compressInFile( ) override;
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void ResizeFileIfNeeded( localIndex bufferedCount );
+  inline void resizeFileIfNeeded( localIndex bufferedCount );
 
   /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
-  virtual globalIndex GetRankOffset( ) override;
+  virtual globalIndex getRankOffset( ) override;
 
 protected:
   virtual void resizeBuffer( ) override;

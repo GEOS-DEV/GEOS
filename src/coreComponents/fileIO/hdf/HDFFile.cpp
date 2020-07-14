@@ -168,7 +168,7 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
 }
 
-void HDFHistIO::Init( bool exists_okay )
+void HDFHistIO::init( bool exists_okay )
 {
   globalIndex localIdxCount = LvArray::integerConversion< globalIndex >( m_dims[0] );
 
@@ -249,7 +249,7 @@ void HDFHistIO::Init( bool exists_okay )
   }
 }
 
-void HDFHistIO::Write( )
+void HDFHistIO::write( )
 {
   // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
   if( m_subcomm != MPI_COMM_NULL )
@@ -297,7 +297,7 @@ void HDFHistIO::Write( )
   }
 }
 
-void HDFHistIO::CompressInFile( )
+void HDFHistIO::compressInFile( )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
@@ -316,7 +316,7 @@ void HDFHistIO::CompressInFile( )
   }
 }
 
-inline void HDFHistIO::ResizeFileIfNeeded( localIndex buffered_count )
+inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
@@ -341,7 +341,7 @@ inline void HDFHistIO::ResizeFileIfNeeded( localIndex buffered_count )
   }
 }
 
-globalIndex HDFHistIO::GetRankOffset( )
+globalIndex HDFHistIO::getRankOffset( )
 {
   return m_globalIdxOffset;
 }
@@ -389,7 +389,7 @@ HDFSerialHistIO::HDFSerialHistIO( string const & filename,
   m_dataBuffer.resize( initAlloc * m_typeSize * m_typeCount );
 }
 
-void HDFSerialHistIO::Init( bool exists_okay )
+void HDFSerialHistIO::init( bool exists_okay )
 {
   // create a dataset in the file if needed, don't erase file
   if( m_typeCount > 0 )
@@ -434,7 +434,7 @@ void HDFSerialHistIO::Init( bool exists_okay )
   }
 }
 
-void HDFSerialHistIO::Write( )
+void HDFSerialHistIO::write( )
 {
   // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
   if( m_typeCount > 0 && m_buffered_count > 0 )
@@ -477,7 +477,7 @@ void HDFSerialHistIO::Write( )
   }
 }
 
-void HDFSerialHistIO::CompressInFile( )
+void HDFSerialHistIO::compressInFile( )
 {
   if( m_typeCount > 0 )
   {
@@ -496,7 +496,7 @@ void HDFSerialHistIO::CompressInFile( )
   }
 }
 
-inline void HDFSerialHistIO::ResizeFileIfNeeded( localIndex buffered_count )
+inline void HDFSerialHistIO::resizeFileIfNeeded( localIndex buffered_count )
 {
   if( m_typeCount > 0 )
   {
@@ -521,7 +521,7 @@ inline void HDFSerialHistIO::ResizeFileIfNeeded( localIndex buffered_count )
   }
 }
 
-globalIndex HDFSerialHistIO::GetRankOffset( )
+globalIndex HDFSerialHistIO::getRankOffset( )
 {
   return 0;
 }
