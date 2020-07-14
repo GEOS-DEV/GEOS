@@ -258,4 +258,17 @@ void FlowSolverBase::ResetViews( MeshLevel & mesh )
 #endif
 }
 
+std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval;
+  rval.push_back( m_solidModelNames[regionIndex] );
+  rval.push_back( m_fluidModelNames[regionIndex] );
+
+  return rval;
+}
+
+
 } // namespace geosx

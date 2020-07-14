@@ -43,6 +43,7 @@
 #include <regex>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <algorithm>
 
 namespace geosx
 {
@@ -648,19 +649,25 @@ void ProblemManager::ApplyNumericalMethods()
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group * const meshBodies = domain->getMeshBodies();
 
-  map< string, localIndex > regionQuadrature;
+  map< std::pair<string,string>, localIndex > regionQuadrature;
+
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup< SolverBase >( solverIndex );
 
-    string const numericalMethodName = solver->getDiscretization();
+    string const discretizationName = solver->getDiscretization();
     arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
     FiniteElementDiscretizationManager const &
     feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
 
-    FiniteElementDiscretization const *
-      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( numericalMethodName );
+    FiniteElementDiscretization const * const
+    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( discretizationName );
+
+//    FiniteVolumeManager const &
+//    finiteVolumeManager = numericalMethodManager->getFiniteVolumeManager();
+//
+//    FluxApproximationBase const * const fvFluxApprox = finiteVolumeManager.getFluxApproximation( discretizationName );
 
     for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
     {
@@ -675,23 +682,42 @@ void ProblemManager::ApplyNumericalMethods()
         for( auto const & regionName : targetRegions )
         {
           ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
-          localIndex const quadratureSize = feDiscretization == nullptr ? 1 : feDiscretization->getNumberOfQuadraturePoints();
-          if( quadratureSize > regionQuadrature[regionName] )
+
+          if( feDiscretization != nullptr )
           {
-            regionQuadrature[regionName] = quadratureSize;
-          }
-          elemRegion->forElementSubRegions< CellElementSubRegion,
-                                            FaceElementSubRegion >( [&]( auto & subRegion )
-          {
-            if( feDiscretization != nullptr )
+            elemRegion->forElementSubRegions< CellElementSubRegion>( [&]( auto & subRegion )
             {
-              feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
-            }
-          } );
+              string const elementTypeString = subRegion.GetElementTypeString();
+              finiteElement::dispatch( elementTypeString,
+                                       [&] ( auto const finiteElement )
+              {
+                using FE_TYPE = TYPEOFREF(finiteElement);
+                localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+
+                feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
+                                                                                           subRegion.getName() ) ];
+
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+              });
+            });
+          }
+          else //if( fvFluxApprox != nullptr )
+          {
+            elemRegion->forElementSubRegions( [&]( auto & subRegion )
+            {
+              localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
+                                                                                         subRegion.getName() ) ];
+              localIndex const numQuadraturePoints = 1;
+              numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+            });
+          }
+
         }
       }
     }
   }
+
 
   for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
   {
@@ -701,24 +727,29 @@ void ProblemManager::ApplyNumericalMethods()
       MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( b );
       ElementRegionManager * const elemManager = meshLevel->getElemManager();
 
-      for( map< string, localIndex >::iterator iter=regionQuadrature.begin(); iter!=regionQuadrature.end(); ++iter )
+      elemManager->forElementSubRegionsComplete( [&]( localIndex const,
+                                                      localIndex const,
+                                                      ElementRegionBase & elemRegion,
+                                                      ElementSubRegionBase & elemSubRegion )
       {
-        string const regionName = iter->first;
-        localIndex const quadratureSize = iter->second;
-
-        ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
-        if( elemRegion != nullptr )
+        string const regionName = elemRegion.getName();
+        string const subRegionName = elemSubRegion.getName();
+        string_array const & materialList = elemRegion.getMaterialList();
+        decltype(regionQuadrature)::const_iterator rqIter = regionQuadrature.find( std::make_pair( regionName, subRegionName ) );
+        if( rqIter != regionQuadrature.end() )
         {
-          string_array const & materialList = elemRegion->getMaterialList();
-          elemRegion->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+          localIndex const quadratureSize = rqIter->second;
+          for( auto & materialName : materialList )
           {
-            for( auto & materialName : materialList )
-            {
-              constitutiveManager->HangConstitutiveRelation( materialName, &subRegion, quadratureSize );
-            }
-          } );
+            constitutiveManager->HangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
+            GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+          }
         }
-      }
+        else
+        {
+          GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<") does not have a discretization associated with it." );
+        }
+      });
     }
   }
 }

@@ -305,14 +305,6 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
 
   arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >
   rho = elementRegionManager.ConstructMaterialViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( "density",
                                                                                                               targetRegionNames(),
@@ -328,6 +320,46 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
+#if 1
+      string const elementTypeString = elementSubRegion.GetElementTypeString();
+      finiteElement::dispatch( elementTypeString,
+                               [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF(finiteElement);
+
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+        real64 N[numNodesPerElem];
+        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        {
+          real64 elemMass = 0;
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            elemMass += rho[er][esr][k][q] * detJ[k][q];
+            FE_TYPE::shapeFunctionValues( q, N );
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
+            }
+          }
+
+
+          for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
+          {
+            if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
+            {
+              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+            }
+            else
+            {
+              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+            }
+          }
+        }
+      });
+#else
       std::unique_ptr< FiniteElementBase >
       fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
 
@@ -357,6 +389,8 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
           }
         }
       }
+
+#endif
     } );
   } );
 }
@@ -380,13 +414,12 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
                                                                                                               targetRegionNames(),
                                                                                                               solidMaterialNames() );
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const &
-  feDiscretization = *(feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName ));
+//  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+//  FiniteElementDiscretizationManager const &
+//  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+//
+//  FiniteElementDiscretization const &
+//  feDiscretization = *(feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName ));
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const er,
@@ -408,6 +441,56 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
+#if 1
+      string const elementTypeString = elementSubRegion.GetElementTypeString();
+      finiteElement::dispatch( elementTypeString,
+                               [&] ( auto const finiteElement )
+      {
+        using FE_TYPE = TYPEOFREF(finiteElement);
+
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+
+        real64 N[numNodesPerElem];
+        for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
+        {
+          real64 elemMass = 0;
+          for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
+          {
+            elemMass += rho[er][esr][k][q] * detJ[k][q];
+            FE_TYPE::shapeFunctionValues( q, N );
+
+            for( localIndex a=0; a< numNodesPerElem; ++a )
+            {
+              mass[elemsToNodes[k][a]] += rho[er][esr][k][q] * detJ[k][q] * N[a];
+            }
+          }
+
+          bool isAttachedToGhostNode = false;
+          for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
+          {
+            if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
+            {
+              isAttachedToGhostNode = true;
+              m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
+            }
+            else
+            {
+              m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
+            }
+          }
+
+          if( isAttachedToGhostNode )
+          {
+            elemsAttachedToSendOrReceiveNodes.insert( k );
+          }
+          else
+          {
+            elemsNotAttachedToSendOrReceiveNodes.insert( k );
+          }
+        }
+      });
+#else
       std::unique_ptr< FiniteElementBase >
       fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
 
@@ -448,6 +531,9 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
           elemsNotAttachedToSendOrReceiveNodes.insert( k );
         }
       }
+
+#endif
+
     } );
   } );
 }

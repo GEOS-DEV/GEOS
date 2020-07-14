@@ -80,6 +80,9 @@ public:
 
   arrayView1d< string const > const & solidModelNames() const { return m_solidModelNames; }
 
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+
+
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
