@@ -661,58 +661,58 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       finiteElement::dispatch( elementTypeString,
                                [&] ( auto const finiteElement )
       {
-          using FE_TYPE = TYPEOFREF(finiteElement);
-          // Compile time values!
-          static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
-          static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
+        using FE_TYPE = TYPEOFREF( finiteElement );
+        // Compile time values!
+        static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
+        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
 
-          // Define an alias for the kernel type for easy use.
-          using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
-                                               CONSTITUTIVE_TYPE,
-                                               FE_TYPE,
-                                               NUM_NODES_PER_ELEM,
-                                               NUM_NODES_PER_ELEM >;
+        // Define an alias for the kernel type for easy use.
+        using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
+                                             CONSTITUTIVE_TYPE,
+                                             FE_TYPE,
+                                             NUM_NODES_PER_ELEM,
+                                             NUM_NODES_PER_ELEM >;
 
-          // 1) Combine the tuple containing the physics kernel specific constructor parameters with
-          // the parameters common to all phsyics kernels that use this interface,
-          // 2) Instantiate the kernel.
-          // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
-          // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
-          // only use one option...most likely camp since we can easily fix bugs.
+        // 1) Combine the tuple containing the physics kernel specific constructor parameters with
+        // the parameters common to all phsyics kernels that use this interface,
+        // 2) Instantiate the kernel.
+        // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
+        // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
+        // only use one option...most likely camp since we can easily fix bugs.
 #if CONSTRUCTOR_PARAM_OPTION==1
-          auto temp = std::forward_as_tuple( nodeManager,
-                                             edgeManager,
-                                             faceManager,
-                                             elementSubRegion,
-                                             finiteElementSpace,
-                                             castedConstitutiveRelation );
+        auto temp = std::forward_as_tuple( nodeManager,
+                                           edgeManager,
+                                           faceManager,
+                                           elementSubRegion,
+                                           finiteElementSpace,
+                                           castedConstitutiveRelation );
 
-          auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
-                                                                    kernelConstructorParamsTuple );
+        auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
+                                                                  kernelConstructorParamsTuple );
 
-          KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+        KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #elif CONSTRUCTOR_PARAM_OPTION==2
-          auto temp = camp::forward_as_tuple( nodeManager,
-                                              edgeManager,
-                                              faceManager,
-                                              elementSubRegion,
-                                              finiteElementSpace,
-                                              castedConstitutiveRelation );
-          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
-                                                                                  kernelConstructorParamsTuple );
-          KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
+        auto temp = camp::forward_as_tuple( nodeManager,
+                                            edgeManager,
+                                            faceManager,
+                                            elementSubRegion,
+                                            finiteElementSpace,
+                                            castedConstitutiveRelation );
+        auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
+                                                                                kernelConstructorParamsTuple );
+        KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
 
 #endif
 
-          // Call the kernelLaunch function, and store the maximum contribution to the residual.
-          maxResidualContribution =
-            std::max( maxResidualContribution,
-                      KERNEL_TYPE::template kernelLaunch< POLICY,
-                                                          NUM_QUADRATURE_POINTS
-                                                          >( numElems,
-                                                             kernelComponent ) );
-        } );
+        // Call the kernelLaunch function, and store the maximum contribution to the residual.
+        maxResidualContribution =
+          std::max( maxResidualContribution,
+                    KERNEL_TYPE::template kernelLaunch< POLICY,
+                                                        NUM_QUADRATURE_POINTS
+                                                        >( numElems,
+                                                           kernelComponent ) );
+      } );
 //      } );
     } );
 

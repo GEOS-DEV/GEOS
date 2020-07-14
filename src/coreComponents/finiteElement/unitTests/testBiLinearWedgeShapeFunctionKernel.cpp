@@ -61,11 +61,11 @@ void testKernelDriver()
   constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
   constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
 
-  array1d< real64 > arrDetJ( numQuadraturePoints );
+  array1d< real64 > arrDetJxW( numQuadraturePoints );
   array2d< real64 > arrN( numQuadraturePoints, numNodes );
   array3d< real64 > arrdNdX( numQuadraturePoints, numNodes, 3 );
 
-  arrayView1d< real64 > const & viewDetJ = arrDetJ;
+  arrayView1d< real64 > const & viewDetJxW = arrDetJxW;
   arrayView2d< real64 > const & viewN = arrN;
   arrayView3d< real64 > const & viewdNdX = arrdNdX;
 
@@ -100,9 +100,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
-                                                                               xCoords,
-                                                                               dNdX );
+      viewDetJxW[q] = BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
+                                                                                  xCoords,
+                                                                                  dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -117,8 +117,8 @@ void testKernelDriver()
 
 
   constexpr real64 parentCoords[3][numNodes] = {
-    {  0.0, 0.0,  1.0, 1.0,  0.0, 0.0 },
-    {  0.0, 0.0,  0.0, 0.0,  1.0, 1.0 },
+    {  0.0, 0.0, 1.0, 1.0, 0.0, 0.0 },
+    {  0.0, 0.0, 0.0, 0.0, 1.0, 1.0 },
     { -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 }
   };
 
@@ -160,7 +160,7 @@ void testKernelDriver()
         }
       }
       real64 const detJ = 1/inverse( J );
-      EXPECT_FLOAT_EQ( detJ*weight, viewDetJ[q] );
+      EXPECT_FLOAT_EQ( detJ*weight, viewDetJxW[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
       {
@@ -209,7 +209,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest() ;
+  testing::InitGoogleTest();
 
   basicSetup( argc, argv, false );
 

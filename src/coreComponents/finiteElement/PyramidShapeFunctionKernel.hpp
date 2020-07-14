@@ -18,12 +18,12 @@ public:
   using BaseClass::numNodes;
   using BaseClass::numQuadraturePoints;
 
-  constexpr static real64 parentVolume = 8.0 / 3.0;
-  constexpr static real64 weight = parentVolume / numQuadraturePoints;
-  constexpr static real64 quadratureCrossSectionCoord = 0.5;
-  constexpr static real64 quadratureLongitudinalCoordNeg = -0.693649167310371;
-  constexpr static real64 quadratureLongitudinalCoordDelta = 0.968245836551854;
-
+  //constexpr static real64 parentVolume = 8.0 / 3.0;
+  constexpr static real64 weight = 81.0 / 100.0;
+  constexpr static real64 weightDelta  = 125.0 / 27.0 - weight;
+  constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177;
+  constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0;
+  constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0;
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -80,21 +80,21 @@ private:
   GEOSX_FORCE_INLINE
   constexpr static real64 quadratureParentCoords0( localIndex const q )
   {
-    return ( -1.0 + 2.0 * ( a & 1 ) + 0.25 * ( a & 4 ) ) * quadratureCrossSectionCoord;
+    return ( -1.0 + 2.0 * ( q & 1 ) + 0.25 * ( q & 4 ) ) * quadratureCrossSectionCoord;
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 quadratureParentCoords1( localIndex const q )
   {
-    return ( -1.0 + ( a & 2 ) + 0.25 * ( a & 4 ) ) * quadratureCrossSectionCoord;
+    return ( -1.0 + ( q & 2 ) + 0.25 * ( q & 4 ) ) * quadratureCrossSectionCoord;
   }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 quadratureParentCoords2( localIndex const q )
   {
-    return quadratureLongitudinalCoordNeg + 0.25 * ( a & 4 ) * quadratureLongitudinalCoordDelta;
+    return quadratureLongitudinalCoordNeg + 0.25 * ( q & 4 ) * quadratureLongitudinalCoordDelta;
   }
 
 };
@@ -125,7 +125,7 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
                                 psi0[a] * psi1[b] * dpsi[0] };
-      localIndex const nodeIndex = linearMap( a, b, 0 );
+      localIndex const nodeIndex = linearMap( a, b, LvArray::integerConversion< localIndex >( 0 ) );
       for( int i = 0; i < 3; ++i )
       {
         for( int j = 0; j < 3; ++j )
@@ -137,7 +137,7 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
   }
 
   {
-    localIndex const nodeIndex = linearMap( 0, 0, 1 );
+    localIndex const nodeIndex = 4;
 
     for( int i = 0; i < 3; ++i )
     {
@@ -145,8 +145,7 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
     }
   }
 
-  real64 const detJ = inverse( J, &(dNdX[0][0]) );
-
+  real64 const detJ = inverse( J );
 
   for( localIndex a=0; a<2; ++a )
   {
@@ -155,7 +154,7 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
                                 psi0[a] * psi1[b] * dpsi[0] };
-      localIndex const nodeIndex = linearMap( a, b, 0 );
+      localIndex const nodeIndex = linearMap( a, b, LvArray::integerConversion< localIndex >( 0 ) );
       for( int i = 0; i < 3; ++i )
       {
         dNdX[nodeIndex][i] = 0.0;
@@ -171,15 +170,15 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
     real64 const dNdXi[3] = { 0.0,
                               0.0,
                               dpsi[1] };
-    localIndex const nodeIndex = linearMap( 0, 0, 1 );
+    localIndex const nodeIndex = 4;
     for( int i = 0; i < 3; ++i )
     {
-      dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dpsi[1] * J[2][i];
+      dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[2] * J[2][i];
     }
   }
 
   // Return determinant times the weight (i.e. for 1-point formula the volume of the tetrahedron)
-  return detJ * weight;
+  return detJ * ( weight + 0.25 * ( q & 4 ) * weightDelta );
 }
 
 
