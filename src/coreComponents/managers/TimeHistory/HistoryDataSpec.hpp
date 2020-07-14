@@ -215,7 +215,12 @@ getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr,
 
 /**
  * @brief Produce a HistoryMetadata object for multi-dimensional LvArray::Array/ArrayView types.
- * @copydetails getFlatArrayMetadata
+ * @tparam ARRAY_T An array type containing a packable type.
+ * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
+ * @param arr The array to produce metadata about
+ * @param sizeOverride Specified in order to overwrite the actual size of the array with the size specified (used when collecting only a
+ * portion of the array data).
+ * @return HistoryMetadata for the provided multi-dimensional array.
  */
 template< typename ARRAY_T >
 inline

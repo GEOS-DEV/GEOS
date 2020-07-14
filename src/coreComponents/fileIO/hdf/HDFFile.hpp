@@ -141,22 +141,22 @@ public:
   /// Destructor
   virtual ~HDFHistIO() { }
 
-  /// @copydoc geosx::BufferedHistoryIO::Init
+  /// @copydoc geosx::BufferedHistoryIO::init
   virtual void init( bool existsOkay ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::Write
+  /// @copydoc geosx::BufferedHistoryIO::write
   virtual void write( ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::CompressInFile
+  /// @copydoc geosx::BufferedHistoryIO::compressInFile
   virtual void compressInFile( ) override;
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
-   * @param buffered_count The number of buffered states to use to determine if the file needs to be resized.
+   * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
   inline void resizeFileIfNeeded( localIndex bufferedCount );
 
-  /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
+  /// @copydoc geosx::BufferedHistoryIO::getRankOffset
   virtual globalIndex getRankOffset( ) override;
 
 protected:
@@ -239,13 +239,13 @@ public:
   /// Destructor
   virtual ~HDFSerialHistIO() { }
 
-  /// @copydoc geosx::BufferedHistoryIO::Init
+  /// @copydoc geosx::BufferedHistoryIO::init
   virtual void init( bool existsOkay ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::Write
+  /// @copydoc geosx::BufferedHistoryIO::write
   virtual void write( ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::CompressInFile
+  /// @copydoc geosx::BufferedHistoryIO::compressInFile
   virtual void compressInFile( ) override;
 
   /**
@@ -254,7 +254,7 @@ public:
    */
   inline void resizeFileIfNeeded( localIndex bufferedCount );
 
-  /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
+  /// @copydoc geosx::BufferedHistoryIO::getRankOffset
   virtual globalIndex getRankOffset( ) override;
 
 protected:

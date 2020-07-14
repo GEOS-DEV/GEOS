@@ -46,7 +46,7 @@ public:
   /// @copydoc dataRepository::Group::InitializePostSubGroups
   void InitializePostSubGroups( Group * const group ) override;
 
-  /// @copydoc geosx::HistoryCollection::GetMetadata
+  /// @copydoc geosx::HistoryCollection::getMetadata
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager ) override;
 
   /**
@@ -94,7 +94,7 @@ public:
 
 protected:
 
-  /// @copydoc geosx::HistoryCollection::Collect
+  /// @copydoc geosx::HistoryCollection::collect
   virtual void collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
