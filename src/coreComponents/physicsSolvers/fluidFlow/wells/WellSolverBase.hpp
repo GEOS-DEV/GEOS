@@ -244,6 +244,8 @@ public:
 
   arrayView1d< string const > const & fluidModelNames() const { return m_fluidModelNames; }
 
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
