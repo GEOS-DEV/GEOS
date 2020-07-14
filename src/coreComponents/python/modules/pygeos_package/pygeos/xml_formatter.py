@@ -17,15 +17,13 @@ def format_attribute(attribute_indent, ka, attribute_value):
 
   # Identify and split multi-line attributes
   if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
-    split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)] + [None]
+    split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
     newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
-
-    if len(split_positions):
-      new_value = attribute_value[:split_positions[0]]
-      for ii in range(1, len(split_positions)):
-        new_value += '%s%s' % (newline_indent, attribute_value[split_positions[ii-1]:split_positions[ii]].strip())
-
-      attribute_value = new_value
+    new_values = []
+    for a, b in zip([0] + split_positions, split_positions + [None]):
+        new_values.append(attribute_value[a:b].strip())
+    if new_values:
+        attribute_value = newline_indent.join(new_values)
 
   return attribute_value
 
