@@ -1,6 +1,33 @@
 import argparse
 import os
 from lxml import etree as ElementTree
+import re
+
+
+def format_attribute(attribute_indent, ka, attribute_value):
+  # Make sure that a space follows commas
+  attribute_value = re.sub(r",\s*", ", ", attribute_value)
+
+  # Consolidate whitespace
+  attribute_value = re.sub(r"\s+", " ", attribute_value)
+
+  # Handle external brackets
+  attribute_value = re.sub(r"{\s*{", "{ {", attribute_value)
+  attribute_value = re.sub(r"}\s*}", "} }", attribute_value)
+
+  # Identify and split multi-line attributes
+  if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
+    split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)] + [None]
+    newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
+
+    if len(split_positions):
+      new_value = attribute_value[:split_positions[0]]
+      for ii in range(1, len(split_positions)):
+        new_value += '%s%s' % (newline_indent, attribute_value[split_positions[ii-1]:split_positions[ii]].strip())
+
+      attribute_value = new_value
+
+  return attribute_value
 
 
 def format_xml_level(output,
@@ -55,6 +82,10 @@ def format_xml_level(output,
       akeys = list(attribute_dict.keys())
       if sort_attributes:
         akeys = sorted(akeys)
+
+      # Format attributes
+      for ka in akeys:
+        attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
 
       for ii in range(0, len(akeys)):
         k = akeys[ii]
