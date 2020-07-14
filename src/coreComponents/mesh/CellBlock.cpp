@@ -281,7 +281,7 @@ void CellBlock::SetElementType( string const & elementType )
 
     // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
     // element type for this
-    this->setNumNodesPerElement( 8 );
+    this->setNumNodesPerElement( 6 );
     this->setNumIndependentNodesPerElement( 6 );
     this->setNumEdgesPerElement( 9 );
     this->setNumFacesPerElement( 5 );

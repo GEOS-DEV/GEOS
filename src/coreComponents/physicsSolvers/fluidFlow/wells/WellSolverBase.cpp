@@ -277,5 +277,17 @@ WellControls const & WellSolverBase::GetWellControls( WellElementSubRegion const
   return *wellControls;
 }
 
+std::vector< string > WellSolverBase::getConstitutiveRelations( string const & regionName ) const
+{
+
+  localIndex const regionIndex = this->targetRegionIndex( regionName );
+
+  std::vector< string > rval;
+  rval.push_back( m_fluidModelNames[regionIndex] );
+
+  return rval;
+}
+
+
 
 } // namespace geosx
