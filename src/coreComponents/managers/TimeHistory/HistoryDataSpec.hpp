@@ -128,9 +128,9 @@ public:
    * @brief Get a pointer to the extent of each dimension.
    * @return The head of the array containing the dimensional extent of each dimension of the array data being collected.
    */
-  const localIndex * getDims( ) const
+  std::vector< localIndex > const & getDims( ) const
   {
-    return &m_dims[0];
+    return m_dims;
   }
   /**
    * @brief Get the dimensional extent of the specified dimension.

@@ -119,7 +119,7 @@ public:
    */
   HDFHistIO( string const & filename,
              localIndex rank,
-             const localIndex * dims,
+	     std::vector< localIndex > const & dims,
              string const & name,
              std::type_index typeId,
              localIndex writeHead = 0,
@@ -217,7 +217,7 @@ public:
    */
   HDFSerialHistIO( string const & filename,
                    localIndex rank,
-                   const localIndex * dims,
+		   std::vector< localIndex > const & dims,
                    string const & name,
                    std::type_index typeId,
                    localIndex writeHead = 0,

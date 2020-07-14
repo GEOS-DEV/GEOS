@@ -138,7 +138,7 @@ HDFFile::~HDFFile()
 
 HDFHistIO::HDFHistIO( string const & filename,
                       localIndex rank,
-                      const localIndex * dims,
+		      std::vector< localIndex > const & dims,
                       string const & name,
                       std::type_index typeId,
                       localIndex writeHead,
@@ -362,7 +362,7 @@ void HDFHistIO::resizeBuffer( )
 
 HDFSerialHistIO::HDFSerialHistIO( string const & filename,
                                   localIndex rank,
-                                  const localIndex * dims,
+				  std::vector< localIndex > const & dims,
                                   string const & name,
                                   std::type_index typeId,
                                   localIndex writeHead,
