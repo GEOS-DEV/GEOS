@@ -167,7 +167,7 @@ constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || trait
  * @tparam T The type to check.
  */
 template< typename T >
-constexpr bool can_history_io_container = is_array_type< T > || is_sorted_array_type< T >;
+constexpr bool can_history_io_container = ( is_array_type< T > || is_sorted_array_type< T > ) && can_history_io< typename T::value_type >;
 
 /**
  * @brief Produce a HistoryMetadata object for a supported one-dimensional array type.
@@ -239,26 +239,6 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
 }
 
 /**
- * @brief Fall-through implementation to catch attempts to collect history information about unsupported data type inside supported
- * container types.
- * @tparam ARRAY_T A history collection/output supported collection type.
- * @param name Unused
- * @param type Unused
- * @param sizeOverride Unused
- * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
- */
-template< typename ARRAY_T >
-inline typename std::enable_if< ( can_history_io_container< ARRAY_T > ) && !can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex sizeOverride )
-{
-  GEOSX_ERROR( "Trying to use time history output on an array containing an unsupported type." );
-  GEOSX_UNUSED_VAR( name );
-  GEOSX_UNUSED_VAR( type );
-  GEOSX_UNUSED_VAR( sizeOverride );
-  return HistoryMetadata( "NULL", 0, std::type_index( typeid(NULL)));
-}
-
-/**
  * @brief Fall-through implementation to catch attempts to collect history that cannot be collected/output.
  * @tparam T A history collection/output unsupported type.
  * @param name Unused
@@ -267,7 +247,7 @@ getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex sizeOv
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename T >
-inline typename std::enable_if< !( can_history_io_container< T > ) && !can_history_io< T >, HistoryMetadata >::type
+inline typename std::enable_if< !can_history_io_container< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
