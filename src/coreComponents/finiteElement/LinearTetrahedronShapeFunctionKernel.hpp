@@ -34,7 +34,7 @@ public:
 
   using BaseClass::numNodes;
   using BaseClass::numQuadraturePoints;
-  constexpr static real64 parentVolume = 1.0 / 6.0 ;
+  constexpr static real64 parentVolume = 1.0 / 6.0;
   constexpr static real64 weight = parentVolume / numQuadraturePoints; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
 
   GEOSX_HOST_DEVICE
