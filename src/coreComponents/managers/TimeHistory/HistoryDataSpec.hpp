@@ -51,7 +51,7 @@ public:
    * @param dims The extent of each dimension of the array being collected.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( const string & name, localIndex rank, size_t * dims, std::type_index type ):
+  HistoryMetadata( const string & name, localIndex rank, localIndex * dims, std::type_index type ):
     m_name( name ),
     m_rank( rank ),
     m_dims( dims, dims+rank ),
@@ -63,7 +63,7 @@ public:
    * @param count The extent of the one-dimensional array.
    * @param type The std::type_index of the array being collected (std::type_index(typeid(T)))
    */
-  HistoryMetadata( const string & name, size_t count, std::type_index type ):
+  HistoryMetadata( const string & name, localIndex count, std::type_index type ):
     m_name( name ),
     m_rank( 1 ),
     m_dims( &count, &count+1 ),
@@ -109,12 +109,12 @@ public:
    */
   size_t getTypeCount( ) const
   {
-    size_t local_size = 1;
-    for( size_t dim : m_dims )
+    localIndex localSize = 1;
+    for( localIndex dim : m_dims )
     {
-      local_size *= dim;
+      localSize *= dim;
     }
-    return local_size;
+    return localSize;
   }
   /**
    * @brief Get the rank of the array data to be collected.
@@ -174,17 +174,16 @@ constexpr bool can_history_io_container = is_array_type< T > || is_sorted_array_
  * @tparam ARRAY_T A supported array type.
  * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
  * @param arr The array to produce metadata about
- * @param size_override Specified in order to overwrite the actual size of the array with the size specified (used when collecting only a
+ * @param sizeOverride Specified in order to overwrite the actual size of the array with the size specified (used when collecting only a
  * portion of the array data).
  * @return HistoryMetadata for the provided one-dimensional array.
  */
 template< typename ARRAY_T >
 inline
-HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
 {
-  localIndex size = size_override < 0 ? arr.size( ) : size_override;
-  size_t sz = LvArray::integerConversion< size_t >( size );
-  return HistoryMetadata( name, sz, std::type_index( typeid(typename ARRAY_T::value_type)));
+  localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
+  return HistoryMetadata( name, size, std::type_index( typeid(typename ARRAY_T::value_type)));
 }
 
 /**
@@ -194,9 +193,9 @@ HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, 
 template< typename ARRAY_T >
 inline
 typename std::enable_if< is_array_type< ARRAY_T > && (ARRAY_T::ndim == 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
 {
-  return getFlatArrayMetadata< ARRAY_T >( name, arr, size_override );
+  return getFlatArrayMetadata< ARRAY_T >( name, arr, sizeOverride );
 }
 
 /**
@@ -206,9 +205,9 @@ getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_ov
 template< typename ARRAY_T >
 inline
 typename std::enable_if< is_sorted_array_type< ARRAY_T > && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_override = -1 )
+getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
 {
-  return getFlatArrayMetadata< ARRAY_T >( name, arr, size_override );
+  return getFlatArrayMetadata< ARRAY_T >( name, arr, sizeOverride );
 }
 
 /**
@@ -218,11 +217,11 @@ getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex size_ov
 template< typename ARRAY_T >
 inline
 typename std::enable_if< ( is_array_type< ARRAY_T >) && (ARRAY_T::ndim > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex size_override = -1 )
+getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
-  size_t per_index_size = arr[ 0 ].size( );
-  size_t num_indices = ( size_override >= 0 ? LvArray::integerConversion< size_t >( size_override ) : LvArray::integerConversion< size_t >( arr.size( ) / per_index_size ) );
-  size_t sizes[2] = { num_indices, per_index_size };
+  localIndex perIndexSize = arr[ 0 ].size( );
+  localIndex numIndices = ( sizeOverride >= 0 ? sizeOverride :  arr.size( ) / perIndexSize );
+  localIndex sizes[2] = { numIndices, perIndexSize };
   return HistoryMetadata( name, 2, &sizes[0], std::type_index( typeid(typename ARRAY_T::value_type)));
 }
 
@@ -231,16 +230,16 @@ getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex size_ov
  * @tparam T The type to produce HistoryMetadata for.
  * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
  * @param type The data of type T to being used for history collection/output.
- * @param size_override Specified in order to overwrite the actual size of the data. Really only here to make the getHistoryMetadata
+ * @param sizeOverride Specified in order to overwrite the actual size of the data. Really only here to make the getHistoryMetadata
  * overloaded function consistent, but is still functional.
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename T >
 inline typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & type, localIndex size_override = -1 )
+getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride = -1 )
 {
   GEOSX_UNUSED_VAR( type );
-  size_t size = size_override < 0 ? 0 : LvArray::integerConversion< size_t >( size_override );
+  localIndex size = sizeOverride < 0 ? 0 : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid(T)));
 }
 
@@ -250,17 +249,17 @@ getHistoryMetadata( string const & name, const T & type, localIndex size_overrid
  * @tparam ARRAY_T A history collection/output supported collection type.
  * @param name Unused
  * @param type Unused
- * @param size_override Unused
+ * @param sizeOverride Unused
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename ARRAY_T >
 inline typename std::enable_if< ( can_history_io_container< ARRAY_T > ) && !can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex size_override )
+getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an array containing an unsupported type." );
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( type );
-  GEOSX_UNUSED_VAR( size_override );
+  GEOSX_UNUSED_VAR( sizeOverride );
   return HistoryMetadata( "NULL", 0, std::type_index( typeid(NULL)));
 }
 
@@ -269,17 +268,17 @@ getHistoryMetadata( string const & name, const ARRAY_T & type, localIndex size_o
  * @tparam T A history collection/output unsupported type.
  * @param name Unused
  * @param type Unused
- * @param size_override Unused
+ * @param sizeOverride Unused
  * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
  */
 template< typename T >
 inline typename std::enable_if< !( can_history_io_container< T > ) && !can_history_io< T >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const T & type, localIndex size_override )
+getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( type );
-  GEOSX_UNUSED_VAR( size_override );
+  GEOSX_UNUSED_VAR( sizeOverride );
   return HistoryMetadata( "NULL", 0, std::type_index( typeid(NULL)));
 }
 
