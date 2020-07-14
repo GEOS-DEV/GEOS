@@ -158,6 +158,7 @@ public:
     /// Mass creation string.
     constexpr static auto creationMassString = "creationMass";
 
+    /// Element default conductivity string.
     static constexpr auto elementDefaultConductivityString = "elementDefaultConductivity";
 
 #if GEOSX_USE_SEPARATION_COEFFICIENT
