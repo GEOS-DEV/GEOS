@@ -787,7 +787,7 @@ void SolverBase::SolveSystem( DofManager const & dofManager,
   if( params.solverType == "direct" || !m_precond )
   {
     LinearSolver solver( params );
-    solver.solve( matrix, solution, rhs );
+    solver.solve( matrix, solution, rhs, &dofManager );
     m_linearSolverResult = solver.result();
   }
   else

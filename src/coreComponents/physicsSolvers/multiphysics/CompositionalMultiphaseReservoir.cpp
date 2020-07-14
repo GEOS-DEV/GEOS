@@ -38,7 +38,7 @@ using namespace constitutive;
 CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const std::string & name,
                                                                     Group * const parent ):
   ReservoirSolverBase( name, parent )
-{}
+{ m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseReservoir"; }
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
@@ -268,8 +268,6 @@ void CompositionalMultiphaseReservoir::AssembleCouplingTerms( real64 const GEOSX
     } );
   } );
 }
-
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseReservoir, std::string const &, Group * const )
 
