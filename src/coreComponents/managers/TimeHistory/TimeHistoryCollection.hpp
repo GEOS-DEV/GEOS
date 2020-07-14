@@ -57,12 +57,6 @@ public:
   }
 
   /**
-   * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
-   * @return The number of collectors of meta-information for this collector.
-   */
-  virtual localIndex getNumMetaCollectors( ) const { return 0; }
-
-  /**
    * @brief Collects history data.
    * @copydoc EventBase::Execute()
    */
@@ -82,10 +76,10 @@ public:
                     "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
     // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
     buffer_unit_type * buffer = m_bufferCall();
-    Collect( domain, time_n, dt, buffer );
+    collect( domain, time_n, dt, buffer );
 
     int rank = MpiWrapper::Comm_rank();
-    if( rank == 0 && m_time_buffer_call )
+    if( rank == 0 && m_timeBufferCall )
     {
       buffer_unit_type * timeBuffer = m_timeBufferCall();
       memcpy( timeBuffer, &time_n, sizeof(time_n) );
@@ -122,7 +116,13 @@ public:
   {
     m_timeBufferCall = timeBufferCall;
   }
-protected:
+
+  /**
+   * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
+   * @return The number of collectors of meta-information for this collector.
+   */
+  virtual localIndex getNumMetaCollectors( ) const = 0;
+
   /**
    * @brief Get a pointer to a collector of meta-information for this collector.
    * @param problemManager The ProblemManager.
@@ -134,6 +134,8 @@ protected:
    *         after being used to perform output during simulation initialization.
    */
   virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) = 0;
+
+protected:
 
   /**
    * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .

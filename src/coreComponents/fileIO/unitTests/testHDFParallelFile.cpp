@@ -15,16 +15,16 @@ TEST( testHDFIO_parallel, SingleValueHistory )
   int rank = MpiWrapper::Comm_rank( );
 
   HDFSerialHistIO io( filename, spec );
-  io.Init( true );
+  io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
     val += 0.5 * (rank+1);
-    buffer_unit_type * buffer = io.GetBufferHead( );
+    buffer_unit_type * buffer = io.getBufferHead( );
     memcpy( buffer, &val, sizeof(real64));
   }
 
-  io.Write( );
+  io.write( );
 }
 
 int main( int ac, char * av[] )

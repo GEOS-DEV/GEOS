@@ -25,14 +25,14 @@ TEST( testHDFIO, SingleValueHistory )
 
   real64 time = 0.0;
   HDFHistIO io( filename, spec );
-  io.Init( true );
+  io.init( true );
   for( localIndex tidx = 0; tidx < 100; ++tidx )
   {
     time += 0.333;
-    buffer_unit_type * buffer = io.GetBufferHead( );
+    buffer_unit_type * buffer = io.getBufferHead( );
     memcpy( buffer, &time, sizeof(real64));
   }
-  io.Write( );
+  io.write( );
 }
 
 TEST( testHDFIO, ArrayHistory )
@@ -48,14 +48,14 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr );
+    HistoryMetadata spec = getHistoryMetadata( "Array1d History", arr.toViewConst( ) );
     HDFHistIO io( filename, spec );
-    io.Init( true );
+    io.init( true );
 
-    buffer_unit_type * buffer = io.GetBufferHead( );
+    buffer_unit_type * buffer = io.getBufferHead( );
     bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
 
-    io.Write( );
+    io.write( );
 
     //read and check the data using hdf api
     // remove( filename.c_str() );
@@ -69,14 +69,14 @@ TEST( testHDFIO, ArrayHistory )
       value = count++;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr );
+    HistoryMetadata spec = getHistoryMetadata( "Array2d History", arr.toViewConst( ) );
     HDFHistIO io( filename, spec );
-    io.Init( true );
+    io.init( true );
 
-    buffer_unit_type * buffer = io.GetBufferHead( );
+    buffer_unit_type * buffer = io.getBufferHead( );
     bufferOps::PackDataDevice< true >( buffer, arr.toViewConst( ));
 
-    io.Write( );
+    io.write( );
 
     //read and check the data using hdf api
     // remove( filename.c_str() );
@@ -100,14 +100,14 @@ TEST( testHDFIO, IdxArrayHistory )
       value = rand() % 1024;
     } );
 
-    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr, idx.size( ));
+    HistoryMetadata spec = getHistoryMetadata( "Array1d Idx History", arr.toViewConst( ), idx.size( ));
     HDFHistIO io( filename, spec );
-    io.Init( true );
+    io.init( true );
 
-    buffer_unit_type * buffer = io.GetBufferHead( );
+    buffer_unit_type * buffer = io.getBufferHead( );
     bufferOps::PackDataByIndexDevice< true >( buffer, arr.toViewConst( ), idx.toViewConst( ) );
 
-    io.Write( );
+    io.write( );
   }
 }
 

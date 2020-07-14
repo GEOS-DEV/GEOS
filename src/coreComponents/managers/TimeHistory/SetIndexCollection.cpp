@@ -44,7 +44,7 @@ void SetIndexCollection::collect( Group * domain_group,
       {
         meta_idx[ii] = m_setIndexOffset + LvArray::integerConversion< globalIndex >( ii );
       }
-      memcpy( buffer, &meta_idx[0], sz * sizeof( globalIndex );
+      memcpy( buffer, &meta_idx[0], sz * sizeof( globalIndex ));
     }
   }
 }

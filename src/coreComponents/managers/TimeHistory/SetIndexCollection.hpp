@@ -42,16 +42,34 @@ public:
  */
   SetIndexCollection( string const & objectPath, string const & setName, globalIndex setIndexOffset );
 
-/// @copydoc geosx::HistoryCollection::GetMetadata
+/// @copydoc geosx::HistoryCollection::getMetadata
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager ) override;
 
-/// @copydoc geosx::HistoryCollection::Collect
-  virtual void Collect( Group * domain,
+  /// @copydoc geosx::HistoryCollection::getMetadataCollector
+  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) override
+  {
+    GEOSX_UNUSED_VAR( problemManager );
+    GEOSX_UNUSED_VAR( metaIdx );
+    GEOSX_UNUSED_VAR( metaRankOffset );
+    return std::unique_ptr< HistoryCollection >( nullptr );
+  }
+
+  /// @copydoc geosx::HistoryCollection::getNumMetaCollectors
+  virtual localIndex getNumMetaCollectors( ) const override
+  {
+    return 0;
+  }
+
+protected:
+
+  /// @copydoc geosx::HistoryCollection::Collect
+  virtual void collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
                         buffer_unit_type * & buffer ) override;
 
-protected:
+
+private:
   /// The path of the object to collect set indices from
   string m_objectPath;
   /// The name of the set to collect indices about

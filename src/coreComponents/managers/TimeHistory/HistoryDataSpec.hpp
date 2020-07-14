@@ -175,7 +175,7 @@ constexpr bool is_sorted_array_type = traits::is_sorted_array_view< T > || trait
  * @tparam T The type to check.
  */
 template< typename T >
-constexpr bool can_history_io_container = ( is_array_type< T > || is_sorted_array_type< T > ) && can_history_io< typename T::value_type >;
+constexpr bool can_history_io_container = ( is_array_type< T > || is_sorted_array_type< T > );
 
 /**
  * @brief Produce a HistoryMetadata object for a supported one-dimensional array type.
@@ -189,10 +189,10 @@ constexpr bool can_history_io_container = ( is_array_type< T > || is_sorted_arra
 template< typename T >
 inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-HistoryMetadata getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex sizeOverride = -1 )
+getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex sizeOverride = -1 )
 {
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
-  return HistoryMetadata( name, size, std::type_index( typeid(typename ARRAY_T::value_type)));
+  return HistoryMetadata( name, size, std::type_index( typeid( T )));
 }
 
 /**
@@ -207,10 +207,10 @@ HistoryMetadata getHistoryMetadata( string const & name, ArrayView< T const, 1, 
 template< typename T >
 inline
 typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
-HistoryMetadata getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr, localIndex sizeOverride = -1 )
+getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr, localIndex sizeOverride = -1 )
 {
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
-  return HistoryMetadata( name, size, std::type_index( typeid(typename ARRAY_T::value_type)));
+  return HistoryMetadata( name, size, std::type_index( typeid(T)));
 }
 
 /**
@@ -252,10 +252,29 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
  * @param name Unused
  * @param type Unused
  * @param sizeOverride Unused
- * @return A HistoryMetadata describing a size-zero array with name "NULL" and type_index(typeid(NULL)), will never actually return.
+ * @return A null HistoryMetadata, will never actually return.
  */
 template< typename T >
-inline typename std::enable_if< !can_history_io_container< T >, HistoryMetadata >::type
+inline typename std::enable_if< can_history_io_container< T > && !can_history_io< typename T::value_type >, HistoryMetadata >::type
+getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
+{
+  GEOSX_ERROR( "Trying to use time history output on an unsupported type." );
+  GEOSX_UNUSED_VAR( name );
+  GEOSX_UNUSED_VAR( type );
+  GEOSX_UNUSED_VAR( sizeOverride );
+  return HistoryMetadata( );
+}
+
+/**
+ * @brief Fall-through implementation to catch attempts to collect history that cannot be collected/output.
+ * @tparam T A history collection/output unsupported type.
+ * @param name Unused
+ * @param type Unused
+ * @param sizeOverride Unused
+ * @return A null HistoryMetadata, will never actually return.
+ */
+template< typename T >
+inline typename std::enable_if< !can_history_io_container< T > && !can_history_io< T >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride )
 {
   GEOSX_ERROR( "Trying to use time history output on an unsupported type." );

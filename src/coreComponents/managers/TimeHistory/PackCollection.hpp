@@ -59,7 +59,7 @@ public:
    *       from SortedArrayView instead of only ArrayViews will remove this
    *       duplication.
    */
-  void UpdateSetsIndices( ProblemManager & problemManager );
+  void updateSetsIndices( ProblemManager & problemManager );
 
   /**
    * @brief Count the total number of indices being collected by this process with this collector.
@@ -77,17 +77,11 @@ public:
    */
   localIndex countLocalSetIndicesExclusive( ProblemManager & problemManager, localIndex lastSetIdx = 0 );
 
-  /// @copydoc geosx::HistoryCollection::GetNumMetaCollectors
+  /// @copydoc geosx::HistoryCollection::getNumMetaCollectors
   virtual localIndex getNumMetaCollectors( ) const override;
 
-  /// @copydoc geosx::HistoryCollection::GetMetaCollector
+  /// @copydoc geosx::HistoryCollection::getMetaCollector
   virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) override;
-
-  /// @copydoc geosx::HistoryCollection::Collect
-  virtual void collect( Group * domain,
-                        real64 const time_n,
-                        real64 const dt,
-                        buffer_unit_type * & buffer ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -99,6 +93,14 @@ public:
   /// @endcond
 
 protected:
+
+  /// @copydoc geosx::HistoryCollection::Collect
+  virtual void collect( Group * domain,
+                        real64 const time_n,
+                        real64 const dt,
+                        buffer_unit_type * & buffer ) override;
+
+private:
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
   /// The indices for the specified sets to pack

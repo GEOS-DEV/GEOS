@@ -40,17 +40,17 @@ void TimeHistoryOutput::initCollectorSerial( ProblemManager & pm, HistoryCollect
   m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_recordCount ),
                                      std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_recordCount ) ) );
   collector->registerTimeBufferCall( [this]() { return this->m_io.back().second->getBufferHead( ); } );
-  m_io.back().second->Init( ( m_recordCount > 0 ) );
+  m_io.back().second->init( ( m_recordCount > 0 ) );
   collector->registerBufferCall( [this]() { return this->m_io.back().first->getBufferHead( ); } );
-  m_io.back().first->Init( ( m_recordCount > 0 ) );
+  m_io.back().first->init( ( m_recordCount > 0 ) );
   if( m_recordCount == 0 )
   {
     // do any 1-time metadata output
-    localIndex meta_collector_count = collector->GetNumMetaCollectors( );
-    Group * domain_group = dynamicCast< Group * >( dynamicCast< ProblemManager * >( group )->getDomainPartition( ) );
+    localIndex meta_collector_count = collector->getNumMetaCollectors( );
+    Group * domain_group = dynamicCast< Group * >( pm.getDomainPartition( ) );
     for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
     {
-      std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( group, meta_idx, 0 );
+      std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( pm, meta_idx, 0 );
       HistoryMetadata meta_metadata = meta_collector->getMetadata( pm );
       meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
       std::unique_ptr< HDFSerialHistIO > meta_io = std::make_unique< HDFSerialHistIO >( m_filename, meta_metadata, 0, 1 );
@@ -88,14 +88,14 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     // do any 1-time metadata output
     globalIndex global_rank_offset = m_io.back().first->getRankOffset( );
     localIndex meta_collector_count = collector->getNumMetaCollectors( );
-    Group * domain_group = dynamicCast< Group * >( pm->getDomainPartition( ) );
+    Group * domain_group = dynamicCast< Group * >( pm.getDomainPartition( ) );
     for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
     {
       std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( pm, meta_idx, global_rank_offset );
       HistoryMetadata meta_metadata = meta_collector->getMetadata( pm );
       meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
       std::unique_ptr< HDFHistIO > meta_io = std::make_unique< HDFHistIO >( m_filename, meta_metadata, 0, 1 );
-      meta_collector->RegisterBufferCall( [&meta_io] () { return meta_io->GetBufferHead( ); } );
+      meta_collector->registerBufferCall( [&meta_io] () { return meta_io->getBufferHead( ); } );
       meta_io->init( false );
       meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
       meta_io->write( );

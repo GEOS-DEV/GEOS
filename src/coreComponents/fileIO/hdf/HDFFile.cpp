@@ -138,7 +138,7 @@ HDFFile::~HDFFile()
 
 HDFHistIO::HDFHistIO( string const & filename,
                       localIndex rank,
-		      std::vector< localIndex > const & dims,
+                      std::vector< localIndex > const & dims,
                       string const & name,
                       std::type_index typeId,
                       localIndex writeHead,
@@ -255,10 +255,10 @@ void HDFHistIO::write( )
   if( m_subcomm != MPI_COMM_NULL )
   {
     localIndex maxBuffered = 0;
-    MpiWrapper::allReduce( &m_buffered_count, &maxBuffered, 1, MPI_MAX, m_comm );
+    MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_comm );
     if( maxBuffered > 0 )
     {
-      ResizeFileIfNeeded( maxBuffered );
+      resizeFileIfNeeded( maxBuffered );
       HDFFile target( m_filename, false, true, m_comm );
 
       hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
@@ -292,7 +292,7 @@ void HDFHistIO::write( )
       H5Dclose( dataset );
 
       m_writeHead += maxBuffered;
-      EmptyBuffer( );
+      emptyBuffer( );
     }
   }
 }
@@ -350,19 +350,19 @@ void HDFHistIO::resizeBuffer( )
 {
   size_t osize = m_dataBuffer.size();
   // if needed, resize the buffer
-  if( (m_buffered_count + 1) * (m_typeCount * m_typeSize) > osize )
+  if( (m_bufferedCount + 1) * (m_typeCount * m_typeSize) > osize )
   {
     m_dataBuffer.resize( osize + ( m_typeCount * m_typeSize ) * m_overallocMultiple );
   }
   // advance the buffer head
-  m_buffer_head = (&m_dataBuffer[0]) + m_buffered_count * ( m_typeCount * m_typeSize );
+  m_bufferHead = (&m_dataBuffer[0]) + m_bufferedCount * ( m_typeCount * m_typeSize );
 }
 
 
 
 HDFSerialHistIO::HDFSerialHistIO( string const & filename,
                                   localIndex rank,
-				  std::vector< localIndex > const & dims,
+                                  std::vector< localIndex > const & dims,
                                   string const & name,
                                   std::type_index typeId,
                                   localIndex writeHead,
@@ -437,9 +437,9 @@ void HDFSerialHistIO::init( bool exists_okay )
 void HDFSerialHistIO::write( )
 {
   // don't need to write if nothing is buffered, this should only happen if the output event occurs before the collection event
-  if( m_typeCount > 0 && m_buffered_count > 0 )
+  if( m_typeCount > 0 && m_bufferedCount > 0 )
   {
-    ResizeFileIfNeeded( m_buffered_count );
+    resizeFileIfNeeded( m_bufferedCount );
     HDFFile target( m_filename, false, false, m_comm );
 
     hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
@@ -450,7 +450,7 @@ void HDFSerialHistIO::write( )
     fileOffset[1] = 0;
 
     std::vector< hsize_t > bufferedCounts( m_rank+1 );
-    bufferedCounts[0] = LvArray::integerConversion< hsize_t >( m_buffered_count );
+    bufferedCounts[0] = LvArray::integerConversion< hsize_t >( m_bufferedCount );
     for( hsize_t dd = 1; dd < m_rank+1; ++dd )
     {
       bufferedCounts[dd] = m_dims[dd-1];
@@ -472,8 +472,8 @@ void HDFSerialHistIO::write( )
     H5Sclose( filespace );
     H5Dclose( dataset );
 
-    m_writeHead += m_buffered_count;
-    EmptyBuffer( );
+    m_writeHead += m_bufferedCount;
+    emptyBuffer( );
   }
 }
 
@@ -530,12 +530,12 @@ void HDFSerialHistIO::resizeBuffer( )
 {
   size_t osize = m_dataBuffer.size();
   // if needed, resize the buffer
-  if( (m_buffered_count + 1) * (m_typeCount * m_typeSize) > osize )
+  if( (m_bufferedCount + 1) * (m_typeCount * m_typeSize) > osize )
   {
     m_dataBuffer.resize( osize + ( m_typeCount * m_typeSize ) * m_overallocMultiple );
   }
   // advance the buffer head
-  m_buffer_head = (&m_dataBuffer[0]) + m_buffered_count * ( m_typeCount * m_typeSize );
+  m_bufferHead = (&m_dataBuffer[0]) + m_bufferedCount * ( m_typeCount * m_typeSize );
 }
 
 }

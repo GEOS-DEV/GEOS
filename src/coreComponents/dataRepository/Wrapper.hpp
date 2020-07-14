@@ -254,11 +254,11 @@ public:
 
   ///@}
 
-  /// @copydoc geosx::WrapperBase::getBufferedIOMetadata
+  /// @copydoc geosx::WrapperBase::getHistoryMetadata
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return getHistoryMetadata< T >( getName(), *this->m_data, packCount );
+    return geosx::getHistoryMetadata( getName(), this->referenceAsView( ), packCount );
   }
 
   /**

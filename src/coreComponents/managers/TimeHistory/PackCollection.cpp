@@ -24,7 +24,7 @@ PackCollection::PackCollection ( string const & name, Group * parent )
 }
 
 void PackCollection::InitializePostSubGroups( Group * const group )
-{  
+{
   updateSetsIndices( dynamicCast< ProblemManager & >( *group ) );
 }
 
@@ -56,7 +56,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
   if( num_sets > 0 )
   {
     Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
-    m_sets_indices.resize( num_sets );
+    m_setsIndices.resize( num_sets );
     localIndex set_idx = 0;
     for( auto & set_name : m_setNames )
     {
@@ -66,7 +66,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
         SortedArrayView< localIndex const > const & set = set_wrapper->reference();
         if( set.size() > 0 )
         {
-          m_sets_indices[ set_idx ].insert( 0, set.begin(), set.end() );
+          m_setsIndices[ set_idx ].insert( 0, set.begin(), set.end() );
         }
       }
       set_idx++;
@@ -76,7 +76,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
 
   inline localIndex PackCollection::countLocalSetIndices( ProblemManager & pm )
 {
-  return countLocalSetIndicesExclusive( problem_group, m_setNames.size( ) );
+  return countLocalSetIndicesExclusive( pm, m_setNames.size( ) );
 }
 
 localIndex PackCollection::countLocalSetIndicesExclusive( ProblemManager & pm, localIndex lastSetIdx )
