@@ -21,15 +21,15 @@ inline hid_t GetHDFDataType< char >() { return H5T_NATIVE_CHAR; }
 template<>
 inline hid_t GetHDFDataType< signed char >() { return H5T_NATIVE_CHAR; }
 template<>
-inline hid_t GetHDFDataType< real32 >() { return H5T_NATIVE_FLOAT; }
+inline hid_t GetHDFDataType< float >() { return H5T_NATIVE_FLOAT; }
 template<>
-inline hid_t GetHDFDataType< real64 >() { return H5T_NATIVE_DOUBLE; }
+inline hid_t GetHDFDataType< double >() { return H5T_NATIVE_DOUBLE; }
 template<>
-inline hid_t GetHDFDataType< integer >() { return H5T_NATIVE_INT; }
+inline hid_t GetHDFDataType< int >() { return H5T_NATIVE_INT; }
 template<>
-inline hid_t GetHDFDataType< localIndex >() { return H5T_NATIVE_LONG; }
+inline hid_t GetHDFDataType< long >() { return H5T_NATIVE_LONG; }
 template<>
-inline hid_t GetHDFDataType< globalIndex >() { return H5T_NATIVE_LLONG; }
+inline hid_t GetHDFDataType< long long >() { return H5T_NATIVE_LLONG; }
 
 /**
  * @brief Get the HDF data type from the type_index of the type.

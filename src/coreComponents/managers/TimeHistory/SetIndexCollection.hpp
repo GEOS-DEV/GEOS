@@ -35,15 +35,15 @@ class SetIndexCollection : public HistoryCollection
 public:
 /**
  * @brief Constructor
- * @param object_path The data repository path of the object to collect set index information about
- * @param set_name The name of the set to collect indices from
- * @param set_index_offset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set
+ * @param objectPath The data repository path of the object to collect set index information about
+ * @param setName The name of the set to collect indices from
+ * @param setIndexOffset An offset constituting all 'prior' rank-sets + local-set index counts to correctly provide history output set
  * indices.
  */
-  SetIndexCollection( string const & object_path, string const & set_name, globalIndex set_index_offset );
+  SetIndexCollection( string const & objectPath, string const & setName, globalIndex setIndexOffset );
 
 /// @copydoc geosx::HistoryCollection::GetMetadata
-  virtual HistoryMetadata GetMetadata( Group * problem_group ) override;
+  virtual HistoryMetadata getMetadata( ProblemManager & problemManager ) override;
 
 /// @copydoc geosx::HistoryCollection::Collect
   virtual void Collect( Group * domain,
@@ -53,11 +53,11 @@ public:
 
 protected:
   /// The path of the object to collect set indices from
-  string m_object_path;
+  string m_objectPath;
   /// The name of the set to collect indices about
-  string m_set_name;
+  string m_setName;
   /// The offset of this MPI rank for just this index set's indices (assuming densely ordered indices)
-  globalIndex m_set_index_offset;
+  globalIndex m_setIndexOffset;
 };
 }
 #endif

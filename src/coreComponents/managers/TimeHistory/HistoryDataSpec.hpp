@@ -29,13 +29,11 @@ namespace geosx
 template< typename T >
 constexpr bool can_history_io = std::is_same< std::remove_reference_t< std::remove_const_t< T > >, char >::value ||
                                 std::is_same< std::remove_reference_t< std::remove_const_t< T > >, signed char >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, real32 >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, real64 >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, integer >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, int >::value ||
+                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, float >::value ||
                                 std::is_same< std::remove_reference_t< std::remove_const_t< T > >, double >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, localIndex >::value ||
-                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, globalIndex >::value;
+                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, int >::value ||
+                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, long >::value ||
+                                std::is_same< std::remove_reference_t< std::remove_const_t< T > >, long long >::value;
 
 /**
  * @class HistoryMetadata
@@ -44,6 +42,16 @@ constexpr bool can_history_io = std::is_same< std::remove_reference_t< std::remo
 class HistoryMetadata
 {
 public:
+  /**
+   * @brief Default constructor
+   **/
+  HistoryMetadata():
+    m_name("null"),
+    m_rank( 0 ),
+    m_dims( ),
+    m_type( std::type_index( typeid( nullptr ) ) )
+  {}
+
   /**
    * @brief Constructor for multi-dimensional array types.
    * @param name A name for the underlying information -- used to specify the data name in time history files.
@@ -254,7 +262,7 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
   GEOSX_UNUSED_VAR( name );
   GEOSX_UNUSED_VAR( type );
   GEOSX_UNUSED_VAR( sizeOverride );
-  return HistoryMetadata( "NULL", 0, std::type_index( typeid(NULL)));
+  return HistoryMetadata( );
 }
 
 }

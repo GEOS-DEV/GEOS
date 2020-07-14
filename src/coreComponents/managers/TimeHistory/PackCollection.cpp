@@ -5,62 +5,60 @@ namespace geosx
 {
 PackCollection::PackCollection ( string const & name, Group * parent )
   : HistoryCollection( name, parent )
-  , m_sets_indices( )
-  , m_object_path( )
-  , m_field_name( )
-  , m_set_names( )
+  , m_setsIndices( )
+  , m_objectPath( )
+  , m_fieldName( )
+  , m_setNames( )
 {
-  registerWrapper( PackCollection::viewKeysStruct::objectPath, &m_object_path )->
+  registerWrapper( PackCollection::viewKeysStruct::objectPath, &m_objectPath )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The name of the object from which to retrieve field values." );
 
-  registerWrapper( PackCollection::viewKeysStruct::fieldName, &m_field_name )->
+  registerWrapper( PackCollection::viewKeysStruct::fieldName, &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "The name of the (packable) field associated with the specified object to retrieve data from" );
 
-  registerWrapper( PackCollection::viewKeysStruct::setNames, &m_set_names )->
+  registerWrapper( PackCollection::viewKeysStruct::setNames, &m_setNames )->
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The set(s) for which to retrieve data." );
 }
 
 void PackCollection::InitializePostSubGroups( Group * const group )
-{
-  UpdateSetsIndices( group );
+{  
+  updateSetsIndices( dynamicCast< ProblemManager & >( *group ) );
 }
 
-HistoryMetadata PackCollection::GetMetadata( Group * problem_group )
+HistoryMetadata PackCollection::getMetadata( ProblemManager & pm )
 {
-  localIndex num_indices = CountLocalSetIndices( problem_group );
-  ProblemManager const * pm = dynamicCast< ProblemManager const * >( problem_group );
-  DomainPartition const & domain = *pm->getDomainPartition( );
+  localIndex num_indices = countLocalSetIndices( pm );
+  DomainPartition const & domain = *(pm.getDomainPartition( ));
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
-  WrapperBase const * target = target_object->getWrapperBase( m_field_name );
-  if( m_set_names.size() != 0 )
+  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
+  if( m_setNames.size() != 0 )
   {
-    return target->getBufferedIOMetadata( num_indices );
+    return target->getHistoryMetadata( num_indices );
   }
   else
   {
-    return target->getBufferedIOMetadata( -1 );
+    return target->getHistoryMetadata( -1 );
   }
 }
 
-void PackCollection::UpdateSetsIndices( Group * problem_group )
+void PackCollection::updateSetsIndices( ProblemManager & pm )
 {
-  ProblemManager const * pm = dynamicCast< ProblemManager const * >( problem_group );
-  DomainPartition const & domain = *pm->getDomainPartition( );
+  DomainPartition const & domain = *(pm.getDomainPartition( ));
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
-  WrapperBase const * target = target_object->getWrapperBase( m_field_name );
+  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !target->isPackable( false ), "The object targeted for collection must be packable!" );
-  localIndex num_sets = m_set_names.size( );
+  localIndex num_sets = m_setNames.size( );
   if( num_sets > 0 )
   {
     Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
     m_sets_indices.resize( num_sets );
     localIndex set_idx = 0;
-    for( auto & set_name : m_set_names )
+    for( auto & set_name : m_setNames )
     {
       dataRepository::Wrapper< SortedArray< localIndex > > const * const set_wrapper = set_group->getWrapper< SortedArray< localIndex > >( set_name );
       if( set_wrapper != nullptr )
@@ -76,52 +74,52 @@ void PackCollection::UpdateSetsIndices( Group * problem_group )
   }
 }
 
-inline localIndex PackCollection::CountLocalSetIndices( Group * problem_group )
+  inline localIndex PackCollection::countLocalSetIndices( ProblemManager & pm )
 {
-  return CountLocalSetIndicesExclusive( problem_group, m_set_names.size( ) );
+  return countLocalSetIndicesExclusive( problem_group, m_setNames.size( ) );
 }
 
-localIndex PackCollection::CountLocalSetIndicesExclusive( Group * problem_group, localIndex last_set_idx )
+localIndex PackCollection::countLocalSetIndicesExclusive( ProblemManager & pm, localIndex lastSetIdx )
 {
-  GEOSX_ERROR_IF( m_set_names.size() == 0 && last_set_idx > 0, "No set names specified in input, but trying to sum local set indices." );
-  int num_sets = m_sets_indices.size( );
-  if( num_sets == 0 )
+  GEOSX_ERROR_IF( m_setNames.size() == 0 && lastSetIdx > 0, "No set names specified in input, but trying to sum local set indices." );
+  int numSets = m_setsIndices.size( );
+  if( numSets == 0 )
   {
-    UpdateSetsIndices( problem_group );
+    updateSetsIndices( pm );
   }
-  localIndex num_indices = 0;
-  for( localIndex set_idx = 0; set_idx < last_set_idx; ++set_idx )
+  localIndex numIndices = 0;
+  for( localIndex setIdx = 0; setIdx < lastSetIdx; ++setIdx )
   {
-    num_indices += m_sets_indices[ set_idx ].size( );
+    numIndices += m_setsIndices[ setIdx ].size( );
   }
-  return num_indices;
+  return numIndices;
 }
 
-localIndex PackCollection::GetNumMetaCollectors( ) const
+localIndex PackCollection::getNumMetaCollectors( ) const
 {
-  return m_set_names.size( );
+  return m_setNames.size( );
 }
 
-std::unique_ptr< HistoryCollection > PackCollection::GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset )
+std::unique_ptr< HistoryCollection > PackCollection::getMetaCollector( ProblemManager & pm, localIndex metaIdx, globalIndex metaRankOffset )
 {
-  globalIndex local_set_offset = LvArray::integerConversion< globalIndex >( CountLocalSetIndicesExclusive( problem_group, meta_idx ) );
-  return std::unique_ptr< HistoryCollection >( new SetIndexCollection( m_object_path, m_set_names[meta_idx], meta_rank_offset + local_set_offset ));
+  globalIndex localSetOffset = LvArray::integerConversion< globalIndex >( countLocalSetIndicesExclusive( pm, metaIdx ) );
+  return std::unique_ptr< HistoryCollection >( new SetIndexCollection( m_objectPath, m_setNames[metaIdx], metaRankOffset + localSetOffset ));
 }
 
-void PackCollection::Collect( Group * domain_group,
+void PackCollection::collect( Group * domain_group,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
                               real64 const GEOSX_UNUSED_PARAM( dt ),
                               buffer_unit_type * & buffer )
 {
   DomainPartition const & domain = dynamicCast< DomainPartition const & >( *domain_group );
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-  Group const * target_object = meshLevel.GetGroupByPath( m_object_path );
-  WrapperBase const * target = target_object->getWrapperBase( m_field_name );
-  if( m_set_names.size( ) > 0 )
+  Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
+  WrapperBase const * target = target_object->getWrapperBase( m_fieldName );
+  if( m_setNames.size( ) > 0 )
   {
     Group const * set_group = target_object->GetGroup( ObjectManagerBase::groupKeyStruct::setsString );
     localIndex set_idx = 0;
-    for( auto & set_name : m_set_names )
+    for( auto & set_name : m_setNames )
     {
       dataRepository::Wrapper< SortedArray< localIndex > > const * const set_wrapper = set_group->getWrapper< SortedArray< localIndex > >( set_name );
       if( set_wrapper != nullptr )
@@ -132,7 +130,7 @@ void PackCollection::Collect( Group * domain_group,
         {
           // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the
           // indices internally
-          target->PackByIndex( buffer, m_sets_indices[ set_idx ], false, true );
+          target->PackByIndex( buffer, m_setsIndices[ set_idx ], false, true );
         }
       }
       set_idx++;

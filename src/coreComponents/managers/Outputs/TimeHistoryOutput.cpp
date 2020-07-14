@@ -4,13 +4,13 @@ namespace geosx
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
-  m_collector_paths( ),
+  m_collectorPaths( ),
   m_format( ),
   m_filename( ),
-  m_record_count( 0 ),
+  m_recordCount( 0 ),
   m_io( )
 {
-  registerWrapper( viewKeys::timeHistoryOutputTarget, &m_collector_paths )->
+  registerWrapper( viewKeys::timeHistoryOutputTarget, &m_collectorPaths )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "A list of collectors from which to collect and output time history information." );
 
@@ -24,7 +24,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "The output file format for time history output." );
 
-  registerWrapper( viewKeys::timeHistoryRestart, &m_record_count )->
+  registerWrapper( viewKeys::timeHistoryRestart, &m_recordCount )->
     setApplyDefaultValue( 0 )->
     setInputFlag( InputFlags::FALSE )->
     setRestartFlags( RestartFlags::WRITE_AND_READ )->
@@ -32,47 +32,93 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 }
 
+void TimeHistoryOutput::initCollectorSerial( ProblemManager & pm, HistoryCollection * collector )
+{
+  HistoryMetadata metadata = collector->getMetadata( pm );
+  HistoryMetadata time_metadata = collector->getTimeMetadata( );
+  time_metadata.setName( metadata.getName( ) + " " + time_metadata.getName( ) );
+  m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_recordCount ),
+                                     std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_recordCount ) ) );
+  collector->registerTimeBufferCall( [this]() { return this->m_io.back().second->getBufferHead( ); } );
+  m_io.back().second->Init( ( m_recordCount > 0 ) );
+  collector->registerBufferCall( [this]() { return this->m_io.back().first->getBufferHead( ); } );
+  m_io.back().first->Init( ( m_recordCount > 0 ) );
+  if( m_recordCount == 0 )
+  {
+    // do any 1-time metadata output
+    localIndex meta_collector_count = collector->GetNumMetaCollectors( );
+    Group * domain_group = dynamicCast< Group * >( dynamicCast< ProblemManager * >( group )->getDomainPartition( ) );
+    for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
+    {
+      std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( group, meta_idx, 0 );
+      HistoryMetadata meta_metadata = meta_collector->getMetadata( pm );
+      meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
+      std::unique_ptr< HDFSerialHistIO > meta_io = std::make_unique< HDFSerialHistIO >( m_filename, meta_metadata, 0, 1 );
+      meta_collector->registerBufferCall( [&meta_io] () { return meta_io->getBufferHead( ); } );
+      meta_io->init( false );
+      meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
+      meta_io->write( );
+    }
+  }
+  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+}
+
+void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryCollection * collector )
+{
+  HistoryMetadata metadata = collector->getMetadata( pm );
+  int rnk = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  if( rnk == 0 )
+  {
+    HistoryMetadata time_metadata = collector->getTimeMetadata( );
+    time_metadata.setName( metadata.getName( ) + " " + time_metadata.getName( ) );
+    m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ),
+                                       std::make_unique< HDFHistIO >( m_filename, time_metadata, m_recordCount ) ) );
+    collector->registerTimeBufferCall( [this]() { return this->m_io.back().second->getBufferHead( ); } );
+    m_io.back().second->init( ( m_recordCount > 0 ) );
+  }
+  else
+  {
+    m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ),
+                                       std::unique_ptr< HDFHistIO >( nullptr ) ) );
+  }
+  collector->registerBufferCall( [this]() { return this->m_io.back().first->getBufferHead( ); } );
+  m_io.back().first->init( ( m_recordCount > 0 ) );
+  if( m_recordCount == 0 )
+  {
+    // do any 1-time metadata output
+    globalIndex global_rank_offset = m_io.back().first->getRankOffset( );
+    localIndex meta_collector_count = collector->getNumMetaCollectors( );
+    Group * domain_group = dynamicCast< Group * >( pm->getDomainPartition( ) );
+    for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
+    {
+      std::unique_ptr< HistoryCollection > meta_collector = collector->getMetaCollector( pm, meta_idx, global_rank_offset );
+      HistoryMetadata meta_metadata = meta_collector->getMetadata( pm );
+      meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
+      std::unique_ptr< HDFHistIO > meta_io = std::make_unique< HDFHistIO >( m_filename, meta_metadata, 0, 1 );
+      meta_collector->RegisterBufferCall( [&meta_io] () { return meta_io->GetBufferHead( ); } );
+      meta_io->init( false );
+      meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
+      meta_io->write( );
+    }
+  }
+  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+}
+
 void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    HDFFile( m_filename, (m_record_count == 0), false, MPI_COMM_GEOSX );
+    HDFFile( m_filename, (m_recordCount == 0), false, MPI_COMM_GEOSX );
+    //HDFFile( m_filename, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
-  for( auto collector_path : m_collector_paths )
+  ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
+  for( auto collector_path : m_collectorPaths )
   {
     Group * tmp = this->GetGroupByPath( collector_path );
     HistoryCollection * collector = Group::group_cast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
-    // todo: switch based on m_format, always hdf for now
-    HistoryMetadata metadata = collector->GetMetadata( group );
-    HistoryMetadata time_metadata = collector->GetTimeMetadata( );
-    time_metadata.setName( metadata.getName() + string( " " ) + time_metadata.getName());
-    m_io.emplace_back( std::make_pair( std::make_unique< HDFSerialHistIO >( m_filename, metadata, m_record_count ),
-                                       std::make_unique< HDFSerialHistIO >( m_filename, time_metadata, m_record_count ) ) );
-    collector->RegisterTimeBufferCall( [this]() { return this->m_io.back().second->GetBufferHead( ); } );
-    m_io.back().second->Init( ( m_record_count > 0 ) );
-    collector->RegisterBufferCall( [this]() { return this->m_io.back().first->GetBufferHead( ); } );
-    m_io.back().first->Init( ( m_record_count > 0 ) );
-    MpiWrapper::Barrier( MPI_COMM_GEOSX );
-    if( m_record_count == 0 )
-    {
-      // do any 1-time metadata output
-      globalIndex global_rank_offset = m_io.back().first->GetRankOffset( );
-      localIndex meta_collector_count = collector->GetNumMetaCollectors( );
-      Group * domain_group = dynamicCast< Group * >( dynamicCast< ProblemManager * >( group )->getDomainPartition( ) );
-      for( localIndex meta_idx = 0; meta_idx < meta_collector_count; ++meta_idx )
-      {
-        std::unique_ptr< HistoryCollection > meta_collector = collector->GetMetaCollector( group, meta_idx, global_rank_offset );
-        HistoryMetadata meta_metadata = meta_collector->GetMetadata( group );
-        meta_metadata.setName( metadata.getName() + " " + meta_metadata.getName());
-        std::unique_ptr< HDFSerialHistIO > meta_io = std::make_unique< HDFSerialHistIO >( m_filename, meta_metadata, 0, 1 );
-        meta_collector->RegisterBufferCall( [&meta_io] () { return meta_io->GetBufferHead( ); } );
-        meta_io->Init( false );
-        meta_collector->Execute( 0.0, 0.0, 0, 0, 0, domain_group );
-        meta_io->Write( );
-      }
-    }
-    MpiWrapper::Barrier( MPI_COMM_GEOSX );
+    initCollectorSerial( pm, collector );
+    //initCollectorParallel( pm, collector );
   }
 }
 
@@ -85,11 +131,11 @@ void TimeHistoryOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   for( auto & io_pair : m_io )
   {
-    m_record_count += io_pair.first->GetBufferedCount( );
-    io_pair.first->Write( );
+    m_recordCount += io_pair.first->getBufferedCount( );
+    io_pair.first->write( );
     if( io_pair.second )
     {
-      io_pair.second->Write( );
+      io_pair.second->write( );
     }
   }
 }
@@ -104,10 +150,10 @@ void TimeHistoryOutput::Cleanup( real64 const time_n,
   // remove any unused trailing space reserved to write additional histories
   for( auto & io_pair : m_io )
   {
-    io_pair.first->CompressInFile();
+    io_pair.first->compressInFile();
     if( io_pair.second )
     {
-      io_pair.second->CompressInFile();
+      io_pair.second->compressInFile();
     }
   }
 }

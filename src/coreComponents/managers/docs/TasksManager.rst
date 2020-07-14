@@ -25,7 +25,7 @@ The children of the Tasks block define different Tasks to be triggered by events
 
 CopyField
 ***************************
-The ``CopyField`` Task is currently non-functional, but will allow a field to be duplicated into/induce creation of a targeted field.
+The ``CopyField`` Task is currently non-functional, but will allow a field to be copied into an existing field, or if the targeted field doesn't exist, it will create the field and then copy the data into that field.
 
 PackCollection
 ***************************

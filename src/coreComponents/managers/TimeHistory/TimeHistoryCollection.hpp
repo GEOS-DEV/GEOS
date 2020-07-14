@@ -42,58 +42,25 @@ public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent ),
-    m_buffer_call()
+    m_bufferCall()
   {   }
 
   /**
    * @brief Get the metadata for what this collector collects.
-   * @param problem_group The problem manager cast to a group.
+   * @param problemManager The problem manager.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
-  virtual HistoryMetadata GetMetadata( Group * problem_group )
+  virtual HistoryMetadata getMetadata( ProblemManager & problemManager )
   {
-    GEOSX_UNUSED_VAR( problem_group );
-    return HistoryMetadata( "null", 0, std::type_index( typeid(nullptr)) );
+    GEOSX_UNUSED_VAR( problemManager );
+    return HistoryMetadata( );
   }
 
   /**
    * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
    * @return The number of collectors of meta-information for this collector.
    */
-  virtual localIndex GetNumMetaCollectors( ) const { return 0; }
-
-  /**
-   * @brief Get a pointer to a collector of meta-information for this collector.
-   * @param problem_group The ProblemManager cast to a group.
-   * @param meta_idx Which of the meta-info collectors to return. (see HistoryCollection::GetNumMetaCollectors( ) ).
-   * @param meta_rank_offset The offset for this rank for the meta-info collector, used to number index metadata consistently across the
-   * simulation.
-   * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
-   * immediately
-   *         after being used to perform output during simulation initialization.
-   */
-  virtual std::unique_ptr< HistoryCollection > GetMetaCollector( Group * problem_group, localIndex meta_idx, globalIndex meta_rank_offset )
-  {
-    GEOSX_UNUSED_VAR( problem_group );
-    GEOSX_UNUSED_VAR( meta_idx );
-    GEOSX_UNUSED_VAR( meta_rank_offset );
-    return std::unique_ptr< HistoryCollection >( nullptr );
-  }
-
-  /**
-   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .
-   * @param domain The ProblemDomain cast to a group.
-   * @param time_n The current simulation time.
-   * @param dt The current simulation time delta.
-   * @param buffer A properly-sized buffer to serialize history data into.
-   */
-  virtual void Collect( Group * domain, real64 const time_n, real64 const dt, buffer_unit_type * & buffer )
-  {
-    GEOSX_UNUSED_VAR( domain );
-    GEOSX_UNUSED_VAR( time_n );
-    GEOSX_UNUSED_VAR( dt );
-    GEOSX_UNUSED_VAR( buffer );
-  }
+  virtual localIndex getNumMetaCollectors( ) const { return 0; }
 
   /**
    * @brief Collects history data.
@@ -111,56 +78,77 @@ public:
     GEOSX_UNUSED_VAR( eventProgress );
     // std::function defines the == and =! comparable against nullptr_t to check the
     //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
-    GEOSX_ERROR_IF( m_buffer_call == nullptr,
+    GEOSX_ERROR_IF( m_bufferCall == nullptr,
                     "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
     // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
-    buffer_unit_type * buffer = m_buffer_call();
+    buffer_unit_type * buffer = m_bufferCall();
     Collect( domain, time_n, dt, buffer );
 
     int rank = MpiWrapper::Comm_rank();
     if( rank == 0 && m_time_buffer_call )
     {
-      buffer_unit_type * time_buffer = m_time_buffer_call();
-      memcpy( time_buffer, &time_n, sizeof(decltype(time_n)) );
+      buffer_unit_type * timeBuffer = m_timeBufferCall();
+      memcpy( timeBuffer, &time_n, sizeof(time_n) );
     }
   }
 
   /**
    * @brief Register a callback that gives the current head of the time history data buffer.
-   * @param buffer_call A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   * @param bufferCall A functional that when invoked returns a pointer to the head of a buffer at least large enough to
    *                    serialize one timestep of history data into.
    * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
    */
-  void RegisterBufferCall( std::function< buffer_unit_type *() > buffer_call )
+  void registerBufferCall( std::function< buffer_unit_type *() > bufferCall )
   {
-    m_buffer_call = buffer_call;
+    m_bufferCall = bufferCall;
   }
 
   /**
    * @brief Get a metadata object relating the the Time variable itself.
    * @return A HistroyMetadata object describing the Time variable.
    */
-  HistoryMetadata GetTimeMetadata( ) const
+  HistoryMetadata getTimeMetadata( ) const
   {
     return HistoryMetadata( "Time", 1, std::type_index( typeid(real64)));
   }
 
   /**
    * @brief Register a callback that gives the current head of the time data buffer.
-   * @param time_buffer_call A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   * @param timeBufferCall A functional that when invoked returns a pointer to the head of a buffer at least large enough to
    *                    serialize one instance of the Time variable into.
    * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
    */
-  void RegisterTimeBufferCall( std::function< buffer_unit_type *() > time_buffer_call )
+  void registerTimeBufferCall( std::function< buffer_unit_type *() > timeBufferCall )
   {
-    m_time_buffer_call = time_buffer_call;
+    m_timeBufferCall = timeBufferCall;
   }
+protected:
+  /**
+   * @brief Get a pointer to a collector of meta-information for this collector.
+   * @param problemManager The ProblemManager.
+   * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::GetNumMetaCollectors( ) ).
+   * @param metaRankOffset The offset for this rank for the meta-info collector, used to number index metadata consistently across the
+   * simulation.
+   * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
+   * immediately
+   *         after being used to perform output during simulation initialization.
+   */
+  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) = 0;
+
+  /**
+   * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::Execute .
+   * @param domain The ProblemDomain cast to a group.
+   * @param time_n The current simulation time.
+   * @param dt The current simulation time delta.
+   * @param buffer A properly-sized buffer to serialize history data into.
+   */
+  virtual void collect( Group * domain, real64 const time_n, real64 const dt, buffer_unit_type * & buffer ) = 0;
 
 private:
   /// Callbacks to get the current time buffer head to write time data into
-  std::function< buffer_unit_type *() > m_time_buffer_call;
+  std::function< buffer_unit_type *() > m_timeBufferCall;
   /// Callbacks to get the current buffer head to write history data into
-  std::function< buffer_unit_type *() > m_buffer_call;
+  std::function< buffer_unit_type *() > m_bufferCall;
 };
 
 }

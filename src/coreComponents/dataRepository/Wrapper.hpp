@@ -256,7 +256,7 @@ public:
 
   /// @copydoc geosx::WrapperBase::getBufferedIOMetadata
   virtual
-  HistoryMetadata getBufferedIOMetadata( localIndex const packCount = -1 ) const override final
+  HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
     return getHistoryMetadata< T >( getName(), *this->m_data, packCount );
   }

@@ -225,7 +225,7 @@ public:
    * @param packCount The number of indices from the wrapped data to collect,
    * @return HistoryMetadata about the wrapped type
    */
-  virtual HistoryMetadata getBufferedIOMetadata( localIndex const packCount ) const = 0;
+  virtual HistoryMetadata getHistoryMetadata( localIndex const packCount ) const = 0;
 
   /**
    * @name Methods for buffer packing/unpacking

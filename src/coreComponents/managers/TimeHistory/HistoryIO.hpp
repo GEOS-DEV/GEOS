@@ -35,9 +35,9 @@ public:
 
   /// Constructor
   BufferedHistoryIO():
-    m_buffered_count( 0 ),
-    m_buffer_head( nullptr ),
-    m_data_buffer( 0 )
+    m_bufferedCount( 0 ),
+    m_bufferHead( nullptr ),
+    m_dataBuffer( 0 )
   {}
 
   /// Destructor
@@ -49,11 +49,11 @@ public:
    * @note Depends on the virtual function resizeBuffer() being implemented correctly in
    *        an inheriting class.
    */
-  buffer_unit_type * GetBufferHead( )
+  buffer_unit_type * getBufferHead( )
   {
     resizeBuffer();
-    m_buffered_count++;
-    return m_buffer_head;
+    m_bufferedCount++;
+    return m_bufferHead;
   }
 
   /**
