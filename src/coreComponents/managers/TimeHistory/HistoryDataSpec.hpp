@@ -107,7 +107,7 @@ public:
    * @brief Get the total data count for the data being collected.
    * @return The number of data units of HistoryMetadata::getType( ) to be collected.
    */
-  size_t getTypeCount( ) const
+  localIndex size( ) const
   {
     localIndex localSize = 1;
     for( localIndex dim : m_dims )
@@ -133,11 +133,11 @@ public:
     return m_dims;
   }
   /**
-   * @brief Get the dimensional extent of the specified dimension.
+   * @brief Get the size of the specified dimension.
    * @param dim The dimsion to get the extent off.
    * @return The extend of the dimension in the array data being collected.
    */
-  localIndex getDimExtent( localIndex dim ) const
+  localIndex size( localIndex dim ) const
   {
     return m_dims[dim];
   }
@@ -171,43 +171,38 @@ constexpr bool can_history_io_container = is_array_type< T > || is_sorted_array_
 
 /**
  * @brief Produce a HistoryMetadata object for a supported one-dimensional array type.
- * @tparam ARRAY_T A supported array type.
+ * @tparam T A type stored in an array that can be packed
  * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
  * @param arr The array to produce metadata about
  * @param sizeOverride Specified in order to overwrite the actual size of the array with the size specified (used when collecting only a
  * portion of the array data).
  * @return HistoryMetadata for the provided one-dimensional array.
  */
-template< typename ARRAY_T >
+template< typename T >
 inline
-HistoryMetadata getFlatArrayMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
+typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
+HistoryMetadata getHistoryMetadata( string const & name, ArrayView< T const, 1, 0 > const & arr, localIndex sizeOverride = -1 )
 {
   localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
   return HistoryMetadata( name, size, std::type_index( typeid(typename ARRAY_T::value_type)));
 }
 
 /**
- * @brief Produce a HistoryMetada object for one-dimensional LvArray::Array/ArrayView types.
- * @copydetails getFlatArrayMetadata
+ * @brief Produce a HistoryMetadata object for a supported one-dimensional array type.
+ * @tparam T A type stored in an array that can be packed
+ * @param name The name to give the metadata, usually dataRepository::Wrapper::getName by default.
+ * @param arr The array to produce metadata about
+ * @param sizeOverride Specified in order to overwrite the actual size of the array with the size specified (used when collecting only a
+ * portion of the array data).
+ * @return HistoryMetadata for the provided one-dimensional array.
  */
-template< typename ARRAY_T >
+template< typename T >
 inline
-typename std::enable_if< is_array_type< ARRAY_T > && (ARRAY_T::ndim == 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
+typename std::enable_if< can_history_io< T >, HistoryMetadata >::type
+HistoryMetadata getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr, localIndex sizeOverride = -1 )
 {
-  return getFlatArrayMetadata< ARRAY_T >( name, arr, sizeOverride );
-}
-
-/**
- * @brief Produce a HistoryMetadata object for LvArray::SortedArray/SortedArrayView types.
- * @copydetails getFlatArrayMetadata
- */
-template< typename ARRAY_T >
-inline
-typename std::enable_if< is_sorted_array_type< ARRAY_T > && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
-getHistoryMetadata( string const & name, const ARRAY_T & arr, localIndex sizeOverride = -1 )
-{
-  return getFlatArrayMetadata< ARRAY_T >( name, arr, sizeOverride );
+  localIndex size = sizeOverride < 0 ? arr.size( ) : sizeOverride;
+  return HistoryMetadata( name, size, std::type_index( typeid(typename ARRAY_T::value_type)));
 }
 
 /**
@@ -281,7 +276,6 @@ getHistoryMetadata( string const & name, const T & type, localIndex sizeOverride
   GEOSX_UNUSED_VAR( sizeOverride );
   return HistoryMetadata( "NULL", 0, std::type_index( typeid(NULL)));
 }
-
 
 }
 
