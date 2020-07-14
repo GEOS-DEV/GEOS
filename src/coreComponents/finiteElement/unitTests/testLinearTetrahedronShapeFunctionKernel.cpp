@@ -194,6 +194,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
+  testing::InitGoogleTest() ;
 
   basicSetup( argc, argv, false );
 
