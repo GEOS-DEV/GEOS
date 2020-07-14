@@ -70,11 +70,11 @@ public:
   /**
    * @brief Constructor -- this creates/opens the target file for read/write.
    * @param fnm The filename.
-   * @param delete_existing Whether to remove/recreate if a file with the same name exists.
-   * @param parallel_access Whether to access one file in parallel or one file per rank in the comm.
+   * @param deleteExisting Whether to remove/recreate if a file with the same name exists.
+   * @param parallelAccess Whether to access one file in parallel or one file per rank in the comm.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile( string const & fnm, bool delete_existing, bool parallel_access, MPI_Comm comm );
+  HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
 
   /**
    * Destructor -- Close the file and acccessors.
@@ -85,16 +85,16 @@ public:
    * @brief Get the HDF hid_t file identifier.
    * @return the HDF hid_t file id.
    */
-  virtual operator hid_t() final { return m_file_id; }
+  virtual operator hid_t() final { return m_fileId; }
 private:
   /// The filename
   string m_filename;
   /// The hdf file id
-  hid_t m_file_id;
+  hid_t m_fileId;
   /// The hdf file access properties list id
-  hid_t m_fapl_id;
+  hid_t m_faplId;
   /// Whether to open the same file in parallel, or open a file per process
-  bool m_mpio_fapl;
+  bool m_mpioFapl;
   /// The comminator to operate on the file collectively over
   MPI_Comm m_comm;
 };
@@ -112,29 +112,29 @@ public:
    * @param rank The rank of the history data being collected.
    * @param dims The dimensional extent for each dimension of the history data being collected.
    * @param name The name to use to create/modify the dataset for the history data.
-   * @param type_id The std::type_index(typeid(T)) of the underlying data type.
-   * @param write_head How many time history states have been written to the file (used on restart and to compress data on exit).
-   * @param init_alloc How many states to preallocate the internal buffer to hold.
+   * @param typeId The std::type_index(typeid(T)) of the underlying data type.
+   * @param writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
+   * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
   HDFHistIO( string const & filename,
              localIndex rank,
              const localIndex * dims,
              string const & name,
-             std::type_index type_id,
-             localIndex write_head = 0,
-             localIndex init_alloc = 4,
+             std::type_index typeId,
+             localIndex writeHead = 0,
+             localIndex initAlloc = 4,
              MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Constructor
    * @param filename The filename to perform history output to.
    * @param spec HistoryMetadata to use to call the other constructor.
-   * @param write_head How many time states have been written to the file (used on restart and to compress data on exit).
-   * @param init_alloc How many states to preallocate the internal buffer to hold.
+   * @param writeHead How many time states have been written to the file (used on restart and to compress data on exit).
+   * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
+  HDFHistIO( string const & filename, const HistoryMetadata & spec, localIndex writeHead = 0, localIndex initAlloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
     HDFHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc, comm )
   { }
 
@@ -142,7 +142,7 @@ public:
   virtual ~HDFHistIO() { }
 
   /// @copydoc geosx::BufferedHistoryIO::Init
-  virtual void Init( bool exists_okay ) override;
+  virtual void Init( bool existsOkay ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::Write
   virtual void Write( ) override;
@@ -154,7 +154,7 @@ public:
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
    * @param buffered_count The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void ResizeFileIfNeeded( localIndex buffered_count );
+  inline void ResizeFileIfNeeded( localIndex bufferedCount );
 
   /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
   virtual globalIndex GetRankOffset( ) override;
@@ -167,22 +167,22 @@ private:
   /// The filename to write to
   string m_filename;
   /// How much to scale the internal and file allocations by when room runs out
-  const localIndex m_overalloc_multiple;
+  const localIndex m_overallocMultiple;
   /// The global index offset for this mpi rank for this data set
-  globalIndex m_global_idx_offset;
+  globalIndex m_globalIdxOffset;
   /// The global index count for this mpi rank for this data set
-  globalIndex m_global_idx_count;
+  globalIndex m_globalIdxCount;
   /// The current limit in discrete history counts for this data set in the file
-  localIndex m_write_limit;
+  localIndex m_writeLimit;
   /// The current history count for this data set in the file
-  localIndex m_write_head;
+  localIndex m_writeHead;
   // history metadata
   /// The underlying data type for this history data set
-  hsize_t m_hdf_type;
+  hsize_t m_hdfType;
   /// The size in byte of the data type
-  size_t m_type_size;
+  size_t m_typeSize;
   /// The number of variables of data type in this data set
-  hsize_t m_type_count;   // prod(dims[0:n])
+  hsize_t m_typeCount;   // prod(dims[0:n])
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
@@ -210,29 +210,29 @@ public:
    * @param rank The rank of the history data being collected.
    * @param dims The dimensional extent for each dimension of the history data being collected.
    * @param name The name to use to create/modify the dataset for the history data.
-   * @param type_id The std::type_index(typeid(T)) of the underlying data type.
-   * @param write_head How many time history states have been written to the file (used on restart and to compress data on exit).
-   * @param init_alloc How many states to preallocate the internal buffer to hold.
+   * @param typeId The std::type_index(typeid(T)) of the underlying data type.
+   * @param writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
+   * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
   HDFSerialHistIO( string const & filename,
                    localIndex rank,
                    const localIndex * dims,
                    string const & name,
-                   std::type_index type_id,
-                   localIndex write_head = 0,
-                   localIndex init_alloc = 4,
+                   std::type_index typeId,
+                   localIndex writeHead = 0,
+                   localIndex initAlloc = 4,
                    MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Constructor
    * @param filename The filename to perform history output to.
    * @param spec HistoryMetadata to use to call the other constructor.
-   * @param write_head How many time states have been written to the file (used on restart and to compress data on exit).
-   * @param init_alloc How many states to preallocate the internal buffer to hold.
+   * @param writeHead How many time states have been written to the file (used on restart and to compress data on exit).
+   * @param initAlloc How many states to preallocate the internal buffer to hold.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFSerialHistIO( string const & filename, const HistoryMetadata & spec, localIndex write_head = 0, localIndex init_alloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
+  HDFSerialHistIO( string const & filename, const HistoryMetadata & spec, localIndex writeHead = 0, localIndex initAlloc = 4, MPI_Comm comm = MPI_COMM_GEOSX ):
     HDFSerialHistIO( filename, spec.getRank(), spec.getDims(), spec.getName(), spec.getType(), write_head, init_alloc, comm )
   { }
 
@@ -240,7 +240,7 @@ public:
   virtual ~HDFSerialHistIO() { }
 
   /// @copydoc geosx::BufferedHistoryIO::Init
-  virtual void Init( bool exists_okay ) override;
+  virtual void Init( bool existsOkay ) override;
 
   /// @copydoc geosx::BufferedHistoryIO::Write
   virtual void Write( ) override;
@@ -250,9 +250,9 @@ public:
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
-   * @param buffered_count The number of buffered states to use to determine if the file needs to be resized.
+   * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
-  inline void ResizeFileIfNeeded( localIndex buffered_count );
+  inline void ResizeFileIfNeeded( localIndex bufferedCount );
 
   /// @copydoc geosx::BufferedHistoryIO::GetRankOffset
   virtual globalIndex GetRankOffset( ) override;
@@ -265,18 +265,18 @@ private:
   /// The filename to write to
   string m_filename;
   /// How much to scale the internal and file allocations by when room runs out
-  const localIndex m_overalloc_multiple;
+  const localIndex m_overallocMultiple;
   /// The current limit in discrete history counts for this data set in the file
-  localIndex m_write_limit;
+  localIndex m_writeLimit;
   /// The current history count for this data set in the file
-  localIndex m_write_head;
+  localIndex m_writeHead;
   // history metadata
   /// The underlying data type for this history data set
-  hsize_t m_hdf_type;
+  hsize_t m_hdfType;
   /// The size in byte of the data type
-  size_t m_type_size;
+  size_t m_typeSize;
   /// The number of variables of data type in this data set
-  hsize_t m_type_count;   // prod(dims[0:n])
+  hsize_t m_typeCount;   // prod(dims[0:n])
   /// The rank of the data set
   hsize_t m_rank;
   /// The dimensions of the data set
