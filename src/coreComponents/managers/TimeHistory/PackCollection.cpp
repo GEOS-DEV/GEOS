@@ -74,7 +74,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
   }
 }
 
-  inline localIndex PackCollection::countLocalSetIndices( ProblemManager & pm )
+inline localIndex PackCollection::countLocalSetIndices( ProblemManager & pm )
 {
   return countLocalSetIndicesExclusive( pm, m_setNames.size( ) );
 }

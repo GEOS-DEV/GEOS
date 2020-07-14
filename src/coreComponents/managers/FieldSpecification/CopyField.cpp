@@ -52,7 +52,7 @@ void CopyField::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                          real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                          Group * GEOSX_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR("Not implemented");
+  GEOSX_ERROR( "Not implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase, CopyField, std::string const &, Group * const )

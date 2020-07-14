@@ -46,7 +46,7 @@ public:
    * @brief Default constructor
    **/
   HistoryMetadata():
-    m_name("null"),
+    m_name( "null" ),
     m_rank( 0 ),
     m_dims( ),
     m_type( std::type_index( typeid( nullptr ) ) )
