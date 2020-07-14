@@ -2863,13 +2863,13 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
                                                              arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString,
                                                                                                                constitutiveManager );
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+//  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+//
+//  FiniteElementDiscretizationManager const &
+//  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+//
+//  FiniteElementDiscretization const *
+//    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
   dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
@@ -2948,7 +2948,7 @@ void SurfaceGenerator::CalculateNodeAndFaceSIF( DomainPartition * domain,
             realT youngsModulus = 9 * K * G / ( 3 * K + G );
             realT poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
-            localIndex const numQuadraturePoints = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() )->n_quadrature_points();
+            localIndex const numQuadraturePoints = detJ[er][esr].size(1);
 
             for( localIndex n=0; n<elementsToNodes.size( 1 ); ++n )
             {
@@ -3689,13 +3689,13 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
                                                                                                                constitutiveManager );
 
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
+//  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+//
+//  FiniteElementDiscretizationManager const &
+//  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
+//
+//  FiniteElementDiscretization const *
+//    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   ElementRegionManager::ElementViewAccessor< array4d< real64 > > const
   dNdX = elementManager.ConstructViewAccessor< array4d< real64 > >( keys::dNdX );
@@ -3743,7 +3743,7 @@ int SurfaceGenerator::CalculateElementForcesOnEdge( DomainPartition * domain,
       x0_xEle -= X[edgeToNodeMap[edgeID][1]];
       udist = Dot( x0_x1, x0_xEle );
 
-      localIndex const numQuadraturePoints = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() )->n_quadrature_points();
+      localIndex const numQuadraturePoints = detJ[er][esr].size(1);
 
 
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )

@@ -117,11 +117,6 @@ public:
     arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
 
-    if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
-    {
-      nNodes -= 2;
-    }
-
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
       LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
