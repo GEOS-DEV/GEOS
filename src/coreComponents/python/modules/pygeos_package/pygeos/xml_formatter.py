@@ -20,7 +20,7 @@ def format_attribute(attribute_indent, ka, attribute_value):
     split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
     newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
     new_values = []
-    for a, b in zip([0] + split_positions, split_positions + [None]):
+    for a, b in zip([None] + split_positions, split_positions + [None]):
         new_values.append(attribute_value[a:b].strip())
     if new_values:
         attribute_value = newline_indent.join(new_values)
