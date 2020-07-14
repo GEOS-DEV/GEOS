@@ -95,10 +95,11 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   {
     m_fapl_id = H5Pcreate( H5P_FILE_ACCESS );
     H5Pset_fapl_mpio( m_fapl_id, m_comm, MPI_INFO_NULL );
-    m_filename = fnm;
+    m_filename = fnm + ".hdf5";
   }
   else
   {
+    m_fapl_id = H5P_DEFAULT;
     m_filename = fnm + "." + std::to_string( rnk ) + ".hdf5";
   }
   // check if file already exists
@@ -114,15 +115,15 @@ HDFFile::HDFFile( string const & fnm, bool delete_existing, bool parallel_access
   }
   if( exists > 0 && !delete_existing )
   {
-    m_file_id = H5Fopen( m_filename.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
+    m_file_id = H5Fopen( m_filename.c_str(), H5F_ACC_RDWR, m_fapl_id );
   }
   else if( exists >= 0 && delete_existing )
   {
-    m_file_id = H5Fcreate( m_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
+    m_file_id = H5Fcreate( m_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_fapl_id );
   }
   else if( exists < 0 )
   {
-    m_file_id = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT );
+    m_file_id = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, m_fapl_id );
   }
 }
 
