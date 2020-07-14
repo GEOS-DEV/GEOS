@@ -1465,44 +1465,47 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
             localIndex const esr = faceToElemSubRegion[faceIndex][ke];
             localIndex const ei  = faceToElemIndex[faceIndex][ke];
 
-            real64 const volume = elemVolume[er][esr][ei];
-
-            // Get the "element to node" map for the specific region/subregion
-            NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
-            localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
-
-            // Compute the box size
-            real64 maxSize[3];
-            real64 minSize[3];
-            for( localIndex j = 0; j < 3; ++j )
+            if( ei >= 0 )
             {
-              maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-              minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-            }
-            for( localIndex a = 1; a < numNodesPerElem; ++a )
-            {
+              real64 const volume = elemVolume[er][esr][ei];
+
+              // Get the "element to node" map for the specific region/subregion
+              NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
+              localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
+
+              // Compute the box size
+              real64 maxSize[3];
+              real64 minSize[3];
               for( localIndex j = 0; j < 3; ++j )
               {
-                maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
+                minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
               }
-            }
-            real64 boxSize[3];
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              boxSize[j] = maxSize[j] - minSize[j];
-            }
+              for( localIndex a = 1; a < numNodesPerElem; ++a )
+              {
+                for( localIndex j = 0; j < 3; ++j )
+                {
+                  maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                  minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
+                }
+              }
+              real64 boxSize[3];
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                boxSize[j] = maxSize[j] - minSize[j];
+              }
 
-            // Get linear elastic isotropic constitutive parameters for the element
-            real64 const K = bulkModulus[er][esr][ei];
-            real64 const G = shearModulus[er][esr][ei];
-            real64 const E = 9.0 * K * G / ( 3.0 * K + G );
-            real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
+              // Get linear elastic isotropic constitutive parameters for the element
+              real64 const K = bulkModulus[er][esr][ei];
+              real64 const G = shearModulus[er][esr][ei];
+              real64 const E = 9.0 * K * G / ( 3.0 * K + G );
+              real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
 
-            // The factor is 8/9 / 4 (number of nodes) = 2/9
-            for( localIndex j = 0; j < 3; ++j )
-            {
-              invStiffApprox[ i ][ j ] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              // The factor is 8/9 / 4 (number of nodes) = 2/9
+              for( localIndex j = 0; j < 3; ++j )
+              {
+                invStiffApprox[ i ][ j ] = 1.0 / ( E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] ) );
+              }
             }
           }
 
