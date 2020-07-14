@@ -100,8 +100,8 @@ void testKernelDriver()
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJ[q] = TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( q,
-                                                                        xCoords,
-                                                                        dNdX );
+                                                                                      xCoords,
+                                                                                      dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -211,6 +211,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
+  testing::InitGoogleTest();
 
   basicSetup( argc, argv, false );
 

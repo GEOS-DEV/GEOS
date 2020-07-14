@@ -43,7 +43,6 @@ struct ParentElementTypeStrings
 
 
 
-
 template< typename LAMBDA >
 void
 dispatch( ParentElementType const input,
@@ -97,8 +96,6 @@ dispatch( string const & input,
 
 }
 }
-
-
 
 
 
