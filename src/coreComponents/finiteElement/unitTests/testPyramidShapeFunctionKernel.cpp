@@ -118,8 +118,8 @@ void testKernelDriver()
 
 
   constexpr real64 parentCoords[3][numNodes] = {
-    { -1,  1, -1,  1, 0 },
-    { -1, -1,  1,  1, 0 },
+    { -1, 1, -1, 1, 0 },
+    { -1, -1, 1, 1, 0 },
     { -1, -1, -1, -1, 1 }
   };
 
@@ -128,7 +128,7 @@ void testKernelDriver()
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[3] = { quadratureCrossSectionCoord*parentCoords[0][q],
+      real64 const xi[3] = { quadratureCrossSectionCoord *parentCoords[0][q],
                              quadratureCrossSectionCoord*parentCoords[1][q],
                              quadratureLongitudinalCoordNeg + quadratureLongitudinalCoordDelta*0.5*( 1 + parentCoords[2][q] ) };
 
@@ -207,7 +207,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest() ;
+  testing::InitGoogleTest();
 
   basicSetup( argc, argv, false );
 

@@ -101,8 +101,8 @@ void testKernelDriver()
     {
       real64 dNdX[numNodes][3] = {{0}};
       viewDetJxW[q] = BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
-                                                                               xCoords,
-                                                                               dNdX );
+                                                                                  xCoords,
+                                                                                  dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )
@@ -117,8 +117,8 @@ void testKernelDriver()
 
 
   constexpr real64 parentCoords[3][numNodes] = {
-    {  0.0, 0.0,  1.0, 1.0,  0.0, 0.0 },
-    {  0.0, 0.0,  0.0, 0.0,  1.0, 1.0 },
+    {  0.0, 0.0, 1.0, 1.0, 0.0, 0.0 },
+    {  0.0, 0.0, 0.0, 0.0, 1.0, 1.0 },
     { -1.0, 1.0, -1.0, 1.0, -1.0, 1.0 }
   };
 
@@ -209,7 +209,7 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 using namespace geosx;
 int main( int argc, char * argv[] )
 {
-  testing::InitGoogleTest() ;
+  testing::InitGoogleTest();
 
   basicSetup( argc, argv, false );
 

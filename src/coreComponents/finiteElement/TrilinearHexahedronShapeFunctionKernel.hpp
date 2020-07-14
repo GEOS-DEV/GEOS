@@ -62,7 +62,7 @@ public:
   GEOSX_HOST_DEVICE
   static real64 shapeFunctionDerivatives( localIndex const q,
                                           real64 const (&X)[numNodes][3],
-                                          real64 (& dNdX)[numNodes][3] );
+                                          real64 ( &dNdX )[numNodes][3] );
 
 private:
   template< typename T >
@@ -141,12 +141,12 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
-                                                           real64 const (&X)[numNodes][3],
-                                                           real64 (& dNdX)[numNodes][3] )
+                                                                         real64 const (&X)[numNodes][3],
+                                                                         real64 (& dNdX)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-#define PD 3
+  #define PD 3
 
 #if PD==1
   real64 const quadratureCoords[3] = { quadratureFactor *parentCoords0( q ),
@@ -164,15 +164,15 @@ real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIn
 #elif PD==2
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 * ( 1 + quadratureFactor ),
                                                          0.5 * ( 1 - quadratureFactor ) };
-  real64 const psi0[2] = { linearBasisAtQuadrature[basisIndex0(q)], linearBasisAtQuadrature[!basisIndex0(q)] };
-  real64 const psi1[2] = { linearBasisAtQuadrature[basisIndex1(q)], linearBasisAtQuadrature[!basisIndex1(q)] };
-  real64 const psi2[2] = { linearBasisAtQuadrature[basisIndex2(q)], linearBasisAtQuadrature[!basisIndex2(q)] };
+  real64 const psi0[2] = { linearBasisAtQuadrature[basisIndex0( q )], linearBasisAtQuadrature[!basisIndex0( q )] };
+  real64 const psi1[2] = { linearBasisAtQuadrature[basisIndex1( q )], linearBasisAtQuadrature[!basisIndex1( q )] };
+  real64 const psi2[2] = { linearBasisAtQuadrature[basisIndex2( q )], linearBasisAtQuadrature[!basisIndex2( q )] };
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
 #elif PD==3
-  int const qa = basisIndex0(q);
-  int const qb = basisIndex1(q);
-  int const qc = basisIndex2(q);
+  int const qa = basisIndex0( q );
+  int const qb = basisIndex1( q );
+  int const qc = basisIndex2( q );
 
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
                                                          0.5 - 0.5 * quadratureFactor };
@@ -188,12 +188,12 @@ real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIn
   for( int a=0; a<2; ++a )
   {
 #if PD==3
-    int const qaa = abs(a-qa);
+    int const qaa = abs( a-qa );
 #endif
     for( int b=0; b<2; ++b )
     {
 #if PD==3
-      int const qbb = abs(b-qb);
+      int const qbb = abs( b-qb );
 #endif
       for( int c=0; c<2; ++c )
       {
@@ -202,10 +202,10 @@ real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIn
                                   psi0[a] * dpsi[b] * psi2[c],
                                   psi0[a] * psi1[b] * dpsi[c] };
 #else
-        int const qcc = abs(c-qc);
+        int const qcc = abs( c-qc );
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
-                                   dpsi[b] * psiProduct[ qaa + qcc ],
-                                   dpsi[c] * psiProduct[ qaa + qbb ] };
+                                  dpsi[b] * psiProduct[ qaa + qcc ],
+                                  dpsi[c] * psiProduct[ qaa + qbb ] };
 
 #endif
 
@@ -228,12 +228,12 @@ real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIn
   for( int a=0; a<2; ++a )
   {
 #if PD==3
-    int const qaa = abs(a-qa);
+    int const qaa = abs( a-qa );
 #endif
     for( int b=0; b<2; ++b )
     {
 #if PD==3
-      int const qbb = abs(b-qb);
+      int const qbb = abs( b-qb );
 #endif
       for( int c=0; c<2; ++c )
       {
@@ -242,7 +242,7 @@ real64 TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIn
                                   psi0[a] * dpsi[b] * psi2[c],
                                   psi0[a] * psi1[b] * dpsi[c] };
 #else
-        int const qcc = abs(c-qc);
+        int const qcc = abs( c-qc );
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                   dpsi[b] * psiProduct[ qaa + qcc ],
                                   dpsi[c] * psiProduct[ qaa + qbb ] };
