@@ -423,10 +423,10 @@ void
 ProppantSlurryFluidUpdate::
   ComputeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
                          arraySlice1d< real64 const > const & dComponentDensity_dPressure,
-                         arraySlice2d< real64 const > const & dComponentDensity_dComponentConcentration,
+                         arraySlice2d< real64 const > const & GEOSX_UNUSED_PARAM( dComponentDensity_dComponentConcentration ),
                          real64 const fluidDensity,
                          real64 const dFluidDensity_dPressure,
-                         arraySlice1d< real64 const > const & dFluidDensity_dComponentConcentration,
+                         arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
                          real64 & fluidViscosity,
                          real64 & dFluidViscosity_dPressure,
                          arraySlice1d< real64 > const & dFluidViscosity_dComponentConcentration ) const
@@ -448,19 +448,6 @@ ProppantSlurryFluidUpdate::
     dFluidViscosity_dPressure +=
       (dComponentDensity_dPressure[c1] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dPressure) *
       (m_defaultViscosity[c1] - m_referenceViscosity);
-
-    // TODO: why? - Sergey
-#if 0
-    for( localIndex c2 = 0; c2 < NC; ++c2 )
-    {
-      dFluidViscosity_dComponentConcentration[c2] += ( dComponentDensity_dComponentConcentration[c1][c2] / fluidDensity
-                                                       - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dComponentConcentration[c2] ) *
-                                                     ( m_defaultViscosity[c1] - m_referenceViscosity );
-    }
-#else
-    GEOSX_UNUSED_VAR( dComponentDensity_dComponentConcentration )
-    GEOSX_UNUSED_VAR( dFluidDensity_dComponentConcentration )
-#endif
   }
 }
 
@@ -469,12 +456,10 @@ ProppantSlurryFluidUpdate::
   Compute( real64 const & proppantConcentration,
            real64 const & fluidDensity,
            real64 const & dFluidDensity_dPressure,
-           arraySlice1d< real64 const > const &
-           dFluidDensity_dComponentConcentration,
+           arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidDensity_dComponentConcentration ),
            real64 const & fluidViscosity,
            real64 const & dFluidViscosity_dPressure,
-           arraySlice1d< real64 const > const &
-           dFluidViscosity_dComponentConcentration,
+           arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dFluidViscosity_dComponentConcentration ),
            integer const & isProppantBoundary,
            real64 & density,
            real64 & dDensity_dPressure,
@@ -496,17 +481,6 @@ ProppantSlurryFluidUpdate::
   density = (1.0 - effectiveConcentration) * fluidDensity + effectiveConcentration * m_referenceProppantDensity;
   dDensity_dPressure = (1.0 - effectiveConcentration) * dFluidDensity_dPressure;
 
-  // TODO: why? - Sergey
-#if 0
-  dDensity_dProppantConcentration = -fluidDensity + m_referenceProppantDensity;
-  for( localIndex c = 0; c < NC; ++c )
-  {
-    dDensity_dComponentConcentration[c] = (1.0 - effectiveConcentration) * dFluidDensity_dComponentConcentration[c];
-  }
-#else
-  GEOSX_UNUSED_VAR( dFluidDensity_dComponentConcentration )
-#endif
-
   dDensity_dProppantConcentration = 0.0;
   for( localIndex c = 0; c < NC; ++c )
   {
@@ -516,21 +490,6 @@ ProppantSlurryFluidUpdate::
   real64 const coef = pow( 1.0 + 1.25 *  effectiveConcentration / (1.0 - effectiveConcentration / m_maxProppantConcentration), 2.0 );
   viscosity = fluidViscosity * coef;
   dViscosity_dPressure = dFluidViscosity_dPressure * coef;
-
-  // TODO: why? - Sergey
-#if 0
-  dViscosity_dProppantConcentration = fluidViscosity * 2.0 * (1.0 + 1.25 *  effectiveConcentration / (1.0 -
-                                                                                                      effectiveConcentration / m_maxProppantConcentration)) * 1.25 * m_maxProppantConcentration *
-                                      m_maxProppantConcentration / (m_maxProppantConcentration - effectiveConcentration) / (m_maxProppantConcentration
-                                                                                                                            - effectiveConcentration);
-
-  for( localIndex c = 0; c < NC; ++c )
-  {
-    dViscosity_dComponentConcentration[c] = dFluidViscosity_dComponentConcentration[c] * coef;
-  }
-#else
-  GEOSX_UNUSED_VAR( dFluidViscosity_dComponentConcentration )
-#endif
 
   dViscosity_dProppantConcentration = 0.0;
   for( localIndex c = 0; c < NC; ++c )

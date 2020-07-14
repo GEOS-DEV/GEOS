@@ -1,8 +1,4 @@
-<?xml version="1.0" ?>
-<!--# # -->
-
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://geosx-geosx.readthedocs-hosted.com/en/latest/_downloads/schema.xsd">
+<Problem>
 
   <Solvers gravityVector="0.0, 0.0, 0.0">
   
