@@ -217,6 +217,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                         int const cycleNumber,
                                         DomainPartition * const domain )
 {
+  //TJ: This version of solver does two-level iterations
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
