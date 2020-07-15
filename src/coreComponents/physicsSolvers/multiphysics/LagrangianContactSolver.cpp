@@ -462,13 +462,8 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-<<<<<<< HEAD
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView3d< real64 const > const &
+      arrayView3d< real64 > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
-=======
-      arrayView3d< real64 const > const & rotationMatrix = subRegion.getElementRotationMatrix();
->>>>>>> origin/develop
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
       arrayView2d< real64 > const & localJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::localJumpString );
 
@@ -640,13 +635,13 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
-        DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+        //DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
         SolveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
         // Output the linear system solution for debugging purposes
-        DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+        //DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
         // Copy solution from parallel vector back to local
         // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
@@ -1009,6 +1004,7 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   if( rank==0 )
   {
     globalResidualNorm[0] = globalR2[0];
+    globalResidualNorm[1] = 0.0;
     for( int r=0; r<size; ++r )
     {
       // sum across all ranks
@@ -1050,22 +1046,20 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
   return globalResidualNorm[2];
 }
 
-<<<<<<< HEAD
-void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition * const domain ) const
+void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel * const mesh = domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  FaceManager const & faceManager = *mesh.getFaceManager();
+  ElementRegionManager & elemManager = *mesh.getElemManager();
 
-  arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
 
-  elemManager->forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
       arrayView3d< real64 > const &
@@ -1073,32 +1067,23 @@ void LagrangianContactSolver::ComputeRotationMatrices( DomainPartition * const d
 
       forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
       {
-        if( ghostRank[kfe] < 0 )
-        {
-          array1d< real64 > Nbar( 3 );
-          Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
-          Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
-          Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
-          LvArray::tensorOps::normalize< 3 >( Nbar );
+        array1d< real64 > Nbar( 3 );
+        Nbar[ 0 ] = faceNormal[elemsToFaces[kfe][0]][0] - faceNormal[elemsToFaces[kfe][1]][0];
+        Nbar[ 1 ] = faceNormal[elemsToFaces[kfe][0]][1] - faceNormal[elemsToFaces[kfe][1]][1];
+        Nbar[ 2 ] = faceNormal[elemsToFaces[kfe][0]][2] - faceNormal[elemsToFaces[kfe][1]][2];
+        LvArray::tensorOps::normalize< 3 >( Nbar );
 
-          computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
-        }
+        computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
       } );
     }
   } );
 }
 
-void LagrangianContactSolver::AssembleForceResidualDerivativeWrtTraction( DomainPartition * const domain,
-                                                                          DofManager const & dofManager,
-                                                                          ParallelMatrix * const matrix,
-                                                                          ParallelVector * const rhs )
-=======
 void LagrangianContactSolver::
   AssembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
->>>>>>> origin/develop
 {
   GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
@@ -1299,28 +1284,17 @@ void LagrangianContactSolver::
                 }
 
                 real64 const limitTau = contactRelation->limitTangentialTractionNorm( traction[kfe][0] );
-<<<<<<< HEAD
                 real64 sliding[ 2 ] = { localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] };
                 real64 slidingNorm = sqrt( sliding[ 0 ]*sliding[ 0 ] + sliding[ 1 ]*sliding[ 1 ] );
 
-                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
-=======
-                R1TensorT< 2 > sliding( localJump[kfe][1] - previousLocalJump[kfe][1], localJump[kfe][2] - previousLocalJump[kfe][2] );
-                real64 slidingNorm = sqrt( sliding( 0 ) * sliding( 0 ) + sliding( 1 ) * sliding( 1 ) );
-
-//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding );
->>>>>>> origin/develop
+//                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
 
                 if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
                     && slidingNorm > slidingTolerance[kfe] )
                 {
                   for( localIndex i = 1; i < 3; ++i )
                   {
-<<<<<<< HEAD
                     elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding[ i-1 ] / slidingNorm );
-=======
-                    elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * sliding( i - 1 ) / slidingNorm );
->>>>>>> origin/develop
                   }
 
                   // A symmetric 2x2 matrix.
@@ -1346,32 +1320,19 @@ void LagrangianContactSolver::
                   }
                   for( localIndex i = 1; i < 3; ++i )
                   {
-<<<<<<< HEAD
                     dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding[ i-1 ] / slidingNorm;
-=======
-                    dRdT( i, 0 ) = Ja * contactRelation->dLimitTangentialTractionNorm_dNormalTraction( traction[kfe][0] ) * sliding( i - 1 ) / slidingNorm;
->>>>>>> origin/develop
                     dRdT( i, i ) = Ja;
                   }
                 }
                 else
                 {
-<<<<<<< HEAD
                   real64 vaux[ 2 ] = { traction[kfe][1], traction[kfe][2] };
                   real64 vauxNorm = sqrt( vaux[ 0 ]*vaux[ 0 ] + vaux[ 1 ]*vaux[ 1 ] );
-=======
-                  R1TensorT< 2 > vaux( traction[kfe][1], traction[kfe][2] );
-                  real64 vauxNorm = sqrt( vaux( 0 ) * vaux( 0 ) + vaux( 1 ) * vaux( 1 ) );
->>>>>>> origin/develop
                   if( vauxNorm > 0.0 )
                   {
                     for( localIndex i = 1; i < 3; ++i )
                     {
-<<<<<<< HEAD
                       elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux[ i-1 ] / vauxNorm );
-=======
-                      elemRHS[i] = +Ja * ( traction[kfe][i] - limitTau * vaux( i - 1 ) / vauxNorm );
->>>>>>> origin/develop
                     }
                     for( localIndex i = 1; i < 3; ++i )
                     {
@@ -1491,14 +1452,9 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   // Get area and rotation matrix for all faces
-<<<<<<< HEAD
-  arrayView1d< real64 const > const & faceArea = faceManager->faceArea();
+  arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView3d< real64 const > const &
   faceRotationMatrix = fractureSubRegion->getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString );
-=======
-  arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
-  arrayView3d< real64 const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
->>>>>>> origin/develop
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
@@ -1530,15 +1486,10 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
       if( numFluxElems == 2 )
       {
         // First index: face element. Second index: node
-<<<<<<< HEAD
         real64 nodalArea[ 2 ][ 2 ];
 
         // first index: face, second index: element (T/B), third index: dof (x, y, z)
         real64 stiffApprox[ 2 ][ 2 ][ 3 ];
-=======
-        real64 nodalArea[2][2];
-        real64 rotatedInvStiffApprox[ 2 ][ 3 ][ 3 ];
->>>>>>> origin/develop
         for( localIndex kf = 0; kf < 2; ++kf )
         {
           // Get fracture, face and region/subregion/element indices (for elements on both sides)

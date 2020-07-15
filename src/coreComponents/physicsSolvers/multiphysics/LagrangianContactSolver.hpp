@@ -269,7 +269,11 @@ public:
                                        globalIndex & numOpen,
                                        bool printAll = false ) const;
 
+  void ComputeRotationMatrices( DomainPartition & domain ) const;
+
   void ComputeTolerances( DomainPartition & domain ) const;
+
+  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
