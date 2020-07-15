@@ -84,7 +84,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
-  forAll< serialPolicy >( faceManager.size(), [=,&stencil]( localIndex const kf )
+  forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
     // Filter out boundary faces
     if( elemList[kf][0] < 0 || elemList[kf][1] < 0 )
@@ -318,7 +318,6 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
     // only do this if there are more than one element attached to the connector
     localIndex const edgeIndex = fractureConnectorsToEdges[fci];
 
-    //    if( edgeGhostRank[edgeIndex] < 0 && numElems > 1 )
     {
       GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
 
@@ -355,7 +354,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
         stencilCellsRegionIndex[kfe] = fractureRegionIndex;
         stencilCellsSubRegionIndex[kfe] = 0;
         stencilCellsIndex[kfe] = fractureElementIndex;
-        containsLocalElement |= elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
+        containsLocalElement = containsLocalElement || elemGhostRank[fractureRegionIndex][0][fractureElementIndex] < 0;
 
         stencilWeights[kfe] =  1.0 / 12.0 * edgeLength / LvArray::tensorOps::l2Norm< 3 >( cellCenterToEdgeCenter );
 
@@ -558,7 +557,7 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
             LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter[faceIndex] );
             LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
 
-            real64 const c2fDistance = LvArray::tensorOps::l2Norm< 3 >( cellToFaceVec );
+            real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
             LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal[faceIndex] );
             real64 const ht = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal ) * faceArea[faceIndex] / c2fDistance;
@@ -609,6 +608,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemGhostRank =
+    elemManager.ConstructArrayViewAccessor< real64, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< R1Tensor const > > const coefficient =
     elemManager.ConstructArrayViewAccessor< R1Tensor, 1 >( m_coeffName );
 
@@ -641,15 +643,27 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
     for( localIndex ke = 0; ke < numPts; ++ke )
     {
+      // Filter out elements not locally present
       if( elemRegionList[kf][ke] < 0 )
+      {
         continue;
+      }
 
+      // Filter out elements not in target regions
       if( !regionFilter.contains( elemRegionList[kf][ke] ))
+      {
         continue;
+      }
 
       localIndex const er  = elemRegionList[kf][ke];
       localIndex const esr = elemSubRegionList[kf][ke];
       localIndex const ei  = elemList[kf][ke];
+
+      // Filter out ghosted elements
+      if( elemGhostRank[er][esr][ei] >= 0 )
+      {
+        continue;
+      }
 
       LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
@@ -661,19 +675,13 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
-      // TODO Use LvArray::tensorOps::elementWiseMultiplication
-      faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * faceNormal[ 0 ];
-      faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * faceNormal[ 1 ];
-      faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * faceNormal[ 2 ];
+      LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], faceNormal );
       real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
 
       // correct negative weight issue arising from non-K-orthogonal grids
       if( faceWeight < 0.0 )
       {
-        // TODO Use LvArray::tensorOps::elementWiseMultiplication
-        faceConormal[ 0 ] = coefficient[er][esr][ei][ 0 ] * cellToFaceVec[ 0 ];
-        faceConormal[ 1 ] = coefficient[er][esr][ei][ 1 ] * cellToFaceVec[ 1 ];
-        faceConormal[ 2 ] = coefficient[er][esr][ei][ 2 ] * cellToFaceVec[ 2 ];
+        LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, coefficient[er][esr][ei], cellToFaceVec );
         faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
       }
 
