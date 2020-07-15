@@ -160,7 +160,7 @@ public:
       return splitLabel[splitLabel.size() -2 ];
     }
 private:
-    static string m_separator;
+    static const string m_separator;
   };
 };
 

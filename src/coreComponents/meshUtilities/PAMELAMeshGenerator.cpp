@@ -34,7 +34,8 @@ namespace geosx
 {
 using namespace dataRepository;
 
-string PAMELAMeshGenerator::DecodePAMELALabels::m_separator = "_";
+/// TODO when we are going to port to c++17, we can remove that
+const string PAMELAMeshGenerator::DecodePAMELALabels::m_separator = "_";
 
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
