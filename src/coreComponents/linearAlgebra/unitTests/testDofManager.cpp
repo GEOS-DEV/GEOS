@@ -70,13 +70,16 @@ public:
     Base(),
     problemManager( std::make_unique< ProblemManager >( "Problem", nullptr ) ),
     dofManager( "test" )
-  {
-    setupProblem( problemManager.get(), xmlInput );
-    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
-    dofManager.setMesh( problemManager->getDomainPartition(), 0, 0 );
-  }
+  {}
 
 protected:
+
+  void SetUp() override
+  {
+    setupProblemFromXML( problemManager.get(), xmlInput );
+    mesh = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 );
+    dofManager.setMesh( *problemManager->getDomainPartition(), 0, 0 );
+  }
 
   std::unique_ptr< ProblemManager > const problemManager;
   MeshLevel * mesh;

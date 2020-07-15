@@ -2,6 +2,7 @@
 # Specify all headers
 #
 set( finiteVolume_headers
+     BoundaryStencil.hpp
      CellElementStencilMPFA.hpp
      CellElementStencilTPFA.hpp
      FaceElementStencil.hpp
@@ -15,13 +16,13 @@ set( finiteVolume_headers
 # Specify all sources
 #
 set( finiteVolume_sources
+     BoundaryStencil.cpp
      CellElementStencilMPFA.cpp
      CellElementStencilTPFA.cpp
      FaceElementStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     TwoPointFluxApproximation.cpp
-     HybridFVMInnerProduct.cpp     
+     TwoPointFluxApproximation.cpp 
    )
 
 if ( BUILD_OBJ_LIBS )

@@ -89,7 +89,7 @@ public:
    * @brief Copy constructor.
    * @param[in] init the source to copy
    */
-  CellBlock( const CellBlock & init );
+  CellBlock( const CellBlock & init ) = delete;
 
   /**
    * @brief Destructor.

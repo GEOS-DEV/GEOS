@@ -9,6 +9,7 @@
                logLevel="1"
                targetRegions="{Region1,wellRegion1,wellRegion2}">
       <NonlinearSolverParameters newtonTol="1.0e-8"
+                                 lineSearchAction="0"
                                  newtonMaxIter="40"/>
       <LinearSolverParameters solverType="direct"
                               logLevel="0"/>
@@ -42,7 +43,7 @@
                       control="liquidRate" 
                       targetBHP="1e8"
                       targetRate="1e-4" 
-               	      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
+                      injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
     </CompositionalMultiphaseWell>
 
     

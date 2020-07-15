@@ -57,8 +57,8 @@ protected:
                                      bool const initFlag ) override;
 
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView< localIndex const > const & faceSet,
-                                       BoundaryStencil & stencil ) override;
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) override;
 
 };
 

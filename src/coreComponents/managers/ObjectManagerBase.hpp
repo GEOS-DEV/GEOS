@@ -282,6 +282,12 @@ private:
 public:
 
   /**
+   * @brief Manually move all sets to a memory space.
+   * @param targetSpace The memory space to move sets to.
+   */
+  void moveSets( LvArray::MemorySpace const targetSpace );
+
+  /**
    * @copydoc geosx::dataRepository::Group::resize(indexType const)
    * @return Always 0, whatever the new size is.
    */

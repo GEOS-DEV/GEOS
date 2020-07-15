@@ -133,16 +133,16 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
     stressCalc( c, Ddt, stressV );
     stressSliceCheck( stateStress, stressV );
 
-    stateStress=0;
+    stateStress.setValues< serialPolicy >( 0 );
     cw.HypoElastic( 0, 0, Ddt, Rot );
     stressSliceCheck( stateStress, stressV );
 
     voigtStrain( strainV, Ddt );
-    stateStress=0;
+    stateStress.setValues< serialPolicy >( 0 );
     cw.SmallStrain( 0, 0, strainV );
     stressSliceCheck( stateStress, stressV );
 
-    stateStress=0;
+    stateStress.setValues< serialPolicy >( 0 );
     cw.SmallStrainNoState( 0, strainV, stressV2 );
     stressCheck( stressV, stressV2 );
 
@@ -150,7 +150,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
+    stateStress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 1 ] = strain;
@@ -165,7 +165,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
+    stateStress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 2 ] = strain;
@@ -180,7 +180,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
+    stateStress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 5 ] = strain;
@@ -195,7 +195,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
+    stateStress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 4 ] = strain;
@@ -210,7 +210,7 @@ TEST( LinearElasticAnisotropicTests, testStateUpdatePoint )
   }
 
   {
-    stateStress = 0;
+    stateStress.setValues< serialPolicy >( 0 );
     LvArray::tensorOps::fill< 6 >( Ddt, 0 );
 
     Ddt[ 3 ] = strain;

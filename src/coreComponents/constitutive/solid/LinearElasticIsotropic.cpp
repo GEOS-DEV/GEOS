@@ -96,8 +96,8 @@ void LinearElasticIsotropic::AllocateConstitutiveData( dataRepository::Group * c
   m_bulkModulus.resize( parent->size() );
   m_shearModulus.resize( parent->size() );
 
-  m_bulkModulus = m_defaultBulkModulus;
-  m_shearModulus = m_defaultShearModulus;
+  m_bulkModulus.setValues< serialPolicy >( m_defaultBulkModulus );
+  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus );
 
 }
 

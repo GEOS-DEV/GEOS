@@ -23,8 +23,7 @@
 // PVTPackage includes
 #include "MultiphaseSystem/CompositionalMultiphaseSystem.hpp"
 
-
-using namespace PVTPackage;
+#include <map>
 
 namespace geosx
 {
@@ -37,13 +36,19 @@ namespace constitutive
 namespace
 {
 
-std::unordered_map< string, EOS_TYPE > const PVTPackage_eosDict =
+PVTPackage::EOS_TYPE getCompositionalEosType( string const & name )
 {
-  { "PR", EOS_TYPE::PENG_ROBINSON },
-  { "SRK", EOS_TYPE::REDLICH_KWONG_SOAVE }
-};
-
+  static std::map< string, PVTPackage::EOS_TYPE > const eosTypes =
+  {
+    { "PR", PVTPackage::EOS_TYPE::PENG_ROBINSON },
+    { "SRK", PVTPackage::EOS_TYPE::REDLICH_KWONG_SOAVE }
+  };
+  auto const it = eosTypes.find( name );
+  GEOSX_ERROR_IF( it == eosTypes.end(), "Compositional EOS type not supported by PVTPackage: " << name );
+  return it->second;
 }
+
+} // namespace
 
 CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( std::string const & name, Group * const parent )
   : MultiFluidPVTPackageWrapper( name, parent )
@@ -127,14 +132,14 @@ void CompositionalMultiphaseFluid::PostProcessInput()
   if( m_componentVolumeShift.empty())
   {
     m_componentVolumeShift.resize( NC );
-    m_componentVolumeShift = 0.0;
+    m_componentVolumeShift.setValues< serialPolicy >( 0.0 );
   }
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentVolumeShift, NC, viewKeyStruct::componentVolumeShiftString )
   //if (m_componentBinaryCoeff.empty()) TODO needs reading of 2D arrays
   {
     m_componentBinaryCoeff.resize( NC, NC );
-    m_componentBinaryCoeff = 0.0;
+    m_componentBinaryCoeff.setValues< serialPolicy >( 0.0 );
   }
 
   COMPFLUID_CHECK_INPUT_LENGTH( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString )
@@ -147,16 +152,11 @@ void CompositionalMultiphaseFluid::createFluid()
   localIndex const NC = numFluidComponents();
   localIndex const NP = numFluidPhases();
 
-  std::vector< EOS_TYPE > eos( NP );
+  std::vector< PVTPackage::EOS_TYPE > eos( NP );
+  std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(),
+                  []( string const & name ){ return getCompositionalEosType( name ); } );
 
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    auto it = PVTPackage_eosDict.find( m_equationsOfState[ip] );
-    GEOSX_ERROR_IF( it == PVTPackage_eosDict.end(), "Invalid eos name: " << m_equationsOfState[ip] );
-    eos[ip] = it->second;
-  }
-
-  std::vector< PHASE_TYPE > const phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
+  std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< std::string > const components( m_componentNames.begin(), m_componentNames.end() );
   std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
   std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
@@ -165,9 +165,10 @@ void CompositionalMultiphaseFluid::createFluid()
 
   ComponentProperties const compProps( NC, components, Mw, Tc, Pc, Omega );
 
-  m_fluid = std::make_unique< CompositionalMultiphaseSystem >( phases, eos,
-                                                               COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS,
-                                                               compProps );
+  m_fluid = std::make_unique< PVTPackage::CompositionalMultiphaseSystem >( phases,
+                                                                           eos,
+                                                                           PVTPackage::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS,
+                                                                           compProps );
 
 }
 

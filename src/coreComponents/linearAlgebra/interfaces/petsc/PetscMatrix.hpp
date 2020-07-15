@@ -85,6 +85,7 @@ public:
 
   using MatrixBase::createWithLocalSize;
   using MatrixBase::createWithGlobalSize;
+  using MatrixBase::create;
   using MatrixBase::closed;
   using MatrixBase::assembled;
   using MatrixBase::insertable;

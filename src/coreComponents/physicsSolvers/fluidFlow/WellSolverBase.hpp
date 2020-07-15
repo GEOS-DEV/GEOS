@@ -161,21 +161,12 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const meshBodies ) override;
 
-  virtual void SetupDofs( DomainPartition const * const domain,
+  virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
   virtual void ImplicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
-                                  DomainPartition * const domain,
-                                  DofManager & dofManager,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs,
-                                  ParallelVector & solution ) override;
-
-  virtual void ImplicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),
-                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                     DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override {}
-
+                                  DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -190,10 +181,10 @@ public:
    */
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
-                               DomainPartition * const domain,
+                               DomainPartition & domain,
                                DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -206,10 +197,10 @@ public:
    */
   virtual void AssembleFluxTerms( real64 const time_n,
                                   real64 const dt,
-                                  DomainPartition const * const domain,
-                                  DofManager const * const dofManager,
-                                  ParallelMatrix * const matrix,
-                                  ParallelVector * const rhs ) = 0;
+                                  DomainPartition const & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -222,10 +213,10 @@ public:
    */
   virtual void AssembleVolumeBalanceTerms( real64 const time_n,
                                            real64 const dt,
-                                           DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
-                                           ParallelMatrix * const matrix,
-                                           ParallelVector * const rhs ) = 0;
+                                           DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -234,22 +225,10 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void FormPressureRelations( DomainPartition const * const domain,
-                                      DofManager const * const dofManager,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs ) = 0;
-
-  /**
-   * @brief assembles the control equation for the first connection
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void FormControlEquation( DomainPartition const * const domain,
-                                    DofManager const * const dofManager,
-                                    ParallelMatrix * const matrix,
-                                    ParallelVector * const rhs ) = 0;
+  virtual void FormPressureRelations( DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -284,7 +263,7 @@ private:
    * @brief This function generates various discretization information for later use.
    * @param domain the domain parition
    */
-  void PrecomputeData( DomainPartition * const domain );
+  void PrecomputeData( DomainPartition & domain );
 
 protected:
   virtual void PostProcessInput() override;
@@ -296,19 +275,19 @@ protected:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( DomainPartition * const domain );
+  virtual void ResetViews( DomainPartition & domain );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  virtual void InitializeWells( DomainPartition * const domain ) = 0;
+  virtual void InitializeWells( DomainPartition & domain ) = 0;
 
   /**
    * @brief Check if the controls are viable; if not, switch the controls
    * @param domain the domain containing the well manager to access individual wells
    */
-  virtual void CheckWellControlSwitch( DomainPartition * const domain ) = 0;
+  //virtual void CheckWellControlSwitch( DomainPartition & domain ) = 0;
 
   /// name of the flow solver
   string m_flowSolverName;
@@ -323,7 +302,7 @@ protected:
   localIndex m_numDofPerResElement;
 
   /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_resGravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_resGravCoef;
 };
 
 }

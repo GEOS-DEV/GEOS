@@ -106,13 +106,6 @@ when ``ApplyBoundaryConditions()`` is called in this particular class override.
 Browsing the base class ``SolverBase``, it can be noted that most of the solver interface functions are called during
 either ``SolverBase::LinearImplicitStep()`` or ``SolverBase::NonLinearImplicitStep()`` depending on the solver strategy chosen.
 
-The next couple of methods are inlined getters whose name are self-explanatory.
-
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/simplePDE/LaplaceFEM.hpp
-   :language: c++
-   :start-after: //START_SPHINX_INCLUDE_05
-   :end-before: //END_SPHINX_INCLUDE_05
-
 Switching to protected members, ``PostProcessInput()`` is a central member function and
 will be called by ``Group`` object after input is read from XML entry file.
 It will set and dispatch solver variables from the base class ``BaseSolver`` to the most derived class.

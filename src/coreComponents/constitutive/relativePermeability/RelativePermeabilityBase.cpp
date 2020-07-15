@@ -77,7 +77,7 @@ void RelativePermeabilityBase::PostProcessInput()
 
   m_phaseTypes.resize( NP );
   m_phaseOrder.resize( PhaseType::MAX_NUM_PHASES );
-  m_phaseOrder = -1;
+  m_phaseOrder.setValues< serialPolicy >( -1 );
 
   for( localIndex ip = 0; ip < NP; ++ip )
   {
@@ -107,6 +107,18 @@ void RelativePermeabilityBase::AllocateConstitutiveData( dataRepository::Group *
 {
   ConstitutiveBase::AllocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   ResizeFields( parent->size(), numConstitutivePointsPerParentIndex );
+}
+
+void RelativePermeabilityBase::DeliverClone( string const & name,
+                                             Group * const parent,
+                                             std::unique_ptr< ConstitutiveBase > & clone ) const
+{
+  ConstitutiveBase::DeliverClone( name, parent, clone );
+  RelativePermeabilityBase & relPerm = dynamicCast< RelativePermeabilityBase & >( *clone );
+
+  relPerm.m_phaseNames = m_phaseNames;
+  relPerm.m_phaseTypes = m_phaseTypes;
+  relPerm.m_phaseOrder = m_phaseOrder;
 }
 
 } // namespace constitutive

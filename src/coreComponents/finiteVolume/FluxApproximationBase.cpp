@@ -20,6 +20,7 @@
 #include "FluxApproximationBase.hpp"
 
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
 
 namespace geosx
 {
@@ -65,52 +66,29 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::compute( DomainPartition & domain )
+void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
+  DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
+
+  // Compute the main cell-based stencil
   computeCellStencil( domain );
 
+  // For each boundary condition on target field, create a boundary stencil
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-
   fsManager.Apply( 0.0,
                    &domain,
                    "faceManager",
                    m_boundaryFieldName,
-                   [&] ( FieldSpecificationBase const * GEOSX_UNUSED_PARAM( bc ),
+                   [&] ( FieldSpecificationBase const *,
                          string const & setName,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group const * GEOSX_UNUSED_PARAM( targetGroup ),
-                         string const & GEOSX_UNUSED_PARAM( targetName ))
+                         SortedArrayView< localIndex const > const & faceSet,
+                         Group const *,
+                         string const & )
   {
-    Wrapper< BoundaryStencil > * stencil = this->registerWrapper< BoundaryStencil >( setName );
-    stencil->setRestartFlags( RestartFlags::NO_WRITE );
-    computeBoundaryStencil( domain, targetSet, stencil->reference() );
+    computeBoundaryStencil( domain, setName, faceSet );
   } );
-}
-
-
-FluxApproximationBase::BoundaryStencil const &
-FluxApproximationBase::getBoundaryStencil( string const & setName ) const
-{
-  return this->getReference< BoundaryStencil >( setName );
-}
-
-FluxApproximationBase::BoundaryStencil &
-FluxApproximationBase::getBoundaryStencil( string const & setName )
-{
-  return this->getReference< BoundaryStencil >( setName );
-}
-
-bool FluxApproximationBase::hasBoundaryStencil( string const & setName ) const
-{
-  return this->hasWrapper( setName );
-}
-
-void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
-{
-  DomainPartition const * domain = rootGroup->GetGroup< DomainPartition >( keys::domain );
-  compute( const_cast< DomainPartition & >( *domain ) ); // hack, but guaranteed we won't modify it....is it though?
 }
 
 } //namespace geosx
