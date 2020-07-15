@@ -136,7 +136,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   for( k = 0; k <= m_maxIterations && m_result.status == LinearSolverResult::Status::NotConverged; )
   {
     // Re-initialize Krylov subspace
-    g = 0.0;
+    g.setValues< serialPolicy >( 0.0 );
     g[0] = r.norm2();
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 

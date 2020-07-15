@@ -28,6 +28,74 @@ namespace geosx
 namespace constitutive
 {
 
+class RelativePermeabilityBaseUpdate
+{
+public:
+
+  /**
+   * @brief Get number of elements in this wrapper.
+   * @return number of elements
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numElems() const { return m_phaseRelPerm.size( 0 ); }
+
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_phaseRelPerm.size( 1 ); }
+
+  /**
+   * @brief Get number of fluid phases.
+   * @return number of phases
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numPhases() const { return m_phaseTypes.size(); }
+
+protected:
+
+  RelativePermeabilityBaseUpdate( arrayView1d< integer const > const & phaseTypes,
+                                  arrayView1d< integer const > const & phaseOrder,
+                                  arrayView3d< real64 > const & phaseRelPerm,
+                                  arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac )
+    : m_phaseTypes( phaseTypes ),
+    m_phaseOrder( phaseOrder ),
+    m_phaseRelPerm( phaseRelPerm ),
+    m_dPhaseRelPerm_dPhaseVolFrac( dPhaseRelPerm_dPhaseVolFrac )
+  {}
+
+  /// Default copy constructor
+  RelativePermeabilityBaseUpdate( RelativePermeabilityBaseUpdate const & ) = default;
+
+  /// Default move constructor
+  RelativePermeabilityBaseUpdate( RelativePermeabilityBaseUpdate && ) = default;
+
+  /// Deleted copy assignment operator
+  RelativePermeabilityBaseUpdate & operator=( RelativePermeabilityBaseUpdate const & ) = delete;
+
+  /// Deleted move assignment operator
+  RelativePermeabilityBaseUpdate & operator=( RelativePermeabilityBaseUpdate && ) = delete;
+
+  arrayView1d< integer const > m_phaseTypes;
+  arrayView1d< integer const > m_phaseOrder;
+
+  arrayView3d< real64 > m_phaseRelPerm;
+  arrayView4d< real64 > m_dPhaseRelPerm_dPhaseVolFrac;
+
+private:
+
+  GEOSX_HOST_DEVICE
+  virtual void Compute( arraySlice1d< real64 const > const & phaseVolFraction,
+                        arraySlice1d< real64 > const & phaseRelPerm,
+                        arraySlice2d< real64 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
+
+  GEOSX_HOST_DEVICE
+  virtual void Update( localIndex const k,
+                       localIndex const q,
+                       arraySlice1d< real64 const > const & phaseVolFraction ) const = 0;
+};
+
 class RelativePermeabilityBase : public ConstitutiveBase
 {
 public:
@@ -54,69 +122,37 @@ public:
     static constexpr integer OIL   = 1; // second oil phase property
   };
 
-
-
   RelativePermeabilityBase( std::string const & name, dataRepository::Group * const parent );
 
   virtual ~RelativePermeabilityBase() override;
 
+  void DeliverClone( string const & name,
+                     Group * const parent,
+                     std::unique_ptr< ConstitutiveBase > & clone ) const override;
+
   virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  /**
-   * @brief Function to update state of a single material point.
-   * @param[in] phaseVolFraction input phase volume fraction
-   * @param[in] k the first index of the storage arrays (elem index)
-   * @param[in] q the secound index of the storage arrays (quadrature index)
-   *
-   * @note This function performs a point update, but should not be called
-   *       within a kernel since it is virtual, and the required data is not
-   *       guaranteed to be in the target memory space.
-   */
-  virtual void PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                            localIndex const k,
-                            localIndex const q ) = 0;
-
-  /**
-   * @brief Perform a batch constitutive update (all points).
-   * @param[in] phaseVolFraction input phase volume fraction
-   */
-  virtual void BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction ) = 0;
-
   localIndex numFluidPhases() const { return m_phaseNames.size(); }
 
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  arrayView1d< string const > const & phaseNames() const { return m_phaseNames; }
 
-  arrayView3d< real64 const > phaseRelPerm() const { return m_phaseRelPerm; }
-  arrayView4d< real64 const > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
+  arrayView3d< real64 const > const & phaseRelPerm() const { return m_phaseRelPerm; }
+  arrayView4d< real64 const > const & dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
-    static constexpr auto phaseNamesString     = "phaseNames";
-    static constexpr auto phaseTypesString     = "phaseTypes";
-    static constexpr auto phaseOrderString     = "phaseTypes";
+    static constexpr auto phaseNamesString = "phaseNames";
+    static constexpr auto phaseTypesString = "phaseTypes";
+    static constexpr auto phaseOrderString = "phaseTypes";
 
     static constexpr auto phaseRelPermString                    = "phaseRelPerm";                    // Kr
     static constexpr auto dPhaseRelPerm_dPhaseVolFractionString = "dPhaseRelPerm_dPhaseVolFraction"; // dKr_p/dS_p
   } viewKeysRelativePermeabilityBase;
 
 protected:
-  virtual void PostProcessInput() override;
 
-  /**
-   * @brief Function to batch process constitutive updates via a kernel launch.
-   * @tparam LEAFCLASS The derived class that provides the functions for use
-   *                   in the kernel
-   * @tparam ARGS Parameter pack for arbitrary number of arbitrary types for
-   *              the function parameter list
-   * @param phaseVolumeFraction array containing the phase volume fraction,
-   *                            which is input to the update.
-   * @param args arbitrary number of arbitrary types that are passed to the
-   *             kernel
-   */
-  template< typename LEAFCLASS, typename POLICY=serialPolicy, typename ... ARGS >
-  void BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
-                          ARGS && ... args );
+  virtual void PostProcessInput() override;
 
   /**
    * @brief Function called internally to resize member arrays
@@ -135,34 +171,7 @@ protected:
   // output quantities
   array3d< real64 >  m_phaseRelPerm;
   array4d< real64 >  m_dPhaseRelPerm_dPhaseVolFrac;
-
-
 };
-
-
-template< typename LEAFCLASS, typename POLICY, typename ... ARGS >
-void RelativePermeabilityBase::BatchUpdateKernel( arrayView2d< real64 const > const & phaseVolumeFraction,
-                                                  ARGS && ... args )
-{
-  localIndex const numElem = m_phaseRelPerm.size( 0 );
-  localIndex const numQ = m_phaseRelPerm.size( 1 );
-  localIndex const NP = numFluidPhases();
-
-  arrayView3d< real64 > const & phaseRelPerm = m_phaseRelPerm;
-  arrayView4d< real64 > const & dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac;
-
-  forAll< POLICY >( numElem, [=] ( localIndex const k )
-  {
-    for( localIndex q=0; q<numQ; ++q )
-    {
-      LEAFCLASS::Compute( NP,
-                          phaseVolumeFraction[k],
-                          phaseRelPerm[k][q],
-                          dPhaseRelPerm_dPhaseVolFrac[k][q],
-                          args ... );
-    }
-  } );
-}
 
 } // namespace constitutive
 
