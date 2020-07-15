@@ -661,7 +661,8 @@ int SurfaceGenerator::SeparationDriver( DomainPartition * domain,
       FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
 
       // when there is only one fractured element, we use
-      // the original SIF-based approach to identify new fracture elmt
+      // the original SIF-based approach to identify new fracture elmt (06/05/2020)
+      // we abandon the original SIF based approach and only use the tip location-based approach
       if (subRegion->size() < 0 )
       {
 	IdentifyRupturedFaces( domain,
