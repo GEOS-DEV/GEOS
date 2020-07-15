@@ -103,12 +103,10 @@ public:
    * @brief Add an entry to the stencil.
    * @param[in] numPts The number of points in the stencil entry
    * @param[in] cellCenterToEdgeCenter vectors pointing from the cell center to the edge center
-   * @param[in] isGhostConnector flag to identify ghost connectors
    * @param[in] connectorIndex The index of the connector element that the stencil acts across
    */
   void add( localIndex const numPts,
             R1Tensor const * const cellCenterToEdgeCenter,
-            integer const * const isGhostConnector,
             localIndex const connectorIndex );
 
   /**
@@ -133,18 +131,9 @@ public:
   ArrayOfArraysView< R1Tensor const > const & getCellCenterToEdgeCenters() const
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
-  /**
-   * @brief Give the array of flags identifying ghost connectors.
-   * @return The array of flags identifying ghost connectors
-   */
-  ArrayOfArraysView< integer const > const & getIsGhostConnectors() const
-  { return m_isGhostConnectors.toViewConst(); }
-
-
 private:
 
   ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
-  ArrayOfArrays< integer > m_isGhostConnectors;
 
 };
 
