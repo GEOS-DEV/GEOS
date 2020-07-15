@@ -16,8 +16,8 @@
  * @file SinglePhaseWell.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELL_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELL_HPP_
 
 #include "WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -103,29 +103,29 @@ public:
   /**@{*/
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
+  CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain ) override;
+                        DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -161,10 +161,10 @@ public:
    */
   void AssembleFluxTerms( real64 const time_n,
                           real64 const dt,
-                          DomainPartition const * const domain,
-                          DofManager const * const dofManager,
-                          ParallelMatrix * const matrix,
-                          ParallelVector * const rhs ) override;
+                          DomainPartition const & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the volume balance terms for all well elements
@@ -177,10 +177,10 @@ public:
    */
   virtual void AssembleVolumeBalanceTerms( real64 const time_n,
                                            real64 const dt,
-                                           DomainPartition const * const domain,
-                                           DofManager const * const dofManager,
-                                           ParallelMatrix * const matrix,
-                                           ParallelVector * const rhs ) override;
+                                           DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -189,23 +189,10 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void FormPressureRelations( DomainPartition const * const domain,
-                                      DofManager const * const dofManager,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs ) override;
-
-  /**
-   * @brief assembles the control equation for the well head (first connection)
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void FormControlEquation( DomainPartition const * const domain,
-                                    DofManager const * const dofManager,
-                                    ParallelMatrix * const matrix,
-                                    ParallelVector * const rhs ) override;
-
+  virtual void FormPressureRelations( DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override;
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -244,40 +231,28 @@ private:
    * @brief Setup stored reservoir views into domain data for the current step
    * @param domain the domain containing the well manager to access individual wells
    */
-  void ResetViews( DomainPartition * const domain ) override;
+  void ResetViews( DomainPartition & domain ) override;
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void InitializeWells( DomainPartition * const domain ) override;
-
-  /**
-   * @brief Check if the controls are viable; if not, switch the controls
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void CheckWellControlSwitch( DomainPartition * const domain ) override;
-
-  /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
-   */
-  void RecordWellData( WellElementSubRegion const & subRegion );
+  void InitializeWells( DomainPartition & domain ) override;
 
 private:
 
   /// views into reservoir primary variable fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > m_deltaResPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
 
   /// views into reservoir material fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResDens_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resDensity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDens_dPres;
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_resViscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 > > m_dResVisc_dPres;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resViscosity;
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResVisc_dPres;
 
 };
 
