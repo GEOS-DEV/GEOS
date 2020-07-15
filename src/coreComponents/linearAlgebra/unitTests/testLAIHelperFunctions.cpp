@@ -118,7 +118,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
   arrayView1d< globalIndex const > const & nodeLocalToGlobal = nodeManager->localToGlobalMap();
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array Region;
   Region.emplace_back( "region1" );
@@ -183,7 +183,7 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
   ElementRegionManager * const elemManager = meshLevel->getElemManager();;
 
   DofManager dofManager( "test" );
-  dofManager.setMesh( domain, 0, 0 );
+  dofManager.setMesh( *domain, 0, 0 );
 
   string_array region;
   region.emplace_back( "region1" );

@@ -78,6 +78,7 @@ public:
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
@@ -96,8 +97,9 @@ public:
                FiniteElementBase const * const finiteElementSpace,
                CONSTITUTIVE_TYPE * const inputConstitutiveType,
                arrayView1d< globalIndex const > const & inputDofNumber,
-               ParallelMatrix & inputMatrix,
-               ParallelVector & inputRhs,
+               globalIndex const rankOffset,
+               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+               arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -106,6 +108,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs ),
     m_disp( nodeManager.totalDisplacement()),
@@ -139,10 +142,10 @@ public:
     {}
 
     /// Stack storage for the element local nodal displacement
-    real64 u_local[ numNodesPerElem ][ 3 ];
+    real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the element local nodal incremental displacement
-    real64 uhat_local[ numNodesPerElem ][ 3 ];
+    real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
     real64 constitutiveStiffness[ 6 ][ 6 ];
@@ -353,32 +356,32 @@ public:
   /**
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
-    real64 meanForce = 0;
-    for( localIndex a=0; a<stack.numRows; ++a )
+    real64 maxForce = 0;
+
+    for( int localNode = 0; localNode < NUM_NODES_PER_ELEM; ++localNode )
     {
-//        RAJA::atomicMax< RAJA::auto_atomic >( &meanForce, stack.localResidual[a] );
-      meanForce = std::max( meanForce, stack.localResidual[a] );
-//                meanForce += fabs( stack.localResidual[a] );
+      for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ numDofPerTestSupportPoint * localNode + dim ] - m_dofRankOffset );
+        if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+        m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                                stack.localRowDofIndex,
+                                                                                stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
+                                                                                NUM_NODES_PER_ELEM * numDofPerTrialSupportPoint );
+
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
+        maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
+      }
     }
-//            meanForce /= stack.ndof;
 
-    m_matrix.add( stack.localRowDofIndex,
-                  stack.localColDofIndex,
-                  &(stack.localJacobian[0][0]),
-                  stack.numRows,
-                  stack.numCols );
 
-    m_rhs.add( stack.localRowDofIndex,
-               stack.localResidual,
-               stack.numRows );
-
-    return meanForce;
+    return maxForce;
   }
 
 

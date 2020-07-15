@@ -47,8 +47,7 @@ template< typename SUBREGION_TYPE,
           int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
           int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
-          int NUM_DOF_PER_TRIAL_SP,
-          typename CRS_TYPE = ParallelMatrix >
+          int NUM_DOF_PER_TRIAL_SP >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
                                               NUM_TEST_SUPPORT_POINTS_PER_ELEM,
@@ -78,6 +77,7 @@ public:
    * @param edgeManager Reference to the EdgeManager object.
    * @param faceManager Reference to the FaceManager object.
    * @param inputDofNumber The dof number for the primary field.
+   * @param rankOffset dof index offset of current rank
    * @param inputMatrix Reference to the Jacobian matrix.
    * @param inputRhs Reference to the RHS vector.
    * @copydoc geosx::finiteElement::KernelBase::KernelBase
@@ -89,12 +89,14 @@ public:
                       FiniteElementBase const * const finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
-                      CRS_TYPE & inputMatrix,
-                      ParallelVector & inputRhs ):
+                      globalIndex const rankOffset,
+                      CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                      arrayView1d< real64 > const & inputRhs ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_dofNumber( inputDofNumber ),
+    m_dofRankOffset( rankOffset ),
     m_matrix( inputMatrix ),
     m_rhs( inputRhs )
   {
@@ -181,11 +183,14 @@ protected:
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_dofNumber;
 
+  /// The global rank offset
+  globalIndex const m_dofRankOffset;
+
   /// The global Jacobian matrix.
-  CRS_TYPE & m_matrix;
+  CRSMatrixView< real64, globalIndex const > const m_matrix;
 
   /// The global residaul vector.
-  ParallelVector & m_rhs;
+  arrayView1d< real64 > const m_rhs;
 
 };
 

@@ -21,6 +21,7 @@
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/IntegerConversion.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 
@@ -911,7 +912,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   var.resize( length );
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )
@@ -974,7 +975,7 @@ Unpack( buffer_unit_type const * & buffer,
 
   var.resizeArray( subArrayIndex, length );
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )
@@ -1021,7 +1022,7 @@ Unpack( buffer_unit_type const * & buffer,
   GEOSX_DEBUG_VAR( expectedLength );
 
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )

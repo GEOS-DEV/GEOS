@@ -88,7 +88,7 @@ void CommunicationTools::AssignGlobalIndices( ObjectManagerBase & object,
 {
   GEOSX_MARK_FUNCTION;
   integer_array & ghostRank = object.getReference< integer_array >( object.m_ObjectManagerBaseViewKeys.ghostRank );
-  ghostRank = -2;
+  ghostRank.setValues< serialPolicy >( -2 );
 
   int const commRank = MpiWrapper::Comm_rank();
 

@@ -103,9 +103,6 @@ public:
    */
   static typename CatalogInterface::CatalogType & GetCatalog();
 
-  /// Alias for stored stencil types
-  using BoundaryStencil = FluxStencil< PointDescriptor, real64 >;
-
   FluxApproximationBase() = delete;
 
   /**
@@ -114,25 +111,6 @@ public:
    * @param parent the parent group of this group.
    */
   FluxApproximationBase( string const & name, dataRepository::Group * const parent );
-
-  /**
-   * @brief Return a boundary stencil by face set name.
-   * @param[in] setName the face set name
-   * @return the boundary stencil by face set name
-   */
-  BoundaryStencil const & getBoundaryStencil( string const & setName ) const;
-
-  /**
-   * @copydoc getBoundaryStencil( string const & ) const
-   */
-  BoundaryStencil & getBoundaryStencil( string const & setName );
-
-  /**
-   * @brief Check if a stencil exists.
-   * @param[in] setName the face set name
-   * @return true if a stencil exists
-   */
-  bool hasBoundaryStencil( string const & setName ) const;
 
   /**
    * @brief Call a user-provided function for each stencil.
@@ -151,20 +129,6 @@ public:
    */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
   void forStencils( LAMBDA && lambda ) const;
-
-  /**
-   * @brief Call a user-provided function for each boundary stencil.
-   * @tparam LAMBDA The type of lambda function passed into the parameter list.
-   * @param[in] lambda The LAMBDA function
-   */
-  template< typename LAMBDA >
-  void forBoundaryStencils( LAMBDA && lambda ) const;
-
-  /**
-   * @brief Triggers computation of the stencil, implemented in derived classes.
-   * @param[in,out] domain The domain on which to perform the stencil computation
-   */
-  void compute( DomainPartition & domain );
 
   /**
    * @brief Add a new fracture stencil.
@@ -231,14 +195,14 @@ protected:
   virtual void computeCellStencil( DomainPartition const & domain ) = 0;
 
   /**
-   * @brief Actual computation of the boundary stencil, to be overridden by implementations.
-   * @param[in] domain the domain on which to perform the computation
-   * @param[in] faceSet set of faces
-   * @param[out] stencil the boundary stencil
+   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @param domain the target domain
+   * @param setName name of the face set, to be used as wrapper name for the produced stencil
+   * @param faceSet set of face indices to use
    */
   virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView< localIndex const > const & faceSet,
-                                       BoundaryStencil & stencil ) = 0;
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) = 0;
 
   /// name of the primary solution field
   string m_fieldName;
@@ -271,16 +235,6 @@ template< typename TYPE, typename ... TYPES, typename LAMBDA >
 void FluxApproximationBase::forStencils( LAMBDA && lambda ) const
 {
   this->forWrappers< TYPE, TYPES... >( [&] ( auto const & wrapper )
-  {
-    lambda( wrapper.reference());
-  } );
-}
-
-
-template< typename LAMBDA >
-void FluxApproximationBase::forBoundaryStencils( LAMBDA && lambda ) const
-{
-  this->forWrappers< BoundaryStencil >( [&] ( auto const & wrapper )
   {
     lambda( wrapper.reference());
   } );

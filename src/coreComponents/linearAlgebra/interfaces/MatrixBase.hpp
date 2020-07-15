@@ -21,6 +21,7 @@
 
 #include "linearAlgebra/common.hpp"
 #include "linearAlgebra/interfaces/LinearOperator.hpp"
+//#include "LvArray/src/streamIO.hpp"
 
 namespace geosx
 {
@@ -212,6 +213,40 @@ protected:
                         globalIndex const globalCols,
                         localIndex const maxEntriesPerRow,
                         MPI_Comm const & comm ) = 0;
+
+  /**
+   * @brief Create parallel matrix from a local CRS matrix.
+   * @param localMatrix The input local matrix.
+   * @param comm The MPI communicator to use.
+   *
+   * @note Copies values, so that @p localMatrix does not need to retain its values after the call.
+   * @todo Replace generic implementation with more efficient ones in each package.
+   */
+  virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
+                       MPI_Comm const & comm )
+  {
+    localMatrix.move( LvArray::MemorySpace::CPU, false );
+
+    localIndex maxEntriesPerRow = 0;
+    for( localIndex i = 0; i < localMatrix.numRows(); ++i )
+    {
+      maxEntriesPerRow = std::max( maxEntriesPerRow, localMatrix.numNonZeros( i ) );
+    }
+
+    createWithLocalSize( localMatrix.numRows(),
+                         localMatrix.numRows(),
+                         maxEntriesPerRow,
+                         comm );
+
+    globalIndex const rankOffset = ilower();
+
+    open();
+    for( localIndex localRow = 0; localRow < localMatrix.numRows(); ++localRow )
+    {
+      insert( localRow + rankOffset, localMatrix.getColumns( localRow ), localMatrix.getEntries( localRow ) );
+    }
+    close();
+  }
 
   ///@}
 
@@ -910,6 +945,6 @@ protected:
 
 };
 
-}
+} // namespace geosx
 
 #endif //GEOSX_LINEARALGEBRA_INTERFACES_MATRIXBASE_HPP_

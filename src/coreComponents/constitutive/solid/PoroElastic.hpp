@@ -95,10 +95,14 @@ public:
     m_poreVolumeRelation.Compute( pres, m_poreVolumeMultiplier[k][q], m_dPVMult_dPressure[k][q] );
   }
 
+  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+                                         arrayView1d< real64 const > const & dPres ) override final;
+
   KernelWrapper createKernelUpdates()
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_biotCoefficient );
   }
+
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {

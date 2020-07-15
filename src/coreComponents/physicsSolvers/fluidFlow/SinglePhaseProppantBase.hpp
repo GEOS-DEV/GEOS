@@ -54,24 +54,19 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void UpdateState( Group & dataGroup, localIndex const targetIndex ) const override;
-
   virtual void UpdateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
-
-  struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
-  {
-    static constexpr auto transTMultString = "transTMult";
-    static constexpr auto poroMultString = "poroMult";
-
-  } viewKeysSinglePhaseProppantBase;
 
 protected:
 
   virtual void ValidateFluidModels( DomainPartition const & domain ) const override;
 
+  virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
+
+  virtual arrayView1d< real64 const > const & getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const override;
+
 private:
 
-  virtual void ResetViewsPrivate( ElementRegionManager * const elemManager ) override;
+  virtual void ResetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

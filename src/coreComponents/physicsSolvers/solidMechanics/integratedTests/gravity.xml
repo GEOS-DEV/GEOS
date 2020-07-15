@@ -5,7 +5,7 @@
   <!-- With this value of g, the stress matches what we'd expect with the correct value: -12998.1 -->
   <Solvers gravityVector="0.0,0.0,-9.81">
     <SolidMechanicsLagrangianSSLE name="lagsolve" timeIntegrationOption="QuasiStatic" logLevel="0" discretization="FE1" targetRegions="{Region2}" solidMaterialNames="{rock}">
-      <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="5"/>
+      <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="5"/>
       <LinearSolverParameters solverType="gmres" krylovTol="1.0e-10" logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>

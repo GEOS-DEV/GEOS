@@ -102,7 +102,7 @@ void DomainPartition::GenerateSets()
   {
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
-    nodeInSet[name] = false;
+    nodeInSet[name].setValues< serialPolicy >( false );
     Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets->getWrapper< SortedArray< localIndex > >( name );
     if( setPtr!=nullptr )
     {

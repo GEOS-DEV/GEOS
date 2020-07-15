@@ -107,12 +107,14 @@ void PetscVector::createWithGlobalSize( globalIndex const globalSize, MPI_Comm c
   GEOSX_LAI_CHECK_ERROR( VecSetSizes( m_vec, PETSC_DECIDE, globalSize ) );
 }
 
-void PetscVector::create( arraySlice1d< real64 const > const & localValues, MPI_Comm const & comm )
+void PetscVector::create( arrayView1d< real64 const > const & localValues, MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
   reset();
   PetscInt const size = localValues.size();
   PetscScalar * values;
+
+  localValues.move( LvArray::MemorySpace::CPU, false );
 
   GEOSX_LAI_CHECK_ERROR( VecCreate( comm, &m_vec ) );
   GEOSX_LAI_CHECK_ERROR( VecSetType( m_vec, VECMPI ) );

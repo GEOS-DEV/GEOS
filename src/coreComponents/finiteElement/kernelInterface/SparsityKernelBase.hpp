@@ -51,8 +51,7 @@ class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                                       NUM_DOF_PER_TEST_SP,
-                                                      NUM_DOF_PER_TRIAL_SP,
-                                                      ParallelMatrix >
+                                                      NUM_DOF_PER_TRIAL_SP >
 {
 public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::ImplicitKernelBase)
@@ -63,19 +62,22 @@ public:
                                    NUM_DOF_PER_TEST_SP,
                                    NUM_DOF_PER_TRIAL_SP >;
 
-  using Base::numTestSupportPointsPerElem;
-  using Base::numTrialSupportPointsPerElem;
-  using Base::numDofPerTestSupportPoint;
-  using Base::numDofPerTrialSupportPoint;
-  using Base::m_elemsToNodes;
-  using Base::m_matrix;
 
   using typename Base::StackVariables;
+  using Base::m_dofRankOffset;
+
   using Base::setup;
 
-
   /**
-   * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
+   * @brief Constructor
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param inputDofNumber The dof number for the primary field.
+   * @param rankOffset dof index offset of current rank
+   * @param inputSparsity The sparsity pattern to fill.
+   * @param rowSizes The array that will be filled with row sizes.
+   * @copydoc geosx::finiteElement::KernelBase::KernelBase
    */
   SparsityKernelBase( NodeManager const & nodeManager,
                       EdgeManager const & edgeManager,
@@ -84,8 +86,9 @@ public:
                       FiniteElementBase const * const finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
-                      ParallelMatrix & inputMatrix,
-                      ParallelVector & inputRhs ):
+                      globalIndex const rankOffset,
+                      SparsityPattern< globalIndex > & inputSparsity,
+                      arrayView1d< localIndex > const & rowSizes ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -93,8 +96,11 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
-          inputMatrix,
-          inputRhs )
+          rankOffset,
+          CRSMatrix< real64, globalIndex >().toViewConstSizes(),
+          array1d< real64 >().toView() ),
+    m_sparsity( inputSparsity ),
+    m_rowSizes( rowSizes )
   {}
 
 
@@ -104,20 +110,28 @@ public:
    * In this implementation, only the matrix values are inserted, making this
    * implementation appropriate for generating the sparsity pattern.
    */
-//    GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
-    m_matrix.insert( stack.localRowDofIndex,
-                     stack.localColDofIndex,
-                     &(stack.localJacobian[0][0]),
-                     stack.numRows,
-                     stack.numCols );
+
+    for( localIndex r=0; r<stack.numRows; ++r )
+    {
+      localIndex const row = stack.localRowDofIndex[r] - m_dofRankOffset;
+      if( row < 0 || row >= m_sparsity.numRows() ) continue;
+      for( localIndex c=0; c<stack.numCols; ++c )
+      {
+        m_sparsity.insertNonZero( row,
+                                  stack.localColDofIndex[c] );
+      }
+    }
     return 0;
   }
+private:
+  SparsityPattern< globalIndex > & m_sparsity;
 
+  arrayView1d< localIndex > const & m_rowSizes;
 };
 
 
@@ -159,7 +173,8 @@ struct SparsityHelper
                                      KERNEL_TEMPLATE< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
                                                       NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint >;
+                                                      NUM_TRIAL_SUPPORT_POINTS_PER_ELEM >::numDofPerTrialSupportPoint
+                                     >;
 };
 
 
@@ -179,8 +194,9 @@ struct SparsityHelper
  * @param feDiscretization A pointer to the finite element discretization/space
  *                         object.
  * @param inputDofNumber The global degree of freedom numbers.
- * @param inputMatrix The global Jacobian Matrix.
- * @param inputRhs The global residual vector (unused)....perhaps remove?
+ * @param rankOffset Offset of dof indices on curren rank.
+ * @param inputSparsityPattern The local sparsity pattern to fill.
+ * @param rowSizes The array of local row sizes to be populated
  * @return 0
  *
  * Fills matrix sparsity using information from physics specific implementation
@@ -200,24 +216,24 @@ real64 fillSparsity( MeshLevel & mesh,
                      arrayView1d< string const > const & targetRegions,
                      FiniteElementDiscretization const * const feDiscretization,
                      arrayView1d< globalIndex const > const & inputDofNumber,
-                     ParallelMatrix & inputMatrix,
-                     ParallelVector & inputRhs )
+                     globalIndex const rankOffset,
+                     SparsityPattern< globalIndex > & inputSparsityPattern,
+                     arrayView1d< localIndex > const & rowSizes )
 {
-  real64 rval = 0;
+  regionBasedKernelApplication< POLICY,
+                                constitutive::NullModel,
+                                REGION_TYPE,
+                                SparsityHelper< KERNEL_TEMPLATE >::template Kernel
+                                >( mesh,
+                                   targetRegions,
+                                   array1d< string >(),
+                                   feDiscretization,
+                                   inputDofNumber,
+                                   rankOffset,
+                                   inputSparsityPattern,
+                                   rowSizes );
 
-  rval = regionBasedKernelApplication< POLICY,
-                                       constitutive::NullModel,
-                                       REGION_TYPE,
-                                       SparsityHelper< KERNEL_TEMPLATE >::template Kernel
-                                       >( mesh,
-                                          targetRegions,
-                                          array1d< string >(),
-                                          feDiscretization,
-                                          inputDofNumber,
-                                          inputMatrix,
-                                          inputRhs );
-
-  return rval;
+  return 0;
 }
 
 }
