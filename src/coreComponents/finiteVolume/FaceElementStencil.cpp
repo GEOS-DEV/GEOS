@@ -25,6 +25,11 @@ FaceElementStencil::FaceElementStencil():
   StencilBase< FaceElementStencil_Traits, FaceElementStencil >()
 {}
 
+void FaceElementStencil::move( LvArray::MemorySpace const space )
+{
+  StencilBase< FaceElementStencil_Traits, FaceElementStencil >::move( space );
+  m_cellCenterToEdgeCenters.move( space, true );
+}
 
 void FaceElementStencil::add( localIndex const numPts,
                               localIndex const * const elementRegionIndices,
@@ -62,7 +67,6 @@ void FaceElementStencil::add( localIndex const numPts,
 
 void FaceElementStencil::add( localIndex const numPts,
                               R1Tensor const * const cellCenterToEdgeCenter,
-                              integer const * const isGhostConnectors,
                               localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
@@ -79,15 +83,10 @@ void FaceElementStencil::add( localIndex const numPts,
     {
       m_cellCenterToEdgeCenters.clearArray( stencilIndex );
       m_cellCenterToEdgeCenters.appendToArray( stencilIndex, cellCenterToEdgeCenter, cellCenterToEdgeCenter + numPts );
-
-      m_isGhostConnectors.clearArray( stencilIndex );
-      m_isGhostConnectors.appendToArray( stencilIndex, isGhostConnectors, isGhostConnectors + numPts );
-
     }
     else
     {
       m_cellCenterToEdgeCenters.appendArray( cellCenterToEdgeCenter, cellCenterToEdgeCenter + numPts );
-      m_isGhostConnectors.appendArray( isGhostConnectors, isGhostConnectors + numPts );
     }
   }
 }

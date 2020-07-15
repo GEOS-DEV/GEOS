@@ -216,6 +216,11 @@ void ProblemManager::ParseCommandLineInput()
       }
     }
   }
+
+  if( opts.suppressMoveLogging )
+  {
+    chai::ArrayManager::getInstance()->disableCallbacks();
+  }
 }
 
 
@@ -644,7 +649,7 @@ void ProblemManager::ApplyNumericalMethods()
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group * const meshBodies = domain->getMeshBodies();
 
-  map< std::pair<string,string>, localIndex > regionQuadrature;
+  map< std::pair< string, string >, localIndex > regionQuadrature;
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
@@ -680,13 +685,13 @@ void ProblemManager::ApplyNumericalMethods()
 
           if( feDiscretization != nullptr )
           {
-            elemRegion->forElementSubRegions< CellElementSubRegion>( [&]( auto & subRegion )
+            elemRegion->forElementSubRegions< CellElementSubRegion >( [&]( auto & subRegion )
             {
               string const elementTypeString = subRegion.GetElementTypeString();
               finiteElement::dispatch( elementTypeString,
                                        [&] ( auto const finiteElement )
               {
-                using FE_TYPE = TYPEOFREF(finiteElement);
+                using FE_TYPE = TYPEOFREF( finiteElement );
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
                 feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
@@ -694,8 +699,8 @@ void ProblemManager::ApplyNumericalMethods()
                                                                                            subRegion.getName() ) ];
 
                 numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-              });
-            });
+              } );
+            } );
           }
           else //if( fvFluxApprox != nullptr )
           {
@@ -705,7 +710,7 @@ void ProblemManager::ApplyNumericalMethods()
                                                                                          subRegion.getName() ) ];
               localIndex const numQuadraturePoints = 1;
               numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-            });
+            } );
           }
 
         }
@@ -744,7 +749,7 @@ void ProblemManager::ApplyNumericalMethods()
         {
           GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<") does not have a discretization associated with it." );
         }
-      });
+      } );
     }
   }
 }

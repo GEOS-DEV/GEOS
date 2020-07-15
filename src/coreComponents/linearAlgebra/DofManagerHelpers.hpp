@@ -464,7 +464,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
 
     // create an array to track previously visited locations (to avoid multiple visits)
     array1d< bool > locationsVisited( objectManager.size() );
-    locationsVisited = false;
+    locationsVisited.setValues< serialPolicy >( false );
 
     // create (and overallocate) an array to collect indicies to visit
     array1d< localIndex > locationsToVisit{};

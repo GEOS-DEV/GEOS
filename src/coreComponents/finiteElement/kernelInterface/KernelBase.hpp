@@ -134,11 +134,11 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
       lambda( std::integral_constant< INTEGRAL_TYPE, 4 >() );
       break;
     }
-    case 5:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
-      break;
-    }
+//    case 5:
+//    {
+//      lambda( std::integral_constant< INTEGRAL_TYPE, 5 >() );
+//      break;
+//    }
     case 6:
     {
       lambda( std::integral_constant< INTEGRAL_TYPE, 6 >() );
@@ -154,6 +154,52 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
   }
 }
 
+
+/**
+ * @brief Call a lambda function (callback) with an integral_constant
+ *        conversion of the input integral type to allow for static
+ *        dispatch.
+ * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
+ * @tparam LAMBDA The type of @p lambda to execute.
+ * @param input The integer to convert to an integral_constant.
+ * @param lambda The generic lambda function (takes the integral_constant as
+ *               a parameter) that will be executed.
+ *
+ * Implements a switchyard to convert the value of @p input to an
+ * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
+ * This allows a runtime @p input to be dispatched as a compile time constant.
+ * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
+ * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
+ *
+ *     int value = 1;
+ *     integralTypeDispatch( 1, [&]( auto const constValueType )
+ *     {
+ *       static constexpr int constValue = decltype( constValueType )::value;
+ *
+ *       func< constValue >(...);
+ *     };
+ */
+template< typename INTEGRAL_TYPE, typename LAMBDA >
+void
+quadtratureDispatch( INTEGRAL_TYPE const input,
+                     LAMBDA && lambda )
+{
+  switch( input )
+  {
+    case 1:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
+      break;
+    }
+    case 8:
+    {
+      lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
+      break;
+    }
+    default:
+      GEOSX_ERROR( "quadtratureDispatch() is not implemented for value of: "<<input );
+  }
+}
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -393,6 +439,8 @@ public:
                 KERNEL_TYPE const & kernelComponent )
   {
     GEOSX_MARK_FUNCTION;
+
+    // Define a RAJA reduction variable to get the maximum residual contribution.
     RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
     forAll< POLICY >( numElems,
@@ -409,10 +457,7 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.m_elemGhostRank[k] < 0 )
-      {
-        maxResidual.max( kernelComponent.complete( k, stack ) );
-      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
     } );
     return maxResidual.get();
   }
@@ -461,10 +506,8 @@ public:
 
         kernelComponent.quadraturePointResidualContribution( k, q, stack );
       }
-      if( kernelComponent.m_elemGhostRank[k] < 0 )
-      {
-        maxResidual.max( kernelComponent.complete( k, stack ) );
-      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
+
     } );
     return maxResidual.get();
   }
@@ -618,7 +661,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       finiteElement::dispatch( elementTypeString,
                                [&] ( auto const finiteElement )
       {
-
         using FE_TYPE = TYPEOFREF( finiteElement );
         // Compile time values!
         static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
@@ -637,6 +679,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
         // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
         // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
         // only use one option...most likely camp since we can easily fix bugs.
+
 #if CONSTRUCTOR_PARAM_OPTION==1
         auto temp = std::forward_as_tuple( nodeManager,
                                            edgeManager,

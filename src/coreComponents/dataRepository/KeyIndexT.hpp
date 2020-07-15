@@ -125,7 +125,7 @@ public:
    * @brief Set the index.
    * @param[in] index new value of the index
    */
-  void setIndex( INDEX_TYPE const & index )
+  void setIndex( INDEX_TYPE const & index ) const
   {
     m_index = index;
   }
@@ -135,7 +135,7 @@ private:
   KEY_TYPE const m_key;
 
   /// index value
-  INDEX_TYPE m_index;
+  INDEX_TYPE mutable m_index;
 };
 
 /**
