@@ -65,6 +65,17 @@ public:
   virtual void reserve( localIndex const size );
 
   /**
+   * @brief Move the data arrays associated with the stencil to a specified
+   *   memory space.
+   * @param space The target memory space.
+   *
+   * @note The existence of this function indicates we need to redesign the
+   * stencil classes.
+   */
+  virtual void move( LvArray::MemorySpace const space );
+
+
+  /**
    * @brief Add an entry to the stencil.
    * @param[in] numPts The number of points in the stencil entry
    * @param[in] elementRegionIndices The element region indices for each point in the stencil entry
@@ -94,6 +105,11 @@ public:
    */
   virtual localIndex size() const = 0;
 
+  /**
+   * @brief Set the name used in data movement logging callbacks.
+   * @param name the name prefix for the stencil's data arrays
+   */
+  void setName( string const & name );
 
   /**
    * @brief Const access to the element regions indices.
@@ -161,6 +177,26 @@ bool StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::zero( localIndex const connector
     }
   } );
 }
+
+template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::setName( string const & name )
+{
+  m_elementRegionIndices.setName( name + "/elementRegionIndices" );
+  m_elementSubRegionIndices.setName( name + "/elementSubRegionIndices" );
+  m_elementIndices.setName( name + "/elementIndices" );
+  m_weights.setName( name + "/weights" );
+}
+
+template< typename LEAFCLASSTRAITS, typename LEAFCLASS >
+void StencilBase< LEAFCLASSTRAITS, LEAFCLASS >::move( LvArray::MemorySpace const space )
+{
+  m_elementRegionIndices.move( space, true );
+  m_elementSubRegionIndices.move( space, true );
+  m_elementIndices.move( space, true );
+  m_weights.move( space, true );
+}
+
+
 } /* namespace geosx */
 
 #endif /* GEOSX_FINITEVOLUME_STENCILBASE_HPP_ */

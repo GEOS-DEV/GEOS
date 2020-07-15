@@ -87,8 +87,9 @@ public:
                    FiniteElementBase const * const finiteElementSpace,
                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
-                   ParallelMatrix & inputMatrix,
-                   ParallelVector & inputRhs,
+                   globalIndex const rankOffset,
+                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                   arrayView1d< real64 > const & inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
@@ -102,6 +103,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs,
           inputGravityVector ),
@@ -217,7 +219,7 @@ public:
    * The ImplicitNewmark implementation adds residual and jacobian
    * contributions from  stiffness based damping.
    */
-  //    GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const

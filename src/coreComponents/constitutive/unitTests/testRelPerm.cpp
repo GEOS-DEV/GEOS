@@ -16,9 +16,7 @@
 #include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
-#include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
-#include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
+#include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
@@ -29,31 +27,32 @@ using namespace geosx::testing;
 using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 
-void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
-                               arraySlice1d< real64 > const & saturation,
-                               real64 perturbParameter,
-                               real64 relTol )
+void testNumericalDerivatives( RelativePermeabilityBase & relPerm,
+                               arraySlice1d< real64 const > const & saturation,
+                               real64 const perturbParameter,
+                               real64 const relTol )
 {
-  localIndex const NP = relPerm->numFluidPhases();
-
-  auto const & phases = relPerm->getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString );
+  localIndex const NP = relPerm.numFluidPhases();
+  auto const & phases = relPerm.phaseNames();
 
   // create a clone of the rel perm to run updates on
   std::unique_ptr< ConstitutiveBase > relPermCopyPtr;
-  relPerm->DeliverClone( "fluidCopy", nullptr, relPermCopyPtr );
-  auto relPermCopy = relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
+  relPerm.DeliverClone( "fluidCopy", nullptr, relPermCopyPtr );
+  RelativePermeabilityBase & relPermCopy = *relPermCopyPtr->group_cast< RelativePermeabilityBase * >();
 
-  relPerm->AllocateConstitutiveData( relPerm->getParent(), 1 );
-  relPermCopy->AllocateConstitutiveData( relPerm->getParent(), 1 );
+  relPerm.AllocateConstitutiveData( relPerm.getParent(), 1 );
+  relPermCopy.AllocateConstitutiveData( relPerm.getParent(), 1 );
 
-  arraySlice1d< real64 > phaseRelPerm = relPerm->getReference< array3d< real64 > >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString )[0][0];
-  arraySlice2d< real64 > dPhaseRelPerm_dSat = relPerm->getReference< array4d< real64 > >(
-    RelativePermeabilityBase::viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString )[0][0];
-
-  arraySlice1d< real64 > phaseRelPermCopy = relPermCopy->getReference< array3d< real64 > >( RelativePermeabilityBase::viewKeyStruct::phaseRelPermString )[0][0];
+  arraySlice1d< real64 const > phaseRelPerm = relPerm.phaseRelPerm()[0][0];
+  arraySlice2d< real64 const > dPhaseRelPerm_dSat = relPerm.dPhaseRelPerm_dPhaseVolFraction()[0][0];
+  arraySlice1d< real64 const > phaseRelPermCopy = relPermCopy.phaseRelPerm()[0][0];
 
   // set the fluid state to current
-  relPerm->PointUpdate( saturation, 0, 0 );
+  constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
+  {
+    typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
+    relPermWrapper.Update( 0, 0, saturation );
+  } );
 
   // update saturation and check derivatives
   auto dPhaseRelPerm_dS = invertLayout( dPhaseRelPerm_dSat, NP, NP );
@@ -68,9 +67,13 @@ void testNumericalDerivatives( RelativePermeabilityBase * relPerm,
     }
     satNew[jp] += dS;
 
-    relPermCopy->PointUpdate( satNew, 0, 0 );
-    string var = "phaseVolFrac[" + phases[jp] + "]";
+    constitutive::constitutiveUpdatePassThru( relPermCopy, [&] ( auto & castedRelPerm )
+    {
+      typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
+      relPermWrapper.Update( 0, 0, satNew );
+    } );
 
+    string const var = "phaseVolFrac[" + phases[jp] + "]";
     checkDerivative( phaseRelPermCopy.toSliceConst(),
                      phaseRelPerm.toSliceConst(),
                      dPhaseRelPerm_dS[jp].toSliceConst(),
@@ -233,7 +236,7 @@ TEST( testRelPerm, numericalDerivatives_brooksCoreyRelPerm )
   auto parent = std::make_unique< Group >( "parent", nullptr );
   parent->resize( 1 );
 
-  RelativePermeabilityBase * fluid = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
+  RelativePermeabilityBase * relperm = makeBrooksCoreyRelPerm( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
   parent->InitializePostInitialConditions( parent.get() );
@@ -242,10 +245,10 @@ TEST( testRelPerm, numericalDerivatives_brooksCoreyRelPerm )
   array1d< real64 > sat( 4 );
   sat[0] = 0.7; sat[1] = 0.3;
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  testNumericalDerivatives( fluid, sat, eps, tol );
+  testNumericalDerivatives( *relperm, sat, eps, tol );
 }
 
 TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
@@ -253,12 +256,12 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
   auto parent = std::make_unique< Group >( "parent", nullptr );
   parent->resize( 1 );
 
-  RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
+  RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermTwoPhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
   parent->InitializePostInitialConditions( parent.get() );
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
   // TODO test over a range of values
@@ -271,7 +274,7 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
   sat[1] = alpha*(1.0-sat[0]);
   while( sat[0] <= end_sat )
   {
-    testNumericalDerivatives( fluid, sat, eps, tol );
+    testNumericalDerivatives( *relperm, sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }
@@ -282,12 +285,12 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   auto parent = std::make_unique< Group >( "parent", nullptr );
   parent->resize( 1 );
 
-  RelativePermeabilityBase * fluid = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
+  RelativePermeabilityBase * relperm = makeBrooksCoreyBakerRelPermThreePhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
   parent->InitializePostInitialConditions( parent.get() );
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
   real64 const start_sat = 0.3;
@@ -300,7 +303,7 @@ TEST( testRelPerm, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   sat[2] = (1-alpha)*(1.0-sat[0]);
   while( sat[0] <= end_sat )
   {
-    testNumericalDerivatives( fluid, sat, eps, tol );
+    testNumericalDerivatives( *relperm, sat, eps, tol );
     sat[0] += dS;
     sat[1] = alpha *(1-sat[0]);
     sat[2] = (1-alpha) *(1-sat[0]);
@@ -313,12 +316,12 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
   auto parent = std::make_unique< Group >( "parent", nullptr );
   parent->resize( 1 );
 
-  RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
+  RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermTwoPhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
   parent->InitializePostInitialConditions( parent.get() );
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
   real64 const start_sat = 0.3;
@@ -330,7 +333,7 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
   sat[1] = alpha*(1.0-sat[0]);
   while( sat[0] <= end_sat )
   {
-    testNumericalDerivatives( fluid, sat, eps, tol );
+    testNumericalDerivatives( *relperm, sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }
@@ -341,12 +344,12 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
   auto parent = std::make_unique< Group >( "parent", nullptr );
   parent->resize( 1 );
 
-  RelativePermeabilityBase * fluid = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );
+  RelativePermeabilityBase * relperm = makeVanGenuchtenBakerRelPermThreePhase( "relPerm", parent.get() );
 
   parent->Initialize( parent.get() );
   parent->InitializePostInitialConditions( parent.get() );
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
   real64 const start_sat = 0.3;
@@ -359,7 +362,7 @@ TEST( testRelPerm, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
   sat[2] = (1-alpha)*(1.0-sat[0]);
   while( sat[0] <= end_sat )
   {
-    testNumericalDerivatives( fluid, sat, eps, tol );
+    testNumericalDerivatives( *relperm, sat, eps, tol );
     sat[0] += dS;
     sat[1] = alpha *(1-sat[0]);
     sat[2] = (1-alpha) *(1-sat[0]);

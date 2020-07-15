@@ -13,6 +13,7 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
      fluidFlow/CompositionalMultiphaseWell.hpp
+     fluidFlow/CompositionalMultiphaseWellKernels.hpp     
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
@@ -23,7 +24,9 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseFVMKernels.hpp          
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseWell.hpp
+     fluidFlow/SinglePhaseWellKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
+     fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/WellSolverBase.hpp
      fluidFlow/WellSolverBase.hpp
      multiphysics/FlowProppantTransportSolver.hpp
@@ -34,6 +37,7 @@ set( physicsSolvers_headers
      multiphysics/SinglePhaseReservoir.hpp
      multiphysics/CompositionalMultiphaseReservoir.hpp
      simplePDE/LaplaceFEM.hpp
+     simplePDE/LaplaceFEMKernels.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianSSLE.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
