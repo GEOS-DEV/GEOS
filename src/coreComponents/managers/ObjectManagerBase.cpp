@@ -842,6 +842,11 @@ void ObjectManagerBase::CopyObject( const localIndex source, const localIndex de
   for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
   {
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
+
+#if !defined(__CUDA_ARCH__)
+    targetSet.move( LvArray::MemorySpace::CPU, true );
+#endif
+
     if( targetSet.count( source ) > 0 )
     {
       targetSet.insert( destination );
@@ -1031,5 +1036,16 @@ void ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange( std::set
     }
   }
 }
+
+
+void ObjectManagerBase::moveSets( LvArray::MemorySpace const targetSpace )
+{
+  m_sets.forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+  {
+    SortedArray< localIndex > & set = wrapper.reference();
+    set.move( targetSpace );
+  } );
+}
+
 
 } /* namespace geosx */

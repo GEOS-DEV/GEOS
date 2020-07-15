@@ -131,7 +131,9 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
 // The code below should work with any subscriptable vector/matrix types
 
 template< typename VEC1, typename VEC2 >
-inline void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void copy( localIndex const N, VEC1 const & v1, VEC2 const & v2 )
 {
   for( localIndex i = 0; i < N; ++i )
   {
@@ -140,10 +142,12 @@ inline void copy( localIndex N, VEC1 const & v1, VEC2 const & v2 )
 }
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
-inline void applyChainRule( localIndex N,
-                            MATRIX const & dy_dx,
-                            VEC1 const & df_dy,
-                            VEC2 const & df_dx )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void applyChainRule( localIndex const N,
+                     MATRIX const & dy_dx,
+                     VEC1 const & df_dy,
+                     VEC2 && df_dx )
 {
   // this could use some dense linear algebra
   for( localIndex i = 0; i < N; ++i )
@@ -157,10 +161,12 @@ inline void applyChainRule( localIndex N,
 }
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
-inline void applyChainRuleInPlace( localIndex N,
-                                   MATRIX const & dy_dx,
-                                   VEC1 const & df_dxy,
-                                   VEC2 & work )
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void applyChainRuleInPlace( localIndex const N,
+                            MATRIX const & dy_dx,
+                            VEC1 && df_dxy,
+                            VEC2 && work )
 {
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );

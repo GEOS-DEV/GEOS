@@ -215,6 +215,11 @@ void ProblemManager::ParseCommandLineInput()
       }
     }
   }
+
+  if( opts.suppressMoveLogging )
+  {
+    chai::ArrayManager::getInstance()->disableCallbacks();
+  }
 }
 
 

@@ -157,10 +157,13 @@ void HypreVector::createWithGlobalSize( globalIndex const globalSize,
   finalize( m_ij_vector, m_par_vector );
 }
 
-void HypreVector::create( arraySlice1d< real64 const > const & localValues,
+void HypreVector::create( arrayView1d< real64 const > const & localValues,
                           MPI_Comm const & comm )
 {
   GEOSX_LAI_ASSERT( closed() );
+
+  localValues.move( LvArray::MemorySpace::CPU, false );
+
   HYPRE_BigInt const localSize = LvArray::integerConversion< HYPRE_BigInt >( localValues.size() );
 
   HYPRE_BigInt const jlower = MpiWrapper::PrefixSum< HYPRE_BigInt >( localSize );
