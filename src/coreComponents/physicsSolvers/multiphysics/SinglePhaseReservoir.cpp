@@ -25,7 +25,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
+#include "physicsSolvers/wells/SinglePhaseWell.hpp"
 
 
 namespace geosx

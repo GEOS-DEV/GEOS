@@ -13,12 +13,11 @@
  */
 
 #include "WellElementSubRegion.hpp"
-#include "WellElementRegion.hpp"
-
 
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/WellElementRegion.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "LvArray/src/streamIO.hpp"
 
