@@ -107,6 +107,7 @@ public:
 
   using VectorBase::closed;
   using VectorBase::ready;
+  using VectorBase::extract;
 
   virtual bool created() const override;
 
@@ -116,7 +117,7 @@ public:
   virtual void createWithGlobalSize( globalIndex const globalSize,
                                      MPI_Comm const & comm ) override;
 
-  virtual void create( arraySlice1d< real64 const > const & localValues,
+  virtual void create( arrayView1d< real64 const > const & localValues,
                        MPI_Comm const & comm ) override;
 
   virtual void open() override;

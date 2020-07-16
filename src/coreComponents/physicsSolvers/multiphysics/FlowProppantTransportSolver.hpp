@@ -20,10 +20,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 #define GEOSX_PHYSICSSOLVERS_COUPLEDSOLVERS_FLOWPROPPANTTRANSPORTSOLVER_HPP_
 
-#include "../SolverBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 
 namespace geosx
 {
+
+class ProppantTransport;
+class FlowSolverBase;
 
 class FlowProppantTransportSolver : public SolverBase
 {
@@ -40,28 +43,14 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void
-  ImplicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override final;
-
-  virtual void
-  ImplicitStepComplete( real64 const & time_n,
-                        real64 const & dt,
-                        DomainPartition * const domain ) override final;
-
-  virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
-
   virtual real64
   SolverStep( real64 const & time_n,
               real64 const & dt,
               int const cycleNumber,
-              DomainPartition * const domain ) override;
+              DomainPartition & domain ) override;
+
+  virtual void
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -71,16 +60,25 @@ public:
   } flowProppantTransportSolverViewKeys;
 
 
+  void PreStepUpdate( real64 const & time_n,
+                      real64 const & dt,
+                      DomainPartition & domain );
+
+  void PostStepUpdate( real64 const & time_n,
+                       real64 const & dt,
+                       DomainPartition & domain );
+
 protected:
+
   virtual void PostProcessInput() override final;
-
-  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const problemManager ) override final;
-
 
 private:
 
   string m_proppantSolverName;
   string m_flowSolverName;
+
+  FlowSolverBase * m_flowSolver;
+  ProppantTransport * m_proppantSolver;
 
 };
 

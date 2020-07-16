@@ -130,6 +130,22 @@ private:
   }
 };
 
+template< typename KERNELWRAPPER, typename ... PARAMS >
+inline real64
+finiteElementLaunchDispatch( localIndex NUM_NODES_PER_ELEM,
+                             localIndex NUM_QUADRATURE_POINTS,
+                             PARAMS && ... params )
+{
+  if( NUM_NODES_PER_ELEM == 8 && NUM_QUADRATURE_POINTS == 8 )
+  {
+    return KERNELWRAPPER::template Launch< 8, 8 >( std::forward< PARAMS >( params )... );
+  }
+
+  GEOSX_ERROR( "Not implemented!" );
+
+  return 0;
+}
+
 }
 
 #endif

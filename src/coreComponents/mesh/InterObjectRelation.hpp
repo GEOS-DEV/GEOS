@@ -49,18 +49,6 @@ public:
   {}
 
   /**
-   * @brief Equals operator that sets *this to a single value of any type.
-   * @tparam rTYPE An rtype to call the BASETYPE::operator== with.
-   * @param rhs The rtype oject to assign to the BASETYPE.
-   * @return *this
-   */
-  template< typename rTYPE > InterObjectRelation & operator=( const rTYPE & rhs )
-  {
-    BASETYPE::operator=( rhs );
-    return (*this);
-  }
-
-  /**
    * @brief Get a reference to this object cast to BASETYPE const.
    * @return A reference to this object cast to BASETYPE const.
    */

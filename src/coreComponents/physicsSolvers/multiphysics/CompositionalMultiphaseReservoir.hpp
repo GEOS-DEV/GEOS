@@ -73,16 +73,16 @@ public:
 
   /**@}*/
 
-  virtual void AddCouplingSparsityPattern( DomainPartition * const domain,
-                                           DofManager & dofManager,
-                                           ParallelMatrix & matrix ) override;
+  virtual void AddCouplingSparsityPattern( DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           SparsityPatternView< globalIndex > const & pattern ) const override;
 
   virtual void AssembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
-                                      DomainPartition * const domain,
-                                      DofManager const * const dofManager,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs ) override;
+                                      DomainPartition const & domain,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override;
 
 };
 
