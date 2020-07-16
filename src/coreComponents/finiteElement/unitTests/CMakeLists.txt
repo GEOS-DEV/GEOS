@@ -3,6 +3,7 @@
 #
 
 set(testSources
+    testBiLinearQuadrilateralFaceShapeFunctionKernel.cpp
     testBiLinearWedgeShapeFunctionKernel.cpp
     testLinearTetrahedronShapeFunctionKernel.cpp
     testPyramidShapeFunctionKernel.cpp
