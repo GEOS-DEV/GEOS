@@ -451,7 +451,7 @@
   <ElementRegions>
 
     <CellElementRegion name="reservoir" 
-                       cellBlocks="{0_HEX}" 
+                       cellBlocks="{DEFAULT_HEX}" 
                        materialList="{fluid, rock, relperm}" />
 
     <WellElementRegion name="wellRegion1"
@@ -511,21 +511,21 @@
      <FieldSpecification name="referencePorosity"
                          initialCondition="1"
                          setNames="{all}"
-                         objectPath="ElementRegions/reservoir/0_HEX"
+                         objectPath="ElementRegions/reservoir/DEFAULT_HEX"
                          fieldName="referencePorosity"
                          scale="0.2"/>
 
     <FieldSpecification name="initialPressure"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/reservoir/0_HEX"
+                        objectPath="ElementRegions/reservoir/DEFAULT_HEX"
                         fieldName="pressure"
                         scale="4e7"/>
 
     <FieldSpecification name="initialComposition_oil"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/reservoir/0_HEX"
+                        objectPath="ElementRegions/reservoir/DEFAULT_HEX"
                         fieldName="globalCompFraction"
                         component="0"
                         scale="0.99"/>
@@ -533,7 +533,7 @@
     <FieldSpecification name="initialComposition_gas"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/reservoir/0_HEX"
+                        objectPath="ElementRegions/reservoir/DEFAULT_HEX"
                         fieldName="globalCompFraction"
                         component="1"
                         scale="0.001"/>
@@ -541,7 +541,7 @@
     <FieldSpecification name="initialComposition_water"
                         initialCondition="1"
                         setNames="{all}"
-                        objectPath="ElementRegions/reservoir/0_HEX"
+                        objectPath="ElementRegions/reservoir/DEFAULT_HEX"
                         fieldName="globalCompFraction"
                         component="2"
                         scale="0.009"/>

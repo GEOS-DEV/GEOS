@@ -3,17 +3,17 @@ $MeshFormat
 $EndMeshFormat
 $PhysicalNames
 11
-2 4 1 
-2 5 2 
-2 6 3 
-2 29 4 
-2 30 5 
-2 31 7 
-2 32 8 
-2 33 6 
-3 1 1 
-3 2 2 
-3 3 3 
+2 4 "West"
+2 5 "South"
+2 6 "East"
+2 29 "North"
+2 30 "Bottom"
+2 31 "Hor1"
+2 32 "Hor2"
+2 33 "Top"
+3 1 "Overburden"
+3 2 "Reservoir"
+3 3 "Underburden"
 $EndPhysicalNames
 $Nodes
 24578
