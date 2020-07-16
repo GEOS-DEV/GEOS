@@ -1,64 +1,77 @@
+<?xml version="1.0" ?>
 
 <Problem>
-
-  <Events maxTime="10" logLevel="1">
+  <Events
+    maxTime="10"
+    logLevel="1">
     <!-- This event will execute every cycle, and will always request dt = 1 -->
-    <PeriodicEvent name="periodic_a"
-                   forceDt="1" />
+    <PeriodicEvent
+      name="periodic_a"
+      forceDt="1"/>
 
     <!-- This event will execute every cycle, and will requset a max dt = 1 -->
-    <PeriodicEvent name="periodic_b"
-                   maxEventDt="1"
-                   target="/Solvers/solver_a" />
+    <PeriodicEvent
+      name="periodic_b"
+      maxEventDt="1"
+      target="/Solvers/solver_a"/>
 
     <!-- This event will exectue every 5 s.  When necessary, it will request a dt
     that will cause it to be triggered at a time equal to a multiple of timeFrequency -->
-    <PeriodicEvent name="periodic_c"
-                   timeFrequency="5"
-                   target="/Outputs/restartOutput"/>
+    <PeriodicEvent
+      name="periodic_c"
+      timeFrequency="5"
+      target="/Outputs/restartOutput"/>
 
     <!-- This event will execute every 3 cycles.  When it does, it will attempt to
     execute each of its two sub-events -->
-    <PeriodicEvent name="periodic_d"
-                   cycleFrequency="3"
-                   logLevel="0">
-      <PeriodicEvent name="subevent_a" />
-      <PeriodicEvent name="subevent_b" />
+    <PeriodicEvent
+      name="periodic_d"
+      cycleFrequency="3"
+      logLevel="0">
+      <PeriodicEvent
+        name="subevent_a"/>
+      <PeriodicEvent
+        name="subevent_b"/>
     </PeriodicEvent>
 
     <!-- This event will request a dt = 3.3.  It will not not attempt to reduce its dt
     request to execute on multiples of timeFrequency -->
-    <PeriodicEvent name="periodic_e"
-                   timeFrequency="3.3"
-                   targetExactTimestep="0"/>
+    <PeriodicEvent
+      name="periodic_e"
+      timeFrequency="3.3"
+      targetExactTimestep="0"/>
 
     <!-- This event will execute every cycle from (beginTime <= time < endTime).
     It will limit its dt request so that the time will match beginTime and
     endTime exactly at some point during the simulation -->
-    <PeriodicEvent name="periodic_f"
-                   beginTime="6.1"
-                   endTime="8.3"
-                   logLevel="0">
-      <PeriodicEvent name="subevent_c" />
-      <PeriodicEvent name="subevent_d" />
+    <PeriodicEvent
+      name="periodic_f"
+      beginTime="6.1"
+      endTime="8.3"
+      logLevel="0">
+      <PeriodicEvent
+        name="subevent_c"/>
+      <PeriodicEvent
+        name="subevent_d"/>
     </PeriodicEvent>
 
-
     <!-- This event will execute once during its target cycle -->
-    <SoloEvent name="solo_a"
-               targetCycle="3"/>
+    <SoloEvent
+      name="solo_a"
+      targetCycle="3"/>
 
     <!-- This event will execute once during its target time.  It will limit
     its dt request to execute exactly at this time -->
-    <SoloEvent name="solo_b"
-               targetTime="4"/>
+    <SoloEvent
+      name="solo_b"
+      targetTime="4"/>
 
     <!-- This event will execute once time >= targetTime.  It will not limit
     its dt request to exactly match targetTime -->
-    <SoloEvent name="solo_c"
-               targetTime="5.123"
-               targetExactTimestep="0"/>
-
+    <SoloEvent
+      name="solo_c"
+      targetTime="5.123"
+      targetExactTimestep="0"/>
 
     <!-- This event will execute when the wall time = maxRunTime.
     It will then set the exitFlag on the EventManager loop and
@@ -66,5 +79,4 @@
     <!-- <HaltEvent name="halt_a"
                maxRuntime="10.0"/> -->
   </Events>
-
 </Problem>

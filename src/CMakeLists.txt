@@ -132,7 +132,7 @@ if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT 
                      )
 
   add_custom_target( geosx_format_all_xml_files
-                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/coreComponents/python/modules/pygeos_package/pygeos/xml_formatter.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                      DEPENDS geosx_update_rst_tables
                      )
