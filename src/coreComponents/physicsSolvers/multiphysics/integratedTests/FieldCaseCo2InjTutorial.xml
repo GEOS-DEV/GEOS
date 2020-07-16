@@ -26,11 +26,11 @@
   <ElementRegions>
 
     <CellElementRegion name="Reservoir"
-                       cellBlocks="{1_TETRA}"
+                       cellBlocks="{Reservoir_TETRA}"
                        materialList="{fluid1, rock, relperm}"/>
 
     <CellElementRegion name="Burden"
-                       cellBlocks="{0_TETRA,2_TETRA}"
+                       cellBlocks="{Overburden_TETRA,Underburden_TETRA}"
                        materialList="{rock}"/>
 
     <WellElementRegion name="wellRegion"

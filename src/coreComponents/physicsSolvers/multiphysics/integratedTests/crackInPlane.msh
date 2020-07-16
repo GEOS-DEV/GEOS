@@ -1,6 +1,11 @@
 $MeshFormat
 2.2 0 8
 $EndMeshFormat
+$PhysicalNames
+2
+3 1 "South"
+3 2 "North"
+$EndPhysicalNames
 $Nodes
 2788
 1 -5 -5 0
