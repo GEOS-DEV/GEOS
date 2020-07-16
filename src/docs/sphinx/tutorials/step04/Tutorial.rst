@@ -224,16 +224,16 @@ the **ElementRegions** XML block: **CellElementRegion** and **WellElementRegion*
 
 Here, we define a **CellElementRegion** named ``reservoir`` corresponding to the
 reservoir mesh.
-The attribute ``cellBlocks`` must be set to ``0_HEX`` to point this element region
+The attribute ``cellBlocks`` must be set to ``DEFAULT_HEX`` to point this element region
 to the hexahedral mesh corresponding to the bottom layers of SPE10 that we have
 imported with the **PAMELAMeshGenerator**.
-Note that ``0_HEX`` is a name internally defined by the mesh importer to denote the first
-(and in our case, the only) hexahedral region of the reservoir mesh.
+Note that ``DEFAULT_HEX`` is a name internally defined by the mesh importer to denote the only
+hexahedral region of the reservoir mesh.
 We refer to :ref:`TutorialSinglePhaseFlowExternalMesh` for a discussion on
 hexahedral meshes in GEOSX.
 
 .. note::
-        If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+        If you use a name that is not ``DEFAULT_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
 
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
