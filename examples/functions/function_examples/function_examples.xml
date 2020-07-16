@@ -1,24 +1,36 @@
+<?xml version="1.0" ?>
 
 <Problem>
-  
   <Functions>
     <!-- These are example mathpresso functions.  In order to use them, you need to specify the order that the 
     symbolic math function should expect the variables to be given, and an expression that it will compile.
     A list of available functions is given here: https://github.com/kobalicek/mathpresso -->
-    <SymbolicFunction name="f_a" variableNames="{x, y, z, t}" expression="x+y*z"/>
-    <SymbolicFunction name="f_b" variableNames="{x, y, z, t}" expression="sqrt((x*x)+(y*y)+(z*z))*t"/>
-    
+    <SymbolicFunction
+      name="f_a"
+      variableNames="{ x, y, z, t }"
+      expression="x+y*z"/>
+
+    <SymbolicFunction
+      name="f_b"
+      variableNames="{ x, y, z, t }"
+      expression="sqrt((x*x)+(y*y)+(z*z))*t"/>
+
     <!-- As a special case, 1D tables may be specified using coordinates and values.
          A 1D table will only evaluate the first entry in evaluate (for the demo solver, this is x) -->
-    <TableFunction name="f_c" coordinates="{-10, 10}" values="{-10, 10}" />
+    <TableFunction
+      name="f_c"
+      coordinates="{ -10, 10 }"
+      values="{ -10, 10 }"/>
 
     <!-- More generally, an ND table may be specified by giving a list of coordinate files, and a voxel file (with
          data in Fortran-array order).  Note: Unlike the old code, I do not look for header values in the voxel file.
          In the tables directory, I have a placed a few examples from my testing:
          
          fx(X,Y,Z)=X, fy(X,Y,Z)=Y, fz(X,Y,Z)=Z, r(X,Y,Z)=sqrt(X^2+Y^2+Z^2), poly(X,Y,Z)=X+Y^2+Z^3 
-       --> 
-    <TableFunction name="f_d" coordinateFiles="{tables/x.geos, tables/y.geos, tables/z.geos}" voxelFile="tables/poly.geos"/>
-  </Functions>  
-  
+       -->
+    <TableFunction
+      name="f_d"
+      coordinateFiles="{ tables/x.geos, tables/y.geos, tables/z.geos }"
+      voxelFile="tables/poly.geos"/>
+  </Functions>
 </Problem>

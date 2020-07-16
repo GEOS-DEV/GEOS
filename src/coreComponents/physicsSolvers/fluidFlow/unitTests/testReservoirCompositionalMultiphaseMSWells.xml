@@ -1,18 +1,19 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
+  <Solvers
+    gravityVector="0.0, 0.0, -9.81">
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ Region1, wellRegion1, wellRegion2, wellRegion3 }">
+      targetRegions="{ Region1, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
         solverType="direct"
-        logLevel="0"/>
+        logLevel="2"/>
     </CompositionalMultiphaseReservoir>
 
     <CompositionalMultiphaseFlow
@@ -29,7 +30,7 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
+      targetRegions="{ wellRegion1, wellRegion2 }"
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
@@ -42,17 +43,11 @@
         targetRate="1"/>
       <WellControls
         name="wellControls2"
-        type="producer"
-        control="BHP"
-        targetBHP="4e6"
-        targetRate="1"/>
-      <WellControls
-        name="wellControls3"
         type="injector"
         control="liquidRate"
-        targetBHP="1e8"
-        targetRate="1e-4"
-        injectionStream="{ 0.1, 0.1, 0.8 }"/>
+        targetBHP="1e7"
+        targetRate="1e-5"
+        injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -60,11 +55,11 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 15 }"
-      yCoords="{ 0, 15 }"
+      xCoords="{ 0, 5 }"
+      yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 20 }"
-      ny="{ 20 }"
+      nx="{ 3 }"
+      ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
 
@@ -73,84 +68,51 @@
       wellRegionName="wellRegion1"
       wellControlsName="wellControls1"
       meshName="mesh1"
-      polylineNodeCoords="{ { 0.5, 0.5, 0.5 },
-                            { 7.5, 0.5, 0.35 },
-                            { 14.5, 0.5, 0.2 } }"
-      polylineSegmentConn="{ { 0, 1 },
-                             { 1, 2 } }"
+      polylineNodeCoords="{ { 4.5, 0, 2 },
+                            { 4.5, 0, 0.5 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
-      numElementsPerSegment="20">
+      numElementsPerSegment="1">
       <Perforation
         name="producer1_perf1"
-        distanceFromHead="14"/>
-      <Perforation
-        name="producer1_perf2"
-        distanceFromHead="11"/>
-      <Perforation
-        name="producer1_perf3"
-        distanceFromHead="8"/>
-    </InternalWell>
-
-    <InternalWell
-      name="well_producer2"
-      wellRegionName="wellRegion2"
-      wellControlsName="wellControls2"
-      meshName="mesh1"
-      polylineNodeCoords="{ { 14.5, 14.5, 0.5 },
-                            { 7.5, 14.5, 0.35 },
-                            { 0.5, 14.5, 0.2 } }"
-      polylineSegmentConn="{ { 0, 1 },
-                             { 1, 2 } }"
-      radius="0.1"
-      numElementsPerSegment="17">
-      <Perforation
-        name="producer2_perf1"
-        distanceFromHead="14."/>
-      <Perforation
-        name="producer2_perf2"
-        distanceFromHead="10"/>
-      <Perforation
-        name="producer2_perf3"
-        distanceFromHead="6"/>
+        distanceFromHead="1.45"/>
     </InternalWell>
 
     <InternalWell
       name="well_injector1"
-      wellRegionName="wellRegion3"
-      wellControlsName="wellControls3"
+      wellRegionName="wellRegion2"
+      wellControlsName="wellControls2"
       meshName="mesh1"
-      polylineNodeCoords="{ { 0.5, 0.5, 0.5 },
-                            { 14.5, 14.5, 0.2 } }"
+      polylineNodeCoords="{ { 0.5, 0, 2 },
+                            { 0.5, 0, 0.5 } }"
       polylineSegmentConn="{ { 0, 1 } }"
       radius="0.1"
-      numElementsPerSegment="30">
+      numElementsPerSegment="1">
       <Perforation
         name="injector1_perf1"
-        distanceFromHead="19.5"/>
-      <Perforation
-        name="injector1_perf2"
-        distanceFromHead="10.45"/>
+        distanceFromHead="1.45"/>
     </InternalWell>
   </Mesh>
 
   <Events
-    maxTime="1e5">
+    maxTime="2.5e4">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e3"
+      forceDt="2.5e3"
       target="/Solvers/reservoirSystem"/>
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="1e4"
+      timeFrequency="2.5e3"
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5e4"
+      timeFrequency="1e99"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"
+      endTime="-1"/>
   </Events>
 
   <NumericalMethods>
@@ -175,20 +137,23 @@
     <WellElementRegion
       name="wellRegion2"
       materialList="{ fluid1, relperm }"/>
-
-    <WellElementRegion
-      name="wellRegion3"
-      materialList="{ fluid1, relperm }"/>
   </ElementRegions>
 
   <Constitutive>
-    <BlackOilFluid
+    <CompositionalMultiphaseFluid
       name="fluid1"
-      fluidType="DeadOil"
-      phaseNames="{ oil, gas, water }"
-      surfaceDensities="{ 800.0, 0.9907, 1022.0 }"
-      componentMolarWeight="{ 114e-3, 16e-3, 18e-3 }"
-      tableFiles="{ pvdo.txt, pvdg.txt, pvtw.txt }"/>
+      phaseNames="{ oil, gas }"
+      equationsOfState="{ PR, PR }"
+      componentNames="{ N2, C10, C20, H2O }"
+      componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
+      componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
+      componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
+      componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
+      componentVolumeShift="{ 0, 0, 0, 0 }"
+      componentBinaryCoeff="{ { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 },
+                              { 0, 0, 0, 0 } }"/>
 
     <PoreVolumeCompressibleSolid
       name="rock"
@@ -197,10 +162,10 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ oil, gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
-      phaseRelPermExponent="{ 2.0, 2.0, 1.5 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9, 0.9 }"/>
+      phaseNames="{ oil, gas }"
+      phaseMinVolumeFraction="{ 0.1, 0.15 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -250,30 +215,39 @@
 
     <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
     <FieldSpecification
-      name="initialComposition_oil"
+      name="initialComposition_N2"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="0"
-      scale="0.6"/>
+      scale="0.099"/>
 
     <FieldSpecification
-      name="initialComposition_gas"
+      name="initialComposition_C10"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="1"
-      scale="0.399"/>
+      scale="0.3"/>
 
     <FieldSpecification
-      name="initialComposition_water"
+      name="initialComposition_C20"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Region1/cb1"
       fieldName="globalCompFraction"
       component="2"
+      scale="0.6"/>
+
+    <FieldSpecification
+      name="initialComposition_H20"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/cb1"
+      fieldName="globalCompFraction"
+      component="3"
       scale="0.001"/>
   </FieldSpecifications>
 
