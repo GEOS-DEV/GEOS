@@ -163,6 +163,7 @@ void HyprePreconditioner::createAMG()
     }
   }
 
+  /*
   // Set coarsest level solver
   // (by default for coarsest grid size above 5,000 superlu_dist is used)
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( m_precond, 5000 ) );
@@ -170,6 +171,7 @@ void HyprePreconditioner::createAMG()
   {
     GEOSX_LAI_CHECK_ERROR( hypre_BoomerAMGSetCycleRelaxType( m_precond, 9, 3 ) );
   }
+  */
 
   // Set the number of sweeps
   if( m_parameters.amg.preOrPostSmoothing == "both" )
