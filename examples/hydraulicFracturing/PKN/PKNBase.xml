@@ -1,4 +1,6 @@
-<Problem>  
+<?xml version="1.0" ?>
+
+<Problem>
   <!--Mesh>
     <InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
@@ -10,19 +12,19 @@
                   nz="{10, 5, 10, 20, 10, 5, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh-->
-
   <!-- aspect ratio of 2.5 -->
   <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}"
-                  xCoords="{0, 150, 200, 400}"
-                  yCoords="{0, 150, 200, 400}"
-                  zCoords="{-400, -100, -20, 20, 100, 400}"
-                  nx="{75, 10, 20}"
-                  ny="{75, 10, 20}"
-                  nz="{10, 10, 20, 10, 10}"
-                  cellBlockNames="{cb1}"/>
-                  
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 150, 200, 400 }"
+      yCoords="{ 0, 150, 200, 400 }"
+      zCoords="{ -400, -100, -20, 20, 100, 400 }"
+      nx="{ 75, 10, 20 }"
+      ny="{ 75, 10, 20 }"
+      nz="{ 10, 10, 20, 10, 10 }"
+      cellBlockNames="{ cb1 }"/>
+
     <!--InternalMesh name="mesh1"
                   elementTypes="{C3D8}"
                   xCoords="{-200, -100, 100, 200}"
@@ -32,7 +34,6 @@
                   ny="{10, 100, 10}"
                   nz="{10, 20, 10}"
                   cellBlockNames="{cb1}"/-->
-
   </Mesh>
 
   <!-- aspect ratio of 5.0 -->
@@ -47,7 +48,6 @@
                   nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh-->
-
   <!-- aspect ratio of 10.0 -->
   <!--Mesh>
     <InternalMesh name="mesh1"
@@ -60,92 +60,92 @@
                   nz="{10, 10, 10, 10, 10}"
                   cellBlockNames="{cb1}"/>
   </Mesh-->
-  
   <Geometry>
     <!-- Cylinder name="fracture" 
               point1="0.0, 0.0, -0.1" 
               point2="0.0, 0.0, 0.1" 
               radius="6.6"/-->
-              
-    <Box name="fracture"
-         xMin="-4.1, -4.1, -0.1"
-         xMax=" 2.1,  6.1, 0.1"/>
-    <Box name="source"
-         xMin="-2.1, -2.1, -0.1"
-         xMax=" 2.1,  6.1, 0.1"/>
-    <Box name="core"  
-         xMin="-500.1, -500.1, -0.1"
-         xMax="500.1, 10.1, 0.1" />
+    <Box
+      name="fracture"
+      xMin="-4.1, -4.1, -0.1"
+      xMax=" 2.1, 6.1, 0.1"/>
+
+    <Box
+      name="source"
+      xMin="-2.1, -2.1, -0.1"
+      xMax=" 2.1, 6.1, 0.1"/>
+
+    <Box
+      name="core"
+      xMin="-500.1, -500.1, -0.1"
+      xMax="500.1, 10.1, 0.1"/>
   </Geometry>
 
-
-  <Events maxTime="200.0">
-  
+  <Events
+    maxTime="200.0">
     <!-- SoloEvent 
       name="initialPlot"
       target="/Outputs/siloOutput"
       /-->
-
-    <SoloEvent 
+    <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGen"
-      />
-  
+      target="/Solvers/SurfaceGen"/>
+
     <!-- SoloEvent 
       name="preFracturePlot"
       target="/Outputs/siloOutput"
       /-->
-
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications1"
       beginTime="0.0"
       endTime="1.0"
       forceDt="0.2000000000001"
-      target="/Solvers/hydrofracture" />
-    <PeriodicEvent 
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
       name="solverApplications2"
       beginTime="1.0"
       endTime="3.0"
       forceDt="0.5"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications3"
       beginTime="3.0"
       endTime="8.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications4"
       beginTime="8.0"
       endTime="20.0"
       forceDt="2.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications5"
       beginTime="20.0"
       endTime="60.0"
       forceDt="4.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications6"
       beginTime="60.0"
       endTime="100.0"
       forceDt="8.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications7"
       beginTime="100.0"
       endTime="200.0"
       forceDt="10.0"
-      target="/Solvers/hydrofracture" />
-      
+      target="/Solvers/hydrofracture"/>
+
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
@@ -155,12 +155,12 @@
                    timeFrequency="0.001"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" /-->
-
-    <PeriodicEvent name="outputs2"
-                   beginTime="2.0"
-                   timeFrequency="2.0"
-                   targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="2.0"
+      timeFrequency="2.0"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
 
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="100"
@@ -169,28 +169,35 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions> 
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    <BasisFunctions>
+      <LagrangeBasis3
+        name="linearBasis"
+        degree="1"/>
     </BasisFunctions>
-    
+
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+      <GaussQuadrature3
+        name="gaussian"
+        degree="2"/>
     </QuadratureRules>
-    
+
     <FiniteElements>
-        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace
+        name="FE1"
+        parentSpace="C3D8"
+        basis="linearBasis"
+        quadrature="gaussian"/>
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="pressure"
-                                 coefficientName="permeability"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <FieldSpecifications>
-
-
     <!-- FieldSpecification name="initialMeanStress"
                initialCondition="1"
                setNames="{all}"
@@ -198,26 +205,29 @@
                fieldName="rock_stress"
                component="5"
                scale="-60e6"/-->
-    <FieldSpecification name="waterDensity"
-               initialCondition="1"
-               setNames="{fracture}"
-               objectPath="ElementRegions"
-               fieldName="water_density"
-               scale="1000"/>
+    <FieldSpecification
+      name="waterDensity"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="ElementRegions"
+      fieldName="water_density"
+      scale="1000"/>
 
-    <FieldSpecification name="separableFace"
-               initialCondition="1"
-               setNames="{core}"
-               objectPath="faceManager"
-               fieldName="isFaceSeparable"
-               scale="1"/>
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
 
-    <FieldSpecification name="frac"
-               initialCondition="1"
-               setNames="{fracture}"
-               objectPath="faceManager"
-               fieldName="ruptureState"
-               scale="1"/>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
 
     <!-- FieldSpecification name="aperture"
                component="0"
@@ -226,41 +236,41 @@
                objectPath="ElementRegions/Fracture/fracture"
                fieldName="elementAperture"
                scale="1.0e-4"/-->
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
 
-               
-    <FieldSpecification name="yconstraint"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="1"
-               scale="0.0"
-               setNames="{yneg, ypos}"/>
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
 
-    <FieldSpecification name="zconstraint"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="2"
-               scale="0.0"
-               setNames="{zneg, zpos}"/>
-               
-    <FieldSpecification name="xconstraint"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="0"
-               scale="0.0"
-               setNames="{xneg, xpos}"/>
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
 
     <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="0.0"
                setNames="{all}"/-->
-               
-    <SourceFlux name="sourceTerm"
-                objectPath="ElementRegions/Fracture"
-                scale="-6.625"
-                setNames="{source}"/>
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-6.625"
+      setNames="{ source }"/>
   </FieldSpecifications>
 
-  <Functions>
-  </Functions>
+  <Functions/>
 </Problem>

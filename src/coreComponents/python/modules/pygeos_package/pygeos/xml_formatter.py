@@ -1,6 +1,31 @@
 import argparse
 import os
-from xml.etree import ElementTree
+from lxml import etree as ElementTree
+import re
+
+
+def format_attribute(attribute_indent, ka, attribute_value):
+  # Make sure that a space follows commas
+  attribute_value = re.sub(r",\s*", ", ", attribute_value)
+
+  # Handle external brackets
+  attribute_value = re.sub(r"{\s*", "{ ", attribute_value)
+  attribute_value = re.sub(r"\s*}", " }", attribute_value)
+
+  # Consolidate whitespace
+  attribute_value = re.sub(r"\s+", " ", attribute_value)
+
+  # Identify and split multi-line attributes
+  if re.match(r"\s*{\s*({[-+.,0-9a-zA-Z\s]*},?\s*)*\s*}", attribute_value):
+    split_positions = [match.end() for match in re.finditer(r"}\s*,", attribute_value)]
+    newline_indent = '\n%s' % (' ' * (len(attribute_indent) + len(ka) + 4))
+    new_values = []
+    for a, b in zip([None] + split_positions, split_positions + [None]):
+        new_values.append(attribute_value[a:b].strip())
+    if new_values:
+        attribute_value = newline_indent.join(new_values)
+
+  return attribute_value
 
 
 def format_xml_level(output,
@@ -12,6 +37,19 @@ def format_xml_level(output,
                      sort_attributes=False,
                      close_tag_newline=False,
                      include_namespace=False):
+  """Iteratively format the xml file
+
+     @param output the output filename
+     @param node the current xml element
+     @param level the xml depth
+     @param indent the xml indent style
+     @param block_separation_max_depth the maximum depth to separate adjacent elements
+     @param modify_attribute_indent option to have flexible attribute indentation
+     @param sort_attributes option to sort attributes alphabetically
+     @param close_tag_newline option to place close tag on a separate line
+     @param include_namespace option to include the xml namespace in the output
+  """
+
   # Handle comments
   if node.tag is ElementTree.Comment:
     output.write('\n%s<!--%s-->' % (indent*level, node.text))
@@ -42,6 +80,10 @@ def format_xml_level(output,
       akeys = list(attribute_dict.keys())
       if sort_attributes:
         akeys = sorted(akeys)
+
+      # Format attributes
+      for ka in akeys:
+        attribute_dict[ka] = format_attribute(attribute_indent, ka, attribute_dict[ka])
 
       for ii in range(0, len(akeys)):
         k = akeys[ii]
@@ -75,14 +117,6 @@ def format_xml_level(output,
         output.write('/>')
 
 
-# Class to handle commented xml structure
-class CommentedTreeBuilder(ElementTree.TreeBuilder):
-  def comment(self, data):
-    self.start(ElementTree.Comment, {})
-    self.data(data)
-    self.end(ElementTree.Comment)
-
-
 def main():
   """Script to format xml files
 
@@ -103,12 +137,17 @@ def main():
   # Process the xml file
   fname = os.path.expanduser(args.input)
   try:
-    xml_parser = ElementTree.XMLParser(target=CommentedTreeBuilder())
-    tree = ElementTree.parse(fname, xml_parser)
+    tree = ElementTree.parse(fname)
     root = tree.getroot()
+    prologue_comments = [tmp.text for tmp in root.itersiblings(preceding=True)]
+    epilog_comments = [tmp.text for tmp in root.itersiblings()]
 
     with open(fname, 'w') as f:
       f.write('<?xml version=\"1.0\" ?>\n')
+
+      for comment in reversed(prologue_comments):
+        f.write('\n<!--%s-->' % (comment))
+
       format_xml_level(f,
                        root,
                        0,
@@ -118,6 +157,9 @@ def main():
                        sort_attributes=args.alphebitize,
                        close_tag_newline=args.close,
                        include_namespace=args.namespace)
+
+      for comment in epilog_comments:
+        f.write('\n<!--%s-->' % (comment))
       f.write('\n')
 
   except ElementTree.ParseError as err:
