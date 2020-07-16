@@ -635,13 +635,13 @@ real64 LagrangianContactSolver::NonlinearImplicitStep( real64 const & time_n,
         m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
 
         // Output the linear system matrix/rhs for debugging purposes
-        //DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+        DebugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
         SolveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
         // Output the linear system solution for debugging purposes
-        //DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+        DebugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
         // Copy solution from parallel vector back to local
         // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
