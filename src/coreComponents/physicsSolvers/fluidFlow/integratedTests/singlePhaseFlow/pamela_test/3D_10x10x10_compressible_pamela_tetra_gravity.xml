@@ -71,7 +71,7 @@
 
  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS -->
  <ElementRegions>
-    <CellElementRegion name="Domain" cellBlocks="{0_TETRA}" materialList="{water, rock}"/>
+    <CellElementRegion name="Domain" cellBlocks="{DEFAULT_TETRA}" materialList="{water, rock}"/>
   </ElementRegions>
  <!-- SPHINX_TUT_EXT_TETRA_ELEM_REGIONS_END -->
 
@@ -97,7 +97,7 @@
                component="0"
                initialCondition="1"  
                setNames="{all}"
-               objectPath="ElementRegions/Domain/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -105,7 +105,7 @@
                component="1"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
@@ -113,21 +113,21 @@
                component="2"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
                fieldName="permeability"
                scale="2.0e-14"/>
 
     <FieldSpecification name="referencePorosity"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
                fieldName="referencePorosity"
                scale="0.05"/>
 
     <FieldSpecification name="initialPressure"
                initialCondition="1"
                setNames="{all}"
-               objectPath="ElementRegions/Domain/elementSubRegions/0_TETRA"
+               objectPath="ElementRegions/Domain/elementSubRegions/DEFAULT_TETRA"
                fieldName="pressure"
                scale="1e3"/>
     <FieldSpecification name="boundaryPressure"
