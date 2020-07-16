@@ -90,7 +90,7 @@ void testKernelDriver()
       for( localIndex a=0; a<numNodes; ++a )
       {
         real64 N = 0.25 * ( 1 + xi[ 0 ]*pCoords[ 0 ][ a ] ) *
-                   ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] ) ;
+                   ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] );
         EXPECT_FLOAT_EQ( N, viewN[q][a] );
       }
 
