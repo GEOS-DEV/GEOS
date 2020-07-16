@@ -93,24 +93,16 @@ void SolidMechanicsEmbeddedFractures::ResetStateToBeginningOfStep( DomainPartiti
 
 void SolidMechanicsEmbeddedFractures::ImplicitStepSetup( real64 const & time_n,
                                                          real64 const & dt,
-                                                         DomainPartition * const domain,
-                                                         DofManager & GEOSX_UNUSED_PARAM( dofManager ),
-                                                         ParallelMatrix & GEOSX_UNUSED_PARAM( matrix ),
-                                                         ParallelVector & GEOSX_UNUSED_PARAM( rhs ),
-                                                         ParallelVector & GEOSX_UNUSED_PARAM( solution ) )
+                                                         DomainPartition & domain )
 {
   m_solidSolver = this->getParent()->GetGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 
-  m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
-                                    m_solidSolver->getDofManager(),
-                                    m_solidSolver->getSystemMatrix(),
-                                    m_solidSolver->getSystemRhs(),
-                                    m_solidSolver->getSystemSolution() );
+  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
 }
 
 void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const & time_n,
                                                             real64 const & dt,
-                                                            DomainPartition * const domain )
+                                                            DomainPartition & domain )
 {
   m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
 }
@@ -118,33 +110,25 @@ void SolidMechanicsEmbeddedFractures::ImplicitStepComplete( real64 const & time_
 real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
                                                     real64 const & dt,
                                                     int const cycleNumber,
-                                                    DomainPartition * const domain )
+                                                    DomainPartition & domain )
 {
   real64 dtReturn = dt;
 
   ImplicitStepSetup( time_n,
                      dt,
-                     domain,
-                     m_dofManager,
-                     m_matrix,
-                     m_rhs,
-                     m_solution );
+                     domain );
 
   SetupSystem( domain,
                m_dofManager,
-               m_matrix,
-               m_rhs,
-               m_solution );
+			   m_localMatrix,
+			   m_localRhs,
+			   m_localSolution );
 
   // currently the only method is implicit time integration
   dtReturn = this->NonlinearImplicitStep( time_n,
                                           dt,
                                           cycleNumber,
-                                          domain,
-                                          m_dofManager,
-                                          m_matrix,
-                                          m_rhs,
-                                          m_solution );
+                                          domain );
 
   // m_solidSolver->updateStress( domain );
 
@@ -154,7 +138,7 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const * const domain,
+void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
                                                  DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -181,10 +165,10 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const * const d
 
 void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition * const domain,
                                                    DofManager & dofManager,
-                                                   ParallelMatrix & matrix,
-                                                   ParallelVector & rhs,
-                                                   ParallelVector & solution,
-                                                   bool const setSparsity )
+												   CRSMatrix< real64, globalIndex > & localMatrix ,
+												   array1d< real64 > &  localRhs,
+												   array1d< real64 > & localSolution,
+												   bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 

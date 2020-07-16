@@ -47,24 +47,20 @@ public:
 
   virtual void RegisterDataOnMesh( dataRepository::Group * const MeshBodies ) override final;
 
-  virtual void SetupDofs( DomainPartition const * const domain,
+  virtual void SetupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
   virtual void SetupSystem( DomainPartition * const domain,
                             DofManager & dofManager,
-                            ParallelMatrix & matrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
+							CRSMatrix< real64, globalIndex > & localMatrix,
+							array1d< real64 > & localRhs,
+							array1d< real64 > & localSolution,
                             bool const setSparsity = true ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override final;
+                     DomainPartition & domain ) override final;
 
   virtual void ImplicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
@@ -72,35 +68,35 @@ public:
 
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
-                               DomainPartition * const domain,
-                               DofManager const & dofManager,
-                               ParallelMatrix & matrix,
-                               ParallelVector & rhs ) override;
+                               DomainPartition & domain,
+							   DofManager const & dofManager,
+							   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+							   arrayView1d< real64 > const & localRhs  ) override;
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs ) override;
+										CRSMatrixView< real64, globalIndex const > const & localMatrix,
+										arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+						 arrayView1d< real64 const > const & localSolution  ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+		               arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
-  virtual void ResetStateToBeginningOfStep( DomainPartition * const domain ) override final;
+  virtual void ResetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              int const cycleNumber,
-                             DomainPartition * const domain ) override;
+                             DomainPartition & domain ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {

@@ -233,7 +233,7 @@ void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeMa
 {
 
   offSet.resize( size() + 1 );
-  offSet = 0;
+  offSet.setValues<serialPolicy>( 0 );
   for( localIndex k =0; k < size(); k++ )
   {
     ComputeIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k );
