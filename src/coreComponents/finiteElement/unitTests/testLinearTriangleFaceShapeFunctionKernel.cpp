@@ -13,7 +13,7 @@
  */
 
 /**
- * @file testBiLinearQuadrilateralFaceShapeFunctionKernel.hpp
+ * @file testLinearTriangleFaceShapeFunctionKernel.hpp
  */
 
 #include "managers/initialization.hpp"
@@ -22,15 +22,16 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
+#include "finiteElement/LinearTriangleFaceShapeFunctionKernel.hpp"
 
 using namespace geosx;
 
 template< typename POLICY >
 void testKernelDriver()
 {
-  constexpr int numNodes = 4;
-  constexpr int numQuadraturePoints = 4;
+  constexpr int numNodes = 3;
+  constexpr int numQuadraturePoints = 1;
+  constexpr real64 weight = 0.5;
 
   array1d< real64 > arrDetJ( numQuadraturePoints );
   array2d< real64 > arrN( numQuadraturePoints, numNodes );
@@ -41,8 +42,7 @@ void testKernelDriver()
   constexpr real64 xCoords[numNodes][3] = {
     { 0.1, 0.1, 0.9 },
     { 1.1, -0.1, 0.1 },
-    { 0.0, 1.1, 0.0 },
-    { 0.9, 1.1, -0.1 }
+    { 0.0, 1.1, 0.0 }
   };
 
   forAll< POLICY >( 1,
@@ -52,7 +52,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      BiLinearQuadrilateralFaceShapeFunctionKernel::shapeFunctionValues( q, N );
+      LinearTriangleFaceShapeFunctionKernel::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -66,41 +66,38 @@ void testKernelDriver()
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      viewDetJ[q] = BiLinearQuadrilateralFaceShapeFunctionKernel::JxW( q,
-                                                                       xCoords );
+      viewDetJ[q] = LinearTriangleFaceShapeFunctionKernel::JxW( q,
+                                                                xCoords );
     }
   } );
 
-  constexpr real64 pCoords[2][numNodes] = {
-    { -1, 1, -1, 1 },
-    { -1, -1, 1, 1 }
+  constexpr real64 quadratureCoords[2][numQuadraturePoints] = {
+    { 1.0 / 3.0 },
+    { 1.0 / 3.0 }
   };
-
-  constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
-  constexpr static real64 weight = 1.0;
 
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      real64 const xi[2] = { quadratureFactor *pCoords[0][q],
-                             quadratureFactor*pCoords[1][q] };
+      real64 const xi[2] = { quadratureCoords[0][q],
+                             quadratureCoords[1][q] };
 
       for( localIndex a=0; a<numNodes; ++a )
       {
-        real64 N = 0.25 * ( 1 + xi[ 0 ]*pCoords[ 0 ][ a ] ) *
-                   ( 1 + xi[ 1 ]*pCoords[ 1 ][ a ] );
+        real64 N =   static_cast< real64 >( ( a | 0 ) < 1 )
+                   + static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ) * xi[0]
+                   + static_cast< real64 >( ( ( a ^ 2 ) < 1 ) - ( ( a ^ 2 ) == 2 ) ) * xi[1];
         EXPECT_FLOAT_EQ( N, viewN[q][a] );
       }
 
       real64 dXdXi[3][2] = {{0}};
       for( localIndex a=0; a<numNodes; ++a )
       {
-        real64 dNdXi[2] = { 0.25 * pCoords[ 0 ][ a ] *
-                            ( 1 + xi[ 1 ] * pCoords[ 1 ][ a ] ),
-                            0.25 * ( 1 + xi[ 0 ] * pCoords[ 0 ][ a ] ) *
-                            pCoords[ 1 ][ a ] };
+        real64 dNdXi[2] = { static_cast< real64 >( ( ( a ^ 1 ) < 1 ) - ( ( a ^ 1 ) == 1 ) ),
+                            static_cast< real64 >( ( ( a ^ 2 ) < 1 ) - ( ( a ^ 2 ) == 2 ) ) };
+
         for( int i = 0; i < 3; ++i )
         {
           for( int j = 0; j < 2; ++j )
@@ -120,7 +117,6 @@ void testKernelDriver()
   } );
 }
 
-
 #ifdef USE_CUDA
 TEST( FiniteElementShapeFunctions, testKernelCuda )
 {
@@ -131,8 +127,6 @@ TEST( FiniteElementShapeFunctions, testKernelHost )
 {
   testKernelDriver< serialPolicy >();
 }
-
-
 
 using namespace geosx;
 int main( int argc, char * argv[] )

@@ -6,6 +6,7 @@ set(testSources
     testBiLinearQuadrilateralFaceShapeFunctionKernel.cpp
     testBiLinearWedgeShapeFunctionKernel.cpp
     testLinearTetrahedronShapeFunctionKernel.cpp
+    testLinearTriangleFaceShapeFunctionKernel.cpp
     testPyramidShapeFunctionKernel.cpp
     testShapeFunctionKernel.cpp
    )
