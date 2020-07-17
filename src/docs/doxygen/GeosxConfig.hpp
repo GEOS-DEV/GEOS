@@ -66,7 +66,7 @@
 #define GEOSX_USE_PETSC
 
 /// Choice of global linear algebra interface (CMake option GEOSX_LA_INTERFACE)
-#define GEOSX_LA_INTERFACE Hypre
+#define GEOSX_LA_INTERFACE Trilinos
 /// Macro defined when Trilinos interface is selected
 #define GEOSX_LA_INTERFACE_TRILINOS
 /// Macro defined when Hypre interface is selected

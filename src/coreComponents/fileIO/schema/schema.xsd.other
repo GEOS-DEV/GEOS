@@ -1074,14 +1074,8 @@
 		<xsd:attribute name="K_IC" type="r1_array" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--boundaryFaceDensity => (no description available)-->
-		<xsd:attribute name="boundaryFaceDensity" type="real64_array2d" />
-		<!--boundaryFaceMobility => (no description available)-->
-		<xsd:attribute name="boundaryFaceMobility" type="real64_array" />
 		<!--boundaryFacePressure => (no description available)-->
 		<xsd:attribute name="boundaryFacePressure" type="real64_array" />
-		<!--boundaryFaceViscosity => (no description available)-->
-		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1170,7 +1164,7 @@
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="externalForce" type="r1_array" />
+		<xsd:attribute name="externalForce" type="real64_array2d" />
 		<!--faceList => (no description available)-->
 		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->

@@ -268,7 +268,15 @@ public:
    */
   arrayView1d< real64 const > const & getElementArea() const { return m_elementArea; }
 
+  /**
+   * @brief Get element default conductivity.
+   * @return the element default conductivity
+   */
   arrayView1d< real64 > const & getElementDefaultConductivity()       { return m_elementDefaultConductivity; }
+
+  /**
+   * @copydoc getElementDefaultConductivity()
+   */
   arrayView1d< real64 const > const & getElementDefaultConductivity() const { return m_elementDefaultConductivity; }
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT

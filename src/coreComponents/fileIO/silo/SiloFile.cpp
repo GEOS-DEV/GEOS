@@ -2728,8 +2728,6 @@ void SiloFile::WriteMaterialDataField( string const & meshName,
 
     array1d< localIndex > mixlen2( nvars );
     array1d< localIndex > nels2( nvars );
-    mixlen2 = 0;
-    nels2 = 0;
 
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )

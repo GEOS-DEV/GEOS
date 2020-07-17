@@ -72,8 +72,8 @@ void WellElementRegion::GenerateWell( MeshLevel & mesh,
 
 
   // 2) classify well elements based on connectivity to local mesh partition
-  array1d< integer > elemStatusGlobal( numElemsGlobal );
-  elemStatusGlobal = WellElementSubRegion::WellElemStatus::UNOWNED;
+  array1d< integer > elemStatusGlobal;
+  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
 
   arrayView1d< globalIndex const > const & perfElemIdGlobal = wellGeometry.GetPerfElemIndex();
 
