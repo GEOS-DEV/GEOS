@@ -217,7 +217,10 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                         int const cycleNumber,
                                         DomainPartition * const domain )
 {
-  //TJ: This version of solver does two-level iterations
+  //TJ: This version of solver is a combination of version 1 and version 2.
+  //    It uses two-level iterations ONLY when the tip propagates into a new element.
+  //    It uses the initial guess method when the tip propagates internally in the tip
+  //    element
   real64 dtReturn = dt;
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
