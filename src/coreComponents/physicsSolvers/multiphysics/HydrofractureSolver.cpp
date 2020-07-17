@@ -276,6 +276,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       //    relying on the fact that the initial value of m_tipIterationFlag = false
       if (m_tipIterationFlag == false)
       {
+        SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+	SortedArray< localIndex > & nodesWithAssignedDisp =
+	  mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+
+	//TJ: We have to clear all the essential B.C. assigned at the split nodes
+	nodesWithAssignedDisp.clear();
+
 	if( solveIter>0 )
 	{
 	  /* TJ: set stress = stress_n to reset the solid stress
@@ -293,7 +300,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
         MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
         NodeManager & nodeManager = *mesh.getNodeManager();
-        SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
 
         array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
         array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & dispIncre = nodeManager.incrementalDisplacement();
@@ -357,7 +363,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  GEOSX_ASSERT_MSG( found == true,
 			"Trailing face is not found among the fracture face elements" );
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-//	  std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
+	  std::cout << "Before newton solve (m_tipIterationFlag == false): " << std::endl;
+	  std::cout << "Rank " << rank
+	            << ": m_tipElement = "     << m_tipElement
+		    << ", converged tipLoc = " << m_convergedTipLoc
+		    << std::endl;
 
 	  // First time step
 	  if (time_n < 1.0e-6 && solveIter == 0)
@@ -571,14 +581,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
-/*
+
 	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
 					 << myChildIndex[refNodeIndex] << std::endl;
 	  std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
 				       << ", disp " << myChildIndex[refNodeIndex] << " = " << disp(myChildIndex[refNodeIndex],0)
 				       << std::endl;
-*/
+
 	  real64 tipX = 0.0;
 	  if (viscosity < 2.0e-3) // Toughness-dominated case
 	  {
@@ -601,12 +611,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  }
 	  m_newTipLocation = tipX + tipBCLocation;
 	  m_convergedTipLoc = m_newTipLocation;
-/*	  std::cout << "Rank " << rank
+	  std::cout << "After newton solve (m_tipIterationFlag == false): " << std::endl;
+	  std::cout << "Rank " << rank
 		    << ": Tip element = " << m_tipElement
 		    << ", "
 		    << "converged tip loc = " << m_convergedTipLoc
 		    << std::endl;
-*/
+
         }
         else
         {
@@ -897,6 +908,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  //TJ: compare old tip location with the new one
 	  if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
 	  {
+	    // change the flag to false to switch to the initial guess based method
+	    m_tipIterationFlag = false;
 	    m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
 	    m_convergedTipLoc = m_newTipLocation;
 	    m_oldTipLocation = m_newTipLocation;
