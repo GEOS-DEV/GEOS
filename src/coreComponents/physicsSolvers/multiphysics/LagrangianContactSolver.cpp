@@ -958,11 +958,31 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
+  NodeManager const & nodeManager = *mesh.getNodeManager();
+
+  arrayView1d< globalIndex const > const & dispDofNumber =
+    nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
+
   string const & dofKey = dofManager.getKey( viewKeyStruct::tractionString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  real64 const momentumResidualNorm = m_solidSolver->CalculateResidualNorm( domain, dofManager, localRhs );
-  real64 const momentumR2 = momentumResidualNorm * momentumResidualNorm;
+  arrayView1d< integer const > const & elemGhostRank = nodeManager.ghostRank();
+
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum0( 0.0 );
+  forAll< parallelDevicePolicy<> >( nodeManager.size(),
+                                    [localRhs, localSum0, dispDofNumber, rankOffset, elemGhostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    if( elemGhostRank[k] < 0 )
+    {
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dispDofNumber[k] - rankOffset );
+      for( localIndex dim = 0; dim < 3; ++dim )
+      {
+        localSum0 += localRhs[localRow + dim] * localRhs[localRow + dim];
+      }
+    }
+  } );
+  real64 const momentumR2 = localSum0.get();
+
   real64 contactR2 = 0.0;
 
   forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const, FaceElementSubRegion const & subRegion )
@@ -1003,11 +1023,12 @@ real64 LagrangianContactSolver::CalculateResidualNorm( DomainPartition const & d
 
   if( rank==0 )
   {
-    globalResidualNorm[0] = globalR2[0];
+    globalResidualNorm[0] = 0.0;
     globalResidualNorm[1] = 0.0;
     for( int r=0; r<size; ++r )
     {
       // sum across all ranks
+      globalResidualNorm[0] += globalR2[2 * r + 0];
       globalResidualNorm[1] += globalR2[2 * r + 1];
     }
     globalResidualNorm[2] = globalResidualNorm[0] + globalResidualNorm[1];
@@ -1098,8 +1119,8 @@ void LagrangianContactSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext.setValues< serialPolicy >( 0 );
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1192,8 +1213,8 @@ void LagrangianContactSolver::
 
   FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1411,7 +1432,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the finite volume method used to compute the stabilization
