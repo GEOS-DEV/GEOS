@@ -1391,17 +1391,17 @@ void LagrangianContactFlowSolver::SolveSystem( DofManager const & dofManager,
     solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
-  int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( rank == 0 )
-  {
-    string str;
-    std::getline( std::cin, str );
-    if( str.length() > 0 )
-    {
-      GEOSX_ERROR( "STOP" );
-    }
-  }
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  // int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  // if( rank == 0 )
+  // {
+  //   string str;
+  //   std::getline( std::cin, str );
+  //   if( str.length() > 0 )
+  //   {
+  //     GEOSX_ERROR( "STOP" );
+  //   }
+  // }
+  // MpiWrapper::Barrier( MPI_COMM_GEOSX );
 }
 
 void LagrangianContactFlowSolver::SetNextDt( real64 const & currentDt,
