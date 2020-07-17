@@ -115,7 +115,6 @@ void testKernelDriver()
     { 0.25 }
   };
 
-
   forAll< serialPolicy >( 1,
                           [=] ( localIndex const )
   {
