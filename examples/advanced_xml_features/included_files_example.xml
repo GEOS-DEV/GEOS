@@ -1,5 +1,7 @@
+<?xml version="1.0" ?>
+
 <Problem>
-<!--
+  <!--
 Note: This example uses the advanced xml input features,
            and needs to be compiled using pygeos.
 
@@ -15,8 +17,13 @@ using the following rules:
     Otherwise insert the target into the xml structure as-is
 -->
   <Included>
-      <File name="./included/included_a.xml"/>
-      <File name="./included/included_b.xml"/>
-      <File name="./included/included_c.xml"/>
+    <File
+      name="./included/included_a.xml"/>
+
+    <File
+      name="./included/included_b.xml"/>
+
+    <File
+      name="./included/included_c.xml"/>
   </Included>
 </Problem>

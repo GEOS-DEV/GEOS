@@ -940,8 +940,8 @@ void LagrangianContactFlowSolver::
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
 
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
-  string const presDofKey = dofManager.getKey( m_pressureKey );
+  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
 
   arrayView1d< globalIndex const > const &
   dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -1066,7 +1066,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( m_pressureKey );
+  string const & presDofKey = dofManager.getKey( m_pressureKey );
 
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();

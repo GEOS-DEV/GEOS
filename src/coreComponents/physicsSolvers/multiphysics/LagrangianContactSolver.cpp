@@ -1118,8 +1118,8 @@ void LagrangianContactSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
   fext.setValues< serialPolicy >( 0 );
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1212,8 +1212,8 @@ void LagrangianContactSolver::
 
   FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
-  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1434,7 +1434,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   NodeManager const & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
+  string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   globalIndex const rankOffset = dofManager.rankOffset();
 
   // Get the finite volume method used to compute the stabilization
