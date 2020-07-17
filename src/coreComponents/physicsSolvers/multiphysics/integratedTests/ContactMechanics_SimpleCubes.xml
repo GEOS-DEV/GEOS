@@ -181,7 +181,7 @@
     <MohrCoulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionCoefficient="0.577350269189626"/>
+      frictionCoefficient="0.577350269"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -254,6 +254,7 @@
       objectPath="faceManager"
       fieldName="Traction"
       component="0"
+      functionName="ForceTimeFunction"
       scale="-1.0e0"
       setNames="{ front }"/>
 
