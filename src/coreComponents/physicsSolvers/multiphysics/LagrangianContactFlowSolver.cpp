@@ -1110,13 +1110,13 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elemManager.ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::bulkModulusString,
-                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
-                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
+                                                                                                 m_contactSolver->getSolidSolver()->targetRegionNames(),
+                                                                                                 m_contactSolver->getSolidSolver()->solidMaterialNames() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elemManager.ConstructMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( LinearElasticIsotropic::viewKeyStruct::shearModulusString,
-                                                                                                  m_contactSolver->getSolidSolver()->targetRegionNames(),
-                                                                                                  m_contactSolver->getSolidSolver()->solidMaterialNames() );
+                                                                                                 m_contactSolver->getSolidSolver()->targetRegionNames(),
+                                                                                                 m_contactSolver->getSolidSolver()->solidMaterialNames() );
   arrayView1d< globalIndex const > const &
   presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1309,43 +1309,6 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
             RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], rhs );
           }
         }
-
-        /*
-        // Global matrix and rhs assembly
-        matrix->add( elemDOF[0],
-                     elemDOF[0],
-                     totalInvStiffApprox.data(),
-                     nDof[0],
-                     nDof[0] );
-
-        matrix->add( elemDOF[1],
-                     elemDOF[1],
-                     totalInvStiffApprox.data(),
-                     nDof[1],
-                     nDof[1] );
-
-        // Change sign
-        totalInvStiffApprox( 0 ) *= -1.0;
-
-        matrix->add( elemDOF[0],
-                     elemDOF[1],
-                     totalInvStiffApprox.data(),
-                     nDof[0],
-                     nDof[1] );
-
-        matrix->add( elemDOF[1],
-                     elemDOF[0],
-                     totalInvStiffApprox.data(),
-                     nDof[1],
-                     nDof[0] );
-
-        rhs->add( elemDOF[0],
-                  &rhs0,
-                  nDof[0] );
-        rhs->add( elemDOF[1],
-                  &rhs1,
-                  nDof[1] );
-        */
       }
     }
   } );
