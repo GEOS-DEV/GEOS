@@ -387,7 +387,7 @@ void FluxKernel::
                                     ElementView< arrayView1d< real64 const > > const & mob,
                                     ElementView< arrayView1d< real64 const > > const & dMob_dPres,
                                     ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture0 ),
-				    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( conductivity0 ),
+                                    ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( conductivity0 ),
                                     ElementView< arrayView1d< real64 const > > const & GEOSX_UNUSED_PARAM( aperture ),
                                     ElementView< arrayView1d< R1Tensor const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
                                     R1Tensor const,
