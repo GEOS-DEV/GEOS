@@ -2888,7 +2888,7 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
   HydrofractureSolver * const myHydroSolver = this->getParent()->GetGroup< HydrofractureSolver >( "hydrofracture" );
   real64 const tipLoc = myHydroSolver->getConvergedTipLoc();
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-//  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
+  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
 
 
   for( localIndex iEdge = 0; iEdge != edgeManager.size(); ++iEdge )

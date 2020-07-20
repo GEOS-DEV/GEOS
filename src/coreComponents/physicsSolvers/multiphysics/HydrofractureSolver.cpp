@@ -244,11 +244,27 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     m_numResolves[1] = m_numResolves[0];
     int solveIter;
 
+    //TJ
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+
+    //TJ: We use this global flag to ensure that the MPI processes are either ALL in
+    //    the initial guess solver (globalSolverIterFlag = 0), or ALL in the tip iteration
+    //    solver (globalSolverIterFlag = 1). The reason we use 0/1 instead of true/false is
+    //    because we are going to use MPI::allReduce to maintain the consistency of
+    //    globalSolverIterFlag across all the processes. The globalSolverIterFlag needs to be
+    //    initialized outside the solverIter loop, so that at the beginning of each time step,
+    //    we always use the initial guess solver. Also, globalSolverIterFlag should not be rewritten
+    //    at the beginning of each solverIter.
+    int globalSolverIterFlag = 0;
+
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
       int locallyFractured = 0;
       int globallyFractured = 0;
 
+      //TJ: each copy of hydrofactureSolver (each mpi process) has its own localSolverFlag variable,
+      //    even for those process where no surface element (fracture) is defined.
+      int localSolverIterFlag = 0;
 
       /* TJ: create the sparsity patterns for the diagonal blocks
        *     and the off-diagonal blocks
@@ -274,8 +290,19 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
       //TJ: original solve without tip iteration
       //    relying on the fact that the initial value of m_tipIterationFlag = false
-      if (m_tipIterationFlag == false)
+      //TJ: For MPI, each copy of hydrofractureSolver has its own PRIVATE member of
+      //    m_tipIterationFlag. The value of m_tipIterationFlag needs to maintain a consistent
+      //    value across all the copies of hydrofractureSolver.
+      //TJ: Since we have globalSolverIterFlag now, we can get rid of the private member
+      //    m_tipIterationFlag. Also, at the first solver (solverIter = 0), globalSolverIterFlag is
+      //    always ZERO
+
+      if (globalSolverIterFlag == 0)
       {
+        std::cout << "Rank " << rank << ": I am in initial guess solver." << std::endl;
+
+	real64 localConvergedTipLoc = -1.0;
+
         SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
 	SortedArray< localIndex > & nodesWithAssignedDisp =
 	  mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
@@ -335,7 +362,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         real64 const PI = 2 * acos(0.0);
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
         real64 const mup = 12.0 * viscosity;
-//	int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
 	//TJ: find the location of the tip boundary
 	SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
@@ -362,8 +388,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  } // for localIndex i
 	  GEOSX_ASSERT_MSG( found == true,
 			"Trailing face is not found among the fracture face elements" );
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-	  std::cout << "Before newton solve (m_tipIterationFlag == false): " << std::endl;
+	  std::cout << "Rank " << rank
+	            << ": Before newton solve (globalSolverIterFlag == 0): " << std::endl;
 	  std::cout << "Rank " << rank
 	            << ": m_tipElement = "     << m_tipElement
 		    << ", converged tipLoc = " << m_convergedTipLoc
@@ -447,47 +473,46 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	//TJ: print out surface aperture before newton solve
 
 	{
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
+	  std::cout << "Rank " << rank << ": Inside initial guess solver, "
 		       "before newton solve: "
 		    << std::endl;
-	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  std::cout << "Rank " << rank << ": Face element subRegion size: " << subRegion->size() << std::endl;
 	  if (subRegion->size() == 0)
-	    std::cout << "No face element yet" << "\n";
+	    std::cout << "Rank " << rank << ": No face element yet" << "\n";
 	  else
 	  {
-	    std::cout << "Face element info: " << std::endl;
+	    std::cout << "Rank " << rank << ": Face element info: " << std::endl;
 	    for(localIndex i=0; i<nodeMap.size(); i++)
 	    {
-	      std::cout << "Face (node) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (node) " << i << ": ";
 	      for(localIndex j=0; j<nodeMap[i].size(); j++)
 		std::cout << nodeMap[i][j] << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<edgeMap.size(); i++)
 	    {
-	      std::cout << "Face (edge) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 	      for(localIndex j=0; j<edgeMap[i].size(); j++)
 		std::cout << edgeMap[i][j] << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<faceMap.size(0); i++)
 	    {
-	      std::cout << "Face (face) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (face) " << i << ": ";
 	      for(localIndex j=0; j<faceMap.size(1); j++)
 		std::cout << faceMap[i][j] << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
 	    {
-	      std::cout << "Face (center) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (center) " << i << ": ";
 	      for(auto & item : subRegion->getElementCenter()[i])
 		std::cout << item << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
 	    {
-	      std::cout << "Face (aperture) " << i << ": "
+	      std::cout << "Rank " << rank << ": Face (aperture) " << i << ": "
 			<< subRegion->getElementAperture()[i]
 			<< std::endl;
 	    }
@@ -509,41 +534,39 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	//TJ: print out surface aperture after newton solve
 
 	{
-
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
-	  std::cout << "Rank " << rank << " Inside hydrofracture solver, "
+	  std::cout << "Rank " << rank << ": Inside initial guess solver, "
 		       "after newton solve: "
 		    << std::endl;
-	  std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	  std::cout << "Rank " << rank << ": Face element subRegion size: " << subRegion->size() << std::endl;
 	  if (subRegion->size() == 0)
-	    std::cout << "No face element yet" << "\n";
+	    std::cout << "Rank " << rank << ": No face element yet" << "\n";
 	  else
 	  {
-	    std::cout << "Face element info: " << std::endl;
+	    std::cout << "Rank " << rank << ": Face element info: " << std::endl;
 	    for(localIndex i=0; i<nodeMap.size(); i++)
 	    {
-	      std::cout << "Face (node) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (node) " << i << ": ";
 	      for(localIndex j=0; j<nodeMap[i].size(); j++)
 		std::cout << nodeMap[i][j] << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<edgeMap.size(); i++)
 	    {
-	      std::cout << "Face (edge) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 	      for(localIndex j=0; j<edgeMap[i].size(); j++)
 		std::cout << edgeMap[i][j] << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
 	    {
-	      std::cout << "Face (center) " << i << ": ";
+	      std::cout << "Rank " << rank << ": Face (center) " << i << ": ";
 	      for(auto & item : subRegion->getElementCenter()[i])
 		std::cout << item << " ";
 	      std::cout << "\n";
 	    }
 	    for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
 	    {
-	      std::cout << "Face (aperture) " << i << ": "
+	      std::cout << "Rank " << rank << ": Face (aperture) " << i << ": "
 			<< subRegion->getElementAperture()[i]
 			<< std::endl;
 	    }
@@ -582,7 +605,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
 			    "Node crosses the symmetric plane." );
 
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex << ", childIndex = "
 					 << myChildIndex[refNodeIndex] << std::endl;
 	  std::cout << "Rank " << rank << ": disp " << refNodeIndex               << " = " << disp(refNodeIndex,0)
@@ -610,23 +632,46 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
             tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
 	  }
 	  m_newTipLocation = tipX + tipBCLocation;
-	  m_convergedTipLoc = m_newTipLocation;
-	  std::cout << "After newton solve (m_tipIterationFlag == false): " << std::endl;
+	  localConvergedTipLoc = m_newTipLocation;
+
+	  //TJ: when there is no trailingFaces in the MPI process,
+	  //    there is no tip element in this process. So we don't
+	  //    calculate the tip location in this process.
+          if (trailingFaces.empty())
+            localConvergedTipLoc = -1.0;
+
+	  std::cout << "Rank " << rank
+	            << ": After newton solve (globalSolverIterFlag == 0): " << std::endl;
 	  std::cout << "Rank " << rank
 		    << ": Tip element = " << m_tipElement
 		    << ", "
-		    << "converged tip loc = " << m_convergedTipLoc
+		    << "converged tip loc = " << localConvergedTipLoc
 		    << std::endl;
-
         }
         else
         {
 //	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 //	  std::cout << "Rank " << rank << ": No face element yet" << "\n";
         } // if (subRegion->size() > 0)
-      }  //TJ: solve with tip iteration, if (m_tipIterationFlag==false)
-      else
+
+        real64 globalConvergedTipLoc = -1.0;
+	MpiWrapper::allReduce( &localConvergedTipLoc,
+			       &globalConvergedTipLoc,
+			       1,
+			       MPI_MAX,
+			       MPI_COMM_GEOSX );
+	m_convergedTipLoc = globalConvergedTipLoc;
+	std::cout << "Rank " << rank
+		  << ": converged tip loc = " << m_convergedTipLoc
+		  << std::endl;
+      }  // if (globalSolverIterFlag == 0)
+      else  // solve with tip iteration (globalSolverIterFlag == 1)
       {
+	int localTipIterConverged = 0;
+	int globalTipIterConverged = 0;
+	real64 localConvergedTipLoc = -1.0;
+
+        std::cout << "Rank " << rank << ": I am in tip iteration solver." << std::endl;
         std::cout << "Solve with tip iteration, ";
         integer const maxTipIteration = 50;
         std::cout << "maximum " << maxTipIteration << " allowed."
@@ -636,6 +681,12 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
         SortedArray< localIndex > const & nodesWithAssignedDisp =
   	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+
+        std::cout << "Rank " << rank << ": size of nodesWithAssignedDisp: "
+    	      << nodesWithAssignedDisp.size() << std::endl;
+        for(auto & item : nodesWithAssignedDisp)
+          std::cout << item << ", ";
+        std::cout << std::endl;
 
         MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
         NodeManager & nodeManager = *mesh.getNodeManager();
@@ -673,82 +724,93 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
         real64 const mup = 12.0 * viscosity;
 
-        //TJ: tolerance for the tip iteration,
-        //    convergence is achieved when || m_newTipLocation - m_oldTipLocation || < tipTol
+
+	//TJ: tolerance for the tip iteration,
+	//    convergence is achieved when || m_newTipLocation - m_oldTipLocation || < tipTol
 	real64 const tipTol = 1.0e-6;
 
 	//TJ: temporary variables for binary search
 	real64 minTipLocation = 0.0;
 	real64 maxTipLocation = 0.0;
+	localIndex_array myChildIndex = nodeManager.getReference<localIndex_array>("childIndex");
 
 	//TJ: find the location of the channel boundary
-        real64 const channelElmtArea = subRegion->getElementArea()[m_channelElement];
-        real64 channelElmtSize = sqrt(channelElmtArea);
-        channelElmtSize = 1.0;  // hard coded
-        R1Tensor const channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
-        // Tip propagates in the y-direction (hard coded)
-        real64 const channelBCLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
+	R1Tensor channelElmtCenter;
+	real64 channelElmtArea;
+	real64 channelElmtSize;
+	// Tip propagates in the y-direction (hard coded)
+	real64 channelBCLocation;
 
-	localIndex_array myChildIndex = nodeManager.getReference<localIndex_array>("childIndex");
-        localIndex refNodeIndex;
-	for(localIndex i=0; i<nodeMap[m_channelElement].size(); i++)
+	localIndex refNodeIndex;
+	if (!nodesWithAssignedDisp.empty())
 	{
-	  localIndex node = nodeMap[m_channelElement][i];
-	  if (   std::find( nodesWithAssignedDisp.begin(), nodesWithAssignedDisp.end(), node )
-	      == nodesWithAssignedDisp.end()
-	      && myChildIndex[node] >= 0)
-	  {
-	    refNodeIndex = node;
-	    break;
-	  }
-	}
+	  channelElmtCenter = subRegion->getElementCenter()[m_channelElement];
+	  channelElmtArea = subRegion->getElementArea()[m_channelElement];
+	  channelElmtSize = sqrt(channelElmtArea);
+	  channelElmtSize = 1.0;  // hard coded
+	  // Tip propagates in the y-direction (hard coded)
+	  channelBCLocation = channelElmtCenter[1] + 0.5 * channelElmtSize;
 
+
+	  for(localIndex i=0; i<nodeMap[m_channelElement].size(); i++)
+	  {
+	    localIndex node = nodeMap[m_channelElement][i];
+	    if (   std::find( nodesWithAssignedDisp.begin(), nodesWithAssignedDisp.end(), node )
+		== nodesWithAssignedDisp.end()
+		&& myChildIndex[node] >= 0)
+	    {
+	      refNodeIndex = node;
+	      break;
+	    }
+	  }
+        } // if (!nodesWithAssignedDisp.empty())
 	m_tipLocationHistory.clear();
+
         //TJ: tip iterations
         for(localIndex tipIterCount = 0; tipIterCount < maxTipIteration; tipIterCount++)
         {
           //TJ: print out surface aperture before newton solve
 	  {
-	    std::cout << "Inside hydrofracture solver, "
+	    std::cout << "Rank " << rank << ": Inside tip iteration, "
 			 "before newton solve: "
 		      << std::endl;
-	    std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	    std::cout << "Rank " << rank << ": Face element subRegion size: " << subRegion->size() << std::endl;
 	    if (subRegion->size() == 0)
-	      std::cout << "No face element yet" << "\n";
+	      std::cout << "Rank " << rank << ": No face element yet" << "\n";
 	    else
 	    {
-	      std::cout << "Face element info: " << std::endl;
+	      std::cout << "Rank " << rank << ": Face element info: " << std::endl;
 	      for(localIndex i=0; i<nodeMap.size(); i++)
 	      {
-		std::cout << "Face (node) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (node) " << i << ": ";
 		for(localIndex j=0; j<nodeMap[i].size(); j++)
 		  std::cout << nodeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<edgeMap.size(); i++)
 	      {
-		std::cout << "Face (edge) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 		for(localIndex j=0; j<edgeMap[i].size(); j++)
 		  std::cout << edgeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<faceMap.size(0); i++)
 	      {
-		std::cout << "Face (face) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (face) " << i << ": ";
 		for(localIndex j=0; j<faceMap.size(1); j++)
 		  std::cout << faceMap[i][j] << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
 	      {
-		std::cout << "Face (center) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (center) " << i << ": ";
 		for(auto & item : subRegion->getElementCenter()[i])
 		  std::cout << item << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
 	      {
-		std::cout << "Face (aperture) " << i << ": "
+		std::cout << "Rank " << rank << ": Face (aperture) " << i << ": "
 			  << subRegion->getElementAperture()[i]
 			  << std::endl;
 	      }
@@ -766,100 +828,205 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 						  m_solution );
 	  //TJ: print out surface aperture after newton solve
 	  {
-	    std::cout << "Inside hydrofracture solver, "
+	    std::cout << "Rank " << rank << ": Inside tip iteration, "
 			 "after newton solve: "
 		      << std::endl;
-	    std::cout << "Face element subRegion size: " << subRegion->size() << std::endl;
+	    std::cout << "Rank " << rank << ": Face element subRegion size: " << subRegion->size() << std::endl;
 	    if (subRegion->size() == 0)
-	      std::cout << "No face element yet" << "\n";
+	      std::cout << "Rank " << rank << ": No face element yet" << "\n";
 	    else
 	    {
-	      std::cout << "Face element info: " << std::endl;
+	      std::cout << "Rank " << rank << ": Face element info: " << std::endl;
 	      for(localIndex i=0; i<nodeMap.size(); i++)
 	      {
-		std::cout << "Face (node) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (node) " << i << ": ";
 		for(localIndex j=0; j<nodeMap[i].size(); j++)
 		  std::cout << nodeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<edgeMap.size(); i++)
 	      {
-		std::cout << "Face (edge) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 		for(localIndex j=0; j<edgeMap[i].size(); j++)
 		  std::cout << edgeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
 	      {
-		std::cout << "Face (center) " << i << ": ";
+		std::cout << "Rank " << rank << ": Face (center) " << i << ": ";
 		for(auto & item : subRegion->getElementCenter()[i])
 		  std::cout << item << " ";
 		std::cout << "\n";
 	      }
 	      for(localIndex i=0; i<subRegion->getElementAperture().size(); i++)
 	      {
-		std::cout << "Face (aperture) " << i << ": "
+		std::cout << "Rank " << rank << ": Face (aperture) " << i << ": "
 			  << subRegion->getElementAperture()[i]
 			  << std::endl;
 	      }
 	    }
 	  } // print statements
 
-          //TJ: obtain new tip location
-	  std::cout << "The face element on the boundary of the channel is "
-	            << m_channelElement << std::endl;
-	  real64 const refAper = subRegion->getElementAperture()[m_channelElement];
-	  std::cout << "The aperture of the face element at the channel boundary is "
-	            << refAper << std::endl;
-
-	  //TJ: find the upper bound of the tip location inside the partially opened element
-	  //    the upper bound is obtained at the first tip iteration, since the gap at the
-	  //    newly split node pair is almost zero
-	  if (tipIterCount == 0)
+	  if (!nodesWithAssignedDisp.empty())
 	  {
-	    m_tipLocationHistory.insert(tipIterCount, m_oldTipLocation);
-	    minTipLocation = m_oldTipLocation;   // initialize the lower bound
-/*
-	    if (m_newTipLocation <= m_oldTipLocation)
+	    //TJ: obtain new tip location
+	    std::cout << "Rank " << rank << ": the face element on the boundary of the channel is "
+		      << m_channelElement << std::endl;
+	    real64 const refAper = subRegion->getElementAperture()[m_channelElement];
+	    std::cout << "Rank " << rank << ": the aperture of the face element at the channel boundary is "
+		      << refAper << std::endl;
+
+	    //TJ: find the upper bound of the tip location inside the partially opened element
+	    //    the upper bound is obtained at the first tip iteration, since the gap at the
+	    //    newly split node pair is almost zero
+	    if (tipIterCount == 0)
 	    {
-	      std::cout << "Accept that new tip location is behind the channel B.C.!" << std::endl;
-	      break;
+	      m_tipLocationHistory.insert(tipIterCount, m_oldTipLocation);
+	      minTipLocation = m_oldTipLocation;   // initialize the lower bound
+  /*
+	      if (m_newTipLocation <= m_oldTipLocation)
+	      {
+		std::cout << "Accept that new tip location is behind the channel B.C.!" << std::endl;
+		break;
+	      }
+	      //Safe guard for the corner case
+	      GEOSX_ASSERT_MSG( m_newTipLocation > m_oldTipLocation,
+			    "Corner case: the initial gap (0.0001) is too large!" );
+  */
 	    }
-	    //Safe guard for the corner case
-	    GEOSX_ASSERT_MSG( m_newTipLocation > m_oldTipLocation,
-			  "Corner case: the initial gap (0.0001) is too large!" );
-*/
+
+	    //TJ: use the displacement gap at the node pair other than the newly split one
+	    //    on the face element at the channel boundary for the tip asymptotic relation
+	    real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
+	    std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex
+		      << ", disp "         << disp(refNodeIndex,0)
+		      << ", childIndex = " << myChildIndex[refNodeIndex]
+		      << ", disp "         << disp(myChildIndex[refNodeIndex],0)
+		      << std::endl;
+
+  //        GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
+  //			  "Node crosses the symmetric plane." );
+
+	    // TJ: When nodes cross symmetric plane, instead of terminating the simulation,
+	    //     we can use the tiploc as a new upper bound
+	    if (disp(refNodeIndex,0) >= 0.0)
+	    {
+	      std::cout << "Rank " << rank << ": Node crosses the symmetric plane. Half the tip location." << std::endl;
+	      if (tipIterCount == 0) // initialize the upper bound
+		maxTipLocation = m_convergedTipLoc;
+	      else
+		maxTipLocation = m_oldTipLocation;
+	    }
+	    else
+	    {
+	      real64 tipX = 0.0;
+	      if (viscosity < 2.0e-3) // Toughness-dominated case
+	      {
+		//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
+		tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
+	      }
+	      else // Viscosity-dominated case
+	      {
+    /*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
+		tipX = tipBCLocation / ( pow(coeff_viscous/refDisp, 3.0/2.0) - 1.0 );
+    */
+		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+		real64 gamma_m0 = 0.616;
+		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+		tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
+	      }
+	      m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
+
+	      if (tipIterCount == 0)   // initialize the upper bound
+	      {
+		maxTipLocation =
+		  m_newTipLocation > m_convergedTipLoc ? m_newTipLocation : m_convergedTipLoc;
+	      }
+	      else
+	      {
+		if (m_newTipLocation <= channelBCLocation)
+		{
+		  maxTipLocation = m_oldTipLocation;
+		}
+		else
+		{
+		  //TJ: update the lower and upper bounds for the binary search
+		  if (m_newTipLocation > m_oldTipLocation)
+		    minTipLocation = m_oldTipLocation;
+		  else
+		    maxTipLocation = m_oldTipLocation;
+		}
+	      }
+	    }   // if (disp(refNodeIndex,0) >= 0.0)
+
+	    // safe guard the binary search
+  //          GEOSX_ASSERT_MSG( maxTipLocation > minTipLocation,
+  //               "maxTipLocation < minTipLocation" );
+
+	    m_newTipLocation = 0.5 * (minTipLocation + maxTipLocation);
+
+	    //TJ: compare old tip location with the new one
+	    if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
+	    {
+	      //TJ: change the flag to false to switch to the initial guess based method
+	      //TJ: since we have the globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
+              // m_tipIterationFlag = false;
+	      m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	      m_convergedTipLoc = m_newTipLocation;
+	      localConvergedTipLoc = m_convergedTipLoc;
+	      m_oldTipLocation = m_newTipLocation;
+	      for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
+		std::cout << "Rank " << rank << ": Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
+	      std::cout << "Rank " << rank << ": tipLoc = " << m_convergedTipLoc << ", "
+			<< "Tip iteration converges in " << tipIterCount+1 << " steps."
+			<< std::endl;
+	      localTipIterConverged = 1;
+	    }
+	  } // if (!nodesWithAssignedDisp.empty())
+
+	  //TJ: each copy of the HF solvers need to break the tip iteration loop
+	  //    at the same time
+	  MpiWrapper::allReduce( &localTipIterConverged,
+				 &globalTipIterConverged,
+				 1,
+				 MPI_MAX,
+				 MPI_COMM_GEOSX );
+	  if (globalTipIterConverged == 1)
+	  {
+	    real64 globalConvergedTipLoc = -1.0;
+	    MpiWrapper::allReduce( &localConvergedTipLoc,
+				   &globalConvergedTipLoc,
+				   1,
+				   MPI_MAX,
+				   MPI_COMM_GEOSX );
+	    m_convergedTipLoc = globalConvergedTipLoc;
+	    break;
 	  }
 
-	  //TJ: use the displacement gap at the node pair other than the newly split one
-          //    on the face element at the channel boundary for the tip asymptotic relation
-          real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
-          std::cout << "refNodeIndex = " << refNodeIndex
-                    << ", disp "         << disp(refNodeIndex,0)
-                    << ", childIndex = " << myChildIndex[refNodeIndex]
-		    << ", disp "         << disp(myChildIndex[refNodeIndex],0)
-		    << std::endl;
+	  if (!nodesWithAssignedDisp.empty())
+	  {
+	    m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	    for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
+	      std::cout << "Rank " << rank << ": Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
 
-//        GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
-//			  "Node crosses the symmetric plane." );
+	    m_oldTipLocation = m_newTipLocation;
 
-          // TJ: When nodes cross symmetric plane, instead of terminating the simulation,
-          //     we can use the tiploc as a new upper bound
-          if (disp(refNodeIndex,0) >= 0.0)
-          {
-            std::cout << "Node crosses the symmetric plane. Half the tip location." << std::endl;
-            if (tipIterCount == 0) // initialize the upper bound
-              maxTipLocation = m_convergedTipLoc;
-            else
-              maxTipLocation = m_oldTipLocation;
-          }
-          else
-          {
-	    real64 tipX = 0.0;
+	    //TJ: reset essential B.C. at the newly split nodes
+	    real64 relativeDist = m_newTipLocation - channelBCLocation;
+	    GEOSX_ASSERT_MSG( relativeDist > 0.0,
+			    "Tip location falls behind the edge of the newly generated face element!" );
+
+	    real64 refValue = 0.0;
 	    if (viscosity < 2.0e-3) // Toughness-dominated case
 	    {
 	      //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
-	      tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
+	      // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+	      // based on symmetry
+	      refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
 	    }
 	    else // Viscosity-dominated case
 	    {
@@ -867,104 +1034,36 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 	      real64 gamma_m0 = 0.616;
 	      real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
-	      tipX = tipBCLocation / ( pow(coeff_viscous/refDisp, 3.0/2.0) - 1.0 );
+	      // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
+	      // based on symmetry
+	      refValue = 0.5 * coeff_viscous * pow(relativeDist/m_convergedTipLoc, 2.0/3.0);
   */
 	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 	      real64 gamma_m0 = 0.616;
 	      real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
 	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-	      tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
+	      refValue = 0.5 * Betam
+			     * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
 	    }
-	    m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
 
-	    if (tipIterCount == 0)   // initialize the upper bound
+	    for(auto node : nodesWithAssignedDisp)
 	    {
-	      maxTipLocation =
-                m_newTipLocation > m_convergedTipLoc ? m_newTipLocation : m_convergedTipLoc;
+	      // the sign of the displacement at the newly split nodes are always the same
+	      disp(node, 0) = disp(node,0) > 0 ? refValue : -refValue;
+	      dispIncre(node, 0) = disp(node, 0) - 0.0;
+	      std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
 	    }
-	    else
-	    {
-	      if (m_newTipLocation <= channelBCLocation)
-	      {
-		maxTipLocation = m_oldTipLocation;
-	      }
-	      else
-	      {
-		//TJ: update the lower and upper bounds for the binary search
-		if (m_newTipLocation > m_oldTipLocation)
-		  minTipLocation = m_oldTipLocation;
-		else
-		  maxTipLocation = m_oldTipLocation;
-	      }
-	    }
-          }   // if (disp(refNodeIndex,0) >= 0.0)
+	  } // if (!nodesWithAssignedDisp.empty())
 
-          // safe guard the binary search
-//          GEOSX_ASSERT_MSG( maxTipLocation > minTipLocation,
-//               "maxTipLocation < minTipLocation" );
+	  std::map< string, string_array > fieldNames;
+	  fieldNames["node"].push_back( keys::IncrementalDisplacement );
+	  fieldNames["node"].push_back( keys::TotalDisplacement );
+	  fieldNames["elems"].push_back( FlowSolverBase::viewKeyStruct::pressureString );
+	  fieldNames["elems"].push_back( "elementAperture" );
 
-	  m_newTipLocation = 0.5 * (minTipLocation + maxTipLocation);
-
-	  //TJ: compare old tip location with the new one
-	  if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
-	  {
-	    // change the flag to false to switch to the initial guess based method
-	    m_tipIterationFlag = false;
-	    m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
-	    m_convergedTipLoc = m_newTipLocation;
-	    m_oldTipLocation = m_newTipLocation;
-	    for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
-	      std::cout << "Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
-	    std::cout << "tipLoc = " << m_convergedTipLoc << ", "
-		      << "Tip iteration converges in " << tipIterCount+1 << " steps."
-		      << std::endl;
-	    break;
-	  }
-
-	  m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
-	  for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
-	    std::cout << "Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
-
-	  m_oldTipLocation = m_newTipLocation;
-
-          //TJ: reset essential B.C. at the newly split nodes
-	  real64 relativeDist = m_newTipLocation - channelBCLocation;
-          GEOSX_ASSERT_MSG( relativeDist > 0.0,
-			  "Tip location falls behind the edge of the newly generated face element!" );
-
-	  real64 refValue = 0.0;
-	  if (viscosity < 2.0e-3) // Toughness-dominated case
-	  {
-	    //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
-	    // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
-	    // based on symmetry
-	    refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
-	  }
-	  else // Viscosity-dominated case
-	  {
-/*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
-	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
-	    real64 gamma_m0 = 0.616;
-	    real64 coeff_viscous = em * Lm * gamma_m0 * sqrt(3.0) * pow(2.0, 2.0/3.0);
-	    // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
-	    // based on symmetry
-	    refValue = 0.5 * coeff_viscous * pow(relativeDist/m_convergedTipLoc, 2.0/3.0);
-*/
-	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
-	    real64 gamma_m0 = 0.616;
-	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
-	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
-	    refValue = 0.5 * Betam
-			   * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
-	  }
-
-          for(auto node : nodesWithAssignedDisp)
-	  {
-            // the sign of the displacement at the newly split nodes are always the same
-            disp(node, 0) = disp(node,0) > 0 ? refValue : -refValue;
-            dispIncre(node, 0) = disp(node, 0) - 0.0;
-            std::cout << "Node " << node << ": " << disp(node,0) << std::endl;
-	  }
+	  CommunicationTools::SynchronizeFields( fieldNames,
+						 domain->getMeshBody( 0 )->getMeshLevel( 0 ),
+						 domain->getNeighbors() );
 
           this->UpdateDeformationForCoupling( domain );
 
@@ -974,12 +1073,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   			  "Tip iteration does not converge!" );
         } // for tipIterCount
 
-      } // else, solve with tip iteration
+      } // if (globalSolverIterFlag == 0 or 1)
 
       /* TJ: update the stress in solid via displacement increment
        *     stress = stress + materialStiffness*disp_increment
        */
       m_solidSolver->updateStress( domain );
+      std::cout << "Rank " << rank << ": after updateStress." << std::endl;
 
       if( surfaceGenerator!=nullptr )
       {
@@ -988,7 +1088,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
           locallyFractured = 1;
 
           // when there is more than one fracture face element, we use tip-based method
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
           if (subRegion->size() >= 0)
           {
 	    /* TJ: This is where we can prescribe the displacement boundary conditions
@@ -1245,7 +1344,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	    GEOSX_ASSERT_MSG( m_channelElement != -1,
 		  "Face elmt on the channel boundary is not found!" );
-	    std::cout << "m_channelElement = " << m_channelElement << std::endl;
+	    std::cout << "Rank " << rank << ": m_channelElement = " << m_channelElement << std::endl;
 
 
 
@@ -1282,16 +1381,26 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 	    //TJ: set the tip iteration flag to get ready for finding
 	    //    the tip location through fixed-point iteration
-	    m_tipIterationFlag = true;
-	    std::cout << "End of disp manipulation" << std::endl;
+            //TJ: since we have globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
+//	    m_tipIterationFlag = true;
+	    localSolverIterFlag = 1;
+
+	    std::cout << "Rank " << rank << ": End of disp manipulation" << std::endl;
           } // if subRegion->size() >= 0
-        }
+        } // if( surfaceGenerator->SolverStep( time_n, dt, cycleNumber, domain ) > 0 )
         MpiWrapper::allReduce( &locallyFractured,
                                &globallyFractured,
                                1,
                                MPI_MAX,
                                MPI_COMM_GEOSX );
-      }
+
+        //TJ: we need to maintain a consistent profile of the globalSolverIterFlag
+        MpiWrapper::allReduce( &localSolverIterFlag,
+                               &globalSolverIterFlag,
+                               1,
+                               MPI_MAX,
+                               MPI_COMM_GEOSX );
+      } // if( surfaceGenerator!=nullptr )
       if( globallyFractured == 0 )
       {
         break;
@@ -1385,8 +1494,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
           m_flowSolver->UpdateState( subRegion1, targetIndex );
         } );
 */
-
-      }
+      } //  if( globallyFractured == 0 or 1 )
     }  //for( solveIter=0; solveIter<maxIter; ++solveIter )
 
     if (solveIter == maxIter)
@@ -1885,40 +1993,33 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   //TJ: test whether the displacement field at newly splitted nodes are passed correctly
   {
-/*    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
-    disp = nodeManager->totalDisplacement();
-    arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
-    dispIncre = nodeManager->incrementalDisplacement();
-    std::cout << "Node 8 (disp): "
-	      << disp(8,0) << ", "
-	      << disp(8,1) << ", "
-	      << disp(8,2) << std::endl;
-    std::cout << "Node 8 (disp_incre): "
-	      << dispIncre(8,0) << ", "
-	      << dispIncre(8,1) << ", "
-	      << dispIncre(8,2) << std::endl;
-
-
-    std::cout << "Node 10 (disp): "
-	      << disp(10,0) << ", "
-	      << disp(10,1) << ", "
-	      << disp(10,2) << std::endl;
-    std::cout << "Node 10 (disp_incre): "
-	      << dispIncre(10,0) << ", "
-	      << dispIncre(10,1) << ", "
-	      << dispIncre(10,2) << std::endl;
-    if (disp.size(0) >=27)
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+    SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+    SortedArray< localIndex > const & nodesWithAssignedDisp =
+    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+    if (!nodesWithAssignedDisp.empty())
     {
-      std::cout << "Node 26 (disp): "
-  	      << disp(26,0) << ", "
-  	      << disp(26,1) << ", "
-  	      << disp(26,2) << std::endl;
-      std::cout << "Node 26 (disp_incre): "
-  	      << dispIncre(26,0) << ", "
-  	      << dispIncre(26,1) << ", "
-  	      << dispIncre(26,2) << std::endl;
+      arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
+      disp = nodeManager->totalDisplacement();
+      arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const &
+      dispIncre = nodeManager->incrementalDisplacement();
+
+      for(auto node : nodesWithAssignedDisp)
+      {
+	std::cout << "Rank " << rank
+	          << ": Node " << node << " (disp): "
+	          << disp(node, 0) << ", "
+	          << disp(node, 1) << ", "
+	          << disp(node, 2) << ", "
+                  << std::endl;
+	std::cout << "Rank " << rank
+	          << ": Node " << node << " (dispIncre): "
+	          << dispIncre(node, 0) << ", "
+	          << dispIncre(node, 1) << ", "
+	          << dispIncre(node, 2) << ", "
+                  << std::endl;
+      }
     }
-*/
   }
 
   GEOSX_MARK_FUNCTION;
@@ -1934,6 +2035,10 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
   SortedArray< localIndex > const & nodesWithAssignedDisp =
           mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+
+  //TJ: matrix open and close have to be outside the   if (!nodesWithAssignedDisp.empty())
+  m_solidSolver->getSystemMatrix().open();
+  m_solidSolver->getSystemRhs().open();
   if (!nodesWithAssignedDisp.empty())
   {
 /*    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -1949,8 +2054,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       GEOSX_LOG_RANK_0( "residual0: written to " << filename );
     }
 */
-    m_solidSolver->getSystemMatrix().open();
-    m_solidSolver->getSystemRhs().open();
+
     // Hard code for displacement in the x-direction
     integer const component = 0;
     arrayView1d< globalIndex const > const & dofMap
@@ -1960,10 +2064,13 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
     arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp
                                         = nodeManager->totalDisplacement();
+    std::cout << "We are before zero out matrix00 entries." << std::endl;
 
     integer counter = 0;
     for(auto node : nodesWithAssignedDisp)
     {
+      std::cout << "We are inside Node: " << node << std::endl;
+
       dof( counter ) = dofMap[node]+component;
       real64 bcValue = disp(node, component);
       real64 fieldValue = bcValue;
@@ -1977,13 +2084,18 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       ++counter;
     }
 
+    std::cout << "We passed zero out matrix00 entries." << std::endl;
+    std::cout << "We are before prescribe RHS due to zero out matrix00 entries." << std::endl;
+
     FieldSpecificationEqual::template PrescribeRhsValues< LAInterface >( m_solidSolver->getSystemRhs(),
 									 counter,
 									 dof.data(),
 									 rhsContribution.data() );
 
-    m_solidSolver->getSystemMatrix().close();
-    m_solidSolver->getSystemRhs().close();
+    std::cout << "We are after prescribe RHS due to zero out matrix00 entries." << std::endl;
+
+
+
 /*    {
       string filename = "after_matrix00_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
       m_solidSolver->getSystemMatrix().write( filename, LAIOutputFormat::MATRIX_MARKET );
@@ -1996,6 +2108,24 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     }
 */
   }  //   if (!nodesWithAssignedDisp.empty())
+
+  //TJ: matrix open and close have to be outside the   if (!nodesWithAssignedDisp.empty())
+  m_solidSolver->getSystemMatrix().close();
+  {
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+    std::cout << "Rank " << rank << " passed close system matrix." << std::endl;
+  }
+
+  m_solidSolver->getSystemRhs().close();
+  {
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+    std::cout << "Rank " << rank << " passed close system RHS." << std::endl;
+  }
+
+  {
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+    std::cout << "Rank " << rank << " passed extra B.C.s applied at matrix_00." << std::endl;
+  }
 
 
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );
@@ -2026,6 +2156,9 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
   } );
   m_matrix01.close();
 
+
+  //TJ: matrix open and close have to be outside the   if (!nodesWithAssignedDisp.empty())
+  m_matrix01.open();
   if (!nodesWithAssignedDisp.empty())
   {
 /*    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -2036,7 +2169,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       GEOSX_LOG_RANK_0( "matrix01: written to " << filename );
     }
 */
-    m_matrix01.open();
     integer const component = 0;
     arrayView1d< globalIndex const > const & dofMap
                                         = nodeManager->getReference< array1d< globalIndex > >( dispDofKey );
@@ -2045,7 +2177,6 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
       globalIndex const dof = dofMap[a]+component;
       m_matrix01.clearRow(dof);
     }
-    m_matrix01.close();
 
     {
 /*      string filename = "after_matrix01_" + std::to_string( time ) + "_" + std::to_string( newtonIter ) + ".mtx";
@@ -2054,7 +2185,13 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 */
     }
   }  //    if (!nodesWithAssignedDisp.empty())
+  m_matrix01.close();
 
+
+  {
+    int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
+    std::cout << "Rank " << rank << " passed extra B.C.s applied at matrix_01." << std::endl;
+  }
 
   m_flowSolver->ApplyBoundaryConditions( time,
                                          dt,

@@ -201,7 +201,8 @@ private:
 
   //TJ: a flag to indicate of finding the tip location
   //    through fixed-pointer iterations
-  bool m_tipIterationFlag;
+  //TJ: Since we have globalSolverIterFlag, we don't need this private member anymore
+//  bool m_tipIterationFlag;
 
   //TJ: old tip location
   real64 m_oldTipLocation;
