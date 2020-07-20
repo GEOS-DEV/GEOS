@@ -27,7 +27,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlow.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geosx
 {

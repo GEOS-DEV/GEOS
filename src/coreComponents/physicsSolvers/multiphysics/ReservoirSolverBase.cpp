@@ -25,7 +25,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 namespace geosx
 {
