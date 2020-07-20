@@ -767,7 +767,6 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh \
         @PROJECT_SOURCE_DIR@/coreComponents/managers \
         @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
-        @PROJECT_SOURCE_DIR@/coreComponents/wells \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
         @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \

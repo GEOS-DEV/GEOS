@@ -19,10 +19,10 @@
 #include "WellSolverBase.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "wells/WellControls.hpp"
-#include "wells/WellElementRegion.hpp"
-#include "wells/WellElementSubRegion.hpp"
-#include "wells/PerforationData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "mesh/WellElementRegion.hpp"
+#include "mesh/WellElementSubRegion.hpp"
+#include "meshUtilities/PerforationData.hpp"
 
 namespace geosx
 {
