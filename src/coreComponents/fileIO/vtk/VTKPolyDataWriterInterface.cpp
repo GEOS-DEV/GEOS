@@ -287,14 +287,17 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, ElementRe
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
   {
-    vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
-    auto VTKPoints = GetVTKPoints( nodeManager );
-    ug->SetPoints( VTKPoints );
-    auto VTKCells = GetVTKCells( er );
-    ug->SetCells( VTKCells.first.data(), VTKCells.second );
-    WriteElementFields< CellElementSubRegion >( ug->GetCellData(), er );
-    WriteNodeFields( ug->GetPointData(), nodeManager );
-    WriteUnstructuredGrid( ug, time, er.getName() );
+    if( er.size() != 0 )
+    {
+      vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
+      auto VTKPoints = GetVTKPoints( nodeManager );
+      ug->SetPoints( VTKPoints );
+      auto VTKCells = GetVTKCells( er );
+      ug->SetCells( VTKCells.first.data(), VTKCells.second );
+      WriteElementFields< CellElementSubRegion >( ug->GetCellData(), er );
+      WriteNodeFields( ug->GetPointData(), nodeManager );
+      WriteUnstructuredGrid( ug, time, er.getName() );
+    }
   } );
 }
 
