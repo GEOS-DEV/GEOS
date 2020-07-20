@@ -19,7 +19,7 @@
 #include "WellSolverBase.hpp"
 
 #include "managers/DomainPartition.hpp"
-#include "physicsSolvers/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "meshUtilities/PerforationData.hpp"

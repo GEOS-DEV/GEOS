@@ -23,13 +23,13 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
-     wells/WellSolverBase.hpp
-     wells/WellSolverBase.hpp
-     wells/SinglePhaseWell.hpp
-     wells/SinglePhaseWellKernels.hpp     
-     wells/CompositionalMultiphaseWell.hpp
-     wells/CompositionalMultiphaseWellKernels.hpp
-     wells/WellControls.hpp
+     fluidFlow/wells/WellSolverBase.hpp
+     fluidFlow/wells/WellSolverBase.hpp
+     fluidFlow/wells/SinglePhaseWell.hpp
+     fluidFlow/wells/SinglePhaseWellKernels.hpp     
+     fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
+     fluidFlow/wells/WellControls.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
@@ -72,10 +72,10 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp     
      fluidFlow/SinglePhaseHybridFVMKernels.cpp
      fluidFlow/SinglePhaseProppantBase.cpp     
-     wells/WellSolverBase.cpp
-     wells/SinglePhaseWell.cpp          
-     wells/CompositionalMultiphaseWell.cpp     
-     wells/WellControls.cpp     
+     fluidFlow/wells/WellSolverBase.cpp
+     fluidFlow/wells/SinglePhaseWell.cpp          
+     fluidFlow/wells/CompositionalMultiphaseWell.cpp     
+     fluidFlow/wells/WellControls.cpp     
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
@@ -127,6 +127,6 @@ endif()
 geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( fluidFlow/unitTests )
-add_subdirectory( wells/unitTests )
+add_subdirectory( fluidFlow/wells/unitTests )
 
 message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

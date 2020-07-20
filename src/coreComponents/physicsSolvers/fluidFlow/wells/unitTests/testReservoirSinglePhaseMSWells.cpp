@@ -25,7 +25,7 @@
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "physicsSolvers/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;

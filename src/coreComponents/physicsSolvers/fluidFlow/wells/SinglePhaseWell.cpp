@@ -29,8 +29,8 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "meshUtilities/PerforationData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/wells/SinglePhaseWellKernels.hpp"
-#include "physicsSolvers/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
