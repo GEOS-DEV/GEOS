@@ -16,14 +16,14 @@
  * @file CompositionalMultiphaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseWell.hpp"
-#include "wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
@@ -1264,4 +1264,4 @@ struct SolutionCheckKernel
 
 } // end namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELLKERNELS_HPP

@@ -22,10 +22,10 @@
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
-#include "WellElementRegion.hpp"
-#include "WellElementSubRegion.hpp"
-#include "PerforationData.hpp"
-#include "Perforation.hpp"
+#include "mesh/WellElementRegion.hpp"
+#include "mesh/WellElementSubRegion.hpp"
+#include "meshUtilities/PerforationData.hpp"
+#include "meshUtilities/Perforation.hpp"
 
 namespace geosx
 {

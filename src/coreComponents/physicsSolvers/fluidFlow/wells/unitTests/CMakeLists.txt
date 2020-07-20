@@ -3,10 +3,8 @@
 #
 
 set( gtest_geosx_tests
-     testSinglePhaseBaseKernels.cpp
-     testSinglePhaseFVMKernels.cpp     
-     testSinglePhaseHybridFVMKernels.cpp
-     testCompMultiphaseFlow.cpp
+     testReservoirSinglePhaseMSWells.cpp
+     testReservoirCompositionalMultiphaseMSWells.cpp
    )
 
 set( dependencyList gtest )

@@ -13,7 +13,6 @@ set( subdirs
      meshUtilities
      mpiCommunications
      physicsSolvers
-     wells
      python
      )
 

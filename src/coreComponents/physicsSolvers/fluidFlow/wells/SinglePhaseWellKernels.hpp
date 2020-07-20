@@ -16,14 +16,14 @@
  * @file SinglePhaseWellKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
 #include "common/DataTypes.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseWell.hpp"
-#include "wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
@@ -707,4 +707,4 @@ struct SolutionCheckKernel
 
 } // end namespace geosx
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEWELLKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
