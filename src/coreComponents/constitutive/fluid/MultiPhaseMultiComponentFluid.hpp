@@ -166,7 +166,7 @@ public:
              m_phaseDensity[k][q],
              m_dPhaseDensity_dPressure[k][q],
              m_dPhaseDensity_dTemperature[k][q],
-             m_dPhaseFraction_dGlobalCompFraction[k][q],
+             m_dPhaseDensity_dGlobalCompFraction[k][q],
              m_phaseViscosity[k][q],
              m_dPhaseViscosity_dPressure[k][q],
              m_dPhaseViscosity_dTemperature[k][q],
