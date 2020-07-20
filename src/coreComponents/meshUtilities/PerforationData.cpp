@@ -17,11 +17,13 @@
  */
 
 #include "PerforationData.hpp"
+
 #include "mpiCommunications/MpiWrapper.hpp"
-#include "Perforation.hpp"
 #include "managers/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/Perforation.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
+
 
 namespace geosx
 {
