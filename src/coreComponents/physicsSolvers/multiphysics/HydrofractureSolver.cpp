@@ -1428,7 +1428,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    //    the tip location through fixed-point iteration
             //TJ: since we have globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
 //	    m_tipIterationFlag = true;
-	    localSolverIterFlag = 1;
+	    localSolverIterFlag = 0;
 /*
 	    std::cout << "Rank " << rank << ": End of disp manipulation" << std::endl;
 */
