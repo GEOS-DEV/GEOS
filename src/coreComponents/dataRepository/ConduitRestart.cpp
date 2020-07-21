@@ -40,9 +40,7 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 
   if( MpiWrapper::Comm_rank() == 0 )
   {
-    std::string cmd = "mkdir -p " + rootPath;
-    int ret = std::system( cmd.data() );
-    GEOSX_ERROR_IF( ret != 0, "Failed to create directory: command '" << cmd << "' exited with code " << std::to_string( ret ) );
+    makeDirsForPath( rootPath );
 
     root[ "protocol/name" ] = "hdf5";
     root[ "protocol/version" ] = CONDUIT_VERSION;
