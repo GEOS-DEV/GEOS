@@ -162,8 +162,8 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
 {
   real64 m1[ 3 ] = { normal[ 2 ], 0.0, -normal[ 0 ] };
   real64 m2[ 3 ] = { 0.0, normal[ 2 ], -normal[ 1 ] };
-  real64 const norm_m1 = LvArray::tensorOps::normalize< 3 >( m1 );
-  real64 const norm_m2 = LvArray::tensorOps::normalize< 3 >( m2 );
+  real64 const norm_m1 = LvArray::tensorOps::l2Norm< 3 >( m1 );
+  real64 const norm_m2 = LvArray::tensorOps::l2Norm< 3 >( m2 );
 
   // If present, looks for a vector with 0 norm
   // Fix the uncertain case of norm_m1 very close to norm_m2
@@ -171,12 +171,14 @@ void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
   {
     LvArray::tensorOps::crossProduct( m2, normal, m1 );
     LvArray::tensorOps::normalize< 3 >( m2 );
+    LvArray::tensorOps::normalize< 3 >( m1 );
   }
   else
   {
     LvArray::tensorOps::crossProduct( m1, normal, m2 );
     LvArray::tensorOps::scale< 3 >( m1, -1 );
     LvArray::tensorOps::normalize< 3 >( m1 );
+    LvArray::tensorOps::normalize< 3 >( m2 );
   }
 
   // Save everything in the standard form (3x3 rotation matrix)
