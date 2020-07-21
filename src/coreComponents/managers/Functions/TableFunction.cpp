@@ -146,7 +146,12 @@ void TableFunction::setInterpolationMethod( string interpolationMethodString )
 void TableFunction::InitializeFunction()
 {
   // Read in data
-  if( m_coordinateFiles.empty())
+  if( m_coordinates.size() > 0 )
+  {
+    // This function appears to be already initialized
+    // Apparently, this can be called multiple times during unit tests?
+  }
+  else if( m_coordinateFiles.empty() )
   {
     // 1D Table
     m_dimensions = 1;
