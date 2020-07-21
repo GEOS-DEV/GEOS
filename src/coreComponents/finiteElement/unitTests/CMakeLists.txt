@@ -6,17 +6,26 @@ set(testSources
     testShapeFunctionKernel.cpp
    )
 
-if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
+
+if ( ENABLE_MPI )
+  set ( dependencyList ${dependencyList} mpi )
+endif()
+
+if ( ENABLE_OPENMP )
+  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if( ENABLE_CALIPER )
-  set( dependencyList ${dependencyList} caliper adiak )
-endif()
 #
 # Add gtest C++ based tests
 #
@@ -25,14 +34,14 @@ foreach(test ${testSources})
     blt_add_executable( NAME ${test_name}
                         SOURCES ${test}
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                        DEPENDS_ON gtest geosx_core ${dependencyList} )
+                        DEPENDS_ON ${dependencyList} )
 
     blt_add_test( NAME ${test_name} 
                   COMMAND ${test_name}
                   )
 
-    if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )    
-        set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")    
+    if( ( NOT ${ENABLE_CUDA} ) AND ( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" ) )
+        set_target_properties(${test_name} PROPERTIES COMPILE_FLAGS "-Wno-everything")
     endif()
 
 endforeach()
