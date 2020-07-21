@@ -638,7 +638,7 @@ public:
   bool hasExtrinsicData() const
   {
     // FIXME c++17 We copy paste the Group::hasWrapper implementation for linking reasons
-    //             (the key needs to be defined/decalred).
+    //             (the key needs to be defined/declared).
     //             C++17 introduces inline variables and should remove this problem.
     return this->wrappers()[MESH_DATA_TRAIT::key] != nullptr;
   }
