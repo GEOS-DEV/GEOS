@@ -10,7 +10,7 @@
                        proppantDiameter="4.5e-4"
                        frictionCoefficient="0.04"
                        criticalShieldsNumber="0.0"
-                       maxProppantConcentration="0.6"
+                       maxProppantConcentration="0.62"
                        discretization="singlePhaseTPFA"
                        targetRegions="{Fracture}"
                        fluidNames="{water}"
@@ -23,8 +23,9 @@
                 lineSearchAction="0"
                 maxTimeStepCuts="5"
                 newtonMinIter="1"/>
-            <SystemSolverParameters
-                krylovTol="1.0e-12"/>
+            <LinearSolverParameters
+                solverType="gmres"
+                krylovTol="1.0e-7"/>
 
     
     </ProppantTransport>    
@@ -50,12 +51,13 @@
                      solidNames="{rock}">
 
             <NonlinearSolverParameters
-                newtonTol="1.0e-8"
+                newtonTol="1.0e-6"
                 newtonMaxIter="8"
                 lineSearchAction="0"
                 newtonMinIter="0"/>
-            <SystemSolverParameters
-                krylovTol="1.0e-12"/>
+            <LinearSolverParameters
+                solverType="gmres"
+                krylovTol="1.0e-7"/>
 
 
     </SinglePhaseProppantFVM>
@@ -155,17 +157,17 @@
                          referencePressure="1e5"
                          referenceDensity="1000"
                          compressibility="0.0"
-                         maxProppantConcentration="0.6"
+                         maxProppantConcentration="0.62"
                          referenceViscosity="0.001"
                          referenceProppantDensity="2550.0"/>
 
     <ParticleFluid name="sand"
                    particleSettlingModel="Stokes"
-		   hinderedSettlingCoefficient="5.0"
+		   hinderedSettlingCoefficient="4.5"
                    isCollisionalSlip="0"
                    proppantDensity="2550.0"
                    proppantDiameter="4.5e-4"                   
-                   maxProppantConcentration="0.6"
+                   maxProppantConcentration="0.62"
                                            />
 
     <!-- Below are some dummy parameters that are not used in simulation, but required by silo output  -->
