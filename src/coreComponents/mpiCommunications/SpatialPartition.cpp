@@ -223,13 +223,12 @@ void SpatialPartition::AddNeighbors( const unsigned int idim,
 
 void SpatialPartition::AddNeighborsMetis( SortedArray< globalIndex > & neighborList )
 {
-  SortedArray< globalIndex >::iterator itNeighbor = neighborList.begin();
-  for(; itNeighbor != neighborList.end(); itNeighbor++ )
+  for( globalIndex const gid : neighborList )
   {
     m_neighbors.push_back( NeighborCommunicator());
-    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( *itNeighbor ) );
+    m_neighbors.back().SetNeighborRank( LvArray::integerConversion< int >( gid ) );
 
-//    m_neighbors.back().Initialize( LvArray::integerConversion<int>(*itNeighbor), this->m_rank, this->m_size );
+//    m_neighbors.back().Initialize( LvArray::integerConversion<int>(gid), this->m_rank, this->m_size );
   }
 }
 
@@ -303,10 +302,9 @@ void SpatialPartition::setSizes( const R1Tensor & min, const R1Tensor & max )
       m_max( i ) = min( i ) + (m_coords( i ) + 1) * m_blockSize( i );
 
       m_PartitionLocations[i].resize( nlocl );
-      localIndex j = 0;
-      for( array1d< real64 >::iterator it = m_PartitionLocations[i].begin(); it != m_PartitionLocations[i].end(); ++it, ++j )
+      for( localIndex j = 0; j < m_PartitionLocations[ i ].size(); ++j )
       {
-        *it = (j+1) * m_blockSize( i );
+        m_PartitionLocations[ i ][ j ] = (j+1) * m_blockSize( i );
       }
     }
     else if( nlocl == m_PartitionLocations[i].size() )
