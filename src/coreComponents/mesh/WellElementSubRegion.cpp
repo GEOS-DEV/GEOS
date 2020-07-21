@@ -13,8 +13,6 @@
  */
 
 #include "WellElementSubRegion.hpp"
-#include "WellElementRegion.hpp"
-
 
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"

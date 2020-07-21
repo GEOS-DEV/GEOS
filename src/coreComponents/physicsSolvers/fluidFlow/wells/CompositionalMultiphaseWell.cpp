@@ -28,14 +28,14 @@
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "wells/PerforationData.hpp"
-#include "wells/WellElementSubRegion.hpp"
-#include "wells/WellControls.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "meshUtilities/PerforationData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFlowKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseWellKernels.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
