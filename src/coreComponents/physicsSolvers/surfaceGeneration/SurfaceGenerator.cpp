@@ -1166,20 +1166,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
           std::cout<<"  NodeID, ParentID = "<<nodeID<<", "<<parentNodeIndex<<std::endl;
           std::cout<<"  Starting Edge/Face = "<<startingEdge<<", "<<startingFace<<std::endl;
-          std::cout<<"  Face Separation Path = ";
-          for( localIndex_array::const_iterator kf=facePath.begin(); kf!=facePath.end(); ++kf )
-          {
-            std::cout<<*kf<<", ";
-          }
-          std::cout<<std::endl;
-
-          std::cout<<"  Edge Separation Path = ";
-          for( localIndex_array::const_iterator kf=edgePath.begin(); kf!=edgePath.end(); ++kf )
-          {
-            std::cout<<*kf<<", ";
-          }
-          std::cout<<std::endl;
-
+          std::cout<<"  Face Separation Path = " << facePath << std::endl;
+          std::cout<<"  Edge Separation Path = " << facePath << std::endl;
 
           GEOSX_ERROR( "crap" );
         }

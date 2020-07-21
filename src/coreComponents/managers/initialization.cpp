@@ -17,9 +17,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
-#include "LvArray/src/SetFPE.hpp"
-#include "LvArray/src/SetSignalHandling.hpp"
-#include "LvArray/src/stackTrace.hpp"
+#include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -110,7 +108,8 @@ void addUmpireHighWaterMarks()
     // This is a little redundant since
     std::size_t const mark = rm.getAllocator( allocatorName ).getHighWatermark();
     std::size_t const totalMark = MpiWrapper::Sum( mark );
-    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " << std::setw( 9 ) << LvArray::calculateSize( totalMark ) );
+    GEOSX_LOG_RANK_0( "Umpire " << std::setw( 15 ) << allocatorName << " high water mark: " <<
+                      std::setw( 9 ) << LvArray::system::calculateSize( totalMark ) );
 
     pushStatsIntoAdiak( allocatorName + " high water mark", mark );
   }
@@ -463,7 +462,7 @@ void overrideInputFileName( std::string const & inputFileName )
 ///////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
-  LvArray::resetSignalHandling();
+  LvArray::system::resetSignalHandling();
   finalizeLAI();
   finalizeLogger();
   internal::addUmpireHighWaterMarks();
@@ -490,8 +489,8 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////
 void setupCXXUtils()
 {
-  LvArray::setSignalHandling( []( int const signal ) { LvArray::stackTraceHandler( signal, true ); } );
-  LvArray::SetFPE();
+  LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
+  LvArray::system::setFPE();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

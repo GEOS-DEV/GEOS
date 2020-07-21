@@ -29,7 +29,7 @@
 
 
 #include "common/DataTypes.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 
 namespace geosx
 {

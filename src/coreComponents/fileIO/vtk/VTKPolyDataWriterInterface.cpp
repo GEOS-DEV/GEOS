@@ -251,7 +251,7 @@ void VTKPolyDataWriterInterface::WriteField( WrapperBase const & wrapperBase, vt
     if( typeID!=typeid(r1_array) )
     {
       integer nbOfComponents = 1;
-      for( localIndex i = 1; i < arrayType::ndim; i++ )
+      for( localIndex i = 1; i < arrayType::NDIM; i++ )
       {
         nbOfComponents = nbOfComponents * sourceArray.size( i );
       }

@@ -22,7 +22,7 @@
 // Source inclues
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 #include "common/DataTypes.hpp"
 #include "codingUtilities/SFINAE_Macros.hpp"
 #include "LvArray/src/Macros.hpp"
@@ -32,7 +32,7 @@
 #include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
-#include "LvArray/src/StringUtilities.hpp"
+#include "LvArray/src/system.hpp"
 #include "WrapperBase.hpp"
 
 // System includes
@@ -841,7 +841,7 @@ public:
 #if defined(USE_TOTALVIEW_OUTPUT)
   virtual string totalviewTypeName() const override
   {
-    return LvArray::demangle( typeid( Wrapper< T > ).name() );
+    return LvArray::system::demangle( typeid( Wrapper< T > ).name() );
   }
 
   virtual int setTotalviewDisplay() const override
@@ -849,8 +849,8 @@ public:
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();
     TV_ttf_add_row( "m_ownsData", "bool", &m_ownsData );
-    TV_ttf_add_row( "m_data", LvArray::demangle< T >().c_str(), m_data );
-    TV_ttf_add_row( "m_default", LvArray::demangle< DefaultValue< T > >().c_str(), &m_default );
+    TV_ttf_add_row( "m_data", LvArray::system::demangle< T >().c_str(), m_data );
+    TV_ttf_add_row( "m_default", LvArray::system::demangle< DefaultValue< T > >().c_str(), &m_default );
     return 0;
   }
 //  void tvTemplateInstantiation();
