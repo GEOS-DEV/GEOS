@@ -26,6 +26,7 @@
       solidNames="{ rock }"
       relPermNames="{ relperm }"
       temperature="297.15"
+      maxRelComponentDensityChange="0.9"
       useMass="0"/>
 
     <CompositionalMultiphaseWell
@@ -35,6 +36,7 @@
       fluidNames="{ fluid1 }"
       relPermNames="{ relperm }"
       wellTemperature="297.15"
+      maxRelComponentDensityChange="0.9"      
       useMass="0">
       <WellControls
         name="wellControls1"

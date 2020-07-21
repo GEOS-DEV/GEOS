@@ -830,6 +830,8 @@
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxRelComponentDensityChange => Maximum (relative) change in a component density between two Newton iterations-->
+		<xsd:attribute name="maxRelComponentDensityChange" type="real64" default="1" />
 		<!--meanPermCoeff => Coefficient to move between harmonic mean (1.0) and arithmetic mean (0.0) for the calculation of permeability between elements.-->
 		<xsd:attribute name="meanPermCoeff" type="real64" default="1" />
 		<!--relPermNames => Name of the relative permeability constitutive model to use-->
@@ -883,6 +885,8 @@
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxRelComponentDensityChange => Maximum (relative) change in a component density between two Newton iterations-->
+		<xsd:attribute name="maxRelComponentDensityChange" type="real64" default="1" />
 		<!--relPermNames => Names of relative permeability constitutive models to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->

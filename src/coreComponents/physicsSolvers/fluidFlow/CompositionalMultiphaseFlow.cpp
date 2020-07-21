@@ -47,7 +47,10 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
-  m_capPressureFlag( 0 )
+  m_capPressureFlag( 0 ),
+  m_maxRelCompDensChange( 1.0 ),
+  m_compDensCheckTol( 1e-10 ),
+  m_minScalingFactor( 1e-2 )  
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
@@ -69,6 +72,12 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the capillary pressure constitutive model to use" );
 
+  this->registerWrapper( viewKeyStruct::maxRelCompDensChangeString, &m_maxRelCompDensChange )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1.0 )->
+    setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
+  
   m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFlow";
 
 }
@@ -78,6 +87,11 @@ void CompositionalMultiphaseFlow::PostProcessInput()
   FlowSolverBase::PostProcessInput();
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
   m_capPressureFlag = CheckModelNames( m_capPressureModelNames, viewKeyStruct::capPressureNamesString, true );
+
+  GEOSX_ERROR_IF_GT_MSG( m_maxRelCompDensChange, 1.0,
+			 "The maximum relative change in component density must smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxRelCompDensChange, 0.0,
+			 "The maximum relative change in component density must larger or equal to 0.0" );  
 }
 
 void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
@@ -1199,13 +1213,81 @@ void CompositionalMultiphaseFlow::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
+real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition const & domain,
+                                                              DofManager const & dofManager,
+                                                              arrayView1d< real64 const > const & localSolution )
+{
+  GEOSX_MARK_FUNCTION;
+  
+  // check if we want to rescale the Newton update
+  if( m_maxRelCompDensChange >= 1.0 )
+  {
+    // no rescaling wanted, we just return 1.0;
+    return 1.0;
+  }  
+
+  real64 constexpr eps = 1e-10;  
+  real64 const maxRelCompDensChange = m_maxRelCompDensChange; 
+  
+  localIndex const NC = m_numComponents;
+  
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
+  real64 scalingFactor = 1.0;
+
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  {
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+    arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 const > const & dCompDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+    
+    forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+
+        // compute the change in component densities and component fractions 
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
+	  
+          // compute scaling factor based on relative change in component densities
+	  real64 const prevCompDens = compDens[ei][ic] + dCompDens[ei][ic];
+          real64 const absCompDensChange = fabs( localSolution[lid] );
+	  real64 const maxAbsCompDensChange = maxRelCompDensChange * prevCompDens;
+	  // TODO: see if this is robust for the transition prevCompDens \approx 0 => compDens > 0  
+          if( absCompDensChange > maxAbsCompDensChange && maxAbsCompDensChange > eps )
+          {
+            minVal.min( maxAbsCompDensChange / absCompDensChange );
+          }
+        }
+      }
+    } );
+
+    if( minVal.get() < scalingFactor )
+    {
+      scalingFactor = minVal.get();
+    }
+  } );
+
+  return LvArray::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ),  m_minScalingFactor );
+}
+
+
 bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & domain,
                                                        DofManager const & dofManager,
                                                        arrayView1d< real64 const > const & localSolution,
                                                        real64 const scalingFactor )
 {
   localIndex const NC = m_numComponents;
-
+  real64 const checkTol = m_compDensCheckTol;
+    
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1222,9 +1304,9 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
     arrayView2d< real64 const > const & compDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
     arrayView2d< real64 const > const & dCompDens = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
 
-    RAJA::ReduceMin< parallelDeviceReduce, integer > check( 1 );
+    RAJA::ReduceMin< serialReduce, integer > check( 1 );
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    forAll< serialPolicy >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       if( elemGhostRank[ei] < 0 )
       {
@@ -1236,7 +1318,7 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
         for( localIndex ic = 0; ic < NC; ++ic )
         {
           real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-          check.min( newDens >= 0.0 );
+          check.min( newDens >= - checkTol );
         }
       }
     } );
@@ -1252,8 +1334,7 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                                        real64 const scalingFactor,
                                                        DomainPartition & domain )
 {
-  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
-
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );  
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::dofFieldString,
                                viewKeyStruct::deltaPressureString,
@@ -1266,6 +1347,8 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                scalingFactor,
                                1, m_numDofPerCell );
 
+  ChopNegativeDensities( domain );
+
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
@@ -1274,6 +1357,38 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     UpdateState( subRegion, targetIndex );
+  } );
+}
+
+void CompositionalMultiphaseFlow::ChopNegativeDensities( DomainPartition & domain )
+{
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  
+  localIndex const NC = m_numComponents;
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const & ghostRank =
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+    arrayView2d< real64 const > const & compDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::globalCompDensityString );
+    arrayView2d< real64 > const & dCompDens =
+      subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaGlobalCompDensityString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( ghostRank[ei] < 0 )
+      {
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
+          if( newDens < 0 )
+          {
+            dCompDens[ei][ic] = -compDens[ei][ic];
+          }
+        }
+      }
+    } );
   } );
 }
 

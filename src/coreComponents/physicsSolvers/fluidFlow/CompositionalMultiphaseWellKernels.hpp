@@ -1209,6 +1209,53 @@ struct ResidualNormKernel
 
 };
 
+/******************************** SolutionScalingKernel ********************************/
+
+struct SolutionScalingKernel
+{
+  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  static real64
+  Launch( LOCAL_VECTOR const localSolution,
+          globalIndex const rankOffset,
+          localIndex const numComponents,
+          arrayView1d< globalIndex const > const & wellElemDofNumber,
+          arrayView1d< integer const > const & wellElemGhostRank,
+          arrayView2d< real64 const > const & wellElemCompDens,
+          arrayView2d< real64 const > const & dWellElemCompDens,
+          real64 const maxRelCompDensChange )
+  {
+    real64 constexpr eps = 1e-10;  
+    
+    RAJA::ReduceMin< REDUCE_POLICY, real64 > minVal( 1.0 );
+
+    forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    {
+      if( wellElemGhostRank[iwelem] < 0 )
+      {
+
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          localIndex const lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+	  
+          // compute scaling factor based on relative change in component densities
+          real64 const prevCompDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const maxAbsCompDensChange = maxRelCompDensChange * prevCompDens;
+	    
+          // if the relative change is too large, chop back
+          if( absCompDensChange > maxAbsCompDensChange && maxAbsCompDensChange > eps )
+          {
+            minVal.min( maxAbsCompDensChange / absCompDensChange );
+          }
+        }
+      }
+    } );
+    return minVal.get();
+  }
+
+};
+
+
 /******************************** SolutionCheckKernel ********************************/
 
 struct SolutionCheckKernel
@@ -1224,6 +1271,7 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemCompDens,
           arrayView2d< real64 const > const & dWellElemCompDens,
+          real64 const densCheckTol,
           real64 const scalingFactor )
   {
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
@@ -1236,6 +1284,8 @@ struct SolutionCheckKernel
         localIndex lid = wellElemDofNumber[iwelem] + CompositionalMultiphaseWell::ColOffset::DPRES - rankOffset;
         real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
                                + scalingFactor * localSolution[lid];
+	
+	// the pressure must be positive
         if( newPres < 0.0 )
         {
           minVal.min( 0 );
@@ -1247,7 +1297,10 @@ struct SolutionCheckKernel
           lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
           real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
                                  + scalingFactor * localSolution[lid];
-          if( newDens < 0.0 )
+
+	  // the component density must be positive, up to a tolerance
+	  // (slightly) negative densities are chopped back in CompositionalMultiphaseWell::ApplySystemSolution
+          if( newDens < -densCheckTol )
           {
             minVal.min( 0 );
           }

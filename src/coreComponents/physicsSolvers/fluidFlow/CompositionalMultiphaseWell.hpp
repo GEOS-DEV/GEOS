@@ -111,6 +111,11 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
+  virtual real64
+  ScalingForSystemSolution( DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution ) override;
+
   virtual bool
   CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
@@ -209,7 +214,7 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
-
+  
   arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
@@ -250,6 +255,10 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
+
+    // accepted relative and absolute changes between two Newton iterations
+    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";   
+    
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -306,11 +315,11 @@ private:
   void ResizeFields( WellElementSubRegion & subRegion );
 
   /**
-   * @brief Save all the rates and pressures in the well for reporting purposes
-   * @param well the well with its perforations
+   * @brief sets all the negative component densities (if any) to zero
+   * @param domain the physical domain object
    */
-  void RecordWellData( WellElementSubRegion const & subRegion );
-
+  void ChopNegativeDensities( DomainPartition & domain );
+  
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -326,7 +335,15 @@ private:
   /// list of relative permeability model names per target region
   array1d< string > m_relPermModelNames;
 
+  /// maximum relative change in a component density between two Newton iterations
+  real64 m_maxRelCompDensChange;
+  
+  /// tolerance used in CheckSystemSolution to check acceptable values of component densities    
+  real64 const m_compDensCheckTol;  
 
+  /// minimum value of the scaling factor obtained by enforcing maxRelCompDensChange
+  real64 const m_minScalingFactor;
+  
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
