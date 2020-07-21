@@ -21,23 +21,34 @@ blt_register_library( NAME python_interp
                       LIBRARIES python2.7 
                       )
 
-add_custom_target( pygeos
-                   COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
-                   COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/pygeos ${CMAKE_BINARY_DIR}/bin/pygeos
-                   COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
-                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+
+set(PYGEOS_BINS
+  "${CMAKE_BINARY_DIR}/bin/pygeos"
+  "${CMAKE_BINARY_DIR}/bin/format_xml"
+)
+
+
+add_custom_command( OUTPUT ${PYGEOS_BINS}
+                    COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
+                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/pygeos ${CMAKE_BINARY_DIR}/bin/pygeos
+                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+                    )
+
+add_custom_target( pygeos 
+                   DEPENDS ${PYGEOS_BINS}}
                    )
 
 add_custom_target( pygeos_test
                    COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_pygeos
                    COMMAND rm -r ${CMAKE_BINARY_DIR}/python/pygeos_tests*
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/python
-                   DEPENDS pygeos
+                   DEPENDS ${PYGEOS_BINS}
                    )
 
 add_custom_target( geosx_format_all_xml_files
                    COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/formatXMLFiles.bash -g ${CMAKE_BINARY_DIR}/bin/format_xml ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-                   DEPENDS pygeos
+                   DEPENDS ${PYGEOS_BINS}
                    )
 
