@@ -214,7 +214,13 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
-  
+
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void ChopNegativeDensities( DomainPartition & domain );
+
   arrayView1d< string const > const & relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
@@ -257,8 +263,8 @@ public:
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
 
     // accepted relative and absolute changes between two Newton iterations
-    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";   
-    
+    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";
+
   } viewKeysCompMultiphaseWell;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -314,12 +320,6 @@ private:
    */
   void ResizeFields( WellElementSubRegion & subRegion );
 
-  /**
-   * @brief sets all the negative component densities (if any) to zero
-   * @param domain the physical domain object
-   */
-  void ChopNegativeDensities( DomainPartition & domain );
-  
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -337,13 +337,13 @@ private:
 
   /// maximum relative change in a component density between two Newton iterations
   real64 m_maxRelCompDensChange;
-  
-  /// tolerance used in CheckSystemSolution to check acceptable values of component densities    
-  real64 const m_compDensCheckTol;  
+
+  /// tolerance used in CheckSystemSolution to check acceptable values of component densities
+  real64 const m_compDensCheckTol;
 
   /// minimum value of the scaling factor obtained by enforcing maxRelCompDensChange
   real64 const m_minScalingFactor;
-  
+
   /// views into reservoir primary variable fields
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;

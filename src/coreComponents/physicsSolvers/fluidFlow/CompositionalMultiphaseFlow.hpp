@@ -317,8 +317,8 @@ public:
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
 
     // accepted relative change in component density between two Newton iterations
-    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";   
-    
+    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";
+
   } viewKeysCompMultiphaseFlow;
 
   struct groupKeyStruct : SolverBase::groupKeyStruct
@@ -371,7 +371,13 @@ public:
                           DomainPartition & domain,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
- 
+
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void ChopNegativeDensities( DomainPartition & domain );
+
 protected:
 
   virtual void PostProcessInput() override;
@@ -402,12 +408,6 @@ private:
    */
   void ResetViews( MeshLevel & mesh ) override;
 
-  /**
-   * @brief sets all the negative component densities (if any) to zero
-   * @param domain the physical domain object
-   */
-  void ChopNegativeDensities( DomainPartition & domain );
-  
   /// the max number of fluid phases
   localIndex m_numPhases;
 
@@ -429,18 +429,15 @@ private:
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
 
-  /// maximum absolute change in a component fraction between two Newton iterations
-  real64 m_maxAbsCompFracChange;
-
   /// maximum relative change in a component density between two Newton iterations
   real64 m_maxRelCompDensChange;
 
-  /// tolerance used in CheckSystemSolution to check acceptable values of component densities    
+  /// tolerance used in CheckSystemSolution to check acceptable values of component densities
   real64 const m_compDensCheckTol;
 
   /// minimum value of the scaling factor obtained by enforcing maxRelCompDensChange and maxAbsCompFracChange
   real64 const m_minScalingFactor;
-  
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
 

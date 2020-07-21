@@ -54,7 +54,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_useMass( false ),
   m_maxRelCompDensChange( 1.0 ),
   m_compDensCheckTol( 1e-10 ),
-  m_minScalingFactor( 1e-2 )
+  m_minScalingFactor( 5e-2 )
 {
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -74,7 +74,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( 1.0 )->
     setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
-  
+
 }
 
 void CompositionalMultiphaseWell::PostProcessInput()
@@ -88,10 +88,10 @@ void CompositionalMultiphaseWell::PostProcessInput()
                                                            "(referenced from well solver " << getName() << ")" );
 
   GEOSX_ERROR_IF_GT_MSG( m_maxRelCompDensChange, 1.0,
-			 "The maximum relative change in component density must smaller or equal to 1.0" );
+                         "The maximum relative change in component density must smaller or equal to 1.0" );
   GEOSX_ERROR_IF_LT_MSG( m_maxRelCompDensChange, 0.0,
-			 "The maximum relative change in component density must larger or equal to 0.0" );  
-  
+                         "The maximum relative change in component density must larger or equal to 0.0" );
+
 }
 
 void CompositionalMultiphaseWell::RegisterDataOnMesh( Group * const meshBodies )
@@ -655,8 +655,8 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
-  }  
-  
+  }
+
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   real64 scalingFactor = 1.0;
@@ -686,15 +686,15 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
                                                              wellElemCompDens,
                                                              dWellElemCompDens,
                                                              m_maxRelCompDensChange );
-    
 
-    if (subRegionScalingFactor < scalingFactor)
+
+    if( subRegionScalingFactor < scalingFactor )
     {
       scalingFactor = subRegionScalingFactor;
     }
   } );
 
-  return LvArray::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ),  m_minScalingFactor );
+  return LvArray::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
 bool
@@ -866,6 +866,8 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor,
                                m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
+  // some densities may be slightly negative, they are chopped here
+  // TODO: find a way to do that in CheckSystemSolution or ScalingForSystemSolution
   ChopNegativeDensities( domain );
 
   // synchronize
@@ -905,9 +907,10 @@ void CompositionalMultiphaseWell::ChopNegativeDensities( DomainPartition & domai
       {
         for( localIndex ic = 0; ic < NC; ++ic )
         {
-	  // get the latest component density (i.e., after the update of dWellElemCompDens)
+          // get the latest component density (i.e., after the update of dWellElemCompDens)
           real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
-	  // if the new density is negative, chop back to zero 
+          // we allowed for some densities to be slightly negative in CheckSystemSolution
+          // if the new density is negative, chop back to zero
           if( newDens < 0 )
           {
             dWellElemCompDens[iwelem][ic] = -wellElemCompDens[iwelem][ic];
