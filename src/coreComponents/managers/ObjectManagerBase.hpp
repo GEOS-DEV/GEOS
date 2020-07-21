@@ -637,8 +637,10 @@ public:
   template< typename MESH_DATA_TRAIT >
   bool hasExtrinsicData() const
   {
-    return this->hasWrapper( MESH_DATA_TRAIT::key );
-    // return nullptr != this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key );
+    // FIXME c++17 We copy paste the Group::hasWrapper implementation for linking reasons
+    //             (the key needs to be defined/decalred).
+    //             C++17 introduces inline variables and should remove this problem.
+    return this->wrappers()[MESH_DATA_TRAIT::key] != nullptr;
   }
 
 #if 0
