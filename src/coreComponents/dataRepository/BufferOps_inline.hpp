@@ -1086,7 +1086,7 @@ template< typename SORTED0, typename SORTED1 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView1d< localIndex > & var,
+        arrayView1d< localIndex > const & var,
         array1d< localIndex > const & indices,
         mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap,
         mapBase< globalIndex, localIndex, SORTED1 > const & relatedObjectGlobalToLocalMap )
