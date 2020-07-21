@@ -66,13 +66,11 @@ void OutputBase::SetupDirectoryStructure()
   string childDirectory = m_childDirectory;
 
   int const rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  if( rank  == 0 )
+  if( rank == 0 )
   {
     if( !childDirectory.empty())
     {
-      string cmd = "mkdir -p " + childDirectory;
-      int ret = std::system( cmd.c_str());
-      GEOSX_ERROR_IF( ret != 0, "Command '" << cmd << "' exited with code " << std::to_string( ret ));
+      makeDirsForPath( childDirectory );
     }
   }
 }

@@ -18,6 +18,7 @@
 
 // Source includes
 #include "common/Logger.hpp"
+#include "common/Path.hpp"
 
 namespace geosx
 {
@@ -53,21 +54,12 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 
   if( rankOutputDir != "" )
   {
-    if( internal::rank != 0 )
+    if( internal::rank == 0 )
     {
-      MPI_Barrier( mpi_comm );
-    }
-    else
-    {
-      std::string cmd = "mkdir -p " + rankOutputDir;
-      int ret = std::system( cmd.c_str());
-      if( ret != 0 )
-      {
-        GEOSX_ERROR( "Failed to initialize Logger: command '" << cmd << "' exited with code " << std::to_string( ret ));
-      }
-      MPI_Barrier( mpi_comm );
+      makeDirsForPath( rankOutputDir );
     }
 
+    MPI_Barrier( mpi_comm );
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
   }
@@ -83,13 +75,7 @@ void InitializeLogger( const std::string & rankOutputDir )
 {
   if( rankOutputDir != "" )
   {
-    std::string cmd = "mkdir -p " + rankOutputDir;
-    int ret = std::system( cmd.c_str());
-    if( ret != 0 )
-    {
-      GEOSX_LOG( "Failed to initialize Logger: command '" << cmd << "' exited with code " << std::to_string( ret ));
-      abort();
-    }
+    makeDirsForPath( rankOutputDir );
 
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
