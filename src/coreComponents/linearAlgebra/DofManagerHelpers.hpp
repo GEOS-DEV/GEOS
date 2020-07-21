@@ -200,17 +200,17 @@ struct MapHelperImpl< array2d< T, PERMUTATION > >
     return map( i0, i1 );
   }
 
-  static localIndex size0( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map )
+  static localIndex size0( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map )
   {
     return map.size( 0 );
   }
 
-  static localIndex size1( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
+  static localIndex size1( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const GEOSX_UNUSED_PARAM( i0 ) )
   {
     return map.size( 1 );
   }
 
-  static T const & value( arrayView2d<T const, LvArray::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
+  static T const & value( arrayView2d<T const, LvArray::typeManipulation::getStrideOneDimension( PERMUTATION {} ) > const & map, localIndex const i0, localIndex const i1 )
   {
     return map( i0, i1 );
   }

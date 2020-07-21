@@ -23,7 +23,10 @@
 #include "KeyIndexT.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Logger.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
+
+// System includes
+#include <vector>
 
 namespace geosx
 {
