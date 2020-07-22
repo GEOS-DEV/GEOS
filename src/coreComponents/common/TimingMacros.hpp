@@ -14,7 +14,7 @@
 
 
 
-/* UNCRUSTIFY-OFF */
+/* clang-format off */
 
 /**
  * @file TimingMacros.hpp

@@ -138,8 +138,10 @@ public:
 public:
     GEOSX_HOST_DEVICE
     StackVariables():
+      // clang-format off
       fLocal{ { 0.0} },
       varLocal{ {0.0} }
+      // clang-format on
   #if defined(CALCFEMSHAPE)
       ,
       xLocal(),
