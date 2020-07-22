@@ -16,6 +16,7 @@
  * @file FaceManager.cpp
  */
 
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "FaceManager.hpp"
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
@@ -952,8 +953,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const &
-  childFaceIndices = getReference< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

@@ -25,12 +25,12 @@
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "managers/DomainPartition.hpp"
-#include "wells/PerforationData.hpp"
-#include "wells/WellElementSubRegion.hpp"
-#include "wells/WellControls.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
+#include "mesh/WellElementSubRegion.hpp"
+#include "meshUtilities/PerforationData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
