@@ -17,7 +17,7 @@
 
 #include "CellElementSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
-#include "wells/WellElementSubRegion.hpp"
+#include "WellElementSubRegion.hpp"
 #include "managers/ObjectManagerBase.hpp"
 #include "EmbeddedSurfaceSubRegion.hpp"
 
