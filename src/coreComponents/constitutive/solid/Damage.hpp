@@ -50,15 +50,19 @@ public:
   GEOSX_HOST_DEVICE
   real64 GetDegradationValue( localIndex const k,
                               localIndex const q) const {
-    real64 residualStiffness = 1e-4;
-    return (1 - residualStiffness)*(1 - m_damage( k,q ))*(1 - m_damage( k,q )) + residualStiffness;
+     return (1 - m_damage( k,q ))*(1 - m_damage( k,q ));
   }
 
-  // GEOSX_HOST_DEVICE
-  // real64 GetDegradationDerivative( localIndex const k,
-  //                                 localIndex const q) const {
-  //    return -2*(1 - m_damage( k,q ));
-  // }
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationDerivative( real64 const d) const {
+     return -2*(1 - d);
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationSecondDerivative( real64 const d) const {
+     return 2 * (d - d + 1);
+  }
+
 
 
   GEOSX_HOST_DEVICE inline
@@ -120,10 +124,10 @@ public:
 
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
 
-    //if( sed > m_strainEnergyDensity( k, q ) )
-    //{
-    m_strainEnergyDensity( k, q ) = sed;
-    //}
+    if( sed > m_strainEnergyDensity( k, q ) )
+    {
+      m_strainEnergyDensity( k, q ) = sed;
+    }
     // std::cout << "Strain Energy is: "<<m_strainEnergyDensity( k,q )<<std::endl;
     return m_strainEnergyDensity( k, q );
   }
