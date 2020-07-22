@@ -20,14 +20,6 @@
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
-#ifdef GEOSX_USE_PYTHON
-// Note: the python header must be included first to avoid conflicting
-// definitions of _posix_c_source
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <Python.h>
-#include <numpy/arrayobject.h>
-#endif
-
 #include "EventManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
@@ -93,20 +85,6 @@ public:
    * @return flag indicating beginFromRestart status
    */
   static bool ParseRestart( std::string & restartFileName );
-
-  /**
-   * @brief Initializes a python interpreter within GEOSX
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void InitializePythonInterpreter();
-
-  /**
-   * @brief Closes the internal python interpreter
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void ClosePythonInterpreter();
 
   /**
    * @brief Generates the xml schema documentation

@@ -58,8 +58,6 @@ int main( int argc, char *argv[] )
 
   {
     ProblemManager problemManager( "Problem", nullptr );
-
-    problemManager.InitializePythonInterpreter();
     problemManager.ParseCommandLineInput();
 
     if( !problemManager.getSchemaFileName().empty() )
@@ -91,8 +89,6 @@ int main( int argc, char *argv[] )
       GEOSX_LOG_RANK_0( "\ninit time = " << std::setprecision( 5 ) << t_initialize - t_start <<
                         "s, run time = " << t_run - t_initialize << "s" );
     }
-
-    problemManager.ClosePythonInterpreter();
   }
 
   GEOSX_MARK_FUNCTION_END;

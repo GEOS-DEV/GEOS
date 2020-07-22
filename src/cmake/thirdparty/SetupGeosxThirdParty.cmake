@@ -632,7 +632,21 @@ if( ENABLE_VTK )
   blt_register_library( NAME vtk
                         LIBRARIES ${VTK_LIBRARIES}
                         TREAT_INCLUDES_AS_SYSTEM ON )
-  set( thirdPartyLibs ${thirdPartyLibs} vtk )  
+  set( thirdPartyLibs ${thirdPartyLibs} vtk )
+endif()
+
+################################
+# Python
+################################
+if ( ENABLE_PYTHON )
+    find_package( Python3 REQUIRED
+                  COMPONENTS Development NumPy )
+
+    message( STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}" )
+    message( STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}" )
+    message( STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}" )
+
+    set( thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy )
 endif()
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")

@@ -23,6 +23,10 @@
 #include "RestartFlags.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
+#if defined(GEOSX_USE_PYTHON)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 #include <string>
 #include <memory>
 #include <set>
@@ -486,6 +490,14 @@ public:
    */
   virtual int setTotalviewDisplay() const;
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
+#endif
+
+#if defined(GEOSX_USE_PYTHON)
+  /**
+   * @brief Return a Python object representing the wrapped object.
+   * @return A Python object representing the wrapped object.
+   */
+  virtual PyObject * createPythonObject() const = 0;
 #endif
 
 protected:

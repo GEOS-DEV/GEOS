@@ -187,7 +187,6 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
     setApplyDefaultValue( mpiSize );
 
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-  problemManager.InitializePythonInterpreter();
   problemManager.ProcessInputFileRecursive( xmlProblemNode );
 
   DomainPartition & domain  = *problemManager.getDomainPartition();

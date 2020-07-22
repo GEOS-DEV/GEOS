@@ -127,7 +127,6 @@ protected:
       setApplyDefaultValue( mpiSize );
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager.InitializePythonInterpreter();
     problemManager.ProcessInputFileRecursive( xmlProblemNode );
 
     // The objects in domain are handled separately for now

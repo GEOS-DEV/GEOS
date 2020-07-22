@@ -54,8 +54,12 @@ if ( ENABLE_CUDA )
 endif()
 
 if( CONDUIT_FOUND )
-  set( dependencyList ${dependencyList} common conduit fmt )
-endif( )
+  set( dependencyList ${dependencyList} common conduit )
+endif()
+
+if( ENABLE_PYTHON )
+  set( dependencyList ${dependencyList} pylvarray )
+endif()
 
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}

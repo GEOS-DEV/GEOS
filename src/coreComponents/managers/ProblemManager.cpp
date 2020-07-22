@@ -264,44 +264,6 @@ bool ProblemManager::ParseRestart( std::string & restartFileName )
 }
 
 
-void ProblemManager::InitializePythonInterpreter()
-{
-#ifdef GEOSX_USE_PYTHON
-  // Initialize python and numpy
-  GEOSX_LOG_RANK_0( "Loading python interpreter" );
-
-  // Check to make sure the appropriate environment variables are set
-  if( getenv( "GPAC_SCHEMA" ) == NULL )
-  {
-    GEOSX_ERROR( "GPAC_SCHEMA must be defined to use the new preprocessor!" );
-  }
-  if( getenv( "GEOS_PYTHONPATH" ) == NULL )
-  {
-    GEOSX_ERROR( "GEOS_PYTHONPATH must be defined to use the new preprocessor!" );
-  }
-  if( getenv( "GEOS_PYTHONHOME" ) == NULL )
-  {
-    GEOSX_ERROR( "GEOS_PYTHONHOME must be defined to use the new preprocessor!" );
-  }
-
-  setenv( "PYTHONPATH", getenv( "GEOS_PYTHONPATH" ), 1 );
-  Py_SetPythonHome( getenv( "GEOS_PYTHONHOME" ));
-  Py_Initialize();
-  import_array();
-#endif
-}
-
-
-void ProblemManager::ClosePythonInterpreter()
-{
-#ifdef GEOSX_USE_PYTHON
-  // Add any other cleanup here
-  GEOSX_LOG_RANK_0( "Closing python interpreter" );
-  Py_Finalize();
-#endif
-}
-
-
 void ProblemManager::GenerateDocumentation()
 {
   // Documentation output
@@ -428,35 +390,6 @@ void ProblemManager::ParseInputFile()
 
   Group * commandLine = GetGroup< Group >( groupKeys.commandLine );
   std::string const & inputFileName = commandLine->getReference< std::string >( viewKeys.inputFileName );
-
-
-#ifdef GEOSX_USE_PYTHON
-  // Load the pygeos module
-  PyObject *pModule = PyImport_ImportModule( "pygeos" );
-  if( pModule == NULL )
-  {
-    PyErr_Print();
-    GEOSX_ERROR( "Could not find the pygeos module in GEOS_PYTHONPATH!" );
-  }
-
-  // Call the xml preprocessor
-  PyObject *pPreprocessorFunction = PyObject_GetAttrString( pModule, "PreprocessGEOSXML" );
-  PyObject *pPreprocessorInputStr = Py_BuildValue( "(s)", inputFileName.c_str());
-  PyObject *pKeywordDict = Py_BuildValue( "{s:s}", "schema", getenv( "GPAC_SCHEMA" ));
-  PyObject *pPreprocessorResult = PyObject_Call( pPreprocessorFunction, pPreprocessorInputStr, pKeywordDict );
-  inputFileName = PyString_AsString( pPreprocessorResult );
-
-  // Cleanup
-  Py_DECREF( pPreprocessorResult );
-  Py_DECREF( pKeywordDict );
-  Py_DECREF( pPreprocessorInputStr );
-  Py_DECREF( pPreprocessorFunction );
-  Py_DECREF( pModule );
-
-#else
-  GEOSX_LOG_RANK_0( "GEOS must be configured to use Python to use parameters, symbolic math, etc. in input files" );
-#endif
-
 
   // Load preprocessed xml file and check for errors
   xmlResult = xmlDocument.load_file( inputFileName.c_str());
