@@ -9,9 +9,9 @@
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 
-#include "BiLinearWedgeShapeFunctionKernel.hpp"
-#include "LinearTetrahedronShapeFunctionKernel.hpp"
-#include "TrilinearHexahedronShapeFunctionKernel.hpp"
+#include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
+#include "elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp"
+#include "elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 
 
 

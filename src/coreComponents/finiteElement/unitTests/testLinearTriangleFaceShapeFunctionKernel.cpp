@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/LinearTriangleFaceShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 
 using namespace geosx;
 
