@@ -12,12 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
-#define GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_
+#ifndef GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
+#define GEOSX_MESH_WELLELEMENTSUBREGION_HPP_
 
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/InterObjectRelation.hpp"
-#include "PerforationData.hpp"
+#include "meshUtilities/PerforationData.hpp"
 
 namespace geosx
 {
@@ -486,4 +486,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_WELLS_WELLELEMENTSUBREGION_HPP_ */
+#endif /* GEOSX_MESH_WELLELEMENTSUBREGION_HPP_ */

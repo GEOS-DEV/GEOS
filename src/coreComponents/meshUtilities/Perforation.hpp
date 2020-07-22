@@ -16,8 +16,8 @@
  * @file Perforation.hpp
  */
 
-#ifndef GEOSX_WELLS_PERFORATION_HPP
-#define GEOSX_WELLS_PERFORATION_HPP
+#ifndef GEOSX_MESHUTILITIES_PERFORATION_HPP
+#define GEOSX_MESHUTILITIES_PERFORATION_HPP
 
 #include "dataRepository/Group.hpp"
 
@@ -142,4 +142,4 @@ private:
 
 } //namespace geosx
 
-#endif //GEOSX_WELLS_PERFORATION_HPP
+#endif //GEOSX_MESHUTILITIES_PERFORATION_HPP

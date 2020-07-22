@@ -37,8 +37,8 @@
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "wells/InternalWellGenerator.hpp"
-#include "wells/WellElementRegion.hpp"
+
+
 
 // System includes
 #include <vector>
