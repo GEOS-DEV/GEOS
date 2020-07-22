@@ -63,8 +63,6 @@ public:
      return 2 * (d - d + 1);
   }
 
-
-
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k,
                              localIndex const q,
@@ -112,17 +110,18 @@ public:
   virtual real64 calculateStrainEnergyDensity( localIndex const k,
                                                localIndex const q ) const override final
   {
-    real64 const K = UPDATE_BASE::getBulkModulus(k);
-    real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
-    real64 compressionIndicator = 0;
-    if (traceOfStress < 0.0)
-    {
-      compressionIndicator = 1;
-      // std::cout << "compression state detected" <<std::endl;
-      // std::cout << "Strain Energy Would Be: "<< UPDATE_BASE::calculateStrainEnergyDensity(k,q) <<std::endl;
-    }
+    //real64 const K = UPDATE_BASE::getBulkModulus(k);
+    // real64 traceOfStress = this->m_stress(k,q,0) + this->m_stress(k,q,1) + this->m_stress(k,q,2);
+    // real64 compressionIndicator = 0;
+    // if (traceOfStress < 0.0)
+    // {
+    //   compressionIndicator = 1;
+    //   // std::cout << "compression state detected" <<std::endl;
+    //   // std::cout << "Strain Energy Would Be: "<< UPDATE_BASE::calculateStrainEnergyDensity(k,q) <<std::endl;
+    // }
 
-    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
+    //real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
+    real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q);
 
     if( sed > m_strainEnergyDensity( k, q ) )
     {
