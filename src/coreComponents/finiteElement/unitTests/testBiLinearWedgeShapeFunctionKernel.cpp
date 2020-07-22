@@ -16,7 +16,7 @@
  * @file testBiLinearWedgeShapeFunctionKernel.hpp
  */
 
-#include "finiteElement/BiLinearWedgeShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

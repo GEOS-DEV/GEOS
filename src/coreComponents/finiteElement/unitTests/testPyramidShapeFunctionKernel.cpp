@@ -16,7 +16,7 @@
  * @file testPyramidShapeFunctionKernel.hpp
  */
 
-#include <finiteElement/PyramidShapeFunctionKernel.hpp>
+#include <finiteElement/elementFormulations/PyramidShapeFunctionKernel.hpp>
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

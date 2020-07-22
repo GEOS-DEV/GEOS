@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "../TrilinearHexahedronShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 
 using namespace geosx;
 
