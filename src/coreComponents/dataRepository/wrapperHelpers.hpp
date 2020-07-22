@@ -685,12 +685,12 @@ UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX & )
 
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T & object )
-{ return LvArray::python::create( object ); }
+createPythonObject( T & object, bool const modify )
+{ return LvArray::python::create( object, modify ); }
 
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T & )
+createPythonObject( T &, bool )
 {
   GEOSX_ERROR( "Cannot export " << LvArray::demangleType< T >() << " to Python." );
   return nullptr;

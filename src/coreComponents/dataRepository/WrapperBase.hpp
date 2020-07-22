@@ -497,7 +497,7 @@ public:
    * @brief Return a Python object representing the wrapped object.
    * @return A Python object representing the wrapped object.
    */
-  virtual PyObject * createPythonObject() const = 0;
+  virtual PyObject * createPythonObject( bool const modify ) = 0;
 #endif
 
 protected:

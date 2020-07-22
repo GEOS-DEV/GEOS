@@ -27,6 +27,7 @@ set(managers_headers
     FieldSpecification/DirichletBoundaryCondition.hpp
     FieldSpecification/SourceFluxBoundaryCondition.hpp
     initialization.hpp
+    GeosxState.hpp
    )
 
 
@@ -58,6 +59,7 @@ set(managers_sources
     FieldSpecification/DirichletBoundaryCondition.cpp
     FieldSpecification/SourceFluxBoundaryCondition.cpp
     initialization.cpp
+    GeosxState.cpp
    )
 
 if( ENABLE_MPI )
