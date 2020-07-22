@@ -25,21 +25,18 @@
 namespace geosx
 {
 
-using PyramidShapeFunctionKernelBaseClass = FiniteElementShapeFunctionKernelBase< 5, 5 >;
-
-class PyramidShapeFunctionKernel : PyramidShapeFunctionKernelBaseClass
+class PyramidShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase< 5, 5 >
 {
-public:
-  using BaseClass = PyramidShapeFunctionKernelBaseClass;
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+private:
 
-  //constexpr static real64 parentVolume = 8.0 / 3.0;
+  constexpr static localIndex numNodes = getNumNodes();
   constexpr static real64 weight = 81.0 / 100.0;
   constexpr static real64 weightDelta  = 125.0 / 27.0 - weight;
   constexpr static real64 quadratureCrossSectionCoord = 0.584237394672177;
   constexpr static real64 quadratureLongitudinalCoordNeg = -2.0 / 3.0;
   constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0;
+
+public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

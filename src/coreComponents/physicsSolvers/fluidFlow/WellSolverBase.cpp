@@ -282,8 +282,7 @@ std::vector< string > WellSolverBase::getConstitutiveRelations( string const & r
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );
 
-  std::vector< string > rval;
-  rval.push_back( m_fluidModelNames[regionIndex] );
+  std::vector< string > rval{ m_fluidModelNames[regionIndex] };
 
   return rval;
 }

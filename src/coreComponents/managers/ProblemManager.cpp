@@ -692,7 +692,7 @@ void ProblemManager::ApplyNumericalMethods()
                                        [&] ( auto const finiteElement )
               {
                 using FE_TYPE = TYPEOFREF( finiteElement );
-                localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+                localIndex const numQuadraturePoints = FE_TYPE::getNumQuadraturePoints();
 
                 feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,

@@ -14,9 +14,16 @@ template< int NUM_SUPPORT_POINTS, int NUM_QUADRATURE_POINTS >
 class FiniteElementShapeFunctionKernelBase
 {
 public:
-  constexpr static localIndex numNodes = NUM_SUPPORT_POINTS;
-  constexpr static localIndex numQuadraturePoints = NUM_QUADRATURE_POINTS;
 
+  constexpr static localIndex getNumNodes()
+  {
+    return NUM_SUPPORT_POINTS;
+  }
+
+  constexpr static localIndex getNumQuadraturePoints()
+  {
+    return NUM_QUADRATURE_POINTS;
+  }
 
 //  GEOSX_HOST_DEVICE
 //  GEOSX_FORCE_INLINE

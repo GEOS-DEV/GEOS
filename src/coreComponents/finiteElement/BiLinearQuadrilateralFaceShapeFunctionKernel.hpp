@@ -25,18 +25,16 @@
 namespace geosx
 {
 
-using BiLinearQuadrilateralFaceBaseClass = FiniteElementShapeFunctionKernelBase< 4, 4 >;
-
-class BiLinearQuadrilateralFaceShapeFunctionKernel : public BiLinearQuadrilateralFaceBaseClass
+class BiLinearQuadrilateralFaceShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase< 4, 4 >
 {
-public:
-  using BaseClass = BiLinearQuadrilateralFaceBaseClass;
+private:
 
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+  constexpr static localIndex numNodes = getNumNodes();
   constexpr static real64 parentArea = 4.0;
-  constexpr static real64 weight = parentArea / numQuadraturePoints;
+  constexpr static real64 weight = parentArea / getNumQuadraturePoints();
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+
+public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

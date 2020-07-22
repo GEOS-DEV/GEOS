@@ -25,18 +25,16 @@
 namespace geosx
 {
 
-using TrilinearHexahedronBaseClass = FiniteElementShapeFunctionKernelBase< 8, 8 >;
-
-class TrilinearHexahedronShapeFunctionKernel : public TrilinearHexahedronBaseClass
+class TrilinearHexahedronShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase< 8, 8 >
 {
-public:
-  using BaseClass = TrilinearHexahedronBaseClass;
+private:
 
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+  constexpr static localIndex numNodes = getNumNodes();
   constexpr static real64 parentVolume = 8.0;
-  constexpr static real64 weight = parentVolume / numQuadraturePoints;
+  constexpr static real64 weight = parentVolume / getNumQuadraturePoints();
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
+
+public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

@@ -663,8 +663,8 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
         // Compile time values!
-        static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
-        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
+        static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::getNumNodes();
+        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::getNumQuadraturePoints();
 
         // Define an alias for the kernel type for easy use.
         using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,

@@ -86,8 +86,8 @@ public:
     finiteElement::dispatch( elementTypeString,
                              [&] ( auto const finiteElement )
     {
-      localIndex const numNodesPerElem = finiteElement.numNodes;
-      localIndex const numQuadraturePointsPerElem = finiteElement.numQuadraturePoints;
+      localIndex const numNodesPerElem = finiteElement.getNumNodes();
+      localIndex const numQuadraturePointsPerElem = finiteElement.getNumQuadraturePoints();
       dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), numQuadraturePointsPerElem, numNodesPerElem, 3 );
       detJ.resize( elementSubRegion->size(), numQuadraturePointsPerElem );
 

@@ -25,17 +25,15 @@
 namespace geosx
 {
 
-using LinearTetrahedronShapeFunctionKernelBaseClass = FiniteElementShapeFunctionKernelBase< 4, 1 >;
-
-class LinearTetrahedronShapeFunctionKernel : public LinearTetrahedronShapeFunctionKernelBaseClass
+class LinearTetrahedronShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase< 4, 1 >
 {
-public:
-  using BaseClass = LinearTetrahedronShapeFunctionKernelBaseClass;
+private:
 
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+  constexpr static localIndex numNodes = getNumNodes();
   constexpr static real64 parentVolume = 1.0 / 6.0;
-  constexpr static real64 weight = parentVolume / numQuadraturePoints; // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
+  constexpr static real64 weight = parentVolume / getNumQuadraturePoints(); // point weight for 1-point (r = 1/4, s = 1/4, t = 1/4) formula
+
+public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
