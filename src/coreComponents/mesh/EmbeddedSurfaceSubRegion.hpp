@@ -139,13 +139,19 @@ public:
                               BoundedPlane const * fracture );
 
   /**
+   * @brief inherit ghost rank from cell elements.
+   * @param cellGhostRank cell element ghost ranks
+   */
+  void inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank );
+
+  /**
    * @brief Given the coordinates of a node, it computes the Heaviside function iside a cut element with respect to the fracture element.
    * @param nodeCoord coordinate of the node
    * @param k embedded surface cell index
    * @return value of the Heaviside
    */
   real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
-                                   localIndex const k );
+                                   localIndex const k ) const;
 
   /**
    * @brief Get list of intersection points (nodes of the embedded plane), offset and connectivity list

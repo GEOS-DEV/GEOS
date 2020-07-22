@@ -189,6 +189,15 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
   return addEmbeddedElem;
 }
 
+void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank )
+{
+  arrayView1d< integer > const & ghostRank = this->ghostRank();
+  for( localIndex k=0; k < size(); ++k )
+  {
+    ghostRank[k] = cellGhostRank[m_embeddedSurfaceToRegion[k]][m_embeddedSurfaceToSubRegion[k]][m_embeddedSurfaceToCell[k]];
+  }
+}
+
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
                                                                     localIndex const k )
 {
@@ -212,7 +221,7 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 }
 
 real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
-                                                           localIndex const k )
+                                                           localIndex const k ) const
 {
   real64 heaviside;
   R1Tensor distanceVector;
@@ -233,7 +242,7 @@ void EmbeddedSurfaceSubRegion::getIntersectionPoints( NodeManager const & nodeMa
 {
 
   offSet.resize( size() + 1 );
-  offSet.setValues<serialPolicy>( 0 );
+  offSet.setValues< serialPolicy >( 0 );
   for( localIndex k =0; k < size(); k++ )
   {
     ComputeIntersectionPoints( nodeManager, edgeManager, elemManager, intersectionPoints, connectivityList, offSet, k );

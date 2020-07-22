@@ -52,9 +52,9 @@ public:
 
   virtual void SetupSystem( DomainPartition & domain,
                             DofManager & dofManager,
-							CRSMatrix< real64, globalIndex > & localMatrix,
-							array1d< real64 > & localRhs,
-							array1d< real64 > & localSolution,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            array1d< real64 > & localRhs,
+                            array1d< real64 > & localSolution,
                             bool const setSparsity = true ) override;
 
   virtual void
@@ -69,26 +69,26 @@ public:
   virtual void AssembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
-							   DofManager const & dofManager,
-							   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-							   arrayView1d< real64 > const & localRhs  ) override;
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
 
   virtual void ApplyBoundaryConditions( real64 const time,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-										CRSMatrixView< real64, globalIndex const > const & localMatrix,
-										arrayView1d< real64 > const & localRhs ) override;
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
   CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-						 arrayView1d< real64 const > const & localSolution  ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-		               arrayView1d< real64 const > const & localSolution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
@@ -113,19 +113,19 @@ public:
 
 protected:
 
-   void AddCouplingNumNonzeros( DomainPartition & domain,
-                                DofManager & dofManager,
-                                arrayView1d< localIndex > const & rowLengths ) const;
+  void AddCouplingNumNonzeros( DomainPartition & domain,
+                               DofManager & dofManager,
+                               arrayView1d< localIndex > const & rowLengths ) const;
 
-   /**
-    * @Brief add the sparsity pattern induced by the perforations
-    * @param domain the physical domain object
-    * @param dofManager degree-of-freedom manager associated with the linear system
-    * @param pattern the sparsity pattern
-    */
-   void AddCouplingSparsityPattern( DomainPartition const & domain,
-                                    DofManager const & dofManager,
-                                    SparsityPatternView< globalIndex > const & pattern ) const;
+  /**
+   * @Brief add the sparsity pattern induced by the perforations
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void AddCouplingSparsityPattern( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   SparsityPatternView< globalIndex > const & pattern ) const;
 
   /*
    * @brief Assemble Equilibrium operator
@@ -135,7 +135,7 @@ protected:
    * @param hInv scaling coefficient
    */
   void AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                    EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                    EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
                                     const localIndex k,
                                     const real64 hInv );
   /*
@@ -151,7 +151,7 @@ protected:
    * @param dNdX shape functions derivatives
    */
   void AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                      EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                      EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
                                       localIndex const k,
                                       localIndex const q,
                                       CellBlock::NodeMapType const & elemsToNodes,

@@ -120,9 +120,9 @@ real64 SolidMechanicsEmbeddedFractures::SolverStep( real64 const & time_n,
 
   SetupSystem( domain,
                m_dofManager,
-			   m_localMatrix,
-			   m_localRhs,
-			   m_localSolution );
+               m_localMatrix,
+               m_localRhs,
+               m_localSolution );
 
   // currently the only method is implicit time integration
   dtReturn = this->NonlinearImplicitStep( time_n,
@@ -144,11 +144,11 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
   m_solidSolver->SetupDofs( domain, dofManager );
 
-  MeshLevel const * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
-  ElementRegionManager const * const elemManager = meshLevel->getElemManager();
+  MeshLevel const & meshLevel              = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
 
   array1d< string > regions;
-  elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & region ) {
+  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & region ) {
     regions.emplace_back( region.getName() );
   } );
 
@@ -165,10 +165,10 @@ void SolidMechanicsEmbeddedFractures::SetupDofs( DomainPartition const & domain,
 
 void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
-												   CRSMatrix< real64, globalIndex > & localMatrix ,
-												   array1d< real64 > &  localRhs,
-												   array1d< real64 > & localSolution,
-												   bool const setSparsity )
+                                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                                   array1d< real64 > & localRhs,
+                                                   array1d< real64 > & localSolution,
+                                                   bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -181,8 +181,6 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  localIndex const numLocalDof = dofManager.numLocalDofs();
-
   // Set the sparsity pattern without the Kwu and Kuw blocks.
   SparsityPattern< globalIndex > patternDiag;
   dofManager.setSparsityPattern( patternDiag );
@@ -191,10 +189,10 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   array1d< localIndex > rowLengths( patternDiag.numRows() );
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
-	  rowLengths[localRow] = patternDiag.numNonZeros( localRow );
+    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
-  // Add the number of nonzeros induced by coupling on perforations
+  // Add the number of nonzeros induced by coupling
   AddCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
 
   // Create a new pattern with enough capacity for coupled matrix
@@ -204,8 +202,8 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
-	  globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-	  pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
   }
 
   // Add the nonzeros from coupling
@@ -227,58 +225,56 @@ void SolidMechanicsEmbeddedFractures::SetupSystem( DomainPartition & domain,
 
 void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
                                                       real64 const dt,
-                                                      DomainPartition * const domain,
+                                                      DomainPartition & domain,
                                                       DofManager const & dofManager,
-                                                      ParallelMatrix & matrix,
-                                                      ParallelVector & rhs )
+                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  matrix.zero();
-  rhs.zero();
-
 
   m_solidSolver->AssembleSystem( time,
                                  dt,
                                  domain,
                                  dofManager,
-                                 matrix,
-                                 rhs );
+                                 localMatrix,
+                                 localRhs );
 
-  matrix.open();
-  rhs.open();
 
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  ConstitutiveManager * const constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager const & nodeManager          = *mesh.getNodeManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
+
+  ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager->totalDisplacement();
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager->incrementalDisplacement();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager->referencePosition();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
 
   r1_array const uhattilde;
 
   string const dofKey     = dofManager.getKey( keys::TotalDisplacement );
   string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
-  globalIndex_array const & globalDofNumber = nodeManager->getReference< globalIndex_array >( dofKey );
+  arrayView1d< globalIndex const > const & globalDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elemManager->ConstructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+//  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase const >
+//  constitutiveRelations = elemManager.ConstructFullConstitutiveAccessor< ConstitutiveBase const >( constitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< real64 > const
-  density = elemManager->ConstructFullMaterialViewAccessor< real64 >( "density0",
-                                                                      constitutiveManager );
+  density = elemManager.ConstructFullMaterialViewAccessor< real64 >( "density0",
+                                                                     constitutiveManager );
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   constexpr int dim = 3;
   static constexpr int maxNumUdof = dim * 8; // this is hard-coded for now.
 
   // Initialise local matrices and vectors
-  array1d< globalIndex >             elementLocalDofIndex ( maxNumUdof );
-  array1d< globalIndex >             jumpLocalDofIndex    ( 3 );
+  array1d< globalIndex >       dispEqnRowIndices ( maxNumUdof );
+  array1d< globalIndex >       jumpEqnRowIndices    ( 3 );
+  array1d< globalIndex >       dispColIndices ( maxNumUdof );
+  array1d< globalIndex >       jumpColIndices ( 3 );
 
   array2d< real64 >            Kwu_elem( 3, maxNumUdof );
   array2d< real64 >            Kuw_elem( maxNumUdof, 3 );
@@ -313,30 +309,33 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 > dMatrix( 6, 6 );
 
   // begin region loop
-  elemManager->forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion & embeddedRegion )->void
+  elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & embeddedRegion )->void
   {
     FiniteElementDiscretization const *
     feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_solidSolver->getDiscretization());
     // loop of embeddeSubregions
-    embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )->void
+    embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void
     {
       localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
       arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
       arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
       arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
 
-      arrayView1d< globalIndex > const &
+      arrayView1d< globalIndex const > const &
       embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
       arrayView1d< R1Tensor const > const & w_global  = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::dispJumpString );
       arrayView1d< R1Tensor const > const & dw_global = embeddedSurfaceSubRegion.getReference< array1d< R1Tensor > >( viewKeyStruct::deltaDispJumpString );
 
-      arrayView1d< real64 > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
+      arrayView1d< real64 const > const & fractureSurfaceArea = embeddedSurfaceSubRegion.getElementArea();
+
+      jumpEqnRowIndices.resize( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+      jumpColIndices.resize( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
       // loop over embedded surfaces
       for( localIndex k=0; k<numEmbeddedElems; ++k )
       {
         // Get rock matrix element subregion
-        CellElementSubRegion const * const elementSubRegion = Group::group_cast< CellElementSubRegion const * const >( elemManager->GetRegion( embeddedSurfaceToRegion[k] )->
+        CellElementSubRegion const * const elementSubRegion = Group::group_cast< CellElementSubRegion const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
                                                                                                                          GetSubRegion( embeddedSurfaceToSubRegion[k] ));
         CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
         // Get the number of nodes per element
@@ -347,30 +346,30 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
         // Resize based on numbe of dof of the subregion
         int nUdof = numNodesPerElement * 3;
-        elementLocalDofIndex.resize( nUdof );
+        dispEqnRowIndices.resize( nUdof );
+        dispColIndices.resize( nUdof );
         Kwu_elem.resizeDimension< 1 >( nUdof );
         Kuw_elem.resizeDimension< 0 >( nUdof );
         R0.resize( nUdof );
         u.resize( nUdof );
 
         // Initialize
-        Kwu_elem.setValues<serialPolicy>( 0 );
-        Kuw_elem.setValues<serialPolicy>( 0 );
-        Kww_elem.setValues<serialPolicy>( 0 );
-        R0.setValues<serialPolicy>( 0 );
-        R1.setValues<serialPolicy>( 0 );
-        dTdw.setValues<serialPolicy>( 0 );
-        eqMatrix.setValues<serialPolicy>( 0 );
-        compMatrix.setValues<serialPolicy>( 0 );
-        strainMatrix.setValues<serialPolicy>( 0 );
+        Kwu_elem.setValues< serialPolicy >( 0 );
+        Kuw_elem.setValues< serialPolicy >( 0 );
+        Kww_elem.setValues< serialPolicy >( 0 );
+        R0.setValues< serialPolicy >( 0 );
+        R1.setValues< serialPolicy >( 0 );
+        dTdw.setValues< serialPolicy >( 0 );
+        eqMatrix.setValues< serialPolicy >( 0 );
+        compMatrix.setValues< serialPolicy >( 0 );
+        strainMatrix.setValues< serialPolicy >( 0 );
 
         u_local.resize( numNodesPerElement );
         du_local.resize( numNodesPerElement );
 
         // Get mechanical moduli tensor
-        LinearElasticIsotropic::KernelWrapper const & solidConstitutive =
-          Group::group_cast< LinearElasticIsotropic * const >( constitutiveRelations[embeddedSurfaceToRegion[k]][embeddedSurfaceToSubRegion[k]][0] )->
-            createKernelUpdates();
+        LinearElasticIsotropic const * constitutiveRelation = elementSubRegion->getConstitutiveModel< LinearElasticIsotropic >( m_solidSolver->solidMaterialNames()[0] );
+        LinearElasticIsotropic::KernelWrapper const & solidConstitutive = constitutiveRelation->createKernelUpdates();
         solidConstitutive.GetStiffness( embeddedSurfaceToCell[k], dMatrix );
 
         // Basis functions derivatives
@@ -386,14 +385,15 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
         //if(elemGhostRank[k] < 0)
 
-        // Dof index of nodal displacements
+        // Dof index of nodal displacements and row indices
         for( localIndex a=0; a<numNodesPerElement; ++a )
         {
           localIndex localNodeIndex = elemsToNodes[embeddedSurfaceToCell[k]][a];
 
-          for( int i=0; i<dim; ++i )
+          for( int i=0; i < dim; ++i )
           {
-            elementLocalDofIndex[static_cast< int >(a)*dim+i] = globalDofNumber[localNodeIndex]+i;
+            dispEqnRowIndices[static_cast< int >(a)*dim+i] = globalDofNumber[localNodeIndex] + i - rankOffset;
+            dispColIndices[static_cast< int >(a)*dim+i]    = globalDofNumber[localNodeIndex] + i;
           }
         }
 
@@ -405,14 +405,15 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
         }
 
         // Dof number of jump enrichment
-        for( int i= 0; i < dim; i++ )
+        for( int i= 0; i < embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
         {
-          jumpLocalDofIndex[i] = embeddedElementDofNumber[k] + i;
+          jumpEqnRowIndices[i] = embeddedElementDofNumber[k] + i - rankOffset;
+          jumpColIndices[i]    = embeddedElementDofNumber[k] + i;
           w( i ) = w_global[k][i] + 0*dw_global[k][i];
         }
 
         // copy values in the R1Tensor object to use in BlasLapack interface
-        for( localIndex j=0; j<numNodesPerElement; ++j )
+        for( localIndex j=0; j < numNodesPerElement; ++j )
         {
           for( int i=0; i<dim; ++i )
           {
@@ -482,160 +483,189 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
         // 2. Assembly into global system
         // fill in residual vector
-        rhs.add ( elementLocalDofIndex, R0 );
-        rhs.add ( jumpLocalDofIndex, R1 );
+        for( localIndex i = 0; i < dispEqnRowIndices.size(); ++i )
+        {
+          if( dispEqnRowIndices[i] >= 0 && dispEqnRowIndices[i] < localMatrix.numRows() )
+          {
+            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dispEqnRowIndices[i]], R0[i] );
 
-        // fill in matrix
-        matrix.add  ( jumpLocalDofIndex, jumpLocalDofIndex, Kww_elem );
-        matrix.add  ( jumpLocalDofIndex, elementLocalDofIndex, Kwu_elem );
-        matrix.add  ( elementLocalDofIndex, jumpLocalDofIndex, Kuw_elem );
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dispEqnRowIndices[i],
+                                                                              jumpColIndices.data(),
+                                                                              Kuw_elem[i],
+                                                                              embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+          }
+        }
 
+        for( localIndex i=0; i < jumpEqnRowIndices.size(); ++i )
+        {
+          if( jumpEqnRowIndices[i] >= 0 && jumpEqnRowIndices[i] < localMatrix.numRows() )
+          {
+            RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[jumpEqnRowIndices[i]], R1[i] );
+
+            // fill in matrix
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
+                                                                              jumpColIndices.data(),
+                                                                              Kww_elem [i],
+                                                                              embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+
+            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( jumpEqnRowIndices[i],
+                                                                              dispColIndices.data(),
+                                                                              Kwu_elem[i],
+                                                                              numNodesPerElement * dim );
+          }
+
+        }
       }   // loop over embedded surfaces
     } ); // subregion loop
   } ); // region loop
-
-  // close all the objects
-  rhs.close();
-  matrix.close();
 }
 
 void SolidMechanicsEmbeddedFractures::AddCouplingNumNonzeros( DomainPartition & domain,
                                                               DofManager & dofManager,
                                                               arrayView1d< localIndex > const & rowLengths ) const
 {
-	MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-	NodeManager * const nodeManager = mesh->getNodeManager();
-	ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager const & nodeManager          = *mesh.getNodeManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-	string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-	string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
-	arrayView1d< globalIndex const > const &
-	dispDofNumber =  nodeManager->getReference< globalIndex_array >( dispDofKey );
+  arrayView1d< globalIndex const > const &
+  dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
 
-	localIndex activeJumpDof, activeDisplacementDof;
+  globalIndex const rankOffset = dofManager.rankOffset();
 
-	globalIndex const rankOffset = dofManager.rankOffset();
+  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
+  {
+    localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
+    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
+    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
+    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
 
-	elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
-	{
-		localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+    arrayView1d< globalIndex const > const &
+    embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+    arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
 
-		arrayView1d< globalIndex const > const &
-		embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-		arrayView1d< integer const > const & ghostRank = embeddedSurfaceSubRegion.ghostRank();
+    for( localIndex k=0; k<numEmbeddedElems; ++k )
+    {
+      CellBlock const * const subRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
+                                                                                          GetSubRegion( embeddedSurfaceToSubRegion[k] ));
 
-		for( localIndex k=0; k<numEmbeddedElems; ++k )
-		{
-			CellBlock const * const subRegion = Group::group_cast< CellBlock const * const >( elemManager->GetRegion( embeddedSurfaceToRegion[k] )->
-					GetSubRegion( embeddedSurfaceToSubRegion[k] ));
+      if( ghostRank[k] < 0 )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( embeddedElementDofNumber[k] - rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+        GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments()  );
 
-			if( ghostRank[k] < 0 )
-			{
-				localIndex const localRow = LvArray::integerConversion< localIndex >( embeddedElementDofNumber[k] - rankOffset );
-				GEOSX_ASSERT_GE( localRow, 0 );
-				GEOSX_ASSERT_GE( rowLengths.size(), localRow + 3*subRegion->numNodesPerElement() );
+        for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
+        {
+          rowLengths[localRow + i] += 3*subRegion->numNodesPerElement();
+        }
 
-				for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++i )
-				{
-					rowLengths[localRow + i] += 3*subRegion->numNodesPerElement();
-				}
+        for( localIndex a=0; a<subRegion->numNodesPerElement(); ++a )
+        {
+          const localIndex & node = subRegion->nodeList( embeddedSurfaceToCell[k], a );
+          localIndex const localDispRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
+          GEOSX_ASSERT_GE( localDispRow, 0 );
+          GEOSX_ASSERT_GE( rowLengths.size(), localDispRow + 3*subRegion->numNodesPerElement() );
 
-				for( localIndex a=0; a<subRegion->numNodesPerElement(); ++a )
-				{
-					const localIndex & node = subRegion->nodeList( embeddedSurfaceToCell[k], a );
-					localIndex const localRow = LvArray::integerConversion< localIndex >( dispDofNumber[node] - rankOffset );
-					GEOSX_ASSERT_GE( localRow, 0 );
-					GEOSX_ASSERT_GE( rowLengths.size(), localRow + embeddedSurfaceSubRegion.numOfJumpEnrichments() );
-
-					for( int d=0; d<3; ++d )
-					{
-						rowLengths[localRow + d] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
-					}
-				}
-			}
-		}
-	 } );
+          for( int d=0; d<3; ++d )
+          {
+            rowLengths[localDispRow + d] += embeddedSurfaceSubRegion.numOfJumpEnrichments();
+          }
+        }
+      }
+    }
+  } );
 }
 
 void SolidMechanicsEmbeddedFractures::AddCouplingSparsityPattern( DomainPartition const & domain,
                                                                   DofManager const & dofManager,
                                                                   SparsityPatternView< globalIndex > const & pattern ) const
 {
-	MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-	NodeManager * const nodeManager = mesh->getNodeManager();
-	ElementRegionManager * const elemManager = mesh->getElemManager();
+  MeshLevel const & mesh                   = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager const & nodeManager          = *mesh.getNodeManager();
+  ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-	string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
-	string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
+  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
+  string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
-	arrayView1d< globalIndex const > const &
-	dispDofNumber =  nodeManager->getReference< globalIndex_array >( dispDofKey );
+  arrayView1d< globalIndex const > const &
+  dispDofNumber =  nodeManager.getReference< globalIndex_array >( dispDofKey );
 
-	localIndex activeJumpDof, activeDisplacementDof;
+  globalIndex const rankOffset = dofManager.rankOffset();
 
-	globalIndex const rankOffset = dofManager.rankOffset();
+  static constexpr int maxNumDispDof = 3 * 8; // this is hard-coded for now.
 
-	elemManager->forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
+  elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )
+  {
+    arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
+    arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
+    arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+
+    arrayView1d< globalIndex const > const &
+    embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+
+    // Insert the entries corresponding to jump-disp coupling
+    // This will fill K_wu, and K_uw
+    for( localIndex k=0; k<embeddedSurfaceSubRegion.size(); ++k )
     {
-		localIndex const numEmbeddedElems = embeddedSurfaceSubRegion.size();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToRegion    = embeddedSurfaceSubRegion.getSurfaceToRegionList();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToSubRegion = embeddedSurfaceSubRegion.getSurfaceToSubRegionList();
-		arrayView1d< localIndex const >  const & embeddedSurfaceToCell      = embeddedSurfaceSubRegion.getSurfaceToCellList();
+      CellBlock const * const elemSubRegion = Group::group_cast< CellBlock const * const >( elemManager.GetRegion( embeddedSurfaceToRegion[k] )->
+                                                                                              GetSubRegion( embeddedSurfaceToSubRegion[k] ));
 
-		arrayView1d< globalIndex const > const &
-		embeddedElementDofNumber = embeddedSurfaceSubRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+      // working arrays
+      stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
+      stackArray1d< globalIndex, 3 > eqnRowIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
+      stackArray1d< globalIndex, maxNumDispDof > dofColIndicesDisp ( 3*elemSubRegion->numNodesPerElement() );
+      stackArray1d< globalIndex, 3 > dofColIndicesJump( embeddedSurfaceSubRegion.numOfJumpEnrichments() );
 
-		// Insert the entries corresponding to jump-disp coupling
-		// This will fill K_wu, and K_uw
-		forAll< serialPolicy >( embeddedSurfaceSubRegion->size(), [=] ( localIndex const iperf )
-	    {
-			// working arrays
-			stackArray1d< globalIndex, maxNumDispDof> eqnRowIndexDisp ( );
-			stackArray1d< globalIndex, 3 > eqnRowIndicesJump( wellNDOF );
-			stackArray1d< globalIndex, maxNumDispDof > dofColIndexDisp (  );
-			stackArray1d< globalIndex, 3 > dofColIndicesJump( wellNDOF );
 
-			// get the reservoir (sub)region and element indices
-			localIndex const er = resElementRegion[iperf];
-			localIndex const esr = resElementSubRegion[iperf];
-			localIndex const ei = resElementIndex[iperf];
-			localIndex const iwelem = perfWellElemIndex[iperf];
+      for( localIndex idof = 0; idof < embeddedSurfaceSubRegion.numOfJumpEnrichments(); ++idof )
+      {
+        eqnRowIndicesJump[idof] = embeddedElementDofNumber[k] + idof - rankOffset;
+        dofColIndicesJump[idof] = embeddedElementDofNumber[k] + idof;
+      }
 
-			eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
-			dofColIndexRes = resDofNumber[er][esr][ei];
+      for( localIndex a=0; a<elemSubRegion->numNodesPerElement(); ++a )
+      {
+        const localIndex & node = elemSubRegion->nodeList( embeddedSurfaceToCell[k], a );
+        for( localIndex idof = 0; idof < 3; ++idof )
+        {
+          eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
+          dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
+        }
+      }
 
-			for( localIndex idof = 0; idof < wellNDOF; ++idof )
-			{
-				eqnRowIndicesWell[idof] = wellElemDofNumber[iwelem] + idof - rankOffset;
-				dofColIndicesWell[idof] = wellElemDofNumber[iwelem] + idof;
-			}
+      for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+      {
+        if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
+        {
+          for( localIndex j = 0; j < dofColIndicesJump.size(); ++j )
+          {
+            pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesJump[j] );
+          }
+        }
+      }
 
-			if( eqnRowIndexRes >= 0 && eqnRowIndexRes < pattern.numRows() )
-			{
-				for( localIndex j = 0; j < dofColIndicesWell.size(); ++j )
-				{
-					pattern.insertNonZero( eqnRowIndexRes, dofColIndicesWell[j] );
-				}
-			}
 
-			for( localIndex i = 0; i < eqnRowIndicesWell.size(); ++i )
-			{
-				if( eqnRowIndicesWell[i] >= 0 && eqnRowIndicesWell[i] < pattern.numRows() )
-				{
-					pattern.insertNonZero( eqnRowIndicesWell[i], dofColIndexRes );
-				}
-			}
-	   } );
+      for( localIndex i = 0; i < eqnRowIndicesJump.size(); ++i )
+      {
+        if( eqnRowIndicesJump[i] >= 0 && eqnRowIndicesJump[i] < pattern.numRows() )
+        {
+          for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+          {
+            pattern.insertNonZero( eqnRowIndicesJump[i], dofColIndicesDisp[j] );
+          }
+        }
+      }
+    }
 
-    } );
+  } );
 }
 
 void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real64 > & eqMatrix,
-                                                                   EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                                                   EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
                                                                    const localIndex k,
                                                                    const real64 hInv )
 {
@@ -695,7 +725,7 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
 void
 SolidMechanicsEmbeddedFractures::
   AssembleCompatibilityOperator( array2d< real64 > & compMatrix,
-                                 EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion,
+                                 EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion,
                                  localIndex const k,
                                  localIndex const q,
                                  CellBlock::NodeMapType const & elemsToNodes,
@@ -789,7 +819,7 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
                                                               arrayView4d< real64 const > const & dNdX )
 {
   GEOSX_MARK_FUNCTION;
-  strainMatrix.setValues<serialPolicy>( 0 ); // make 0
+  strainMatrix.setValues< serialPolicy >( 0 ); // make 0
 
   for( integer a=0; a<numNodesPerElement; ++a )
   {
@@ -813,10 +843,10 @@ void SolidMechanicsEmbeddedFractures::AssembleStrainOperator( array2d< real64 > 
 
 void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time,
                                                                real64 const dt,
-                                                               DomainPartition * const domain,
+                                                               DomainPartition & domain,
                                                                DofManager const & dofManager,
-                                                               ParallelMatrix & matrix,
-                                                               ParallelVector & rhs )
+                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -824,20 +854,20 @@ void SolidMechanicsEmbeddedFractures::ApplyBoundaryConditions( real64 const time
                                           dt,
                                           domain,
                                           dofManager,
-                                          matrix,
-                                          rhs );
+                                          localMatrix,
+                                          localRhs );
 }
 
-real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const * const domain,
+real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition const & domain,
                                                                DofManager const & dofManager,
-                                                               ParallelVector const & rhs )
+                                                               arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
   // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->CalculateResidualNorm( domain,
                                                                          dofManager,
-                                                                         rhs );
+                                                                         localRhs );
 
   // Fracture residual
 
@@ -847,20 +877,20 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
 }
 
 void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
-                                                           ParallelVector const & solution,
+                                                           arrayView1d< real64 const > const & localSolution,
                                                            real64 const scalingFactor,
-                                                           DomainPartition * const domain )
+                                                           DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   m_solidSolver->ApplySystemSolution( dofManager,
-                                      solution,
+                                      localSolution,
                                       scalingFactor,
                                       domain );
 
-  dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::deltaDispJumpString, -scalingFactor );
+  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString, viewKeyStruct::deltaDispJumpString, -scalingFactor );
 
-  dofManager.addVectorToField( solution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
+  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString, viewKeyStruct::dispJumpString, -scalingFactor );
 
 
 // TODO
@@ -869,9 +899,9 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
 //  fieldNames["node"].push_back( viewKeyStruct::deltaDispJumpString );
 //
 //  CommunicationTools::SynchronizeFields( fieldNames,
-//                                           domain->getMeshBody( 0 )->getMeshLevel( 0 ),
-//                                           domain->getReference< array1d<NeighborCommunicator> >(
-// domain->viewKeys.neighbors ) );
+//                                           domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+//                                           domain.getReference< array1d<NeighborCommunicator> >(
+// domain.viewKeys.neighbors ) );
 
 }
 

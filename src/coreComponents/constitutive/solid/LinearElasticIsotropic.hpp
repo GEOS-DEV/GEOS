@@ -392,7 +392,7 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of LinearElasticIsotropicUpdate.
    */
-  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true )
+  LinearElasticIsotropicUpdates createKernelUpdates( bool const includeState = true ) const
   {
     if( includeState )
     {
