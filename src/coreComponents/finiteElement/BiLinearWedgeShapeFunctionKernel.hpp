@@ -43,7 +43,7 @@ public:
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void shapeFunctionValues( localIndex const q,
-                                   real64 N[numNodes] )
+                                   real64 (&N)[numNodes] )
   {
     real64 const xi[3] = { quadratureParentCoords0( q ),
                            quadratureParentCoords1( q ),

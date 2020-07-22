@@ -625,11 +625,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
     }
 
-//    localIndex const
-//    numQuadraturePointsPerElem = finiteElementSpace == nullptr ?
-//                                 1 :
-//                                 finiteElementSpace->n_quadrature_points();
-
     // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
@@ -649,13 +644,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     {
       // Create an alias for the type of contitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
-
-      // Apply a sequence of integer dispatch functions to convert the number of nodes per element,
-      // and number of quadrature points per element to a compile time constant.
-//      integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
-//      {
-//        integralTypeDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
-//        {
 
       string const elementTypeString = elementSubRegion.GetElementTypeString();
       finiteElement::dispatch( elementTypeString,
@@ -713,7 +701,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                         >( numElems,
                                                            kernelComponent ) );
       } );
-//      } );
     } );
 
     // Remove the null constitutive model (not required, but cleaner)

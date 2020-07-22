@@ -10,33 +10,34 @@
 namespace geosx
 {
 
+/**
+ * @class FiniteElementShapeFunctionKernelBase
+ * @brief Base class for the finite element kernels.
+ * @tparam NUM_SUPPORT_POINTS The number of support points per element.
+ * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
+ */
 template< int NUM_SUPPORT_POINTS, int NUM_QUADRATURE_POINTS >
 class FiniteElementShapeFunctionKernelBase
 {
 public:
+  /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = NUM_SUPPORT_POINTS;
+
+  /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = NUM_QUADRATURE_POINTS;
 
 
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  static void shapeFunctionValues( localIndex const q,
-//                                   real64 N[numNodes] ) {}
-//
-//
-//
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  static real64 shapeFunctionDerivatives( localIndex const q,
-//                                          real64 const (&X)[numNodes][3],
-//                                          real64 (& dNdX)[numNodes][3] ) {}
-
-
+  /**
+   * @brief Computes the inverse of a 3x3 c-array.
+   * @param J The array to invert...which is also used to store the inverse.
+   * @return The determinant of @p J.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static real64 inverse( real64 (& J)[3][3] )
   {
-    real64 const temp[3][3] = { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
+    real64 const temp[3][3] =
+    { { J[1][1]*J[2][2] - J[1][2]*J[2][1], J[0][2]*J[2][1] - J[0][1]*J[2][2], J[0][1]*J[1][2] - J[0][2]*J[1][1] },
       { J[1][2]*J[2][0] - J[1][0]*J[2][2], J[0][0]*J[2][2] - J[0][2]*J[2][0], J[0][2]*J[1][0] - J[0][0]*J[1][2] },
       { J[1][0]*J[2][1] - J[1][1]*J[2][0], J[0][1]*J[2][0] - J[0][0]*J[2][1], J[0][0]*J[1][1] - J[0][1]*J[1][0] } };
 
@@ -50,30 +51,44 @@ public:
         J[i][j] = temp[i][j] * invDet;
       }
     }
-
     return det;
   }
 
+  /**
+   * @brief Calculate the determinant of a 3x3 c-array.
+   * @param J The input array.
+   * @return The determinant of @p J
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 detJ( real64 const (&J)[3][3] )
+  {
+    return J[0][0] * ( J[1][1]*J[2][2] - J[1][2]*J[2][1] ) +
+           J[1][0] * ( J[0][2]*J[2][1] - J[0][1]*J[2][2] ) +
+           J[2][0] * ( J[0][0]*J[1][1] - J[0][1]*J[1][0] );
+  }
 
 
-//  typedef real64 const TypeOfdNdX[3][numNodes];
+//TODO we want to keep views and provide interfaces to this data here for cases
+//     where we pre-compute the shape function derivatives...maybe...tbd.
 //
 //  GEOSX_HOST_DEVICE
 //  GEOSX_FORCE_INLINE
-//  real64 shapeFunctionDerivatives( localIndex , localIndex , localIndex a, localIndex i )
+//  real64 shapeFunctionDerivatives( localIndex k, localIndex q, real const (&X)[numNodes][3] , real64 (& dNdX)[numNodes][3] )
 //  {
-//    return m_dNdX[i][a];
+//    for( int a=0 ; a<numNodes; ++a )
+//    {
+//      for( int i=0; i<3; ++a )
+//      {
+//        dNdX[a][i] = m_dNdX( k, q, a, i);
+//      }
+//    }
+//    return m_detJ( k, q );
 //  }
-//
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  TypeOfdNdX const & shapeFunctionDerivatives(  ) const
-//  {
-//    return m_dNdX;
-//  }
+//private:
+//  arrayView4d< real64 const > const m_dNdX;
+//  arrayView2d< real64 const > const m_detJ;
 
-
-private:
 
 };
 

@@ -64,27 +64,19 @@ private:
     return i + 2 * j;
   }
 
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  constexpr static int basisIndex0( localIndex const a )
-//  {
-//    return (a & 1);
-//  }
-//
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  constexpr static int basisIndex1( localIndex const a )
-//  {
-//    return ( a & 2 ) >> 1;
-//  }
-//
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  constexpr static int basisIndex2( localIndex const a )
-//  {
-//    return ( a & 4 ) >> 2;
-//  }
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static int basisIndex0( localIndex const a )
+  {
+    return (a & 1);
+  }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr static int basisIndex1( localIndex const a )
+  {
+    return ( a & 2 ) >> 1;
+  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
