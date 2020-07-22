@@ -20,14 +20,6 @@
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
-#ifdef GEOSX_USE_PYTHON
-// Note: the python header must be included first to avoid conflicting
-// definitions of _posix_c_source
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <Python.h>
-#include <numpy/arrayobject.h>
-#endif
-
 #include "EventManager.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
@@ -98,20 +90,6 @@ public:
   static bool parseRestart( string & restartFileName );
 
   /**
-   * @brief Initializes a python interpreter within GEOSX
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void initializePythonInterpreter();
-
-  /**
-   * @brief Closes the internal python interpreter
-   * @note This is not regularly used or tested, and may be removed in future versions.
-   * To use this feature, the code must be compiled with the GEOSX_USE_PYTHON flag
-   */
-  void closePythonInterpreter();
-
-  /**
    * @brief Generates the xml schema documentation
    * This function is called when the code is called with the -s schema_name option.
    * @details Before generating the schema, the code builds up a comprehensive datastructure.
@@ -152,7 +130,7 @@ public:
   /**
    * @brief Run the events in the scheduler.
    */
-  void runSimulation();
+  bool RunSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file

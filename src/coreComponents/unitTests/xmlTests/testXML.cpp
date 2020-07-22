@@ -22,7 +22,6 @@ TEST( testXML, testXML )
 {
   geosx::ProblemManager problemManager( "Problem", nullptr );
 
-  problemManager.initializePythonInterpreter();
   problemManager.parseCommandLineInput();
   problemManager.parseInputFile();
 }

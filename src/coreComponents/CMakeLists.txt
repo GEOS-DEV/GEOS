@@ -17,24 +17,6 @@ set( subdirs
      virtualElement
      )
 
-#set( subdirs
-#     codingUtilities
-#     common
-#     constitutive
-#     dataRepository
-#     fileIO
-#     finiteElement
-#     finiteVolume
-#     math
-#     mesh
-#     managers
-#     meshUtilities
-#     MPI_Communications
-#     physicsSolvers
-#     wells
-#     python
-#     linearAlgebra
-#     )
 
 set( coreLibLinkLine "" PARENT_SCOPE)
 set( geosx_core_include_dirs "" )
@@ -49,8 +31,12 @@ endif()
 list( APPEND coreLibs lvarray)
 add_subdirectory(LvArray)
 
+if( ENABLE_PYTHON )
+  list( APPEND coreLibs pylvarray )
+endif()
+
 foreach( lib ${subdirs} )
-    if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
+    if( NOT ${lib} STREQUAL "math" )
       list( APPEND coreLibs ${lib})
     endif()
 endforeach()
@@ -67,11 +53,7 @@ foreach( lib ${subdirs} )
     add_subdirectory(${lib})
 endforeach()
 
-# Python config
 set( extraComponentsLinkList "" )
-#if( ENABLE_PYTHON )
-#  set( extraComponentsLinkList ${extraComponentsLinkList} python_interp )
-#endif()
 
 if ( ENABLE_OPENMP )
   set( extraComponentsLinkList ${extraComponentsLinkList} openmp )

@@ -440,7 +440,7 @@ void basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupMPI( argc, argv );
   setupLogger();
-  setupCXXUtils();
+  setupLvArray();
   setupOpenMP();
   setupMKL();
   setupLAI( argc, argv );
@@ -488,8 +488,8 @@ void finalizeLogger()
   logger::FinalizeLogger();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-void setupCXXUtils()
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupLvArray()
 {
   LvArray::system::setErrorHandler( []()
   {

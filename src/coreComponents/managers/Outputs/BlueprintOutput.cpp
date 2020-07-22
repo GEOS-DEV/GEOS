@@ -149,6 +149,8 @@ void BlueprintOutput::execute( real64 const time,
   GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
   string const filePathForRank = dataRepository::writeRootFile( fileRoot, buffer );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
+
+  return false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -520,6 +520,28 @@ else()
 endif()
 
 ################################
+# Python
+################################
+if(ENABLE_PYTHON)
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
+    find_package(Python3 REQUIRED
+                 COMPONENTS Development NumPy)
+
+    message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
+    message(STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}")
+    message(STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}")
+
+    # Write out a wrapper script around python. There's gotta be a better way to do this...
+    file(WRITE ${CMAKE_BINARY_DIR}/python "#!/usr/bin/env bash\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/python "PYTHONPATH=${CMAKE_BINARY_DIR}/lib ${Python3_EXECUTABLE} \${@}\n")
+    file(COPY ${CMAKE_BINARY_DIR}/python
+         DESTINATION ${CMAKE_BINARY_DIR}/bin/
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+    file(REMOVE ${CMAKE_BINARY_DIR}/python)
+    set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
+endif()
+
+################################
 # LAI
 ################################
 string(TOUPPER "${GEOSX_LA_INTERFACE}" upper_LAI)
