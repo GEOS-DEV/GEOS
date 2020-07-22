@@ -239,7 +239,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
                                                            cycleNumber,
                                                            domain );
 
-    std::cout << dtReturnTemporary << std::endl;
+    //std::cout << "Here: "<< dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -270,7 +270,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
 
     mapDamageToQuadrature( domain );
 
-    std::cout << dtReturnTemporary << std::endl;
+    //std::cout << "Here: " << dtReturnTemporary << std::endl;
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -281,7 +281,7 @@ real64 PhaseFieldFractureSolver::SplitOperatorStep( real64 const & time_n,
     ++iter;
   }
 
-  GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
+  //GEOSX_ERROR_IF( !isConverged, "PhaseFieldFractureSolver::SplitOperatorStep() did not converge" );
 
   damageSolver.ImplicitStepComplete( time_n, dt, domain );
   solidSolver.ImplicitStepComplete( time_n, dt, domain );

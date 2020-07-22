@@ -2,11 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
- * All rights reserved
+ * All right reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -51,13 +51,12 @@ public:
   real64 GetDegradationValue( localIndex const k,
                               localIndex const q) const {
     real64 residualStiffness = 1e-4;
-    return (1 - residualStiffness)*(1 - m_damage( k,q ))*(1 - m_damage( k,q )) + residualStiffness;
+    return (1 - m_damage( k,q ))*(1 - m_damage( k,q )) + residualStiffness;
   }
 
   // GEOSX_HOST_DEVICE
-  // real64 GetDegradationDerivative( localIndex const k,
-  //                                 localIndex const q) const {
-  //    return -2*(1 - m_damage( k,q ));
+  // real64 GetDegradationDerivative( real64 const damage ) const {
+  //    return -2*(1 - damage);
   // }
 
 
@@ -120,10 +119,10 @@ public:
 
     real64 const sed = UPDATE_BASE::calculateStrainEnergyDensity(k,q) - compressionIndicator*(traceOfStress/3.0)*(traceOfStress/3.0)/(2*K);
 
-    //if( sed > m_strainEnergyDensity( k, q ) )
-    //{
-    m_strainEnergyDensity( k, q ) = sed;
-    //}
+    if( sed > m_strainEnergyDensity( k, q ) )
+    {
+      m_strainEnergyDensity( k, q ) = sed;
+    }
     // std::cout << "Strain Energy is: "<<m_strainEnergyDensity( k,q )<<std::endl;
     return m_strainEnergyDensity( k, q );
   }
@@ -131,9 +130,9 @@ public:
   GEOSX_HOST_DEVICE
   virtual void getStress( localIndex const k,
                           localIndex const q,
-                          real64 (& stress)[6] ) const override
+                          real64 (&stress)[6] ) const override
   {
-    //no tension-compression asymmetry
+    //no tension-compression assymetry
 
     // real64 const damageFactor = ( 1.0 - m_damage( k, q ) )*( 1.0 - m_damage( k, q ) );
     //
@@ -171,6 +170,12 @@ public:
 
 
 
+
+
+
+
+
+
 class DamageBase : public SolidBase
 {};
 
@@ -187,11 +192,16 @@ public:
 
 
   static std::string CatalogName() { return string( "Damage" ) + BASE::m_catalogNameString; }
-  virtual string getCatalogName() const override { return CatalogName(); }
+  virtual string GetCatalogName() override { return CatalogName(); }
 
   virtual void PostProcessInput() override;
 
-  virtual void allocateConstitutiveData( dataRepository::Group * const parent,
+  virtual void
+  DeliverClone( string const & name,
+                dataRepository::Group * const parent,
+                std::unique_ptr< ConstitutiveBase > & clone ) const override;
+
+  virtual void AllocateConstitutiveData( dataRepository::Group * const parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
 

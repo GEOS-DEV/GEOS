@@ -244,6 +244,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
   arrayView1d< globalIndex const > const & dofIndex = nodeManager->getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
   // Initialize all entries to zero
+#if 1 // Andre...this is the new code
   localMatrix.setValues< parallelDevicePolicy< 32 > >( 0 );
   localRhs.setValues< parallelDevicePolicy< 32 > >( 0 );
 
@@ -263,7 +264,150 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                             m_criticalFractureEnergy,
                                                             m_lengthScale,
                                                             m_localDissipationOption=="Linear" ? 1 : 2 );
+#else // this has your changes to the old base code
+  matrix.zero();
+  rhs.zero();
 
+  matrix.open();
+  rhs.open();
+
+  // begin region loop
+  for( localIndex er = 0; er < elemManager->numRegions(); ++er )
+  {
+    ElementRegionBase * const elementRegion = elemManager->GetRegion( er );
+
+    elementRegion->forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const GEOSX_UNUSED_PARAM( esr ),
+                                                                           CellElementSubRegion & elementSubRegion )
+    {
+
+      constitutive::ConstitutiveBase * const
+      solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( m_solidModelName );
+
+      constitutive::ConstitutivePassThru< constitutive::DamageBase >::Execute( solidModel,
+                                                                               [&]( auto * const damageModel )
+      {
+        using CONSTITUTIVE_TYPE = TYPEOFPTR( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel->createKernelUpdates();
+
+        arrayView4d< real64 const > const &
+        dNdX = elementSubRegion.dNdX();
+
+        arrayView2d< real64 const > const &
+        detJ = elementSubRegion.detJ();
+
+        localIndex const numNodesPerElement =  elementSubRegion.numNodesPerElement();
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes = elementSubRegion.nodeList();
+
+        // arrayView1d<real64 const> const &
+        // coeff = elementSubRegion.getReference<array1d<real64> >(viewKeyStruct::coeffName);
+
+        globalIndex_array elemDofIndex( numNodesPerElement );
+        real64_array element_rhs( numNodesPerElement );
+        real64_array2d element_matrix( numNodesPerElement, numNodesPerElement );
+
+        arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
+        std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+        localIndex const n_q_points = finiteElement->n_quadrature_points();
+
+        real64 ell = m_lengthScale;                       //phase-field length scale
+        real64 Gc = m_criticalFractureEnergy;             //energy release rate
+        double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
+
+        arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
+        //real64 diffusion = 1.0;
+        // begin element loop, skipping ghost elements
+        for( localIndex k = 0; k < elementSubRegion.size(); ++k )
+        {
+          if( elemGhostRank[k] < 0 )
+          {
+            element_rhs = 0.0;
+            element_matrix = 0.0;
+            for( localIndex q = 0; q < n_q_points; ++q )
+            {
+              real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k,q );
+              real64 D = 0;                                                                   //max between threshold and
+                                                                                              // Elastic energy
+              if( m_localDissipationOption == "Linear" )
+              {
+                D = std::max( threshold, strainEnergyDensity );
+                //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
+              }
+              //Interpolate d and grad_d
+
+              real64 qp_damage = 0.0;
+              R1Tensor qp_grad_damage;
+              R1Tensor temp;
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
+              {
+                qp_damage += finiteElement->value( a, q ) * nodalDamage[elemNodes( k, a )];
+                temp = dNdX[k][q][a];
+                temp *= nodalDamage[elemNodes( k, a )];
+                qp_grad_damage += temp;
+
+              }
+              //std::cout << "Damage: " << qp_damage <<std::endl;
+              //std::cout << "GradDamage: " << qp_grad_damage <<std::endl;
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
+              {
+                elemDofIndex[a] = dofIndex[elemNodes( k, a )];
+                //real64 diffusion = 1.0;
+                real64 Na = finiteElement->value( a, q );
+                //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
+                if( m_localDissipationOption == "Linear" )
+                {
+                  element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
+                                                    0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
+                                                    (ell * D/Gc) * Na * qp_damage);
+                }
+                else
+                {
+                  element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergyDensity / Gc -
+                                                    (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
+                                                     Na * qp_damage * (1 + 2 * ell*strainEnergyDensity/Gc)) );
+                }
+                for( localIndex b = 0; b < numNodesPerElement; ++b )
+                {
+                  real64 Nb = finiteElement->value( b, q );
+                  if( m_localDissipationOption == "Linear" )
+                  {
+                    element_matrix( a, b ) -= detJ[k][q] *
+                                              (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                               (ell * D/Gc) * Na * Nb);
+                  }
+                  else
+                  {
+                    element_matrix( a, b ) -= detJ[k][q] *
+                                              ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                                                  Na * Nb * (1 + 2 * ell*strainEnergyDensity/Gc )
+                                              );
+                  }
+                }
+              }
+            }
+            matrix.add( elemDofIndex, elemDofIndex, element_matrix );
+            rhs.add( elemDofIndex, element_rhs );
+          }
+        }
+      } );
+    } );
+  }
+  matrix.close();
+  rhs.close();
+
+  if( getLogLevel() == 2 )
+  {
+    GEOSX_LOG_RANK_0( "After PhaseFieldDamageFEM::AssembleSystem" );
+    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+    std::cout << matrix;
+    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+    std::cout << rhs;
+  }
+
+  if( getLogLevel() >= 3 )
+  {
+    NonlinearSolverParameters & solverParams = getNonlinearSolverParameters();
+    integer newtonIter = solverParams.m_numNewtonIterations;
+#endif
 
 }
 
