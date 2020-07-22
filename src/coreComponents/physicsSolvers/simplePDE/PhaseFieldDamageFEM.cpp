@@ -355,30 +355,53 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                 //element_rhs(a) += detJ[k][q] * Na * myFunc(Xq, Yq, Zq); //older reaction diffusion solver
                 if( m_localDissipationOption == "Linear" )
                 {
-                  element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
+                  // element_rhs( a ) += detJ[k][q] * (Na * (ell * D - 3 * Gc / 16 )/ Gc -
+                  //                                   0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
+                  //                                   (ell * D/Gc) * Na * qp_damage);
+
+                  element_rhs( a ) += detJ[k][q] * ( -3 * Na / 16  -
                                                     0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) -
-                                                    (ell * D/Gc) * Na * qp_damage);
+                                                    (0.5 * ell * D/Gc) * Na * constitutiveUpdate.GetDegradationDerivative(qp_damage));
+
                 }
+
                 else
                 {
-                  element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergyDensity / Gc -
+                  // element_rhs( a ) += detJ[k][q] * (Na * (2 * ell) * strainEnergyDensity / Gc -
+                  //                                   (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
+                  //                                    Na * qp_damage * (1 + 2 * ell*strainEnergyDensity/Gc)) );
+
+
+                  element_rhs( a ) -= detJ[k][q] * (Na * qp_damage +
                                                     (pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( qp_grad_damage, dNdX[k][q][a] ) +
-                                                     Na * qp_damage * (1 + 2 * ell*strainEnergyDensity/Gc)) );
+                                                     Na * constitutiveUpdate.GetDegradationDerivative(qp_damage) * (ell*strainEnergyDensity/Gc)) );
                 }
+
                 for( localIndex b = 0; b < numNodesPerElement; ++b )
                 {
                   real64 Nb = finiteElement->value( b, q );
                   if( m_localDissipationOption == "Linear" )
                   {
+                    // element_matrix( a, b ) -= detJ[k][q] *
+                    //                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                    //                            (ell * D/Gc) * Na * Nb);
+                    //
                     element_matrix( a, b ) -= detJ[k][q] *
                                               (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                               (ell * D/Gc) * Na * Nb);
+                                               (0.5 * ell * D/Gc) * constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * Na * Nb);
+
                   }
+
                   else
                   {
+                    // element_matrix( a, b ) -= detJ[k][q] *
+                    //                           ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
+                    //                               Na * Nb * (1 + 2 * ell*strainEnergyDensity/Gc )
+                    //                           );
+
                     element_matrix( a, b ) -= detJ[k][q] *
                                               ( pow( ell, 2 ) * LvArray::tensorOps::AiBi<3>( dNdX[k][q][a], dNdX[k][q][b] ) +
-                                                  Na * Nb * (1 + 2 * ell*strainEnergyDensity/Gc )
+                                                  Na * Nb * (1 + constitutiveUpdate.GetDegradationSecondDerivative(qp_damage) * ell*strainEnergyDensity/Gc )
                                               );
                   }
                 }
