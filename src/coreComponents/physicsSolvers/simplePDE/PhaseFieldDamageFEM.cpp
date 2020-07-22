@@ -303,8 +303,8 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
         std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
         localIndex const n_q_points = finiteElement->n_quadrature_points();
 
-        real64 ell = m_lengthScale;                                 //phase-field length scale
-        real64 Gc = m_criticalFractureEnergy;                                  //energy release rate
+        real64 ell = m_lengthScale;                       //phase-field length scale
+        real64 Gc = m_criticalFractureEnergy;             //energy release rate
         double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
 
         arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
@@ -319,7 +319,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const time_n,
             for( localIndex q = 0; q < n_q_points; ++q )
             {
               real64 const strainEnergyDensity = constitutiveUpdate.calculateStrainEnergyDensity( k,q );
-              double D = 0;                                                                   //max between threshold and
+              real64 D = 0;                                                                   //max between threshold and
                                                                                               // Elastic energy
               if( m_localDissipationOption == "Linear" )
               {
