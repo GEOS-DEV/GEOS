@@ -28,7 +28,7 @@
 #include "FaceElementRegion.hpp"
 #include "EmbeddedSurfaceRegion.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
-#include "wells/WellElementRegion.hpp"
+#include "WellElementRegion.hpp"
 #include "EmbeddedSurfaceRegion.hpp"
 
 namespace geosx

@@ -7,8 +7,6 @@ set( gtest_geosx_tests
      testSinglePhaseFVMKernels.cpp     
      testSinglePhaseHybridFVMKernels.cpp
      testCompMultiphaseFlow.cpp
-     testReservoirCompositionalMultiphaseMSWells.cpp
-     testReservoirSinglePhaseMSWells.cpp
    )
 
 set( dependencyList gtest )

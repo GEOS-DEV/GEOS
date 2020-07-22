@@ -165,7 +165,7 @@ The mesh can be divided in several regions.
 These regions are intended to support different physics
 or to define different constitutive properties.
 
-- For the GMSH file format, the regions are defined using the `elementary geometrical tags`_
+- For the GMSH file format, the regions are defined using the `physical entity names`_
   provided by GMSH.
 - For the MEDIT file format, the regions are defined using the tag of the element.
 - For the ECLIPSE file formats, the regions have to be first defined using the ECLIPSE software.
@@ -196,7 +196,7 @@ A ``CellBlock`` is an ensemble of elements with the same element geometry.
 
 .. image:: mesh.svg
 
-In the example presented above, the mesh is is composed of two regions (*Region 0* and *Region 1*).
+In the example presented above, the mesh is is composed of two regions (*Top* and *Bot*).
 Each region contains 3 ``CellBlocks``.
 
 The ``ElementRegions`` are defined as below :
@@ -204,8 +204,8 @@ The ``ElementRegions`` are defined as below :
 .. code-block:: xml
 
   <ElementRegions>
-    <ElementRegion name="Top" cellBlocks="0_HEX 0_WEDGE 0_TETRA" materialList="water rock"/>
-    <ElementRegion name="Bot" cellBlocks="1_HEX 1_WEDGE 1_TETRA" materialList="water rock"/>
+    <ElementRegion name="Top" cellBlocks="Top_HEX Top_WEDGE Top_TETRA" materialList="water rock"/>
+    <ElementRegion name="Bot" cellBlocks="Bot_HEX Bot_WEDGE Bot_TETRA" materialList="water rock"/>
   </ElementRegions>
 
 You have to use the following syntax to declare your ``CellBlocks`` :

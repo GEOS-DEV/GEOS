@@ -12,8 +12,6 @@ set( physicsSolvers_headers
      SolverBase.hpp
      fluidFlow/CompositionalMultiphaseFlow.hpp
      fluidFlow/CompositionalMultiphaseFlowKernels.hpp
-     fluidFlow/CompositionalMultiphaseWell.hpp
-     fluidFlow/CompositionalMultiphaseWellKernels.hpp     
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/ProppantTransport.hpp
      fluidFlow/ProppantTransportKernels.hpp
@@ -23,12 +21,15 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseBaseKernels.hpp
      fluidFlow/SinglePhaseFVMKernels.hpp          
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
-     fluidFlow/SinglePhaseWell.hpp
-     fluidFlow/SinglePhaseWellKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
-     fluidFlow/WellSolverBase.hpp
-     fluidFlow/WellSolverBase.hpp
+     fluidFlow/wells/WellSolverBase.hpp
+     fluidFlow/wells/WellSolverBase.hpp
+     fluidFlow/wells/SinglePhaseWell.hpp
+     fluidFlow/wells/SinglePhaseWellKernels.hpp     
+     fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
+     fluidFlow/wells/WellControls.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/LagrangianContactSolver.hpp
@@ -62,7 +63,6 @@ set( physicsSolvers_sources
      SolverBase.cpp
      fluidFlow/CompositionalMultiphaseFlow.cpp
      fluidFlow/CompositionalMultiphaseFlowKernels.cpp
-     fluidFlow/CompositionalMultiphaseWell.cpp
      fluidFlow/FlowSolverBase.cpp
      fluidFlow/ProppantTransport.cpp
      fluidFlow/ProppantTransportKernels.cpp
@@ -73,8 +73,10 @@ set( physicsSolvers_sources
      fluidFlow/SinglePhaseHybridFVM.cpp     
      fluidFlow/SinglePhaseHybridFVMKernels.cpp
      fluidFlow/SinglePhaseProppantBase.cpp     
-     fluidFlow/SinglePhaseWell.cpp
-     fluidFlow/WellSolverBase.cpp
+     fluidFlow/wells/WellSolverBase.cpp
+     fluidFlow/wells/SinglePhaseWell.cpp          
+     fluidFlow/wells/CompositionalMultiphaseWell.cpp     
+     fluidFlow/wells/WellControls.cpp     
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
      multiphysics/LagrangianContactSolver.cpp
@@ -127,5 +129,6 @@ endif()
 geosx_add_code_checks( PREFIX physicsSolvers )
 
 add_subdirectory( fluidFlow/unitTests )
+add_subdirectory( fluidFlow/wells/unitTests )
 
 message(STATUS "Leaving src/coreComponents/physicsSolvers/CMakeLists.txt")

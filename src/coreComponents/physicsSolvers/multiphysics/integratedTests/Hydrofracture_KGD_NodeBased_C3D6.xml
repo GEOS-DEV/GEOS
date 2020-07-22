@@ -1,223 +1,236 @@
+<?xml version="1.0" ?>
 
 <Problem>
-
-  <Solvers gravityVector="0.0, 0.0, 0.0">
-  
-    <Hydrofracture 
-      name="hydrofracture" 
+  <Solvers
+    gravityVector="0.0, 0.0, 0.0">
+    <Hydrofracture
+      name="hydrofracture"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       couplingTypeOption="FIM"
       logLevel="1"
-      targetRegions="{Region2, Fracture}"
-      contactRelationName="fractureContact"
-      >
-      <NonlinearSolverParameters 
+      targetRegions="{ Region2, Fracture }"
+      contactRelationName="fractureContact">
+      <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="50"
-        lineSearchMaxCuts="10"
-        />
+        lineSearchMaxCuts="10"/>
       <LinearSolverParameters
         logLevel="0"
         solverType="gmres"
-        preconditionerType="amg"
-        />
+        preconditionerType="amg"/>
     </Hydrofracture>
-  
-    <SolidMechanicsLagrangianSSLE 
-      name="lagsolve" 
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2}"
-      solidMaterialNames="{rock}"
-      contactRelationName="fractureContact"
-      >
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="5"/>
-      <LinearSolverParameters solverType="gmres"
-                              krylovTol="1.0e-10"
-                              logLevel="0"
-        />
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ rock }"
+      contactRelationName="fractureContact">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="5"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-10"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
-  
-    <SinglePhaseFVM 
+
+    <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="0"
       discretization="singlePhaseTPFA"
-      targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{rock}"
-      meanPermCoeff="0.8"
-      >
-      <NonlinearSolverParameters newtonTol="1.0e-5"
-                                 newtonMaxIter="10"/>
-      <LinearSolverParameters solverType="gmres"
-                              krylovTol="1.0e-12"
-                              logLevel="0"/>
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ rock }"
+      meanPermCoeff="0.8">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-12"
+        logLevel="0"/>
     </SinglePhaseFVM>
-    
+
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
       discretization="FE1"
       fractureRegion="Fracture"
-      targetRegions="{Region2}"
-      solidMaterialNames="{rock}"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ rock }"
       rockToughness="0.707e7"
       nodeBasedSIF="1"
-      mpiCommOrder="1"
-      >
-    </SurfaceGenerator>
-    
+      mpiCommOrder="1"/>
   </Solvers>
-  
+
   <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D6}"
-                  xCoords="{ -5, 5}"
-                  yCoords="{0, 15}"
-                  zCoords="{0, 1}"
-                  nx="{10}"
-                  ny="{15}"
-                  nz="{1}"
-                  cellBlockNames="{cb1}"/>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D6 }"
+      xCoords="{ -5, 5 }"
+      yCoords="{ 0, 15 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 15 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
   <Geometry>
-    <Box name="fracture" 
-         xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  1.01, 1.01"/>
-    <Box name="source"
-         xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  1.01, 1.01"/>
-    <Box name="core"
-         xMin="-0.01, -0.01, -0.01"
-         xMax=" 0.01,  100.01, 1.01"/>
+    <Box
+      name="fracture"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 1.01, 1.01"/>
+
+    <Box
+      name="source"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 1.01, 1.01"/>
+
+    <Box
+      name="core"
+      xMin="-0.01, -0.01, -0.01"
+      xMax=" 0.01, 100.01, 1.01"/>
   </Geometry>
 
-
-  <Events maxTime="50.0">
-  
-    <SoloEvent 
+  <Events
+    maxTime="50.0">
+    <SoloEvent
       name="initialPlot"
-      target="/Outputs/siloOutput"
-      />
+      target="/Outputs/siloOutput"/>
 
-    <SoloEvent 
+    <SoloEvent
       name="preFracture"
-      target="/Solvers/SurfaceGen"
-      />
-  
-    <SoloEvent 
+      target="/Solvers/SurfaceGen"/>
+
+    <SoloEvent
       name="preFracturePlot"
-      target="/Outputs/siloOutput"
-      />
+      target="/Outputs/siloOutput"/>
 
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent 
+    <PeriodicEvent
       name="solverApplications0"
       beginTime="0.0"
       endTime="50.0"
       forceDt="1.0"
-      target="/Solvers/hydrofracture" />
+      target="/Solvers/hydrofracture"/>
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
     integer multiple of the timeFrequency. -->
-    <PeriodicEvent name="outputs"
-                   timeFrequency="1"
-                   targetExactTimestep="0"
-                   target="/Outputs/siloOutput" />
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
 
-    <PeriodicEvent name="restarts"
-                   timeFrequency="1e99"
-                   targetExactTimestep="0"
-                   target="/Outputs/restartOutput"/>
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e99"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions> 
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+    <BasisFunctions>
+      <LagrangeBasis3
+        name="linearBasis"
+        degree="1"/>
     </BasisFunctions>
-    
+
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />    
+      <GaussQuadrature3
+        name="gaussian"
+        degree="2"/>
     </QuadratureRules>
-    
+
     <FiniteElements>
-        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace
+        name="FE1"
+        parentSpace="C3D8"
+        basis="linearBasis"
+        quadrature="gaussian"/>
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="pressure"
-                                 coefficientName="permeability"/>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion name="Region2"
-                   cellBlocks="{cb1}"
-                   materialList="{water, rock}"/>
-                   
-    <FaceElementRegion name="Fracture"
-                       defaultAperture="1.0e-4"
-                       materialList="{water, rock}"/>
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, rock }"/>
+
+    <FaceElementRegion
+      name="Fracture"
+      defaultAperture="1.0e-4"
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
-    <CompressibleSinglePhaseFluid name="water"
-                                  defaultDensity="1000"
-                                  defaultViscosity="0.001"
-                                  referencePressure="0.0"
-                                  referenceDensity="1000"
-                                  compressibility="5e-10"
-                                  referenceViscosity="1.0e-3"
-                                  viscosibility="0.0"/>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="5e-10"
+      referenceViscosity="1.0e-3"
+      viscosibility="0.0"/>
 
-    <PoroLinearElasticIsotropic name="rock"
-                                defaultDensity="2700"
-                                defaultBulkModulus="1.0e9"
-                                defaultShearModulus="1.0e9"
-                                BiotCoefficient="1"
-                                compressibility="1.6155088853e-18"
-                                referencePressure="2.125e6"
-                                />
-                                
-    <Contact name="fractureContact"
-      penaltyStiffness="0.0e8" >
-      <TableFunction 
-        name="aperTable" 
-        coordinates = "{ -1.0e-3, 0.0}"
-        values      = "{  1.0e-6, 1.0e-4}" 
-        />
+    <PoroLinearElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="1.0e9"
+      defaultShearModulus="1.0e9"
+      BiotCoefficient="1"
+      compressibility="1.6155088853e-18"
+      referencePressure="2.125e6"/>
+
+    <Contact
+      name="fractureContact"
+      penaltyStiffness="0.0e8">
+      <TableFunction
+        name="aperTable"
+        coordinates="{ -1.0e-3, 0.0 }"
+        values="{ 1.0e-6, 1.0e-4 }"/>
     </Contact>
   </Constitutive>
 
   <FieldSpecifications>
+    <FieldSpecification
+      name="waterDensity"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="ElementRegions"
+      fieldName="water_density"
+      scale="1000"/>
 
-    <FieldSpecification name="waterDensity"
-               initialCondition="1"
-               setNames="{fracture}"
-               objectPath="ElementRegions"
-               fieldName="water_density"
-               scale="1000"/>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
 
-    <FieldSpecification name="frac"
-               initialCondition="1"
-               setNames="{fracture}"
-               objectPath="faceManager"
-               fieldName="ruptureState"
-               scale="1"/>
-
-    <FieldSpecification name="separableFace"
-               initialCondition="1"
-               setNames="{core}"
-               objectPath="faceManager"
-               fieldName="isFaceSeparable"
-               scale="1"/>
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
 
     <!-- FieldSpecification name="aperture"
                component="0"
@@ -226,57 +239,58 @@
                objectPath="ElementRegions/Fracture/fracture"
                fieldName="elementAperture"
                scale="1.0e-4"/-->
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ all }"/>
 
-               
-    <FieldSpecification name="yconstraint"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="1"
-               scale="0.0"
-               setNames="{all}"/>
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ all }"/>
 
-    <FieldSpecification name="zconstraint"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="2"
-               scale="0.0"
-               setNames="{all}"/>
-               
-    <FieldSpecification name="left"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="0"
-               scale="0.0"
-               setNames="{xneg}"/>
+    <FieldSpecification
+      name="left"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
 
-    <FieldSpecification name="right"
-               objectPath="nodeManager"
-               fieldName="TotalDisplacement"
-               component="0"
-               scale="-0.0"
-               setNames="{xpos}"/>
-
+    <FieldSpecification
+      name="right"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="-0.0"
+      setNames="{ xpos }"/>
 
     <!-- FieldSpecification name="source"
                objectPath="ElementRegions/Fracture"
                fieldName="pressure"
                scale="0.0"
                setNames="{all}"/-->
-               
-    <SourceFlux name="sourceTerm"
-                objectPath="ElementRegions/Fracture"
-                scale="-5.0"
-                setNames="{source}"/>
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-5.0"
+      setNames="{ source }"/>
   </FieldSpecifications>
 
-  <Functions>
-  </Functions>
+  <Functions/>
 
   <Outputs>
-      <Silo name="siloOutput"
-          plotLevel="3"/>
-      <Restart name="restartOutput"/>
+    <Silo
+      name="siloOutput"
+      plotLevel="3"/>
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
-
-
 </Problem>
