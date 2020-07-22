@@ -262,6 +262,8 @@ public:
     m_effectiveStress = input;
   }
 
+  real64 & getMaxForce() { return m_maxForce; }
+
 
 protected:
   virtual void PostProcessInput() override final;

@@ -868,12 +868,82 @@ real64 SolidMechanicsEmbeddedFractures::CalculateResidualNorm( DomainPartition c
   real64 const solidResidualNorm = m_solidSolver->CalculateResidualNorm( domain,
                                                                          dofManager,
                                                                          localRhs );
-
   // Fracture residual
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  GEOSX_LOG_RANK_0( "residual = "<< solidResidualNorm );
+  string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString );
 
-  return solidResidualNorm;
+  globalIndex const rankOffset = dofManager.rankOffset();
+
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
+
+  // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
+  // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
+  real64 globalResidualNorm[2] = {0, 0};
+
+  forTargetSubRegions< EmbeddedSurfaceSubRegion >( mesh, [&]( localIndex const targetIndex,
+		                                           EmbeddedSurfaceSubRegion const & subRegion )
+  {
+	  GEOSX_UNUSED_VAR(targetIndex);
+
+	  arrayView1d< globalIndex const > const &
+	      dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+	  arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+
+	  for (localIndex k=0; k<subRegion.size(); ++k)
+	    {
+	  	  if( ghostRank[k] < 0 )
+	  	  {
+	  		  localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+	  		  for( localIndex i = 0; i < subRegion.numOfJumpEnrichments(); ++i )
+	  		  {
+	  			  localSum += localRhs[localRow + i] * localRhs[localRow + i];
+	  		  }
+	  	  }
+	    }
+
+	    real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
+
+
+
+	    int const rank     = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+	    int const numRanks = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+	    array1d< real64 > globalValues( numRanks * 2 );
+
+	    // Everything is done on rank 0
+	    MpiWrapper::gather( localResidualNorm,
+	  		  2,
+	  		  globalValues.data(),
+	  		  2,
+	  		  0,
+	  		  MPI_COMM_GEOSX );
+
+	    if( rank==0 )
+	    {
+	  	  for( int r=0; r<numRanks; ++r )
+	  	  {
+	  		  // sum/max across all ranks
+	  		  globalResidualNorm[0] += globalValues[r*2];
+	  		  globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+	  	  }
+	    }
+
+	    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
+  });
+
+  real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
+  // time-step when maxForce = 0;
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+	  char output[200] = {0};
+	  sprintf( output,
+			  "( RFracture ) = (%4.2e) ; ",
+			  fractureResidualNorm );
+	  std::cout<<output;
+  }
+
+  return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 }
 
 void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & dofManager,
