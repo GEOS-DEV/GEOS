@@ -17,11 +17,13 @@ set( finiteElement_headers
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      basis/BasisFunctionManager.hpp
-     FiniteElementShapeFunctionKernelBase.hpp
-     LinearTetrahedronShapeFunctionKernel.hpp
-     BiLinearWedgeShapeFunctionKernel.hpp
-     PyramidShapeFunctionKernel.hpp
-     TrilinearHexahedronShapeFunctionKernel.hpp
+     elementFormulations/FiniteElementShapeFunctionKernelBase.hpp
+     elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp
+     elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
+     elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp
+     elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
+     elementFormulations/PyramidShapeFunctionKernel.hpp
+     elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp
    )
 #
 # Specify all sources

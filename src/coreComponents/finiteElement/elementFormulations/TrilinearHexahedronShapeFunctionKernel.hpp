@@ -132,8 +132,8 @@ public:
    *   the parent/physical transformation matrix.
    */
   GEOSX_HOST_DEVICE
-  static real64 quadraturePointWeight( localIndex const q,
-                                       real64 const (&X)[numNodes][3] );
+  static real64 transformedQuadratureWeight( localIndex const q,
+                                             real64 const (&X)[numNodes][3] );
 
 
 private:
@@ -401,8 +401,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 TrilinearHexahedronShapeFunctionKernel::
-quadraturePointWeight( localIndex const q,
-                       real64 const (&X)[numNodes][3] )
+transformedQuadratureWeight( localIndex const q,
+                             real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
