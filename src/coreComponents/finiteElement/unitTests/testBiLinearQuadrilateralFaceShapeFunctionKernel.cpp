@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
 
 using namespace geosx;
 
