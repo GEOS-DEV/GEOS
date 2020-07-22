@@ -24,6 +24,10 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 
+#if defined(GEOSX_USE_PYTHON)
+#include "LvArray/src/python/python.hpp"
+#endif
+
 #include <string>
 #include <memory>
 #include <set>
@@ -386,6 +390,8 @@ public:
     return m_name;
   }
 
+  string getPath() const;
+
   /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value
@@ -519,6 +525,14 @@ public:
    */
   virtual int setTotalviewDisplay() const;
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
+#endif
+
+#if defined(GEOSX_USE_PYTHON)
+  /**
+   * @brief Return a Python object representing the wrapped object.
+   * @return A Python object representing the wrapped object.
+   */
+  virtual PyObject * createPythonObject( bool const modify ) = 0;
 #endif
 
 protected:

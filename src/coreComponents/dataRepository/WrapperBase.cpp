@@ -61,6 +61,10 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
   m_description = source.m_description;
 }
 
+string WrapperBase::getPath() const
+{
+  return m_conduitNode.path();
+}
 
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {

@@ -55,6 +55,10 @@ endif()
 
 set( dependencyList ${dependencyList} common conduit )
 
+if( ENABLE_PYTHON )
+  set( dependencyList ${dependencyList} pylvarray )
+endif()
+
 blt_add_library( NAME                  dataRepository
                  SOURCES               ${dataRepository_sources}
                  HEADERS               ${dataRepository_headers}

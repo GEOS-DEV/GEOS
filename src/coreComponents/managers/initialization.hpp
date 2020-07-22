@@ -116,7 +116,7 @@ void finalizeLogger();
  * @brief Setup the LvArray library. This initializes signal handling
  *        and the floating point environment.
  */
-void setupCXXUtils();
+void setupLvArray();
 
 /**
  * @brief Setup MKL if in use.

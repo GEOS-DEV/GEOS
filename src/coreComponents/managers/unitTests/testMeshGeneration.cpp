@@ -115,7 +115,6 @@ protected:
     }
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager->initializePythonInterpreter();
     problemManager->processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
@@ -129,6 +128,7 @@ protected:
     elementManager->postProcessInputRecursive();
 
     problemManager->problemSetup();
+    problemManager->applyInitialConditions();
   }
 
   /**
