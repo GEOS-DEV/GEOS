@@ -3,18 +3,21 @@
 
 BasedOnStyle: Google
 Language: Cpp
-Standard: Cpp11
+Standard: c++14 
 
 AccessModifierOffset: -2
+
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AlwaysBreakTemplateDeclarations: MultiLine
-AlwaysBreakBeforeMultilineStrings: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakBeforeMultilineStrings: false
 
 BinPackArguments: false
 BinPackParameters: false
-BreakConstructorInitializers: BeforeComma
+BreakConstructorInitializers: AfterColon
 
 BreakBeforeBraces: Custom
 BraceWrapping:
@@ -39,34 +42,40 @@ BraceWrapping:
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
-ColumnLimit: 80
+ColumnLimit: 100
+
+DerivePointerAlignment: false
 
 FixNamespaceComments: true
 
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentPPDirectives: BeforeHash
 IndentWidth: 2
 
+KeepEmptyLinesAtTheStartOfBlocks: true
+
 PenaltyExcessCharacter: 10
+
+PointerAlignment: Middle
 
 ReflowComments: false
 
 SortIncludes: false
-SpaceAfterTemplateKeyword: true
+SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeCpp11BracedList: true
 SpaceBeforeCtorInitializerColon: true
 SpaceBeforeInheritanceColon: true
 SpaceBeforeParens: Never
 SpaceBeforeRangeBasedForLoopColon: true
-SpaceInEmptyBlock: true
+SpaceInEmptyBlock: false
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
-SpacesInAngles: false
+SpacesInAngles: true
 SpacesInCStyleCastParentheses: false
 SpacesInContainerLiterals: false
 SpacesInConditionalStatement: false
-SpacesInParentheses: false
+SpacesInParentheses: true
 SpacesInSquareBrackets: false
 
 UseTab: Never
