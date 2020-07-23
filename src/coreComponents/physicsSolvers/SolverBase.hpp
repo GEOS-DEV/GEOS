@@ -59,7 +59,7 @@ public:
   /**
    * This method is called when it's host event is triggered
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

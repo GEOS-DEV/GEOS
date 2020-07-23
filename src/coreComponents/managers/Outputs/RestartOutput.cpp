@@ -37,7 +37,7 @@ RestartOutput::RestartOutput( std::string const & name,
 RestartOutput::~RestartOutput()
 {}
 
-void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
+bool RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                              real64 const GEOSX_UNUSED_PARAM( dt ),
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -61,6 +61,8 @@ void RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   problemManager->finishWriting();
   FunctionManager::Instance().finishWriting();
   FieldSpecificationManager::get().finishWriting();
+
+  return false;
 }
 
 

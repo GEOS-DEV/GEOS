@@ -95,7 +95,7 @@ void EventManager::ExpandObjectCatalogs()
 }
 
 
-void EventManager::Run( dataRepository::Group * domain )
+bool EventManager::Run( dataRepository::Group * domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -118,7 +118,7 @@ void EventManager::Run( dataRepository::Group * domain )
   // Inform user if it appears this is a mid-loop restart
   if((m_currentSubEvent > 0))
   {
-    GEOSX_LOG_RANK_0( "The restart-file was written during step " << m_currentSubEvent << " of the event loop.  Resuming from that point." );
+    GEOSX_LOG_RANK_0( "Resuming from step " << m_currentSubEvent << " of the event loop." );
   }
 
   // Run problem
@@ -169,15 +169,22 @@ void EventManager::Run( dataRepository::Group * domain )
         subEvent->SignalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }
 
+      bool earlyReturn = false;
       if( eventForecast <= 0 )
       {
-        subEvent->Execute( m_time, m_dt, m_cycle, 0, 0, domain );
+        earlyReturn = subEvent->Execute( m_time, m_dt, m_cycle, 0, 0, domain );
       }
 
       // Check the exit flag
       // Note: Currently, this is only being used by the HaltEvent
       //       If it starts being used elsewhere it may need to be synchronized
       exitFlag += subEvent->GetExitFlag();
+
+      if ( earlyReturn )
+      {
+        ++m_currentSubEvent;
+        return true;
+      }
     }
 
     // Increment time/cycle, reset the subevent counter
@@ -193,6 +200,8 @@ void EventManager::Run( dataRepository::Group * domain )
   {
     subEvent.Cleanup( m_time, m_cycle, 0, 0, domain );
   } );
+
+  return false;
 }
 
 } /* namespace geosx */

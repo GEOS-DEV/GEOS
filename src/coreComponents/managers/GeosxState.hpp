@@ -35,7 +35,10 @@ public:
 
   bool initializeDataRepository();
 
-  void run();
+  bool run();
+
+  dataRepository::Group * getGroupByPath( std::string const & path )
+  { return m_problemManager.GetGroupByPath( path ); }
 
   std::chrono::system_clock::duration getInitTime() const
   { return m_initTime; }

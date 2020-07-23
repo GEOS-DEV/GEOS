@@ -519,6 +519,13 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
+.. _XML_PythonOutput:
+
+Element: PythonOutput
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/PythonOutput.rst
+
+
 .. _XML_QuadratureRules:
 
 Element: QuadratureRules
@@ -1249,6 +1256,13 @@ Datastructure: ProppantSlurryFluid
 Datastructure: ProppantTransport
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
+
+
+.. _DATASTRUCTURE_PythonOutput:
+
+Datastructure: PythonOutput
+===========================
+.. include:: ../../coreComponents/fileIO/schema/docs/PythonOutput_other.rst
 
 
 .. _DATASTRUCTURE_QuadratureRules:

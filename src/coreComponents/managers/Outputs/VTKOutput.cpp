@@ -57,7 +57,7 @@ VTKOutput::~VTKOutput()
 
 
 
-void VTKOutput::Execute( real64 const time_n,
+bool VTKOutput::Execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -75,6 +75,8 @@ void VTKOutput::Execute( real64 const time_n,
   }
   m_writer.SetPlotLevel( m_plotLevel );
   m_writer.Write( time_n, cycleNumber, *domainPartition );
+
+  return false;
 }
 
 

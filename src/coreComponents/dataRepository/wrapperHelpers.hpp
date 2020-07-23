@@ -692,7 +692,7 @@ template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
 createPythonObject( T &, bool )
 {
-  GEOSX_ERROR( "Cannot export " << LvArray::demangleType< T >() << " to Python." );
+  LVARRAY_LOG( "Cannot export a " << LvArray::demangleType< T >() << " to python." );
   return nullptr;
 }
 

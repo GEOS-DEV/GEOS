@@ -64,12 +64,13 @@ bool GeosxState::initializeDataRepository()
   return true;
 }
 
-void GeosxState::run()
+bool GeosxState::run()
 {
   GEOSX_MARK_FUNCTION;
   std::chrono::system_clock::time_point const begin = std::chrono::system_clock::now();
-  m_problemManager.RunSimulation();
+  bool const earlyReturn = m_problemManager.RunSimulation();
   m_runTime += std::chrono::system_clock::now() - begin;
+  return earlyReturn;
 }
 
 std::chrono::system_clock::time_point GeosxState::initialize()

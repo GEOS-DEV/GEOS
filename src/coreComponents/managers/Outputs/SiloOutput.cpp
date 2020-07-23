@@ -75,7 +75,7 @@ SiloOutput::~SiloOutput()
 
 
 
-void SiloOutput::Execute( real64 const time_n,
+bool SiloOutput::Execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const eventCounter,
@@ -106,6 +106,7 @@ void SiloOutput::Execute( real64 const time_n,
   silo.ClearEmptiesFromMultiObjects( cycleNumber );
   silo.Finish();
 
+  return false;
 }
 
 

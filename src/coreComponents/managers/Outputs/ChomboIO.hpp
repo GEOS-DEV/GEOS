@@ -50,7 +50,7 @@ public:
    * @brief Writes out a Chombo plot file.
    * @copydetails EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

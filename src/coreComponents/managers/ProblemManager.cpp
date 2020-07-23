@@ -656,10 +656,10 @@ void ProblemManager::ApplyNumericalMethods()
   }
 }
 
-void ProblemManager::RunSimulation()
+bool ProblemManager::RunSimulation()
 {
   DomainPartition * domain  = getDomainPartition();
-  m_eventManager->Run( domain );
+  return m_eventManager->Run( domain );
 }
 
 DomainPartition * ProblemManager::getDomainPartition()

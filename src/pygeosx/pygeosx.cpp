@@ -12,63 +12,166 @@
 namespace geosx
 {
 
-// static std::unique_ptr< GeosxState > state;
+// TODO: corbett This should go in LvArray
+class PyObjectRef
+{
+public:
 
-// bool initialize( int argc, char ** argv )
-// {
-//   basicSetup( argc, argv );
-//   state = std::make_unique< GeosxState >();
-//   state.initializeDataRepository();
-// }
+  /**
+   * @brief Create an uninitialized (nullptr) reference.
+   */
+  PyObjectRef() = default;
+  
+  /**
+   * @brief Take ownership of a reference to @p src.
+   * @p src The object to be referenced.
+   */
+  explicit PyObjectRef( PyObject * src ):
+    m_object( src )
+  {}
 
-// void run()
-// {
-//   GEOSX_ERROR_IF( state == nullptr, "" );
-//   state.run()
-// }
+  // Theese could be implemented but I don't have a use case yet.
+  PyObjectRef( PyObjectRef const & ) = delete;
+  PyObjectRef( PyObjectRef && ) = delete;
 
-// PyObject * get( std::string const & path, std::string const & wrapper, bool const modify )
-// {
-//   GEOSX_ERROR_IF( state == nullptr, "" );
+  /**
+   * @brief Decrease the reference count to the current object.
+   */
+  ~PyObjectRef()
+  {
+    if ( m_object != nullptr )
+    { Py_DECREF( m_object ); }
+  }
 
-//   Group * group = m_state.m_problemManager.GetGroupByPath( path );
-//   GEOSX_ERROR_IF( group == nullptr, "" );
-//   Wrapper * wrapper = group->getWrapperBase( wrapper );
-//   GEOSX_ERROR_IF( wrapper == nullptr, "" );
-//   return wrapper->createPythonObject( modify );
-// }
+  PyObjectRef & operator=( PyObjectRef const & ) = delete;
+  PyObjectRef & operator=( PyObjectRef && ) = delete;
 
-// void finalize()
-// {
-//   state = nullptr;
-//   basicCleanup();
-// }
+  /**
+   * @brief Decrease the reference count to the current object and take ownership
+   *   of a new reference.
+   * @p src The new object to be referenced.
+   * @return *this.
+   */
+  PyObjectRef & operator=( PyObject * src )
+  {
+    if ( m_object != nullptr )
+    { Py_DECREF( m_object ); }
 
-static PyObject *
-run( PyObject *self, PyObject *args )
+    m_object = src;
+    return *this;
+  }
+
+  operator PyObject*()
+  { return m_object; }
+
+private:
+  PyObject * m_object = nullptr;
+};
+
+
+
+static std::unique_ptr< GeosxState > state;
+
+
+
+PyObject * initialize( PyObject * self, PyObject * args )
+{
+  GEOSX_UNUSED_VAR( self );
+
+  GEOSX_ERROR_IF( state != nullptr, "Already initialized." );
+
+  PyObject * list;
+  if ( !PyArg_ParseTuple( args, "O", &list ) )
+  { return nullptr; }
+
+  PyObjectRef iterator{ PyObject_GetIter( list ) };
+  if ( iterator == nullptr )
+  { return nullptr; }
+
+  std::vector< std::string > stringArgs;
+  for( PyObjectRef item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
+  {
+    PyObjectRef ascii { PyUnicode_AsASCIIString( item ) };
+    if ( ascii == nullptr )
+    { return nullptr; }
+
+    char const * const stringValue = PyBytes_AsString( ascii );
+    if ( stringValue == nullptr )
+    { return nullptr; }
+
+    stringArgs.push_back( stringValue );
+  }
+
+  if ( PyErr_Occurred() )
+  { return nullptr; }
+
+  std::vector< char * > argv( stringArgs.size() + 1 );
+  for ( std::size_t i = 0; i < stringArgs.size(); ++i )
+  { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
+
+  basicSetup( argv.size() - 1, argv.data(), true );
+  state = std::make_unique< GeosxState >();
+  state->initializeDataRepository();
+
+  Py_RETURN_NONE;
+}
+
+PyObject * get( PyObject * self, PyObject * args )
+{
+  GEOSX_UNUSED_VAR( self );
+
+  PyObject * unicodePath;
+  int modify;
+  if ( !PyArg_ParseTuple( args, "Up", &unicodePath, &modify ) )
+  { return nullptr; }
+
+  PyObjectRef asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
+  if ( asciiPath == nullptr )
+  { return nullptr; }
+
+  char const * const charPath = PyBytes_AsString( asciiPath );
+  if ( charPath == nullptr )
+  { return nullptr; }
+
+  std::string groupPath, wrapperName;
+  splitPath( charPath, groupPath, wrapperName );
+
+  dataRepository::Group * const group = state->getGroupByPath( groupPath );
+  if ( group == nullptr )
+  {
+    GEOSX_LOG_RANK( "The group doesn't exist: " << groupPath );
+    Py_RETURN_NONE;
+  }
+
+  dataRepository::WrapperBase * const wrapper = group->getWrapperBase( wrapperName );
+  if ( wrapper == nullptr )
+  {
+    GEOSX_LOG_RANK( "Goup " << groupPath << " doesn't have a wrapper " << wrapper );
+    Py_RETURN_NONE;
+  }
+
+  PyObject * const ret = wrapper->createPythonObject( modify );
+  if ( ret == nullptr )
+  { Py_RETURN_NONE; }
+  else
+  { return ret; }
+}
+
+static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
   GEOSX_UNUSED_VAR( args );
 
-  GEOSX_LOG( "In c++!" );
+  GEOSX_ERROR_IF( state == nullptr, "State must be initialized." );
+  return PyBool_FromLong( state->run() );
+}
 
-  constexpr int argc = 3;
-  std::string argStrings[ argc ] = { "", "-i", "integratedTests/solidMechanicsSSLE/SSLE-sedov.xml" };
-  char * argv[ argc + 1 ] = { const_cast< char * >( argStrings[ 0 ].data() ),
-                              const_cast< char * >( argStrings[ 1 ].data() ),
-                              const_cast< char * >( argStrings[ 2 ].data() ),
-                              nullptr };
+static PyObject * finalize( PyObject * self, PyObject * args )
+{
+  GEOSX_UNUSED_VAR( self );
+  GEOSX_UNUSED_VAR( args );
 
-  basicSetup( argc, argv, true );
-
-  {
-    GeosxState state;
-
-    bool const problemToRun = state.initializeDataRepository();
-    if ( problemToRun )
-    { state.run(); }
-  }
-
+  state = nullptr;
   basicCleanup();
 
   Py_RETURN_NONE;
@@ -77,8 +180,14 @@ run( PyObject *self, PyObject *args )
 } // namespace geosx
 
 static PyMethodDef pygeosxFuncs[] = {
+  { "initialize", geosx::initialize, METH_VARARGS, 
+    "" },
+  { "get", geosx::get, METH_VARARGS, 
+    "" },
   { "run", geosx::run, METH_VARARGS, 
-    "run the simulation" },
+    "" },
+  { "finalize", geosx::finalize, METH_VARARGS, 
+    "" },
   { NULL, NULL, 0, NULL }        /* Sentinel */
 };
 

@@ -132,7 +132,7 @@ real64 SolverBase::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return 0;
 }
 
-void SolverBase::Execute( real64 const time_n,
+bool SolverBase::Execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -177,6 +177,8 @@ void SolverBase::Execute( real64 const time_n,
 
   // Decide what to do with the next Dt for the event running the solver.
   SetNextDt( nextDt, m_nextDt );
+
+  return false;
 }
 
 void SolverBase::SetNextDt( real64 const & currentDt,

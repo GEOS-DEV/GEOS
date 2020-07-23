@@ -51,7 +51,7 @@ public:
    * @brief Writes out a set of vtk files.
    * @copydoc EventBase::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

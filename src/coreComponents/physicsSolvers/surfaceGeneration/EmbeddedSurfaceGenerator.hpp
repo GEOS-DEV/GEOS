@@ -64,7 +64,7 @@ public:
 
   virtual void RegisterDataOnMesh( Group * const MeshBody ) override final;
 
-  virtual void Execute( real64 const time_n,
+  virtual bool Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -72,6 +72,7 @@ public:
                         dataRepository::Group * domain ) override
   {
     SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
+    return false;
   }
 
   /**

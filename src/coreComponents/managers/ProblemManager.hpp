@@ -126,7 +126,7 @@ public:
   /**
    * @brief Run the events in the scheduler.
    */
-  void RunSimulation();
+  bool RunSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file

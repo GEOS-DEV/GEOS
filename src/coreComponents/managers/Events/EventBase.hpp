@@ -67,7 +67,7 @@ public:
    * @brief If the event forecast is equal to 0, then call the step function on its target and/or children.
    * @copydoc ExecutableGroup::Execute()
    */
-  virtual void Execute( real64 const time_n,
+  virtual bool Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

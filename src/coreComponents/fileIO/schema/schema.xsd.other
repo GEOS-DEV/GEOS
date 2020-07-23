@@ -386,6 +386,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
+			<xsd:element name="PythonOutput" type="PythonOutputType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="VTK" type="VTKType" />
@@ -393,6 +394,7 @@
 	</xsd:complexType>
 	<xsd:complexType name="BlueprintType" />
 	<xsd:complexType name="ChomboIOType" />
+	<xsd:complexType name="PythonOutputType" />
 	<xsd:complexType name="RestartType" />
 	<xsd:complexType name="SiloType" />
 	<xsd:complexType name="VTKType" />
