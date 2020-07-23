@@ -134,7 +134,7 @@ public:
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
                         SUBREGION_TYPE const & elementSubRegion,
-                        FiniteElementBase const * const finiteElementSpace,
+                        FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE * const inputConstitutiveType,
                         real64 const dt,
                         string const & elementListName ):

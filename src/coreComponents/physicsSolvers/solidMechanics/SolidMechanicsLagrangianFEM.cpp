@@ -27,7 +27,6 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
@@ -623,10 +622,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodes = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-  FiniteElementDiscretization const & feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
 
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
@@ -684,7 +679,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
                           m_solidMaterialNames,
-                          &feDiscretization,
                           dt,
                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodes ) );
 
@@ -698,7 +692,6 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
                           m_solidMaterialNames,
-                          &feDiscretization,
                           dt,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodes ) );
 
@@ -1044,7 +1037,6 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                     FaceElementSubRegion,
                     SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                        allFaceElementRegions,
-                                                                       nullptr,
                                                                        dofNumber,
                                                                        dofManager.rankOffset(),
                                                                        pattern,
@@ -1056,7 +1048,6 @@ void SolidMechanicsLagrangianFEM::SetupSystem( DomainPartition & domain,
                   CellElementSubRegion,
                   SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                      targetRegionNames(),
-                                                                     nullptr,
                                                                      dofNumber,
                                                                      dofManager.rankOffset(),
                                                                      pattern,

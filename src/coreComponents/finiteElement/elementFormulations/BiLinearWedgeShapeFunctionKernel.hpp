@@ -25,20 +25,29 @@
 namespace geosx
 {
 
-using BiLinearWedgeShapeFunctionKernelBaseClass = FiniteElementShapeFunctionKernelBase< 6, 6 >;
 
-class BiLinearWedgeShapeFunctionKernel : BiLinearWedgeShapeFunctionKernelBaseClass
+class BiLinearWedgeShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
 {
 public:
-  using BaseClass = BiLinearWedgeShapeFunctionKernelBaseClass;
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = 6;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = 6;
 
   constexpr static real64 parentVolume = 1.0;
   constexpr static real64 weight = parentVolume / numQuadraturePoints;
   constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
   constexpr static real64 quadratureLongitudinalCoord = 1.0 / 1.732050807568877293528;
 
+
+  virtual ~BiLinearWedgeShapeFunctionKernel() override final
+  {}
+
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

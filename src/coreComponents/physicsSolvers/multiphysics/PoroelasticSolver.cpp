@@ -255,14 +255,6 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const &
-  feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
 
@@ -309,7 +301,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
 
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
-    localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
+    FiniteElementShapeFunctionKernelBase const &
+    fe = elementSubRegion.getReference<FiniteElementShapeFunctionKernelBase>( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
@@ -385,11 +379,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );
 
@@ -397,9 +386,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
-
-  FiniteElementDiscretization const & feDiscretization =
-    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   // begin subregion loop
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
@@ -423,8 +409,9 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
-    std::unique_ptr< FiniteElementBase >
-    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
+    FiniteElementShapeFunctionKernelBase const &
+    fe = elementSubRegion.getReference<FiniteElementShapeFunctionKernelBase>( m_solidSolver->getDiscretizationName() );
+    localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
@@ -436,7 +423,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     localIndex const nUDof = dim * numNodesPerElement;
     localIndex const nPDof = m_flowSolver->numDofPerCell();
     GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
-    int numQuadraturePoints = fe->n_quadrature_points();
 
     // TODO: remove use of R1Tensor and use device policy
     forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )

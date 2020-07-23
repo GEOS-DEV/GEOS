@@ -3,16 +3,7 @@
 #
 set( finiteElement_headers
      FiniteElementDiscretization.hpp
-     ElementLibrary/FiniteElement.h
-     ElementLibrary/FiniteElementBase.h
-     ElementLibrary/TetrahedralElement.hpp
      Kinematics.h
-     basis/BasisBase.hpp
-     basis/LagrangeBasis.hpp
-     basis/Polynomial.hpp
-     quadrature/GaussQuadrature.hpp
-     quadrature/QuadratureBase.hpp
-     quadrature/QuadratureRuleManager.hpp
      kernelInterface/KernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
@@ -30,17 +21,7 @@ set( finiteElement_headers
 #
 set( finiteElement_sources
      FiniteElementDiscretization.cpp
-     ElementLibrary/FiniteElement.cpp
-     ElementLibrary/FiniteElementBase.cpp
-     ElementLibrary/TetrahedralElement.cpp
-     basis/BasisBase.cpp
-     basis/LagrangeBasis.cpp
-     basis/Polynomial.cpp
-     quadrature/GaussQuadrature.cpp
-     quadrature/QuadratureBase.cpp
-     quadrature/QuadratureRuleManager.cpp
      FiniteElementDiscretizationManager.cpp
-     basis/BasisFunctionManager.cpp
    )
 
 if( BUILD_OBJ_LIBS)

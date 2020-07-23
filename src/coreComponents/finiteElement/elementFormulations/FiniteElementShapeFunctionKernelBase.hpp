@@ -13,19 +13,15 @@ namespace geosx
 /**
  * @class FiniteElementShapeFunctionKernelBase
  * @brief Base class for the finite element kernels.
- * @tparam NUM_SUPPORT_POINTS The number of support points per element.
- * @tparam NUM_QUADRATURE_POINTS The number of quadrature points per element.
  */
-template< int NUM_SUPPORT_POINTS, int NUM_QUADRATURE_POINTS >
 class FiniteElementShapeFunctionKernelBase
 {
 public:
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = NUM_SUPPORT_POINTS;
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = NUM_QUADRATURE_POINTS;
+  virtual localIndex getNumQuadraturePoints() const = 0;
 
+  virtual ~FiniteElementShapeFunctionKernelBase()
+  {}
 
   /**
    * @brief Computes the inverse of a 3x3 c-array.

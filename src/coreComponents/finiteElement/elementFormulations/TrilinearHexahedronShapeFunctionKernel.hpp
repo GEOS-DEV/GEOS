@@ -25,8 +25,6 @@
 namespace geosx
 {
 
-using TrilinearHexahedronBaseClass = FiniteElementShapeFunctionKernelBase< 8, 8 >;
-
 /**
  * @class TrilinearHexahedronShapeFunctionKernel
  *
@@ -54,9 +52,23 @@ using TrilinearHexahedronBaseClass = FiniteElementShapeFunctionKernelBase< 8, 8 
  *                            0                   1             |/____ xi0
  *
  */
-class TrilinearHexahedronShapeFunctionKernel : public TrilinearHexahedronBaseClass
+class TrilinearHexahedronShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
 {
 public:
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = 8;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = 8;
+
+
+  virtual ~TrilinearHexahedronShapeFunctionKernel() override final
+  {}
+
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
 
   /**
    * @brief Calculate shape functions values for each support point at a

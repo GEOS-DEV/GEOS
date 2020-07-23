@@ -691,7 +691,8 @@ void ProblemManager::ApplyNumericalMethods()
               finiteElement::dispatch( elementTypeString,
                                        [&] ( auto const finiteElement )
               {
-                using FE_TYPE = TYPEOFREF(finiteElement);
+                using FE_TYPE = TYPEOFREF( finiteElement );
+                subRegion.template registerWrapper<FE_TYPE>(discretizationName);
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
                 feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
