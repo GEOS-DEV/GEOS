@@ -18,9 +18,6 @@
 
 #include "EdgeManager.hpp"
 #include "FaceElementRegion.hpp"
-#include "finiteElement/basis/LagrangeBasis.hpp"
-#include "finiteElement/quadrature/GaussQuadrature.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 
 
 namespace geosx

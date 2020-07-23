@@ -318,19 +318,10 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   ResetStressToBeginningOfStep( domain );
-
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
@@ -343,7 +334,6 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                KERNEL_TEMPLATE >( mesh,
                                                                   targetRegionNames(),
                                                                   m_solidMaterialNames,
-                                                                  feDiscretization,
                                                                   dofNumber,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,

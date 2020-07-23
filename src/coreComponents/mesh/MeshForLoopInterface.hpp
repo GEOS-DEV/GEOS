@@ -26,7 +26,7 @@
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "finiteElement/ElementLibrary/FiniteElementBase.h"
+//#include "finiteElement/ElementLibrary/FiniteElementBase.h"
 
 namespace geosx
 {

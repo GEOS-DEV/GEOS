@@ -29,7 +29,6 @@ namespace dataRepository
 class Group;
 }
 class FieldSpecificationBase;
-class FiniteElementBase;
 class DomainPartition;
 
 /**

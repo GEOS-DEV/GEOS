@@ -656,13 +656,14 @@ public:
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
+  string getDiscretizationName() const {return m_discretizationName;}
+
 protected:
 
   static real64 EisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
-  string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );

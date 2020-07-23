@@ -332,22 +332,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="NumericalMethodsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="BasisFunctions" type="BasisFunctionsType" maxOccurs="1" />
 			<xsd:element name="FiniteElements" type="FiniteElementsType" maxOccurs="1" />
 			<xsd:element name="FiniteVolume" type="FiniteVolumeType" maxOccurs="1" />
-			<xsd:element name="QuadratureRules" type="QuadratureRulesType" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="BasisFunctionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LagrangeBasis1" type="LagrangeBasis1Type" />
-			<xsd:element name="LagrangeBasis2" type="LagrangeBasis2Type" />
-			<xsd:element name="LagrangeBasis3" type="LagrangeBasis3Type" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="LagrangeBasis1Type" />
-	<xsd:complexType name="LagrangeBasis2Type" />
-	<xsd:complexType name="LagrangeBasis3Type" />
 	<xsd:complexType name="FiniteElementsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
@@ -372,16 +360,6 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geosx_FaceElementStencil" />
 	</xsd:complexType>
-	<xsd:complexType name="QuadratureRulesType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="GaussQuadrature1" type="GaussQuadrature1Type" />
-			<xsd:element name="GaussQuadrature2" type="GaussQuadrature2Type" />
-			<xsd:element name="GaussQuadrature3" type="GaussQuadrature3Type" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="GaussQuadrature1Type" />
-	<xsd:complexType name="GaussQuadrature2Type" />
-	<xsd:complexType name="GaussQuadrature3Type" />
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
