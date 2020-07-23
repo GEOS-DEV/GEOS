@@ -113,6 +113,14 @@ public:
   void Write( real64 time, integer cycle, DomainPartition const & domain );
 
 private:
+  /*!
+   * @brief Communicate to the asking rank the number of elements in the
+   * ElementRegionBase \p er in rank \p rank.
+   * @param[in] er the ElementRegionBase for which we want to know the number of elements
+   * @param[in] rank the rank we want to ask
+   * @return the number of elements in the region for the asked rank
+   */
+  localIndex AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank ) const;
 
   /*!
    * @brief Create a folder at the given time-step \p time
