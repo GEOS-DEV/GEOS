@@ -70,7 +70,7 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
-localIndex AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank )
+localIndex VTKPolyDataWriterInterface::AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank ) const
 {
   localIndex nbElems = er.getNumberOfElements();
   MpiWrapper::Broadcast( nbElems, rank );
