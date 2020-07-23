@@ -36,7 +36,7 @@ add_custom_command( OUTPUT ${PYGEOS_BINS}
                     )
 
 add_custom_target( pygeos 
-                   DEPENDS ${PYGEOS_BINS}}
+                   DEPENDS ${PYGEOS_BINS}
                    )
 
 add_custom_target( pygeos_test
