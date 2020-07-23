@@ -21,7 +21,7 @@
 
 #include "managers/NumericalMethodsManager.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
+//#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
 
 #include "managers/DomainPartition.hpp"

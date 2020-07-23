@@ -25,18 +25,23 @@
 namespace geosx
 {
 
-using LinearTriangleFaceBaseClass = FiniteElementShapeFunctionKernelBase< 3, 1 >;
-
-class LinearTriangleFaceShapeFunctionKernel : public LinearTriangleFaceBaseClass
+class LinearTriangleFaceShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
 {
 public:
-  using BaseClass = LinearTriangleFaceBaseClass;
 
-  using BaseClass::numNodes;
-  using BaseClass::numQuadraturePoints;
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = 3;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = 1;
+
   constexpr static real64 parentArea = 0.5;
   constexpr static real64 weight = parentArea / numQuadraturePoints;
   constexpr static real64 quadratureFactor = 1.0 / 3.0;
+
+
+  virtual ~LinearTriangleFaceShapeFunctionKernel() override final
+  {}
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE

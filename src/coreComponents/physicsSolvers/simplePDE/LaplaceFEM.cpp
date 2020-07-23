@@ -29,7 +29,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
-#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "finiteElement/Kinematics.h"
 #include "managers/NumericalMethodsManager.hpp"
 #include "codingUtilities/Utilities.hpp"
@@ -176,7 +175,6 @@ void LaplaceFEM::SetupSystem( DomainPartition & domain,
                                CellElementSubRegion,
                                LaplaceFEMKernel >( *mesh,
                                                    targetRegionNames(),
-                                                   nullptr,
                                                    dofIndex,
                                                    dofManager.rankOffset(),
                                                    pattern,
@@ -198,15 +196,6 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
   NodeManager & nodeManager = *(mesh->getNodeManager());
 
-  NumericalMethodsManager const *
-    numericalMethodManager = domain.getParent()->GetGroup< NumericalMethodsManager >( "NumericalMethods" );
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   arrayView1d< globalIndex const > const &
   dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( m_fieldName ) );
 
@@ -218,7 +207,6 @@ void LaplaceFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                   LaplaceFEMKernel >( *mesh,
                                                       targetRegionNames(),
                                                       array1d< string >(),
-                                                      feDiscretization,
                                                       dofIndex,
                                                       dofManager.rankOffset(),
                                                       localMatrix,
