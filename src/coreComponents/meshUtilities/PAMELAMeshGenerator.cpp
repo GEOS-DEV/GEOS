@@ -316,7 +316,7 @@ void PAMELAMeshGenerator::GenerateMesh( DomainPartition * const domain )
       }
 
       /// Import ppt
-      if( cellBlock != nullptr )
+      if( cellBlock != nullptr && cellBlock->size() > 0 )
       {
         for( localIndex fieldIndex = 0; fieldIndex < m_fieldNamesInGEOSX.size(); fieldIndex++ )
         {
