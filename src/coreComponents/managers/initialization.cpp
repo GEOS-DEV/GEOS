@@ -160,7 +160,7 @@ void setupCaliper()
   adiak::value( "compiler version", adiak::version( "clang" __clang_version__ ) );
 #elif defined( __INTEL_COMPILER )
   adiak::value( "compiler", "intel" );
-  adiak::value( "compiler version", adiak::version( "intel" __INTEL_COMPILER ) );
+  adiak::value( "compiler version", adiak::version( "intel" STRINGIZE( __INTEL_COMPILER ) ) );
 #elif defined( __GNUC__ )
   adiak::value( "compiler", "gcc" );
   adiak::value( "compiler version", adiak::version( "gcc" __VERSION__ ) );

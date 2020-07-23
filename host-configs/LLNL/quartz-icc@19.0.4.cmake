@@ -5,11 +5,14 @@ set(CMAKE_C_COMPILER ${COMPILER_DIR}/bin/intel64/icc CACHE PATH "")
 set(CMAKE_CXX_COMPILER ${COMPILER_DIR}/bin/intel64/icpc CACHE PATH "")
 set(CMAKE_Fortran_COMPILER ${COMPILER_DIR}/bin/intel64/ifort CACHE PATH "")
 
-set(CMAKE_C_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
-set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -march=native -mtune=native" CACHE STRING "")
+set(CMAKE_C_FLAGS_DEBUG "-g -O0" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG -qoverride-limits" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG -qoverride-limits" CACHE STRING "" FORCE)
 
 set(MPI_HOME             /usr/tce/packages/mvapich2/mvapich2-2.3-intel-19.0.4 CACHE PATH "")
+
+set(ENABLE_XML_UPDATES OFF CACHE BOOL "")
 
 set(ENABLE_MKL ON CACHE BOOL "")
 set(MKL_ROOT /usr/tce/packages/mkl/mkl-2019.0)

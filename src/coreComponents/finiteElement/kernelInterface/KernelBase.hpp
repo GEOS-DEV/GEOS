@@ -607,8 +607,8 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regiongs of type REGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< REGION_TYPE >( targetRegions,
-                                                            [&] ( localIndex const targetRegionIndex,
-                                                                  auto & elementSubRegion )
+  [&constitutiveNames, &feDiscretization, &maxResidualContribution, &nodeManager, &edgeManager, &faceManager, &elementRegionManager, &kernelConstructorParamsTuple]
+  ( localIndex const targetRegionIndex, auto & elementSubRegion )
   {
     localIndex const numElems = elementSubRegion.size();
 
@@ -642,20 +642,51 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
     constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::Execute( constitutiveRelation,
-                                                                      [&]( auto * const castedConstitutiveRelation )
+    [&maxResidualContribution, &nodeManager, &edgeManager, &faceManager, &kernelConstructorParamsTuple, &elementSubRegion, numElems, finiteElementSpace, numQuadraturePointsPerElem]
+    ( auto * const castedConstitutiveRelation )
     {
       // Create an alias for the type of contitutive model.
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
+      // Combine the tuple containing the physics kernel specific constructor parameters with
+      // the parameters common to all phsyics kernels that use this interface,
+      // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
+      // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
+      // only use one option...most likely camp since we can easily fix bugs.
+#if CONSTRUCTOR_PARAM_OPTION==1
+      auto temp = std::forward_as_tuple( nodeManager,
+                                         edgeManager,
+                                         faceManager,
+                                         elementSubRegion,
+                                         finiteElementSpace,
+                                         castedConstitutiveRelation );
+
+      auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
+                                                                kernelConstructorParamsTuple );
+#elif CONSTRUCTOR_PARAM_OPTION==2
+      auto temp = camp::forward_as_tuple( nodeManager,
+                                          edgeManager,
+                                          faceManager,
+                                          elementSubRegion,
+                                          finiteElementSpace,
+                                          castedConstitutiveRelation );
+
+      auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
+                                                                              kernelConstructorParamsTuple );
+#endif
+
       // Apply a sequence of integer dispatch functions to convert the number of nodes per element,
       // and number of quadrature points per element to a compile time constant.
-      integralTypeDispatch( elementSubRegion.numNodesPerElement(), [&]( auto const NNPE )
+      integralTypeDispatch( elementSubRegion.numNodesPerElement(),
+      [&maxResidualContribution, numElems, &fullKernelComponentConstructorArgs, numQuadraturePointsPerElem]
+      ( auto const NNPE )
       {
-        quadtratureDispatch( numQuadraturePointsPerElem, [&]( auto const NQPPE )
+        quadtratureDispatch( numQuadraturePointsPerElem, [&maxResidualContribution, numElems, &fullKernelComponentConstructorArgs, NNPE]
+        ( auto const NQPPE )
         {
           // Compile time values!
-          static constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
-          static constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
+          constexpr int NUM_NODES_PER_ELEM = decltype( NNPE )::value;
+          constexpr int NUM_QUADRATURE_POINTS = decltype( NQPPE )::value;
 
           // Define an alias for the kernel type for easy use.
           using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
@@ -663,36 +694,11 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                                NUM_NODES_PER_ELEM,
                                                NUM_NODES_PER_ELEM >;
 
-          // 1) Combine the tuple containing the physics kernel specific constructor parameters with
-          // the parameters common to all phsyics kernels that use this interface,
           // 2) Instantiate the kernel.
-          // note: have two options, using std::tuple and camp::tuple. Due to a bug in the OSX
-          // implementation of std::tuple_cat, we must use camp on OSX. In the future, we should
-          // only use one option...most likely camp since we can easily fix bugs.
 #if CONSTRUCTOR_PARAM_OPTION==1
-          auto temp = std::forward_as_tuple( nodeManager,
-                                             edgeManager,
-                                             faceManager,
-                                             elementSubRegion,
-                                             finiteElementSpace,
-                                             castedConstitutiveRelation );
-
-          auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
-                                                                    kernelConstructorParamsTuple );
-
           KERNEL_TYPE kernelComponent = std::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
-
 #elif CONSTRUCTOR_PARAM_OPTION==2
-          auto temp = camp::forward_as_tuple( nodeManager,
-                                              edgeManager,
-                                              faceManager,
-                                              elementSubRegion,
-                                              finiteElementSpace,
-                                              castedConstitutiveRelation );
-          auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
-                                                                                  kernelConstructorParamsTuple );
           KERNEL_TYPE kernelComponent = camp::make_from_tuple< KERNEL_TYPE >( fullKernelComponentConstructorArgs );
-
 #endif
 
           // Call the kernelLaunch function, and store the maximum contribution to the residual.

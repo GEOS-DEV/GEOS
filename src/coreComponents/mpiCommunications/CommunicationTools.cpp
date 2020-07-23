@@ -549,7 +549,7 @@ void removeFromCommList( std::vector< localIndex > const & indicesToRemove, arra
 void fixReceiveLists( ObjectManagerBase & objectManager,
                       std::vector< NeighborCommunicator > const & neighbors )
 {
-  constexpr int nonLocalGhostsTag = 54673246;
+  int nonLocalGhostsTag = 45;
 
   std::vector< MPI_Request > nonLocalGhostsRequests( neighbors.size() );
 

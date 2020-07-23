@@ -194,7 +194,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
     firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
   }
 
-  constexpr int neighborsTag = 43543;
+  int neighborsTag = 54;
 
   // Send this list of neighbors to all neighbors.
   std::vector< MPI_Request > requests( m_neighbors.size() );
