@@ -348,7 +348,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           std::unique_ptr< FiniteElementBase >
           fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
 
-          // Resize based on numbe of dof of the subregion
+          // Resize based on number of dof of the subregion
           int nUdof = numNodesPerElement * 3;
           dispEqnRowIndices.resize( nUdof );
           dispColIndices.resize( nUdof );
@@ -386,8 +386,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           arrayView1d< real64 const > const & cellVolume = elementSubRegion->getElementVolume();
           real64 hInv = fractureSurfaceArea[k] / cellVolume[embeddedSurfaceToCell[k]]; // AreaFrac / cellVolume
           AssembleEquilibriumOperator( eqMatrix, embeddedSurfaceSubRegion, k, hInv );
-
-          //if(elemGhostRank[k] < 0)
 
           // Dof index of nodal displacements and row indices
           for( localIndex a=0; a<numNodesPerElement; ++a )
@@ -695,15 +693,6 @@ void SolidMechanicsEmbeddedFractures::AssembleEquilibriumOperator( array2d< real
   LvArray::tensorOps::AiBj< 3, 3 >( t2DnSym, nVec, tVec2 );
   LvArray::tensorOps::plusAiBj< 3, 3 >( t2DnSym, tVec2, nVec );
   LvArray::tensorOps::scale< 3, 3 >( t2DnSym, 0.5 );
-
-//  t1DnSym.dyadic_ab( nVec, tVec1 );
-//  t2DnSym.dyadic_ab( nVec, tVec2 );
-//  t1Dn.dyadic_ab( tVec1, nVec );
-//  t2Dn.dyadic_ab( tVec2, nVec );
-//  t1DnSym += t1Dn;
-//  t2DnSym += t2Dn;
-//  t1DnSym *= 0.5;
-//  t2DnSym *= 0.5;
 
   int VoigtIndex;
 

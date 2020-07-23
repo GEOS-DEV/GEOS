@@ -69,8 +69,6 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::elementAreaString, &m_elementArea )->
     setApplyDefaultValue( -1.0 )->
     setDescription( "The area of each EmbeddedSurface element." );
-
-  m_numNodesPerElement = 4; // (it's unused though.)
 }
 
 
@@ -124,7 +122,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
    *   3. Once we have the intersection we check if it falls inside the bounded plane.
    *
    * Only elements for which all intersection points fall within the fracture plane limits will be added.
-   * If the frac does not cut through the entire element we will just chop it (it's a discretization error).
+   * If the fracture does not cut through the entire element we will just chop it (it's a discretization error).
    *
    * B. Once we know the element has to be added we compute it's geometric properties:
    * - Surface Area: this is trivial given the intersection points as long as they are ordered either CW or CCW.
