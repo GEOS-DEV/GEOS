@@ -70,6 +70,13 @@ int ToVTKCellType( const string & elementType )
   return vtkIdentifier;
 }
 
+localIndex AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank )
+{
+  localIndex nbElems = er.getNumberOfElements();
+  MpiWrapper::Broadcast( nbElems, rank );
+  return nbElems;
+}
+
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
   m_outputFolder( outputName ),
   m_pvd( outputName + ".pvd" ),
@@ -287,7 +294,7 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, ElementRe
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
   {
-    if( er.size() != 0 )
+    if( er.getNumberOfElements<CellElementSubRegion>() != 0 )
     {
       vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
       auto VTKPoints = GetVTKPoints( nodeManager );
@@ -345,28 +352,34 @@ void VTKPolyDataWriterInterface::WriteVTMFile( real64 time, ElementRegionManager
 {
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
+    vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
+    for( int i = 0; i < mpiSize; i++ )
+    {
+      string const dataSetFile = GetDataSetFilePath( er, time, i );
+      if( AskMPIRankForNbElementsInRegion( er, i ) > 0 )
+      {
+        if( mpiRank == 0 )
+        {
+          vtmWriter.AddDataToSubBlock( er.getCatalogName(), er.getName(), dataSetFile, i );
+        }
+      }
+    }
+  };
   if( mpiRank == 0 )
   {
-    auto writeSubBlocks = [&]( ElementRegionBase const & er ) {
-      vtmWriter.AddSubBlock( er.getCatalogName(), er.getName() );
-      for( int i = 0; i < mpiSize; i++ )
-      {
-        string const dataSetFile = GetDataSetFilePath( er, time, i );
-        vtmWriter.AddDataToSubBlock( er.getCatalogName(), er.getName(), dataSetFile, i );
-      }
-    };
-    // Cells
     vtmWriter.AddBlock( CellElementRegion::CatalogName() );
-    elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
-
-    // Wells
     vtmWriter.AddBlock( WellElementRegion::CatalogName() );
-    elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
-
-    // Surfaces
     vtmWriter.AddBlock( FaceElementRegion::CatalogName() );
-    elemManager.forElementRegions< FaceElementRegion >( writeSubBlocks );
+  }
 
+  elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
+  elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
+  elemManager.forElementRegions< FaceElementRegion >( writeSubBlocks );
+
+
+  if( mpiRank == 0 )
+  {
     vtmWriter.Save();
   }
 }
