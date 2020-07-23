@@ -19,11 +19,13 @@
 #ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 #define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
 
+#include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
-#include "ElementLibrary/FiniteElement.h"
+#include "LvArray/src/tensorOps.hpp"
+//#include "ElementLibrary/FiniteElement.h"
 #include "FiniteElementDispatch.hpp"
-#include "common/TimingMacros.hpp"
+
 
 namespace geosx
 {
@@ -45,9 +47,9 @@ string const parentSpace="parentSpace";
 }
 }
 
-class BasisBase;
-class QuadratureBase;
-class FiniteElementBase;
+//class BasisBase;
+//class QuadratureBase;
+//class FiniteElementBase;
 
 class FiniteElementDiscretization : public dataRepository::Group
 {
@@ -68,7 +70,7 @@ public:
   ///@}
 
 
-  std::unique_ptr< FiniteElementBase > getFiniteElement( string const & catalogName ) const;
+//  std::unique_ptr< FiniteElementBase > getFiniteElement( string const & catalogName ) const;
 
 
   template< typename SUBREGION_TYPE >
@@ -151,14 +153,14 @@ public:
 #endif
   }
 
-  localIndex getNumberOfQuadraturePoints() const;
+//  localIndex getNumberOfQuadraturePoints() const;
 
   string m_basisName;
   string m_quadratureName;
   string m_parentSpace;
 
-  BasisBase const *    m_basis    = nullptr;
-  QuadratureBase const * m_quadrature = nullptr;
+//  BasisBase const *    m_basis    = nullptr;
+//  QuadratureBase const * m_quadrature = nullptr;
 protected:
   void PostProcessInput() override final;
 

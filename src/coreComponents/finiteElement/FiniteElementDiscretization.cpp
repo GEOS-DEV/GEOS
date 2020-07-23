@@ -23,9 +23,6 @@
 #include "managers/ObjectManagerBase.hpp"
 #include "mesh/NodeManager.hpp"
 #include "managers/NumericalMethodsManager.hpp"
-#include "basis/BasisBase.hpp"
-#include "quadrature/QuadratureBase.hpp"
-#include "ElementLibrary/FiniteElement.h"
 #include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
@@ -50,33 +47,33 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 FiniteElementDiscretization::~FiniteElementDiscretization()
 {}
 
-localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
-{
-  return m_quadrature->size();
-}
+//localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
+//{
+//  return m_quadrature->size();
+//}
 
-std::unique_ptr< FiniteElementBase > FiniteElementDiscretization::getFiniteElement( string const & ) const
-{
-  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
-                                                       *m_basis,
-                                                       *m_quadrature,
-                                                       0 );
-}
+//std::unique_ptr< FiniteElementBase > FiniteElementDiscretization::getFiniteElement( string const & ) const
+//{
+//  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
+//                                                       *m_basis,
+//                                                       *m_quadrature,
+//                                                       0 );
+//}
 
 void FiniteElementDiscretization::PostProcessInput()
 {
-  auto const & basisName = this->getReference< string >( keys::basis );
-  auto const & quadratureName = this->getReference< string >( keys::quadrature );
+//  auto const & basisName = this->getReference< string >( keys::basis );
+//  auto const & quadratureName = this->getReference< string >( keys::quadrature );
 
   // TODO find a better way to do this that doesn't involve getParent(). We
   // shouldn't really use that unless there is no
   // other choice.
-  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
-  Group const & basisManager = numericalMethods.getBasisFunctions();
-  Group const & quadratureManager = numericalMethods.getQuadratureRules();
+//  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
+//  Group const & basisManager = numericalMethods.getBasisFunctions();
+//  Group const & quadratureManager = numericalMethods.getQuadratureRules();
 
-  m_basis = basisManager.GetGroup< BasisBase >( basisName );
-  m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
+//  m_basis = basisManager.GetGroup< BasisBase >( basisName );
+//  m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
 }
 
 

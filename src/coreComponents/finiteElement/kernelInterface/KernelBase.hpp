@@ -23,7 +23,6 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
-#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -154,52 +153,6 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
   }
 }
 
-
-/**
- * @brief Call a lambda function (callback) with an integral_constant
- *        conversion of the input integral type to allow for static
- *        dispatch.
- * @tparam INTEGRAL_TYPE The type of integer passed in @p input.
- * @tparam LAMBDA The type of @p lambda to execute.
- * @param input The integer to convert to an integral_constant.
- * @param lambda The generic lambda function (takes the integral_constant as
- *               a parameter) that will be executed.
- *
- * Implements a switchyard to convert the value of @p input to an
- * integral_constant<@p INTEGRAL_TYPE, @p input>, and pass that to @p lambda.
- * This allows a runtime @p input to be dispatched as a compile time constant.
- * Note that @p LAMBDA must be a generic lambda that takes in a single `auto`
- * parameter and then converts the value to an INTEGRAL_TYPE. For instance:
- *
- *     int value = 1;
- *     integralTypeDispatch( 1, [&]( auto const constValueType )
- *     {
- *       static constexpr int constValue = decltype( constValueType )::value;
- *
- *       func< constValue >(...);
- *     };
- */
-template< typename INTEGRAL_TYPE, typename LAMBDA >
-void
-quadtratureDispatch( INTEGRAL_TYPE const input,
-                     LAMBDA && lambda )
-{
-  switch( input )
-  {
-    case 1:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 1 >() );
-      break;
-    }
-    case 8:
-    {
-      lambda( std::integral_constant< INTEGRAL_TYPE, 8 >() );
-      break;
-    }
-    default:
-      GEOSX_ERROR( "quadtratureDispatch() is not implemented for value of: "<<input );
-  }
-}
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -271,7 +224,7 @@ public:
    *                           which currently doesn't do much.
    */
   KernelBase( SUBREGION_TYPE const & elementSubRegion,
-              FiniteElementBase const * const finiteElementSpace,
+              FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE * const inputConstitutiveType ):
     m_elemsToNodes( elementSubRegion.nodeList().toViewConst() ),
     m_elemGhostRank( elementSubRegion.ghostRank() ),
@@ -526,7 +479,7 @@ protected:
 
   /// The finite element space/discretization object for the element type in
   /// the SUBREGION_TYPE.
-  FiniteElementBase const * m_finiteElementSpace;
+  FE_TYPE const & m_finiteElementSpace;
 };
 
 
@@ -587,7 +540,6 @@ static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      arrayView1d< string const > const & constitutiveNames,
-                                     FiniteElementDiscretization const * const feDiscretization,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
   // save the maximum residual contribution for scaling residuals for convergence criteria.
@@ -617,13 +569,6 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     // Create an alias for the type of subregion we are in, which is now known at compile time.
     typedef TYPEOFREF( elementSubRegion ) SUBREGIONTYPE;
-
-    // Extract the number of quadrature point from the finite element object.
-    FiniteElementBase const * finiteElementSpace = nullptr;
-    if( feDiscretization != nullptr )
-    {
-      finiteElementSpace = ( feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() ) ).get();
-    }
 
     // Get the constitutive model...and allocate a null constitutive model if required.
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
@@ -672,7 +617,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                            edgeManager,
                                            faceManager,
                                            elementSubRegion,
-                                           finiteElementSpace,
+                                           finiteElement,
                                            castedConstitutiveRelation );
 
         auto fullKernelComponentConstructorArgs = std::tuple_cat( temp,
