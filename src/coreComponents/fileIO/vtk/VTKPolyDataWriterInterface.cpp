@@ -294,7 +294,7 @@ void VTKPolyDataWriterInterface::WriteCellElementRegions( real64 time, ElementRe
 {
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion const & er )->void
   {
-    if( er.getNumberOfElements<CellElementSubRegion>() != 0 )
+    if( er.getNumberOfElements< CellElementSubRegion >() != 0 )
     {
       vtkSmartPointer< vtkUnstructuredGrid > ug = vtkUnstructuredGrid::New();
       auto VTKPoints = GetVTKPoints( nodeManager );
