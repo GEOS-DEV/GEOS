@@ -69,6 +69,9 @@ public:
   operator PyObject*()
   { return m_object; }
 
+  PyObject * get() const
+  { return m_object; }
+
 private:
   PyObject * m_object = nullptr;
 };
@@ -216,6 +219,10 @@ static PyObject * finalize( PyObject * self, PyObject * args )
   GEOSX_UNUSED_VAR( self );
   GEOSX_UNUSED_VAR( args );
 
+  if ( state == nullptr ){
+    PyErr_SetString( PyExc_RuntimeError, "state already finalized" );
+    return NULL;
+  }
   state = nullptr;
   basicCleanup();
 
@@ -256,7 +263,10 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   NULL,
 };
 
-PyObject * addConstants( PyObject * module ){
+/**
+ * Add geosx::State enums to the given module. Return the module, or NULL on failure
+ */
+static PyObject * addConstants( PyObject * module ){
   if ( PyModule_AddIntConstant( module, "COMPLETED", static_cast< long >( geosx::State::COMPLETED ) ) ){
     PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
     return NULL;
@@ -277,12 +287,37 @@ PyObject * addConstants( PyObject * module ){
 }
 
 /**
- *
+ * Add exit handler to a module. Register the module's 'finalize' function,
+ * which should take no arguments, with the `atexit` standard library module.
+ */
+static int addExitHandler( PyObject * module ){
+  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
+  if ( atexit_module == nullptr ){ return 0; }
+  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
+  if ( atexit_register_pyfunc == nullptr ){ return 0; }
+  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
+  if ( finalize_pyfunc == nullptr ){ return 0; }
+  if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) ){
+    return 0;
+  }
+  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
+  if ( returnval == nullptr ){ return 0; }
+  return 1;
+}
+
+/**
+ * Initialize the module with functions, constants, and exit handler
  */
 PyMODINIT_FUNC
 PyInit_pygeosx(void)
 {
   import_array();
   PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
+  if ( !addExitHandler( module ) ){
+    if ( PyErr_Occurred() == NULL ){
+      PyErr_SetString( PyExc_RuntimeError, "couldn't add exit handler" );
+    }
+    return NULL;
+  }
   return addConstants( module );
 }

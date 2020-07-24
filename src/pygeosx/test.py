@@ -33,5 +33,3 @@ while pygeosx.run() != pygeosx.COMPLETED:
 currentTime = pygeosx.get( "Events/time", False )
 print( "In python after after the simulation has ended: current time = {}".format( currentTime[ 0 ] ) )
 sys.stdout.flush()
-
-pygeosx.finalize()
