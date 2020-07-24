@@ -26,7 +26,7 @@ namespace geosx
 {
 
 
-class PyramidShapeFunctionKernel : FiniteElementShapeFunctionKernelBase
+class PyramidShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
 {
 public:
   /// The number of nodes/support points per element.
