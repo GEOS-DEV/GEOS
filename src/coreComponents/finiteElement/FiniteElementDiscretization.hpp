@@ -38,12 +38,9 @@ namespace dataRepository
 {
 namespace keys
 {
-string const finiteElementSpace = "FiniteElementSpace";
-string const basis = "basis";
-string const quadrature = "quadrature";
 string const dNdX = "dNdX";
 string const detJ = "detJ";
-string const parentSpace="parentSpace";
+//string const parentSpace="parentSpace";
 }
 }
 
@@ -66,7 +63,7 @@ public:
    * @name Static Factory Catalog Functions
    */
   ///@{
-  static string CatalogName() { return dataRepository::keys::finiteElementSpace; }
+  static string CatalogName() { return "FiniteElementSpace"; }
 
   ///@}
 
@@ -86,10 +83,6 @@ public:
     static constexpr auto orderString = "order";
     static constexpr auto formulationString = "formulation";
   };
-
-  string m_basisName;
-  string m_quadratureName;
-  string m_parentSpace;
 
   int m_order;
   string m_formulation;

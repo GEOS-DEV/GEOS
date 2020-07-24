@@ -562,16 +562,10 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType">
-		<!--basis => (no description available)-->
-		<xsd:attribute name="basis" type="string" use="required" />
 		<!--formulation => (no description available)-->
 		<xsd:attribute name="formulation" type="string" default="default" />
 		<!--order => (no description available)-->
-		<xsd:attribute name="order" type="integer" default="1" />
-		<!--parentSpace => (no description available)-->
-		<xsd:attribute name="parentSpace" type="string" use="required" />
-		<!--quadrature => (no description available)-->
-		<xsd:attribute name="quadrature" type="string" use="required" />
+		<xsd:attribute name="order" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
