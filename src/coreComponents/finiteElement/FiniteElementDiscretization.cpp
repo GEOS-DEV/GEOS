@@ -39,13 +39,7 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::basis, &m_basisName )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::quadrature, &m_quadratureName )->setInputFlag( InputFlags::REQUIRED );
-  registerWrapper( keys::parentSpace, &m_parentSpace )->setInputFlag( InputFlags::REQUIRED );
-
-  registerWrapper( viewKeyStruct::orderString, &m_order )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( 1 );
+  registerWrapper( viewKeyStruct::orderString, &m_order )->setInputFlag( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
     setInputFlag( InputFlags::OPTIONAL )->
