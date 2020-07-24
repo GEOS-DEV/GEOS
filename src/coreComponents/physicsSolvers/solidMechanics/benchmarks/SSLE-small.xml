@@ -78,9 +78,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
   </NumericalMethods>
 
