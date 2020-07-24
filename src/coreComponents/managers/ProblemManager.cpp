@@ -688,17 +688,23 @@ void ProblemManager::ApplyNumericalMethods()
             elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
             {
               string const elementTypeString = subRegion.GetElementTypeString();
-              finiteElement::dispatch( elementTypeString,
-                                       [&] ( auto finiteElement )
+
+              std::unique_ptr<FiniteElementShapeFunctionKernelBase> newFE = feDiscretization->factory( elementTypeString );
+              finiteElement::dispatch3D( *newFE,
+                                       [ &, newFE=std::move(newFE)  ] ( auto finiteElement ) mutable
               {
                 using FE_TYPE = TYPEOFREF( finiteElement );
-                subRegion.template registerWrapper< FE_TYPE,
-                                                    FiniteElementShapeFunctionKernelBase>( discretizationName )->
+                subRegion.template registerWrapper< FiniteElementShapeFunctionKernelBase>( discretizationName,
+                                                                                           std::move(newFE) )->
                   setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+
+                FE_TYPE &
+                fe = dynamic_cast<FE_TYPE&>(subRegion.template getReference< FiniteElementShapeFunctionKernelBase >( discretizationName ));
 
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
+                feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, fe );
+
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                            subRegion.getName() ) ];
 

@@ -42,41 +42,67 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
   registerWrapper( keys::basis, &m_basisName )->setInputFlag( InputFlags::REQUIRED );
   registerWrapper( keys::quadrature, &m_quadratureName )->setInputFlag( InputFlags::REQUIRED );
   registerWrapper( keys::parentSpace, &m_parentSpace )->setInputFlag( InputFlags::REQUIRED );
+
+  registerWrapper( viewKeyStruct::orderString, &m_order )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1 );
+
+  registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( "default" );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()
 {}
 
-//localIndex FiniteElementDiscretization::getNumberOfQuadraturePoints() const
-//{
-//  return m_quadrature->size();
-//}
-
-//std::unique_ptr< FiniteElementBase > FiniteElementDiscretization::getFiniteElement( string const & ) const
-//{
-//  return FiniteElementBase::CatalogInterface::Factory( m_parentSpace,
-//                                                       *m_basis,
-//                                                       *m_quadrature,
-//                                                       0 );
-//}
 
 void FiniteElementDiscretization::PostProcessInput()
 {
-//  auto const & basisName = this->getReference< string >( keys::basis );
-//  auto const & quadratureName = this->getReference< string >( keys::quadrature );
-
-  // TODO find a better way to do this that doesn't involve getParent(). We
-  // shouldn't really use that unless there is no
-  // other choice.
-//  NumericalMethodsManager const & numericalMethods = *(this->getParent()->getParent()->group_cast< NumericalMethodsManager const * >());
-//  Group const & basisManager = numericalMethods.getBasisFunctions();
-//  Group const & quadratureManager = numericalMethods.getQuadratureRules();
-
-//  m_basis = basisManager.GetGroup< BasisBase >( basisName );
-//  m_quadrature = quadratureManager.GetGroup< QuadratureBase >( quadratureName );
+  GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported.");
+  GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported.");
 }
 
-
+std::unique_ptr<FiniteElementShapeFunctionKernelBase>
+FiniteElementDiscretization::factory( string const & parentElementShape ) const
+{
+  std::unique_ptr<FiniteElementShapeFunctionKernelBase> rval;
+  if( m_order==1 )
+  {
+    if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedral )
+    {
+      rval = std::make_unique<TrilinearHexahedronShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedal )
+    {
+      rval = std::make_unique<LinearTetrahedronShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
+    {
+      rval = std::make_unique<BiLinearWedgeShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
+    {
+      rval = std::make_unique<PyramidShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
+    {
+      rval = std::make_unique<BiLinearWedgeShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
+    {
+      rval = std::make_unique<BiLinearQuadrilateralFaceShapeFunctionKernel>();
+    }
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Triangle )
+    {
+      rval = std::make_unique<LinearTriangleFaceShapeFunctionKernel>();
+    }
+    else
+    {
+      GEOSX_ERROR( "" );
+    }
+  }
+  return rval;
+}
 
 REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, std::string const &, Group * const )
 
