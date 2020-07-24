@@ -988,6 +988,7 @@
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
+			<xsd:element name="finiteVolumeStencils" type="finiteVolumeStencilsType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
 		<!--meshLevel => (no description available)-->
@@ -1065,8 +1066,6 @@
 		<xsd:attribute name="K_IC" type="r1_array" />
 		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--boundaryFacePressure => (no description available)-->
-		<xsd:attribute name="boundaryFacePressure" type="real64_array" />
 		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
@@ -1118,6 +1117,11 @@
 		<xsd:attribute name="ruptureState" type="integer_array" />
 		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="finiteVolumeStencilsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
