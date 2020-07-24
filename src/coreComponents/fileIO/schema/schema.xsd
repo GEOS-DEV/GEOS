@@ -564,6 +564,10 @@
 	<xsd:complexType name="FiniteElementSpaceType">
 		<!--basis => (no description available)-->
 		<xsd:attribute name="basis" type="string" use="required" />
+		<!--formulation => (no description available)-->
+		<xsd:attribute name="formulation" type="string" default="default" />
+		<!--order => (no description available)-->
+		<xsd:attribute name="order" type="integer" default="1" />
 		<!--parentSpace => (no description available)-->
 		<xsd:attribute name="parentSpace" type="string" use="required" />
 		<!--quadrature => (no description available)-->

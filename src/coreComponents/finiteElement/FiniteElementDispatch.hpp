@@ -34,100 +34,62 @@ namespace geosx
 namespace finiteElement
 {
 
-enum class ParentElementType
-{
-  Tetrahedal,
-  Pyramid,
-  Prism,
-  Hexahedral,
-  Polyhedral,
-  Polytope,
-  INVALID
-};
-
 struct ParentElementTypeStrings
 {
-  static constexpr auto Tetrahedal  = "C3D4";
-  static constexpr auto Pyramid     = "C3D5";
-  static constexpr auto Prism       = "C3D6";
-  static constexpr auto Hexahedral  = "C3D8";
-  static constexpr auto Polyhedral  = "POLYHEDRAL";
-  static constexpr auto Polytope    = "POLYTOPE";
+  static constexpr auto Tetrahedal    = "C3D4";
+  static constexpr auto Pyramid       = "C3D5";
+  static constexpr auto Prism         = "C3D6";
+  static constexpr auto Hexahedral    = "C3D8";
+  static constexpr auto Quadralateral = "C2D4";
+  static constexpr auto Triangle      = "C2D3";
+  static constexpr auto Polyhedral    = "POLYHEDRAL";
+  static constexpr auto Polytope      = "POLYTOPE";
 };
 
 
+//template< typename LAMBDA >
+//void
+//dispatch( string const & input,
+//          LAMBDA && lambda )
+//{
+//  if( input ==  ParentElementTypeStrings::Hexahedral )
+//  {
+//    lambda( TrilinearHexahedronShapeFunctionKernel() );
+//  }
+//  else if( input == ParentElementTypeStrings::Tetrahedal )
+//  {
+//    lambda( LinearTetrahedronShapeFunctionKernel() );
+//  }
+//  else if( input == ParentElementTypeStrings::Prism )
+//  {
+//    lambda( BiLinearWedgeShapeFunctionKernel() );
+//  }
+//  else
+//  {
+//    GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
+//  }
+//}
 
 template< typename LAMBDA >
 void
-dispatch( ParentElementType const input,
-          LAMBDA && lambda )
-{
-  switch( input )
-  {
-    case ParentElementType::Hexahedral:
-    {
-      lambda( TrilinearHexahedronShapeFunctionKernel() );
-      break;
-    }
-    case ParentElementType::Tetrahedal:
-    {
-      lambda( LinearTetrahedronShapeFunctionKernel() );
-      break;
-    }
-    case ParentElementType::Prism:
-    {
-      lambda( BiLinearWedgeShapeFunctionKernel() );
-      break;
-    }
-    default:
-      GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: " );
-  }
-}
-
-
-template< typename LAMBDA >
-void
-dispatch( string const & input,
-          LAMBDA && lambda )
-{
-  if( input ==  ParentElementTypeStrings::Hexahedral )
-  {
-    lambda( TrilinearHexahedronShapeFunctionKernel() );
-  }
-  else if( input == ParentElementTypeStrings::Tetrahedal )
-  {
-    lambda( LinearTetrahedronShapeFunctionKernel() );
-  }
-  else if( input == ParentElementTypeStrings::Prism )
-  {
-    lambda( BiLinearWedgeShapeFunctionKernel() );
-  }
-  else
-  {
-    GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
-  }
-}
-
-template< typename LAMBDA >
-void
-dispatch3D( FiniteElementShapeFunctionKernelBase & input,
+dispatch3D( FiniteElementShapeFunctionKernelBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<TrilinearHexahedronShapeFunctionKernel*>(&input) )
+  if( dynamic_cast<TrilinearHexahedronShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<TrilinearHexahedronShapeFunctionKernel&>(input) );
+    lambda( static_cast<TrilinearHexahedronShapeFunctionKernel const &>(input) );
   }
-  else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel*>(&input) )
+  else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<BiLinearWedgeShapeFunctionKernel&>(input) );
+    lambda( static_cast<BiLinearWedgeShapeFunctionKernel const &>(input) );
   }
-  else if( dynamic_cast<LinearTetrahedronShapeFunctionKernel*>(&input) )
+  else if( dynamic_cast<LinearTetrahedronShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<LinearTetrahedronShapeFunctionKernel&>(input) );
+    lambda( static_cast<LinearTetrahedronShapeFunctionKernel const &>(input) );
   }
-  else if( dynamic_cast<PyramidShapeFunctionKernel*>(&input) )
+  else if( dynamic_cast<PyramidShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<PyramidShapeFunctionKernel&>(input) );
+    lambda( static_cast<PyramidShapeFunctionKernel const &>(input) );
   }
   else
   {
@@ -137,16 +99,16 @@ dispatch3D( FiniteElementShapeFunctionKernelBase & input,
 
 template< typename LAMBDA >
 void
-dispatch2D( FiniteElementShapeFunctionKernelBase & input,
+dispatch2D( FiniteElementShapeFunctionKernelBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<BiLinearQuadrilateralFaceShapeFunctionKernel*>(&input) )
+  if( dynamic_cast<BiLinearQuadrilateralFaceShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<BiLinearQuadrilateralFaceShapeFunctionKernel&>(input) );
+    lambda( static_cast<BiLinearQuadrilateralFaceShapeFunctionKernel const &>(input) );
   }
-  else if( dynamic_cast<LinearTriangleFaceShapeFunctionKernel*>(&input) )
+  else if( dynamic_cast<LinearTriangleFaceShapeFunctionKernel const *>(&input) )
   {
-    lambda( static_cast<LinearTriangleFaceShapeFunctionKernel&>(input) );
+    lambda( static_cast<LinearTriangleFaceShapeFunctionKernel const &>(input) );
   }
   else
   {
