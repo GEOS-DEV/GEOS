@@ -46,26 +46,18 @@ namespace SolidMechanicsLagrangianFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED,
           template< typename,
                     typename,
-                    typename,
-                    int,
-                    int > class BASE >
+                    typename > class BASE >
 class PoroElastic : public BASE< SUBREGION_TYPE,
                                  CONSTITUTIVE_TYPE,
-                                 FE_TYPE,
-                                 NUM_NODES_PER_ELEM,
-                                 NUM_NODES_PER_ELEM >
+                                 FE_TYPE >
 {
 public:
   /// Alias for the base class.
   using Base = BASE< SUBREGION_TYPE,
                      CONSTITUTIVE_TYPE,
-                     FE_TYPE,
-                     NUM_NODES_PER_ELEM,
-                     NUM_NODES_PER_ELEM >;
+                     FE_TYPE >;
 
   using Base::m_constitutiveUpdate;
   using typename Base::StackVariables;
@@ -139,14 +131,10 @@ protected:
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 using QuasiStaticPoroElastic = PoroElastic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
                                             QuasiStatic >;
 
 } // namespace SolidMechanicsLagrangianFEMKernels

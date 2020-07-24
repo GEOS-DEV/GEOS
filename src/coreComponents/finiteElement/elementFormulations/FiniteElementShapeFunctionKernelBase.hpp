@@ -19,6 +19,7 @@ class FiniteElementShapeFunctionKernelBase
 public:
 
   virtual localIndex getNumQuadraturePoints() const = 0;
+  virtual localIndex getNumSupportPoints() const = 0;
 
   virtual ~FiniteElementShapeFunctionKernelBase()
   {}
