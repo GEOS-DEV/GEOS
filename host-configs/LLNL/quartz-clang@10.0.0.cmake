@@ -19,3 +19,5 @@ set(MKL_LIBRARIES ${MKL_ROOT}/lib/libmkl_intel_lp64.so
                   CACHE STRING "")
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/quartz-base.cmake)
+
+set(Python3_EXECUTABLE "/usr/WS2/corbett5/python/python-3.8.5-install/bin/python3" CACHE PATH "" FORCE)

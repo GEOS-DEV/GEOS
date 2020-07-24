@@ -35,7 +35,7 @@ set(ENABLE_PVTPackage ON CACHE BOOL "")
 set(ENABLE_GEOSX_PTP ON CACHE BOOL "" FORCE)
 
 set(ENABLE_PYTHON ON CACHE BOOL "")
-set(PYTHON_DIR /usr/tce/packages/python/python-3.7.2 CACHE PATH "")
+set(Python3_EXECUTABLE "/usr/gapps/GEOSX/python/${CONFIG_NAME}/bin/python3" CACHE PATH "" FORCE)
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 set(ENABLE_PAPI ON CACHE BOOL "")

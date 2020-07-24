@@ -7,6 +7,11 @@
 #include "managers/GeosxState.hpp"
 
 // System includes
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#define NPY_NO_DEPRECATED_API NPY_1_15_API_VERSION
+#include <numpy/arrayobject.h>
+#pragma GCC diagnostic pop
 #include <chrono>
 
 namespace geosx
@@ -251,5 +256,6 @@ static struct PyModuleDef pygeosxModuleFunctions = {
 PyMODINIT_FUNC
 PyInit_pygeosx(void)
 {
+  import_array();
   return PyModule_Create(&pygeosxModuleFunctions);
 }

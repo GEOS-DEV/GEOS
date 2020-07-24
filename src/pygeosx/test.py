@@ -1,18 +1,20 @@
 import pygeosx
 import sys
 import os
-# from mpi4py import MPI
 
 xml = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), "pyssle.xml" )
 
 print( "In python before initialization." )
 sys.stdout.flush()
 
-# comm = MPI.COMM_WORLD
-# rank = comm.Get_rank()
-# n_ranks = comm.Get_size()
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+n_ranks = comm.Get_size()
 
-pygeosx.initialize( 0, sys.argv )
+# rank = 0
+
+pygeosx.initialize( rank, sys.argv )
 currentTime = pygeosx.get( "Events/time", False )
 print( "In python after initialization: current time = {}".format( currentTime[ 0 ] ) )
 sys.stdout.flush()
