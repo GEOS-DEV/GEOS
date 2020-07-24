@@ -685,7 +685,7 @@ void ProblemManager::ApplyNumericalMethods()
 
           if( feDiscretization != nullptr )
           {
-            elemRegion->forElementSubRegions< CellElementSubRegion>( [&]( auto & subRegion )
+            elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
             {
               string const elementTypeString = subRegion.GetElementTypeString();
               finiteElement::dispatch( elementTypeString,
