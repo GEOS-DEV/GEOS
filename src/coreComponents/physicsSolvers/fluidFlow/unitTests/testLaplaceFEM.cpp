@@ -147,6 +147,7 @@ protected:
     elementManager->PostProcessInputRecursive();
 
     problemManager.ProblemSetup();
+    problemManager->ApplyInitialConditions();
     solver = problemManager.GetPhysicsSolverManager().GetGroup< LaplaceFEM >( "laplace" );
   }
 

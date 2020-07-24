@@ -22,11 +22,35 @@
 #include "ProblemManager.hpp"
 
 #include <chrono>
+#include <ostream>
 
 namespace geosx
 {
 
 std::string durationToString( std::chrono::system_clock::duration const duration );
+
+enum class State
+{
+  UNINITIALIZED = 0,
+  INITIALIZED = 1,
+  READY_TO_RUN = 2,
+  COMPLETED = 3
+};
+
+std::ostream & operator<<( std::ostream & os, State const state )
+{
+  if ( state == State::UNINITIALIZED )
+  { return os << "State::UNINITIALIZED"; }
+  if ( state == State::INITIALIZED )
+  { return os << "State::INITIALIZED"; }
+  if ( state == State::READY_TO_RUN )
+  { return os << "State::READY_TO_RUN"; }
+  if ( state == State::COMPLETED )
+  { return os << "State::COMPLETED"; }
+
+  GEOSX_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
+  return os;
+}
 
 class GeosxState
 {
@@ -35,10 +59,14 @@ public:
 
   bool initializeDataRepository();
 
-  bool run();
+  void applyInitialConditions();
 
-  dataRepository::Group * getGroupByPath( std::string const & path )
-  { return m_problemManager.GetGroupByPath( path ); }
+  void run();
+
+  State getState() const
+  { return m_state; }
+
+  dataRepository::Group * getGroupByPath( std::string const & path );
 
   std::chrono::system_clock::duration getInitTime() const
   { return m_initTime; }
@@ -53,6 +81,7 @@ private:
   std::chrono::system_clock::time_point m_startTime;
   std::chrono::system_clock::duration m_initTime;
   std::chrono::system_clock::duration m_runTime;
+  State m_state;
   ProblemManager m_problemManager;
 };
 

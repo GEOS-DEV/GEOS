@@ -128,6 +128,7 @@ protected:
     elementManager->PostProcessInputRecursive();
 
     problemManager->ProblemSetup();
+    problemManager->ApplyInitialConditions();
   }
 
   /**

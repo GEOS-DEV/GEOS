@@ -48,7 +48,11 @@ int main( int argc, char *argv[] )
 
     bool const problemToRun = state.initializeDataRepository();
     if ( problemToRun )
-    { LVARRAY_WARNING_IF( state.run(), "Simulation exited early." ); }
+    {
+      state.applyInitialConditions();
+      state.run();
+      LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." ); 
+    }
 
     initTime = state.getInitTime();
     runTime = state.getRunTime();

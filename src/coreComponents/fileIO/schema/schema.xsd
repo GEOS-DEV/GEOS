@@ -706,7 +706,7 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Blueprint" type="BlueprintType" />
 			<xsd:element name="ChomboIO" type="ChomboIOType" />
-			<xsd:element name="PythonOutput" type="PythonOutputType" />
+			<xsd:element name="Python" type="PythonType" />
 			<xsd:element name="Restart" type="RestartType" />
 			<xsd:element name="Silo" type="SiloType" />
 			<xsd:element name="VTK" type="VTKType" />
@@ -742,7 +742,7 @@
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PythonOutputType">
+	<xsd:complexType name="PythonType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
 		<!--parallelThreads => Number of plot files.-->

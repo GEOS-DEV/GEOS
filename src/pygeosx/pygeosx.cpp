@@ -72,16 +72,18 @@ private:
 
 static std::unique_ptr< GeosxState > state;
 
-
-
-PyObject * initialize( PyObject * self, PyObject * args )
+/**
+ * 
+ */
+static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
   GEOSX_ERROR_IF( state != nullptr, "Already initialized." );
 
+  long pythonMPIRank;
   PyObject * list;
-  if ( !PyArg_ParseTuple( args, "O", &list ) )
+  if ( !PyArg_ParseTuple( args, "lO", &pythonMPIRank, &list ) )
   { return nullptr; }
 
   PyObjectRef iterator{ PyObject_GetIter( list ) };
@@ -110,13 +112,19 @@ PyObject * initialize( PyObject * self, PyObject * args )
   { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
 
   basicSetup( argv.size() - 1, argv.data(), true );
+
+  GEOSX_ERROR_IF_NE( pythonMPIRank, MpiWrapper::Comm_rank() );
+
   state = std::make_unique< GeosxState >();
   state->initializeDataRepository();
 
   Py_RETURN_NONE;
 }
 
-PyObject * get( PyObject * self, PyObject * args )
+/**
+ * 
+ */
+static PyObject * get( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
@@ -157,19 +165,45 @@ PyObject * get( PyObject * self, PyObject * args )
   { return ret; }
 }
 
+/**
+ * 
+ */
+static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
+{
+  GEOSX_UNUSED_VAR( self );
+
+  if ( !PyArg_ParseTuple( args, "" ) )
+  { return nullptr; }
+
+  GEOSX_ERROR_IF( state == nullptr, "State must be initialized." );
+  state->applyInitialConditions();
+  Py_RETURN_NONE;
+}
+
+/**
+ * 
+ */
 static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
-  GEOSX_UNUSED_VAR( args );
+
+  if ( !PyArg_ParseTuple( args, "" ) )
+  { return nullptr; }
 
   GEOSX_ERROR_IF( state == nullptr, "State must be initialized." );
-  return PyBool_FromLong( state->run() );
+  state->run();
+  return PyLong_FromLong( static_cast< int >( state->getState() ) );
 }
 
+/**
+ * 
+ */
 static PyObject * finalize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
-  GEOSX_UNUSED_VAR( args );
+
+  if ( !PyArg_ParseTuple( args, "" ) )
+  { return nullptr; }
 
   state = nullptr;
   basicCleanup();
@@ -179,10 +213,15 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 
 } // namespace geosx
 
+/**
+ * 
+ */
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS, 
     "" },
   { "get", geosx::get, METH_VARARGS, 
+    "" },
+  { "applyInitialConditions", geosx::applyInitialConditions, METH_VARARGS, 
     "" },
   { "run", geosx::run, METH_VARARGS, 
     "" },
@@ -206,7 +245,9 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   NULL,
 };
 
-
+/**
+ * 
+ */
 PyMODINIT_FUNC
 PyInit_pygeosx(void)
 {

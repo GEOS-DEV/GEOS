@@ -519,11 +519,11 @@ Element: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport.rst
 
 
-.. _XML_PythonOutput:
+.. _XML_Python:
 
-Element: PythonOutput
-=====================
-.. include:: ../../coreComponents/fileIO/schema/docs/PythonOutput.rst
+Element: Python
+===============
+.. include:: ../../coreComponents/fileIO/schema/docs/Python.rst
 
 
 .. _XML_QuadratureRules:
@@ -1258,11 +1258,11 @@ Datastructure: ProppantTransport
 .. include:: ../../coreComponents/fileIO/schema/docs/ProppantTransport_other.rst
 
 
-.. _DATASTRUCTURE_PythonOutput:
+.. _DATASTRUCTURE_Python:
 
-Datastructure: PythonOutput
-===========================
-.. include:: ../../coreComponents/fileIO/schema/docs/PythonOutput_other.rst
+Datastructure: Python
+=====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Python_other.rst
 
 
 .. _DATASTRUCTURE_QuadratureRules:

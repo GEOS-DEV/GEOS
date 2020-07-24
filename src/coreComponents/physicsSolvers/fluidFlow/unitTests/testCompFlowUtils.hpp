@@ -203,6 +203,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   elementManager.ProcessInputFileRecursive( topLevelNode );
 
   problemManager.ProblemSetup();
+  problemManager.ApplyInitialConditions();
 }
 
 } // namespace testing

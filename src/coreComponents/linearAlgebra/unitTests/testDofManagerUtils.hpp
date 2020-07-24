@@ -63,6 +63,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   elementManager->PostProcessInputRecursive();
 
   problemManager->ProblemSetup();
+  problemManager->ApplyInitialConditions();
 }
 
 /**
