@@ -114,8 +114,7 @@ public:
 
 private:
   /*!
-   * @brief Communicate to the asking rank the number of elements in the
-   * ElementRegionBase \p er in rank \p rank.
+   * @brief Ask rank \p rank for the number of elements in its ElementRegionBase \p er.
    * @param[in] er the ElementRegionBase for which we want to know the number of elements
    * @param[in] rank the rank we want to ask
    * @return the number of elements in the region for the asked rank
