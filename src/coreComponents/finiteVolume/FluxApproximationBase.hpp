@@ -116,13 +116,14 @@ public:
    * @brief Extract stencil stored under the mesh group.
    * @tparam TYPE type of Stencil to get
    * @param mesh the mesh level object
+   * @param name name of the stencil object
    * @return reference to the stencil
    */
   template< typename TYPE >
   TYPE const & getStencil( MeshLevel const & mesh, string const & name ) const;
 
   /**
-   * @copydoc getStencil(MeshLevel const &, string const &)
+   * @copydoc getStencil(MeshLevel const &, string const &) const
    */
   template< typename TYPE >
   TYPE & getStencil( MeshLevel & mesh, string const & name ) const;
@@ -130,6 +131,7 @@ public:
   /**
    * @brief Call a user-provided function for each stencil.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
    * @param[in] lambda The LAMBDA function
    */
   template< typename LAMBDA >
@@ -140,6 +142,7 @@ public:
    * @tparam TYPE The type to be passed to forWrappers
    * @tparam TYPES Other types to be passed to forWrappers
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] mesh the mesh level containing the stencils
    * @param[in] lambda The LAMBDA function
    */
   template< typename TYPE, typename ... TYPES, typename LAMBDA >
@@ -147,7 +150,7 @@ public:
 
   /**
    * @brief Add a new fracture stencil.
-   * @param[in,out] domain The domain on which to add the fracture stencil
+   * @param[in,out] mesh the mesh on which to add the fracture stencil
    * @param[in] faceElementRegionName the face element region name
    * @param[in] initFlag if true initialize physical fields, like pressure
    */
@@ -177,6 +180,9 @@ public:
     static constexpr auto fractureStencilString       = "fractureStencil";
   };
 
+  /**
+   * @brief Group keys.
+   */
   struct groupKeyStruct
   {
     /// Key under which the top-level group for all FV stencils will be registered on MeshLevel
@@ -201,25 +207,25 @@ protected:
 
   /**
    * @brief Register the wrapper for cell stencil on a mesh.
-   * @param[in] mesh the target mesh level
+   * @param stencilGroup the group holding the stencil objects
    */
   virtual void registerCellStencil( Group & stencilGroup ) const = 0;
 
   /**
    * @brief Actual computation of the cell-to-cell stencil, to be overridden by implementations.
-   * @param[in] domain the domain on which to perform the computation
+   * @param[in] mesh the mesh on which to perform the computation
    */
   virtual void computeCellStencil( MeshLevel & mesh ) const = 0;
 
   /**
    * @brief Register the wrapper for fracture stencil on a mesh.
-   * @param[in] mesh the target mesh level
+   * @param stencilGroup the group holding the stencil objects
    */
   virtual void registerFractureStencil( Group & stencilGroup ) const = 0;
 
   /**
    * @brief Register the wrapper for boundary face stencil on a mesh.
-   * @param mesh the target mesh level
+   * @param stencilGroup the group holding the stencil objects
    * @param setName the face set name (used as the wrapper name)
    */
   virtual void registerBoundaryStencil( Group & stencilGroup,
@@ -227,7 +233,7 @@ protected:
 
   /**
    * @brief Allocate and populate a stencil to be used in boundary condition application
-   * @param domain the target domain
+   * @param mesh the target mesh level
    * @param setName name of the face set, to be used as wrapper name for the produced stencil
    * @param faceSet set of face indices to use
    */
