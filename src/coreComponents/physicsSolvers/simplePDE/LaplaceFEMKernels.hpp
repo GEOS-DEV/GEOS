@@ -128,15 +128,11 @@ namespace geosx
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 class LaplaceFEMKernel :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM,
                                             1,
                                             1 >
 {
@@ -145,13 +141,13 @@ public:
   using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE,
-                                                  NUM_NODES_PER_ELEM,
-                                                  NUM_NODES_PER_ELEM,
                                                   1,
                                                   1 >;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_matrix;
@@ -211,7 +207,7 @@ public:
     {}
 
     /// C-array storage for the element local primary field variable.
-    real64 primaryField_local[NUM_NODES_PER_ELEM];
+    real64 primaryField_local[numNodesPerElem];
   };
 
 
@@ -228,7 +224,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -247,9 +243,9 @@ public:
                                             localIndex const q,
                                             StackVariables & stack ) const
   {
-    for( localIndex a=0; a<NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a<numNodesPerElem; ++a )
     {
-      for( localIndex b=0; b<NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b=0; b<numNodesPerElem; ++b )
       {
         stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( m_dNdX[k][q][a], m_dNdX[k][q][b] ) * m_detJ( k, q );
       }
@@ -271,22 +267,22 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
-      for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
+      for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
       }
     }
 
-    for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( int a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localColDofIndex,
                                                                               stack.localJacobian[ a ],
-                                                                              NUM_NODES_PER_ELEM );
+                                                                              numNodesPerElem );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
       maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );

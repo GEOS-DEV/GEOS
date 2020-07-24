@@ -45,15 +45,11 @@ namespace finiteElement
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
                                               FE_TYPE,
-                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                                               NUM_DOF_PER_TEST_SP,
                                               NUM_DOF_PER_TRIAL_SP >
 {
@@ -62,8 +58,6 @@ public:
   using Base = KernelBase< SUBREGION_TYPE,
                            CONSTITUTIVE_TYPE,
                            FE_TYPE,
-                           NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
                            NUM_DOF_PER_TEST_SP,
                            NUM_DOF_PER_TRIAL_SP >;
 

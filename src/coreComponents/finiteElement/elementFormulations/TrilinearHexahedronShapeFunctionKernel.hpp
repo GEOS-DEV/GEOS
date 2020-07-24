@@ -70,6 +70,11 @@ public:
     return numQuadraturePoints;
   }
 
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
   /**
    * @brief Calculate shape functions values for each support point at a
    *   quadrature point.
