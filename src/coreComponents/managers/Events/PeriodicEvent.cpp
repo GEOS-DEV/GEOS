@@ -90,13 +90,13 @@ void PeriodicEvent::EstimateEventTiming( real64 const time,
   // Check event status
   if( cycle == 0 )
   {
-    setForecast( ForeCast::READY_FOR_EXEC );
+    setReadyForExec();
   }
   else if( m_timeFrequency >= 0.0 )
   {
     if( dt <= 0 )
     {
-      setForecast( ForeCast::IDLE );
+      setIdle();
     }
     else
     {
@@ -176,11 +176,11 @@ void PeriodicEvent::CheckOptionalFunctionThreshold( real64 const time,
   // Forcast event
   if( result > m_eventThreshold )
   {
-    setForecast( ForeCast::READY_FOR_EXEC );
+    setReadyForExec();
   }
   else
   {
-    setForecast( ForeCast::IDLE );
+    setIdle();
   }
 }
 

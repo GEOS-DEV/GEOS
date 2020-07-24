@@ -230,50 +230,45 @@ public:
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
-   * @brief Forecast statuses.
-   *
-   * This enum is kept public only for debugging purpose.
-   */
-  enum class ForeCast : integer
-  {
-    READY_FOR_EXEC,
-    PREPARE_FOR_EXEC,
-    IDLE
-  };
-
-  /**
    * @brief Forecasts accessors
    * @return The forecast.
    *
-   * The `GetForecast` getter only exists for debugging purpose.
+   * The `getForecast` getter only exists for debugging purpose.
    * Prefer the predicate functions below.
    */
   ///@{
-  ForeCast getForecast() const
+  integer getForecast() const
   { return m_eventForecast; }
 
   bool isReadyForExec() const
-  { return m_eventForecast == ForeCast::READY_FOR_EXEC; }
+  { return m_eventForecast <= 0; }
 
   bool isPreparingForExec() const
-  { return m_eventForecast == ForeCast::PREPARE_FOR_EXEC; }
+  { return m_eventForecast == 1; }
 
   bool isIdle() const
-  { return m_eventForecast == ForeCast::IDLE; }
+  { return m_eventForecast > 1; }
 
 protected:
 
-  void setForecast( ForeCast forecast )
-  { m_eventForecast = forecast; }
+  void setReadyForExec()
+  { m_eventForecast = 0; }
+
+  void setPreparingForExec()
+  { m_eventForecast = 1; }
+
+  void setIdle()
+  { m_eventForecast = std::numeric_limits< decltype( m_eventForecast ) >::max(); }
 
   /**
    * @brief Sets the forecast
    * @param forecast The forecast provided as an integer.
    *
-   * If the forecast is 0 or below, the event is considered being READY_FOR_EXEC.
-   * If it equals 1, it is in PREPARE_FOR_EXEC status. Above, the event is IDLE.
+   * If the forecast is 0 or below, the event is considered being "ready for exec".
+   * If it equals 1, it is in "prepare for exec" status. Above, the event is "idle".
    */
-  void setForecast( integer forecast );
+  void setForecast( integer forecast )
+  { m_eventForecast = forecast; }
   ///@}
 
   /**
@@ -306,7 +301,7 @@ private:
   integer m_targetExactStartStop;
   integer m_currentSubEvent;
   integer m_targetExecFlag;
-  ForeCast m_eventForecast;
+  integer m_eventForecast;
   integer m_exitFlag;
   integer m_eventCount;
   integer m_timeStepEventCount;
@@ -316,15 +311,6 @@ private:
   /// A pointer to the optional event target
   ExecutableGroup * m_target;
 };
-
-/**
- * @brief Prints a ForeCast to standard streams.
- * @param os The out stream
- * @param obj The forcast
- * @return The stream
- */
-std::ostream & operator<<( std::ostream & os,
-                           const EventBase::ForeCast & obj );
 
 } /* namespace geosx */
 

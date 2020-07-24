@@ -42,7 +42,7 @@ EventBase::EventBase( const std::string & name,
   m_targetExactStartStop( 0 ),
   m_currentSubEvent( 0 ),
   m_targetExecFlag( 0 ),
-  m_eventForecast( ForeCast::READY_FOR_EXEC ),
+  m_eventForecast( 0 ),
   m_exitFlag( 0 ),
   m_eventCount( 0 ),
   m_timeStepEventCount( 0 ),
@@ -163,7 +163,7 @@ void EventBase::CheckEvents( real64 const time,
   {
     if( dt <= 0 )
     {
-      this->setForecast( ForeCast::IDLE );
+      this->setIdle();
     }
     else
     {
@@ -172,7 +172,7 @@ void EventBase::CheckEvents( real64 const time,
   }
   else if( time >= m_endTime )
   {
-    this->setForecast( ForeCast::IDLE );
+    this->setIdle();
   }
   else
   {
@@ -359,29 +359,6 @@ void EventBase::SetProgressIndicator( array1d< integer > & eventCounters )
   {
     subEvent.SetProgressIndicator( eventCounters );
   } );
-}
-
-void EventBase::setForecast( integer forecast )
-{
-  if( forecast <= 0 )
-  {
-    m_eventForecast = ForeCast::READY_FOR_EXEC;
-  }
-  else if( forecast == 1 )
-  {
-    m_eventForecast = ForeCast::PREPARE_FOR_EXEC;
-  }
-  else
-  {
-    m_eventForecast = ForeCast::IDLE;
-  }
-}
-
-std::ostream & operator<<( std::ostream & os,
-                           const EventBase::ForeCast & obj )
-{
-  os << static_cast< std::underlying_type_t< EventBase::ForeCast > >(obj);
-  return os;
 }
 
 } /* namespace geosx */

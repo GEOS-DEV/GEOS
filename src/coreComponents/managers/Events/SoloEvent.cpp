@@ -65,7 +65,7 @@ void SoloEvent::EstimateEventTiming( real64 const time,
     {
       if( dt <= 0 )
       {
-        setForecast( ForeCast::IDLE );
+        setIdle();
       }
       else
       {
@@ -81,7 +81,7 @@ void SoloEvent::EstimateEventTiming( real64 const time,
   }
   else
   {
-    setForecast( ForeCast::IDLE );
+    setIdle();
   }
 }
 
