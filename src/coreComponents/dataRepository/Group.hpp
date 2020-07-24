@@ -927,7 +927,7 @@ public:
 
   /**
    * @brief Calls RegisterDataOnMesh() recursively.
-   * @param[in,out] MeshBodies the group of MeshBody objects to register data on.
+   * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
   virtual void RegisterDataOnMeshRecursive( Group * const meshBodies );
 
