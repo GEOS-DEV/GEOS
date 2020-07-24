@@ -535,6 +535,7 @@ template< typename POLICY,
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
+                                     string const & finiteElementName,
                                      arrayView1d< string const > const & constitutiveNames,
                                      KERNEL_CONSTRUCTOR_PARAMS && ... kernelConstructorParams )
 {
@@ -587,8 +588,12 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       using CONSTITUTIVE_TYPE = TYPEOFPTR( castedConstitutiveRelation );
 
       string const elementTypeString = elementSubRegion.GetElementTypeString();
-      finiteElement::dispatch( elementTypeString,
-                               [&] ( auto const finiteElement )
+
+      FiniteElementShapeFunctionKernelBase &
+      subRegionFE = elementSubRegion.template getReference<FiniteElementShapeFunctionKernelBase>( finiteElementName );
+
+      finiteElement::dispatch3D( subRegionFE,
+                                 [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
 //        // Compile time values!

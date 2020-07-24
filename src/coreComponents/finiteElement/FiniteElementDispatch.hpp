@@ -1,8 +1,19 @@
 /*
- * FiniteElementDispatch.hpp
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
- *  Created on: Jul 6, 2020
- *      Author: settgast
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file FiniteElementDispatch
  */
 
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
@@ -12,6 +23,9 @@
 #include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
 #include "elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp"
 #include "elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
+#include "elementFormulations/PyramidShapeFunctionKernel.hpp"
+#include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
+#include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 
 
 
@@ -91,6 +105,52 @@ dispatch( string const & input,
   else
   {
     GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
+  }
+}
+
+template< typename LAMBDA >
+void
+dispatch3D( FiniteElementShapeFunctionKernelBase & input,
+            LAMBDA && lambda )
+{
+  if( dynamic_cast<TrilinearHexahedronShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<TrilinearHexahedronShapeFunctionKernel&>(input) );
+  }
+  else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<BiLinearWedgeShapeFunctionKernel&>(input) );
+  }
+  else if( dynamic_cast<LinearTetrahedronShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<LinearTetrahedronShapeFunctionKernel&>(input) );
+  }
+  else if( dynamic_cast<PyramidShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<PyramidShapeFunctionKernel&>(input) );
+  }
+  else
+  {
+    GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+  }
+}
+
+template< typename LAMBDA >
+void
+dispatch2D( FiniteElementShapeFunctionKernelBase & input,
+            LAMBDA && lambda )
+{
+  if( dynamic_cast<BiLinearQuadrilateralFaceShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<BiLinearQuadrilateralFaceShapeFunctionKernel&>(input) );
+  }
+  else if( dynamic_cast<LinearTriangleFaceShapeFunctionKernel*>(&input) )
+  {
+    lambda( static_cast<LinearTriangleFaceShapeFunctionKernel&>(input) );
+  }
+  else
+  {
+    GEOSX_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<typeid(input).name() );
   }
 }
 
