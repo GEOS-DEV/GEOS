@@ -42,15 +42,19 @@ TwoPointFluxApproximation::TwoPointFluxApproximation( std::string const & name,
 
 }
 
-void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & domain )
+void TwoPointFluxApproximation::registerCellStencil( Group & stencilGroup ) const
 {
-  MeshBody const & meshBody = *domain.getMeshBody( 0 );
-  MeshLevel const & mesh = *meshBody.getMeshLevel( 0 );
+  stencilGroup.registerWrapper< CellElementStencilTPFA >( viewKeyStruct::cellStencilString )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
+{
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  CellElementStencilTPFA & stencil = this->getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
+  CellElementStencilTPFA & stencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
 
   arrayView2d< localIndex const > const & elemRegionList = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
@@ -80,7 +84,7 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
 
   stencil.reserve( faceManager.size() );
 
-  real64 const lengthTolerance = meshBody.getGlobalLengthScale() * m_areaRelTol;
+  real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
@@ -183,16 +187,20 @@ void TwoPointFluxApproximation::computeCellStencil( DomainPartition const & doma
   } );
 }
 
-
-void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
-                                                      string const & faceElementRegionName,
-                                                      bool const initFlag )
+void TwoPointFluxApproximation::registerFractureStencil( Group & stencilGroup ) const
 {
-  MeshLevel * const mesh = domain.getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager * const nodeManager = mesh->getNodeManager();
-  EdgeManager const * const edgeManager = mesh->getEdgeManager();
-  FaceManager const * const faceManager = mesh->getFaceManager();
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  stencilGroup.registerWrapper< FaceElementStencil >( viewKeyStruct::fractureStencilString )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
+                                                      string const & faceElementRegionName,
+                                                      bool const initFlag ) const
+{
+  NodeManager * const nodeManager = mesh.getNodeManager();
+  EdgeManager const * const edgeManager = mesh.getEdgeManager();
+  FaceManager const * const faceManager = mesh.getFaceManager();
+  ElementRegionManager * const elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager->ConstructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString );
@@ -208,8 +216,8 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   arrayView2d< real64 const > const & faceNormal = faceManager->faceNormal();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-  FaceElementStencil & fractureStencil = getReference< FaceElementStencil >( viewKeyStruct::fractureStencilString );
-  CellElementStencilTPFA & cellStencil = getReference< CellElementStencilTPFA >( viewKeyStruct::cellStencilString );
+  FaceElementStencil & fractureStencil = getStencil< FaceElementStencil >( mesh, viewKeyStruct::fractureStencilString );
+  CellElementStencilTPFA & cellStencil = getStencil< CellElementStencilTPFA >( mesh, viewKeyStruct::cellStencilString );
   fractureStencil.move( LvArray::MemorySpace::CPU );
   cellStencil.move( LvArray::MemorySpace::CPU );
 
@@ -586,19 +594,21 @@ void TwoPointFluxApproximation::addToFractureStencil( DomainPartition & domain,
   }
 }
 
-void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & domain,
-                                                        string const & setName,
-                                                        SortedArrayView< localIndex const > const & faceSet )
+void TwoPointFluxApproximation::registerBoundaryStencil( Group & stencilGroup, string const & setName ) const
 {
-  MeshBody const & meshBody = *domain.getMeshBody( 0 );
-  MeshLevel const & mesh = *meshBody.getMeshLevel( 0 );
+  stencilGroup.registerWrapper< BoundaryStencil >( setName )->
+    setRestartFlags( RestartFlags::NO_WRITE );
+}
+
+void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
+                                                        string const & setName,
+                                                        SortedArrayView< localIndex const > const & faceSet ) const
+{
   NodeManager const & nodeManager = *mesh.getNodeManager();
   FaceManager const & faceManager = *mesh.getFaceManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  // register a new stencil object
-  Wrapper< BoundaryStencil > * wrapper = registerWrapper< BoundaryStencil >( setName )->setRestartFlags( RestartFlags::NO_WRITE );
-  BoundaryStencil & stencil = wrapper->reference();
+  BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
 
   arrayView2d< localIndex const > const & elemRegionList     = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList  = faceManager.elementSubRegionList();
@@ -630,7 +640,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( DomainPartition const & 
   stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
   stackArray1d< real64, numPts > stencilWeights( numPts );
 
-  real64 const lengthTolerance = meshBody.getGlobalLengthScale() * this->m_areaRelTol;
+  real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
   real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
