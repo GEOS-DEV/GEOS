@@ -1600,7 +1600,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject.release(), true ),
+                     new Wrapper< T >( name, this, std::move(newObject) ),
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );
