@@ -192,8 +192,6 @@ integralTypeDispatch( INTEGRAL_TYPE const input,
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class KernelBase
@@ -201,11 +199,11 @@ class KernelBase
 public:
   /// Compile time value for the number of test function support points per
   /// element.
-  static constexpr int numTestSupportPointsPerElem  = NUM_TEST_SUPPORT_POINTS_PER_ELEM;
+  static constexpr int numTestSupportPointsPerElem  = FE_TYPE::numNodes;
 
   /// Compile time value for the number of trial function support points per
   /// element.
-  static constexpr int numTrialSupportPointsPerElem = NUM_TRIAL_SUPPORT_POINTS_PER_ELEM;
+  static constexpr int numTrialSupportPointsPerElem = FE_TYPE::numNodes;
 
   /// Compile time value for the number of degrees of freedom per test function
   /// support point.
@@ -214,6 +212,8 @@ public:
   /// Compile time value for the number of degrees of freedom per trial
   /// function support point.
   static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
+
+  static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   /**
    * @brief Constructor
@@ -383,7 +383,6 @@ public:
    * that follow the interface set by KernelBase.
    */
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static
   typename std::enable_if< std::is_same< POLICY, serialPolicy >::value ||
@@ -402,7 +401,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -429,7 +428,6 @@ public:
    * that follow the interface set by KernelBase.
    */
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static
   typename std::enable_if< !( std::is_same< POLICY, serialPolicy >::value ||
@@ -451,7 +449,7 @@ public:
 
       kernelComponent.setup( k, stack );
 
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -532,9 +530,7 @@ template< typename POLICY,
           typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                    typename FE_TYPE > class KERNEL_TEMPLATE,
           typename ... KERNEL_CONSTRUCTOR_PARAMS >
 static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
@@ -595,16 +591,13 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                [&] ( auto const finiteElement )
       {
         using FE_TYPE = TYPEOFREF( finiteElement );
-        // Compile time values!
-        static constexpr int NUM_NODES_PER_ELEM = FE_TYPE::numNodes;
-        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
+//        // Compile time values!
+//        static constexpr int NUM_QUADRATURE_POINTS = FE_TYPE::numQuadraturePoints;
 
         // Define an alias for the kernel type for easy use.
         using KERNEL_TYPE = KERNEL_TEMPLATE< SUBREGIONTYPE,
                                              CONSTITUTIVE_TYPE,
-                                             FE_TYPE,
-                                             NUM_NODES_PER_ELEM,
-                                             NUM_NODES_PER_ELEM >;
+                                             FE_TYPE >;
 
         // 1) Combine the tuple containing the physics kernel specific constructor parameters with
         // the parameters common to all phsyics kernels that use this interface,
@@ -642,9 +635,8 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
         maxResidualContribution =
           std::max( maxResidualContribution,
                     KERNEL_TYPE::template kernelLaunch< POLICY,
-                                                        NUM_QUADRATURE_POINTS
-                                                        >( numElems,
-                                                           kernelComponent ) );
+                                                        KERNEL_TYPE >( numElems,
+                                                                       kernelComponent ) );
       } );
     } );
 

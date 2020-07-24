@@ -42,22 +42,16 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
+          typename FE_TYPE >
 class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            FE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM >
+                                            FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
-                            FE_TYPE,
-                            NUM_NODES_PER_ELEM,
-                            NUM_NODES_PER_ELEM >;
+                            FE_TYPE >;
 
   using Base::numNodesPerElem;
   using Base::numTestSupportPointsPerElem;

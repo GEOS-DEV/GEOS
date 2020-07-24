@@ -45,6 +45,16 @@ public:
   virtual ~PyramidShapeFunctionKernel() override final
   {}
 
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void shapeFunctionValues( localIndex const q,
