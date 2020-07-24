@@ -135,6 +135,7 @@ static PyObject * reinit( PyObject * self, PyObject * args )
   PYTHON_ERROR_IF( g_state == nullptr || g_state->getState() != State::COMPLETED,
                    PyExc_RuntimeError, "State must be COMPLETED", nullptr );
 
+  long pythonMPIRank;
   PyObject * list;
   if( !PyArg_ParseTuple( args, "O", &list ) )
   {
