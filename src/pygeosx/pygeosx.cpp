@@ -26,7 +26,7 @@ public:
    * @brief Create an uninitialized (nullptr) reference.
    */
   PyObjectRef() = default;
-  
+
   /**
    * @brief Take ownership of a reference to @p src.
    * @p src The object to be referenced.
@@ -78,13 +78,16 @@ private:
 static std::unique_ptr< GeosxState > state;
 
 /**
- * 
+ *
  */
 static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
-  GEOSX_ERROR_IF( state != nullptr, "Already initialized." );
+  if ( state != nullptr ){
+    PyErr_SetString( PyExc_RuntimeError, "state already initialized" );
+    return NULL;
+  }
 
   long pythonMPIRank;
   PyObject * list;
@@ -118,7 +121,10 @@ static PyObject * initialize( PyObject * self, PyObject * args )
 
   basicSetup( argv.size() - 1, argv.data(), true );
 
-  GEOSX_ERROR_IF_NE( pythonMPIRank, MpiWrapper::Comm_rank() );
+  if ( pythonMPIRank != MpiWrapper::Comm_rank() ){
+    PyErr_SetString( PyExc_ValueError, "Python MPI rank does not align with GEOSX MPI rank" );
+    return NULL;
+  }
 
   state = std::make_unique< GeosxState >();
   state->initializeDataRepository();
@@ -127,7 +133,7 @@ static PyObject * initialize( PyObject * self, PyObject * args )
 }
 
 /**
- * 
+ *
  */
 static PyObject * get( PyObject * self, PyObject * args )
 {
@@ -171,44 +177,44 @@ static PyObject * get( PyObject * self, PyObject * args )
 }
 
 /**
- * 
+ *
  */
 static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
+  GEOSX_UNUSED_VAR( args );
 
-  if ( !PyArg_ParseTuple( args, "" ) )
-  { return nullptr; }
-
-  GEOSX_ERROR_IF( state == nullptr, "State must be initialized." );
+  if ( state == nullptr ){
+    PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
+    return NULL;
+  }
   state->applyInitialConditions();
   Py_RETURN_NONE;
 }
 
 /**
- * 
+ *
  */
 static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
+  GEOSX_UNUSED_VAR( args );
 
-  if ( !PyArg_ParseTuple( args, "" ) )
-  { return nullptr; }
-
-  GEOSX_ERROR_IF( state == nullptr, "State must be initialized." );
+  if ( state == nullptr ){
+    PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
+    return NULL;
+  }
   state->run();
   return PyLong_FromLong( static_cast< int >( state->getState() ) );
 }
 
 /**
- * 
+ *
  */
 static PyObject * finalize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
-
-  if ( !PyArg_ParseTuple( args, "" ) )
-  { return nullptr; }
+  GEOSX_UNUSED_VAR( args );
 
   state = nullptr;
   basicCleanup();
@@ -219,18 +225,18 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 } // namespace geosx
 
 /**
- * 
+ *
  */
 static PyMethodDef pygeosxFuncs[] = {
-  { "initialize", geosx::initialize, METH_VARARGS, 
+  { "initialize", geosx::initialize, METH_VARARGS,
     "" },
-  { "get", geosx::get, METH_VARARGS, 
+  { "get", geosx::get, METH_VARARGS,
     "" },
-  { "applyInitialConditions", geosx::applyInitialConditions, METH_VARARGS, 
+  { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS,
     "" },
-  { "run", geosx::run, METH_VARARGS, 
+  { "run", geosx::run, METH_NOARGS,
     "" },
-  { "finalize", geosx::finalize, METH_VARARGS, 
+  { "finalize", geosx::finalize, METH_NOARGS,
     "" },
   { NULL, NULL, 0, NULL }        /* Sentinel */
 };
@@ -250,12 +256,33 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   NULL,
 };
 
+PyObject * addConstants( PyObject * module ){
+  if ( PyModule_AddIntConstant( module, "COMPLETED", static_cast< long >( geosx::State::COMPLETED ) ) ){
+    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+    return NULL;
+  }
+  if ( PyModule_AddIntConstant( module, "INITIALIZED", static_cast< long >( geosx::State::INITIALIZED ) ) ){
+    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+    return NULL;
+  }
+  if ( PyModule_AddIntConstant( module, "UNINITIALIZED", static_cast< long >( geosx::State::UNINITIALIZED ) ) ){
+    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+    return NULL;
+  }
+  if ( PyModule_AddIntConstant( module, "READY_TO_RUN", static_cast< long >( geosx::State::READY_TO_RUN ) ) ){
+    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+    return NULL;
+  }
+  return module;
+}
+
 /**
- * 
+ *
  */
 PyMODINIT_FUNC
 PyInit_pygeosx(void)
 {
   import_array();
-  return PyModule_Create(&pygeosxModuleFunctions);
+  PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
+  return addConstants( module );
 }

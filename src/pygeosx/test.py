@@ -24,8 +24,7 @@ currentTime = pygeosx.get( "Events/time", False )
 print( "In python after applyInitialConditions: current time = {}".format( currentTime[ 0 ] ) )
 sys.stdout.flush()
 
-# 3 is the value of the State::COMPLETED enum
-while pygeosx.run() != 3:
+while pygeosx.run() != pygeosx.COMPLETED:
     currentTime = pygeosx.get( "Events/time", True )
     print( "In python: current time = {}".format( currentTime[ 0 ] ) )
     sys.stdout.flush()
