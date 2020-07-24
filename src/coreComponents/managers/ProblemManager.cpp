@@ -689,10 +689,13 @@ void ProblemManager::ApplyNumericalMethods()
             {
               string const elementTypeString = subRegion.GetElementTypeString();
               finiteElement::dispatch( elementTypeString,
-                                       [&] ( auto const finiteElement )
+                                       [&] ( auto finiteElement )
               {
                 using FE_TYPE = TYPEOFREF( finiteElement );
-                subRegion.template registerWrapper<FE_TYPE>(discretizationName);
+                subRegion.template registerWrapper< FE_TYPE,
+                                                    FiniteElementShapeFunctionKernelBase>( discretizationName )->
+                  setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
                 feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );

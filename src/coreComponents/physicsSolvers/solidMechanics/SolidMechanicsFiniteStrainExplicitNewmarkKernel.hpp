@@ -91,22 +91,16 @@ void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
+          typename FE_TYPE >
 class ExplicitFiniteStrain : public ExplicitSmallStrain< SUBREGION_TYPE,
                                                          CONSTITUTIVE_TYPE,
-                                                         FE_TYPE,
-                                                         NUM_NODES_PER_ELEM,
-                                                         NUM_NODES_PER_ELEM >
+                                                         FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = ExplicitSmallStrain< SUBREGION_TYPE,
                                     CONSTITUTIVE_TYPE,
-                                    FE_TYPE,
-                                    NUM_NODES_PER_ELEM,
-                                    NUM_NODES_PER_ELEM >;
+                                    FE_TYPE >;
 
   using Base::numNodesPerElem;
   using Base::numDofPerTestSupportPoint;
@@ -188,7 +182,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a< numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
@@ -212,7 +206,7 @@ public:
                                    StackVariables & stack ) const
   {
 #if defined(CALCFEMSHAPE)
-    real64 dNdX[ NUM_NODES_PER_ELEM ][ 3 ];
+    real64 dNdX[ numNodesPerElem ][ 3 ];
     real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
     /// Macro to substitute in the shape function derivatives.
@@ -227,7 +221,7 @@ public:
     /// @endcond DOXYGEN_SKIP
 #endif
     real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
-    CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );
+    CalculateGradients< numNodesPerElem >( dUhatdX, dUdX, stack.varLocal, stack.uLocal, DNDX );
     LvArray::tensorOps::scale< 3, 3 >( dUhatdX, m_dt );
 
     real64 F[ 3 ][ 3 ], Ldt[ 3 ][ 3 ], fInv[ 3 ][ 3 ];
@@ -253,7 +247,7 @@ public:
 
     m_constitutiveUpdate.HypoElastic( k, q, Dadt, Rot );
 
-    Integrate< NUM_NODES_PER_ELEM >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
+    Integrate< numNodesPerElem >( m_constitutiveUpdate.m_stress[k][q].toSliceConst(),
                                      DNDX,
                                      DETJ,
                                      detF,
