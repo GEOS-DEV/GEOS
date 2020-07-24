@@ -1088,7 +1088,7 @@
 		<xsd:attribute name="faceCenter" type="real64_array2d" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
-		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
+		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--faceRotationMatrix => (no description available)-->
 		<xsd:attribute name="faceRotationMatrix" type="real64_array3d" />
