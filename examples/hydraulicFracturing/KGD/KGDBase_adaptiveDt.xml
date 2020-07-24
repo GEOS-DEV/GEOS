@@ -84,17 +84,13 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
 
     <FiniteElements>
       <FiniteElementSpace
         name="FE2"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="constant"/>
+        order="1"/>
     </FiniteElements>
 
     <FiniteVolume>
