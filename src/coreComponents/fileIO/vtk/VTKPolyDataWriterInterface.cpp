@@ -73,8 +73,10 @@ int ToVTKCellType( const string & elementType )
 localIndex VTKPolyDataWriterInterface::AskMPIRankForNbElementsInRegion( ElementRegionBase const & er, int rank ) const
 {
   localIndex nbElems = er.getNumberOfElements();
-  MpiWrapper::Broadcast( nbElems, rank );
-  return nbElems;
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+  array1d< localIndex > nbElemsInRegion( mpiSize );
+  MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, MPI_COMM_GEOSX );
+  return nbElemsInRegion[rank];
 }
 
 VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string const & outputName ):
