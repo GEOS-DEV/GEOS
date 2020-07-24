@@ -47,13 +47,14 @@ string const parentSpace="parentSpace";
 }
 }
 
-//class BasisBase;
-//class QuadratureBase;
-//class FiniteElementBase;
+
 
 class FiniteElementDiscretization : public dataRepository::Group
 {
 public:
+
+
+
 
   FiniteElementDiscretization() = delete;
 
@@ -83,7 +84,6 @@ public:
     array2d< real64 > & detJ = elementSubRegion->detJ();
     auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
-#if 1
     string const elementTypeString = elementSubRegion->GetElementTypeString();
     finiteElement::dispatch( elementTypeString,
                              [&] ( auto const finiteElement )
@@ -120,47 +120,17 @@ public:
       }
 
     } );
-#else
-
-    {
-      std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
-      dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), m_quadrature->size(), fe->dofs_per_element(), 3 );
-      detJ.resize( elementSubRegion->size(), m_quadrature->size() );
-    }
-
-    // We can't use a simple RAJA loop here because each thread needs it's own FiniteElementBase, and we can't capture
-    // fe
-    // in the lambda because it's a unique_ptr.
-    PRAGMA_OMP( "omp parallel" )
-    {
-      std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
-
-      PRAGMA_OMP( "omp for" )
-      for( localIndex k = 0; k < elementSubRegion->size(); ++k )
-      {
-        fe->reinit( X, elemsToNodes[k] );
-
-        for( localIndex q = 0; q < fe->n_quadrature_points(); ++q )
-        {
-          detJ( k, q ) = fe->JxW( q );
-          for( localIndex b = 0; b < fe->dofs_per_element(); ++b )
-          {
-            LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], fe->gradient( b, q ) );
-          }
-        }
-      }
-    }
-#endif
   }
 
-//  localIndex getNumberOfQuadraturePoints() const;
+
 
   string m_basisName;
   string m_quadratureName;
   string m_parentSpace;
 
-//  BasisBase const *    m_basis    = nullptr;
-//  QuadratureBase const * m_quadrature = nullptr;
+//  string m_order;
+//  string m_implementationOption;
+
 protected:
   void PostProcessInput() override final;
 
