@@ -316,8 +316,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-  // Take BCs defined for "pressure" field and apply values to "boundaryFacePressure"
-  // TODO: Just use "pressure"? will have to rebaseline all flow tests
+  // Take BCs defined for "pressure" field and apply values to "facePressure"
   fsManager.Apply( time_n + dt,
                    &domain,
                    "faceManager",

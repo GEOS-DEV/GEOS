@@ -108,10 +108,12 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
         setDefaultValue( 1.0 );
     } );
 
-    // TODO restrict this to boundary sets
     FaceManager * const faceManager = meshLevel->getFaceManager();
     {
-      faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString );
+      faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString )->
+        setPlotLevel( PlotLevel::LEVEL_0 )->
+        setRegisteringObjects( this->getName() )->
+        setDescription( "An array that holds the pressures at the faces." );
     }
   }
 }
