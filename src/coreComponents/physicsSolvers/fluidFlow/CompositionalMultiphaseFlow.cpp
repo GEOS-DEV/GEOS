@@ -48,9 +48,9 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_capPressureFlag( 0 ),
-  m_maxRelCompDensChange( 1.0 ),
-  m_compDensCheckTol( 1e-10 ),
-  m_minScalingFactor( 5e-2 )
+  m_maxCompFracChange( 1.0 ),
+  m_minScalingFactor( 0.1 ),
+  m_allowCompDensChopping( 1 )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
@@ -72,11 +72,17 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
     setInputFlag( InputFlags::OPTIONAL )->
     setDescription( "Name of the capillary pressure constitutive model to use" );
 
-  this->registerWrapper( viewKeyStruct::maxRelCompDensChangeString, &m_maxRelCompDensChange )->
+  this->registerWrapper( viewKeyStruct::maxCompFracChangeString, &m_maxCompFracChange )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( 1.0 )->
-    setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString, &m_allowCompDensChopping )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1 )->
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
   m_linearSolverParameters.get().mgr.strategy = "CompositionalMultiphaseFlow";
 
@@ -88,10 +94,10 @@ void CompositionalMultiphaseFlow::PostProcessInput()
   CheckModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString );
   m_capPressureFlag = CheckModelNames( m_capPressureModelNames, viewKeyStruct::capPressureNamesString, true );
 
-  GEOSX_ERROR_IF_GT_MSG( m_maxRelCompDensChange, 1.0,
-                         "The maximum relative change in component density must smaller or equal to 1.0" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelCompDensChange, 0.0,
-                         "The maximum relative change in component density must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
 }
 
 void CompositionalMultiphaseFlow::RegisterDataOnMesh( Group * const MeshBodies )
@@ -1220,14 +1226,14 @@ real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition co
   GEOSX_MARK_FUNCTION;
 
   // check if we want to rescale the Newton update
-  if( m_maxRelCompDensChange >= 1.0 )
+  if( m_maxCompFracChange >= 1.0 )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
   }
 
   real64 constexpr eps = 1e-10;
-  real64 const maxRelCompDensChange = m_maxRelCompDensChange;
+  real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
 
@@ -1251,6 +1257,11 @@ real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition co
     {
       if( elemGhostRank[ei] < 0 )
       {
+        real64 prevTotalDens = 0;
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
+        }
 
         // compute the change in component densities and component fractions
         for( localIndex ic = 0; ic < NC; ++ic )
@@ -1258,12 +1269,16 @@ real64 CompositionalMultiphaseFlow::ScalingForSystemSolution( DomainPartition co
           localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
 
           // compute scaling factor based on relative change in component densities
-          real64 const prevCompDens = compDens[ei][ic] + dCompDens[ei][ic];
           real64 const absCompDensChange = fabs( localSolution[lid] );
-          real64 const maxAbsCompDensChange = maxRelCompDensChange * prevCompDens;
-          // TODO: see if this is robust for the transition prevCompDens \approx 0 => compDens > 0
-          // TODO: this may produce a very conservative chopping strategy, revisit later if too restrictive
-          if( absCompDensChange > maxAbsCompDensChange && maxAbsCompDensChange > eps )
+          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+
+          // This actually checks the change in component fraction, using a lagged total density
+          // Indeed we can rewrite the following check as:
+          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+          // because I found it more robust than using directly newTotalDens (which can vary also
+          // wildly when the compDens change is large)
+          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
           {
             minVal.min( maxAbsCompDensChange / absCompDensChange );
           }
@@ -1287,7 +1302,7 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
                                                        real64 const scalingFactor )
 {
   localIndex const NC = m_numComponents;
-  real64 const checkTol = m_compDensCheckTol;
+  integer const allowCompDensChopping = m_allowCompDensChopping;
 
   MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
@@ -1316,10 +1331,16 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
           real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
           check.min( newPres >= 0.0 );
         }
-        for( localIndex ic = 0; ic < NC; ++ic )
+
+        // if component density is not allowed, the time step fails if a component density is negative
+        // otherwise, negative component densities will be chopped (i.e., set to zero in ApplySystemSolution)
+        if( !allowCompDensChopping )
         {
-          real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-          check.min( newDens >= -checkTol );
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            check.min( newDens >= 0.0 );
+          }
         }
       }
     } );
@@ -1348,9 +1369,12 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
                                scalingFactor,
                                1, m_numDofPerCell );
 
-  // some densities may be slightly negative, they are chopped here
-  // TODO: find a way to do that in CheckSystemSolution or ScalingForSystemSolution
-  ChopNegativeDensities( domain );
+  // if component density chopping is allowed, some component densities may be negative after the update
+  // these negative component densities are set to zero in this function
+  if( m_allowCompDensChopping )
+  {
+    ChopNegativeDensities( domain );
+  }
 
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );

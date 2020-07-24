@@ -285,6 +285,9 @@ public:
     static constexpr auto relPermNamesString  = "relPermNames";
     static constexpr auto capPressureNamesString  = "capPressureNames";
 
+    static constexpr auto maxCompFracChangeString = "maxCompFractionChange";
+    static constexpr auto allowLocalCompDensChoppingString = "allowLocalCompDensityChopping";
+
     static constexpr auto facePressureString  = "facePressure";
     static constexpr auto bcPressureString    = "bcPressure";
 
@@ -315,9 +318,6 @@ public:
     static constexpr auto phaseViscosityString             = "phaseViscosity";
     static constexpr auto phaseRelativePermeabilityString  = "phaseRelativePermeability";
     static constexpr auto phaseCapillaryPressureString     = "phaseCapillaryPressure";
-
-    // accepted relative change in component density between two Newton iterations
-    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";
 
   } viewKeysCompMultiphaseFlow;
 
@@ -429,14 +429,15 @@ private:
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
 
-  /// maximum relative change in a component density between two Newton iterations
-  real64 m_maxRelCompDensChange;
+  /// maximum (absolute) change in a component fraction between two Newton iterations
+  real64 m_maxCompFracChange;
 
-  /// tolerance used in CheckSystemSolution to check acceptable values of component densities
-  real64 const m_compDensCheckTol;
+  /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
+  real64 m_minScalingFactor;
 
-  /// minimum value of the scaling factor obtained by enforcing maxRelCompDensChange and maxAbsCompFracChange
-  real64 const m_minScalingFactor;
+  /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
+  integer m_allowCompDensChopping;
+
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;

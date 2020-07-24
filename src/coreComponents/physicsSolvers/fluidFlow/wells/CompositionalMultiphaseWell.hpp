@@ -229,9 +229,12 @@ public:
 
     // inputs
     static constexpr auto temperatureString = "wellTemperature";
-    static constexpr auto useMassFlagString = "useMass";
+    static constexpr auto useMassFlagString = CompositionalMultiphaseFlow::viewKeyStruct::useMassFlagString;
 
-    static constexpr auto relPermNamesString  = "relPermNames";
+    static constexpr auto relPermNamesString  = CompositionalMultiphaseFlow::viewKeyStruct::relPermNamesString;
+
+    static constexpr auto maxCompFracChangeString = CompositionalMultiphaseFlow::viewKeyStruct::maxCompFracChangeString;
+    static constexpr auto allowLocalCompDensChoppingString = CompositionalMultiphaseFlow::viewKeyStruct::allowLocalCompDensChoppingString;
 
     // primary solution field
     static constexpr auto pressureString = CompositionalMultiphaseFlow::viewKeyStruct::pressureString;
@@ -247,11 +250,6 @@ public:
     static constexpr auto dPhaseVolumeFraction_dGlobalCompDensityString =
       CompositionalMultiphaseFlow::viewKeyStruct::dPhaseVolumeFraction_dGlobalCompDensityString;
 
-    // mixture density
-    static constexpr auto mixtureDensityString = "wellElementMixtureDensity";
-    static constexpr auto dMixtureDensity_dPressureString = "dWellElementMixtureDensity_dPres";
-    static constexpr auto dMixtureDensity_dGlobalCompDensityString = "dWellElementMixtureDensity_dComp";
-
     // global component fractions
     static constexpr auto globalCompFractionString = CompositionalMultiphaseFlow::viewKeyStruct::globalCompFractionString;
     static constexpr auto dGlobalCompFraction_dGlobalCompDensityString =
@@ -261,9 +259,6 @@ public:
     static constexpr auto compPerforationRateString = "compPerforationRate";
     static constexpr auto dCompPerforationRate_dPresString = "dCompPerforationRate_dPres";
     static constexpr auto dCompPerforationRate_dCompString = "dCompPerforationRate_dComp";
-
-    // accepted relative and absolute changes between two Newton iterations
-    static constexpr auto maxRelCompDensChangeString = "maxRelComponentDensityChange";
 
   } viewKeysCompMultiphaseWell;
 
@@ -335,14 +330,14 @@ private:
   /// list of relative permeability model names per target region
   array1d< string > m_relPermModelNames;
 
-  /// maximum relative change in a component density between two Newton iterations
-  real64 m_maxRelCompDensChange;
+  /// maximum (absolute) change in a component fraction between two Newton iterations
+  real64 m_maxCompFracChange;
 
-  /// tolerance used in CheckSystemSolution to check acceptable values of component densities
-  real64 const m_compDensCheckTol;
+  /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
+  real64 m_minScalingFactor;
 
-  /// minimum value of the scaling factor obtained by enforcing maxRelCompDensChange
-  real64 const m_minScalingFactor;
+  /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
+  integer m_allowCompDensChopping;
 
   /// views into reservoir primary variable fields
 

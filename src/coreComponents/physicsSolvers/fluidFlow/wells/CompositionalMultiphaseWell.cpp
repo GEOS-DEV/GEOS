@@ -52,9 +52,9 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_numComponents( 0 ),
   m_temperature( 0.0 ),
   m_useMass( false ),
-  m_maxRelCompDensChange( 1.0 ),
-  m_compDensCheckTol( 1e-10 ),
-  m_minScalingFactor( 5e-2 )
+  m_maxCompFracChange( 1.0 ),
+  m_minScalingFactor( 0.1 ),
+  m_allowCompDensChopping( 1 )
 {
   this->registerWrapper( viewKeyStruct::temperatureString, &m_temperature )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -69,11 +69,17 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Names of relative permeability constitutive models to use" );
 
-  this->registerWrapper( viewKeyStruct::maxRelCompDensChangeString, &m_maxRelCompDensChange )->
+  this->registerWrapper( viewKeyStruct::maxCompFracChangeString, &m_maxCompFracChange )->
     setSizedFromParent( 0 )->
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( 1.0 )->
-    setDescription( "Maximum (relative) change in a component density between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString, &m_allowCompDensChopping )->
+    setSizedFromParent( 0 )->
+    setInputFlag( InputFlags::OPTIONAL )->
+    setApplyDefaultValue( 1 )->
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
 
 }
 
@@ -87,10 +93,10 @@ void CompositionalMultiphaseWell::PostProcessInput()
                   "Flow solver " << GetFlowSolverName() << " not found or incompatible type "
                                                            "(referenced from well solver " << getName() << ")" );
 
-  GEOSX_ERROR_IF_GT_MSG( m_maxRelCompDensChange, 1.0,
-                         "The maximum relative change in component density must smaller or equal to 1.0" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxRelCompDensChange, 0.0,
-                         "The maximum relative change in component density must larger or equal to 0.0" );
+  GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
+  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
 
 }
 
@@ -651,7 +657,7 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
   GEOSX_MARK_FUNCTION;
 
   // check if we want to rescale the Newton update
-  if( m_maxRelCompDensChange >= 1.0 )
+  if( m_maxCompFracChange >= 1.0 )
   {
     // no rescaling wanted, we just return 1.0;
     return 1.0;
@@ -685,7 +691,7 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
                                                              wellElemGhostRank,
                                                              wellElemCompDens,
                                                              dWellElemCompDens,
-                                                             m_maxRelCompDensChange );
+                                                             m_maxCompFracChange );
 
 
     if( subRegionScalingFactor < scalingFactor )
@@ -740,7 +746,7 @@ CompositionalMultiphaseWell::CheckSystemSolution( DomainPartition const & domain
                                                            dWellElemPressure,
                                                            wellElemCompDens,
                                                            dWellElemCompDens,
-                                                           m_compDensCheckTol,
+                                                           m_allowCompDensChopping,
                                                            scalingFactor );
 
     if( subRegionSolutionCheck == 0 )
@@ -866,9 +872,12 @@ CompositionalMultiphaseWell::ApplySystemSolution( DofManager const & dofManager,
                                scalingFactor,
                                m_numDofPerWellElement - 1, m_numDofPerWellElement );
 
-  // some densities may be slightly negative, they are chopped here
-  // TODO: find a way to do that in CheckSystemSolution or ScalingForSystemSolution
-  ChopNegativeDensities( domain );
+  // if component density chopping is allowed, some component densities may be negative after the update
+  // these negative component densities are set to zero in this function
+  if( m_allowCompDensChopping )
+  {
+    ChopNegativeDensities( domain );
+  }
 
   // synchronize
   std::map< string, string_array > fieldNames;

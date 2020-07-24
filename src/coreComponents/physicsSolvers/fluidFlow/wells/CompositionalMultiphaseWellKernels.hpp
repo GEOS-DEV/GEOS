@@ -1222,7 +1222,7 @@ struct SolutionScalingKernel
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView2d< real64 const > const & wellElemCompDens,
           arrayView2d< real64 const > const & dWellElemCompDens,
-          real64 const maxRelCompDensChange )
+          real64 const maxCompFracChange )
   {
     real64 constexpr eps = 1e-10;
 
@@ -1233,18 +1233,27 @@ struct SolutionScalingKernel
       if( wellElemGhostRank[iwelem] < 0 )
       {
 
+        real64 prevTotalDens = 0;
+        for( localIndex ic = 0; ic < numComponents; ++ic )
+        {
+          prevTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+        }
+
         for( localIndex ic = 0; ic < numComponents; ++ic )
         {
           localIndex const lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
 
           // compute scaling factor based on relative change in component densities
-          real64 const prevCompDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
           real64 const absCompDensChange = fabs( localSolution[lid] );
-          real64 const maxAbsCompDensChange = maxRelCompDensChange * prevCompDens;
+          real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
 
-          // if the relative change is too large, chop back
-          // TODO: this may produce a very conservative chopping strategy, revisit later if too restrictive
-          if( absCompDensChange > maxAbsCompDensChange && maxAbsCompDensChange > eps )
+          // This actually checks the change in component fraction, using a lagged total density
+          // Indeed we can rewrite the following check as:
+          //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
+          // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
+          // because I found it more robust than using directly newTotalDens (which can vary also
+          // wildly when the compDens change is large)
+          if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
           {
             minVal.min( maxAbsCompDensChange / absCompDensChange );
           }
@@ -1272,7 +1281,7 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemCompDens,
           arrayView2d< real64 const > const & dWellElemCompDens,
-          real64 const densCheckTol,
+          integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
@@ -1292,18 +1301,20 @@ struct SolutionCheckKernel
           minVal.min( 0 );
         }
 
-        // comp densities
-        for( localIndex ic = 0; ic < numComponents; ++ic )
+        // if component density is not allowed, the time step fails if a component density is negative
+        // otherwise, negative component densities will be chopped (i.e., set to zero in ApplySystemSolution)
+        if( !allowCompDensChopping )
         {
-          lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
-          real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
-                                 + scalingFactor * localSolution[lid];
-
-          // the component density must be positive, up to a tolerance
-          // (slightly) negative densities are chopped back in CompositionalMultiphaseWell::ApplySystemSolution
-          if( newDens < -densCheckTol )
+          for( localIndex ic = 0; ic < numComponents; ++ic )
           {
-            minVal.min( 0 );
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+
+            if( newDens < 0 )
+            {
+              minVal.min( 0 );
+            }
           }
         }
       }
