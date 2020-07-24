@@ -111,7 +111,7 @@ void SinglePhaseBase::RegisterDataOnMesh( Group * const MeshBodies )
     // TODO restrict this to boundary sets
     FaceManager * const faceManager = meshLevel->getFaceManager();
     {
-      faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::boundaryFacePressureString );
+      faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString );
     }
   }
 }

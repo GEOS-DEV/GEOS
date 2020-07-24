@@ -63,12 +63,12 @@ public:
    * @param[in] name the provided name
    * @return the FluxApproximation associated with the provided name
    */
-  FluxApproximationBase const * getFluxApproximation( string const & name ) const;
+  FluxApproximationBase const & getFluxApproximation( string const & name ) const;
 
   /**
    * @copydoc getFluxApproximation( string const & ) const
    */
-  FluxApproximationBase * getFluxApproximation( string const & name );
+  FluxApproximationBase & getFluxApproximation( string const & name );
 
 private:
 
