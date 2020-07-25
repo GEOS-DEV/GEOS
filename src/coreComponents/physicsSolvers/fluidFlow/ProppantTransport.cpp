@@ -617,10 +617,8 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
 
@@ -673,7 +671,7 @@ void ProppantTransport::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 
   FluxKernel::ElementViewConst< arrayView1d< integer const > > const & elemGhostRank = m_elemGhostRank.toViewConst();
 
-  fluxApprox.forStencils< FaceElementStencil >( [&]( auto const & stencil )
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( auto const & stencil )
   {
 
     FluxKernel::Launch( stencil,
@@ -1206,7 +1204,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres               = m_pressure.toViewConst();
   FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef           = m_gravCoef.toViewConst();
@@ -1221,7 +1219,7 @@ void ProppantTransport::UpdateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   FluxKernel::ElementView< arrayView1d< R1Tensor > > const & cellBasedFlux = cellBasedFluxAccessor.toView();
 
-  fluxApprox.forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     FluxKernel::LaunchCellBasedFluxCalculation( stencil,
                                                 transTMultiplier,
@@ -1257,7 +1255,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   // For data modified through an accessor, we must create the view accessor
   // every time in order to ensure the data gets properly touched on device
@@ -1271,7 +1269,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const proppantLiftFlux =
     elemManager.ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::proppantLiftFluxString );
 
-  fluxApprox.forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     ProppantPackVolumeKernel::LaunchProppantPackVolumeCalculation( stencil,
                                                                    dt,
@@ -1314,7 +1312,7 @@ void ProppantTransport::UpdateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
   } );
 
 
-  fluxApprox.forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     ProppantPackVolumeKernel::LaunchProppantPackVolumeUpdate( stencil,
                                                               downVector,
