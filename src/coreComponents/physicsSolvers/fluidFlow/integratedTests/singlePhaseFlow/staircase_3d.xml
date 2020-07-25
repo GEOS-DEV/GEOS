@@ -81,7 +81,6 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        boundaryFieldName="boundaryFacePressure"
         targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
@@ -151,14 +150,14 @@
     <FieldSpecification
       name="sourceTerm"
       objectPath="faceManager"
-      fieldName="boundaryFacePressure"
+      fieldName="pressure"
       scale="5e6"
       setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="faceManager"
-      fieldName="boundaryFacePressure"
+      fieldName="pressure"
       scale="-5e6"
       setNames="{ sink }"/>
   </FieldSpecifications>
