@@ -42,21 +42,19 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  ModifiedCamClayUpdates( arrayView2d<real64 const> const &refPInvariant,
-                          arrayView2d<real64 const> const &refStrainVol,
-                          arrayView2d<real64 const> const &refShearModulus,
-                          arrayView1d<real64 const> const &alpha,
-                          arrayView1d<real64 const> const &Cc,
-                          arrayView1d<real64 const> const &Cr,
-                          arrayView1d<real64 const> const &M,
-                          arrayView2d<real64> const &newPreconsPressure,
-                          arrayView2d<real64> const &oldPreconsPressure,
-                          arrayView3d<real64, solid::STRESS_USD> const &newStress,
-                          arrayView3d<real64, solid::STRESS_USD> const &newElasticStrain, 
-                          arrayView3d<real64, solid::STRESS_USD> const &oldElasticStrain, 
-                          arrayView3d<real64, solid::STRESS_USD> const &stress,
-                          arrayView3d<real64, solid::STRESS_USD> const &strainElastic ):
-    SolidBaseUpdates( strainElastic ),//how to add strainElastic if SolidBase does not have strains?
+  ModifiedCamClayUpdates( arrayView2d<real64 const> const & refPInvariant,
+                          arrayView2d<real64 const> const & refStrainVol,
+                          arrayView2d<real64 const> const & refShearModulus,
+                          arrayView1d<real64 const> const & alpha,
+                          arrayView1d<real64 const> const & Cc,
+                          arrayView1d<real64 const> const & Cr,
+                          arrayView1d<real64 const> const & M,
+                          arrayView1d<real64 const> const & associativity,
+                          arrayView2d<real64> const & newPreconsPressure,
+                          arrayView2d<real64> const & oldPreconsPressure,
+                          arrayView3d<real64, solid::STRESS_USD> const & newElasticStrain, 
+                          arrayView3d<real64, solid::STRESS_USD> const & oldElasticStrain, 
+                          arrayView3d<real64, solid::STRESS_USD> const & stress):
     SolidBaseUpdates( stress ), 
     m_referencePInvariant( refPInvariant ),
     m_refElasticStrainVolumetric( refStrainVol ), 
@@ -68,9 +66,10 @@ public:
     m_associativity( associativity ),
     m_newPreconsolidationPressure( newPreconsPressure ),
     m_oldPreconsolidationPressure( oldPreconsPressure ),
-    m_newStress( newStress ), 
+//    m_newPlasticStrain( newPlasticStrain ),
+//    m_oldPlasticStrain( oldPlasticStrain ),
     m_newElasticStrain( newElasticStrain ),
-    m_newElasticStrain( oldElasticStrain ) 
+    m_oldElasticStrain( oldElasticStrain ) 
   {}
 
   /// Default copy constructor
@@ -92,7 +91,6 @@ public:
   virtual void SmallStrainUpdate( localIndex const k, 
                                   localIndex const q,
                                   arraySlice1d< real64 const > const & strainIncrement,
-                                  arraySlice1d< real64 > const & strainElastic,
                                   arraySlice1d< real64 > const & stress,
                                   arraySlice2d< real64 > const & stiffness) override final;
 
@@ -138,11 +136,16 @@ private:
   arrayView2d< real64 > const m_oldPreconsolidationPressure;
 
   /// A reference to the ArrayView holding the new strain for each integration point
-  arrayView3d< real64, solid::STRESS_USD > const m_newStress;
   arrayView3d< real64, solid::STRESS_USD > const m_newElasticStrain;
 
   /// A reference to the ArrayView holding the old strain for each integration point
   arrayView3d< real64, solid::STRESS_USD > const m_oldElasticStrain;
+    
+//  /// A reference to the ArrayView holding the new plastic strain for each integration point
+//  arrayView3d< real64, solid::STRESS_USD > const m_newPlasticStrain;
+//
+//  /// A reference to the ArrayView holding the old plastic strain for each integration point
+//  arrayView3d< real64, solid::STRESS_USD > const m_oldPlasticStrain;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +155,6 @@ GEOSX_FORCE_INLINE
 void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k, 
                                               localIndex const q,
                                               arraySlice1d< real64 const > const & strainIncrement,
-                                              arraySlice1d< real64 > const & strainElastic,
                                               arraySlice1d< real64 > const & stress,
                                               arraySlice2d< real64 > const & stiffness ) 
 {
@@ -171,12 +173,12 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
   // elastic predictor
   // newStrainElastic = oldStrain + strainIncrement
-
+  array1d< real64 > strainElastic(6);
+    
   for (localIndex i = 0; i < 6; ++i) 
   {
     strainElastic[i] = m_oldElasticStrain[k][q][i] + strainIncrement[i];
   }
-
   // Decompose the strain tensor into the elastic strain invariants strainVol and strainDev
   real64 strainVol = 0;
   for (localIndex i = 0; i < 3; ++i) 
@@ -188,32 +190,33 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
   for (localIndex i = 0; i < 3; ++i) 
   {
     deviator[i] = strainElastic[i] - 1. / 3. * strainVol;
-    deviator[i + 3] = strainElastic[i + 3];
+    deviator[i + 3] = strainElastic[i + 3] / 2.; //divided by 2. due to Voigt notation
   }
 
   real64 strainDev = 0;
   for (localIndex i = 0; i < 3; ++i) 
   {
     strainDev += deviator[i] * deviator[i];
-    strainDev += deviator[i + 3] * deviator[i + 3];
+    strainDev += 2 * deviator[i + 3] * deviator[i + 3];
   }
   strainDev = std::sqrt(strainDev) + 1e-15; // perturbed to avoid divide by zero when strainDev=0;
-
+    
   for (localIndex i = 0; i < 6; ++i) 
   {
     deviator[i] /= strainDev; // normalized deviatoric direction, "nhat"
   }
   strainDev *= std::sqrt(2. / 3.);
-
+    
   // two-invariant decomposition in P-Q space (mean & deviatoric stress)
   real64 expOmega = std::exp((refStrainVol - strainVol) / Cr);
   real64 shear = refShearModulus - alpha * refPInvariant * expOmega;
   real64 Q = 3 * shear * strainDev;
   real64 P = refPInvariant * (1 + 3 * alpha * strainDev * strainDev / (2 * Cr)) * expOmega;
+  real64 bulk = -P / Cr;
 
   // Q: should we add a check for Poisson ration<0?
-  real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
-  GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
+  // real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
+  // GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
 
   // construct stress = P*eye + sqrt(2/3)*Q*nhat
 
@@ -234,7 +237,7 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
   // constants
   real64 c1 = 2 * shear;
-  real64 c2 = -P / Cr - c1 / 3. ;
+  real64 c2 = bulk - c1 / 3. ;
   real64 coupling = 3 * refPInvariant * alpha * strainDev * expOmega / Cr;
   real64 c3 = std::sqrt(2. / 3.) * coupling;
 
@@ -271,6 +274,7 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
   if (yield > 1e-9) // plasticity branch
   {
+//    std::cout << "plastic step" << std::endl;
     array1d<real64> solution(3), residual(3), delta(3);
     array2d<real64> jacobian(3, 3), jacobianInv(3, 3), hessianHyper(2, 2), hessiansMult(2, 2);
     real64 yieldDerivP, yieldDerivQ, plasticPotDerivP, plasticPotDerivQ, preconsPressureDeriv;
@@ -301,11 +305,12 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
       // r[2] = F = 0
       residual[0] = solution[0] - strainVol + solution[2] * plasticPotDerivP;
       residual[1] = solution[1] - strainDev + solution[2] * plasticPotDerivQ;
-      residual[2] = Q * Q / (M * M) + P * (P - oldPreconsPressure);
+      residual[2] = Q * Q / (M * M) + P * (P - preconsPressure);
 
       norm = LvArray::tensorOps::l2Norm<3>(residual);
 
-      // residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
+      //residual.L2_Norm();
+//      std::cout << "iter: " << iter << " " << "norm: " << norm << std::endl;
 
       if (iter == 0) 
       {
@@ -343,6 +348,7 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
       jacobian(2, 0) = hessianHyper(0, 0) * yieldDerivP + hessianHyper(1, 0) * yieldDerivQ 
                      - preconsPressureDeriv * P;
       jacobian(2, 1) = hessianHyper(0, 1) * yieldDerivP + hessianHyper(1, 1) * yieldDerivQ;
+      jacobian(2, 2) = 0.0;
 
       LvArray::tensorOps::invert<3>(jacobianInv, jacobian);
       LvArray::tensorOps::AijBj<3, 3>(delta, jacobianInv, residual);
@@ -357,19 +363,22 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
       shear = refShearModulus - alpha * refPInvariant * expOmega;
       Q = 3 * shear * solution[1];
       P = refPInvariant * (1 + 3 * alpha * solution[1] * solution[1] / (2 * Cr)) * expOmega;
+      bulk = -P / Cr;
 
       // Q: should we assert for negative Poisson?
-      real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
-      GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
+      // real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
+      //std::cout << "poisson ratio: " << poissonRatio << std::endl;
+      // GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
     }
 
     // construct elastic strain
     // plasticPotDerivStress
     array1d<real64> plasticPotDerivStress(6);
 
-    for (localIndex i = 0; i < 6; ++i) 
+    for (localIndex i = 0; i < 3; ++i)
     {
       plasticPotDerivStress[i] = std::sqrt(3. / 2.) * plasticPotDerivQ * deviator[i];
+      plasticPotDerivStress[i+3] = std::sqrt(3. / 2.) * plasticPotDerivQ * 2 * deviator[i+3];
     }
     for (localIndex i = 0; i < 3; ++i) 
     {
@@ -378,10 +387,12 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
     for (localIndex i = 0; i < 3; ++i) 
     {
-      strainElastic[i]   -= solution[2] * plasticPotDerivStress[i];
+      strainElastic[i] -= solution[2] * plasticPotDerivStress[i];
+//      strainPlastic[i] += solution[2] * plasticPotDerivStress[i];
       strainElastic[i+3] -= solution[2] * plasticPotDerivStress[i+3];
+//      strainPlastic[i+3] += solution[2] * plasticPotDerivStress[i+3];
     }
-
+      
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
 
     for (localIndex i = 0; i < 6; ++i) 
@@ -408,7 +419,7 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
     real64 preconsPressureDerivTrial = - preconsPressureDeriv;
     real64 residual0DerivStrainVol  = - 1 - solution[2] * preconsPressureDerivTrial;
     real64 residual2DerivStrainVol  = - P * preconsPressureDerivTrial;
-    array2d<real64> bTilda(2, 2), dBar(2, 2)
+    array2d<real64> bTilda(2, 2), dBar(2, 2);
     
     bTilda(0, 0) = - ( residual0DerivStrainVol * jacobianInv(0,0) 
                      + residual2DerivStrainVol * jacobianInv(0,2) );
@@ -419,43 +430,35 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
     //How to perform matrix multiplication with LvArray?
 
-    for (localIndex i = 0; i < 3; ++i) 
+    for (localIndex i = 0; i < 2; ++i)
     {
-      for (localIndex j = 0; j < 3; ++j) 
+      for (localIndex j = 0; j < 2; ++j)
       {
         dBar[i][j] = 0;
       }
     }
 
-    for (localIndex i = 0; i < 3; ++i) 
+    for (localIndex i = 0; i < 2; ++i)
     {
-      for (localIndex j = 0; j < 3; ++j) 
+      for (localIndex j = 0; j < 2; ++j)
       {
-        for (localIndex k = 0; k < 3; ++k) 
+        for (localIndex l = 0; l < 2; ++l) 
         {
-          dBar[i][j] += hessianHyper(i, k) * bTilda(k, j);
+          dBar[i][j] += hessianHyper(i, l) * bTilda(l, j);
         }
       }
     }
 
-    real64 c1 = (std::fabs(solution[1]) > 1e-4) ? 2 * Q / ( 3 * solution[1] ) : 2 * shear; 
-    // Q: I still do not understand why we should not just assume that c1 = 2*shear
-    // We have previsouly set Q = 3 * shear * solution[1].
-    // This would imply that c1 = 2*Q/(3*solution[1]) = 2 * shear, no?
-
-    real64 c2 = dBar(0, 0) - c1 / 3.;
-    real64 c3 = sqrt(2. / 3) * dBar(0, 1);
-    real64 c4 = sqrt(2. / 3) * dBar(1, 0);
+    c1 = (std::fabs(strainDev) > 1e-10) ? 2 * Q / ( 3 * strainDev ) : 2 * shear;
+    c2 = dBar(0, 0) - c1 / 3.;
+    c3 = std::sqrt(2. / 3) * dBar(0, 1);
+    real64 c4 = std::sqrt(2. / 3) * dBar(1, 0);
     real64 c5 = (2. / 3) * dBar(1, 1) - c1;
-
-    array1d<real64> identity(6);
 
     for (localIndex i = 0; i < 3; ++i) 
     {
       stiffness[i][i] = c1;
       stiffness[i + 3][i + 3] = 0.5 * c1;
-      identity[i] = 1.0;
-      identity[i + 3] = 0.0;
     }
 
     for (localIndex i = 0; i < 6; ++i) 
@@ -475,8 +478,8 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
   m_newPreconsolidationPressure[k][q] = preconsPressure;
   for (localIndex i = 0; i < 6; ++i) 
   {
-    m_newStress[k][q][i] = stress[i];
     m_newElasticStrain[k][q][i] = strainElastic[i];
+//    m_newPlasticStrain[k][q][i] = strainPlastic[i];
   }
 }
 
@@ -489,6 +492,7 @@ void ModifiedCamClayUpdates::SaveConvergedState( localIndex const k, localIndex 
   for (localIndex i = 0; i < 6; ++i) 
   {
     m_oldElasticStrain[k][q][i] = m_newElasticStrain[k][q][i];
+//    m_oldPlasticStrain[k][q][i] = m_newPlasticStrain[k][q][i];
   }
 }
 
@@ -603,14 +607,17 @@ public:
     /// string/key for old value of preconsolidation pressure
     static constexpr auto oldPreconsolidationPressureString = "OldPreconsolidationPressure";
 
-    /// string/key for the current stress
-    static constexpr auto newStressString = "NewStress";
-
     /// string/key for the current elastic strain
     static constexpr auto newElasticStrainString = "NewElasticStrain";
 
     /// string/key for the previous elastic strain
     static constexpr auto oldElasticStrainString = "OldElasticStrain";
+      
+//    /// string/key for the current plastic strain
+//    static constexpr auto newPlasticStrainString = "NewPlasticStrain";
+//
+//    /// string/key for the previous plastic strain
+//    static constexpr auto oldPlasticStrainString = "OldPlasticStrain";
   };
 
   /**
@@ -629,11 +636,12 @@ public:
                                    m_associativity, 
                                    m_newPreconsolidationPressure, 
                                    m_oldPreconsolidationPressure,
-                                   m_newStress, 
                                    m_newElasticStrain, 
-                                   m_oldElasticStrain, 
-                                   m_stress,
-                                   m_strainElastic );
+                                   m_oldElasticStrain,
+//                                   m_newPlasticStrain,
+//                                   m_oldPlasticStrain,
+                                   m_stress);
+                                  // m_strainElastic );
   }
 
 protected:
@@ -643,31 +651,31 @@ private:
   // TODO: maybe define some helper structs for defaults, arrays, arrayViews, etc.
 
   /// Material parameter: The default value of the bulk modulus
-  array1d<real64> m_defaultRefPInvariant;
+  real64 m_defaultRefPInvariant;
 
   /// Material parameter: The default value of the shear modulus
-  array1d<real64> m_defaultRefElasticStrainVolumetric;
+  real64 m_defaultRefElasticStrainVolumetric;
 
   /// Material parameter: The default value of the yield surface slope
-  array1d<real64> m_defaultRefShearModulus;
+  real64 m_defaultRefShearModulus;
 
   /// Material parameter: The default value of the parameter setting the shear modulus evolution
-  array1d<real64> m_defaultShearModulusEvolution;
+  real64 m_defaultShearModulusEvolution;
 
   /// Material parameter: The default value of the virgin compression index 
-  array1d<real64> m_defaultVirginCompressionIndex;
+  real64 m_defaultVirginCompressionIndex;
 
   /// Material parameter: The default value of the recompression index 
-  array1d<real64> m_defaultRecompressionIndex;
+  real64 m_defaultRecompressionIndex;
 
   /// Material parameter: The default value of the critical state line slope 
-  array1d<real64> m_defaultCriticalStateSlope;
+  real64 m_defaultCriticalStateSlope;
 
   /// Material parameter: The default value of the critical state line slope 
-  array1d<real64> m_defaultAssociativity;
+  real64 m_defaultAssociativity;
 
   /// History variable: The default value of the preconsolidation pressure
-  array2d<real64> m_defaultPreconsolidationPressure;
+  real64 m_defaultPreconsolidationPressure;
 
   /// Material parameter: The reference value for the stress invariant P for quadrature point
   array2d<real64> m_referencePInvariant;
@@ -699,14 +707,17 @@ private:
   /// History variable: The previous preconsolidation pressure for each quadrature point
   array2d<real64> m_oldPreconsolidationPressure;
 
-  /// History variable: The current stress for each quadrature point
-  array3d<real64, solid::STRESS_PERMUTATION> m_newStress;
-
   /// History variable: The current elastic strain for each quadrature point
   array3d<real64, solid::STRESS_PERMUTATION> m_newElasticStrain;
 
   /// History variable: The previous elastic strain for each quadrature point.
   array3d<real64, solid::STRESS_PERMUTATION> m_oldElasticStrain;
+    
+//  /// History variable: The current plastic strain for each quadrature point
+//  array3d<real64, solid::STRESS_PERMUTATION> m_newPlasticStrain;
+//
+//  /// History variable: The previous plastic strain for each quadrature point.
+//  array3d<real64, solid::STRESS_PERMUTATION> m_oldPlasticStrain;
 };
 
 } /* namespace constitutive */

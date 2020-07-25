@@ -4,8 +4,10 @@
 
 set( gtest_geosx_tests
      testDruckerPrager.cpp
+     testDP_Julia.cpp
      testLinearElasticIsotropic.cpp
      testLinearElasticAnisotropic.cpp
+		 testModifiedCamClay.cpp
      testRelPerm.cpp
      testCapillaryPressure.cpp 
    )

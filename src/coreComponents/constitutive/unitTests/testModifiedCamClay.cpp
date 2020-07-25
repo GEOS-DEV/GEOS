@@ -33,16 +33,16 @@ TEST( ModifiedCamClayTests, testModel )
     "<Constitutive>"
     "   <ModifiedCamClay"
     "      name=\"granite\" "
-    "      defaultDensity=\"2700\" "
-    "      defaultRefPInvariant=\"-0.5\" "
+    "      defaultDensity=\"2700.0\" "
+    "      defaultRefPInvariant=\"-90000.0\" "
     "      defaultRefElasticStrainVolumetric=\"0.0\" "
-    "      defaultRefShearModulus=\"10.0\" "
-    "      defaultShearModulusEvolution=\"0.0\" "
-    "      defaultVirginCompressionIndex=\"0.1\" "
-    "      defaultRecompressionIndex=\"0.01\" "
-    "      defaultCriticalStateSlope=\"1.0\" "
+    "      defaultRefShearModulus=\"0.0\" "
+    "      defaultShearModulusEvolution=\"120.0\" "
+    "      defaultVirginCompressionIndex=\"0.13\" "
+    "      defaultRecompressionIndex=\"0.018\" "
+    "      defaultCriticalStateSlope=\"1.05\" "
     "      defaultAssociativity=\"1.0\" "
-    "      defaultPreconsolidationPressure=\"-1.0\"/>"
+    "      defaultPreconsolidationPressure=\"-90000.0\"/>"
     "</Constitutive>";
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -72,24 +72,27 @@ TEST( ModifiedCamClayTests, testModel )
   
   ModifiedCamClay::KernelWrapper cmw = cm.createKernelWrapper();
   
-  real64 inc = -1e-4; // compression
+    real64 inc = -0.5e-3; // compression
   real64 total = 0;
-  real64 stress11 = 0;
     
   array2d< real64 > strainIncrement(1,6);
                     strainIncrement = 0;
-                    strainIncrement[0][0] = inc;
+    strainIncrement[0][0] = inc;
+//    strainIncrement[0][1] = inc/3.;
+//    strainIncrement[0][2] = inc/3.;
+    strainIncrement[0][3] = inc;
+//                    strainIncrement[0][4] = inc;
+//                    strainIncrement[0][5] = inc;
   
   array2d< real64 > stress(1,6);
   array3d< real64 > stiffness(1,6,6);
   array2d< real64 > deviator(1,6);
 
-  for(localIndex loadstep=0; loadstep < 40; ++loadstep)
+  for(localIndex loadstep=0; loadstep < 100; ++loadstep)
   {
     cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
     cmw.SaveConvergedState(0,0);
     total += inc;
-    stress11 = stress[0][0];
       
     real64 mean = (stress[0][0]+stress[0][1]+stress[0][2])/3.;
     
@@ -103,7 +106,7 @@ TEST( ModifiedCamClayTests, testModel )
     for(localIndex i=0; i<3; ++i)
     {
       invariantQ += deviator[0][i]*deviator[0][i];
-      invariantQ += deviator[0][i+3]*deviator[0][i+3];
+      invariantQ += 2 * deviator[0][i+3]*deviator[0][i+3];
     }
     invariantQ = std::sqrt(invariantQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
   
@@ -116,53 +119,73 @@ TEST( ModifiedCamClayTests, testModel )
     std::cout << mean << " " << invariantQ << " " << total << std::endl;
   }
   
-  for(localIndex i=0; i<6; ++i)
-  {
-    for(localIndex j=0; j<6; ++j)
-    {
-      std::cout << stiffness[0][i][j] << " ";
-    }
-    std::cout << "\n";
-  }
+//  for(localIndex i=0; i<6; ++i)
+//  {
+//    for(localIndex j=0; j<6; ++j)
+//    {
+//      std::cout << stiffness[0][i][j] << " ";
+//    }
+//    std::cout << "\n";
+//  }
   
   // finite-difference check of tangent stiffness
+    
+//    std::cout << "finite-difference check " << std::endl;
   
   array2d< real64 > fd_stiffness(6,6);
   array2d< real64 > pstress(1,6);
   array3d< real64 > pstiffness(1,6,6);
   
-  real64 eps = 1e-8;
+  real64 eps = -1e-12;
   
-  cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);    
+  cmw.SmallStrainUpdate(0,0,strainIncrement[0],stress[0],stiffness[0]);
+  
+//  std::cout << "stiffness from cto: " << std::endl;
+//  for(localIndex i=0; i<6; ++i)
+//  {
+//    for(localIndex j=0; j<6; ++j)
+//    {
+//      std::cout << stiffness[0][i][j] << " ";
+//    }
+//    std::cout << "\n";
+//  }
+    
   for(localIndex i=0; i<6; ++i)
   {
-    strainIncrement[0][i] -= eps;
+    strainIncrement[0][i] += eps;
     
     if(i>0)
     {
-      strainIncrement[0][i-1] += eps;
+      strainIncrement[0][i-1] -= eps;
     }
     
     cmw.SmallStrainUpdate(0,0,strainIncrement[0],pstress[0],pstiffness[0]);
-   for(localIndex j=0; j<6; ++j)
-   {
-      std::cout <<pstress[0][j] <<std::endl;
-   }
       
     for(localIndex j=0; j<6; ++j)
     {
-      fd_stiffness[j][i] = (pstress[0][j]-stress[0][j])/-eps;
+      fd_stiffness[j][i] = (pstress[0][j]-stress[0][j])/eps;
     }
   }
   
-  for(localIndex i=0; i<6; ++i)
-  {
-    for(localIndex j=0; j<6; ++j)
-    {
-      std::cout << fd_stiffness[i][j] << " ";
-    }
-    std::cout << "\n";
-  }
+//  std::cout << "stiffness from FD: " << std::endl;
+//  for(localIndex i=0; i<6; ++i)
+//  {
+//    for(localIndex j=0; j<6; ++j)
+//    {
+//      std::cout << fd_stiffness[i][j] << " ";
+//    }
+//    std::cout << "\n";
+//  }
+    
+//  for(localIndex i=0; i<6; ++i)
+//  {
+//    for(localIndex j=0; j<6; ++j)
+//    {
+//      real64 error = (fd_stiffness[i][j] - stiffness[0][i][j])/stiffness[0][i][j];
+//      std::cout << error << " ";
+//    }
+//      std::cout << "\n";
+//  }
   
 }
 

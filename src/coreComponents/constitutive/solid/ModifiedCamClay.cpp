@@ -45,7 +45,8 @@ ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent
   m_associativity(),
   m_newPreconsolidationPressure(),
   m_oldPreconsolidationPressure(),
-  m_newStress(),
+//  m_newPlasticStrain(),
+//  m_oldPlasticStrain(),
   m_newElasticStrain(),
   m_oldElasticStrain()
 {
@@ -138,10 +139,6 @@ ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent
     setApplyDefaultValue( -1 )->
     setDescription( "Old preconsolidation pressure field" );
 
-  registerWrapper( viewKeyStruct::newStressString, &m_newStress )->
-    setApplyDefaultValue( -1 )->
-    setDescription( "New stress field" );
-
   registerWrapper( viewKeyStruct::newElasticStrainString, &m_newElasticStrain )->
     setApplyDefaultValue( -1 )->
     setDescription( "New elastic strain field" );
@@ -149,6 +146,14 @@ ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent
   registerWrapper( viewKeyStruct::oldElasticStrainString, &m_oldElasticStrain )->
     setApplyDefaultValue( -1 )->
     setDescription( "Old elastic strain field" );
+    
+//  registerWrapper( viewKeyStruct::newPlasticStrainString, &m_newPlasticStrain )->
+//    setApplyDefaultValue( -1 )->
+//    setDescription( "New plastic strain field" );
+//
+//  registerWrapper( viewKeyStruct::oldPlasticStrainString, &m_oldPlasticStrain )->
+//    setApplyDefaultValue( -1 )->
+//    setDescription( "Old plastic strain field" );
 }
 
 
@@ -177,6 +182,7 @@ ModifiedCamClay::DeliverClone( string const & name,
   newConstitutiveRelation->m_defaultCriticalStateSlope = m_defaultCriticalStateSlope;
   newConstitutiveRelation->m_defaultAssociativity = m_defaultAssociativity;
   newConstitutiveRelation->m_defaultPreconsolidationPressure = m_defaultPreconsolidationPressure;
+
   newConstitutiveRelation->m_referencePInvariant = m_referencePInvariant;
   newConstitutiveRelation->m_refElasticStrainVolumetric = m_refElasticStrainVolumetric;
   newConstitutiveRelation->m_referenceShearModulus = m_referenceShearModulus;
@@ -187,9 +193,10 @@ ModifiedCamClay::DeliverClone( string const & name,
   newConstitutiveRelation->m_associativity = m_associativity;
   newConstitutiveRelation->m_newPreconsolidationPressure = m_newPreconsolidationPressure;
   newConstitutiveRelation->m_oldPreconsolidationPressure = m_oldPreconsolidationPressure;
-  newConstitutiveRelation->m_newStress = m_newStress;
   newConstitutiveRelation->m_newElasticStrain = m_newElasticStrain;
   newConstitutiveRelation->m_oldElasticStrain = m_oldElasticStrain;
+//  newConstitutiveRelation->m_newPlasticStrain = m_newPlasticStrain;
+//  newConstitutiveRelation->m_oldPlasticStrain = m_oldPlasticStrain;
 }
 
 void ModifiedCamClay::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -211,9 +218,11 @@ void ModifiedCamClay::AllocateConstitutiveData( dataRepository::Group * const pa
   m_newPreconsolidationPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   m_oldPreconsolidationPressure.resize( parent->size(), numConstitutivePointsPerParentIndex );
   
-  m_newStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
   m_newElasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
   m_oldElasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );// TODO: figure out how to set initial strain
+    
+//  m_newPlasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
+//  m_oldPlasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
   
   // set arrays to default values
   m_referencePInvariant = m_defaultRefPInvariant;
@@ -238,16 +247,16 @@ void ModifiedCamClay::PostProcessInput()
   // Check this assessment of negative Poisson ratio
   // Q: should we assess with the default values?
 
-  real64 initialP = m_defaultRefPInvariant;
-  real64 Cr = m_defaultRecompressionIndex;
-  real64 shear = m_defaultRefShearModulus;
-  real64 bulk = -initialP / Cr;
-  real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
-  
-  GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
+  // real64 initialP = m_defaultRefPInvariant;
+  // real64 Cr = m_defaultRecompressionIndex;
+  // real64 shear = m_defaultRefShearModulus;
+  // real64 bulk = -initialP / Cr;
+  // real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
+
+  // GEOSX_ERROR_IF( poissonRatio < 0 , "Negative poisson ratio produced" );
   
   m_postProcessed = true; // TODO: add parameter conversion helper class for more flexible input
-}
+} 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ModifiedCamClay, std::string const &, Group * const )
 }

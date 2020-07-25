@@ -31,6 +31,7 @@ set( constitutive_headers
      solid/LinearElasticAnisotropic.hpp
      solid/LinearElasticIsotropic.hpp
      solid/LinearElasticTransverseIsotropic.hpp
+		 solid/ModifiedCamClay.hpp
      solid/PoroElastic.hpp
      solid/PoreVolumeCompressibleSolid.hpp
      solid/SolidBase.hpp
@@ -73,6 +74,7 @@ set( constitutive_sources
      solid/LinearElasticAnisotropic.cpp
      solid/LinearElasticIsotropic.cpp
      solid/LinearElasticTransverseIsotropic.cpp
+		 solid/ModifiedCamClay.cpp
      solid/PoroElastic.cpp
      solid/PoreVolumeCompressibleSolid.cpp
      solid/SolidBase.cpp
