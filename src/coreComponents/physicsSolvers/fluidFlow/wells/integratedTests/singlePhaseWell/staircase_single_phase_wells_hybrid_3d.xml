@@ -132,7 +132,6 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        boundaryFieldName="facePressure"
         targetRegions="{ Channel }"
         coefficientName="permeability"/>
     </FiniteVolume>
