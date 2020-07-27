@@ -316,6 +316,70 @@ static bool addExitHandler( PyObject * module )
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
+ * Add geosx::State enums to the given module. Return the module, or NULL on failure
+ */
+static PyObject * addConstants( PyObject * module )
+{
+  std::array< std::pair< long, char const * >, 4 > const constants = { {
+    { static_cast< long >( geosx::State::COMPLETED ), "COMPLETED" },
+    { static_cast< long >( geosx::State::INITIALIZED ), "INITIALIZED" },
+    { static_cast< long >( geosx::State::UNINITIALIZED ), "UNINITIALIZED" },
+    { static_cast< long >( geosx::State::READY_TO_RUN ), "READY_TO_RUN" }
+  } };
+
+  for ( std::pair< long, char const * > const & pair : constants )
+  {
+    if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
+    {
+      PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+      return nullptr;
+    }
+  }
+
+  return module;
+}
+
+/**
+ * Add exit handler to a module. Register the module's 'finalize' function,
+ * which should take no arguments, with the `atexit` standard library module.
+ */
+static bool addExitHandler( PyObject * module ){
+  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
+  
+  if ( atexit_module == nullptr )
+  { return 0; }
+
+  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
+  if ( atexit_register_pyfunc == nullptr )
+  { return 0; }
+
+  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
+  if ( finalize_pyfunc == nullptr )
+  { return 0; }
+
+  if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
+  { return 0; }
+
+  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
+  
+  return returnval != nullptr;
+}
+
+// Allow mixing designated and non-designated initializers in the same initializer list.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc99-designator"
+
+static PyTypeObject GroupType = {
+  PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "geosx.Group",
+  .tp_basicsize = sizeof( geosx::Group ),
+  .tp_itemsize = 0,
+  .tp_flags = Py_TPFLAGS_DEFAULT,
+  .tp_doc = "",
+  .tp_new = PyType_GenericNew,
+};
+
+/**
  *
  */
 static PyMethodDef pygeosxFuncs[] = {
@@ -389,3 +453,5 @@ PyInit_pygeosx()
   // Since we return module we don't want to decrease the reference count.
   return module.release();
 }
+
+#pragma GCC diagnostic pop
