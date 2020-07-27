@@ -40,7 +40,6 @@ R1Tensor LinePlaneIntersection( R1Tensor lineDir,
    * d = (planeOrigin - linePoint) * planeNormal / (lineDir * planeNormal )
    * pInt = d*lineDir+linePoint;
    */
-
   real64 dummy[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( planeOrigin );
   LvArray::tensorOps::subtract< 3 >( dummy, linePoint );
   real64 const d = LvArray::tensorOps::AiBi< 3 >( dummy, planeNormal ) /
