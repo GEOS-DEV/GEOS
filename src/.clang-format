@@ -10,8 +10,10 @@ AccessModifierOffset: -2
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: None
 AllowShortLambdasOnASingleLine: All
+
+AlwaysBreakAfterReturnType: All
 AlwaysBreakTemplateDeclarations: Yes
 AlwaysBreakBeforeMultilineStrings: false
 
@@ -42,7 +44,7 @@ BraceWrapping:
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 2
-ColumnLimit: 100
+ColumnLimit: 200
 
 DerivePointerAlignment: false
 
