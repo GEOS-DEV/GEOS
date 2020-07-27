@@ -59,7 +59,7 @@ void SinglePhaseFVM< BASE >::SetupDofs( DomainPartition const & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::pressureString, fluxApprox );
 }
@@ -113,9 +113,9 @@ void SinglePhaseFVM< BASE >::SetupSystem( DomainPartition & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( this->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( this->getDiscretization() );
 
-  fluxApprox.forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
     for( localIndex iconn = 0; iconn < stencil.size(); ++iconn )
     {
@@ -226,16 +226,14 @@ void SinglePhaseFVM< BASE >::AssembleFluxTerms( real64 const GEOSX_UNUSED_PARAM(
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::pressureString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-
-
-  fluxApprox.forAllStencils( [&]( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&]( auto const & stencil )
   {
     FluxKernel::Launch( stencil,
                         dt,
@@ -297,7 +295,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   // make a list of region indices to be included
   map< localIndex, localIndex > regionFluidMap;
@@ -308,7 +306,7 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
   } );
 
   arrayView1d< real64 const > const & presFace =
-    faceManager.getReference< array1d< real64 > >( viewKeyStruct::boundaryFacePressureString );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::facePressureString );
 
   arrayView1d< real64 const > const & gravCoefFace =
     faceManager.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString );
@@ -318,28 +316,28 @@ void SinglePhaseFVM< BASE >::ApplyFaceDirichletBC( real64 const time_n,
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
+  // Take BCs defined for "pressure" field and apply values to "facePressure"
   fsManager.Apply( time_n + dt,
                    &domain,
                    "faceManager",
-                   viewKeyStruct::boundaryFacePressureString,
+                   viewKeyStruct::pressureString,
                    [&] ( FieldSpecificationBase const * const fs,
                          string const & setName,
                          SortedArrayView< localIndex const > const & targetSet,
                          Group * const targetGroup,
-                         string const & fieldName )
+                         string const & )
   {
-    Wrapper< BoundaryStencil > const * const wrapper = fluxApprox.getWrapper< BoundaryStencil >( setName );
-    if( wrapper == nullptr || wrapper->reference().size() == 0 )
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( stencil.size() == 0 )
     {
       return;
     }
-    BoundaryStencil const & stencil = wrapper->reference();
 
     // first, evaluate BC to get primary field values (pressure)
     fs->ApplyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                             time_n + dt,
                                                                             targetGroup,
-                                                                            fieldName );
+                                                                            viewKeyStruct::facePressureString );
 
     // Now run the actual kernel
     BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();

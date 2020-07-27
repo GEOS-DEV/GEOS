@@ -432,7 +432,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
       FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( *domain,
+        fluxApprox->addToFractureStencil( *meshLevel,
                                           this->m_fractureRegionName,
                                           false );
         edgeManager->m_recalculateFractureConnectorEdges.clear();
@@ -485,7 +485,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
-          fluxApprox->addToFractureStencil( domain,
+          fluxApprox->addToFractureStencil( *meshLevel,
                                             this->m_fractureRegionName,
                                             true );
           edgeManager->m_recalculateFractureConnectorEdges.clear();
