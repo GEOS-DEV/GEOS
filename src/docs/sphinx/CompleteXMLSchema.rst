@@ -1489,6 +1489,13 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
+.. _DATASTRUCTURE_finiteVolumeStencils:
+
+Datastructure: finiteVolumeStencils
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/finiteVolumeStencils_other.rst
+
+
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen

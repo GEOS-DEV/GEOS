@@ -1071,7 +1071,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const * const stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
@@ -1121,7 +1121,7 @@ void LagrangianContactFlowSolver::AssembleStabilization( DomainPartition const &
   presDofNumber = fractureSubRegion->getReference< globalIndex_array >( presDofKey );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  stabilizationMethod->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
