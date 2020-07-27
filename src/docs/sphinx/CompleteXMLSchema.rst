@@ -589,6 +589,13 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SolidMechanicsEmbeddedFractures:
+
+Element: SolidMechanicsEmbeddedFractures
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures.rst
+
+
 .. _XML_SolidMechanicsLagrangianSSLE:
 
 Element: SolidMechanicsLagrangianSSLE
@@ -1319,6 +1326,13 @@ Datastructure: SinglePhaseReservoir
 Datastructure: SinglePhaseWell
 ==============================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
+
+Datastructure: SolidMechanicsEmbeddedFractures
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
 
 
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:

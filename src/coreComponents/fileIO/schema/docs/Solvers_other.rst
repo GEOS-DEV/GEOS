@@ -19,6 +19,7 @@ SinglePhaseHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`
 SinglePhaseProppantFVM           node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`           
 SinglePhaseReservoir             node :ref:`DATASTRUCTURE_SinglePhaseReservoir`             
 SinglePhaseWell                  node :ref:`DATASTRUCTURE_SinglePhaseWell`                  
+SolidMechanicsEmbeddedFractures  node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`  
 SolidMechanicsLagrangianSSLE     node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`     
 SolidMechanics_LagrangianFEM     node :ref:`DATASTRUCTURE_SolidMechanics_LagrangianFEM`     
 SurfaceGenerator                 node :ref:`DATASTRUCTURE_SurfaceGenerator`                 
