@@ -297,7 +297,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   array2d< real64 >            Kww_gauss( 3, 3 );
 
   // intermediate objects to do BDC, EDB, EDC
-  array2d< real64 >            matBD( maxNumUdof * dim, 6 );
+  array2d< real64 >            matBD( maxNumUdof, 6 );
   array2d< real64 >            matED( 3, 6 );
 
   array1d< R1Tensor > u_local( 8 );
