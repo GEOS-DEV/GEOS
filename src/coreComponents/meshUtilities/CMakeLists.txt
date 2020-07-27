@@ -4,6 +4,7 @@
 #
 set(meshUtilities_headers
     ComputationalGeometry.hpp
+    GMSHMeshGenerator.hpp
     MeshManager.hpp
     MeshGeneratorBase.hpp
     InternalMeshGenerator.hpp
@@ -24,6 +25,7 @@ set(meshUtilities_headers
 #
 set(meshUtilities_sources
     ComputationalGeometry.cpp
+    GMSHMeshGenerator.cpp
     MeshManager.cpp
     MeshGeneratorBase.cpp
     InternalMeshGenerator.cpp
