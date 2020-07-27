@@ -1,6 +1,4 @@
 <?xml version="1.0" ?>
-
-<!--# # -->
 <Problem>
   <Solvers
     gravityVector="0.0, 0.0, -9.81">
@@ -123,6 +121,7 @@
 
     <EmbeddedSurfaceElementRegion
       name="Fracture"
+      defaultAperture = "1e-4"
       materialList="{ water }"/>
   </ElementRegions>
 
