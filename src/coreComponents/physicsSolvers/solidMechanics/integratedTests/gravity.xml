@@ -106,13 +106,6 @@
         basis="linearBasis"
         quadrature="gaussian"/>
     </FiniteElements>
-
-    <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
-    </FiniteVolume>
   </NumericalMethods>
 
   <FieldSpecifications>
