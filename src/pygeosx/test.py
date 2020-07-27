@@ -1,35 +1,31 @@
 import pygeosx
 import sys
-import os
-
-xml = os.path.join( os.path.dirname( os.path.realpath( __file__ ) ), "pyssle.xml" )
-
-print( "In python before initialization." )
-sys.stdout.flush()
-
 from mpi4py import MPI
+
+# Get the MPI rank
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
-n_ranks = comm.Get_size()
 
-# rank = 0
+def printAndFlush( msg ):
+    print( "Rank {}: {}".format( rank, msg ) )
+    sys.stdout.flush()
+
+
+
+printAndFlush( "In python before initialization." )
 
 pygeosx.initialize( rank, sys.argv )
 currentTime = pygeosx.get( "Events/time", False )
-print( "In python after initialization: current time = {}".format( currentTime[ 0 ] ) )
-sys.stdout.flush()
+printAndFlush( "In python after initialization: current time = {}".format( currentTime[ 0 ] ) )
 
 pygeosx.applyInitialConditions()
 currentTime = pygeosx.get( "Events/time", False )
-print( "In python after applyInitialConditions: current time = {}".format( currentTime[ 0 ] ) )
-sys.stdout.flush()
+printAndFlush( "In python after applyInitialConditions: current time = {}".format( currentTime[ 0 ] ) )
 
 while pygeosx.run() != pygeosx.COMPLETED:
     currentTime = pygeosx.get( "Events/time", True )
-    print( "In python: current time = {}".format( currentTime[ 0 ] ) )
-    sys.stdout.flush()
+    printAndFlush( "In python: current time = {}".format( currentTime[ 0 ] ) )
     currentTime[ 0 ] += 1e-6
 
 currentTime = pygeosx.get( "Events/time", False )
-print( "In python after after the simulation has ended: current time = {}".format( currentTime[ 0 ] ) )
-sys.stdout.flush()
+printAndFlush( "In python after after the simulation has ended: current time = {}".format( currentTime[ 0 ] ) )

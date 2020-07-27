@@ -76,9 +76,21 @@ private:
   PyObject * m_object = nullptr;
 };
 
-
-
 static std::unique_ptr< GeosxState > state;
+
+/**
+ *
+ */
+struct Group
+{
+  PyObject_HEAD
+  dataRepository::Group * group;
+};
+
+
+
+
+
 
 /**
  *
@@ -232,6 +244,70 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 } // namespace geosx
 
 /**
+ * Add geosx::State enums to the given module. Return the module, or NULL on failure
+ */
+static PyObject * addConstants( PyObject * module )
+{
+  std::array< std::pair< long, char const * >, 4 > const constants = { {
+    { static_cast< long >( geosx::State::COMPLETED ), "COMPLETED" },
+    { static_cast< long >( geosx::State::INITIALIZED ), "INITIALIZED" },
+    { static_cast< long >( geosx::State::UNINITIALIZED ), "UNINITIALIZED" },
+    { static_cast< long >( geosx::State::READY_TO_RUN ), "READY_TO_RUN" }
+  } };
+
+  for ( std::pair< long, char const * > const & pair : constants )
+  {
+    if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
+    {
+      PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
+      return nullptr;
+    }
+  }
+
+  return module;
+}
+
+/**
+ * Add exit handler to a module. Register the module's 'finalize' function,
+ * which should take no arguments, with the `atexit` standard library module.
+ */
+static bool addExitHandler( PyObject * module ){
+  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
+  
+  if ( atexit_module == nullptr )
+  { return 0; }
+
+  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
+  if ( atexit_register_pyfunc == nullptr )
+  { return 0; }
+
+  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
+  if ( finalize_pyfunc == nullptr )
+  { return 0; }
+
+  if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
+  { return 0; }
+
+  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
+  
+  return returnval != nullptr;
+}
+
+// Allow mixing designated and non-designated initializers in the same initializer list.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc99-designator"
+
+static PyTypeObject GroupType = {
+  PyVarObject_HEAD_INIT( nullptr, 0 )
+  .tp_name = "geosx.Group",
+  .tp_basicsize = sizeof( geosx::Group ),
+  .tp_itemsize = 0,
+  .tp_flags = Py_TPFLAGS_DEFAULT,
+  .tp_doc = "",
+  .tp_new = PyType_GenericNew,
+};
+
+/**
  *
  */
 static PyMethodDef pygeosxFuncs[] = {
@@ -253,57 +329,11 @@ static PyMethodDef pygeosxFuncs[] = {
  */
 static struct PyModuleDef pygeosxModuleFunctions = {
   PyModuleDef_HEAD_INIT,
-  "pygeosx",   /* name of module */
-  "Module for testing numpy views of LvArray::Array objects", /* module documentation, may be NULL */
-  -1,       /* size of per-interpreter state of the module or -1 if the module keeps state in global variables. */
-  pygeosxFuncs,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
+  .m_name = "pygeosx",
+  .m_doc = "Module for testing numpy views of LvArray::Array objects",
+  .m_size = -1,
+  .m_methods = pygeosxFuncs
 };
-
-/**
- * Add geosx::State enums to the given module. Return the module, or NULL on failure
- */
-static PyObject * addConstants( PyObject * module ){
-  if ( PyModule_AddIntConstant( module, "COMPLETED", static_cast< long >( geosx::State::COMPLETED ) ) ){
-    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-    return NULL;
-  }
-  if ( PyModule_AddIntConstant( module, "INITIALIZED", static_cast< long >( geosx::State::INITIALIZED ) ) ){
-    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-    return NULL;
-  }
-  if ( PyModule_AddIntConstant( module, "UNINITIALIZED", static_cast< long >( geosx::State::UNINITIALIZED ) ) ){
-    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-    return NULL;
-  }
-  if ( PyModule_AddIntConstant( module, "READY_TO_RUN", static_cast< long >( geosx::State::READY_TO_RUN ) ) ){
-    PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-    return NULL;
-  }
-  return module;
-}
-
-/**
- * Add exit handler to a module. Register the module's 'finalize' function,
- * which should take no arguments, with the `atexit` standard library module.
- */
-static int addExitHandler( PyObject * module ){
-  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
-  if ( atexit_module == nullptr ){ return 0; }
-  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
-  if ( atexit_register_pyfunc == nullptr ){ return 0; }
-  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
-  if ( finalize_pyfunc == nullptr ){ return 0; }
-  if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) ){
-    return 0;
-  }
-  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
-  if ( returnval == nullptr ){ return 0; }
-  return 1;
-}
 
 /**
  * Initialize the module with functions, constants, and exit handler
@@ -312,12 +342,29 @@ PyMODINIT_FUNC
 PyInit_pygeosx(void)
 {
   import_array();
-  PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
-  if ( !addExitHandler( module ) ){
-    if ( PyErr_Occurred() == NULL ){
-      PyErr_SetString( PyExc_RuntimeError, "couldn't add exit handler" );
-    }
-    return NULL;
+
+  geosx::PyObjectRef module{ PyModule_Create( &pygeosxModuleFunctions ) };
+  if ( module == nullptr )
+  { return nullptr; }
+
+  if( PyType_Ready( &GroupType ) < 0 )
+  { return nullptr; }
+
+  Py_INCREF( &GroupType );
+  if ( PyModule_AddObject( module, "Group", reinterpret_cast< PyObject * >( &GroupType ) ) < 0 )
+  {
+    Py_DECREF( &GroupType );
+    return nullptr;
   }
+
+  if ( !addExitHandler( module ) )
+  {
+    if ( PyErr_Occurred() == nullptr )
+    { PyErr_SetString( PyExc_RuntimeError, "couldn't add exit handler" ); }
+    return nullptr;
+  }
+
   return addConstants( module );
 }
+
+#pragma GCC diagnostic pop
