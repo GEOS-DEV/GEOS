@@ -41,9 +41,22 @@ std::unique_ptr< GeosxState > & getState()
   return s_state;
 };
 
-/**
- *
- */
+static constexpr char const * initializeDocString =
+"initialize(rank, args)\n"
+"--\n\n"
+"Initialize GEOSX, this must be the first module call.\n"
+"\n"
+"Parameters\n"
+"__________\n"
+"rank : int\n"
+"    The MPI rank of the process.\n"
+"args : list of strings\n"
+"    The list of command line arguments to pass to GEOSX.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"Group\n"
+"    The ProblemManager.";
 static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
@@ -96,9 +109,14 @@ static PyObject * initialize( PyObject * self, PyObject * args )
   return python::createNewPyGroup( getState()->getProblemManager() );
 }
 
-/**
- *
- */
+static constexpr char const * applyInitialConditionsDocString =
+"applyInitialConditions()\n"
+"--\n\n"
+"Apply the initial conditions.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"None\n";
 static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
@@ -111,9 +129,16 @@ static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
   Py_RETURN_NONE;
 }
 
-/**
- *
- */
+static constexpr char const * runDocString =
+"run()\n"
+"--\n\n"
+"Enter the event loop.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"int\n"
+"    The state of the simulation. If the simulation has ended the value is `COMPLETED`. If the "
+"simulation still has steps left to run the value is `READY_TO_RUN`.";
 static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
@@ -126,15 +151,21 @@ static PyObject * run( PyObject * self, PyObject * args )
   return PyLong_FromLong( static_cast< int >( getState()->getState() ) );
 }
 
-/**
- *
- */
+static constexpr char const * finalizeDocString =
+"finalize()\n"
+"--\n\n"
+"Finalize GEOSX. After this no calls into pygeosx or to MPI are allowed.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"None\n";
 static PyObject * finalize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( getState() == nullptr ){
-    PyErr_SetString( PyExc_RuntimeError, "state already finalized" );
+  if ( getState() == nullptr )
+  {
+    PyErr_SetString( PyExc_RuntimeError, "State either not initialized or already finalized." );
     return nullptr;
   }
 
@@ -205,16 +236,15 @@ static bool addExitHandler( PyObject * module ){
  *
  */
 static PyMethodDef pygeosxFuncs[] = {
-  { "initialize", geosx::initialize, METH_VARARGS,
-    "" },
-  { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS,
-    "" },
-  { "run", geosx::run, METH_NOARGS,
-    "" },
-  { "finalize", geosx::finalize, METH_NOARGS,
-    "" },
+  { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
+  { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
+  { "run", geosx::run, METH_NOARGS, geosx::runDocString },
+  { "finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
+
+static constexpr char const * pygeosxDocString =
+"Python driver for GEOSX.";
 
 /**
  * Initialize the module object for Python with the exported functions
@@ -222,7 +252,7 @@ static PyMethodDef pygeosxFuncs[] = {
 static struct PyModuleDef pygeosxModuleFunctions = {
   PyModuleDef_HEAD_INIT,
   .m_name = "pygeosx",
-  .m_doc = "Module for testing numpy views of LvArray::Array objects",
+  .m_doc = pygeosxDocString,
   .m_size = -1,
   .m_methods = pygeosxFuncs
 };

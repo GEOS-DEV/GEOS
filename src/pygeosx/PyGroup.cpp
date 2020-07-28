@@ -46,6 +46,9 @@ namespace python
  */
 struct PyGroup
 {
+  static constexpr char const * docString =
+  "A Python interface to geosx::dataRepository::Group.";
+
   PyObject_HEAD
   dataRepository::Group * group;
 };
@@ -88,9 +91,15 @@ static PyObject * PyGroup_repr( PyObject * const obj )
   return PyUnicode_FromString( repr.c_str() );
 }
 
-/**
- *
- */
+static constexpr char const * PyGroup_groupsDocString =
+"groups()\n"
+"--\n\n"
+"Return a list of the subgroups.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"list of Group\n"
+"    A list containing each subgroup.";
 static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args )
 {
   GEOSX_UNUSED_VAR( args );
@@ -121,9 +130,15 @@ static PyObject * PyGroup_groups( PyGroup * const self, PyObject * const args )
   return pyList;
 }
 
-/**
- *
- */
+static constexpr char const * PyGroup_wrappersDocString =
+"wrappers()\n"
+"--\n\n"
+"Return a list of the wrappers.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"list of Wrapper\n"
+"    A list containing each wrapper.";
 static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args )
 {
   GEOSX_UNUSED_VAR( args );
@@ -154,9 +169,20 @@ static PyObject * PyGroup_wrappers( PyGroup * const self, PyObject * const args 
   return pyList;
 }
 
-/**
- *
- */
+static constexpr char const * PyGroup_getGroupDocString =
+"getGroup(path)\n"
+"--\n\n"
+"Return the `Group` at the relative path `path` or `None` if it doesn't exist.\n"
+"\n"
+"Parameters\n"
+"__________\n"
+"path : str\n"
+"    The relative path of the group to return.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"Group\n"
+"    The group at the relative path.";
 static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args )
 {
   VERIFY_NON_NULL_AND_RETURN( self, nullptr );
@@ -185,29 +211,78 @@ static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args 
   return createNewPyGroup( *result );
 }
 
+static constexpr char const * PyGroup_getWrapperDocString =
+"getWrapper(path)\n"
+"--\n\n"
+"Return the `Wrapper` at the relative path `path` or `None` if it doesn't exist.\n"
+"\n"
+"Parameters\n"
+"__________\n"
+"path : str\n"
+"    The relative path of the wrapper to return.\n"
+"\n"
+"Returns\n"
+"_______\n"
+"Group\n"
+"    The wrapper at the relative path.";
+static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const args )
+{
+  VERIFY_NON_NULL_AND_RETURN( self, nullptr );
+  VERIFY_NON_NULL_GROUP_AND_RETURN( self );
+
+  PyObject * unicodePath;
+  if ( !PyArg_ParseTuple( args, "U", &unicodePath ) )
+  { return nullptr; }
+
+  PyObjectRef asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
+  if ( asciiPath == nullptr )
+  { return nullptr; }
+
+  char const * const path = PyBytes_AsString( asciiPath );
+  if ( path == nullptr )
+  { return nullptr; }
+
+  std::string groupPath, wrapperName;
+  splitPath( path, groupPath, wrapperName );
+
+  dataRepository::Group * const group = self->group->GetGroupByPath( groupPath );
+  if ( group == nullptr )
+  {
+    GEOSX_LOG_RANK( "Group " << self->group->getPath() << "/" << groupPath << " does not exist." );
+    Py_RETURN_NONE;
+  }
+
+  dataRepository::WrapperBase * const wrapper = group->getWrapperBase( wrapperName );
+  if ( wrapper == nullptr )
+  {
+    GEOSX_LOG_RANK( "Goup " << group->getPath() << " doesn't have a wrapper " << wrapperName );
+    Py_RETURN_NONE;
+  }
+
+  // Create a new Group and set the dataRepository::Group it points to.
+  return createNewPyWrapper( *wrapper );
+}
 
 // Allow mixing designated and non-designated initializers in the same initializer list.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wc99-designator"
 
 static PyMethodDef PyGroup_methods[] = {
-  { "groups", (PyCFunction) PyGroup_groups, METH_NOARGS,
-    "" },
-  { "wrappers", (PyCFunction) PyGroup_wrappers, METH_NOARGS,
-    "" },
-  { "getGroup", (PyCFunction) PyGroup_getGroup, METH_VARARGS,
-    "" },
-  { nullptr, nullptr, 0, nullptr }        /* Sentinel */
+  { "groups", (PyCFunction) PyGroup_groups, METH_NOARGS, PyGroup_groupsDocString },
+  { "wrappers", (PyCFunction) PyGroup_wrappers, METH_NOARGS, PyGroup_wrappersDocString },
+  { "getGroup", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
+  { "getWrapper", (PyCFunction) PyGroup_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
+  { nullptr, nullptr, 0, nullptr } // Sentinel
 };
 
 static PyTypeObject PyGroupType = {
   PyVarObject_HEAD_INIT( nullptr, 0 )
-  .tp_name = "Group",
+  .tp_name = "pygeosx.Group",
   .tp_basicsize = sizeof( PyGroup ),
   .tp_itemsize = 0,
   .tp_repr = PyGroup_repr,
   .tp_flags = Py_TPFLAGS_DEFAULT,
-  .tp_doc = "",
+  .tp_doc = PyGroup::docString,
   .tp_methods = PyGroup_methods,
   .tp_new = PyType_GenericNew,
 };
