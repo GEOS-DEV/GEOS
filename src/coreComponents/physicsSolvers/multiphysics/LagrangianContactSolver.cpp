@@ -454,7 +454,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   FaceManager & faceManager = *meshLevel.getFaceManager();
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
 
@@ -1112,7 +1112,7 @@ void LagrangianContactSolver::
   NodeManager & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 > const &
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -1210,7 +1210,7 @@ void LagrangianContactSolver::
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const * const contactRelation = constitutiveManager->GetGroup< ContactRelationBase const >( m_contactRelationName );
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const & tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const & dispDofKey = dofManager.getKey( keys::TotalDisplacement );

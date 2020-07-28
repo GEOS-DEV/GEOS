@@ -620,8 +620,8 @@ struct RateInitializationKernel
         // if BHP constraint set rate below the absolute max rate
         // with the appropriate sign (negative for prod, positive for inj)
         connRate[iwelem] = ( wellType == WellControls::Type::PRODUCER )
-                     ? LvArray::max( 0.1 * targetRate, -1e3 )
-             : LvArray::min( 0.1 * targetRate, 1e3 );
+                     ? LvArray::math::max( 0.1 * targetRate, -1e3 )
+             : LvArray::math::min( 0.1 * targetRate, 1e3 );
       }
       else
       {
