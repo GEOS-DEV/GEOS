@@ -370,6 +370,8 @@ public:
     return m_name;
   }
 
+  string getPath() const;
+
   /**
    * @brief Set the InputFlag of the wrapper.
    * @param input the new InputFlags value

@@ -66,6 +66,11 @@ void WrapperBase::CopyWrapperAttributes( WrapperBase const & source )
   m_restart_flags = source.m_restart_flags;
 }
 
+string WrapperBase::getPath() const
+{
+  return m_conduitNode.path();
+}
+
 string WrapperBase::dumpInputOptions( bool const outputHeader ) const
 {
   string rval;

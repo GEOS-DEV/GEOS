@@ -691,10 +691,7 @@ createPythonObject( T & object, bool const modify )
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
 createPythonObject( T &, bool )
-{
-  LVARRAY_LOG( "Cannot export a " << LvArray::demangleType< T >() << " to python." );
-  return nullptr;
-}
+{ return nullptr; }
 
 #endif
 

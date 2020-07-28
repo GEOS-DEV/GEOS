@@ -37,20 +37,7 @@ enum class State
   COMPLETED = 3
 };
 
-std::ostream & operator<<( std::ostream & os, State const state )
-{
-  if ( state == State::UNINITIALIZED )
-  { return os << "State::UNINITIALIZED"; }
-  if ( state == State::INITIALIZED )
-  { return os << "State::INITIALIZED"; }
-  if ( state == State::READY_TO_RUN )
-  { return os << "State::READY_TO_RUN"; }
-  if ( state == State::COMPLETED )
-  { return os << "State::COMPLETED"; }
-
-  GEOSX_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
-  return os;
-}
+std::ostream & operator<<( std::ostream & os, State const state );
 
 class GeosxState
 {
@@ -66,7 +53,8 @@ public:
   State getState() const
   { return m_state; }
 
-  dataRepository::Group * getGroupByPath( std::string const & path );
+  dataRepository::Group & getProblemManager()
+  { return m_problemManager; }
 
   std::chrono::system_clock::duration getInitTime() const
   { return m_initTime; }

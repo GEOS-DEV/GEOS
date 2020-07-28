@@ -57,6 +57,21 @@ std::string durationToString( std::chrono::system_clock::duration const duration
   return buffer;
 }
 
+std::ostream & operator<<( std::ostream & os, State const state )
+{
+  if ( state == State::UNINITIALIZED )
+  { return os << "State::UNINITIALIZED"; }
+  if ( state == State::INITIALIZED )
+  { return os << "State::INITIALIZED"; }
+  if ( state == State::READY_TO_RUN )
+  { return os << "State::READY_TO_RUN"; }
+  if ( state == State::COMPLETED )
+  { return os << "State::COMPLETED"; }
+
+  GEOSX_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
+  return os;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState::GeosxState():
   m_startTime( initialize() ),
@@ -91,13 +106,6 @@ bool GeosxState::initializeDataRepository()
   m_state = State::INITIALIZED;
 
   return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-dataRepository::Group * GeosxState::getGroupByPath( std::string const & path )
-{ 
-  GEOSX_ERROR_IF_EQ( m_state, State::UNINITIALIZED );
-  return m_problemManager.GetGroupByPath( path );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////

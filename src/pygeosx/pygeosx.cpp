@@ -1,8 +1,26 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All right reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+
 // Python.h must be included first.
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 // Source includes
+#include "pygeosx.hpp"
+#include "PyGroup.hpp"
+#include "PyWrapper.hpp"
 #include "managers/initialization.hpp"
 #include "managers/GeosxState.hpp"
 
@@ -17,80 +35,11 @@
 namespace geosx
 {
 
-// TODO: corbett This should go in LvArray
-class PyObjectRef
+std::unique_ptr< GeosxState > & getState()
 {
-public:
-
-  /**
-   * @brief Create an uninitialized (nullptr) reference.
-   */
-  PyObjectRef() = default;
-
-  /**
-   * @brief Take ownership of a reference to @p src.
-   * @p src The object to be referenced.
-   */
-  explicit PyObjectRef( PyObject * src ):
-    m_object( src )
-  {}
-
-  // Theese could be implemented but I don't have a use case yet.
-  PyObjectRef( PyObjectRef const & ) = delete;
-  PyObjectRef( PyObjectRef && ) = delete;
-
-  /**
-   * @brief Decrease the reference count to the current object.
-   */
-  ~PyObjectRef()
-  {
-    if ( m_object != nullptr )
-    { Py_DECREF( m_object ); }
-  }
-
-  PyObjectRef & operator=( PyObjectRef const & ) = delete;
-  PyObjectRef & operator=( PyObjectRef && ) = delete;
-
-  /**
-   * @brief Decrease the reference count to the current object and take ownership
-   *   of a new reference.
-   * @p src The new object to be referenced.
-   * @return *this.
-   */
-  PyObjectRef & operator=( PyObject * src )
-  {
-    if ( m_object != nullptr )
-    { Py_DECREF( m_object ); }
-
-    m_object = src;
-    return *this;
-  }
-
-  operator PyObject*()
-  { return m_object; }
-
-  PyObject * get() const
-  { return m_object; }
-
-private:
-  PyObject * m_object = nullptr;
+  static std::unique_ptr< GeosxState > s_state;
+  return s_state;
 };
-
-static std::unique_ptr< GeosxState > state;
-
-/**
- *
- */
-struct Group
-{
-  PyObject_HEAD
-  dataRepository::Group * group;
-};
-
-
-
-
-
 
 /**
  *
@@ -99,9 +48,9 @@ static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
-  if ( state != nullptr ){
+  if ( getState() != nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state already initialized" );
-    return NULL;
+    return nullptr;
   }
 
   long pythonMPIRank;
@@ -138,57 +87,13 @@ static PyObject * initialize( PyObject * self, PyObject * args )
 
   if ( pythonMPIRank != MpiWrapper::Comm_rank() ){
     PyErr_SetString( PyExc_ValueError, "Python MPI rank does not align with GEOSX MPI rank" );
-    return NULL;
+    return nullptr;
   }
 
-  state = std::make_unique< GeosxState >();
-  state->initializeDataRepository();
+  getState() = std::make_unique< GeosxState >();
+  getState()->initializeDataRepository();
 
-  Py_RETURN_NONE;
-}
-
-/**
- *
- */
-static PyObject * get( PyObject * self, PyObject * args )
-{
-  GEOSX_UNUSED_VAR( self );
-
-  PyObject * unicodePath;
-  int modify;
-  if ( !PyArg_ParseTuple( args, "Up", &unicodePath, &modify ) )
-  { return nullptr; }
-
-  PyObjectRef asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
-  if ( asciiPath == nullptr )
-  { return nullptr; }
-
-  char const * const charPath = PyBytes_AsString( asciiPath );
-  if ( charPath == nullptr )
-  { return nullptr; }
-
-  std::string groupPath, wrapperName;
-  splitPath( charPath, groupPath, wrapperName );
-
-  dataRepository::Group * const group = state->getGroupByPath( groupPath );
-  if ( group == nullptr )
-  {
-    GEOSX_LOG_RANK( "The group doesn't exist: " << groupPath );
-    Py_RETURN_NONE;
-  }
-
-  dataRepository::WrapperBase * const wrapper = group->getWrapperBase( wrapperName );
-  if ( wrapper == nullptr )
-  {
-    GEOSX_LOG_RANK( "Goup " << groupPath << " doesn't have a wrapper " << wrapper );
-    Py_RETURN_NONE;
-  }
-
-  PyObject * const ret = wrapper->createPythonObject( modify );
-  if ( ret == nullptr )
-  { Py_RETURN_NONE; }
-  else
-  { return ret; }
+  return python::createNewPyGroup( getState()->getProblemManager() );
 }
 
 /**
@@ -196,14 +101,13 @@ static PyObject * get( PyObject * self, PyObject * args )
  */
 static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
 {
-  GEOSX_UNUSED_VAR( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOSX_UNUSED_VAR( self, args );
 
-  if ( state == nullptr ){
+  if ( getState() == nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
-    return NULL;
+    return nullptr;
   }
-  state->applyInitialConditions();
+  getState()->applyInitialConditions();
   Py_RETURN_NONE;
 }
 
@@ -212,15 +116,14 @@ static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
  */
 static PyObject * run( PyObject * self, PyObject * args )
 {
-  GEOSX_UNUSED_VAR( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOSX_UNUSED_VAR( self, args );
 
-  if ( state == nullptr ){
+  if ( getState() == nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
-    return NULL;
+    return nullptr;
   }
-  state->run();
-  return PyLong_FromLong( static_cast< int >( state->getState() ) );
+  getState()->run();
+  return PyLong_FromLong( static_cast< int >( getState()->getState() ) );
 }
 
 /**
@@ -228,14 +131,14 @@ static PyObject * run( PyObject * self, PyObject * args )
  */
 static PyObject * finalize( PyObject * self, PyObject * args )
 {
-  GEOSX_UNUSED_VAR( self );
-  GEOSX_UNUSED_VAR( args );
+  GEOSX_UNUSED_VAR( self, args );
 
-  if ( state == nullptr ){
+  if ( getState() == nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state already finalized" );
-    return NULL;
+    return nullptr;
   }
-  state = nullptr;
+
+  getState() = nullptr;
   basicCleanup();
 
   Py_RETURN_NONE;
@@ -243,10 +146,11 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 
 } // namespace geosx
 
+
 /**
- * Add geosx::State enums to the given module. Return the module, or NULL on failure
+ * Add geosx::State enums to the given module. Return the module, or nullptr on failure
  */
-static PyObject * addConstants( PyObject * module )
+static bool addConstants( PyObject * module )
 {
   std::array< std::pair< long, char const * >, 4 > const constants = { {
     { static_cast< long >( geosx::State::COMPLETED ), "COMPLETED" },
@@ -260,11 +164,11 @@ static PyObject * addConstants( PyObject * module )
     if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
     {
       PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-      return nullptr;
+      return false;
     }
   }
 
-  return module;
+  return true;
 }
 
 /**
@@ -288,7 +192,7 @@ static bool addExitHandler( PyObject * module ){
   if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
   { return 0; }
 
-  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
+  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
   
   return returnval != nullptr;
 }
@@ -297,23 +201,11 @@ static bool addExitHandler( PyObject * module ){
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wc99-designator"
 
-static PyTypeObject GroupType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-  .tp_name = "geosx.Group",
-  .tp_basicsize = sizeof( geosx::Group ),
-  .tp_itemsize = 0,
-  .tp_flags = Py_TPFLAGS_DEFAULT,
-  .tp_doc = "",
-  .tp_new = PyType_GenericNew,
-};
-
 /**
  *
  */
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS,
-    "" },
-  { "get", geosx::get, METH_VARARGS,
     "" },
   { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS,
     "" },
@@ -321,7 +213,7 @@ static PyMethodDef pygeosxFuncs[] = {
     "" },
   { "finalize", geosx::finalize, METH_NOARGS,
     "" },
-  { NULL, NULL, 0, NULL }        /* Sentinel */
+  { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
 /**
@@ -343,28 +235,43 @@ PyInit_pygeosx(void)
 {
   import_array();
 
+  if( PyType_Ready( geosx::python::getPyGroupType() ) < 0 )
+  { return nullptr; }
+
+  if( PyType_Ready( geosx::python::getPyWrapperType() ) < 0 )
+  { return nullptr; }
+
   geosx::PyObjectRef module{ PyModule_Create( &pygeosxModuleFunctions ) };
   if ( module == nullptr )
   { return nullptr; }
-
-  if( PyType_Ready( &GroupType ) < 0 )
-  { return nullptr; }
-
-  Py_INCREF( &GroupType );
-  if ( PyModule_AddObject( module, "Group", reinterpret_cast< PyObject * >( &GroupType ) ) < 0 )
-  {
-    Py_DECREF( &GroupType );
-    return nullptr;
-  }
 
   if ( !addExitHandler( module ) )
   {
     if ( PyErr_Occurred() == nullptr )
     { PyErr_SetString( PyExc_RuntimeError, "couldn't add exit handler" ); }
+
     return nullptr;
   }
 
-  return addConstants( module );
+  if( !addConstants( module ) )
+  { return nullptr; }
+
+  Py_INCREF( geosx::python::getPyGroupType() );
+  if ( PyModule_AddObject( module, "Group", reinterpret_cast< PyObject * >( geosx::python::getPyGroupType() ) ) < 0 )
+  {
+    Py_DECREF( geosx::python::getPyGroupType() );
+    return nullptr;
+  }
+
+  Py_INCREF( geosx::python::getPyWrapperType() );
+  if ( PyModule_AddObject( module, "Wrapper", reinterpret_cast< PyObject * >( geosx::python::getPyWrapperType() ) ) < 0 )
+  {
+    Py_DECREF( geosx::python::getPyWrapperType() );
+    return nullptr;
+  }
+
+  // Since we return module we don't want to decrease the reference count.
+  return module.release();
 }
 
 #pragma GCC diagnostic pop

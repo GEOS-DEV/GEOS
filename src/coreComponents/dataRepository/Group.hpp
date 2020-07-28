@@ -1117,6 +1117,11 @@ public:
     return m_wrappers;
   }
 
+  indexType numWrappers() const
+  {
+    return m_wrappers.size();
+  }
+
   ///@}
 
   /**
@@ -1315,6 +1320,11 @@ public:
   inline const string getName() const
   {
     return m_name;
+  }
+
+  inline string const getPath() const
+  {
+    return m_conduitNode.path();
   }
 
   /**
