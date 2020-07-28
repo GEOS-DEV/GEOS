@@ -157,10 +157,10 @@ struct MatrixLayout
   using COL_MAJOR_PERM = RAJA::PERM_JI;
 
   /// row major data unit stride dim
-  constexpr static int const ROW_MAJOR = LvArray::getStrideOneDimension( ROW_MAJOR_PERM {} );
+  constexpr static int const ROW_MAJOR = LvArray::typeManipulation::getStrideOneDimension( ROW_MAJOR_PERM {} );
 
   /// column major unit stride dim
-  constexpr static int const COL_MAJOR = LvArray::getStrideOneDimension( COL_MAJOR_PERM {} );
+  constexpr static int const COL_MAJOR = LvArray::typeManipulation::getStrideOneDimension( COL_MAJOR_PERM {} );
 };
 
 }

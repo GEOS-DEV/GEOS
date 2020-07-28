@@ -12,16 +12,19 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+// Source includes
 #include "VTKPolyDataWriterInterface.hpp"
-
 #include "dataRepository/Group.hpp"
 
+// TPL includes
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellData.h>
 #include <vtkPointData.h>
 #include <vtkExtentTranslator.h>
 
+// System includes
 #include <unordered_set>
+#include <sys/stat.h>
 
 
 
@@ -251,7 +254,7 @@ void VTKPolyDataWriterInterface::WriteField( WrapperBase const & wrapperBase, vt
     if( typeID!=typeid(r1_array) )
     {
       integer nbOfComponents = 1;
-      for( localIndex i = 1; i < arrayType::ndim; i++ )
+      for( localIndex i = 1; i < arrayType::NDIM; i++ )
       {
         nbOfComponents = nbOfComponents * sourceArray.size( i );
       }
