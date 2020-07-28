@@ -837,7 +837,7 @@ void LagrangianContactFlowSolver::
   NodeManager & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
 
   arrayView2d< real64 > const &
@@ -935,7 +935,7 @@ void LagrangianContactFlowSolver::
   NodeManager const & nodeManager = *mesh.getNodeManager();
 
   arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
-  FaceManager::NodeMapType const & faceToNodeMap = faceManager.nodeList();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   CRSMatrixView< real64 const, localIndex const > const &
   dFluxResidual_dAperture = m_flowSolver->getDerivativeFluxResidual_dAperture().toViewConst();
