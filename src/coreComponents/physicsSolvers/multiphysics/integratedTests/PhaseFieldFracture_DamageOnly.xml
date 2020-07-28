@@ -31,7 +31,7 @@
                 timeIntegrationOption="SteadyState"
                 fieldName="Damage"
                 solidMaterialNames="{shale}"
-                localDissipation = "Quadratic"
+                localDissipation = "Linear"
                 lengthScale = "0.2"
                 criticalFractureEnergy = "2.7"
                 logLevel="1"
@@ -98,7 +98,11 @@
     <DamageLinearElasticIsotropic name="shale"
                             defaultDensity="2700"
                             defaultBulkModulus="1.7500e5"
-                            defaultShearModulus="8.0769e4"/>
+                            defaultShearModulus="8.0769e4"
+                            lengthScale="0.2"
+                            criticalFractureEnergy="2.7"
+                            criticalStrainEnergy="1.5"
+                            />
   </Constitutive>
 
   <FieldSpecifications>

@@ -32,8 +32,6 @@
                 fieldName="Damage"
                 solidMaterialNames="{shale}"
                 localDissipation = "Quadratic"
-                lengthScale = "0.2"
-                criticalFractureEnergy = "2.7"
                 logLevel="1"
                 targetRegions="{Region1}">
     </PhaseFieldDamageFEM>
@@ -97,8 +95,12 @@
   <Constitutive>
     <DamageLinearElasticIsotropic name="shale"
                                   defaultDensity="2700"
-                                  defaultBulkModulus="2.00e5" 
-                                  defaultShearModulus="3.00e5"/>
+                                  defaultBulkModulus="2.00e5"
+                                  defaultShearModulus="3.00e5"
+                                  lengthScale="0.2"
+                                  criticalFractureEnergy="2.7"
+                                  criticalStrainEnergy="0"
+                                  />
   </Constitutive>
 
   <FieldSpecifications>

@@ -40,19 +40,6 @@
 
 #include "managers/DomainPartition.hpp"
 
-// this should be part of the input file
-
-double myFunc2( double, double, double )
-{
-  return 0;
-  // return pow(x, 2) + pow(y, 2) + pow(z, 2) + 6;
-//  return x * (1 - x) * y * (1 - y) * z * (1 - z) -
-//         2 * (x - 1) * x * (y - 1) * y - 2 * (x - 1) * x * (z - 1) * z -
-//         2 * (y - 1) * y * (z - 1) * z;
-}
-
-///////////////////////////////////
-
 namespace geosx
 {
 
@@ -309,9 +296,12 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
         std::unique_ptr< FiniteElementBase > finiteElement = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
         localIndex const n_q_points = finiteElement->n_quadrature_points();
 
-        real64 ell = m_lengthScale;                       //phase-field length scale
-        real64 Gc = m_criticalFractureEnergy;             //energy release rate
-        double threshold = 3 * Gc / (16 * ell);           //elastic energy threshold - use when Local Dissipation is linear
+        //real64 ell = m_lengthScale;                       //phase-field length scale
+        real64 ell = constitutiveUpdate.getRegularizationLength();
+        //real64 Gc = m_criticalFractureEnergy;             //energy release rate
+	real64 Gc = constitutiveUpdate.getCriticalFractureEnergy();
+
+        real64 threshold = constitutiveUpdate.getEnergyThreshold();//elastic energy threshold - use when Local Dissipation is linear
 
         arrayView1d< real64 > const & nodalDamage = nodeManager->getReference< array1d< real64 > >( m_fieldName );
         //real64 diffusion = 1.0;
@@ -331,7 +321,7 @@ void PhaseFieldDamageFEM::AssembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
               {
                 D = std::max( threshold, strainEnergyDensity );
                 //D = max(strainEnergy(k,q), strainEnergy(k,q));//debbuging line - remove after testing
-              }
+	      }
               //Interpolate d and grad_d
 
               real64 qp_damage = 0.0;
