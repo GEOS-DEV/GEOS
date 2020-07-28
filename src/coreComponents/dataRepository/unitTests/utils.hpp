@@ -34,17 +34,6 @@ void fill( R1Tensor & val, localIndex )
   }
 }
 
-void fill( R2Tensor & val, localIndex )
-{
-  for( int i = 0; i < 3; ++i )
-  {
-    for( int j = 0; j < 3; ++j )
-    {
-      val( i, j ) = rand( -100, 100 );
-    }
-  }
-}
-
 void fill( std::string & val, localIndex )
 {
   int const num = rand( -100, 100 );

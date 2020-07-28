@@ -189,7 +189,7 @@ public:
    * @param keyIndex
    * @return pointer to const T
    */
-  inline T const * operator[]( KeyIndex & keyIndex ) const
+  inline T const * operator[]( KeyIndex const & keyIndex ) const
   {
     INDEX_TYPE index = keyIndex.Index();
 
@@ -214,45 +214,8 @@ public:
    * @param keyIndex
    * @return pointer to T
    */
-  inline T * operator[]( KeyIndex & keyIndex )
-  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
-
-
-
-  /**
-   *
-   * @param keyIndex
-   * @return pointer to const T
-   */
-  inline T const * operator[]( KeyIndex const & keyIndex ) const
-  {
-//    INDEX_TYPE index = keyIndex.Index();
-//
-//    if( index==KeyIndex::invalid_index )
-//    {
-//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// invalid key index passed as const into accessor function\n");
-//    }
-//#if RANGE_CHECKING==1
-//    else if (m_values[index].first!=keyIndex.Key() )
-//    {
-//      GEOSX_ERROR("MappedVector::operator[]( KeyIndex const & keyIndex ):
-// inconsistent key passed as const into accessor function\n")
-//    }
-//#endif
-//
-//    return this->operator[]( index );
-    return this->operator[]( const_cast< KeyIndex & >(keyIndex) );
-  }
-
-  /**
-   *
-   * @param keyIndex
-   * @return pointer to T
-   */
   inline T * operator[]( KeyIndex const & keyIndex )
   { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
-
 
   ///@}
 

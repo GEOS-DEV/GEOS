@@ -64,6 +64,13 @@ public:
                                          localIndex const GEOSX_UNUSED_PARAM( k ),
                                          localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
 
+  virtual void StateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
+                                         arrayView1d< real64 const > const & dPres )
+  {
+    GEOSX_UNUSED_VAR( pres )
+    GEOSX_UNUSED_VAR( dPres )
+  }
+
   /**
    * @brief function to resize the fields in this constitutive model
    * @param[in] newSize the new size of the fields
@@ -110,10 +117,6 @@ public:
     static constexpr auto dPVMult_dPresString  = "dPVMult_dDensity";
 
   };
-
-  struct groupKeyStruct
-  {};
-
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 

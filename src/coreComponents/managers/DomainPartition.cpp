@@ -64,12 +64,12 @@ void DomainPartition::InitializationOrder( string_array & order )
 {
   SortedArray< string > usedNames;
   {
-    order.push_back( keys::ConstitutiveManager );
+    order.emplace_back( keys::ConstitutiveManager );
     usedNames.insert( keys::ConstitutiveManager );
   }
 
   {
-    order.push_back( groupKeysStruct::meshBodiesString );
+    order.emplace_back( string( groupKeysStruct::meshBodiesString ) );
     usedNames.insert( groupKeysStruct::meshBodiesString );
   }
 
@@ -78,7 +78,7 @@ void DomainPartition::InitializationOrder( string_array & order )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
-      order.push_back( subGroup.first );
+      order.emplace_back( subGroup.first );
     }
   }
 }
@@ -102,11 +102,11 @@ void DomainPartition::GenerateSets()
   {
     string name = wrapper.second->getName();
     nodeInSet[name].resize( nodeManager->size() );
-    nodeInSet[name] = false;
+    nodeInSet[name].setValues< serialPolicy >( false );
     Wrapper< SortedArray< localIndex > > const * const setPtr = nodeSets->getWrapper< SortedArray< localIndex > >( name );
     if( setPtr!=nullptr )
     {
-      setNames.push_back( name );
+      setNames.emplace_back( name );
       SortedArrayView< localIndex const > const & set = setPtr->reference();
       for( localIndex const a : set )
       {
@@ -183,7 +183,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   {
     for( integer const neighborRank : m_metisNeighborList )
     {
-      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
 
@@ -191,7 +191,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
   array1d< int > firstNeighborRanks;
   for( NeighborCommunicator const & neighbor : m_neighbors )
   {
-    firstNeighborRanks.push_back( neighbor.NeighborRank() );
+    firstNeighborRanks.emplace_back( neighbor.NeighborRank() );
   }
 
   constexpr int neighborsTag = 43543;
@@ -224,7 +224,7 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
 
   for( integer const neighborRank : secondNeighborRanks )
   {
-    m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+    m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
   }
 
   MpiWrapper::Waitall( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
@@ -283,7 +283,7 @@ void DomainPartition::AddNeighbors( const unsigned int idim,
     if( !me )
     {
       int const neighborRank = MpiWrapper::Cart_rank( cartcomm, ncoords );
-      m_neighbors.push_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }
   else

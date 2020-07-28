@@ -1,6 +1,6 @@
 [submodule "src/coreComponents/LvArray"]
 	path = src/coreComponents/LvArray
-	url = ../cxx-utilities.git
+	url = ../LvArray.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
 	url = ../../LLNL/blt.git

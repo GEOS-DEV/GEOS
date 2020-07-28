@@ -59,34 +59,25 @@ public:
 
   /**
    * @brief Writes out a Blueprint plot file.
-   * @param time The current simulation time.
-   * @param dt The current time step.
-   * @param cycle The current cycle.
-   * @param evenCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails EventBase::Execute()
    */
-  virtual void Execute( real64 const time,
+  virtual void Execute( real64 const time_n,
                         real64 const dt,
-                        integer const cycle,
+                        integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override;
 
   /**
    * @brief Writes out a Blueprint plot file at the end of the simulation.
-   * @param time The current simulation time.
-   * @param cycle The current cycle.
-   * @param evenCounter The event counter.
-   * @param eventProgress The event progress.
-   * @param domain The DomainPartition to write out up-casted to a Group.
+   * @copydetails ExecutableGroup::Cleanup()
    */
-  virtual void Cleanup( real64 const time,
-                        integer const cycle,
+  virtual void Cleanup( real64 const time_n,
+                        integer const cycleNumber,
                         integer const eventCounter,
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override
-  { Execute( time, 0, cycle, eventCounter, eventProgress, domain ); }
+  { Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain ); }
 
 private:
 

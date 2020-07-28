@@ -21,10 +21,10 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/solidSelector.hpp"
 #include "finiteElement/ElementLibrary/FiniteElementBase.h"
 #include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "TimeIntegrationOption.hpp"
 
@@ -43,11 +43,8 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   localIndex const N = acceleration.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
-    for( int j = 0; j < 3; ++j )
-    {
-      velocity( i, j ) += dt * acceleration( i, j );
-      acceleration( i, j ) = 0;
-    }
+    LvArray::tensorOps::scaledAdd< 3 >( velocity[ i ], acceleration[ i ], dt );
+    LvArray::tensorOps::fill< 3 >( acceleration[ i ], 0 );
   } );
 }
 
@@ -62,11 +59,8 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   forAll< parallelDevicePolicy<> >( indices.size(), [=] GEOSX_DEVICE ( localIndex const i )
   {
     localIndex const a = indices[ i ];
-    for( int j = 0; j < 3; ++j )
-    {
-      acceleration( a, j ) /= mass[ a ];
-      velocity( a, j ) += dt * acceleration( a, j );
-    }
+    LvArray::tensorOps::scale< 3 >( acceleration[ a ], 1.0 / mass[ a ] );
+    LvArray::tensorOps::scaledAdd< 3 >( velocity[ a ], acceleration[ a ], dt );
   } );
 }
 
@@ -80,14 +74,10 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
   localIndex const N = velocity.size( 0 );
   forAll< parallelDevicePolicy<> >( N, [=] GEOSX_DEVICE ( localIndex const i )
   {
-    for( int j = 0; j < 3; ++j )
-    {
-      uhat( i, j ) = velocity( i, j ) * dt;
-      u( i, j ) += uhat( i, j );
-    }
+    LvArray::tensorOps::scaledCopy< 3 >( uhat[ i ], velocity[ i ], dt );
+    LvArray::tensorOps::add< 3 >( u[ i ], uhat[ i ] );
   } );
 }
-
 
 
 /**
@@ -109,19 +99,12 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
 {
   real64 rval = 0;
 
-  constitutive::constitutiveUpdatePassThru( constitutiveRelation, [&]( auto & constitutive )
+  using namespace constitutive;
+
+  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
+                                              [&]( auto * const constitutive )
   {
-    using CONSTITUTIVE_TYPE = TYPEOFREF( constitutive );
-    if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
-    {
-      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( &constitutive, std::forward< PARAMS >( params )... );
-    }
-    else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
-    {
-      GEOSX_ERROR( "Not implemented!" );
-      // rval = KERNELWRAPPER::template Launch<4,1, CONSTITUTIVE_TYPE>( &constitutive, std::forward<PARAMS>(params)...
-      // );
-    }
+    rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >( params )... );
   } );
   return rval;
 }
@@ -143,37 +126,26 @@ struct ExplicitKernel
   static
   void Integrate( arraySlice1d< real64 const, USD > const & fieldVar,
   #if defined(CALCFEMSHAPE)
-                  real64 const (&dNdX)[N][3],
+                  real64 const (&dNdX)[ N ][ 3 ],
   #else
-                  arraySlice1d< R1Tensor const > const & dNdX,
+                  arraySlice2d< real64 const > const & dNdX,
   #endif
                   real64 const detJ,
                   real64 const detF,
-                  R2Tensor const & fInv,
-                  R1Tensor (& result)[N] )
+                  real64 const ( &fInv )[ 3 ][ 3 ],
+                  real64 ( & result )[ N ][ 3 ] )
   {
     GEOSX_ASSERT_EQ( fieldVar.size(), 6 );
 
-    real64 const integrationFactor = detJ * detF;
+    real64 const integrationFactor = -detJ * detF;
 
     real64 P[ 3 ][ 3 ];
-    P[ 0 ][ 0 ] = ( fieldVar[ 0 ] * fInv( 0, 0 ) + fieldVar[ 5 ] * fInv( 0, 1 ) + fieldVar[ 4 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 0 ][ 1 ] = ( fieldVar[ 0 ] * fInv( 1, 0 ) + fieldVar[ 5 ] * fInv( 1, 1 ) + fieldVar[ 4 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 0 ][ 2 ] = ( fieldVar[ 0 ] * fInv( 2, 0 ) + fieldVar[ 5 ] * fInv( 2, 1 ) + fieldVar[ 4 ] * fInv( 2, 2 ) ) * integrationFactor;
+    LvArray::tensorOps::symAikBjk< 3 >( P, fieldVar, fInv );
+    LvArray::tensorOps::scale< 3, 3 >( P, integrationFactor );
 
-    P[ 1 ][ 0 ] = ( fieldVar[ 5 ] * fInv( 0, 0 ) + fieldVar[ 1 ] * fInv( 0, 1 ) + fieldVar[ 3 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 1 ][ 1 ] = ( fieldVar[ 5 ] * fInv( 1, 0 ) + fieldVar[ 1 ] * fInv( 1, 1 ) + fieldVar[ 3 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 1 ][ 2 ] = ( fieldVar[ 5 ] * fInv( 2, 0 ) + fieldVar[ 1 ] * fInv( 2, 1 ) + fieldVar[ 3 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-    P[ 2 ][ 0 ] = ( fieldVar[ 4 ] * fInv( 0, 0 ) + fieldVar[ 3 ] * fInv( 0, 1 ) + fieldVar[ 2 ] * fInv( 0, 2 ) ) * integrationFactor;
-    P[ 2 ][ 1 ] = ( fieldVar[ 4 ] * fInv( 1, 0 ) + fieldVar[ 3 ] * fInv( 1, 1 ) + fieldVar[ 2 ] * fInv( 1, 2 ) ) * integrationFactor;
-    P[ 2 ][ 2 ] = ( fieldVar[ 4 ] * fInv( 2, 0 ) + fieldVar[ 3 ] * fInv( 2, 1 ) + fieldVar[ 2 ] * fInv( 2, 2 ) ) * integrationFactor;
-
-    for( int a=0; a<N; ++a )    // loop through all shape functions in element
+    for( int a = 0; a < N; ++a )    // loop through all shape functions in element
     {
-      result[a][0] -= P[ 0 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 0 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 0 ][ 2 ] * dNdX[ a ][ 2 ];
-      result[a][1] -= P[ 1 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 1 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 1 ][ 2 ] * dNdX[ a ][ 2 ];
-      result[a][2] -= P[ 2 ][ 0 ] * dNdX[ a ][ 0 ] + P[ 2 ][ 1 ] * dNdX[ a ][ 1 ] + P[ 2 ][ 2 ] * dNdX[ a ][ 2 ];
+      LvArray::tensorOps::plusAijBj< 3, 3 >( result[ a ], P, dNdX[ a ] );
     }
   }
 
@@ -197,9 +169,9 @@ struct ExplicitKernel
   template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS, typename CONSTITUTIVE_TYPE >
   static inline real64
   Launch( CONSTITUTIVE_TYPE * const constitutiveRelation,
-          LvArray::SortedArrayView< localIndex const, localIndex > const & elementList,
+          SortedArrayView< localIndex const > const & elementList,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes,
-          arrayView3d< R1Tensor const > const & dNdX,
+          arrayView4d< real64 const > const & dNdX,
           arrayView2d< real64 const > const & detJ,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u,
@@ -218,7 +190,7 @@ struct ExplicitKernel
 
 
 
-    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelWrapper();
+    typename CONSTITUTIVE_TYPE::KernelWrapper constitutive = constitutiveRelation->createKernelUpdates();
 
     using KERNEL_POLICY = parallelDevicePolicy< 32 >;
     RAJA::forall< KERNEL_POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, elementList.size() ),
@@ -226,23 +198,21 @@ struct ExplicitKernel
     {
       localIndex const k = elementList[ index ];
 
-      R1Tensor v_local[NUM_NODES_PER_ELEM];
-      R1Tensor u_local[NUM_NODES_PER_ELEM];
-      R1Tensor f_local[NUM_NODES_PER_ELEM];
+      real64 v_local[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 u_local[ NUM_NODES_PER_ELEM ][ 3 ];
+      real64 f_local[ NUM_NODES_PER_ELEM ][ 3 ] = { { 0 } };
 #if defined(CALCFEMSHAPE)
-      real64 X_local[8][3];
+      real64 X_local[ NUM_NODES_PER_ELEM ][ 3 ];
 #endif
+
       for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
       {
         localIndex const nodeIndex = elemsToNodes( k, a );
-        for( int i=0; i<3; ++i )
-        {
+        LvArray::tensorOps::copy< 3 >( v_local[ a ], vel[ nodeIndex ] );
+        LvArray::tensorOps::copy< 3 >( u_local[ a ], u[ nodeIndex ] );
 #if defined(CALCFEMSHAPE)
-          X_local[ a ][ i ] = X[ nodeIndex ][ i ];
+        LvArray::tensorOps::copy< 3 >( X_local[ a ], X[ nodeIndex ] );
 #endif
-          u_local[ a ][ i ] = u[ nodeIndex ][ i ];
-          v_local[ a ][ i ] = vel[ nodeIndex ][ i ];
-        }
       }
 
       //Compute Quadrature
@@ -251,41 +221,38 @@ struct ExplicitKernel
 #if defined(CALCFEMSHAPE)
         real64 dNdX[ 8 ][ 3 ];
         real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, X_local, dNdX );
-#define DNDX dNdX
-#define DETJ detJ
+        #define DNDX dNdX
+        #define DETJ detJ
 #else
-#define DNDX dNdX[k][q]
-#define DETJ detJ( k, q )
+        #define DNDX dNdX[k][q]
+        #define DETJ detJ( k, q )
 #endif
-        R2Tensor dUhatdX, dUdX;
+        real64 dUhatdX[ 3 ][ 3 ], dUdX[ 3 ][ 3 ];
         CalculateGradients< NUM_NODES_PER_ELEM >( dUhatdX, dUdX, v_local, u_local, DNDX );
-        dUhatdX *= dt;
+        LvArray::tensorOps::scale< 3, 3 >( dUhatdX, dt );
 
-        R2Tensor F, Ldt, fInv;
+        real64 F[ 3 ][ 3 ], Ldt[ 3 ][ 3 ], fInv[ 3 ][ 3 ];
 
         // calculate du/dX
-        F = dUhatdX;
-        F *= 0.5;
-        F += dUdX;
-        F.PlusIdentity( 1.0 );
-        fInv.Inverse( F );
+        LvArray::tensorOps::scaledCopy< 3, 3 >( F, dUhatdX, 0.5 );
+        LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+        LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+        LvArray::tensorOps::invert< 3 >( fInv, F );
 
         // chain rule: calculate dv/du = dv/dX * dX/du
-        Ldt.AijBjk( dUhatdX, fInv );
+        LvArray::tensorOps::AikBkj< 3, 3, 3 >( Ldt, dUhatdX, fInv );
 
         // calculate gradient (end of step)
-        F = dUhatdX;
-        F += dUdX;
-        F.PlusIdentity( 1.0 );
-        real64 const detF = F.Det();
-        fInv.Inverse( F );
+        LvArray::tensorOps::copy< 3, 3 >( F, dUhatdX );
+        LvArray::tensorOps::add< 3, 3 >( F, dUdX );
+        LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
+        real64 const detF = LvArray::tensorOps::invert< 3 >( fInv, F );
 
-
-        R2Tensor Rot;
-        R2SymTensor Dadt;
+        real64 Rot[ 3 ][ 3 ];
+        real64 Dadt[ 6 ];
         HughesWinget( Rot, Dadt, Ldt );
 
-        constitutive.HypoElastic( k, q, Dadt.Data(), Rot );
+        constitutive.HypoElastic( k, q, Dadt, Rot );
 
         Integrate< NUM_NODES_PER_ELEM >( constitutive.m_stress[k][q].toSliceConst(),
                                          DNDX,
@@ -293,7 +260,6 @@ struct ExplicitKernel
                                          detF,
                                          fInv,
                                          f_local );
-// );
       }    //quadrature loop
 
       for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
@@ -318,7 +284,7 @@ struct ExplicitKernel
   CalculateSingleNodalForce( localIndex const k,
                              localIndex const targetNode,
                              localIndex const numQuadraturePoints,
-                             arrayView3d< R1Tensor const > const & dNdX,
+                             arrayView4d< real64 const > const & dNdX,
                              arrayView2d< real64 const > const & detJ,
                              arrayView3d< real64 const, solid::STRESS_USD > const & stress,
                              R1Tensor & force )
@@ -329,15 +295,15 @@ struct ExplicitKernel
     //Compute Quadrature
     for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      force[ 0 ] -= ( stress( k, q, 0 ) * dNdX( k, q, a )[ 0 ] +
-                      stress( k, q, 5 ) * dNdX( k, q, a )[ 1 ] +
-                      stress( k, q, 4 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
-      force[ 1 ] -= ( stress( k, q, 5 ) * dNdX( k, q, a )[ 0 ] +
-                      stress( k, q, 1 ) * dNdX( k, q, a )[ 1 ] +
-                      stress( k, q, 3 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
-      force[ 2 ] -= ( stress( k, q, 4 ) * dNdX( k, q, a )[ 0 ] +
-                      stress( k, q, 3 ) * dNdX( k, q, a )[ 1 ] +
-                      stress( k, q, 2 ) * dNdX( k, q, a )[ 2 ] ) * detJ( k, q );
+      force[ 0 ] -= ( stress( k, q, 0 ) * dNdX( k, q, a, 0 ) +
+                      stress( k, q, 5 ) * dNdX( k, q, a, 1 ) +
+                      stress( k, q, 4 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
+      force[ 1 ] -= ( stress( k, q, 5 ) * dNdX( k, q, a, 0 ) +
+                      stress( k, q, 1 ) * dNdX( k, q, a, 1 ) +
+                      stress( k, q, 3 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
+      force[ 2 ] -= ( stress( k, q, 4 ) * dNdX( k, q, a, 0 ) +
+                      stress( k, q, 3 ) * dNdX( k, q, a, 1 ) +
+                      stress( k, q, 2 ) * dNdX( k, q, a, 2 ) ) * detJ( k, q );
 
     }//quadrature loop
 
@@ -346,11 +312,9 @@ struct ExplicitKernel
 
 };
 
-/**
- * @struct Structure to wrap templated function that implements the implicit time integration kernel.
- */
 struct ImplicitKernel
 {
+
   /**
    * @brief Launch of the element processing kernel for implicit time integration.
    * @tparam NUM_NODES_PER_ELEM The number of nodes/dof per element.
@@ -388,12 +352,14 @@ struct ImplicitKernel
   Launch( CONSTITUTIVE_TYPE * const GEOSX_UNUSED_PARAM( constitutiveRelation ),
           localIndex const GEOSX_UNUSED_PARAM( numElems ),
           real64 const GEOSX_UNUSED_PARAM( dt ),
-          arrayView3d< R1Tensor const > const & GEOSX_UNUSED_PARAM( dNdX ),
+          arrayView4d< real64 const > const & GEOSX_UNUSED_PARAM( dNdX ),
           arrayView2d< real64 const > const & GEOSX_UNUSED_PARAM( detJ ),
           FiniteElementBase const * const GEOSX_UNUSED_PARAM( fe ),
           arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
+          globalIndex const GEOSX_UNUSED_PARAM( dofRankOffset ),
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
           arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
@@ -408,15 +374,14 @@ struct ImplicitKernel
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
           real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
           R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
-          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-          ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-          ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+          CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
+          arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( rhs ) )
   {
-    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented" );
+    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::CRSImplicitKernel::Launch() not implemented" );
     return 0;
   }
-
 };
+
 
 } // namespace SolidMechanicsLagrangianFEMKernels
 

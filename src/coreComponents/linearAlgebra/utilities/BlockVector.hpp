@@ -89,7 +89,7 @@ public:
   {
     for( localIndex i = 0; i < rhs.blockSize(); ++i )
     {
-      m_vectorStorage.push_back( rhs.block( i ) );
+      m_vectorStorage.emplace_back( rhs.block( i ) );
     }
     setPointers();
   }

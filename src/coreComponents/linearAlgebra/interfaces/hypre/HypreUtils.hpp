@@ -84,6 +84,7 @@ struct HyprePrecFuncs
   SetupFunc setup{};     ///< pointer to setup function
   ApplyFunc apply{};     ///< pointer to apply function
   DestroyFunc destroy{}; ///< pointer to destroy function
+  DestroyFunc aux_destroy{}; ///< pointer to auxillary destroy function
 };
 
 /**
@@ -126,6 +127,14 @@ struct HypreSolverFuncs
   GetNumIter getNumIter{};     ///< pointer to get number of iterations function
   GetFinalNorm getFinalNorm{}; ///< pointer to get final residual norm function
   DestroyFunc destroy{};       ///< pointer to destroy function
+};
+
+/**
+ * @brief Container for hypre preconditioner auxiliary data.
+ */
+struct HyprePrecAuxData
+{
+  array1d< HYPRE_Int > point_marker_array; ///< array1d of unique tags for local degrees of freedom
 };
 
 }

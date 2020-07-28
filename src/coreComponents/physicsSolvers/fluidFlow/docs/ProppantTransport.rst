@@ -22,7 +22,7 @@ The following attributes are supported:
 
 In particular:
 
-* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolume`)
+* ``discretization`` must point to a Finite Volume flux approximation scheme defined in the Numerical Methods section of the input file (see :ref:`FiniteVolumeDiscretization`)
 * ``proppantName`` must point to a particle fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``fluidName`` must point to a slurry fluid model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
 * ``solidName`` must point to a solid mechanics model defined in the Constitutive section of the input file (see :ref:`Constitutive`)
@@ -44,7 +44,8 @@ be supplied as the value of ``coefficientName`` attribute of the flux approximat
 Input example
 =========================
 
-.. code-block:: xml
+
+.. code-block::xml
 
   <Solvers
     gravityVector="0.0, 0.0, -9.81">

@@ -28,6 +28,10 @@ class NodeManager;
 class FaceManager;
 class MeshLevel;
 class DomainPartition;
+namespace constitutive
+{
+class ConstitutiveBase;
+}
 
 /**
  * @class ElementSubRegionBase
@@ -104,9 +108,11 @@ public:
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
   /**
-   * @copydoc numNodesPerElement() const
+   * @brief Get the number of nodes per element.
+   * @param[in] k cell index (not used)
+   * @return number of nodes per element
    */
-  virtual localIndex numNodesPerElement( localIndex const ) const { return m_numNodesPerElement; }
+  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
    * @brief Set the number of nodes per element.
@@ -168,13 +174,13 @@ public:
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView1d< R1Tensor const > const & getElementCenter() const
+  arrayView2d< real64 const > const & getElementCenter() const
   { return m_elementCenter; }
 
   /**
    * @copydoc getElementCenter() const
    */
-  arrayView1d< R1Tensor > const & getElementCenter()
+  arrayView2d< real64 > const & getElementCenter()
   { return m_elementCenter; }
 
   /**
@@ -196,6 +202,28 @@ public:
    */
   dataRepository::Group * GetConstitutiveModels()
   { return &m_constitutiveModels; }
+
+  /**
+   * @brief Get a pointer to the constitutive model.
+   * @tparam T The type of the constitutive model.
+   * @param name The name of the constitutive model.
+   * @return A pointer to the constitutive model.
+   */
+  template< typename T = constitutive::ConstitutiveBase >
+  T const * getConstitutiveModel( string const & name ) const
+  {
+    return m_constitutiveModels.GetGroup< T >( name );
+  }
+
+  /**
+   * @copydoc getConstitutiveModel( string const & ) const
+   */
+  template< typename T = constitutive::ConstitutiveBase >
+  T * getConstitutiveModel( string const & name )
+  {
+    return m_constitutiveModels.GetGroup< T >( name );
+  }
+
 
   /**
    * @brief Get the type of element in this subregion.
@@ -272,7 +300,7 @@ protected:
   localIndex m_numFacesPerElement;
 
   /// Member level field for the element center.
-  array1d< R1Tensor > m_elementCenter;
+  array2d< real64 > m_elementCenter;
 
   /// Member level field for the element volume.
   array1d< real64 > m_elementVolume;

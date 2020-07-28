@@ -33,18 +33,26 @@ namespace geosx
 class HaltEvent : public EventBase
 {
 public:
-  /// Constructor
+  /**
+   * @brief Main constructor.
+   * @param name The name of the object in the data repository.
+   * @param parent The parent of this object in the data repository.
+   **/
   HaltEvent( const std::string & name,
              Group * const parent );
 
   /// Destructor
   virtual ~HaltEvent() override;
 
-  // Catalog name interface
+  /**
+   * @brief Catalog name interface.
+   * @return This type's catalog name.
+   **/
   static string CatalogName() { return "HaltEvent"; }
 
   /**
-   * This event is designed to look at the external clock. Currently,
+   * @copydoc EventBase::EstimateEventTiming()
+   * @note This event is designed to look at the external clock. Currently,
    * if the event is triggered it will set a flag, which will
    * instruct the code to exit.  This is useful for managing walltime
    */
@@ -52,19 +60,23 @@ public:
                                     real64 const dt,
                                     integer const cycle,
                                     dataRepository::Group * domain ) override;
-
-  /// Timing values
+  /// External start time
   real64 m_externalStartTime;
+  /// External last time
   real64 m_externalLastTime;
+  /// External time increment
   real64 m_externalDt;
+  /// Max runtime
   real64 m_maxRuntime;
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr auto maxRuntimeString = "maxRuntime";
 
     dataRepository::ViewKey maxRuntime = { "maxRuntime" };
   } haltEventViewKeys;
+  /// @endcond
 
 };
 

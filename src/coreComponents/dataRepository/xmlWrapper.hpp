@@ -22,8 +22,8 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "LvArray/src/ArrayUtilities.hpp"
-
+#include "LvArray/src/streamIO.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 // TPL includes
 #include <pugixml.hpp>
 
@@ -181,7 +181,7 @@ public:
     else
     {
       // set the value to the default value
-      rval = defVal;
+      equate( rval, defVal );
     }
     return true;
   }
@@ -260,6 +260,30 @@ public:
   }
 
   ///@}
+
+private:
+
+  /**
+   * @brief Set @p lhs equal to @p rhs.
+   * @tparam T The type of @p lhs and @p rhs.
+   * @param lhs The value to set to @p rhs.
+   * @param rhs The value to set @p lhs to.
+   */
+  template< typename T >
+  static void equate( T & lhs, T const & rhs )
+  { lhs = rhs; }
+
+  /**
+   * @brief Set the entries of @p lhs equal to @p rhs.
+   * @tparam T The type of the values in @p lhs and @p rhs.
+   * @tparam NDIM The dimension of @p lhs.
+   * @tparam PERM The permutation of @p rhs.
+   * @param lhs The array of value to set to @p rhs.
+   * @param rhs The value to set @p lhs to.
+   */
+  template< typename T, int NDIM, typename PERM >
+  static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
+  { lhs.template setValues< serialPolicy >( rhs ); }
 
 };
 

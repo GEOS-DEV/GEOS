@@ -70,23 +70,20 @@ VanGenuchtenBakerRelativePermeability::DeliverClone( string const & name,
                                                      Group * const parent,
                                                      std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< VanGenuchtenBakerRelativePermeability > newModel = std::make_unique< VanGenuchtenBakerRelativePermeability >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< VanGenuchtenBakerRelativePermeability >( name, parent );
+  }
 
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
+  RelativePermeabilityBase::DeliverClone( name, parent, clone );
+  VanGenuchtenBakerRelativePermeability & relPerm = dynamicCast< VanGenuchtenBakerRelativePermeability & >( *clone );
 
-  newModel->m_phaseMinVolumeFraction = this->m_phaseMinVolumeFraction;
-
-  newModel->m_waterOilRelPermExponentInv = this->m_waterOilRelPermExponentInv;
-  newModel->m_waterOilRelPermMaxValue    = this->m_waterOilRelPermMaxValue;
-
-  newModel->m_gasOilRelPermExponentInv = this->m_gasOilRelPermExponentInv;
-  newModel->m_gasOilRelPermMaxValue    = this->m_gasOilRelPermMaxValue;
-
-  newModel->m_volFracScale = this->m_volFracScale;
-
-  clone = std::move( newModel );
+  relPerm.m_phaseMinVolumeFraction     = m_phaseMinVolumeFraction;
+  relPerm.m_waterOilRelPermExponentInv = m_waterOilRelPermExponentInv;
+  relPerm.m_waterOilRelPermMaxValue    = m_waterOilRelPermMaxValue;
+  relPerm.m_gasOilRelPermExponentInv   = m_gasOilRelPermExponentInv;
+  relPerm.m_gasOilRelPermMaxValue      = m_gasOilRelPermMaxValue;
+  relPerm.m_volFracScale               = m_volFracScale;
 }
 
 
@@ -99,14 +96,14 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
   GEOSX_ERROR_IF( m_phaseOrder[PhaseType::OIL] < 0,
                   "VanGenuchtenBakerRelativePermeability: reference oil phase has not been defined and must be included in model" );
 
-#define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "VanGenuchtenBakerRelativePermeability: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << " given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "VanGenuchtenBakerRelativePermeability: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << " given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
 
@@ -163,49 +160,18 @@ void VanGenuchtenBakerRelativePermeability::PostProcessInput()
 
 }
 
-
-void VanGenuchtenBakerRelativePermeability::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+VanGenuchtenBakerRelativePermeability::KernelWrapper VanGenuchtenBakerRelativePermeability::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction = m_phaseMinVolumeFraction;
-
-  arrayView1d< real64 const > const & waterOilRelPermExponentInv = m_waterOilRelPermExponentInv;
-  arrayView1d< real64 const > const & waterOilRelPermMaxValue    = m_waterOilRelPermMaxValue;
-
-  arrayView1d< real64 const > const & gasOilRelPermExponentInv = m_gasOilRelPermExponentInv;
-  arrayView1d< real64 const > const & gasOilRelPermMaxValue    = m_gasOilRelPermMaxValue;
-
-  RelativePermeabilityBase::BatchUpdateKernel< VanGenuchtenBakerRelativePermeability >( phaseVolumeFraction,
-                                                                                        m_phaseOrder,
-                                                                                        phaseMinVolumeFraction,
-                                                                                        waterOilRelPermExponentInv,
-                                                                                        waterOilRelPermMaxValue,
-                                                                                        gasOilRelPermExponentInv,
-                                                                                        gasOilRelPermMaxValue,
-                                                                                        m_volFracScale );
-}
-
-
-void VanGenuchtenBakerRelativePermeability::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                         localIndex const k,
-                                                         localIndex const q )
-{
-  arraySlice1d< real64 > const relPerm           = m_phaseRelPerm[k][q];
-  arraySlice2d< real64 > const dRelPerm_dVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[k][q];
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           relPerm,
-           dRelPerm_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_waterOilRelPermExponentInv,
-           m_waterOilRelPermMaxValue,
-           m_gasOilRelPermExponentInv,
-           m_gasOilRelPermMaxValue,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_waterOilRelPermExponentInv,
+                        m_waterOilRelPermMaxValue,
+                        m_gasOilRelPermExponentInv,
+                        m_gasOilRelPermMaxValue,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseRelPerm,
+                        m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VanGenuchtenBakerRelativePermeability, std::string const &, Group * const )

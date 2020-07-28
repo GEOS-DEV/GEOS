@@ -532,10 +532,10 @@ def main():
     timeLimit = 60
     parser = argparse.ArgumentParser()
     parser.add_argument( "geosxPath", help="The path to the GEOSX executable to benchmark.")
-    parser.add_argument( "outputDirectory", help="The directory to write the output to.")
+    parser.add_argument( "outputDirectory", help="The parent directory to run the benchmarks in.")
     parser.add_argument( "-t", "--timeLimit", type=int, help="Time limit for the entire script in minutes, the default is {}.". format( timeLimit ), default=timeLimit )
     parser.add_argument( "-o", "--timingCollectionDir", help="Directory to copy the timing files to." )
-    parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from an failed runs to." )
+    parser.add_argument( "-e", "--errorCollectionDir", help="Directory to copy the output from any failed runs to." )
     args = parser.parse_args()
 
     geosxPath = os.path.abspath( args.geosxPath )

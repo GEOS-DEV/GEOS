@@ -121,7 +121,6 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
 
   // Create upper Hessenberg matrix
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_maxRestart + 1, m_maxRestart );
-  H = 0.0;
 
   // Create plane rotation storage
   array1d< real64 > c( m_maxRestart + 1 );
@@ -137,7 +136,7 @@ void GMRESsolver< VECTOR >::solve( Vector const & b,
   for( k = 0; k <= m_maxIterations && m_result.status == LinearSolverResult::Status::NotConverged; )
   {
     // Re-initialize Krylov subspace
-    g = 0.0;
+    g.setValues< serialPolicy >( 0.0 );
     g[0] = r.norm2();
     m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
 

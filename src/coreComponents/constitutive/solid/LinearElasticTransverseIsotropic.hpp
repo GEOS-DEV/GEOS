@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICTRANSVERSEISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -38,6 +39,7 @@ namespace constitutive
 class LinearElasticTransverseIsotropicUpdates : public SolidBaseUpdates
 {
 public:
+
   /**
    * @brief Constructor
    * @param[in] c11 The 11 component of the Voigt stiffness tensor.
@@ -62,14 +64,14 @@ public:
     m_c66( c66 )
   {}
 
+  /// Deleted default constructor
+  LinearElasticTransverseIsotropicUpdates() = delete;
+
   /// Default copy constructor
   LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates const & ) = default;
 
   /// Default move constructor
   LinearElasticTransverseIsotropicUpdates( LinearElasticTransverseIsotropicUpdates && ) = default;
-
-  /// Deleted default constructor
-  LinearElasticTransverseIsotropicUpdates() = delete;
 
   /// Deleted copy assignment operator
   LinearElasticTransverseIsotropicUpdates & operator=( LinearElasticTransverseIsotropicUpdates const & ) = delete;
@@ -80,24 +82,24 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const override final;
+                                   real64 const ( &voigtStrain )[ 6 ],
+                                   real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const override final;
+                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const override final;
+                            real64 const ( &Ddt )[ 6 ],
+                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
+                             real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
@@ -146,8 +148,8 @@ GEOSX_HOST_DEVICE
 void
 LinearElasticTransverseIsotropicUpdates::
   SmallStrainNoState( localIndex const k,
-                      real64 const * GEOSX_RESTRICT const voigtStrain,
-                      real64 * GEOSX_RESTRICT const stress ) const
+                      real64 const ( &voigtStrain )[ 6 ],
+                      real64 ( & stress )[ 6 ] ) const
 {
   real64 const c12temp = ( m_c11[k] - 2.0 * m_c66[k] );
   stress[0] = m_c11[k] * voigtStrain[0] +  c12temp * voigtStrain[1] + m_c13[k]*voigtStrain[2];
@@ -166,15 +168,15 @@ void
 LinearElasticTransverseIsotropicUpdates::
   SmallStrain( localIndex const k,
                localIndex const q,
-               real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
+               real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
-  real64 const temp = m_c11[k]*(voigtStrainInc[0] + voigtStrainInc[1]) + m_c13[k]*voigtStrainInc[2];
-  m_stress( k, q, 0 ) += -2.0 * m_c66[k] * voigtStrainInc[1] + temp;
-  m_stress( k, q, 1 ) += -2.0 * m_c66[k] * voigtStrainInc[0] + temp;
-  m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_c13[k]*(voigtStrainInc[0] + voigtStrainInc[1]) + m_c33[k]*voigtStrainInc[2];
-  m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_c44[k]*voigtStrainInc[3];
-  m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_c44[k]*voigtStrainInc[4];
-  m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_c66[k]*voigtStrainInc[5];
+  real64 const temp = m_c11[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c13[ k ] * voigtStrainInc[ 2 ];
+  m_stress( k, q, 0 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 1 ] + temp;
+  m_stress( k, q, 1 ) += -2.0 * m_c66[ k ] * voigtStrainInc[ 0 ] + temp;
+  m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_c13[ k ] * ( voigtStrainInc[ 0 ] + voigtStrainInc[ 1 ] ) + m_c33[ k ] * voigtStrainInc[ 2 ];
+  m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_c44[ k ] * voigtStrainInc[ 3 ];
+  m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_c44[ k ] * voigtStrainInc[ 4 ];
+  m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_c66[ k ] * voigtStrainInc[ 5 ];
 }
 
 GEOSX_HOST_DEVICE
@@ -183,19 +185,13 @@ void
 LinearElasticTransverseIsotropicUpdates::
   HypoElastic( localIndex const k,
                localIndex const q,
-               real64 const * const GEOSX_RESTRICT Ddt,
-               R2Tensor const & Rot ) const
+               real64 const ( &Ddt )[ 6 ],
+               real64 const ( &Rot )[ 3 ][ 3 ] ) const
 {
   SmallStrain( k, q, Ddt );
-  R2SymTensor stress;
-  stress = m_stress[k][q];
-  R2SymTensor temp;
-  real64 const * const pTemp = temp.Data();
-  temp.QijAjkQlk( stress, Rot );
-  for( int i=0; i<6; ++i )
-  {
-    m_stress( k, q, i ) = pTemp[i];
-  }
+  real64 temp[ 6 ];
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
 GEOSX_HOST_DEVICE
@@ -204,7 +200,7 @@ void
 LinearElasticTransverseIsotropicUpdates::
   HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 * const GEOSX_RESTRICT GEOSX_UNUSED_PARAM( stress ) ) const
+                real64 ( & )[ 6 ] ) const
 {
   GEOSX_ERROR( "LinearElasticTransverseIsotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
@@ -467,7 +463,7 @@ public:
    *        data in this.
    * @return An instantiation of LinearElasticTransverseIsotropicUpdates.
    */
-  LinearElasticTransverseIsotropicUpdates createKernelWrapper()
+  LinearElasticTransverseIsotropicUpdates createKernelUpdates()
   {
     return LinearElasticTransverseIsotropicUpdates( m_c11,
                                                     m_c13,
@@ -476,6 +472,27 @@ public:
                                                     m_c66,
                                                     m_stress );
   }
+
+  /**
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for
+   *   the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
+   */
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  {
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_c11,
+                          m_c13,
+                          m_c33,
+                          m_c44,
+                          m_c66,
+                          m_stress );
+  }
+
 
 protected:
   virtual void PostProcessInput() override;

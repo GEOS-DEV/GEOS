@@ -61,9 +61,9 @@ void insert( OrderedVariableToManyElementRelation & relation,
   }
   if( !alreadyPresent )
   {
-    relation.m_toElementRegion.appendToArray( firstIndex, er );
-    relation.m_toElementSubRegion.appendToArray( firstIndex, esr );
-    relation.m_toElementIndex.appendToArray( firstIndex, ei );
+    relation.m_toElementRegion.emplaceBack( firstIndex, er );
+    relation.m_toElementSubRegion.emplaceBack( firstIndex, esr );
+    relation.m_toElementIndex.emplaceBack( firstIndex, ei );
   }
 }
 

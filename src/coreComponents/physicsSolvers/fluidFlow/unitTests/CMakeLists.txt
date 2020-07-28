@@ -1,4 +1,3 @@
-
 #
 # Specify list of tests
 #
@@ -6,65 +5,47 @@
 set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testSinglePhaseFVMKernels.cpp     
-     testSinglePhaseHybridFVMKernels.cpp     
+     testSinglePhaseHybridFVMKernels.cpp
+     testCompMultiphaseFlow.cpp
    )
 
-if(ENABLE_PVTPackage)
-    set( gtest_geosx_tests
-         ${gtest_geosx_tests}
-         testCompMultiphaseFlow.cpp
-         testCompMultiphaseFlowCapPressure.cpp
-         testReservoirCompositionalMultiphaseMSWells.cpp
-         testReservoirSinglePhaseMSWells.cpp
-       )
-endif()
+set( dependencyList gtest )
 
-set( dependencyList geosx_core gtest )
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )
 endif()
 
 if( ENABLE_OPENMP )
-    set( dependencyList ${dependencyList} openmp )
+  set( dependencyList ${dependencyList} openmp )
 endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-#set( gtest_geosx_tests_simple
-#     testLaplaceFEM.cpp )
-#
-#set( nranks 2 )
 
 #
 # Add gtest C++ based tests
 #
 foreach(test ${gtest_geosx_tests})
-    get_filename_component( test_name ${test} NAME_WE )
-    blt_add_executable( NAME ${test_name}
-            SOURCES ${test}
-            OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-            DEPENDS_ON ${dependencyList}
-            )
+  get_filename_component( test_name ${test} NAME_WE )
 
-    blt_add_test( NAME ${test_name}
-                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR}
-            )
+  blt_add_executable( NAME ${test_name}
+                      SOURCES ${test}
+                      OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                      DEPENDS_ON ${dependencyList} )
 
+  blt_add_test( NAME ${test_name}
+                COMMAND ${test_name} )
 endforeach()
 
-#
-# Add tests
-#
-#foreach(test ${gtest_geosx_tests_simple})
-#  get_filename_component( test_name ${test} NAME_WE )
-#  blt_add_executable( NAME ${test_name}
-#                      SOURCES ${test}
-#                      OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-#                      DEPENDS_ON geosx_core gtest )
-#  blt_add_test( NAME ${test_name}
-#                COMMAND ${test_name}
-#                NUM_MPI_TASKS ${nranks} )
-#endforeach()
+# For some reason, BLT is not setting CUDA language for these source files
+if ( ENABLE_CUDA )
+  set_source_files_properties( ${gtest_geosx_tests} PROPERTIES LANGUAGE CUDA )
+endif()

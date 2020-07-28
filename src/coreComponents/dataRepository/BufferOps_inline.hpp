@@ -21,6 +21,7 @@
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/IntegerConversion.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 #include <type_traits>
 
@@ -414,7 +415,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 {
   ArrayOfArrays< T > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
-  var.stealFrom( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  var.assimilate( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
   return sizeOfUnpackedChars;
 }
 
@@ -911,7 +912,7 @@ Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
   var.resize( length );
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )
@@ -974,7 +975,7 @@ Unpack( buffer_unit_type const * & buffer,
 
   var.resizeArray( subArrayIndex, length );
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )
@@ -1021,7 +1022,7 @@ Unpack( buffer_unit_type const * & buffer,
   GEOSX_DEBUG_VAR( expectedLength );
 
   unmappedGlobalIndices.resize( length );
-  unmappedGlobalIndices = unmappedLocalIndexValue;
+  unmappedGlobalIndices.setValues< serialPolicy >( unmappedLocalIndexValue );
 
   bool unpackedGlobalFlag = false;
   for( localIndex a=0; a<length; ++a )
@@ -1085,7 +1086,7 @@ template< typename SORTED0, typename SORTED1 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
-        arrayView1d< localIndex > & var,
+        arrayView1d< localIndex > const & var,
         array1d< localIndex > const & indices,
         mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap,
         mapBase< globalIndex, localIndex, SORTED1 > const & relatedObjectGlobalToLocalMap )

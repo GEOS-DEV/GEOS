@@ -32,7 +32,12 @@ void AggregateElementSubRegion::CreateFromFineToCoarseMap( localIndex nbAggregat
                                                            array1d< localIndex > const & fineToCoarse,
                                                            array1d< R1Tensor > const & barycenters )
 {
-  m_elementCenter = barycenters;
+  m_elementCenter.resize( barycenters.size( 0 ), barycenters.size( 1 ) );
+  LvArray::forValuesInSliceWithIndices( m_elementCenter.toSlice(), [&] ( double & value, localIndex i, localIndex j )
+  {
+    value = barycenters[ i ][ j ];
+  } );
+
   m_nbFineCellsPerCoarseCell.resize( nbAggregates + 1 );
   m_fineToCoarse.resize( fineToCoarse.size() );
 

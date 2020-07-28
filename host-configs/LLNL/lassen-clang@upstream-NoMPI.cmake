@@ -2,7 +2,9 @@ include(${CMAKE_CURRENT_LIST_DIR}/../../host-configs/LLNL/lassen-clang@upstream.
 
 set(CONFIG_NAME "lassen-clang@upstream-NoMPI" CACHE PATH "" FORCE)
 set(GEOSX_TPL_ROOT_DIR /usr/gapps/GEOSX/thirdPartyLibs CACHE PATH "" FORCE)
-set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-05-11/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
+set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-07-08/install-${CONFIG_NAME}-release CACHE PATH "" FORCE)
+
+set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
 
 set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
 

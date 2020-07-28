@@ -84,7 +84,7 @@ public:
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
@@ -124,7 +124,8 @@ public:
     static constexpr auto constitutivePointVolumeFraction = "ConstitutivePointVolumeFraction";
     /// String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr auto dNdXString = "dNdX";
-
+    /// String key for the derivative of the jacobian.
+    static constexpr auto detJString = "detJ";
     /// String key for the constitutive grouping
     static constexpr auto constitutiveGroupingString = "ConstitutiveGrouping";
     /// String key for the constitutive map
@@ -134,9 +135,6 @@ public:
     dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString };
     /// ViewKey for the constitutive map
     dataRepository::ViewKey constitutiveMap       = { constitutiveMapString };
-    /// ViewKey for the derivatives of the shape functions with respect to the reference configuration
-    dataRepository::ViewKey dNdX                  = { dNdXString };
-
   }
   /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;
@@ -144,17 +142,43 @@ public:
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
 
+  /**
+   * @brief @return The array of shape function derivatives.
+   */
+  array4d< real64 > & dNdX()
+  { return m_dNdX; }
+
+  /**
+   * @brief @return The array of shape function derivatives.
+   */
+  arrayView4d< real64 const > const & dNdX() const
+  { return m_dNdX.toViewConst(); }
+
+  /**
+   * @brief @return The array of jacobian determinantes.
+   */
+  array2d< real64 > & detJ()
+  { return m_detJ; }
+
+  /**
+   * @brief @return The array of jacobian determinantes.
+   */
+  arrayView2d< real64 const > const & detJ() const
+  { return m_detJ.toViewConst(); }
+
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
 
   /// Array of constitutive point volume fraction
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-  /// Derivatives of the shape functions wrt the reference configuration
-  array3d< R1Tensor > m_dNdX;
-
-
 private:
+
+  /// The array of shape function derivaties.
+  array4d< real64 > m_dNdX;
+
+  /// The array of jacobian determinantes.
+  array2d< real64 > m_detJ;
 
   /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;

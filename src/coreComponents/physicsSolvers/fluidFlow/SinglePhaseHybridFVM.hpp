@@ -36,19 +36,6 @@ class SinglePhaseHybridFVM : public SinglePhaseBase
 {
 public:
 
-  struct EquationType
-  {
-    static constexpr integer MASS_CONS  = 0;
-    static constexpr integer CONSTRAINT = 1;
-  };
-
-  struct InnerProductType
-  {
-    static constexpr integer TPFA = 0;
-    static constexpr integer QUASI_TPFA = 1;
-  };
-
-
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -97,48 +84,44 @@ public:
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
+                     DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual bool
-  CheckSystemSolution( DomainPartition const * const domain,
+  CheckSystemSolution( DomainPartition const & domain,
                        DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const domain ) override;
+  ResetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain ) override;
+                        DomainPartition & domain ) override;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -152,10 +135,10 @@ public:
   virtual void
   AssembleFluxTerms( real64 const time_n,
                      real64 const dt,
-                     DomainPartition const * const domain,
-                     DofManager const * const dofManager,
-                     ParallelMatrix * const matrix,
-                     ParallelVector * const rhs ) override;
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) override;
 
 
   /**@}*/
@@ -164,7 +147,6 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     // primary face-based field
-    static constexpr auto facePressureString      = "facePressure";
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
 
   } viewKeysSinglePhaseHybridFVM;
@@ -184,119 +166,9 @@ public:
   groupKeyStruct const & groupKeys() const
   { return groupKeysSinglePhaseHybridFVM; }
 
+  virtual void InitializePostInitialConditions_PreSubGroups( dataRepository::Group * const rootGroup ) override;
 
 private:
-
-  /**
-   * @brief Assemble the mass conservation equations and face constraints in the face subregion
-   * @param[in] er index of this element's region
-   * @param[in] esr index of this element's subregion
-   * @param[in] subRegion pointer to the cell element subregion
-   * @param[in] regionFilter set containing the indices of the target regions
-   * @param[in] mesh the mesh object (single level only)
-   * @param[in] nodePosition position of the nodes
-   * @param[in] elemRegionList face-to-elemRegions map
-   * @param[in] elemSubRegionList face-to-elemSubRegions map
-   * @param[in] elemList face-to-elemIds map
-   * @param[in] faceToNodes map from face to nodes
-   * @param[in] faceDofNumber the dof numbers of the face pressures
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
-   * @param[in] faceGravCoef the depth at the mesh faces
-   * @param[in] lengthTolerance tolerance used in the transmissibility calculations
-   * @param[in] dt time step size
-   * @param[in] dofManager the dof manager
-   * @param[inout] matrix the system matrix
-   * @param[inout] rhs the system right-hand side vector
-   */
-  void FluxLaunch( localIndex er,
-                   localIndex esr,
-                   FaceElementSubRegion const * const subRegion,
-                   SortedArray< localIndex > regionFilter,
-                   MeshLevel const * const mesh,
-                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                   array2d< localIndex > const & elemRegionList,
-                   array2d< localIndex > const & elemSubRegionList,
-                   array2d< localIndex > const & elemList,
-                   ArrayOfArraysView< localIndex const > const & faceToNodes,
-                   arrayView1d< globalIndex const > const & faceDofNumber,
-                   arrayView1d< real64 const > const & facePres,
-                   arrayView1d< real64 const > const & dFacePres,
-                   arrayView1d< real64 const > const & faceGravCoef,
-                   real64 const lengthTolerance,
-                   real64 const dt,
-                   DofManager const * const dofManager,
-                   ParallelMatrix * const matrix,
-                   ParallelVector * const rhs );
-
-  /**
-   * @brief Assemble the mass conservation equations and face constraints in the cell subregion
-   * @param[in] er index of this element's region
-   * @param[in] esr index of this element's subregion
-   * @param[in] subRegion pointer to the cell element subregion
-   * @param[in] regionFilter set containing the indices of the target regions
-   * @param[in] mesh the mesh object (single level only)
-   * @param[in] nodePosition position of the nodes
-   * @param[in] elemRegionList face-to-elemRegions map
-   * @param[in] elemSubRegionList face-to-elemSubRegions map
-   * @param[in] elemList face-to-elemIds map
-   * @param[in] faceToNodes map from face to nodes
-   * @param[in] faceDofNumber the dof numbers of the face pressures
-   * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
-   * @param[in] faceGravCoef the depth at the mesh faces
-   * @param[in] lengthTolerance tolerance used in the transmissibility calculations
-   * @param[in] dt time step size
-   * @param[in] dofManager the dof manager
-   * @param[inout] matrix the system matrix
-   * @param[inout] rhs the system right-hand side vector
-   */
-  void FluxLaunch( localIndex er,
-                   localIndex esr,
-                   CellElementSubRegion const * const subRegion,
-                   SortedArray< localIndex > regionFilter,
-                   MeshLevel const * const mesh,
-                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                   array2d< localIndex > const & elemRegionList,
-                   array2d< localIndex > const & elemSubRegionList,
-                   array2d< localIndex > const & elemList,
-                   ArrayOfArraysView< localIndex const > const & faceToNodes,
-                   arrayView1d< globalIndex const > const & faceDofNumber,
-                   arrayView1d< real64 const > const & facePres,
-                   arrayView1d< real64 const > const & dFacePres,
-                   arrayView1d< real64 const > const & faceGravCoef,
-                   real64 const lengthTolerance,
-                   real64 const dt,
-                   DofManager const * const dofManager,
-                   ParallelMatrix * const matrix,
-                   ParallelVector * const rhs );
-
-  /**
-   * @brief In a given element, recompute the transmissibility matrix
-   * @param[in] nodePosition the position of the nodes
-   * @param[in] faceToNodes the map from the face to their nodes
-   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
-   * @param[in] elemCenter the center of the element
-   * @param[in] elemVolume the volume of the element
-   * @param[in] elemPerm the permeability in the element
-   * @param[in] orthonormalizeWithSVD flag to indicate whether SVD is used (if not, Gram-Schmidt is used)
-   * @param[in] lengthTolerance the tolerance used in the trans calculations
-   * @param[inout] transMatrix
-   *
-   * This function is in this class until we find a better place for it
-   *
-   */
-  void ComputeTransmissibilityMatrix( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                      ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                      arraySlice1d< localIndex const > const elemToFaces,
-                                      R1Tensor const & elemCenter,
-                                      real64 const & elemVolume,
-                                      R1Tensor const & elemPerm,
-                                      real64 const & lengthTolerance,
-                                      bool const & orthonormalizeWithSVD,
-                                      stackArray2d< real64, HybridFVMInnerProduct::MAX_NUM_FACES
-                                                    *HybridFVMInnerProduct::MAX_NUM_FACES > const & transMatrix ) const;
-
 
   /// Dof key for the member functions that do not have access to the coupled Dof manager
   string m_faceDofKey;
@@ -304,13 +176,8 @@ private:
   /// relative tolerance (redundant with FluxApproximationBase)
   real64 m_areaRelTol;
 
-  /// type of inner product for the mimetic method
-  /// This is only const for now
-  integer const m_ipType;
-
-  /// flag to decide we orthonormalize with SVD or with MGS
-  /// This is only const for now
-  bool const m_orthonormalizeWithSVD;
+  /// region filter used in flux assembly
+  SortedArray< localIndex > m_regionFilter;
 
 };
 

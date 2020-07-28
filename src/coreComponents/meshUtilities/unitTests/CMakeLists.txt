@@ -12,7 +12,13 @@ set( ECLIPSE_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.GRDECL )
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
 endif(ENABLE_PAMELA)
 
-set( dependencyList geosx_core gtest )
+set( dependencyList gtest )
+
+if ( GEOSX_BUILD_SHARED_LIBS )
+  set (dependencyList ${dependencyList} geosx_core)
+else()
+  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
 
 if ( ENABLE_MPI )
   set ( dependencyList ${dependencyList} mpi )

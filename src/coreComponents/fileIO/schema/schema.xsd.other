@@ -12,6 +12,7 @@
 			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
+<<<<<<< HEAD
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
@@ -23,6 +24,9 @@
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
+=======
+	<xsd:simpleType name="geosx_TimeIntegrationOption">
+>>>>>>> origin/develop
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
@@ -200,6 +204,7 @@
 >>>>>>> origin/develop
 		</xsd:restriction>
 	</xsd:simpleType>
+<<<<<<< HEAD
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
@@ -261,6 +266,8 @@
 			<xsd:pattern value=".*[\[\]`$].*|\{\s*(\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\},\s*)*\{\s*((\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*)*\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*),\s*){8}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*))?\s*\}\s*\}" />
 		</xsd:restriction>
 	</xsd:simpleType>
+=======
+>>>>>>> origin/develop
 	<xsd:simpleType name="real32">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
@@ -598,6 +605,7 @@
 			<xsd:element name="SinglePhaseProppantFVM" type="SinglePhaseProppantFVMType" />
 			<xsd:element name="SinglePhaseReservoir" type="SinglePhaseReservoirType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
+			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangianSSLE" type="SolidMechanicsLagrangianSSLEType" />
 			<xsd:element name="SolidMechanics_LagrangianFEM" type="SolidMechanics_LagrangianFEMType" />
 			<xsd:element name="SurfaceGenerator" type="SurfaceGeneratorType" />
@@ -726,6 +734,14 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsEmbeddedFracturesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+	</xsd:complexType>
 	<xsd:complexType name="SolidMechanicsLagrangianSSLEType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -756,13 +772,13 @@
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--tipEdges => Set containing all the tip edges-->
-		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipEdges" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--tipFaces => Set containing all the tip faces-->
-		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipFaces" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--tipNodes => Set containing all the nodes at the fracture tip-->
-		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="tipNodes" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--trailingFaces => Set containing all the trailing faces-->
-		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="trailingFaces" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="commandLineType">
 		<!--beginFromRestart => Flag to indicate restart run.-->
@@ -815,6 +831,7 @@
 			<xsd:element name="LinearElasticTransverseIsotropic" type="LinearElasticTransverseIsotropicType" />
 			<xsd:element name="MohrCoulomb" type="MohrCoulombType" />
 			<xsd:element name="MultiPhaseMultiComponentFluid" type="MultiPhaseMultiComponentFluidType" />
+			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParticleFluid" type="ParticleFluidType" />
 			<xsd:element name="PoreVolumeCompressibleSolid" type="PoreVolumeCompressibleSolidType" />
 			<xsd:element name="PoroLinearElasticAnisotropic" type="PoroLinearElasticAnisotropicType" />
@@ -1031,6 +1048,7 @@
 		<!--totalDensity => (no description available)-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 	</xsd:complexType>
+	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParticleFluidType">
 		<!--collisionFactor => (no description available)-->
 		<xsd:attribute name="collisionFactor" type="real64_array" />
@@ -1166,6 +1184,7 @@
 			<xsd:element name="edgeManager" type="edgeManagerType" />
 			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
+			<xsd:element name="finiteVolumeStencils" type="finiteVolumeStencilsType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
 		<!--meshLevel => (no description available)-->
@@ -1196,31 +1215,31 @@
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
-		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long&gt;" />
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--SIF_I => SIF_I of the edge.-->
+		<!--SIF_I => Calculated mode 1 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_I" type="real64_array" />
-		<!--SIF_II => SIF_II of the edge.-->
+		<!--SIF_II => Calculated mode 2 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_II" type="real64_array" />
-		<!--SIF_III => SIF_III of the edge.-->
+		<!--SIF_III => Calculated mode 3 Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIF_III" type="real64_array" />
-		<!--childIndex => Child index of the edge.-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgesToFractureConnectors => A map of edge local indices to the fracture connector local indices.-->
 		<xsd:attribute name="edgesToFractureConnectors" type="geosx_mapBase&lt;long, long, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--fractureConnectorsToEdges => A map of fracture connector local indices to edge local indices.-->
 		<xsd:attribute name="fractureConnectorsToEdges" type="localIndex_array" />
 		<!--fractureConnectorsToElementIndex => A map of fracture connector local indices face element local indices-->
-		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="fractureConnectorsToElementIndex" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1231,7 +1250,7 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_NewChaiBuffer&gt; &gt;" />
-		<!--parentIndex => Parent index of the edge.-->
+		<!--parentIndex => Index of parent within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
@@ -1265,28 +1284,20 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--K_IC => K_IC on the face-->
+		<!--K_IC => Critical Stress Intensity Factor :math:`K_{IC}` in the plane of the face. => SurfaceGenerator-->
 		<xsd:attribute name="K_IC" type="r1_array" />
-		<!--SIFonFace => SIF on the face-->
+		<!--SIFonFace => Calculated Stress Intensity Factor on the face. => SurfaceGenerator-->
 		<xsd:attribute name="SIFonFace" type="real64_array" />
-		<!--boundaryFaceDensity => (no description available)-->
-		<xsd:attribute name="boundaryFaceDensity" type="real64_array2d" />
-		<!--boundaryFaceMobility => (no description available)-->
-		<xsd:attribute name="boundaryFaceMobility" type="real64_array" />
-		<!--boundaryFacePressure => (no description available)-->
-		<xsd:attribute name="boundaryFacePressure" type="real64_array" />
-		<!--boundaryFaceViscosity => (no description available)-->
-		<xsd:attribute name="boundaryFaceViscosity" type="real64_array2d" />
-		<!--childIndex => child index of the face.-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
-		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--deltaFacePressure => An array that holds the accumulated pressure updates at the faces. => SinglePhaseHybridFVM-->
 		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="localIndex_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -1296,13 +1307,13 @@
 		<!--faceArea => (no description available)-->
 		<xsd:attribute name="faceArea" type="real64_array" />
 		<!--faceCenter => (no description available)-->
-		<xsd:attribute name="faceCenter" type="r1_array" />
+		<xsd:attribute name="faceCenter" type="real64_array2d" />
 		<!--faceNormal => (no description available)-->
-		<xsd:attribute name="faceNormal" type="r1_array" />
-		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseHybridFVM-->
+		<xsd:attribute name="faceNormal" type="real64_array2d" />
+		<!--facePressure => An array that holds the pressures at the faces. => SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
 		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--faceRotationMatrix => (no description available)-->
-		<xsd:attribute name="faceRotationMatrix" type="r2_array" />
+		<xsd:attribute name="faceRotationMatrix" type="real64_array3d" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1311,20 +1322,28 @@
 		<xsd:attribute name="gravityCoefficient" type="real64_array" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--isFaceSeparable => A flag to mark if the face is separable-->
+		<!--isFaceSeparable => A flag to mark if the face is separable. => SurfaceGenerator-->
 		<xsd:attribute name="isFaceSeparable" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long&gt; &gt;" />
-		<!--parentIndex => Parent index of the face.-->
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
+		<!--parentIndex => Index of parent within the mesh object it is registered on. => SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
-		<!--primaryCandidateFace => The face that has the highest score for splitability-->
+		<!--primaryCandidateFace => ?? => SurfaceGenerator-->
 		<xsd:attribute name="primaryCandidateFace" type="localIndex_array" />
-		<!--ruptureState => Rupture state of the face.0=not ready for rupture. 1=ready for rupture. 2=ruptured-->
+		<!--ruptureState => Rupture state of the face: 
+ 0=not ready for rupture 
+ 1=ready for rupture 
+ 2=ruptured. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureState" type="integer_array" />
-		<!--ruptureTime => Time that the face was ruptured.-->
+		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="finiteVolumeStencilsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1339,34 +1358,34 @@
 		<xsd:attribute name="Mass" type="real64_array" />
 		<!--ReferencePosition => (no description available)-->
 		<xsd:attribute name="ReferencePosition" type="real64_array2d" />
-		<!--SIFNode => SIF on the node-->
+		<!--SIFNode => Calculated Stress Intensity Factor on the node. => SurfaceGenerator-->
 		<xsd:attribute name="SIFNode" type="real64_array" />
 		<!--TotalDisplacement => An array that holds the total displacements on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="TotalDisplacement" type="real64_array2d" />
 		<!--Velocity => An array that holds the current velocity on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="Velocity" type="real64_array2d" />
-		<!--childIndex => Child index of node.-->
+		<!--childIndex => Index of child within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="childIndex" type="localIndex_array" />
 		<!--contactForce => An array that holds the contact force. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="contactForce" type="r1_array" />
-		<!--degreeFromCrack => connectivity distance from crack.-->
+		<!--degreeFromCrack => Distance to the crack in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrack" type="integer_array" />
-		<!--degreeFromCrackTip => degree of connectivity separation from crack tip.-->
+		<!--degreeFromCrackTip => Distance to the crack tip in terms of topological distance. (i.e. how many nodes are along the path to the closest node that is on the crack surface. => SurfaceGenerator-->
 		<xsd:attribute name="degreeFromCrackTip" type="integer_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--elemList => (no description available)-->
-		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--elemRegionList => (no description available)-->
-		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--elemSubRegionList => (no description available)-->
-		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long&gt;" />
+		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt;" />
 		<!--externalForce => An array that holds the external forces on the nodes. This includes any boundary conditions as well as coupling forces such as hydraulic forces. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="externalForce" type="r1_array" />
+		<xsd:attribute name="externalForce" type="real64_array2d" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long&gt; &gt;" />
+		<xsd:attribute name="faceList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfSets&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1375,11 +1394,11 @@
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--parentIndex => Parent index of node.-->
+		<!--parentIndex => Index of parent within the mesh object it is registered on. => EmbeddedSurfaceGenerator, SurfaceGenerator-->
 		<xsd:attribute name="parentIndex" type="localIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-		<!--ruptureTime => Time that the node was ruptured.-->
+		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
 		<xsd:attribute name="ruptureTime" type="real64_array" />
 		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
 		<xsd:attribute name="uhatTilde" type="r1_array" />
@@ -1452,13 +1471,18 @@
 		</xsd:choice>
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+<<<<<<< HEAD
+=======
+		<!--edgeList => Map to the edges.-->
+		<xsd:attribute name="edgeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_NewChaiBuffer&gt; &gt;" />
+>>>>>>> origin/develop
 		<!--elementAperture => The aperture of each EmbeddedSurface.-->
 		<xsd:attribute name="elementAperture" type="real64_array" />
 		<!--elementArea => The area of each EmbeddedSurface element.-->
 		<xsd:attribute name="elementArea" type="real64_array" />
-		<!--elementCenter => The center of each EmbeddedSurface element.-->
-		<xsd:attribute name="elementCenter" type="r1_array" />
-		<!--elementVolume => The volume of each EmbeddedSurface element.-->
+		<!--elementCenter => (no description available)-->
+		<xsd:attribute name="elementCenter" type="real64_array2d" />
+		<!--elementVolume => (no description available)-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--fractureElementsToCellIndices => Map to the cells.-->
 		<xsd:attribute name="fractureElementsToCellIndices" type="localIndex_array" />
@@ -1476,6 +1500,12 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--normalVector => Unit normal vector to the embedded surface.-->
 		<xsd:attribute name="normalVector" type="r1_array" />
+		<!--numEdgesPerElement => (no description available)-->
+		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
+		<!--numFacesPerElement => (no description available)-->
+		<xsd:attribute name="numFacesPerElement" type="localIndex" />
+		<!--numNodesPerElement => (no description available)-->
+		<xsd:attribute name="numNodesPerElement" type="localIndex" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
 	<xsd:complexType name="FaceElementRegionType">
@@ -1526,7 +1556,7 @@
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--elementCenter => (no description available)-->
-		<xsd:attribute name="elementCenter" type="r1_array" />
+		<xsd:attribute name="elementCenter" type="real64_array2d" />
 		<!--elementVolume => (no description available)-->
 		<xsd:attribute name="elementVolume" type="real64_array" />
 		<!--ghostRank => (no description available)-->
@@ -1543,6 +1573,12 @@
 		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_NewChaiBuffer&gt; &gt;" />
+		<!--numEdgesPerElement => (no description available)-->
+		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
+		<!--numFacesPerElement => (no description available)-->
+		<xsd:attribute name="numFacesPerElement" type="localIndex" />
+		<!--numNodesPerElement => (no description available)-->
+		<xsd:attribute name="numNodesPerElement" type="localIndex" />
 		<!--radius => (no description available)-->
 		<xsd:attribute name="radius" type="real64_array" />
 		<!--topRank => (no description available)-->

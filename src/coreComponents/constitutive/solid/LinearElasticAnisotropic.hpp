@@ -20,6 +20,7 @@
 #define GEOSX_CONSTITUTIVE_SOLID_LINEARELASTICANISOTROPIC_HPP_
 #include "SolidBase.hpp"
 #include "constitutive/ExponentialRelation.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -52,6 +53,9 @@ public:
     m_stiffnessView( C )
   {}
 
+  /// Deleted default constructor
+  LinearElasticAnisotropicUpdates() = delete;
+
   /// Default copy constructor
   LinearElasticAnisotropicUpdates( LinearElasticAnisotropicUpdates const & ) = default;
 
@@ -67,24 +71,24 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrainNoState( localIndex const k,
-                                   real64 const * const GEOSX_RESTRICT voigtStrain,
-                                   real64 * const GEOSX_RESTRICT stress ) const override final;
+                                   real64 const ( &voigtStrain )[ 6 ],
+                                   real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void SmallStrain( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT voigtStrainIncrement ) const override final;
+                            real64 const ( &voigtStrainInc )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HypoElastic( localIndex const k,
                             localIndex const q,
-                            real64 const * const GEOSX_RESTRICT Ddt,
-                            R2Tensor const & Rot ) const override final;
+                            real64 const ( &Ddt )[ 6 ],
+                            real64 const ( &Rot )[ 3 ][ 3 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
                              real64 const (&FmI)[3][3],
-                             real64 * const GEOSX_RESTRICT stress ) const override final;
+                             real64 ( &stress )[ 6 ] ) const override final;
 
   GEOSX_HOST_DEVICE
   virtual void HyperElastic( localIndex const k,
@@ -100,13 +104,7 @@ public:
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k, real64 (& c)[6][6] ) const override final
   {
-    for( int i=0; i<6; ++i )
-    {
-      for( int j=0; j<6; ++j )
-      {
-        c[i][j] = m_stiffnessView( k, i, j );
-      }
-    }
+    LvArray::tensorOps::copy< 6, 6 >( c, m_stiffnessView[ k ] );
   }
 
   /// A reference to the ArrayView holding the Voigt Stiffness tensor in each
@@ -120,8 +118,8 @@ GEOSX_HOST_DEVICE
 void
 LinearElasticAnisotropicUpdates::
   SmallStrainNoState( localIndex const k,
-                      real64 const * GEOSX_RESTRICT const voigtStrain,
-                      real64 * GEOSX_RESTRICT const stress ) const
+                      real64 const ( &voigtStrain )[ 6 ],
+                      real64 ( & stress )[ 6 ] ) const
 {
   for( localIndex i=0; i<6; ++i )
   {
@@ -139,15 +137,9 @@ void
 LinearElasticAnisotropicUpdates::
   SmallStrain( localIndex const k,
                localIndex const q,
-               real64 const * const GEOSX_RESTRICT voigtStrainInc ) const
+               real64 const ( &voigtStrainInc )[ 6 ] ) const
 {
-  for( localIndex i=0; i<6; ++i )
-  {
-    for( localIndex j=0; j<6; ++j )
-    {
-      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * voigtStrainInc[j];
-    }
-  }
+  LvArray::tensorOps::plusAijBj< 6, 6 >( m_stress[ k ][ q ], m_stiffnessView[ k ], voigtStrainInc );
 }
 
 GEOSX_HOST_DEVICE
@@ -156,55 +148,32 @@ void
 LinearElasticAnisotropicUpdates::
   HypoElastic( localIndex const k,
                localIndex const q,
-               real64 const * const GEOSX_RESTRICT Ddt,
-               R2Tensor const & Rot ) const
+               real64 const ( &Ddt )[ 6 ],
+               real64 const ( &Rot )[ 3 ][ 3 ] ) const
 {
-//  for( localIndex i=0 ; i<6 ; ++i )
-//  {
-//    for( localIndex j=0 ; j<3 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * Ddt[j];
-//    }
-//    for( localIndex j=3 ; j<6 ; ++j )
-//    {
-//      m_stress( k, q, i ) = m_stress( k, q, i ) + m_stiffnessView( k, i, j ) * 2 * Ddt[j];
-//    }
-//  }
-
-  constexpr localIndex map[6] = { 0, 2, 5, 4, 3, 1 };
-
   for( localIndex j=0; j<3; ++j )
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[map[j]];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[map[j]];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * Ddt[map[j]];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * Ddt[map[j]];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[map[j]];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[map[j]];
+    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * Ddt[ j ];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * Ddt[ j ];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * Ddt[ j ];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * Ddt[ j ];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * Ddt[ j ];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * Ddt[ j ];
   }
+
   for( localIndex j=3; j<6; ++j )
   {
-    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[map[j]];
-    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[map[j]];
+    m_stress( k, q, 0 ) = m_stress( k, q, 0 ) + m_stiffnessView( k, 0, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 1 ) = m_stress( k, q, 1 ) + m_stiffnessView( k, 1, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 2 ) = m_stress( k, q, 2 ) + m_stiffnessView( k, 2, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 3 ) = m_stress( k, q, 3 ) + m_stiffnessView( k, 3, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 4 ) = m_stress( k, q, 4 ) + m_stiffnessView( k, 4, j ) * 2 * Ddt[ j ];
+    m_stress( k, q, 5 ) = m_stress( k, q, 5 ) + m_stiffnessView( k, 5, j ) * 2 * Ddt[ j ];
   }
 
-  R2SymTensor stress;
-  stress = m_stress[k][q];
-
-  R2SymTensor temp;
-  real64 const * const pTemp = temp.Data();
-  temp.QijAjkQlk( stress, Rot );
-
-  m_stress( k, q, 0 ) = pTemp[0];
-  m_stress( k, q, 1 ) = pTemp[2];
-  m_stress( k, q, 2 ) = pTemp[5];
-  m_stress( k, q, 3 ) = pTemp[4];
-  m_stress( k, q, 4 ) = pTemp[3];
-  m_stress( k, q, 5 ) = pTemp[1];
+  real64 temp[ 6 ];
+  LvArray::tensorOps::AikSymBklAjl< 3 >( temp, Rot, m_stress[ k ][ q ] );
+  LvArray::tensorOps::copy< 6 >( m_stress[ k ][ q ], temp );
 }
 
 GEOSX_HOST_DEVICE
@@ -213,7 +182,7 @@ void
 LinearElasticAnisotropicUpdates::
   HyperElastic( localIndex const GEOSX_UNUSED_PARAM( k ),
                 real64 const (&GEOSX_UNUSED_PARAM( FmI ))[3][3],
-                real64 * const GEOSX_RESTRICT GEOSX_UNUSED_PARAM( stress ) ) const
+                real64 ( & )[ 6 ] ) const
 {
   GEOSX_ERROR( "LinearElasticAnisotropicKernelWrapper::HyperElastic() is not implemented!" );
 }
@@ -295,10 +264,32 @@ public:
    */
   void setDefaultStiffness( real64 const c[6][6] );
 
-  LinearElasticAnisotropicUpdates createKernelWrapper() const
+
+  /**
+   * @brief Create a instantiation of the LinearElasticAnisotropicUpdate class
+   *        that refers to the data in this.
+   * @return An instantiation of LinearElasticAnisotropicUpdate.
+   */
+  LinearElasticAnisotropicUpdates createKernelUpdates() const
   {
     return LinearElasticAnisotropicUpdates( m_stiffness.toViewConst(),
                                             m_stress.toView() );
+  }
+
+  /**
+   * @brief Construct an update kernel for a derived type.
+   * @tparam UPDATE_KERNEL The type of update kernel from the derived type.
+   * @tparam PARAMS The parameter pack to hold the constructor parameters for
+   *   the derived update kernel.
+   * @param constructorParams The constructor parameter for the derived type.
+   * @return An @p UPDATE_KERNEL object.
+   */
+  template< typename UPDATE_KERNEL, typename ... PARAMS >
+  UPDATE_KERNEL createDerivedKernelUpdates( PARAMS && ... constructorParams )
+  {
+    return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
+                          m_stiffness.toViewConst(),
+                          m_stress.toView() );
   }
 
   /**

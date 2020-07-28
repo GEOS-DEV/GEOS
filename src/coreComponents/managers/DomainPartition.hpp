@@ -68,6 +68,7 @@ public:
    * @name Default, copy and assignment constructors are deleted.
    */
   ///@{
+  /// @cond DO_NOT_DOCUMENT
   DomainPartition() = delete;
 
   DomainPartition( DomainPartition const & ) = delete;
@@ -77,12 +78,13 @@ public:
   DomainPartition & operator=( DomainPartition const & ) = delete;
 
   DomainPartition & operator=( DomainPartition && ) = delete;
+  /// @endcond
   ///@}
 
   /**
-   * @copydoc dataRepository::Group::RegisterDataOnMeshRecursive( Group * const MeshBodies )
+   * @copydoc dataRepository::Group::RegisterDataOnMeshRecursive( Group * const )
    */
-  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies ) override final;
+  virtual void RegisterDataOnMeshRecursive( Group * const meshBodies ) override final;
 
   void InitializationOrder( string_array & order ) override final;
 

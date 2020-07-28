@@ -69,9 +69,6 @@ public:
 
   std::unique_ptr< FiniteElementBase > getFiniteElement( string const & catalogName ) const;
 
-  void ApplySpaceToTargetCells( ElementSubRegionBase * const group ) const;
-
-
 
   template< typename SUBREGION_TYPE >
   void CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
@@ -79,10 +76,19 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    arrayView3d< R1Tensor > const & dNdX = elementSubRegion->template getReference< array3d< R1Tensor > >( dataRepository::keys::dNdX );
-    arrayView2d< real64 > const & detJ = elementSubRegion->template getReference< array2d< real64 > >( dataRepository::keys::detJ );
+    array4d< real64 > & dNdX = elementSubRegion->dNdX();
+    array2d< real64 > & detJ = elementSubRegion->detJ();
     auto const & elemsToNodes = elementSubRegion->nodeList().toViewConst();
 
+    {
+      std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
+      dNdX.resizeWithoutInitializationOrDestruction( elementSubRegion->size(), m_quadrature->size(), fe->dofs_per_element(), 3 );
+      detJ.resize( elementSubRegion->size(), m_quadrature->size() );
+    }
+
+    // We can't use a simple RAJA loop here because each thread needs it's own FiniteElementBase, and we can't capture
+    // fe
+    // in the lambda because it's a unique_ptr.
     PRAGMA_OMP( "omp parallel" )
     {
       std::unique_ptr< FiniteElementBase > fe = getFiniteElement( m_parentSpace );
@@ -97,7 +103,7 @@ public:
           detJ( k, q ) = fe->JxW( q );
           for( localIndex b = 0; b < fe->dofs_per_element(); ++b )
           {
-            dNdX[k][q][b] = fe->gradient( b, q );
+            LvArray::tensorOps::copy< 3 >( dNdX[ k ][ q ][ b ], fe->gradient( b, q ) );
           }
         }
       }
@@ -112,7 +118,6 @@ public:
 
   BasisBase const *    m_basis    = nullptr;
   QuadratureBase const * m_quadrature = nullptr;
-  FiniteElementBase * m_finiteElement = nullptr;
 protected:
   void PostProcessInput() override final;
 

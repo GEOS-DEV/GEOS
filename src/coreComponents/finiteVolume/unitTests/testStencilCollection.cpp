@@ -70,7 +70,6 @@ void testStencilLoop( LAMBDA && compute )
   {
     in[i] = double(i);
   }
-  out = 0.0;
 
   auto start = std::chrono::high_resolution_clock::now();
   compute( in, out, stencil );

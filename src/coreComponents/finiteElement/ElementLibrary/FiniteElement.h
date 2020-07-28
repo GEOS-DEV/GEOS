@@ -99,36 +99,52 @@ private:
    * element).
    */
   template< int USD >
-  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X, arraySlice1d< localIndex const,
-                                                                                                          USD > const & mapped_support_points )
+  void reinitPrivate( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                      arraySlice1d< localIndex const, USD > const & mapped_support_points )
   {
-    StackArray< real64, 2, 9 > jacobian( 3, 3 );
+    real64 jacobian[ 3 ][ 3 ];
 
     for( int q=0; q<n_q_points; ++q )
     {
       arrayView2d< real64 const > const & parentGradients = data[ q ].parent_gradients;
 
-      LvArray::tensorOps::outerProduct( jacobian.toSlice(), X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
+      LvArray::tensorOps::AiBj< 3, 3 >( jacobian, X[ mapped_support_points[ 0 ] ], parentGradients[ 0 ] );
 
       for( int i=1; i<n_dofs; ++i )
       {
-        LvArray::tensorOps::outerProductPE( jacobian.toSlice(), X[ mapped_support_points[ i ] ], parentGradients[ i ] );
+        LvArray::tensorOps::plusAiBj< 3, 3 >( jacobian, X[ mapped_support_points[ i ] ], parentGradients[ i ] );
       }
 
       if( dim == 2 )
       {
-        jacobian( 2, 2 ) = 1;
+        jacobian[ 2 ][ 2 ] = 1;
       }
 
-      data[ q ].jacobian_determinant = LvArray::tensorOps::invert( jacobian.toSlice() );
+      data[ q ].jacobian_determinant = LvArray::tensorOps::invert< 3 >( jacobian );
 
       for( int i=0; i<n_dofs; ++i )
       {
-        LvArray::tensorOps::matTVec( data[ q ].mapped_gradients[ i ], jacobian.toSliceConst(), parentGradients[ i ] );
+        LvArray::tensorOps::AjiBj< 3, 3 >( data[ q ].mapped_gradients[ i ], jacobian, parentGradients[ i ] );
       }
     }
   }
 };
+
+template< typename KERNELWRAPPER, typename ... PARAMS >
+inline real64
+finiteElementLaunchDispatch( localIndex NUM_NODES_PER_ELEM,
+                             localIndex NUM_QUADRATURE_POINTS,
+                             PARAMS && ... params )
+{
+  if( NUM_NODES_PER_ELEM == 8 && NUM_QUADRATURE_POINTS == 8 )
+  {
+    return KERNELWRAPPER::template Launch< 8, 8 >( std::forward< PARAMS >( params )... );
+  }
+
+  GEOSX_ERROR( "Not implemented!" );
+
+  return 0;
+}
 
 }
 

@@ -86,7 +86,6 @@ TEST( testGeosxTraits, HasAlias_value_type )
 
   static_assert( !HasAlias_value_type< int >, "Should be false." );
   static_assert( !HasAlias_value_type< double >, "Should be false." );
-  static_assert( !HasAlias_value_type< R2SymTensor >, "Should be false." );
 }
 
 TEST( testGeosxTraits, Pointer )
@@ -134,7 +133,6 @@ TEST( testGeosxTraits, HasMemberFunction_data )
   static_assert( !HasMemberFunction_data< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_data< int >, "Should be false." );
   static_assert( !HasMemberFunction_data< double >, "Should be false." );
-  static_assert( !HasMemberFunction_data< R2SymTensor >, "Should be false." );
 }
 
 TEST( testGeosxTraits, HasMemberFunction_move )
@@ -148,7 +146,6 @@ TEST( testGeosxTraits, HasMemberFunction_move )
   static_assert( !HasMemberFunction_move< std::map< string, string > >, "Should be true." );
   static_assert( !HasMemberFunction_move< int >, "Should be false." );
   static_assert( !HasMemberFunction_move< double >, "Should be false." );
-  static_assert( !HasMemberFunction_move< R2SymTensor >, "Should be false." );
 }
 
 TEST( testGeosxTraits, HasMemberFunction_size )
@@ -161,7 +158,6 @@ TEST( testGeosxTraits, HasMemberFunction_size )
 
   static_assert( !HasMemberFunction_size< int >, "Should be false." );
   static_assert( !HasMemberFunction_size< double >, "Should be false." );
-  static_assert( !HasMemberFunction_size< R2SymTensor >, "Should be false." );
 }
 
 TEST( testGeosxTraits, HasMemberFunction_resize )
@@ -176,7 +172,6 @@ TEST( testGeosxTraits, HasMemberFunction_resize )
   static_assert( !HasMemberFunction_resize< std::map< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_resize< int >, "Should be false." );
   static_assert( !HasMemberFunction_resize< double >, "Should be false." );
-  static_assert( !HasMemberFunction_resize< R2SymTensor >, "Should be false." );
 
 }
 
@@ -193,8 +188,6 @@ TEST( testGeosxTraits, CanStreamInto )
 TEST( testGeosxTraits, is_tensorT )
 {
   static_assert( is_tensorT< R1Tensor >, "Should be true." );
-  static_assert( is_tensorT< R2Tensor >, "Should be true." );
-  static_assert( is_tensorT< R2SymTensor >, "Should be true." );
 
   static_assert( !is_tensorT< int >, "Should be false." );
   static_assert( !is_tensorT< double >, "Should be false." );
@@ -213,7 +206,7 @@ TEST( testGeosxTraits, is_string )
 
 TEST( testGeosxTraits, is_array )
 {
-  static_assert( is_array< LvArray::Array< int, 1, camp::make_idx_seq< 0 >::type, int > >, "Should be true." );
+  static_assert( is_array< array1d< int > >, "Should be true." );
 
   static_assert( !is_array< int >, "Should be false." );
   static_assert( !is_array< double >, "Should be false." );

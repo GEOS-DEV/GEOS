@@ -40,7 +40,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_toNodesRelation(),
   m_elementAperture(),
   m_elementArea(),
-  m_numNodesPerSurface()
+  m_numNodesPerSurface(),
+  m_numOfJumpEnrichments( 3 )
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion )->
     setDescription( "Map to the region cut by each EmbeddedSurface." );
@@ -105,8 +106,8 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( NodeManager 
 void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
                                                        R1Tensor normalVector )
 {
-  m_embeddedSurfaceToCell.push_back( cellIndex );
-  m_normalVector.push_back( normalVector );
+  m_embeddedSurfaceToCell.emplace_back( cellIndex );
+  m_normalVector.emplace_back( normalVector );
 
   // resize
   this->resize( this->size() + 1 );
@@ -133,7 +134,7 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
    *   3. Once we have the intersection we check if it falls inside the bounded plane.
    *
    * Only elements for which all intersection points fall within the fracture plane limits will be added.
-   * If the frac does not cut through the entire element we will just chop it (it's a discretization error).
+   * If the fracture does not cut through the entire element we will just chop it (it's a discretization error).
    *
    * B. Once we know the element has to be added we compute it's geometric properties:
    * - Surface Area: this is trivial given the intersection points as long as they are ordered either CW or CCW.
@@ -141,43 +142,44 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
    * - Volume:
    */
 
-  // std::cout << "cell " << cellIndex  << std::endl;
-
   bool addEmbeddedElem = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoord = nodeManager.referencePosition();
   EdgeManager::NodeMapType::ViewTypeConst const & edgeToNodes = edgeManager.nodeList();
-  R1Tensor origin  = fracture->getCenter();
-  R1Tensor normalVector = fracture->getNormal();
+  R1Tensor origin        = fracture->getCenter();
+  R1Tensor normalVector  = fracture->getNormal();
   localIndex edgeIndex;
   R1Tensor lineDir, dist, point, distance;
   real64 prodScalarProd;
 
   array1d< R1Tensor > intersectionPoints;
-  for( localIndex ke = 0; ke < 12; ke++ )
+  for( localIndex ke = 0; ke < cellToEdges.size( 1 ); ke++ )
   {
     edgeIndex = cellToEdges[cellIndex][ke];
-    dist = nodesCoord[edgeToNodes[edgeIndex][0]];
-    dist -= origin;
-    prodScalarProd = Dot( dist, normalVector );
-    dist = nodesCoord[edgeToNodes[edgeIndex][1]];
-    dist -= origin;
-    prodScalarProd *= Dot( dist, normalVector );
+    LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][0]] );
+    LvArray::tensorOps::subtract< 3 >( dist, origin );
+    prodScalarProd = LvArray::tensorOps::AiBi< 3 >( dist, normalVector );
+    LvArray::tensorOps::copy< 3 >( dist, nodesCoord[edgeToNodes[edgeIndex][1]] );
+    LvArray::tensorOps::subtract< 3 >( dist, origin );
+    prodScalarProd *= LvArray::tensorOps::AiBi< 3 >( dist, normalVector );
 
+    // check if the plane intersects the edge
     if( prodScalarProd < 0 )
     {
-      lineDir  = nodesCoord[edgeToNodes[edgeIndex][0]];
-      lineDir -= nodesCoord[edgeToNodes[edgeIndex][1]];
-      lineDir.Normalize();
+      lineDir = LVARRAY_TENSOROPS_INIT_LOCAL_3( nodesCoord[edgeToNodes[edgeIndex][0]] );
+      LvArray::tensorOps::subtract< 3 >( lineDir, nodesCoord[edgeToNodes[edgeIndex][1]] );
+      LvArray::tensorOps::normalize< 3 >( lineDir );
+      //find the intersection point
       point = computationalGeometry::LinePlaneIntersection( lineDir,
                                                             nodesCoord[edgeToNodes[edgeIndex][0]],
                                                             normalVector,
                                                             origin );
+
       // Check if the point is inside the fracture (bounded plane)
       if( !fracture->IsCoordInObject( point ) )
       {
         addEmbeddedElem = false;
       }
-      intersectionPoints.push_back( point );
+      intersectionPoints.emplace_back( point );
     }
   } //end of edge loop
 
@@ -231,23 +233,34 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
     m_normalVector[ surfaceIndex ]   =  normalVector ;
     m_tangentVector1[ surfaceIndex ] = fracture->getWidthVector();
     m_tangentVector2[ surfaceIndex ] =  fracture->getLengthVector();
-
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
   }
-
   return addEmbeddedElem;
 }
 
+void EmbeddedSurfaceSubRegion::inheritGhostRank( array1d< array1d< arrayView1d< integer const > > > const & cellGhostRank )
+{
+  arrayView1d< integer > const & ghostRank = this->ghostRank();
+  for( localIndex k=0; k < size(); ++k )
+  {
+    ghostRank[k] = cellGhostRank[m_embeddedSurfaceToRegion[k]][m_embeddedSurfaceToSubRegion[k]][m_embeddedSurfaceToCell[k]];
+  }
+}
+
 void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1Tensor > const intersectionPoints,
-                                                                    localIndex k )
+                                                                    localIndex const k )
 {
   for( localIndex p = 0; p < intersectionPoints.size(); p++ )
   {
-    m_elementCenter[k] += intersectionPoints[p];
+    // TODO change to LvArray::tensorOps::add
+    m_elementCenter( k, 0 ) += intersectionPoints[ p ][ 0 ];
+    m_elementCenter( k, 1 ) += intersectionPoints[ p ][ 1 ];
+    m_elementCenter( k, 2 ) += intersectionPoints[ p ][ 2 ];
   }
 
-  m_elementArea[k]   = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
-  m_elementCenter[k] /= intersectionPoints.size();
+  m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
+
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / intersectionPoints.size() );
   this->CalculateElementGeometricQuantities( k );
 }
 
@@ -255,7 +268,6 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 {
   this->m_toNodesRelation.SetRelatedObject( mesh->getNodeManager() );
 }
-
 
 int EmbeddedSurfaceSubRegion::totalNumberOfNodes()
 {
@@ -265,6 +277,19 @@ int EmbeddedSurfaceSubRegion::totalNumberOfNodes()
 		totalNumNodes += m_numNodesPerSurface[esi];
 	}
 	return totalNumNodes;
+}
+
+real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
+                                                           localIndex const k ) const
+{
+  real64 heaviside;
+  R1Tensor distanceVector;
+  LvArray::tensorOps::copy< 3 >( distanceVector, nodeCoord );
+  LvArray::tensorOps::subtract< 3 >( distanceVector, m_elementCenter[k] );
+
+  heaviside = LvArray::tensorOps::AiBi< 3 >( distanceVector, m_normalVector[k] ) > 0 ? 1 : 0;
+
+  return heaviside;
 }
 
 } /* namespace geosx */

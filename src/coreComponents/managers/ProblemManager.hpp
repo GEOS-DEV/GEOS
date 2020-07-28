@@ -16,6 +16,7 @@
  * @file ProblemManager.hpp
  */
 
+
 #ifndef GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
@@ -89,6 +90,7 @@ public:
   /**
    * @brief Parses a restart file
    * @param restartFileName the name of the restart file
+   * @return flag indicating beginFromRestart status
    */
   static bool ParseRestart( std::string & restartFileName );
 
@@ -134,6 +136,7 @@ public:
 
   /**
    * @brief Defines the order in which objects should be initialized
+   * @param order list defining ordering sequence
    */
   void InitializationOrder( string_array & order ) override final;
 
@@ -159,34 +162,40 @@ public:
 
   /**
    * @brief Returns a pointer to the DomainPartition
+   * @return Pointer to the DomainPartition
    */
   DomainPartition * getDomainPartition();
 
   /**
    * @brief Returns a pointer to the DomainPartition
+   * @return Const pointer to the DomainPartition
    */
   DomainPartition const * getDomainPartition() const;
 
   /**
    * @brief Returns the problem name
+   * @return The problem name
    */
   const string & getProblemName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
+   * @return The input file name
    */
   const string & getInputFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
+   * @return The restart file name
    */
   const string & getRestartFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
+   * @return The schema file name
    */
   const string & getSchemaFileName() const
   { return GetGroup< Group >( groupKeys.commandLine )->getReference< string >( viewKeys.schemaFileName ); }
@@ -203,40 +212,45 @@ public:
   /// Command line input viewKeys
   struct viewKeysStruct
   {
-    dataRepository::ViewKey inputFileName            = {"inputFileName"};
-    dataRepository::ViewKey restartFileName          = {"restartFileName"};
-    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};
-    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};
-    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};
-    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};
-    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"};
-    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};
-    dataRepository::ViewKey problemName              = {"problemName"};
-    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};
-    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};
-    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};
-  } viewKeys;
+    dataRepository::ViewKey inputFileName            = {"inputFileName"};            ///< Input file name key
+    dataRepository::ViewKey restartFileName          = {"restartFileName"};          ///< Restart file name key
+    dataRepository::ViewKey beginFromRestart         = {"beginFromRestart"};         ///< Flag to begin from restart key
+    dataRepository::ViewKey xPartitionsOverride      = {"xPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in x key
+    dataRepository::ViewKey yPartitionsOverride      = {"yPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in y key
+    dataRepository::ViewKey zPartitionsOverride      = {"zPartitionsOverride"};      ///< Override of number of
+                                                                                     ///< subdivisions in z key
+    dataRepository::ViewKey overridePartitionNumbers = {"overridePartitionNumbers"}; ///< Flag to override partitioning
+                                                                                     ///< key
+    dataRepository::ViewKey schemaFileName           = {"schemaFileName"};           ///< Schema file name key
+    dataRepository::ViewKey problemName              = {"problemName"};              ///< Problem name key
+    dataRepository::ViewKey outputDirectory          = {"outputDirectory"};          ///< Output directory key
+    dataRepository::ViewKey useNonblockingMPI        = {"useNonblockingMPI"};        ///< Flag to use non-block MPI key
+    dataRepository::ViewKey suppressPinned           = {"suppressPinned"};           ///< Flag to suppress use of pinned
+                                                                                     ///< memory key
+  } viewKeys; ///< Command line input viewKeys
 
   /// Child group viewKeys
   struct groupKeysStruct
   {
-    static constexpr auto numericalMethodsManagerString = "NumericalMethods";
-//    constexpr auto eventManager="EventManager";
-    dataRepository::GroupKey commandLine    = { "commandLine" };
-    dataRepository::GroupKey constitutiveManager = { "Constitutive" };
-    dataRepository::GroupKey domain    = { "domain" };
-    dataRepository::GroupKey eventManager = { "Events" };
-    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };
-    dataRepository::GroupKey functionManager = { "Functions" };
-    dataRepository::GroupKey geometricObjectManager = { "Geometry" };
-    dataRepository::GroupKey meshManager = { "Mesh" };
-    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString };
-    dataRepository::GroupKey outputManager = { "Outputs" };
-    dataRepository::GroupKey physicsSolverManager = { "Solvers" };
-  } groupKeys;
+    static constexpr auto numericalMethodsManagerString = "NumericalMethods";             ///< Numerical methods string
+    dataRepository::GroupKey commandLine    = { "commandLine" };                          ///< Command line key
+    dataRepository::GroupKey constitutiveManager = { "Constitutive" };                    ///< Constitutive key
+    dataRepository::GroupKey domain    = { "domain" };                                    ///< Domain key
+    dataRepository::GroupKey eventManager = { "Events" };                                 ///< Events key
+    dataRepository::GroupKey fieldSpecificationManager = { "FieldSpecifications" };       ///< Field specification key
+    dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
+    dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
+    dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
+    dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString }; ///< Numerical methods key
+    dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
+    dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
+  } groupKeys; ///< Child group viewKeys
 
   /**
    * @brief Returns the PhysicsSolverManager
+   * @return Reference to the PhysicsSolverManager
    */
   PhysicsSolverManager & GetPhysicsSolverManager()
   {
@@ -245,6 +259,7 @@ public:
 
   /**
    * @brief Returns the PhysicsSolverManager
+   * @return Const reference to the PhysicsSolverManager
    */
   PhysicsSolverManager const & GetPhysicsSolverManager() const
   {

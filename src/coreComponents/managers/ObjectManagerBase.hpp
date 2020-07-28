@@ -282,6 +282,12 @@ private:
 public:
 
   /**
+   * @brief Manually move all sets to a memory space.
+   * @param targetSpace The memory space to move sets to.
+   */
+  void moveSets( LvArray::MemorySpace const targetSpace );
+
+  /**
    * @copydoc geosx::dataRepository::Group::resize(indexType const)
    * @return Always 0, whatever the new size is.
    */
@@ -378,7 +384,7 @@ public:
       integer & owningRank = m_ghostRank[ index ];
       if( owningRank >= 0 )
       {
-        nonLocalGhosts.push_back( { m_localToGlobalMap[ index ], owningRank } );
+        nonLocalGhosts.emplace_back( m_localToGlobalMap[ index ], owningRank );
       }
       else
       {
@@ -549,6 +555,147 @@ public:
   }
 
   /**
+   * @brief Register data with this ObjectManagerBase using a
+   *   dataRepository::Wrapper.
+   * @tparam MESH_DATA_TRAIT The trait struct that holds the information for
+   *   the data being registered with the repository.
+   * @param nameOfRegisteringObject The name of the object that is requesting
+   *   that this data be registered.
+   * @return A wrapper to the type specified by @p MESH_DATA_TRAIT.
+   */
+  template< typename MESH_DATA_TRAIT >
+  dataRepository::Wrapper< typename MESH_DATA_TRAIT::type > &
+  registerExtrinsicData( string const & nameOfRegisteringObject )
+  {
+    // These are required to work-around the need for instantiation of
+    // the static constexpr trait components. This will not be required once
+    // we move to c++17.
+
+    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
+    // This is required for the Tensor classes.
+    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->
+               setApplyDefaultValue( defaultValue )->
+               setPlotLevel( MESH_DATA_TRAIT::plotLevel )->
+               setRestartFlags( MESH_DATA_TRAIT::restartFlag )->
+               setDescription( MESH_DATA_TRAIT::description )->
+               setRegisteringObjects( nameOfRegisteringObject ) );
+  }
+
+  /**
+   * @brief Register a collection of data with this ObjectManagerBase using a
+   *   dataRepository::Wrapper.
+   * @tparam MESH_DATA_TRAIT0 The first of the trait structs that holds the
+   *   information for the data being registered with the repository.
+   * @tparam MESH_DATA_TRAIT1 The second of the trait structs that holds the
+   *   information for the data being registered with the repository.
+   * @tparam MESH_DATA_TRAITS The parameter pack of trait structs that holds
+   *   the information for the data being registered with the repository.
+   * @param nameOfRegisteringObject The name of the object that is requesting
+   *   that this data be registered.
+   */
+  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
+  void registerExtrinsicData( string const & nameOfRegisteringObject )
+  {
+    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject );
+    registerExtrinsicData< MESH_DATA_TRAIT1, MESH_DATA_TRAITS... >( nameOfRegisteringObject );
+  }
+
+  /**
+   * @brief Get a view to the data associated with a trait from this
+   *   ObjectManagerBase.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return A const reference to a view to const data.
+   */
+  template< typename MESH_DATA_TRAIT >
+  auto const & getExtrinsicData() const
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+  }
+
+  /**
+   * @brief Get a view to the data associated with a trait from this
+   *   ObjectManagerBase.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return A reference to a view to the data.
+   */
+  template< typename MESH_DATA_TRAIT >
+  auto & getExtrinsicData()
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key )->referenceAsView();
+  }
+
+  /**
+   * @brief Checks if an extrinsic data has been registered.
+   * @tparam MESH_DATA_TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this ObjectManagerBase.
+   * @return @p true if the data has been registered, @p false otherwise.
+   */
+  template< typename MESH_DATA_TRAIT >
+  bool hasExtrinsicData() const
+  {
+    // FIXME c++17 We copy paste the Group::hasWrapper implementation for linking reasons
+    //             (the key needs to be defined/declared).
+    //             C++17 introduces inline variables and should remove this problem.
+    return this->wrappers()[MESH_DATA_TRAIT::key] != nullptr;
+  }
+
+#if 0
+  template< typename MESH_DATA_TRAIT >
+  dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
+  registerExtrinsicData( string const & nameOfRegisteringObject,
+                         MESH_DATA_TRAIT const & extrinisicDataTrait )
+  {
+    // These are required to work-around the need for instantiation of
+    // the static constexpr trait components. This will not be required once
+    // we move to c++17.
+
+    //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
+    constexpr dataRepository::PlotLevel plotLevel = MESH_DATA_TRAIT::plotLevel;
+    string const description = MESH_DATA_TRAIT::description;
+
+    // This is required for the Tensor classes.
+    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->
+               setApplyDefaultValue( defaultValue )->
+               setPlotLevel( plotLevel )->
+               setDescription( description )->
+               setRegisteringObjects( nameOfRegisteringObject ) );
+  }
+
+  template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
+  void registerExtrinsicData( string const & nameOfRegisteringObject,
+                              MESH_DATA_TRAIT0 const & extrinisicDataTrait0,
+                              MESH_DATA_TRAIT1 const & extrinisicDataTrait1,
+                              MESH_DATA_TRAITS && ... extrinisicDataTraits )
+  {
+    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject, extrinisicDataTrait0 );
+    registerExtrinsicData< MESH_DATA_TRAIT1,
+                           MESH_DATA_TRAITS... >( nameOfRegisteringObject,
+                                                  extrinisicDataTrait1,
+                                                  std::forward< MESH_DATA_TRAITS >( extrinisicDataTraits )... );
+  }
+
+  template< typename MESH_DATA_TRAIT >
+  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait ) const
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+  }
+
+  template< typename MESH_DATA_TRAIT >
+  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait )
+  {
+    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey )->referenceAsView();
+  }
+#endif
+
+  //**********************************************************************************************************************
+
+  /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
@@ -556,16 +703,12 @@ public:
   {
     /// String key to adjacency list
     static constexpr auto adjacencyListString = "adjacencyList";
-    /// String key to child indices
-    static constexpr auto childIndexString = "childIndex";
     /// String key to domain boundary indicator
     static constexpr auto domainBoundaryIndicatorString = "domainBoundaryIndicator";
     /// String key to external set
     static constexpr auto externalSetString = "externalSet";
     /// String key to ghost ranks
     static constexpr auto ghostRankString = "ghostRank";
-    /// String key to ghosts to send
-    static constexpr auto ghostsToSendString = "ghostsToSend";
     /// String key to ghosts to receive
     static constexpr auto ghostsToReceiveString = "ghostsToReceive";
     /// String key to global->local mao
@@ -574,13 +717,7 @@ public:
     static constexpr auto isExternalString = "isExternal";
     /// String key to the local->global map
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
-    /// String key to the matched partition boundary objects
-    static constexpr auto matchedPartitionBoundaryObjectsString = "matchedPartitionBoundaryObjects";
-    /// String key to parent indices
-    static constexpr auto parentIndexString = "parentIndex";
 
-    /// View key to child indices
-    dataRepository::ViewKey childIndex = { childIndexString };
     /// View key to domain boundary indicator
     dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     /// View key to external set
@@ -589,14 +726,8 @@ public:
     dataRepository::ViewKey ghostRank = { ghostRankString };
     /// View key to global->local mao
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
-    /// View key to the 'is external' vector
-    dataRepository::ViewKey isExternal = { isExternalString };
     /// View key to the local->global map
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
-    /// View key to the matched partition boundary objects
-    dataRepository::ViewKey matchedPartitionBoundaryObjects = { matchedPartitionBoundaryObjectsString };
-    /// View key to parent indices
-    dataRepository::ViewKey parentIndex = { parentIndexString };
   }
   /// viewKey struct for the ObjectManagerBase class
   m_ObjectManagerBaseViewKeys;

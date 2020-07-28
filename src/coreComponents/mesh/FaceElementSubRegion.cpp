@@ -22,6 +22,7 @@
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -45,6 +46,10 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
 {
   SetElementType( "C3D8" );
 
+  registerWrapper( viewKeyStruct::dNdXString, &m_dNdX )->setSizedFromParent( 1 )->reference().resizeDimension< 3 >( 3 );
+
+  registerWrapper( viewKeyStruct::detJString, &m_detJ )->setSizedFromParent( 1 )->reference();
+
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
     setDescription( "Map to the nodes attached to each FaceElement." );
 
@@ -66,19 +71,10 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "The area of each FaceElement." );
 
   registerWrapper( viewKeyStruct::elementRotationMatrixString, &m_elementRotationMatrix )->
-    setApplyDefaultValue( {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0} )->
+    setApplyDefaultValue( 0.0 )->
     setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The rotation matrix of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementCenterString, &m_elementCenter )->
-    setApplyDefaultValue( {0.0, 0.0, 0.0} )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_2 )->
-    setDescription( "The center of each FaceElement." );
-
-  registerWrapper( viewKeyStruct::elementVolumeString, &m_elementVolume )->
-    setApplyDefaultValue( -1.0 )->
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_0 )->
-    setDescription( "The volume of each FaceElement." );
+    setDescription( "The rotation matrix of each FaceElement." )->
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   registerWrapper( viewKeyStruct::faceElementsToCellRegionsString, &m_faceElementsToCells.m_toElementRegion )->
     setApplyDefaultValue( -1 )->
@@ -132,24 +128,23 @@ void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const
 
 void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
                                                                 arrayView1d< real64 const > const & faceArea,
-                                                                arrayView1d< R2Tensor const > const & faceRotationMatrix )
+                                                                arrayView3d< real64 const > const & faceRotationMatrix )
 {
-  m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-  m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
-  m_elementRotationMatrix[k] = faceRotationMatrix[ m_toFacesRelation[k][0] ];
+  localIndex const faceID = m_toFacesRelation( k, 0 );
+  m_elementArea[ k ] = faceArea[ faceID ];
+  m_elementVolume[ k ] = m_elementAperture[ k ] * faceArea[ faceID ];
+  LvArray::tensorOps::copy< 3, 3 >( m_elementRotationMatrix[ k ], faceRotationMatrix[ faceID ] );
 }
 
 void FaceElementSubRegion::CalculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                 FaceManager const & faceManager )
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
-  arrayView1d< R2Tensor const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
+  arrayView3d< real64 const > const & faceRotationMatrix = faceManager.faceRotationMatrix();
 
   forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
   {
-    m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
-    m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
-    m_elementRotationMatrix[k] = faceRotationMatrix[ m_toFacesRelation[k][0] ];
+    CalculateElementGeometricQuantities( k, faceArea, faceRotationMatrix );
   } );
 }
 

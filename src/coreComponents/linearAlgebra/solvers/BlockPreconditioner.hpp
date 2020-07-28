@@ -145,6 +145,8 @@ public:
    */
   ///@{
 
+  using PreconditionerBase< LAI >::compute;
+
   virtual void compute( Matrix const & mat,
                         DofManager const & dofManager ) override;
 

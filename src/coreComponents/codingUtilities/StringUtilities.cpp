@@ -16,7 +16,6 @@
  * @file StringUtilities.cpp
  */
 
-#include "math/TensorT/TensorT.h"
 #include "codingUtilities/StringUtilities.hpp"
 //#include "codingUtilities/UnitManager.h"
 
@@ -36,7 +35,7 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
 
   if( str.length() == 0 )
   {
-    tokens.push_back( str );
+    tokens.emplace_back( str );
   }
   else
   {
@@ -57,10 +56,10 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
       size_t newPos = lastPos;
       while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
         lastPos = newPos + 1;
       }
-      tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
+      tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
     }
     else
     {
@@ -72,11 +71,11 @@ string_array Tokenize( const std::string & str, const std::string & delimiters )
       size_t newPos = lastPos;
       while( (newPos=str.find_first_of( delimiters, lastPos )) != std::string::npos )
       {
-        tokens.push_back( str.substr( lastPos, newPos-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, newPos-lastPos ));
         lastPos = str.find_first_not_of( delimiters, newPos );
       }
       if( lastPos!= std::string::npos )
-        tokens.push_back( str.substr( lastPos, str.length()-lastPos ));
+        tokens.emplace_back( str.substr( lastPos, str.length()-lastPos ));
 
     }
   }

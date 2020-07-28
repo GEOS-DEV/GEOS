@@ -29,22 +29,28 @@ namespace geosx
 /**
  * @class VTKOutput
  *
- * A class for creating silo-based outputs
+ * A class for creating vtk outputs
  */
 class VTKOutput : public OutputBase
 {
 public:
-  /// Main constructor
-  VTKOutput( std::string const & name,
-             Group * const parent );
+  /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
+
+  VTKOutput( std::string const & name, Group * const parent );
 
   /// Destructor
   virtual ~VTKOutput() override;
 
-  /// Catalog name interface
+  /**
+   * @brief Catalog name interface
+   * @return This type's catalog name
+   */
   static string CatalogName() { return "VTK"; }
 
-  /// This method will be called by the event manager if triggered
+  /**
+   * @brief Writes out a set of vtk files.
+   * @copydoc EventBase::Execute()
+   */
   virtual void Execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -52,7 +58,10 @@ public:
                         real64 const eventProgress,
                         dataRepository::Group * domain ) override;
 
-  /// Write one final output as the code exits
+  /**
+   * @brief Write one final set of vtk files as the code exits
+   * @copydoc ExecutableGroup::Cleanup()
+   */
   virtual void Cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -62,6 +71,7 @@ public:
     Execute( time_n, 0, cycleNumber, eventCounter, eventProgress, domain );
   }
 
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct : OutputBase::viewKeysStruct
   {
     static constexpr auto plotFileRoot = "plotFileRoot";
@@ -70,6 +80,7 @@ public:
     static constexpr auto binaryString = "writeBinaryData";
 
   } vtkOutputViewKeys;
+  /// @endcond
 
 private:
   string m_plotFileRoot;

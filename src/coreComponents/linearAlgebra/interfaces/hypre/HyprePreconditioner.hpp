@@ -44,6 +44,9 @@ using HYPRE_Solver = hypre_Solver_struct *;
 namespace geosx
 {
 
+/// Forward-declared struct that hosts preconditioner auxiliary data
+struct HyprePrecAuxData;
+
 /// Forward-declared struct that hosts pointers to preconditioner functions
 struct HyprePrecFuncs;
 
@@ -63,11 +66,16 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
+  /// Allow for partial overload of Base::compute()
+  using Base::compute;
+
   /**
    * @brief Constructor.
    * @param params preconditioner parameters
+   * @param dofManager the Degree-of-Freedom manager associated with matrix
    */
-  explicit HyprePreconditioner( LinearSolverParameters params );
+  explicit HyprePreconditioner( LinearSolverParameters params,
+                                DofManager const * const dofManager = nullptr );
 
   /**
    * @brief Destructor.
@@ -109,6 +117,8 @@ private:
 
   void createAMG();
 
+  void createMGR( DofManager const * const dofManager );
+
   void createILU();
 
   void createILUT();
@@ -119,8 +129,14 @@ private:
   /// Pointer to the Hypre implementation
   HYPRE_Solver m_precond;
 
+  /// Pointer to the auxillary preconditioner used in MGR
+  HYPRE_Solver aux_precond;
+
   /// Pointers to hypre functions to setup/solve/destroy preconditioner
   std::unique_ptr< HyprePrecFuncs > m_functions;
+
+  // Pointer to preconditioner auxiliary data
+  std::unique_ptr< HyprePrecAuxData > m_auxData;
 };
 
 }

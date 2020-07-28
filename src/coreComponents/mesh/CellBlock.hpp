@@ -89,7 +89,7 @@ public:
    * @brief Copy constructor.
    * @param[in] init the source to copy
    */
-  CellBlock( const CellBlock & init );
+  CellBlock( const CellBlock & init ) = delete;
 
   /**
    * @brief Destructor.
@@ -114,7 +114,7 @@ public:
    */
   void calculateElementCenters( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
-    arrayView1d< R1Tensor > const & elementCenters = m_elementCenter;
+    arrayView2d< real64 > const & elementCenters = m_elementCenter;
     localIndex nNodes = numNodesPerElement();
 
     if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
@@ -124,13 +124,13 @@ public:
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
-      elementCenters[k] = 0;
-      for( localIndex a = 0; a < nNodes; ++a )
+      LvArray::tensorOps::copy< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, 0 ) ] );
+      for( localIndex a = 1; a < nNodes; ++a )
       {
-        const localIndex b = m_toNodesRelation[k][a];
-        elementCenters[k] += X[b];
+        LvArray::tensorOps::add< 3 >( elementCenters[ k ], X[ m_toNodesRelation( k, a ) ] );
       }
-      elementCenters[k] /= nNodes;
+
+      LvArray::tensorOps::scale< 3 >( elementCenters[ k ], 1.0 / nNodes );
     } );
   }
 
@@ -142,17 +142,16 @@ public:
   inline void CalculateCellVolumesKernel( localIndex const k,
                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
   {
-    R1Tensor & center = m_elementCenter[k];
-    center = 0.0;
+    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
 
     R1Tensor Xlocal[10];
 
     for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
-      Xlocal[a] = X[m_toNodesRelation[k][a]];
-      center += Xlocal[a];
+      Xlocal[ a ] = X[ m_toNodesRelation( k, a ) ];
+      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
     }
-    center /= m_numNodesPerElement;
+    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 
     if( m_numNodesPerElement == 8 )
     {
@@ -279,7 +278,7 @@ public:
   template< typename T >
   T & AddProperty( string const & propertyName )
   {
-    m_externalPropertyNames.push_back( propertyName );
+    m_externalPropertyNames.emplace_back( propertyName );
     return this->registerWrapper< T >( propertyName )->reference();
   }
 

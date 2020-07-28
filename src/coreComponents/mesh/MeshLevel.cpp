@@ -23,8 +23,6 @@
 //#include "EdgeManager.hpp"
 #include "FaceManager.hpp"
 
-#include "wells/WellElementSubRegion.hpp"
-
 namespace geosx
 {
 using namespace dataRepository;

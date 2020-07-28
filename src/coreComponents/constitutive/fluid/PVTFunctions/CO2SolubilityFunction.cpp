@@ -19,8 +19,6 @@
 
 #include "constitutive/fluid/PVTFunctions/CO2SolubilityFunction.hpp"
 
-using namespace std;
-
 namespace geosx
 {
 
@@ -295,7 +293,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
   while( P <= PEnd )
   {
 
-    pressures.push_back( P );
+    pressures.emplace_back( P );
     P += dP;
 
   }
@@ -305,7 +303,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
   while( T <= TEnd )
   {
 
-    temperatures.push_back( T );
+    temperatures.emplace_back( T );
     T += dT;
 
   }
@@ -317,7 +315,7 @@ void CO2SolubilityFunction::MakeTable( string_array const & inputPara )
 
   CalculateCO2Solubility( pressures, temperatures, m, solubilities );
 
-  m_CO2SolubilityTable = make_shared< XYTable >( "CO2SolubilityTable", pressures, temperatures, solubilities );
+  m_CO2SolubilityTable = std::make_shared< XYTable >( "CO2SolubilityTable", pressures, temperatures, solubilities );
 
 
 }

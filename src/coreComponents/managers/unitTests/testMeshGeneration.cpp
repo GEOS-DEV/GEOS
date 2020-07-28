@@ -190,7 +190,7 @@ TEST_F( MeshGenerationTest, nodePositions )
 
 TEST_F( MeshGenerationTest, elementCentersAndVolumes )
 {
-  arrayView1d< R1Tensor const > const & centers = m_subRegion->getElementCenter();
+  arrayView2d< real64 const > const & centers = m_subRegion->getElementCenter();
   arrayView1d< real64 const > const & volumes = m_subRegion->getElementVolume();
 
   constexpr double VOLUME = dx * dy * dz;
@@ -414,7 +414,7 @@ TEST_F( MeshGenerationTest, faceElementMaps )
 
 bool walkEdgesToFindNeighbor( localIndex const node0,
                               localIndex const node1,
-                              ArrayOfArraysView< localIndex const >::IterableArray const & nodeEdges,
+                              arraySlice1d< localIndex const > const & nodeEdges,
                               arrayView2d< localIndex const > const & edgeToNodeMap )
 {
   for( localIndex const edgeID : nodeEdges )
@@ -452,32 +452,32 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
         localIndex numEdges = 0;
         if( i != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dI, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dI, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( i != numNodesInX - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dI, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dI, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dJ, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dJ, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != numNodesInY - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dJ, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dJ, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - 1, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - 1, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != numNodesInZ - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + 1, nodeToEdgeMap.getIterableSet( nodeID ), edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + 1, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
           ++numEdges;
         }
 
@@ -524,7 +524,7 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
             EXPECT_EQ( edgeToNodeMap( edgeID, 1 ), node1 );
 
             bool foundFace = false;
-            for( localIndex const id : edgeToFaceMap.getIterableSet( edgeID ) )
+            for( localIndex const id : edgeToFaceMap[ edgeID ] )
             {
               if( id == faceID )
                 foundFace = true;

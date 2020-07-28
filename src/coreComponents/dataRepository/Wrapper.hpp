@@ -54,7 +54,7 @@ namespace dataRepository
  * @tparam T is any type that is to be wrapped by Wrapper
  */
 template< typename T >
-class Wrapper : public WrapperBase
+class Wrapper final : public WrapperBase
 {
 public:
 
@@ -137,7 +137,7 @@ public:
    *
    * Deletes wrapped object if the wrapper is owning
    */
-  virtual ~Wrapper() noexcept override final
+  virtual ~Wrapper() noexcept override
   {
     if( m_ownsData )
     {
@@ -197,7 +197,7 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual const std::type_info & get_typeid() const noexcept override final
+  virtual const std::type_info & get_typeid() const noexcept override
   {
     return typeid(T);
   }
@@ -261,7 +261,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  bool isPackable( bool onDevice ) const override final
+  bool isPackable( bool onDevice ) const override
   {
     if( onDevice )
     {
@@ -281,7 +281,7 @@ public:
    * @return number of packed bytes.
    */
   virtual
-  localIndex Pack( buffer_unit_type * & buffer, bool onDevice ) const override final
+  localIndex Pack( buffer_unit_type * & buffer, bool onDevice ) const override
   {
     localIndex packedSize = 0;
     packedSize += bufferOps::Pack< true >( buffer, this->getName() );
@@ -298,7 +298,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
+  localIndex PackByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool onDevice ) const override
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
@@ -318,7 +318,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  localIndex PackSize( bool onDevice ) const override final
+  localIndex PackSize( bool onDevice ) const override
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
@@ -336,7 +336,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool onDevice ) const override final
+  localIndex PackByIndexSize( arrayView1d< localIndex const > const & packList, bool onDevice ) const override
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;
@@ -357,7 +357,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  localIndex Unpack( buffer_unit_type const * & buffer, bool onDevice ) override final
+  localIndex Unpack( buffer_unit_type const * & buffer, bool onDevice ) override
   {
     localIndex unpackedSize = 0;
     string name;
@@ -376,7 +376,7 @@ public:
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual
-  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool onDevice ) override final
+  localIndex UnpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool onDevice ) override
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -399,11 +399,11 @@ public:
   ///@}
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void const * voidPointer() const override final
+  void const * voidPointer() const override
   { return wrapperHelpers::dataPtr( reference() ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex elementByteSize() const override final
+  virtual localIndex elementByteSize() const override
   { return wrapperHelpers::byteSizeOfElement< T >(); }
 
   /**
@@ -415,57 +415,68 @@ public:
   ///@{
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex size() const override final
+  virtual localIndex size() const override
   { return wrapperHelpers::size( *m_data ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void resize( int ndims, localIndex const * const dims ) override final
-  { wrapperHelpers::resizeDimensions( *m_data, ndims, dims ); }
+  virtual void resize( int ndims, localIndex const * const dims ) override
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDimensions( *m_data, ndims, dims );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void reserve( localIndex const newCapacity ) override final
-  { wrapperHelpers::reserve( reference(), newCapacity ); }
+  virtual void reserve( localIndex const newCapacity ) override
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::reserve( reference(), newCapacity );
+  }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual localIndex capacity() const override final
+  virtual localIndex capacity() const override
   {
     // We don't use reference() here because that would return an ArrayView which has no capacity method.
     return wrapperHelpers::capacity( *m_data );
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void resize( localIndex const newSize ) override final
-  { wrapperHelpers::resizeDefault( reference(), newSize, m_default ); }
+  virtual void resize( localIndex const newSize ) override
+  {
+    wrapperHelpers::move( *m_data, LvArray::MemorySpace::CPU, true );
+    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
+  }
 
   /// @cond DO_NOT_DOCUMENT
   struct copy_wrapper
   {
-    template< class U=T >
-    static typename std::enable_if< traits::is_array< U >, void >::type
-    copy( T * const data, localIndex const sourceIndex, localIndex const destIndex )
+    template< typename U, int NDIM, typename PERMUTATION >
+    static void copy( Array< U, NDIM, PERMUTATION > const & array, localIndex const sourceIndex, localIndex const destIndex )
     {
-      data->copy( destIndex, sourceIndex );
+      LvArray::forValuesInSliceWithIndices( array[ sourceIndex ],
+                                            [destIndex, &array]( U const & sourceVal, auto const ... indices )
+      {
+        array( destIndex, indices ... ) = sourceVal;
+      } );
     }
 
-    template< class U=T >
-    static typename std::enable_if< !traits::is_array< U >, void >::type
-    copy( T * const GEOSX_UNUSED_PARAM( data ), localIndex const GEOSX_UNUSED_PARAM( sourceIndex ), localIndex const GEOSX_UNUSED_PARAM( destIndex ) )
+    template< typename U >
+    static void copy( U const &, localIndex const, localIndex const )
     {}
 
   };
   /// @endcond
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override final
+  virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
     if( this->sizedFromParent() )
     {
-      copy_wrapper::copy( this->m_data, sourceIndex, destIndex );
+      copy_wrapper::copy( reference(), sourceIndex, destIndex );
     }
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual void move( chai::ExecutionSpace const space, bool const touch ) const override
+  virtual void move( LvArray::MemorySpace const space, bool const touch ) const override
   { return wrapperHelpers::move( reference(), space, touch ); }
 
   ///@}
@@ -585,11 +596,25 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  typename std::enable_if< DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  typename std::enable_if< !traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
   setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
   {
     m_default.value = defaultVal;
     *m_data = m_default.value;
+    return this;
+  }
+
+  /**
+   * @brief Set and apply for default value.
+   * @param defaultVal the new default value
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  typename std::enable_if< traits::is_array< U > && DefaultValue< U >::has_default_value, Wrapper< T > * >::type
+  setApplyDefaultValue( typename DefaultValue< U >::value_type const & defaultVal )
+  {
+    m_default.value = defaultVal;
+    m_data->template setValues< serialPolicy >( m_default.value );
     return this;
   }
 
@@ -641,7 +666,7 @@ public:
     return default_string;
   }
 
-  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override final
+  virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode ) override
   {
     InputFlags const inputFlag = getInputFlag();
     if( inputFlag >= InputFlags::OPTIONAL )
@@ -714,7 +739,7 @@ public:
       return;
     }
 
-    move( chai::CPU, false );
+    move( LvArray::MemorySpace::CPU, false );
 
     m_conduitNode[ "__sizedFromParent__" ].set( sizedFromParent() );
 
@@ -814,12 +839,12 @@ public:
   ///@}
 
 #if defined(USE_TOTALVIEW_OUTPUT)
-  virtual string totalviewTypeName() const override final
+  virtual string totalviewTypeName() const override
   {
     return LvArray::demangle( typeid( Wrapper< T > ).name() );
   }
 
-  virtual int setTotalviewDisplay() const override final
+  virtual int setTotalviewDisplay() const override
   {
     //std::cout<<"executing Wrapper::setTotalviewDisplay()"<<std::endl;
     WrapperBase::setTotalviewDisplay();

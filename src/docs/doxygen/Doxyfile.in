@@ -763,14 +763,20 @@ INPUT = @PROJECT_SOURCE_DIR@/coreComponents/common \
         @PROJECT_SOURCE_DIR@/coreComponents/dataRepository \
         @PROJECT_SOURCE_DIR@/coreComponents/fileIO \
         @PROJECT_SOURCE_DIR@/coreComponents/linearAlgebra \
-        @PROJECT_SOURCE_DIR@/coreComponents/wells \
-        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
         @PROJECT_SOURCE_DIR@/coreComponents/LvArray/src \
+        @PROJECT_SOURCE_DIR@/coreComponents/mesh \
+        @PROJECT_SOURCE_DIR@/coreComponents/managers \
+        @PROJECT_SOURCE_DIR@/coreComponents/meshUtilities \
+        @PROJECT_SOURCE_DIR@/coreComponents/finiteElement/kernelInterface \
+        @PROJECT_SOURCE_DIR@/coreComponents/mesh/ExtrinsicMeshData.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsPoroElasticKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainExplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainImplicitNewmarkKernel.hpp \
+        @PROJECT_SOURCE_DIR@/coreComponents/physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp \
         @PROJECT_SOURCE_DIR@/coreComponents/finiteVolume \
         @CMAKE_BINARY_DIR@/include/common 
-
-#        @PROJECT_SOURCE_DIR@/coreComponents/managers \
-#        @PROJECT_SOURCE_DIR@/coreComponents/mesh \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -2010,7 +2016,10 @@ PREDEFINED             =
 # definition found in the source code.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE GEOSX_HOST_DEVICE DISABLE_HD_WARNING
+EXPAND_AS_DEFINED      = LVARRAY_HOST_DEVICE \
+                         GEOSX_HOST_DEVICE \
+                         DISABLE_HD_WARNING \
+                         EXTRINSIC_MESH_DATA_TRAIT
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all references to function-like macros that are alone on a line, have

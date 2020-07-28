@@ -37,8 +37,8 @@
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "wells/InternalWellGenerator.hpp"
-#include "wells/WellElementRegion.hpp"
+
+
 
 // System includes
 #include <vector>
@@ -214,6 +214,11 @@ void ProblemManager::ParseCommandLineInput()
         GEOSX_ERROR( "Could not change to the ouput directory: " + outputDirectory );
       }
     }
+  }
+
+  if( opts.suppressMoveLogging )
+  {
+    chai::ArrayManager::getInstance()->disableCallbacks();
   }
 }
 
@@ -537,25 +542,25 @@ void ProblemManager::InitializationOrder( string_array & order )
 
 
   {
-    order.push_back( groupKeys.numericalMethodsManager.Key());
-    usedNames.insert( groupKeys.numericalMethodsManager.Key());
+    order.emplace_back( groupKeys.numericalMethodsManager.Key() );
+    usedNames.insert( groupKeys.numericalMethodsManager.Key() );
   }
 
   {
-    order.push_back( groupKeys.domain.Key());
-    usedNames.insert( groupKeys.domain.Key());
+    order.emplace_back( groupKeys.domain.Key() );
+    usedNames.insert( groupKeys.domain.Key() );
   }
 
   {
-    order.push_back( groupKeys.eventManager.Key());
-    usedNames.insert( groupKeys.eventManager.Key());
+    order.emplace_back( groupKeys.eventManager.Key() );
+    usedNames.insert( groupKeys.eventManager.Key() );
   }
 
   for( auto const & subGroup : this->GetSubGroups() )
   {
     if( usedNames.count( subGroup.first ) == 0 )
     {
-      order.push_back( subGroup.first );
+      order.emplace_back( subGroup.first );
     }
   }
 }
@@ -680,7 +685,6 @@ void ProblemManager::ApplyNumericalMethods()
           {
             if( feDiscretization != nullptr )
             {
-              feDiscretization->ApplySpaceToTargetCells( &subRegion );
               feDiscretization->CalculateShapeFunctionGradients( X, &subRegion );
             }
           } );

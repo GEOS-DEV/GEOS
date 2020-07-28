@@ -26,6 +26,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/EmbeddedSurfaceRegion.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "meshUtilities/SimpleGeometricObjects/GeometricObjectManager.hpp"
@@ -59,6 +60,7 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
 {
+
 }
 
 void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
@@ -148,6 +150,11 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
+
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 
   // Generate Fracture stencil for embedded surfaces
@@ -209,7 +216,7 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition * const GEOSX_UNUSED_PARAM( domain ) )
+                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   real64 rval = 0;
   /*

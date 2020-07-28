@@ -464,7 +464,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
 
     // create an array to track previously visited locations (to avoid multiple visits)
     array1d< bool > locationsVisited( objectManager.size() );
-    locationsVisited = false;
+    locationsVisited.setValues< serialPolicy >( false );
 
     // create (and overallocate) an array to collect indicies to visit
     array1d< localIndex > locationsToVisit{};
@@ -492,7 +492,7 @@ struct MeshLoopHelper< LOC, LOC, VISIT_GHOSTS >
           // check if we should visit this location
           if( ( VISIT_GHOSTS || ghostRank[locIdx] < 0) && !std::exchange( locationsVisited[locIdx], true ) )
           {
-            locationsToVisit.push_back( locIdx );
+            locationsToVisit.emplace_back( locIdx );
           }
         }
       }

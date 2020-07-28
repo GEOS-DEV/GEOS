@@ -64,20 +64,19 @@ BrooksCoreyCapillaryPressure::DeliverClone( string const & name,
                                             Group * const parent,
                                             std::unique_ptr< ConstitutiveBase > & clone ) const
 {
-  std::unique_ptr< BrooksCoreyCapillaryPressure > newModel = std::make_unique< BrooksCoreyCapillaryPressure >( name, parent );
+  if( !clone )
+  {
+    clone = std::make_unique< BrooksCoreyCapillaryPressure >( name, parent );
+  }
 
-  newModel->m_phaseNames = this->m_phaseNames;
-  newModel->m_phaseTypes = this->m_phaseTypes;
-  newModel->m_phaseOrder = this->m_phaseOrder;
+  CapillaryPressureBase::DeliverClone( name, parent, clone );
+  BrooksCoreyCapillaryPressure & relPerm = dynamicCast< BrooksCoreyCapillaryPressure & >( *clone );
 
-  newModel->m_phaseMinVolumeFraction      = this->m_phaseMinVolumeFraction;
-  newModel->m_phaseCapPressureExponentInv = this->m_phaseCapPressureExponentInv;
-  newModel->m_phaseEntryPressure          = this->m_phaseEntryPressure;
-
-  newModel->m_capPressureEpsilon = this->m_capPressureEpsilon;
-  newModel->m_volFracScale       = this->m_volFracScale;
-
-  clone = std::move( newModel );
+  relPerm.m_phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
+  relPerm.m_phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
+  relPerm.m_phaseEntryPressure          = m_phaseEntryPressure;
+  relPerm.m_capPressureEpsilon          = m_capPressureEpsilon;
+  relPerm.m_volFracScale                = m_volFracScale;
 }
 
 
@@ -87,14 +86,14 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-#define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "BrooksCoreyCapillaryPressure: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << "given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define COREY_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "BrooksCoreyCapillaryPressure: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << "given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   COREY_CHECK_INPUT_LENGTH( m_phaseMinVolumeFraction, NP, viewKeyStruct::phaseMinVolumeFractionString )
   COREY_CHECK_INPUT_LENGTH( m_phaseCapPressureExponentInv, NP, viewKeyStruct::phaseCapPressureExponentInvString )
@@ -126,44 +125,17 @@ void BrooksCoreyCapillaryPressure::PostProcessInput()
   GEOSX_ERROR_IF( m_volFracScale < 0.0, "BrooksCoreyCapillaryPressure: sum of min volume fractions exceeds 1.0" );
 }
 
-
-void BrooksCoreyCapillaryPressure::BatchUpdate( arrayView2d< real64 const > const & phaseVolumeFraction )
+BrooksCoreyCapillaryPressure::KernelWrapper BrooksCoreyCapillaryPressure::createKernelWrapper()
 {
-
-  arrayView1d< real64 const > const & phaseMinVolumeFraction      = m_phaseMinVolumeFraction;
-  arrayView1d< real64 const > const & phaseCapPressureExponentInv = m_phaseCapPressureExponentInv;
-  arrayView1d< real64 const > const & phaseEntryPressure          = m_phaseEntryPressure;
-  real64 const & capPressureEpsilon = m_capPressureEpsilon;
-
-  CapillaryPressureBase::BatchUpdateKernel< BrooksCoreyCapillaryPressure >( phaseVolumeFraction,
-                                                                            phaseMinVolumeFraction,
-                                                                            phaseCapPressureExponentInv,
-                                                                            phaseEntryPressure,
-                                                                            capPressureEpsilon,
-                                                                            m_volFracScale );
-}
-
-
-void BrooksCoreyCapillaryPressure::PointUpdate( arraySlice1d< real64 const > const & phaseVolFraction,
-                                                localIndex const k,
-                                                localIndex const q )
-{
-  arraySlice1d< real64 > const capPressure           = m_phaseCapPressure[k][q];
-  arraySlice2d< real64 > const dCapPressure_dVolFrac = m_dPhaseCapPressure_dPhaseVolFrac[k][q];
-
-
-  localIndex const NP = numFluidPhases();
-
-  Compute( NP,
-           phaseVolFraction,
-           capPressure,
-           dCapPressure_dVolFrac,
-           m_phaseOrder,
-           m_phaseMinVolumeFraction,
-           m_phaseCapPressureExponentInv,
-           m_phaseEntryPressure,
-           m_capPressureEpsilon,
-           m_volFracScale );
+  return KernelWrapper( m_phaseMinVolumeFraction,
+                        m_phaseCapPressureExponentInv,
+                        m_phaseEntryPressure,
+                        m_capPressureEpsilon,
+                        m_volFracScale,
+                        m_phaseTypes,
+                        m_phaseOrder,
+                        m_phaseCapPressure,
+                        m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BrooksCoreyCapillaryPressure, std::string const &, Group * const )

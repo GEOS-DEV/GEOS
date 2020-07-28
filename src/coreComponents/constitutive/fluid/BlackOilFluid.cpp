@@ -19,7 +19,6 @@
 #include "BlackOilFluid.hpp"
 
 #include "codingUtilities/Utilities.hpp"
-#include "managers/ProblemManager.hpp"
 #include "common/Path.hpp"
 
 // PVTPackage includes
@@ -37,21 +36,21 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-BlackOilFluid::FluidType BlackOilFluid::stringToFluidType( string const & str )
+namespace
 {
-  if( str == "LiveOil" )
+
+BlackOilFluid::FluidType getBlackOilFluidType( string const & name )
+{
+  static std::map< string, BlackOilFluid::FluidType > const fluidTypes =
   {
-    return BlackOilFluid::FluidType::LiveOil;
-  }
-  else if( str == "DeadOil" )
-  {
-    return BlackOilFluid::FluidType::DeadOil;
-  }
-  else
-  {
-    GEOSX_ERROR( "Unrecognized black-oil fluid type: " << str );
-  }
-  return BlackOilFluid::FluidType::LiveOil; // keep compilers happy
+    { "LiveOil", BlackOilFluid::FluidType::LiveOil },
+    { "DeadOil", BlackOilFluid::FluidType::DeadOil },
+  };
+  auto const it = fluidTypes.find( name );
+  GEOSX_ERROR_IF( it == fluidTypes.end(), "Black-oil fluid type not supported by PVTPackage: " << name );
+  return it->second;
+}
+
 }
 
 BlackOilFluid::BlackOilFluid( std::string const & name, Group * const parent )
@@ -107,26 +106,26 @@ void BlackOilFluid::PostProcessInput()
 
   localIndex const NP = numFluidPhases();
 
-#define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
-  if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
-  { \
-    GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
-                 << (attr) << " attribute (" \
-                 << (data).size() << "given, " \
-                 << (expected) << " expected)" ); \
-  }
+  #define BOFLUID_CHECK_INPUT_LENGTH( data, expected, attr ) \
+    if( LvArray::integerConversion< localIndex >((data).size()) != LvArray::integerConversion< localIndex >( expected )) \
+    { \
+      GEOSX_ERROR( "BlackOilFluid: invalid number of entries in " \
+                   << (attr) << " attribute (" \
+                   << (data).size() << "given, " \
+                   << (expected) << " expected)" ); \
+    }
 
   BOFLUID_CHECK_INPUT_LENGTH( m_surfaceDensities, NP, viewKeyStruct::surfaceDensitiesString )
   BOFLUID_CHECK_INPUT_LENGTH( m_tableFiles, NP, viewKeyStruct::surfaceDensitiesString )
 
 #undef BOFLUID_CHECK_INPUT_LENGTH
 
-  m_fluidType = stringToFluidType( m_fluidTypeString );
+  m_fluidType = getBlackOilFluidType( m_fluidTypeString );
 }
 
 void BlackOilFluid::createFluid()
 {
-  std::vector< PHASE_TYPE > phases( m_pvtPackagePhaseTypes.begin(), m_pvtPackagePhaseTypes.end() );
+  std::vector< PVTPackage::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
   std::vector< std::string > tableFiles( m_tableFiles.begin(), m_tableFiles.end() );
   std::vector< double > densities( m_surfaceDensities.begin(), m_surfaceDensities.end() );
   std::vector< double > molarWeights( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
@@ -136,15 +135,17 @@ void BlackOilFluid::createFluid()
     case FluidType::LiveOil:
     {
       m_fluid = std::make_unique< BlackOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      break;
     }
-    break;
     case FluidType::DeadOil:
     {
       m_fluid = std::make_unique< DeadOilMultiphaseSystem >( phases, tableFiles, densities, molarWeights );
+      break;
     }
-    break;
     default:
+    {
       GEOSX_ERROR( "Unknown fluid type" );
+    }
   }
 }
 

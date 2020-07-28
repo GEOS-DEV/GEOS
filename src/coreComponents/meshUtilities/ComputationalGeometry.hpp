@@ -21,7 +21,8 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "mesh/InterObjectRelation.hpp"
+#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 namespace geosx
 {
@@ -63,111 +64,97 @@ real64 ComputeSurfaceArea( array1d< R1Tensor > const & points,
 array1d< R1Tensor > orderPointsCCW( array1d< R1Tensor > const & points,
                                     localIndex const numPoints,
                                     R1Tensor const & normal );
-/**
- * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
- * @param[in] pointsIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] numPoints the number of points in the polygon
- * @param[in] points 3D point list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal normal to the face
- * @param[in] areaTolerance tolerance used in the geometric computations
- * @return area of the convex 3D polygon
- * @details if area < - areaTolerance, this function will throw an error,
- *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
- */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           real64 areaTolerance = 0.0 );
 
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal and the rotation matrix.
+ * @tparam CENTER_TYPE The type of @p center.
+ * @tparam NORMAL_TYPE The type of @p normal.
  * @param[in] pointsIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] numPoints the number of points in the polygon
+ *   order (CW or CCW) about the polygon loop
  * @param[in] points 3D point list
  * @param[out] center 3D center of the given ordered polygon point list
  * @param[out] normal normal to the face
- * @param[out] rotationMatrix rotation matrix for the face
  * @param[in] areaTolerance tolerance used in the geometric computations
  * @return area of the convex 3D polygon
  * @details if area < - areaTolerance, this function will throw an error,
  *          and if (- areaTolerance <= area <= areaTolerance), the area is set to zero
  */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
+template< typename CENTER_TYPE, typename NORMAL_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 Centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
                            arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           R2Tensor & rotationMatrix,
-                           real64 const areaTolerance = 0.0 );
+                           CENTER_TYPE && center,
+                           NORMAL_TYPE && normal,
+                           real64 const areaTolerance = 0.0 )
+{
+  real64 area = 0.0;
+  LvArray::tensorOps::fill< 3 >( center, 0 );
+  LvArray::tensorOps::fill< 3 >( normal, 0 );
+
+  GEOSX_ERROR_IF_LT( pointsIndices.size(), 2 );
+  for( localIndex a=0; a<(pointsIndices.size()-2); ++a )
+  {
+    real64 v1[ 3 ], v2[ 3 ], vc[ 3 ];
+
+    LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[ a + 1 ] ] );
+    LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ a + 2 ] ] );
+
+    LvArray::tensorOps::copy< 3 >( vc, points[ pointsIndices[ 0 ] ] );
+    LvArray::tensorOps::add< 3 >( vc, v1 );
+    LvArray::tensorOps::add< 3 >( vc, v2 );
+
+    LvArray::tensorOps::subtract< 3 >( v1, points[ pointsIndices[ 0 ] ] );
+    LvArray::tensorOps::subtract< 3 >( v2, points[ pointsIndices[ 0 ] ] );
+
+    real64 triangleNormal[ 3 ];
+    LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
+    real64 const triangleArea = LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
+
+    LvArray::tensorOps::add< 3 >( normal, triangleNormal );
+
+    area += triangleArea;
+    LvArray::tensorOps::scaledAdd< 3 >( center, vc, triangleArea );
+  }
+  if( area > areaTolerance )
+  {
+    LvArray::tensorOps::scale< 3 >( center, 1.0 / ( area * 3.0 ) );
+    LvArray::tensorOps::normalize< 3 >( normal );
+    area *= 0.5;
+  }
+  else if( area < -areaTolerance )
+  {
+    for( localIndex a=0; a<pointsIndices.size(); ++a )
+    {
+#if !defined(__CUDA_ARCH__)
+      GEOSX_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+#endif
+    }
+#if !defined(__CUDA_ARCH__)
+    GEOSX_ERROR( "Negative area found : " << area );
+#endif
+  }
+  else
+  {
+    return 0.;
+  }
+
+  return area;
+}
 
 /**
  * @brief Change the orientation of the input vector to be consistent in a global sense.
  * @param[inout] normal normal to the face
  */
-void FixNormalOrientation_3D( R1Tensor & normal );
+void FixNormalOrientation_3D( arraySlice1d< real64 > const normal );
 
 /**
  * @brief Calculate the rotation matrix for a face in the 3D space
  * @param[in] normal normal to the face
  * @param[out] rotationMatrix rotation matrix for the face
  */
-void RotationMatrix_3D( R1Tensor const & normal,
-                        R2Tensor & rotationMatrix );
-
-/**
- * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
- * @param[in] pointsIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] points 3D point list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal normal to the face
- * @param[in] areaTolerance tolerance used in the geometric computations
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           R1Tensor & center,
-                           R1Tensor & normal,
-                           real64 areaTolerance = 0.0 );
-
-/**
- * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
- * @param[in] pointsIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] numPoints the numberof points in the polygon
- * @param[in] pointReferences 3D reference point list
- * @param[in] pointDisplacements 3D displacement list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal normal to the face
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( localIndex const * const pointsIndices,
-                           localIndex const numPoints,
-                           arrayView1d< R1Tensor const > const & pointReferences,
-                           arrayView1d< R1Tensor const > const & pointDisplacements,
-                           R1Tensor & center,
-                           R1Tensor & normal );
-
-/**
- * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
- * @param[in] pointsIndices list of index references for the points array in
- * order (CW or CCW) about the polygon loop
- * @param[in] pointReferences 3D reference point list
- * @param[in] pointDisplacements 3D displacement list
- * @param[out] center 3D center of the given ordered polygon point list
- * @param[out] normal normal to the face
- * @return area of the convex 3D polygon
- */
-real64 Centroid_3DPolygon( arrayView1d< localIndex const > const & pointsIndices,
-                           arrayView1d< R1Tensor const > const & pointReferences,
-                           arrayView1d< R1Tensor const > const & pointDisplacements,
-                           R1Tensor & center,
-                           R1Tensor & normal );
+void RotationMatrix_3D( arraySlice1d< real64 const > const normal,
+                        arraySlice2d< real64 > const rotationMatrix );
 
 /**
  * @brief Check if a point is inside a convex polyhedron (3D polygon)
@@ -189,16 +176,16 @@ bool IsPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
 /**
  * @brief Compute the dimensions of the bounding box containing the element
-          defined here by the coordinates of its vertices
- * @param[in] elemIndex index of the element in pointIndices
- * @param[in] pointIndices the indices of the vertices in pointCoordinates
- * @param[in] pointCoordinates the vertices coordinates
- * @return an R1Tensor containing the dimensions of the box
+ *   defined here by the coordinates of its vertices.
+ * @param[in] elemIndex index of the element in pointIndices.
+ * @param[in] pointIndices the indices of the vertices in pointCoordinates.
+ * @param[in] pointCoordinates the vertices coordinates.
+ * @param[out] boxDims The dimensions of the bounding box.
  */
-template< typename NODEMAP >
-R1Tensor GetBoundingBox( localIndex elemIndex,
-                         NODEMAP const & pointIndices,
-                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
+void GetBoundingBox( localIndex elemIndex,
+                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
+                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
+                     real64 ( &boxDims )[ 3 ] );
 
 /**
  * @brief Compute the volume of an hexahedron
@@ -262,19 +249,7 @@ real64 WedgeVolume( R1Tensor const * const points );
  */
 real64 PyramidVolume( R1Tensor const * const points );
 
-}
-
-/// @cond DO_NOT_DOCUMENT
-
-extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
-                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_IJ > > const & pointIndices,
-                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
-extern template R1Tensor computationalGeometry::GetBoundingBox( localIndex elemIndex,
-                                                                InterObjectRelation< array2d< localIndex, RAJA::PERM_JI > > const & pointIndices,
-                                                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates );
-
-/// @endcond
-
-} /* namespace geosx */
+} // namespace computationalGeometry
+} // namespace geosx
 
 #endif /* GEOSX_MESHUTILITIES_COMPUTATIONALGEOMETRY_HPP_ */

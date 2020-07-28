@@ -249,7 +249,7 @@ void Group::InitializationOrder( string_array & order )
 {
   for( auto & subGroupIter : this->m_subGroups )
   {
-    order.push_back( subGroupIter.first );
+    order.emplace_back( subGroupIter.first );
   }
 }
 

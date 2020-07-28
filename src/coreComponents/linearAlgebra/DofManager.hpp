@@ -22,6 +22,8 @@
 #include "LvArray/src/SparsityPattern.hpp"
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geosx
 {
@@ -107,7 +109,29 @@ public:
    *
    * @param [in] name a unique name for this DoF manager
    */
-  DofManager( string name );
+  explicit DofManager( string name );
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  DofManager( DofManager const & ) = delete;
+
+  /**
+   * @brief Move constructor.
+   */
+  DofManager( DofManager && ) = default;
+
+  /**
+   * @brief Deleted copy assignment.
+   * @return
+   */
+  DofManager & operator=( DofManager const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment.
+   * @return
+   */
+  DofManager & operator=( DofManager && ) = delete;
 
   /**
    * @brief Destructor.
@@ -126,7 +150,7 @@ public:
    * @param [in] meshLevelIndex Optional localIndex the mesh level.
    * @param [in] meshBodyIndex Optional localIndex the body level.
    */
-  void setMesh( DomainPartition * const domain,
+  void setMesh( DomainPartition & domain,
                 localIndex const meshLevelIndex = 0,
                 localIndex const meshBodyIndex = 0 );
 
@@ -261,7 +285,7 @@ public:
    * automatically from the field definition.
    */
   void addCoupling( string const & fieldName,
-                    FluxApproximationBase const * stencils );
+                    FluxApproximationBase const & stencils );
 
   /**
    * @brief Finish populating fields and apply appropriate dof renumbering
@@ -294,7 +318,7 @@ public:
    * @param [in] fieldName string the name of the field.
    * @return string indicating name of the field.
    */
-  string getKey( string const & fieldName ) const;
+  string const & getKey( string const & fieldName ) const;
 
   /**
    * @brief Return global number of dofs across all processors. If field argument is empty, return
@@ -315,20 +339,47 @@ public:
   localIndex numLocalDofs( string const & fieldName = "" ) const;
 
   /**
+   * @brief Return an array of local number of dofs on this processor
+   * sorted by field registration order.
+   *
+   * @return     array of number of local dofs
+   */
+  array1d< localIndex > numLocalDofsPerField() const;
+
+
+  /**
+   * @brief Computes an array of size equal to sum of all field local number of dofs containing
+   * unique integer labels associated to components stored in the field descriptions.
+   *
+   * @return array1d of localIndex labels
+   */
+  array1d< localIndex > getLocalDofComponentLabels() const;
+
+  /**
    * @brief Return the sum of local dofs across all previous processors w.r.t. to the calling one for
    * the specified field.
    *
    * @param [in] fieldName Optional string the name of the field.
    * @return     the rank offset
    */
-  localIndex rankOffset( string const & fieldName = "" ) const;
+  globalIndex rankOffset( string const & fieldName = "" ) const;
 
   /**
-   * @brief Get the the number of components in a field.
-   * @param fieldName name of the field
-   * @return the number of dof components
+   * @brief Get the number of components in a field. If field argument is empty, return
+   * the total number of components across fields.
+   *
+   * @param [in] fieldName Optional string the name of the field.
+   * @return     the number of dof components
    */
-  localIndex numComponents( string const & fieldName ) const;
+  localIndex numComponents( string const & fieldName = "" ) const;
+
+  /**
+   * @brief Return an array of number of components per field, sorted by field
+   * registration order.
+   *
+   * @return     array of number of components
+   */
+  array1d< localIndex > numComponentsPerField() const;
 
   /**
    * @brief Get the local number of support points on this processor.
@@ -361,7 +412,7 @@ public:
   /**
    * @brief Populate sparsity pattern of the entire system matrix.
    *
-   * @param [out] matrix the target matrix
+   * @param [out] matrix the target parallel matrix
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
    */
   template< typename MATRIX >
@@ -371,7 +422,7 @@ public:
   /**
    * @brief Populate sparsity pattern for one block of the system matrix.
    *
-   * @param [out] matrix the the target matrix
+   * @param [out] matrix the target parallel matrix
    * @param [in]  rowFieldName the name of the row field.
    * @param [in]  colFieldName the name of the col field.
    * @param [in]  closePattern whether to reorderByRank the matrix upon pattern assembly
@@ -383,14 +434,29 @@ public:
                            bool closePattern = true ) const;
 
   /**
-   * @brief Copy values from DOFs to nodes.
+   * @brief Populate sparsity pattern of the entire system matrix.
+   * @param [out] pattern the target sparsity pattern
+   */
+  void setSparsityPattern( SparsityPattern< globalIndex > & pattern ) const;
+
+  /**
+   * @brief Populate sparsity pattern for one block of the system matrix.
+   * @param [out] pattern the target sparsity pattern
+   * @param [in]  rowFieldName name of the row field
+   * @param [in]  colFieldName name of the col field
+   */
+  void setSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                           string const & rowFieldName,
+                           string const & colFieldName ) const;
+
+  /**
+   * @brief Copy values from LA vectors to simulation data arrays.
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
-   * @tparam POLICY execution policy for the kernel
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
-   * @param scalingFactor a factor to scale vector values by
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
+   * @param scalingFactor a factor to scale vector values by
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
    *
@@ -406,14 +472,33 @@ public:
                           localIndex const hiCompIndex = -1 ) const;
 
   /**
-   * @brief Add values from DOFs to nodes.
+   * @brief Copy values from LA vectors to simulation data arrays.
+   *
+   * @param localVector source local vector
+   * @param srcFieldName name of the source field (as defined in DofManager)
+   * @param dstFieldName name of the destination field (view wrapper key on the manager)
+   * @param scalingFactor a factor to scale vector values by
+   * @param loCompIndex index of starting DoF component (for partial copy)
+   * @param hiCompIndex index past the ending DoF component (for partial copy)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   */
+  void copyVectorToField( arrayView1d< real64 const > const & localVector,
+                          string const & srcFieldName,
+                          string const & dstFieldName,
+                          real64 const scalingFactor,
+                          localIndex const loCompIndex = 0,
+                          localIndex const hiCompIndex = -1 ) const;
+
+  /**
+   * @brief Add values from LA vectors to simulation data arrays.
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
-   * @tparam POLICY execution policy for the kernel
    * @param vector source LA vector
    * @param srcFieldName name of the source field (as defined in DofManager)
-   * @param scalingFactor a factor to scale vector values by
    * @param dstFieldName name of the destination field (view wrapper key on the manager)
+   * @param scalingFactor a factor to scale vector values by
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
    *
@@ -429,14 +514,33 @@ public:
                          localIndex const hiCompIndex = -1 ) const;
 
   /**
+   * @brief Add values from LA vectors to simulation data arrays.
+   *
+   * @param localVector source local vector
+   * @param srcFieldName name of the source field (as defined in DofManager)
+   * @param dstFieldName name of the destination field (view wrapper key on the manager)
+   * @param scalingFactor a factor to scale vector values by
+   * @param loCompIndex index of starting DoF component (for partial copy)
+   * @param hiCompIndex index past the ending DoF component (for partial copy)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   */
+  void addVectorToField( arrayView1d< real64 const > const & localVector,
+                         string const & srcFieldName,
+                         string const & dstFieldName,
+                         real64 const scalingFactor,
+                         localIndex const loCompIndex = 0,
+                         localIndex const hiCompIndex = -1 ) const;
+
+  /**
    * @brief Copy values from nodes to DOFs.
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
-   * @tparam POLICY execution policy for the kernel
-   * @param srcFieldName name of the source field (view wrapper key on the manager)
-   * @param scalingFactor a factor to scale vector values by
    * @param vector target LA vector
+   * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param dstFieldName name of the destination field (as defined in DofManager)
+   * @param scalingFactor a factor to scale vector values by
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
    *
@@ -452,14 +556,34 @@ public:
                           localIndex const hiCompIndex = -1 ) const;
 
   /**
-   * @brief Add values from nodes to DOFs.
+   * @brief Copy values from simulation data arrays to vectors.
    *
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
-   * @tparam POLICY execution policy for the kernel
+   * @param localVector target LA vector
    * @param srcFieldName name of the source field (view wrapper key on the manager)
-   * @param scalingFactor a factor to scale vector values by
-   * @param vector target LA vector
    * @param dstFieldName name of the destination field (as defined in DofManager)
+   * @param scalingFactor a factor to scale vector values by
+   * @param loCompIndex index of starting DoF component (for partial copy)
+   * @param hiCompIndex index past the ending DoF component (for partial copy)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   */
+  void copyFieldToVector( arrayView1d< real64 > const & localVector,
+                          string const & srcFieldName,
+                          string const & dstFieldName,
+                          real64 const scalingFactor,
+                          localIndex const loCompIndex = 0,
+                          localIndex const hiCompIndex = -1 ) const;
+
+  /**
+   * @brief Add values from a simulation data array to a DOF vector.
+   *
+   * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
+   * @param vector target LA vector
+   * @param srcFieldName name of the source field (view wrapper key on the manager)
+   * @param dstFieldName name of the destination field (as defined in DofManager)
+   * @param scalingFactor a factor to scale vector values by
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
    *
@@ -474,6 +598,26 @@ public:
                          localIndex const loCompIndex = 0,
                          localIndex const hiCompIndex = -1 ) const;
 
+  /**
+   * @brief Add values from a simulation data array to a DOF vector.
+   *
+   * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
+   * @param localVector target vector
+   * @param srcFieldName name of the source field (view wrapper key on the manager)
+   * @param dstFieldName name of the destination field (as defined in DofManager)
+   * @param scalingFactor a factor to scale vector values by
+   * @param loCompIndex index of starting DoF component (for partial copy)
+   * @param hiCompIndex index past the ending DoF component (for partial copy)
+   *
+   * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
+   *       Negative value of @p hiCompIndex means use full number of field components
+   */
+  void addFieldToVector( arrayView1d< real64 > const & localVector,
+                         string const & srcFieldName,
+                         string const & dstFieldName,
+                         real64 const scalingFactor,
+                         localIndex const loCompIndex = 0,
+                         localIndex const hiCompIndex = -1 ) const;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -560,7 +704,40 @@ private:
                                    localIndex const colFieldIndex ) const;
 
   template< typename MATRIX >
-  void setSparsityPatternFromStencil( MATRIX & pattern, localIndex const fieldIndex ) const;
+  void setSparsityPatternFromStencil( MATRIX & pattern,
+                                      localIndex const fieldIndex ) const;
+
+  /**
+   * @brief Calculate or estimate the number of nonzero entries in each local row
+   * @param rowLengths array of row lengths (values are be incremented, not overwritten)
+   * @param rowFieldIndex index of row field (must be non-negative)
+   * @param colFieldIndex index of col field (must be non-negative)
+   */
+  void countRowLengthsOneBlock( arrayView1d< localIndex > const & rowLengths,
+                                localIndex const rowFieldIndex,
+                                localIndex const colFieldIndex ) const;
+
+  void countRowLengthsFromStencil( arrayView1d< localIndex > const & rowLengths,
+                                   localIndex const fieldIndex ) const;
+
+  /**
+   * @brief Populate the sparsity pattern for a coupling block between given fields.
+   * @param pattern the sparsity to be filled
+   * @param rowFieldIndex index of row field (must be non-negative)
+   * @param colFieldIndex index of col field (must be non-negative)
+   *
+   * This private function is used as a building block by higher-level SetSparsityPattern()
+   */
+  void setSparsityPatternOneBlock( SparsityPattern< globalIndex > & pattern,
+                                   localIndex const rowFieldIndex,
+                                   localIndex const colFieldIndex ) const;
+
+  void setSparsityPatternFromStencil( SparsityPattern< globalIndex > & pattern,
+                                      localIndex const fieldIndex ) const;
+
+  template< int DIMS_PER_DOF >
+  void setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
+                                        localIndex const fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -577,8 +754,8 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY, typename VECTOR >
-  void vectorToField( VECTOR const & vector,
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void vectorToField( LOCAL_VECTOR const localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 const scalingFactor,
@@ -592,7 +769,7 @@ private:
    * @param manager mesh object manager that contains the target field (subregion for elements)
    * @param srcFieldName name of the source field (view wrapper key on the manager)
    * @param scalingFactor a factor to scale vector values by
-   * @param vector target LA vector
+   * @param vector ponter to target vector local data (host or device)
    * @param dstFieldName name of the destination field (as defined in DofManager)
    * @param loCompIndex index of starting DoF component (for partial copy)
    * @param hiCompIndex index past the ending DoF component (for partial copy)
@@ -600,8 +777,8 @@ private:
    * @note [@p loCompIndex , @p hiCompIndex) form a half-open interval.
    *       Negative value of @p hiCompIndex means use full number of field components
    */
-  template< typename FIELD_OP, typename POLICY, typename VECTOR >
-  void fieldToVector( VECTOR & vector,
+  template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
+  void fieldToVector( LOCAL_VECTOR localVector,
                       string const & srcFieldName,
                       string const & dstFieldName,
                       real64 const scalingFactor,

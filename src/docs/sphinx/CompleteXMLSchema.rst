@@ -1,10 +1,9 @@
 ======================
-GEOSX Data Structure
+Datastructure Index
 ======================
 
-********************************
 Input Schema Definitions
-********************************
+========================
 
 :download:`XML Schema <../../coreComponents/fileIO/schema/docs/../schema.xsd>`
 
@@ -401,6 +400,13 @@ Element: NonlinearSolverParameters
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters.rst
 
 
+.. _XML_NullModel:
+
+Element: NullModel
+==================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel.rst
+
+
 .. _XML_NumericalMethods:
 
 Element: NumericalMethods
@@ -574,6 +580,13 @@ Element: SinglePhaseReservoir
 Element: SinglePhaseWell
 ========================
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
+
+
+.. _XML_SolidMechanicsEmbeddedFractures:
+
+Element: SolidMechanicsEmbeddedFractures
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures.rst
 
 
 .. _XML_SolidMechanicsLagrangianSSLE:
@@ -1112,6 +1125,13 @@ Datastructure: NonlinearSolverParameters
 .. include:: ../../coreComponents/fileIO/schema/docs/NonlinearSolverParameters_other.rst
 
 
+.. _DATASTRUCTURE_NullModel:
+
+Datastructure: NullModel
+========================
+.. include:: ../../coreComponents/fileIO/schema/docs/NullModel_other.rst
+
+
 .. _DATASTRUCTURE_NumericalMethods:
 
 Datastructure: NumericalMethods
@@ -1287,6 +1307,13 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
 
 
+.. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
+
+Datastructure: SolidMechanicsEmbeddedFractures
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
 
 Datastructure: SolidMechanicsLagrangianSSLE
@@ -1448,11 +1475,19 @@ Datastructure: elementSubRegions
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
 
 
+<<<<<<< HEAD
 .. _DATASTRUCTURE_embeddedSurfacesEdgeManager:
 
 Datastructure: embeddedSurfacesEdgeManager
 ==========================================
 .. include:: ../../coreComponents/fileIO/schema/docs/embeddedSurfacesEdgeManager_other.rst
+=======
+.. _DATASTRUCTURE_finiteVolumeStencils:
+
+Datastructure: finiteVolumeStencils
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/finiteVolumeStencils_other.rst
+>>>>>>> origin/develop
 
 
 .. _DATASTRUCTURE_lassen:

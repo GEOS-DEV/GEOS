@@ -13,13 +13,13 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
-   /coreComponents/managers/docs/NumericalMethodsManager
-
    /coreComponents/managers/docs/EventManager
 
    /coreComponents/managers/docs/FunctionManager
 
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
+
+   /coreComponents/managers/docs/NumericalMethodsManager
 
    /coreComponents/mpiCommunications/docs/SpatialPartition.rst
 

@@ -157,7 +157,7 @@ void createEdgesByLowestNode( ArrayOfArraysView< localIndex const > const & face
         std::swap( node0, node1 );
 
       // And append the edge to edgesByLowestNode.
-      edgesByLowestNode.atomicAppendToArray( RAJA::auto_atomic{}, node0, EdgeBuilder( node1, faceID, a ) );
+      edgesByLowestNode.emplaceBackAtomic< parallelHostAtomic >( node0, node1, faceID, a );
     }
   } );
 
@@ -582,7 +582,7 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
   array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
-  isEdgeOnDomainBoundary = 0;
+  isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
 
@@ -634,7 +634,7 @@ void EdgeManager::SetIsExternal( FaceManager const * const faceManager )
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager->edgeList().toViewConst();
 
   // get the "isExternal" field from for *this, and set it to zero
-  m_isExternal = 0;
+  m_isExternal.setValues< serialPolicy >( 0 );
 
   // loop through all faces
   for( localIndex kf=0; kf<faceManager->size(); ++kf )

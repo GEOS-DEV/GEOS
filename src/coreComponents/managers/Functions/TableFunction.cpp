@@ -104,7 +104,7 @@ void TableFunction::parse_file( array1d< T > & target, string const & filename, 
     }
     while( ss>>value )
     {
-      target.push_back( value );
+      target.emplace_back( value );
       while( ss.peek() == delimiter || ss.peek() == ' ' )
       {
         ss.ignore();
@@ -123,8 +123,8 @@ void TableFunction::InitializeFunction()
   {
     // 1D Table
     m_dimensions = 1;
-    m_coordinates.push_back( m_tableCoordinates1D );
-    m_size.push_back( m_tableCoordinates1D.size());
+    m_coordinates.emplace_back( m_tableCoordinates1D );
+    m_size.emplace_back( m_tableCoordinates1D.size());
 
     // Check to make sure that the table dimensions match
     GEOSX_ERROR_IF( m_size[0] != m_values.size(), "1D Table function coordinates and values must have the same length." );
@@ -139,7 +139,7 @@ void TableFunction::InitializeFunction()
     for( localIndex ii=0; ii<m_dimensions; ++ii )
     {
       parse_file( m_coordinates[ii], m_coordinateFiles[ii], ',' );
-      m_size.push_back( m_coordinates[ii].size());
+      m_size.emplace_back( m_coordinates[ii].size());
     }
   }
 

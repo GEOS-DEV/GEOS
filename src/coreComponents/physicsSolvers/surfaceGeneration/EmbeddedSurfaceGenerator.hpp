@@ -71,7 +71,7 @@ public:
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >());
+    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
   }
 
   /**
@@ -85,7 +85,7 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition & domain ) override;
 
   /**@}*/
 

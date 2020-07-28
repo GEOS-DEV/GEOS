@@ -12,17 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
+#define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 //START_SPHINX_INCLUDE_00
-struct stabledt
-{
-  double m_maxdt;
-};
 
 namespace geosx
 {
@@ -63,41 +59,40 @@ public:
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
-
-  virtual real64 ExplicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition * const domain ) override;
+                             DomainPartition & domain ) override;
 
   virtual void
   ImplicitStepSetup( real64 const & time_n,
                      real64 const & dt,
-                     DomainPartition * const domain,
-                     DofManager & dofManager,
-                     ParallelMatrix & matrix,
-                     ParallelVector & rhs,
-                     ParallelVector & solution ) override;
+                     DomainPartition & domain ) override;
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
+
+  virtual void
+  SetupSystem( DomainPartition & domain,
+               DofManager & dofManager,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
+               bool const setSparsity = false ) override;
 
   virtual void
   AssembleSystem( real64 const time,
                   real64 const dt,
-                  DomainPartition * const domain,
+                  DomainPartition & domain,
                   DofManager const & dofManager,
-                  ParallelMatrix & matrix,
-                  ParallelVector & rhs ) override;
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   SolveSystem( DofManager const & dofManager,
@@ -107,18 +102,17 @@ public:
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   virtual void
-  ResetStateToBeginningOfStep( DomainPartition * const GEOSX_UNUSED_PARAM( domain ) ) override
-  {}
+    ResetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override;
 
   virtual void
   ImplicitStepComplete( real64 const & time,
                         real64 const & dt,
-                        DomainPartition * const domain ) override;
+                        DomainPartition & domain ) override;
 
   //END_SPHINX_INCLUDE_03
   /**@}*/
@@ -126,8 +120,8 @@ public:
   void ApplyDirichletBC_implicit( real64 const time,
                                   DofManager const & dofManager,
                                   DomainPartition & domain,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs );
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs );
 
   //START_SPHINX_INCLUDE_01
   enum class timeIntegrationOption
@@ -147,17 +141,8 @@ public:
   } laplaceFEMViewKeys;
   //END_SPHINX_INCLUDE_04
 
-  inline ParallelVector const * getSolution() const
-  {
-    return &m_solution;
-  }
-
-  inline globalIndex getSize() const
-  {
-    return m_matrix.numGlobalRows();
-  }
-
 protected:
+
   virtual void PostProcessInput() override final;
 
 private:
@@ -169,4 +154,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_LAGRANGIAN_FEM_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACE_FEM_HPP_ */

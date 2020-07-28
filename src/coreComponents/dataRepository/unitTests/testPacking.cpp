@@ -15,7 +15,6 @@
 #include <gtest/gtest.h>
 
 #include "LvArray/src/Array.hpp"
-#include "math/TensorT/TensorT.h"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "managers/initialization.hpp"
@@ -135,7 +134,7 @@ TEST( testPacking, testTensorPacking )
   array1d< R1Tensor > unp( 1 );
   buffer_unit_type const * bc = &buf[0];
   bufferOps::UnpackDevice( bc, unp.toView() );
-  unp.move( chai::CPU );
+  unp.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < 3; ++ii )
     EXPECT_TRUE( tns[0][ii] = unp[0][ii] );
 }
@@ -160,7 +159,7 @@ TEST( testPacking, testPackingDevice )
 
   buffer_unit_type const * cbuffer = &buf[0];
   bufferOps::UnpackDevice( cbuffer, unpacked.toView());
-  unpacked.move( chai::CPU );
+  unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
     EXPECT_EQ( veloc[ii], unpacked[ii] );
 }
@@ -194,7 +193,7 @@ TEST( testPacking, testPackByIndexDevice )
   buffer_unit_type const * cbuffer = &buf[0];
   localIndex unpacked_size = bufferOps::UnpackByIndexDevice( cbuffer, unpacked.toView(), indices.toViewConst());
   EXPECT_EQ ( unpacked_size, packed_size );
-  unpacked.move( chai::CPU );
+  unpacked.move( LvArray::MemorySpace::CPU );
   for( localIndex ii = 0; ii < size; ++ii )
   {
     if( std::find( indices.begin(), indices.end(), ii ) != indices.end() )

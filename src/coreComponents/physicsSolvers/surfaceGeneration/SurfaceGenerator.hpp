@@ -83,19 +83,19 @@ public:
                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
                         dataRepository::Group * domain ) override
   {
-    SolverStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >());
+    SolverStep( time_n, dt, cycleNumber, *domain->group_cast< DomainPartition * >());
   }
 
   virtual real64 SolverStep( real64 const & time_n,
                              real64 const & dt,
                              integer const cycleNumber,
-                             DomainPartition * domain ) override;
+                             DomainPartition & domain ) override;
 
   /**@}*/
 
 
-  int SeparationDriver( DomainPartition * domain,
-                        MeshLevel * const mesh,
+  int SeparationDriver( DomainPartition & domain,
+                        MeshLevel & mesh,
                         std::vector< NeighborCommunicator > & neighbors,
                         int const tileColor,
                         int const numTileColors,
@@ -141,7 +141,7 @@ private:
    * @param partition
    * @param prefrac
    */
-  void IdentifyRupturedFaces( DomainPartition * domain,
+  void IdentifyRupturedFaces( DomainPartition & domain,
                               NodeManager & nodeManager,
                               EdgeManager & edgeManager,
                               FaceManager & faceManager,
@@ -160,7 +160,7 @@ private:
    * @param vecTip
    * @return
    */
-  realT CalculateEdgeSIF ( DomainPartition * domain,
+  realT CalculateEdgeSIF ( DomainPartition & domain,
                            const localIndex edgeID,
                            localIndex & trailFaceID,
                            NodeManager & nodeManager,
@@ -178,7 +178,7 @@ private:
    * @param elementManager
    * @return
    */
-  void CalculateNodeAndFaceSIF ( DomainPartition * domain,
+  void CalculateNodeAndFaceSIF ( DomainPartition & domain,
                                  NodeManager & nodeManager,
                                  EdgeManager & edgeManager,
                                  FaceManager & faceManager,
@@ -198,7 +198,7 @@ private:
    * @param threeNodesPinched
    * @param calculatef_u. True: calculate f_u; False: calculate f_disconnect.
    */
-  int CalculateElementForcesOnEdge ( DomainPartition * domain,
+  int CalculateElementForcesOnEdge ( DomainPartition & domain,
                                      const localIndex edgeID,
                                      realT edgeLength,
                                      localIndex_array & nodeIndices,
@@ -504,16 +504,7 @@ private:
    */
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static auto ruptureStateString = "ruptureState";
-    constexpr static auto ruptureTimeString = "ruptureTime";
-    constexpr static auto ruptureRateString = "ruptureRate";
-    constexpr static auto SIFonFaceString = "SIFonFace";
-    constexpr static auto K_ICString = "K_IC";
-    constexpr static auto primaryCandidateFaceString = "primaryCandidateFace";
-    constexpr static auto isFaceSeparableString = "isFaceSeparable";
     constexpr static auto failCriterionString = "failCriterion";
-    constexpr static auto degreeFromCrackString = "degreeFromCrack";
-    constexpr static auto degreeFromCrackTipString = "degreeFromCrackTip";
     constexpr static auto solidMaterialNameString = "solidMaterialNames";
     constexpr static auto fExternalString = "fExternal";
     constexpr static auto SIFNodeString = "SIFNode";
@@ -527,21 +518,9 @@ private:
     //TODO: rock toughness should be a material parameter, and we need to make rock toughness to KIC a constitutive
     // relation.
     constexpr static auto rockToughnessString = "rockToughness";
-    constexpr static auto K_IC_00String = "K_IC_00";
-    constexpr static auto K_IC_01String = "K_IC_01";
-    constexpr static auto K_IC_02String = "K_IC_02";
-    constexpr static auto K_IC_10String = "K_IC_10";
-    constexpr static auto K_IC_11String = "K_IC_11";
-    constexpr static auto K_IC_12String = "K_IC_12";
-    constexpr static auto K_IC_20String = "K_IC_20";
-    constexpr static auto K_IC_21String = "K_IC_21";
-    constexpr static auto K_IC_22String = "K_IC_22";
 
-    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
+//    //TODO: Once the node-based SIF criterion becomes mature and robust, remove the edge-based criterion.
     constexpr static auto nodeBasedSIFString = "nodeBasedSIF";
-    constexpr static auto SIF_IString = "SIF_I";
-    constexpr static auto SIF_IIString = "SIF_II";
-    constexpr static auto SIF_IIIString = "SIF_III";
 
   }; //SurfaceGenViewKeys;
 

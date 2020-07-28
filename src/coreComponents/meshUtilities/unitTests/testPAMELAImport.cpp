@@ -74,12 +74,11 @@ void TestMeshImport( string const & inputStringMesh,
       elemSubRegion.CalculateElementGeometricQuantities( nodeManager, faceManager );
       for( localIndex ei = 0; ei < elemSubRegion.size(); ei++ )
       {
-        R1Tensor center = elemSubRegion.getElementCenter()[ ei ];
-        R1Tensor centerFromProperty( centerProperty[er][esr][ei][0],
-                                     centerProperty[er][esr][ei][1],
-                                     centerProperty[er][esr][ei][2] );
-        center -= centerFromProperty;
-        GEOSX_ERROR_IF_GT_MSG( center.L2_Norm(), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemSubRegion.getElementCenter()[ ei ] );
+        // TODO Remove the INIT_LOCAL once centerProperty isn't an R1Tensor.
+        real64 const centerFromProperty[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( centerProperty[er][esr][ei] );
+        LvArray::tensorOps::subtract< 3 >( center, centerFromProperty );
+        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody->getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
       }
     } );
   }
@@ -103,14 +102,10 @@ TEST( PAMELAImport, testGMSH )
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
     "<ElementRegions>" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{0_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"1\" cellBlocks=\"{1_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"2\" cellBlocks=\"{2_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"3\" cellBlocks=\"{3_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"4\" cellBlocks=\"{4_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"5\" cellBlocks=\"{5_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"6\" cellBlocks=\"{6_TETRA}\" materialList=\"{water, rock}\"/>" <<
-    "  <CellElementRegion name=\"7\" cellBlocks=\"{7_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"0\" cellBlocks=\"{Overburden1_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"1\" cellBlocks=\"{Overburden2_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"2\" cellBlocks=\"{Reservoir_TETRA}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"3\" cellBlocks=\"{Underburden_TETRA}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
@@ -136,7 +131,7 @@ TEST( PAMELAImport, testECLIPSE )
   inputStreamRegion <<
     "<?xml version=\"1.0\" ?>" <<
     "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{0_HEX}\" materialList=\"{water, rock}\"/>" <<
+    "  <CellElementRegion name=\"0\" cellBlocks=\"{DEFAULT_HEX}\" materialList=\"{water, rock}\"/>" <<
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 

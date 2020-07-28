@@ -683,9 +683,9 @@ private:
 
   string m_baseFileName;
 
-  string_array m_emptyMeshes;
+  std::vector< std::string > m_emptyMeshes;
 //  string_array m_emptyMaterials;
-  string_array m_emptyVariables;
+  std::vector< std::string > m_emptyVariables;
 
   integer m_writeEdgeMesh;
   integer m_writeFaceMesh;
@@ -745,28 +745,6 @@ template< typename OUTTYPE, typename TYPE >
 OUTTYPE CastField( const TYPE & field, int const i )
 {
   return field.Data()[i];
-}
-
-/**
- * @param field the value to cast
- * @param i the component of the varaible to cast, assuming there is dimensionaliy to the variable
- * @return the casted value
- */
-template<>
-inline real64 CastField< real64, R2SymTensor >( const R2SymTensor & field, int const i )
-{
-  int ii = 0;
-  if( i==1 )
-    ii=2;
-  if( i==2 )
-    ii=5;
-  if( i==3 )
-    ii=4;
-  if( i==4 )
-    ii=3;
-  if( i==5 )
-    ii=1;
-  return field.Data()[ii];
 }
 
 /**
