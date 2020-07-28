@@ -42,12 +42,10 @@ set(meshUtilities_sources
    )
 
 if( BUILD_OBJ_LIBS)
-  set( dependencyList common dataRepository fileIO mesh)
+  set( dependencyList common dataRepository fileIO mesh parmetis)
 else()
-  set( dependencyList common)
+  set( dependencyList common parmetis)
 endif()
-
-set( dependencyList common )
 
 if( ENABLE_PAMELA )
     message(STATUS "Adding PAMELAMeshGenerator sources and headers")

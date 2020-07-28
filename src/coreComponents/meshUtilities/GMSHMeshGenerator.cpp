@@ -31,6 +31,8 @@
 
 #include "mesh/MeshBody.hpp"
 
+#include "parmetis.h"
+
 namespace geosx
 {
 using namespace dataRepository;
@@ -85,7 +87,10 @@ void GMSHMeshGenerator::GetLine(std::ifstream & fileStream, std::string& line)
 {
   do
   {
-    std::getline( fileStream, line );
+    if( !std::getline( fileStream, line ) )
+    {
+      return;
+    }
     m_lineNumber++;
   } while (line.empty() );
 }
@@ -93,10 +98,10 @@ void GMSHMeshGenerator::GetLine(std::ifstream & fileStream, std::string& line)
 void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
 { 
   int const mpiRank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
-  //int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
-  std::cout << domain->getName() << std::endl;
+  int const mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
 
   std::unordered_map< localIndex, std::string > cellElementRegionsIndexToName;
+  std::cout << domain << std::endl;
 
   // Two following arrays contains temporary informations which 
   // will be stored on the first m_initNbProcs ranks
@@ -107,8 +112,8 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
   // on the mesh whic will be stored by the first m_initNbProcs
   array1d< globalIndex > elementGlobalIndex;  // size : number of element in  the first m_initNbProcs ranks
   array1d< localIndex >  elementPhysicalIds;  // size : number of element in  the first m_initNbProcs ranks
-  array1d< globalIndex > elementPtr;          // size : number of element + 1 in the first m_initNbProcs ranks 
-  array1d< globalIndex > elementConnectivity; // size : not known a priori.
+  array1d< idx_t > elementPtr;          // size : number of element + 1 in the first m_initNbProcs ranks 
+  array1d< idx_t > elementConnectivity; // size : not known a priori.
 
 
   if( mpiRank < m_initNbOfProc )
@@ -119,11 +124,10 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
     GEOSX_ERROR_IF( !inputStream, "Could not read input file: " << m_filePath );
 
     std::string lineString;
-    while( !inputStream.eof() )
-    {
+    while( !inputStream.eof()  )
+    { 
+     // if( lineString.substr(0,4) == "$End" ) continue;
       GetLine( inputStream, lineString );
-      if( lineString.substr(0,4) == "$End" ) continue;
-
       if( mpiRank == 0 ) //Basic information read by rank 0
       {
         if(lineString == "$MeshFormat" ) // Reading mesh format
@@ -134,7 +138,6 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
           int dataSize;
           std::istringstream iss(lineString);
           GEOSX_ERROR_IF( !( iss >> version >> isAscii >> dataSize ), " [line " << m_lineNumber << "] 1 float and 2 int are expected (version, ascii info and dataSize)");
-          std::cout << version << " " << isAscii << " " << dataSize << std::endl;
         }
 
         if( lineString == "$PhysicalNames") // Readin physical entities (surface and volume of interests for the simulation)
@@ -216,7 +219,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
         localIndex physicalIndex;
         localIndex trash;
         GEOSX_ERROR_IF( !( iss >> nbTotalElements ), " [line " << m_lineNumber << "] 1 integer is expected corresponding to the total number of elements");
-        GEOSX_LOG_RANK( "nb total of elements " << nbTotalElements);
+        //GEOSX_LOG_RANK( "nb total of elements " << nbTotalElements);
 
         /// First we need to count the number of volume elements
         localIndex nbTotalVolumeElements = 0;
@@ -226,14 +229,14 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
           GetLine( inputStream, lineString );
           std::istringstream iss2(lineString);
           GEOSX_ERROR_IF( !( iss2 >> gIndex >> elementType >> nbOfTags), "[line " << m_lineNumber << "] expecting element index, type and number of tags");
-            GEOSX_LOG_RANK( "element type lol " << elementType );
+            //GEOSX_LOG_RANK( "element type lol " << elementType );
           if( m_gmshCellTypeToNbNodes.count( elementType ) )
           {
-            GEOSX_LOG_RANK( "ca passe");
+            //GEOSX_LOG_RANK( "ca passe");
             nbTotalVolumeElements++;
           }
         }
-        GEOSX_LOG_RANK( "nb total volume elements " << nbTotalVolumeElements );
+        //GEOSX_LOG_RANK( "nb total volume elements " << nbTotalVolumeElements );
         inputStream.seekg( savePos ); // rewind
         globalIndex nbElementsPerRankAPriori = nbTotalElements / m_initNbOfProc;
         globalIndex remainder = nbTotalVolumeElements % m_initNbOfProc;
@@ -242,7 +245,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
           elementGlobalIndex.reserve( nbElementsPerRankAPriori + remainder ) ; // TODO : maybe we can do a better balance?
           elementPhysicalIds.reserve( nbElementsPerRankAPriori + remainder ) ;
           elementPtr.reserve( nbElementsPerRankAPriori + remainder + 1);
-          elementPtr.emplace( 0 );
+          elementPtr.emplace_back( 0 );
           elementConnectivity.reserve( (nbElementsPerRankAPriori + remainder) * 8 );
 
         }
@@ -251,7 +254,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
           elementGlobalIndex.reserve( nbElementsPerRankAPriori ) ; // TODO : maybe we can do a better balance?
           elementPhysicalIds.reserve( nbElementsPerRankAPriori ) ;
           elementPtr.reserve( nbElementsPerRankAPriori  + 1);
-          elementPtr.emplace( 0 );
+          elementPtr.emplace_back( 0 );
           elementConnectivity.reserve( nbElementsPerRankAPriori );
         }
         array1d< globalIndex > offsets( m_initNbOfProc + 1);
@@ -261,7 +264,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
         }
         offsets[m_initNbOfProc] = nbTotalElements;
         globalIndex tempLocalElementIndex = 0; //Local vertex index for the m_initNbRanks
-        GEOSX_LOG_RANK( "offsets " << offsets );
+        //GEOSX_LOG_RANK( "offsets " << offsets );
         for( globalIndex e = 0; e < nbTotalElements; e++ )
         {
           GetLine( inputStream, lineString );
@@ -269,7 +272,7 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
           {
             std::istringstream iss2(lineString);
             GEOSX_ERROR_IF( !( iss2 >> gIndex >> elementType >> nbOfTags), "[line " << m_lineNumber << "] expecting element index, type and number of tags");
-            GEOSX_LOG_RANK( "element type " << elementType );
+            //GEOSX_LOG_RANK( "element type " << elementType );
             if( m_gmshCellTypeToNbNodes.count( elementType ) )
             {
               if( nbOfTags == 0 )
@@ -292,24 +295,85 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
                 
                 elementConnectivity.emplace_back( vGId );
               }
-              GEOSX_LOG_RANK(1);
+              //GEOSX_LOG_RANK(1);
               elementGlobalIndex.emplace_back(gIndex);
-              GEOSX_LOG_RANK(2);
+              //GEOSX_LOG_RANK(2);
               elementPhysicalIds.emplace_back(physicalIndex);
-              GEOSX_LOG_RANK(3);
+              //GEOSX_LOG_RANK(3);
               elementPtr.emplace_back( elementPtr[elementPtr.size() - 1] + nbVerticesInElement );
-              GEOSX_LOG_RANK(4);
+              //GEOSX_LOG_RANK(4);
               tempLocalElementIndex++;
             }
           }
         }
-        GEOSX_LOG_RANK( "global indexes " << elementGlobalIndex );
-        GEOSX_LOG_RANK( "physical ids " << elementPhysicalIds );
-        GEOSX_LOG_RANK( "elementPtr " << elementPtr );
-        GEOSX_LOG_RANK( "connectivity " <<elementConnectivity );
+        //GEOSX_LOG_RANK( "global indexes " << elementGlobalIndex );
+        //GEOSX_LOG_RANK( "physical ids " << elementPhysicalIds );
+        //GEOSX_LOG_RANK( "elementPtr " << elementPtr );
+        //GEOSX_LOG_RANK( "connectivity " <<elementConnectivity );
       }
     }
   }
+
+  // Call to Parmetis
+  
+  //Build elmdist
+  array1d< idx_t > elmdist( mpiSize + 1);
+  idx_t nbElementsPerRank = elementGlobalIndex.size();
+  MpiWrapper::Allgather( &nbElementsPerRank, 1, elmdist.data() + 1, 1, MPI_COMM_GEOSX );
+
+  for( int r = 0; r < mpiSize; r ++)
+  {
+    elmdist[r+1] = elmdist[r+1] + elmdist[r];
+  }
+
+  idx_t wgtflag = 0;
+  idx_t numflag = 0;
+  idx_t ncon = 1;
+  idx_t ncommonnodes = 4;
+  idx_t nparts = mpiSize;
+  array1d< real_t > tpwgts( nparts * ncon );
+  for(int i = 0; i < tpwgts.size(); i++ )
+  {
+    tpwgts[i] = 1./nparts;
+  }
+  real_t ubvec = 1.05; // from doc
+  idx_t options = 0;
+  idx_t edgecuts;
+  array1d< idx_t > part(nbElementsPerRank);
+  if( mpiRank >= m_initNbOfProc )
+  {
+    elementPtr.emplace_back(0);
+    elementPtr.emplace_back(0);
+    elementConnectivity.emplace_back(-1);// will never be read
+    part.emplace_back( -1 ); // will never be read or overwritten
+  }
+  GEOSX_LOG_RANK( "part " << part );
+  GEOSX_LOG_RANK( "elmdist " << elmdist );
+  GEOSX_LOG_RANK( "elementPtr " << elementPtr );
+  GEOSX_LOG_RANK( "elementConnectivity " << elementConnectivity );
+  MPI_Comm parmetisComm;
+  MPI_Group geosxGroup;
+  MPI_Group parmetisGroup;
+  array1d< int > listOfRankWithElements( m_initNbOfProc);
+  for(int r = 0; r < m_initNbOfProc; r++)
+  {
+    listOfRankWithElements[r] = r;
+  }
+  MPI_Comm_group( MPI_COMM_GEOSX, &geosxGroup);
+  MPI_Group_incl( geosxGroup, m_initNbOfProc, listOfRankWithElements.data(), &parmetisGroup );
+
+  MPI_Comm_create_group(MPI_COMM_GEOSX, parmetisGroup, 0, &parmetisComm );
+  if( MPI_COMM_NULL != parmetisComm )
+  {
+  ParMETIS_V3_PartMeshKway( elmdist.data(), elementPtr.data(), elementConnectivity.data(),
+                            NULL, &wgtflag, &numflag, &ncon, &ncommonnodes,&nparts,
+                            tpwgts.data(), &ubvec, &options, &edgecuts, part.data(), &parmetisComm );
+  MPI_Comm_free(&parmetisComm);
+  MPI_Group_free(&parmetisGroup);
+  }
+  GEOSX_LOG_RANK( "part are : " << part );
+
+                    
 }
 
 void GMSHMeshGenerator::GetElemToNodesRelationInBox( const std::string & GEOSX_UNUSED_PARAM( elementType ),
