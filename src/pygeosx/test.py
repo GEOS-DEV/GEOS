@@ -11,6 +11,24 @@ def print_and_flush(msg, *args, **kwargs):
     print("Rank {}: {}".format(rank, msg), *args, **kwargs)
     sys.stdout.flush()
 
+def printWithIndent( msg, indent ):
+    indentString = " " * indent
+    print( indentString + msg.replace( "\n", "\n" + indentString ) )
+
+def printGroup( group, indent=0 ):
+    print( "{}{}".format( " " * indent, group ) )
+
+    indent += 4
+    print( "{}wrappers:".format( " " * indent ) )
+
+    for wrapper in group.wrappers():
+        print( "{}{}".format( " " * ( indent + 4 ), wrapper ) )
+        printWithIndent( str( wrapper.value( False ) ), indent + 8 )
+
+    print( "{}groups:".format( " " * indent ) )
+
+    for subGroup in group.groups():
+        printGroup( subGroup, indent + 4 )
 
 def print_with_indent(msg, indent):
     indent_str = " " * indent

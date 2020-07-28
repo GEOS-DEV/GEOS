@@ -315,10 +315,11 @@ static bool addExitHandler( PyObject * module )
 
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
+
 /**
- * Add geosx::State enums to the given module. Return the module, or NULL on failure
+ * Add geosx::State enums to the given module. Return the module, or nullptr on failure
  */
-static PyObject * addConstants( PyObject * module )
+static bool addConstants( PyObject * module )
 {
   std::array< std::pair< long, char const * >, 4 > const constants = { {
     { static_cast< long >( geosx::State::COMPLETED ), "COMPLETED" },
@@ -332,11 +333,11 @@ static PyObject * addConstants( PyObject * module )
     if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
     {
       PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-      return nullptr;
+      return false;
     }
   }
 
-  return module;
+  return true;
 }
 
 /**
@@ -360,7 +361,7 @@ static bool addExitHandler( PyObject * module ){
   if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
   { return 0; }
 
-  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), NULL ) };
+  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
   
   return returnval != nullptr;
 }
@@ -368,16 +369,6 @@ static bool addExitHandler( PyObject * module ){
 // Allow mixing designated and non-designated initializers in the same initializer list.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wc99-designator"
-
-static PyTypeObject GroupType = {
-  PyVarObject_HEAD_INIT( nullptr, 0 )
-  .tp_name = "geosx.Group",
-  .tp_basicsize = sizeof( geosx::Group ),
-  .tp_itemsize = 0,
-  .tp_flags = Py_TPFLAGS_DEFAULT,
-  .tp_doc = "",
-  .tp_new = PyType_GenericNew,
-};
 
 /**
  *
