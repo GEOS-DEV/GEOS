@@ -365,13 +365,89 @@ void GMSHMeshGenerator::GenerateMesh( DomainPartition * const domain )
   MPI_Comm_create_group(MPI_COMM_GEOSX, parmetisGroup, 0, &parmetisComm );
   if( MPI_COMM_NULL != parmetisComm )
   {
-  ParMETIS_V3_PartMeshKway( elmdist.data(), elementPtr.data(), elementConnectivity.data(),
-                            NULL, &wgtflag, &numflag, &ncon, &ncommonnodes,&nparts,
-                            tpwgts.data(), &ubvec, &options, &edgecuts, part.data(), &parmetisComm );
-  MPI_Comm_free(&parmetisComm);
-  MPI_Group_free(&parmetisGroup);
+    ParMETIS_V3_PartMeshKway( elmdist.data(), elementPtr.data(), elementConnectivity.data(),
+        NULL, &wgtflag, &numflag, &ncon, &ncommonnodes,&nparts,
+        tpwgts.data(), &ubvec, &options, &edgecuts, part.data(), &parmetisComm );
+    MPI_Comm_free(&parmetisComm);
+    MPI_Group_free(&parmetisGroup);
   }
   GEOSX_LOG_RANK( "part are : " << part );
+
+  // Ordering of elements to be sent to other ranks
+  //TODO : it's a little bit overkill. Maybe it's possible to do something better
+  array1d< localIndex > nbElementOwnByRank( mpiSize );
+  array1d< localIndex > connectivitySizeOwnByRank( mpiSize );
+  if(mpiRank < m_initNbOfProc)
+  {
+    std::vector< array1d< localIndex > > orderedElementPhysicalIds( mpiSize );
+    std::vector< array1d< globalIndex > > orderedElementGlobalIndex( mpiSize );
+    std::vector< array1d< globalIndex > > orderedElementConnectivity( mpiSize );
+    std::vector< array1d< globalIndex > > orderedElementPtr( mpiSize );
+    for(int r = 0; r < mpiSize; r++)
+    {
+      orderedElementPhysicalIds[r].reserve( elementPhysicalIds.size() / mpiSize);
+      orderedElementGlobalIndex[r].reserve( elementGlobalIndex.size() / mpiSize);
+      orderedElementConnectivity[r].reserve( elementConnectivity.size() / mpiSize );
+      orderedElementPtr[r].reserve( elementPtr.size() / mpiSize );
+      orderedElementPtr[r].emplace_back( 0 );
+    }
+    for(int e = 0; e < part.size(); e++)
+    {
+      orderedElementGlobalIndex[part[e]].emplace_back( elementGlobalIndex[e] );
+      orderedElementPhysicalIds[part[e]].emplace_back( elementPhysicalIds[e] );
+      for( int v = elementPtr[e]; v < elementPtr[e+1]; v++)
+      {
+        orderedElementConnectivity[part[e]].emplace_back( elementConnectivity[v] );
+      }
+      orderedElementPtr[part[e]].emplace_back( orderedElementPtr[part[e]][ orderedElementPtr[part[e]].size()  -1] + elementPtr[e+1] - elementPtr[e] );
+    }
+    for(int r = 0; r < mpiSize; r++)
+    {
+      nbElementOwnByRank[r] = orderedElementGlobalIndex[r].size();
+      connectivitySizeOwnByRank[r] = orderedElementConnectivity[r].size();
+      GEOSX_LOG_RANK( "to " << r << " phys id " << orderedElementPhysicalIds[r] );
+      GEOSX_LOG_RANK( "to " << r << " g id " << orderedElementGlobalIndex[r] );
+      GEOSX_LOG_RANK( "to " << r << " conn  " << orderedElementConnectivity[r] );
+      GEOSX_LOG_RANK( "to " << r << "  ptr " << orderedElementPtr[r] );
+      //localIndex nbElements = orderedElementGlobalIndex[r].size();
+      //localIndex connectivitySize = orderedElementConnectivity[r].size();
+      // Sending everything !!
+      //MpiWrapper::Send( orderedElementPtr[r].data(), orderedElementPtr.size(), r, 0, MPI_COMM_GEOSX );
+    }
+  }
+  GEOSX_LOG_RANK( "nb elements own by ranl " << nbElementOwnByRank);
+  // Receive number of element
+  array1d< globalIndex > gatheredNbOfElements( m_initNbOfProc );
+  array1d< globalIndex > gatheredConnectivitySize( m_initNbOfProc );
+  GEOSX_LOG_RANK_0("begin gather");
+  for(int r = 0; r < mpiSize; r ++)
+  {
+    MpiWrapper::gather( &nbElementOwnByRank[r], 1, gatheredNbOfElements.data(), 1, r, MPI_COMM_GEOSX );
+    MpiWrapper::gather( &connectivitySizeOwnByRank[r], 1, gatheredConnectivitySize.data(), 1, r, MPI_COMM_GEOSX );
+  }
+  GEOSX_LOG_RANK("end gather " << gatheredNbOfElements);
+  // Compute final number of element for EVERY rank
+  localIndex finalNumberOfElements = 0;
+  localIndex finalConnectivitySize = 0;
+  for( int r = 0; r < m_initNbOfProc; r++ )
+  {
+    finalNumberOfElements += gatheredNbOfElements[r];
+    finalConnectivitySize += gatheredConnectivitySize[r];
+  }
+  GEOSX_LOG_RANK( "final number of elements " << finalNumberOfElements);
+  GEOSX_LOG_RANK( "final connectivty size " << finalConnectivitySize);
+  MpiWrapper::Barrier();
+
+  // Receiving everything
+  array1d< globalIndex > finalElementGlobalIndex;
+  array1d< localIndex >  finalElementPhysicalIds;
+  array1d< globalIndex > finalElementPtr;         
+  array1d< globalIndex > finalElementConnectivity; 
+
+  for( int r = 0; r < m_initNbOfProc; r++ )
+  {
+    //MpiWrapper::Recv( orderedElementPtr[r].data(), orderedElementPtr.size(), r, 0, MPI_COMM_GEOSX );
+  }
 
                     
 }
