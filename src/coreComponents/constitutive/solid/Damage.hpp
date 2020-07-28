@@ -19,7 +19,7 @@
 
 #ifndef GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_DAMAGE_HPP_
-
+#define LORENTZ 1
 #include "constitutive/solid/SolidBase.hpp"
 
 namespace geosx
@@ -34,10 +34,16 @@ public:
   template< typename ... PARAMS >
   DamageUpdates( arrayView2d< real64 > const & inputDamage,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 real64 const & inputLengthScale,
+                 real64 const & inputCriticalFractureEnergy,
+                 real64 const & inputcriticalStrainEnergy,
                  PARAMS && ... baseParams ):
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_damage( inputDamage ),
-    m_strainEnergyDensity( inputStrainEnergyDensity )
+    m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_lengthScale( inputLengthScale),
+    m_criticalFractureEnergy( inputCriticalFractureEnergy),
+    m_criticalStrainEnergy( inputcriticalStrainEnergy)
   {}
 
 
@@ -46,6 +52,34 @@ public:
   using UPDATE_BASE::SmallStrain;
   using UPDATE_BASE::HypoElastic;
   using UPDATE_BASE::HyperElastic;
+
+  //Quasi-Quadratic Lorentz Degradation Function
+  #if LORENTZ
+
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationValue( localIndex const k,
+                              localIndex const q) const {
+     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+     real64 p = 1;
+     return pow(1 - m_damage( k,q ),2) /( pow(1 - m_damage( k,q ),2) + m * m_damage( k,q ) * (1 + p*m_damage( k,q )) );
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationDerivative( real64 const d) const {
+     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+     real64 p = 1;
+     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow(1-d,2) + m*d*(1+p*d), 2);
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 GetDegradationSecondDerivative( real64 const d) const {
+     real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+     real64 p = 1;
+     return -2*m*( pow(d,3)*(2*m*p*p + m*p + 2*p + 1) + pow(d,2)*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow(1-d,2) + m*d*(1+p*d), 3);
+  }
+
+  #else
+  //Standard Quadratic Degradation Function
 
   GEOSX_HOST_DEVICE
   real64 GetDegradationValue( localIndex const k,
@@ -62,6 +96,7 @@ public:
   real64 GetDegradationSecondDerivative( real64 const d) const {
      return 2 * (d - d + 1);
   }
+  #endif
 
   GEOSX_HOST_DEVICE inline
   virtual void GetStiffness( localIndex const k,
@@ -166,9 +201,30 @@ public:
     stress[5] = this->m_stress(k,q,5) * damageFactor;
   }
 
+  GEOSX_HOST_DEVICE
+  real64 getRegularizationLength() const {
+    return m_lengthScale;
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 getCriticalFractureEnergy() const {
+    return m_criticalFractureEnergy;
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 getEnergyThreshold() const {
+    #if LORENTZ
+    return m_criticalStrainEnergy;
+    #else
+    return 3*m_criticalFractureEnergy/(16 * m_lengthScale);
+    #endif
+  }
 
   arrayView2d< real64 > const m_damage;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  real64 const m_lengthScale;
+  real64 const m_criticalFractureEnergy;
+  real64 const m_criticalStrainEnergy;
 
 };
 
@@ -212,13 +268,22 @@ public:
   KernelWrapper createKernelUpdates()
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
-                                                                       m_strainEnergyDensity.toView() );
+                                                                       m_strainEnergyDensity.toView(),
+                                                                       m_lengthScale,
+                                                                       m_criticalFractureEnergy,
+                                                                       m_criticalStrainEnergy);
   }
 
   struct viewKeyStruct : public BASE::viewKeyStruct
   {
     static constexpr auto damageString =  "damage";
     static constexpr auto strainEnergyDensityString =  "strainEnergyDensity";
+    /// string/key for regularization length
+    static constexpr auto lengthScaleString  = "lengthScale";
+    /// string/key for Gc
+    static constexpr auto criticalFractureEnergyString = "criticalFractureEnergy";
+    /// string/key for sigma_c
+    static constexpr auto criticalStrainEnergyString = "criticalStrainEnergy";
 
   };
 
@@ -226,6 +291,9 @@ public:
 protected:
   array2d< real64 > m_damage;
   array2d< real64 > m_strainEnergyDensity;
+  real64 m_lengthScale;
+  real64 m_criticalFractureEnergy;
+  real64 m_criticalStrainEnergy;
 };
 
 }

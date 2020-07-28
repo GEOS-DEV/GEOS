@@ -1,3 +1,4 @@
+
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -34,7 +35,10 @@ template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_damage(),
-  m_strainEnergyDensity()
+  m_strainEnergyDensity(),
+  m_lengthScale(),
+  m_criticalFractureEnergy(),
+  m_criticalStrainEnergy()
 {
 
   this->registerWrapper( viewKeyStruct::damageString, &m_damage )->
@@ -47,6 +51,17 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 )->
     setDescription( "Stress Deviator" );
 
+  this->registerWrapper(viewKeyStruct::lengthScaleString, &m_lengthScale)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("lenght scale l in the phase-field equation");
+
+  this->registerWrapper(viewKeyStruct::criticalFractureEnergyString, &m_criticalFractureEnergy)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("critical fracture energy");
+
+  this->registerWrapper(viewKeyStruct::criticalStrainEnergyString, &m_criticalStrainEnergy)->
+    setInputFlag(InputFlags::REQUIRED)->
+    setDescription("material critical stress in a 1d tension test");
 }
 
 template< typename BASE >
@@ -71,6 +86,10 @@ void Damage< BASE >::DeliverClone( string const & name,
 
   newConstitutiveRelation->m_damage = m_damage;
   newConstitutiveRelation->m_strainEnergyDensity = m_strainEnergyDensity;
+  newConstitutiveRelation->m_lengthScale = m_lengthScale;
+  newConstitutiveRelation->m_criticalFractureEnergy = m_criticalFractureEnergy;
+  newConstitutiveRelation->m_criticalStrainEnergy = m_criticalStrainEnergy;
+  
 }
 
 template< typename BASE >
