@@ -38,6 +38,9 @@ namespace python
  */
 struct PyGroup
 {
+  static constexpr char const * docString =
+  "A Python interface to geosx::dataRepository::Group.";
+
   PyObject_HEAD
 
   static constexpr char const * docString =
