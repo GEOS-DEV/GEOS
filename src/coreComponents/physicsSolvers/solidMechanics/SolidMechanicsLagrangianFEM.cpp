@@ -320,8 +320,8 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
 #if 1
-      FiniteElementShapeFunctionKernelBase const &
-      fe = elementSubRegion.getReference<FiniteElementShapeFunctionKernelBase>( this->getDiscretizationName() );
+      FiniteElementBase const &
+      fe = elementSubRegion.getReference<FiniteElementBase>( this->getDiscretizationName() );
       finiteElement::dispatch3D( fe,
                                [&] ( auto const finiteElement )
       {
@@ -434,8 +434,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      FiniteElementShapeFunctionKernelBase const &
-      fe = elementSubRegion.getReference<FiniteElementShapeFunctionKernelBase>( getDiscretizationName() );
+      FiniteElementBase const &
+      fe = elementSubRegion.getReference<FiniteElementBase>( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
                                [&] ( auto const finiteElement )
       {

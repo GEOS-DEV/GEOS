@@ -19,14 +19,14 @@
 #ifndef GEOSX_CORE_FINITEELEMENT_LINEARTETRAHEDRONSHAPEFUNCTIONKERNEL
 #define GEOSX_CORE_FINITEELEMENT_LINEARTETRAHEDRONSHAPEFUNCTIONKERNEL
 
-#include "FiniteElementShapeFunctionKernelBase.hpp"
+#include "FiniteElementBase.hpp"
 
 
 namespace geosx
 {
 
 
-class LinearTetrahedronShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
+class LinearTetrahedronShapeFunctionKernel : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.

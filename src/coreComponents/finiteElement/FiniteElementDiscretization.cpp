@@ -31,7 +31,7 @@
 namespace geosx
 {
 using namespace dataRepository;
-
+using namespace finiteElement;
 
 
 FiniteElementDiscretization::FiniteElementDiscretization( std::string const & name, Group * const parent ):
@@ -39,7 +39,8 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::orderString, &m_order )->setInputFlag( InputFlags::REQUIRED );
+  registerWrapper( viewKeyStruct::orderString, &m_order )->
+    setInputFlag( InputFlags::REQUIRED );
 
   registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
     setInputFlag( InputFlags::OPTIONAL )->
@@ -56,17 +57,17 @@ void FiniteElementDiscretization::PostProcessInput()
   GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported.");
 }
 
-std::unique_ptr<FiniteElementShapeFunctionKernelBase>
+std::unique_ptr<FiniteElementBase>
 FiniteElementDiscretization::factory( string const & parentElementShape ) const
 {
-  std::unique_ptr<FiniteElementShapeFunctionKernelBase> rval;
+  std::unique_ptr<FiniteElementBase> rval;
   if( m_order==1 )
   {
-    if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedral )
+    if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedron )
     {
-      rval = std::make_unique<TrilinearHexahedronShapeFunctionKernel>();
+      rval = std::make_unique<Hexahedron_Lagrange1_GaussLegendre2>();
     }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedal )
+    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
     {
       rval = std::make_unique<LinearTetrahedronShapeFunctionKernel>();
     }
@@ -77,10 +78,6 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
     {
       rval = std::make_unique<PyramidShapeFunctionKernel>();
-    }
-    else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
-    {
-      rval = std::make_unique<BiLinearWedgeShapeFunctionKernel>();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
     {
