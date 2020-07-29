@@ -21,7 +21,8 @@
 
 
 #include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
-#include "elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp"
+#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 #include "elementFormulations/PyramidShapeFunctionKernel.hpp"
 #include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
 #include "elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
@@ -59,9 +60,9 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( static_cast<BiLinearWedgeShapeFunctionKernel const &>(input) );
   }
-  else if( dynamic_cast<LinearTetrahedronShapeFunctionKernel const *>(&input) )
+  else if( dynamic_cast<H1_Tetrahedron_Lagrange1_Gauss1 const *>(&input) )
   {
-    lambda( static_cast<LinearTetrahedronShapeFunctionKernel const &>(input) );
+    lambda( static_cast<H1_Tetrahedron_Lagrange1_Gauss1 const &>(input) );
   }
   else if( dynamic_cast<PyramidShapeFunctionKernel const *>(&input) )
   {

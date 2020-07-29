@@ -69,7 +69,7 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
     {
-      rval = std::make_unique<LinearTetrahedronShapeFunctionKernel>();
+      rval = std::make_unique<H1_Tetrahedron_Lagrange1_Gauss1>();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
     {
