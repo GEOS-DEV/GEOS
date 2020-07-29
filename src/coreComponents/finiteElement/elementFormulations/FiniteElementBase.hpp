@@ -14,14 +14,14 @@ namespace geosx
  * @class FiniteElementShapeFunctionKernelBase
  * @brief Base class for the finite element kernels.
  */
-class FiniteElementShapeFunctionKernelBase
+class FiniteElementBase
 {
 public:
 
   virtual localIndex getNumQuadraturePoints() const = 0;
   virtual localIndex getNumSupportPoints() const = 0;
 
-  virtual ~FiniteElementShapeFunctionKernelBase()
+  virtual ~FiniteElementBase()
   {}
 
   /**

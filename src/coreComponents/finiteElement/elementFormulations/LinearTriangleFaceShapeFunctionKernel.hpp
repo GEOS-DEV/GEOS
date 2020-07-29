@@ -19,13 +19,13 @@
 #ifndef GEOSX_CORE_FINITEELEMENT_LINEARTRIANGLEFACE
 #define GEOSX_CORE_FINITEELEMENT_LINEARTRIANGLEFACE
 
-#include "FiniteElementShapeFunctionKernelBase.hpp"
+#include "FiniteElementBase.hpp"
 
 
 namespace geosx
 {
 
-class LinearTriangleFaceShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
+class LinearTriangleFaceShapeFunctionKernel : public FiniteElementBase
 {
 public:
 

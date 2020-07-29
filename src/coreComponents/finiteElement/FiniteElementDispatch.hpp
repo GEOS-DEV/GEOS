@@ -22,9 +22,9 @@
 
 #include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
 #include "elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp"
-#include "elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 #include "elementFormulations/PyramidShapeFunctionKernel.hpp"
 #include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
+#include "elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 
 
@@ -36,48 +36,24 @@ namespace finiteElement
 
 struct ParentElementTypeStrings
 {
-  static constexpr auto Tetrahedal    = "C3D4";
+  static constexpr auto Tetrahedon    = "C3D4";
   static constexpr auto Pyramid       = "C3D5";
   static constexpr auto Prism         = "C3D6";
-  static constexpr auto Hexahedral    = "C3D8";
+  static constexpr auto Hexahedron    = "C3D8";
   static constexpr auto Quadralateral = "C2D4";
   static constexpr auto Triangle      = "C2D3";
   static constexpr auto Polyhedral    = "POLYHEDRAL";
   static constexpr auto Polytope      = "POLYTOPE";
 };
 
-
-//template< typename LAMBDA >
-//void
-//dispatch( string const & input,
-//          LAMBDA && lambda )
-//{
-//  if( input ==  ParentElementTypeStrings::Hexahedral )
-//  {
-//    lambda( TrilinearHexahedronShapeFunctionKernel() );
-//  }
-//  else if( input == ParentElementTypeStrings::Tetrahedal )
-//  {
-//    lambda( LinearTetrahedronShapeFunctionKernel() );
-//  }
-//  else if( input == ParentElementTypeStrings::Prism )
-//  {
-//    lambda( BiLinearWedgeShapeFunctionKernel() );
-//  }
-//  else
-//  {
-//    GEOSX_ERROR( "integralTypeDispatch() is not implemented for value of: "<<input );
-//  }
-//}
-
 template< typename LAMBDA >
 void
-dispatch3D( FiniteElementShapeFunctionKernelBase const & input,
+dispatch3D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<TrilinearHexahedronShapeFunctionKernel const *>(&input) )
+  if( dynamic_cast<Hexahedron_Lagrange1_GaussLegendre2 const *>(&input) )
   {
-    lambda( static_cast<TrilinearHexahedronShapeFunctionKernel const &>(input) );
+    lambda( static_cast<Hexahedron_Lagrange1_GaussLegendre2 const &>(input) );
   }
   else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel const *>(&input) )
   {
@@ -99,7 +75,7 @@ dispatch3D( FiniteElementShapeFunctionKernelBase const & input,
 
 template< typename LAMBDA >
 void
-dispatch2D( FiniteElementShapeFunctionKernelBase const & input,
+dispatch2D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
   if( dynamic_cast<BiLinearQuadrilateralFaceShapeFunctionKernel const *>(&input) )

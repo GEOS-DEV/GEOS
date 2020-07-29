@@ -74,7 +74,7 @@ public:
                                         FE_TYPE & fe ) const;
 
 
-  std::unique_ptr<FiniteElementShapeFunctionKernelBase>
+  std::unique_ptr<FiniteElementBase>
   factory( string const & parentElementShape ) const;
 
   struct viewKeyStruct
