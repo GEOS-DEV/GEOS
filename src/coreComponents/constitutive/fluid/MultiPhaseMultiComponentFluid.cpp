@@ -317,7 +317,7 @@ void MultiPhaseMultiComponentFluidUpdate::Compute( real64 pressure,
   EvalVarArgs P =  pressure;
   P.m_der[0] = 1.0;
 
-  static real64 TK = 273.15;
+  constexpr real64 TK = 273.15;
   EvalVarArgs T =  temperature - TK;
 
   stackArray1d< EvalVarArgs, maxNumPhase > phaseFractionTemp( NP );

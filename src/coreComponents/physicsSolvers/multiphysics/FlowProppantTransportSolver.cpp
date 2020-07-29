@@ -21,6 +21,7 @@
 #include "FlowProppantTransportSolver.hpp"
 
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/ProppantTransport.hpp"
@@ -73,7 +74,7 @@ void FlowProppantTransportSolver::PreStepUpdate( real64 const & time_n,
     m_proppantSolver->ResizeFractureFields( *domain.getMeshBody( 0 )->getMeshLevel( 0 ) );
 
     // We need re-apply initial conditions to fractures after they are generated
-    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
+    FieldSpecificationManager const & boundaryConditionManager = getGlobalState().getFieldSpecificationManager();
     boundaryConditionManager.ApplyInitialConditions( &domain );
   }
 

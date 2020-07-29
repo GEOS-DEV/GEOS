@@ -29,6 +29,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -352,7 +353,7 @@ real64 ProppantTransport::SolverStep( real64 const & time_n,
 
   if( cycleNumber == 0 )
   {
-    FieldSpecificationManager const & boundaryConditionManager = FieldSpecificationManager::get();
+    FieldSpecificationManager const & boundaryConditionManager = getGlobalState().getFieldSpecificationManager();
 
     boundaryConditionManager.ApplyInitialConditions( &domain );
 
@@ -725,7 +726,7 @@ void ProppantTransport::ApplyBoundaryConditions( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::proppantConcentrationString );
   globalIndex const rankOffset = dofManager.rankOffset();
 

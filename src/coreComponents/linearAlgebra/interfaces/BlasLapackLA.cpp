@@ -34,7 +34,7 @@ static std::random_device rd;
 static std::mt19937 gen( rd());
 static std::uniform_int_distribution< int > dis( 0, 4095 );
 static std::uniform_int_distribution< int > disOdd( 0, 2047 );
-static int ISEED[] = {dis( gen ), dis( gen ), dis( gen ), disOdd( gen )*2 + 1};
+static int ISEED[] = { dis( gen ), dis( gen ), dis( gen ), disOdd( gen ) * 2 + 1 };
 
 real64 BlasLapackLA::vectorNorm1( arraySlice1d< real64 const > const & X )
 {

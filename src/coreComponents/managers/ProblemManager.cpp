@@ -28,6 +28,7 @@
 #include "managers/initialization.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "managers/Outputs/OutputManager.hpp"
+#include "managers/Functions/FunctionManager.hpp"
 #include "mesh/MeshBody.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "meshUtilities/MeshUtilities.hpp"
@@ -54,12 +55,12 @@ class CellElementSubRegion;
 class FaceElementSubRegion;
 
 
-ProblemManager::ProblemManager( const std::string & name,
-                                Group * const parent ):
-  dataRepository::Group( name, parent ),
+ProblemManager::ProblemManager( std::string const & name, conduit::Node & root ):
+  dataRepository::Group( name, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
-  m_functionManager( nullptr )
+  m_functionManager( nullptr ),
+  m_fieldSpecificationManager( nullptr )
 {
   // Groups that do not read from the xml
   RegisterGroup< DomainPartition >( groupKeys.domain );
@@ -68,24 +69,15 @@ ProblemManager::ProblemManager( const std::string & name,
 
   setInputFlags( InputFlags::PROBLEM_ROOT );
 
-  // Mandatory groups that read from the xml
-  RegisterGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager.Key(),
-                                              &FieldSpecificationManager::get() );//->setRestartFlags(RestartFlags::NO_WRITE);
+  m_fieldSpecificationManager = RegisterGroup< FieldSpecificationManager >( groupKeys.fieldSpecificationManager );
 
-
-  // RegisterGroup<ConstitutiveManager>(groupKeys.constitutiveManager);
-  // RegisterGroup<ElementRegionManager>(groupKeys.elementRegionManager);
   m_eventManager = RegisterGroup< EventManager >( groupKeys.eventManager );
   RegisterGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
   RegisterGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
   RegisterGroup< MeshManager >( groupKeys.meshManager );
   RegisterGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = RegisterGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
-
-  // The function manager is handled separately
-  m_functionManager = &FunctionManager::Instance();
-  // Mandatory groups that read from the xml
-  RegisterGroup< FunctionManager >( groupKeys.functionManager.Key(), m_functionManager );
+  m_functionManager = RegisterGroup< FunctionManager >( groupKeys.functionManager );
 
   // Command line entries
   commandLine->registerWrapper< string >( viewKeys.inputFileName.Key() )->
@@ -306,9 +298,8 @@ void ProblemManager::SetSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   m_functionManager->GenerateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( m_functionManager, schemaRoot, targetChoiceNode, documentationType );
 
-  FieldSpecificationManager & bcManager = FieldSpecificationManager::get();
-  bcManager.GenerateDataStructureSkeleton( 0 );
-  schemaUtilities::SchemaConstruction( &bcManager, schemaRoot, targetChoiceNode, documentationType );
+  m_fieldSpecificationManager->GenerateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( m_fieldSpecificationManager, schemaRoot, targetChoiceNode, documentationType );
 
   ConstitutiveManager * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   schemaUtilities::SchemaConstruction( constitutiveManager, schemaRoot, targetChoiceNode, documentationType );
@@ -671,7 +662,7 @@ DomainPartition const * ProblemManager::getDomainPartition() const
 void ProblemManager::ApplyInitialConditions()
 {
   DomainPartition * domain = GetGroup< DomainPartition >( keys::domain );
-  FieldSpecificationManager::get().ApplyInitialConditions( domain );
+  m_fieldSpecificationManager->ApplyInitialConditions( domain );
   InitializePostInitialConditions( this );
 }
 

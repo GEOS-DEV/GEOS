@@ -19,10 +19,22 @@
 #ifndef GEOSX_MANAGERS_GEOSXSTATE_HPP_
 #define GEOSX_MANAGERS_GEOSXSTATE_HPP_
 
+// Source includes
 #include "ProblemManager.hpp"
 
+// TPL includes
+#include <conduit.hpp>
+
+// System includes
+#include <functional>
 #include <chrono>
 #include <ostream>
+
+// Forward declaration of conduit::Node
+namespace conduit
+{
+  class Node;
+}
 
 namespace geosx
 {
@@ -44,6 +56,11 @@ class GeosxState
 public:
   GeosxState();
 
+  GeosxState( GeosxState const & ) = delete;
+  GeosxState( GeosxState && ) = delete;
+  GeosxState & operator=( GeosxState const & ) = delete;
+  GeosxState & operator=( GeosxState && ) = delete;
+
   bool initializeDataRepository();
 
   void applyInitialConditions();
@@ -53,8 +70,21 @@ public:
   State getState() const
   { return m_state; }
 
-  dataRepository::Group & getProblemManager()
-  { return m_problemManager; }
+  conduit::Node & getRootConduitNode()
+  {
+    GEOSX_ERROR_IF( m_rootNode == nullptr, "Not initialized." );
+    return *m_rootNode;
+  }
+
+  ProblemManager & getProblemManager()
+  {
+    GEOSX_ERROR_IF( m_problemManager == nullptr, "Not initialized." );
+    return *m_problemManager;
+  }
+
+  FieldSpecificationManager & getFieldSpecificationManager();
+
+  FunctionManager & getFunctionManager();
 
   std::chrono::system_clock::duration getInitTime() const
   { return m_initTime; }
@@ -63,15 +93,19 @@ public:
   { return m_runTime; }
 
 private:
-
-  std::chrono::system_clock::time_point initialize();
-
-  std::chrono::system_clock::time_point m_startTime;
+  std::unique_ptr< conduit::Node > m_rootNode;
+  std::unique_ptr< ProblemManager > m_problemManager;
+  State m_state;
   std::chrono::system_clock::duration m_initTime;
   std::chrono::system_clock::duration m_runTime;
-  State m_state;
-  ProblemManager m_problemManager;
 };
+
+
+
+GeosxState & getGlobalState();
+
+void setGlobalStateAccessor( std::function< GeosxState * () > const & accessor );
+
 
 } // namespace geosx
 

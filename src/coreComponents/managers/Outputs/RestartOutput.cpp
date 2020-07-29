@@ -21,8 +21,6 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
-
 
 namespace geosx
 {
@@ -55,12 +53,8 @@ bool RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
   sprintf( fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber );
 
   problemManager->prepareToWrite();
-  FunctionManager::Instance().prepareToWrite();
-  FieldSpecificationManager::get().prepareToWrite();
   writeTree( fileName );
   problemManager->finishWriting();
-  FunctionManager::Instance().finishWriting();
-  FieldSpecificationManager::get().finishWriting();
 
   return false;
 }

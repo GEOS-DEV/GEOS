@@ -21,6 +21,7 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
+#include "managers/GeosxState.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
@@ -29,9 +30,6 @@ namespace geosx
 {
 namespace dataRepository
 {
-
-conduit::Node rootConduitNode;
-
 
 std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 {
@@ -97,16 +95,16 @@ void writeTree( std::string const & path )
   conduit::Node root;
   std::string const filePathForRank = writeRootFile( root, path );
   GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
-  conduit::relay::io::save( rootConduitNode, filePathForRank, "hdf5" );
+  conduit::relay::io::save( getGlobalState().getRootConduitNode(), filePathForRank, "hdf5" );
 }
 
 
-void loadTree( std::string const & path )
+void loadTree( std::string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
   std::string const filePathForRank = readRootNode( path );
   GEOSX_LOG_RANK( "Reading in restart file at " << filePathForRank );
-  conduit::relay::io::load( filePathForRank, "hdf5", rootConduitNode );
+  conduit::relay::io::load( filePathForRank, "hdf5", root );
 }
 
 } /* end namespace dataRepository */

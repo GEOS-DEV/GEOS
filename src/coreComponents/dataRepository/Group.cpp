@@ -17,28 +17,24 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
-
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
 namespace dataRepository
 {
 
-conduit::Node & conduitNodeFromParent( string const & name, Group * const parent )
+Group::Group( std::string const & name,
+              Group * const parent ):
+  Group( name, parent->getConduitNode() )
 {
-  if( parent == nullptr )
-  {
-    return rootConduitNode[ name ];
-  }
-  else
-  {
-    return parent->getConduitNode()[ name ];
-  }
+  GEOSX_ERROR_IF( parent == nullptr, "Should not be null." );
+  m_parent = parent;
 }
 
 Group::Group( std::string const & name,
-              Group * const parent ):
-  m_parent( parent ),
+              conduit::Node & rootNode ):
+  m_parent( nullptr ),
   m_sizedFromParent( 0 ),
   m_wrappers(),
   m_subGroups(),
@@ -48,7 +44,7 @@ Group::Group( std::string const & name,
   m_logLevel( 0 ),
   m_restart_flags( RestartFlags::WRITE_AND_READ ),
   m_input_flags( InputFlags::INVALID ),
-  m_conduitNode( conduitNodeFromParent( name, parent ) )
+  m_conduitNode( rootNode[ name ] )
 {}
 
 Group::~Group()
@@ -255,8 +251,6 @@ void Group::InitializationOrder( string_array & order )
 
 void Group::Initialize( Group * const group )
 {
-  static localIndex indent = 0;
-
   InitializePreSubGroups( group );
 
   string_array initOrder;
@@ -264,9 +258,7 @@ void Group::Initialize( Group * const group )
 
   for( auto const & groupName : initOrder )
   {
-    ++indent;
     this->GetGroup( groupName )->Initialize( group );
-    --indent;
   }
 
   InitializePostSubGroups( group );

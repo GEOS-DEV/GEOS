@@ -28,8 +28,9 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/FaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
@@ -768,7 +769,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   MeshLevel * const mesh = domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dispDofKey = m_solidSolver->getDofManager().getKey( keys::TotalDisplacement );
   NodeManager const * const nodeManager = mesh->getNodeManager();
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager->getReference< globalIndex_array >( dispDofKey );

@@ -12,8 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+// Source includes
 #include "GeosxState.hpp"
 #include "managers/initialization.hpp"
+
+// TPL includes
+#include <conduit.hpp>
 
 namespace geosx
 {
@@ -74,13 +78,23 @@ std::ostream & operator<<( std::ostream & os, State const state )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState::GeosxState():
-  m_startTime( initialize() ),
-  m_initTime(),
-  m_runTime(),
+  m_rootNode( new conduit::Node ),
+  m_problemManager( nullptr ),
   m_state( State::UNINITIALIZED ),
-  m_problemManager( "Problem", nullptr )
+  m_initTime(),
+  m_runTime()
 {
-  m_initTime = std::chrono::system_clock::now() - m_startTime;
+  Timer timer( m_initTime );
+
+  std::string restartFileName;
+  if( ProblemManager::ParseRestart( restartFileName ) )
+  {
+    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
+    dataRepository::loadTree( restartFileName, *m_rootNode );
+  }
+
+  m_problemManager = std::make_unique< ProblemManager >( "Problem", *m_rootNode );
+  GEOSX_LOG_VAR( m_problemManager->getPath() );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,17 +105,17 @@ bool GeosxState::initializeDataRepository()
 
   GEOSX_ERROR_IF_NE( m_state, State::UNINITIALIZED );
 
-  m_problemManager.ParseCommandLineInput();
+  getProblemManager().ParseCommandLineInput();
 
-  if( !m_problemManager.getSchemaFileName().empty() )
+  if( !getProblemManager().getSchemaFileName().empty() )
   {
-    m_problemManager.GenerateDocumentation();
+    getProblemManager().GenerateDocumentation();
     m_state = State::INITIALIZED;
     return false;
   }
 
-  m_problemManager.ParseInputFile();
-  m_problemManager.ProblemSetup();
+  getProblemManager().ParseInputFile();
+  getProblemManager().ProblemSetup();
 
   m_state = State::INITIALIZED;
 
@@ -116,10 +130,10 @@ void GeosxState::applyInitialConditions()
   
   GEOSX_ERROR_IF_NE( m_state, State::INITIALIZED );
 
-  m_problemManager.ApplyInitialConditions();
+  getProblemManager().ApplyInitialConditions();
 
   if ( getCommandLineOptions().beginFromRestart )
-  { m_problemManager.ReadRestartOverwrite(); }
+  { getProblemManager().ReadRestartOverwrite(); }
 
   m_state = State::READY_TO_RUN;
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
@@ -133,27 +147,39 @@ void GeosxState::run()
 
   GEOSX_ERROR_IF_NE( m_state, State::READY_TO_RUN );
 
-  if ( !m_problemManager.RunSimulation() )
+  if ( !getProblemManager().RunSimulation() )
   {
     m_state = State::COMPLETED;
   }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::chrono::system_clock::time_point GeosxState::initialize()
+FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
+{ return getProblemManager().getFieldSpecificationManager(); }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FunctionManager & GeosxState::getFunctionManager()
+{ return getProblemManager().getFunctionManager(); }
+
+
+static std::function< GeosxState * () > s_stateAccessor;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState & getGlobalState()
 {
-  GEOSX_MARK_FUNCTION;
-  std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
+  GEOSX_ERROR_IF( s_stateAccessor == nullptr,
+                  "A state accessor has not been set, set one with setGlobalStateAccessor." );
 
-  std::string restartFileName;
-  if( ProblemManager::ParseRestart( restartFileName ) )
-  {
-    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName );
-  }
+  GeosxState * const state = s_stateAccessor();
+  GEOSX_ERROR_IF( state == nullptr,
+                  "The state has not been created." );
 
-  return startTime;
+  return *state;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setGlobalStateAccessor( std::function< GeosxState * () > const & accessor )
+{ s_stateAccessor = accessor; }
 
 } // namespace geosx
 

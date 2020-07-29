@@ -43,16 +43,6 @@ public:
   virtual ~FunctionManager() override;
 
   /**
-   * @brief Return the function manager instance
-   * @return the function manager instance
-   */
-  static FunctionManager & Instance()
-  {
-    static FunctionManager theFunctionManager( "Functions", nullptr );
-    return theFunctionManager;
-  }
-
-  /**
    * @brief Static Factory Catalog Functions
    * @return the catalog name
    */

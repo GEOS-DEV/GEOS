@@ -25,6 +25,7 @@
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 
@@ -601,7 +602,7 @@ void SinglePhaseBase::ApplyDiricletBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.Apply( time_n + dt,
@@ -648,7 +649,7 @@ void SinglePhaseBase::ApplySourceFluxBC( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
   string const dofKey = dofManager.getKey( viewKeyStruct::pressureString );
 
   fsManager.Apply( time_n + dt, &domain,

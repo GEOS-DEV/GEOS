@@ -46,6 +46,8 @@ int main( int argc, char *argv[] )
   {
     GeosxState state;
 
+    setGlobalStateAccessor( [&state] () { return &state; } );
+
     bool const problemToRun = state.initializeDataRepository();
     if ( problemToRun )
     {

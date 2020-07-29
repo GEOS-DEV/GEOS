@@ -35,6 +35,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -305,7 +306,7 @@ void LaplaceFEM::ApplyDirichletBC_implicit( real64 const time,
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs )
 {
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.Apply( time,
                    &domain,

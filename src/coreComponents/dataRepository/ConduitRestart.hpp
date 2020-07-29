@@ -82,13 +82,11 @@ CONDUIT_TYPE_INFO( R1Tensor, CONDUIT_NATIVE_DOUBLE );
 template< typename T >
 using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::remove_pointer_t< T > > >;
 
-extern conduit::Node rootConduitNode;
-
 std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
 
 void writeTree( std::string const & path );
 
-void loadTree( std::string const & path );
+void loadTree( std::string const & path, conduit::Node & root );
 
 } // namespace dataRepository
 } // namespace geosx

@@ -21,7 +21,6 @@
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #include "EventManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
@@ -29,6 +28,8 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
+class FunctionManager;
+class FieldSpecificationManager;
 
 /**
  * @class ProblemManager
@@ -43,7 +44,7 @@ public:
    * @param parent the parent Group
    */
   explicit ProblemManager( const std::string & name,
-                           Group * const parent );
+                           conduit::Node & root );
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -244,6 +245,30 @@ public:
     return *m_physicsSolverManager;
   }
 
+  FunctionManager & getFunctionManager()
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager; 
+  }
+
+  FunctionManager const & getFunctionManager() const
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager; 
+  }
+
+  FieldSpecificationManager & getFieldSpecificationManager()
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager; 
+  }
+
+  FieldSpecificationManager const & getFieldSpecificationManager() const
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager; 
+  }
+
 protected:
   /**
    * @brief Post process the command line input
@@ -260,6 +285,9 @@ private:
 
   /// The FunctionManager
   FunctionManager * m_functionManager;
+
+  /// The FieldSpecificationManager
+  FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
 } /* namespace geosx */

@@ -31,8 +31,9 @@
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
+#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "meshUtilities/ComputationalGeometry.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
@@ -541,7 +542,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
   FiniteElementDiscretization const & feDiscretization = *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
   arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
@@ -636,7 +637,7 @@ void SolidMechanicsLagrangianFEM::ApplyDisplacementBC_implicit( real64 const tim
 {
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
 
   fsManager.Apply( time,
                    &domain,
@@ -665,8 +666,8 @@ void SolidMechanicsLagrangianFEM::CRSApplyTractionBC( real64 const time,
                                                       DomainPartition & domain,
                                                       arrayView1d< real64 > const & localRhs )
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  FunctionManager const & functionManager = FunctionManager::Instance();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
+  FunctionManager const & functionManager = getGlobalState().getFunctionManager();
 
   FaceManager const & faceManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
   NodeManager const & nodeManager = *domain.getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
@@ -1052,7 +1053,7 @@ SolidMechanicsLagrangianFEM::
   MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
   FaceManager & faceManager = *mesh.getFaceManager();
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager & fsManager = getGlobalState().getFieldSpecificationManager();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 

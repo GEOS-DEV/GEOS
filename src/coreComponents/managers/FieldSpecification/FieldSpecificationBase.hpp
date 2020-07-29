@@ -25,10 +25,10 @@
 #include "dataRepository/Group.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "managers/FieldSpecification/FieldSpecificationOps.hpp"
-#include "managers/Functions/FunctionManager.hpp"
-#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/ObjectManagerBase.hpp"
-
+#include "managers/Functions/FunctionManager.hpp"
+#include "managers/GeosxState.hpp"
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
 {
@@ -622,7 +622,7 @@ void FieldSpecificationBase::ApplyFieldValueKernel( ArrayView< T, N, USD > const
                                                     Group * dataGroup ) const
 {
   integer const component = GetComponent();
-  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   if( m_functionName.empty() )
   {
@@ -731,7 +731,7 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   globalIndex_array dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -831,7 +831,7 @@ FieldSpecificationBase::
   GEOSX_UNUSED_VAR( dofDim );
 
   integer const component = GetComponent();
-  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   globalIndex_array dof( targetSet.size() );
   real64_array rhsContribution( targetSet.size() );
@@ -1010,7 +1010,7 @@ FieldSpecificationBase::
 {
   integer const component = GetComponent();
   string const & functionName = getReference< string >( viewKeyStruct::functionNameString );
-  FunctionManager & functionManager = FunctionManager::Instance();
+  FunctionManager & functionManager = getGlobalState().getFunctionManager();
 
   array1d< globalIndex > dofArray( targetSet.size() );
   arrayView1d< globalIndex > const & dof = dofArray.toView();
