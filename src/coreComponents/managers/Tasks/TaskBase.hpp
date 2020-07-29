@@ -53,8 +53,8 @@ public:
    */
   static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::execute
-  virtual void execute( real64 const time_n,
+  /// @copydoc geosx::ExecutableGroup::Execute
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -68,6 +68,7 @@ public:
     GEOSX_UNUSED_VAR( eventProgress );
     GEOSX_UNUSED_VAR( domain );
     GEOSX_ERROR( "NOT IMPLEMENTED" );
+    return false;
   }
 
   /// @copydoc geosx::dataRepository::Group::postProcessInput( )

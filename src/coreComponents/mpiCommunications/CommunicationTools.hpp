@@ -22,6 +22,7 @@
 #include "MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
+#include "managers/GeosxState.hpp"
 
 #include <set>
 
@@ -36,60 +37,99 @@ class ElementRegionManager;
 
 class MPI_iCommData;
 
+class CommID
+{
+public:
+  CommID( std::set< int > & freeIDs ):
+    m_freeIDs( freeIDs ),
+    m_id(-1)
+  {
+    GEOSX_ERROR_IF_EQ( freeIDs.size(), 0 );
+    m_id = *freeIDs.begin();
+    freeIDs.erase( freeIDs.begin() );
+  }
+
+  CommID( CommID && src ):
+    m_freeIDs( src.m_freeIDs ),
+    m_id( src.m_id )
+  {
+    src.m_id = -1;
+  }
+
+  ~CommID()
+  {
+    if ( m_id < 0 )
+    { return; }
+
+    GEOSX_ERROR_IF( m_freeIDs.count( m_id ) > 0, "Attempting to release commID that is already free: " << m_id );
+
+    m_freeIDs.insert( m_id );
+    m_id = -1;
+  }
+
+  CommID( CommID const & ) = delete;
+  CommID & operator=( CommID const & ) = delete;
+  CommID & operator=( CommID && ) = delete;
+
+  constexpr operator int()
+  { return m_id; }
+
+private:
+  std::set< int > & m_freeIDs;
+  int m_id = -1;
+};
+
 
 class CommunicationTools
 {
 public:
-
-
   CommunicationTools();
   ~CommunicationTools();
 
-  static void assignGlobalIndices( ObjectManagerBase & object,
-                                   ObjectManagerBase const & compositionObject,
-                                   std::vector< NeighborCommunicator > & neighbors );
+  void assignGlobalIndices( ObjectManagerBase & object,
+                            ObjectManagerBase const & compositionObject,
+                            std::vector< NeighborCommunicator > & neighbors );
 
-  static void assignNewGlobalIndices( ObjectManagerBase & object,
-                                      std::set< localIndex > const & indexList );
+  void assignNewGlobalIndices( ObjectManagerBase & object,
+                               std::set< localIndex > const & indexList );
 
-  static void
-  assignNewGlobalIndices( ElementRegionManager & elementManager,
-                          std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
+  void assignNewGlobalIndices( ElementRegionManager & elementManager,
+                               std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
-  static void findGhosts( MeshLevel & meshLevel,
+  void findGhosts( MeshLevel & meshLevel,
                           std::vector< NeighborCommunicator > & neighbors,
                           bool use_nonblocking );
 
-  static std::set< int > & getFreeCommIDs();
-  static int reserveCommID();
-  static void releaseCommID( int & ID );
+  CommID getCommID()
+  { return CommID( m_freeCommIDs ); }
 
-  static void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
+  void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
                                                    std::vector< NeighborCommunicator > & allNeighbors );
 
-  static void synchronizeFields( const std::map< string, string_array > & fieldNames,
+  void synchronizeFields( const std::map< string, string_array > & fieldNames,
                                  MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & allNeighbors,
                                  bool on_device = false );
 
-  static void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
+  void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
                                             MeshLevel * const mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             MPI_iCommData & icomm,
                                             bool on_device = false );
 
-  static void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
+  void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
                                        MeshLevel * const mesh,
                                        std::vector< NeighborCommunicator > & allNeighbors,
                                        MPI_iCommData & icomm,
                                        bool on_device = false );
 
-  static void synchronizeUnpack( MeshLevel * const mesh,
+  void synchronizeUnpack( MeshLevel * const mesh,
                                  std::vector< NeighborCommunicator > & neighbors,
                                  MPI_iCommData & icomm,
                                  bool on_device = false );
 
-
+private:
+  std::set< int > m_freeCommIDs;
 };
 
 
@@ -99,31 +139,17 @@ public:
 
   MPI_iCommData():
     size( 0 ),
-    commID( -1 ),
-    sizeCommID( -1 ),
+    commID( getGlobalState().getCommunicationTools().getCommID() ),
+    sizeCommID( getGlobalState().getCommunicationTools().getCommID() ),
     fieldNames(),
     mpiSendBufferRequest(),
     mpiRecvBufferRequest(),
     mpiSendBufferStatus(),
     mpiRecvBufferStatus()
-  {
-    commID = CommunicationTools::reserveCommID();
-    sizeCommID = CommunicationTools::reserveCommID();
-  }
+  {}
 
   ~MPI_iCommData()
-  {
-    if( commID >= 0 )
-    {
-      CommunicationTools::releaseCommID( commID );
-    }
-
-    if( sizeCommID >= 0 )
-    {
-      CommunicationTools::releaseCommID( sizeCommID );
-    }
-
-  }
+  {}
 
   void resize( localIndex numMessages )
   {

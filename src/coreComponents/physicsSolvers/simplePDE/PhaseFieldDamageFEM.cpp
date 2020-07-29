@@ -432,9 +432,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  CommunicationTools::synchronizeFields( fieldNames,
-                                         mesh,
-                                         domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
+                                                              mesh,
+                                                              domain.getNeighbors() );
 }
 
 void PhaseFieldDamageFEM::applyBoundaryConditions(
@@ -568,8 +568,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                     arrayView1d< real64 > const & localRhs )
 
 {
-  GEOSX_MARK_FUNCTION;
-  FieldSpecificationManager const & fsManager = FieldSpecificationManager::get();
+  FieldSpecificationManager const & fsManager = getGlobalState().getFieldSpecificationManager();
   fsManager.apply( time,
                    &domain,
                    "nodeManager",

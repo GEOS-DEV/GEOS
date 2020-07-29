@@ -21,7 +21,6 @@
 #define GEOSX_MANAGERS_PROBLEMMANAGER_HPP_
 
 #include "EventManager.hpp"
-#include "managers/Functions/FunctionManager.hpp"
 #include "fileIO/schema/schemaUtilities.hpp"
 
 namespace geosx
@@ -33,6 +32,10 @@ namespace constitutive
 {
 class ConstitutiveManager;
 }
+class FunctionManager;
+class FieldSpecificationManager;
+struct CommandLineOptions;
+
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -46,7 +49,7 @@ public:
    * @param parent the parent Group
    */
   explicit ProblemManager( const std::string & name,
-                           Group * const parent );
+                           conduit::Node & root );
 
   /**
    * @brief Destructor, deletes all Groups and Wrappers owned by this Group
@@ -87,7 +90,7 @@ public:
    * @param restartFileName the name of the restart file
    * @return flag indicating beginFromRestart status
    */
-  static bool parseRestart( std::string & restartFileName );
+  static bool parseRestart( std::string & restartFileName, CommandLineOptions const & options );
 
   /**
    * @brief Generates the xml schema documentation
@@ -249,6 +252,30 @@ public:
     return *m_physicsSolverManager;
   }
 
+  FunctionManager & getFunctionManager()
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager; 
+  }
+
+  FunctionManager const & getFunctionManager() const
+  {
+    GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
+    return *m_functionManager; 
+  }
+
+  FieldSpecificationManager & getFieldSpecificationManager()
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager; 
+  }
+
+  FieldSpecificationManager const & getFieldSpecificationManager() const
+  {
+    GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
+    return *m_fieldSpecificationManager; 
+  }
+
 protected:
   /**
    * @brief Post process the command line input
@@ -288,6 +315,9 @@ private:
 
   /// The FunctionManager
   FunctionManager * m_functionManager;
+
+  /// The FieldSpecificationManager
+  FieldSpecificationManager * m_fieldSpecificationManager;
 };
 
 } /* namespace geosx */

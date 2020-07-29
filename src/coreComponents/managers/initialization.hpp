@@ -21,7 +21,13 @@
 
 // TPL includes
 #ifdef GEOSX_USE_CALIPER
-#include <adiak.hpp>
+  #include <adiak.hpp>
+
+  //Forward declaration of cali::ConfigManager.
+  namespace cali
+  {
+    class ConfigManager;
+  }
 #endif
 
 namespace geosx
@@ -79,23 +85,19 @@ struct CommandLineOptions
 };
 
 /**
+ * @brief Parse the command line options and populate @p commandLineOptions with the results.
+ * @param argc The number of command line arguments.
+ * @param argv The command line arguments.
+ */
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char ** argv );
+
+/**
  * @brief Perform the basic GEOSX initialization and optionally parse the command line input.
  * @param [in] argc The number of command line arguments.
  * @param [in,out] argv The command line arguments.
  * @param [in] parseCommandLine True iff the command line options should be parsed.
  */
-void basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
-
-/**
- * @brief @return a struct containing all the parsed command line options.
- */
-CommandLineOptions const & getCommandLineOptions();
-
-/**
- * @brief Override the input file name, useful only for tests.
- * @param inputFileName new input file name
- */
-void overrideInputFileName( std::string const & inputFileName );
+std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
 
 /**
  * @brief Perform the basic GEOSX cleanup.
@@ -139,6 +141,10 @@ void setupMPI( int argc, char * argv[] );
  * @brief Finalize MPI.
  */
 void finalizeMPI();
+
+void setupCaliper( cali::ConfigManager &, CommandLineOptions const & commandLineOptions );
+
+void finalizeCaliper();
 
 /**
  * @brief Compute the sum, mean, min, and max of @p value across ranks and push

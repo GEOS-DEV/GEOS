@@ -21,6 +21,8 @@
 #include "mpiCommunications/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 // TPL includes
 #include <conduit_relay.hpp>
@@ -30,17 +32,16 @@ namespace geosx
 namespace dataRepository
 {
 
-conduit::Node rootConduitNode;
-
-
 std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
 {
+  std::string const completeRootPath = getGlobalState().getCommandLineOptions().outputDirectory + "/" + rootPath;
+
   std::string rootDirName, rootFileName;
-  splitPath( rootPath, rootDirName, rootFileName );
+  splitPath( completeRootPath, rootDirName, rootFileName );
 
   if( MpiWrapper::commRank() == 0 )
   {
-    makeDirsForPath( rootPath );
+    makeDirsForPath( completeRootPath );
 
     root[ "protocol/name" ] = "hdf5";
     root[ "protocol/version" ] = CONDUIT_VERSION;
@@ -51,13 +52,13 @@ std::string writeRootFile( conduit::Node & root, std::string const & rootPath )
     root[ "number_of_trees" ] = 1;
     root[ "tree_pattern" ] = "/";
 
-    conduit::relay::io::save( root, rootPath + ".root", "hdf5" );
+    conduit::relay::io::save( root, completeRootPath + ".root", "hdf5" );
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 
-  std::vector< char > buffer( rootPath.size() + 64 );
-  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", rootPath.data(), MpiWrapper::commRank() ), 1024 );
+  std::vector< char > buffer( completeRootPath.size() + 64 );
+  GEOSX_ERROR_IF_GE( std::snprintf( buffer.data(), buffer.size(), "%s/rank_%07d.hdf5", completeRootPath.data(), MpiWrapper::Comm_rank() ), int( buffer.size() ) );
   return buffer.data();
 }
 
@@ -90,23 +91,23 @@ std::string readRootNode( std::string const & rootPath )
 }
 
 /* Write out a restart file. */
-void writeTree( std::string const & path )
+void writeTree( std::string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
 
-  conduit::Node root;
-  std::string const filePathForRank = writeRootFile( root, path );
+  conduit::Node rootFileNode;
+  std::string const filePathForRank = writeRootFile( rootFileNode, path );
   GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
-  conduit::relay::io::save( rootConduitNode, filePathForRank, "hdf5" );
+  conduit::relay::io::save( root, filePathForRank, "hdf5" );
 }
 
 
-void loadTree( std::string const & path )
+void loadTree( std::string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
   std::string const filePathForRank = readRootNode( path );
   GEOSX_LOG_RANK( "Reading in restart file at " << filePathForRank );
-  conduit::relay::io::load( filePathForRank, "hdf5", rootConduitNode );
+  conduit::relay::io::load( filePathForRank, "hdf5", root );
 }
 
 } /* end namespace dataRepository */

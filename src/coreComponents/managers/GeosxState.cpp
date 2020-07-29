@@ -12,11 +12,36 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+// Source includes
 #include "GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
 #include "managers/initialization.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
+
+// TPL includes
+#include <conduit.hpp>
+
+#if defined( GEOSX_USE_CALIPER )
+  #include <caliper/cali-manager.h>
+#endif
+
+// System includes
+#include <ostream>
 
 namespace geosx
 {
+
+GeosxState * currentGlobalState = nullptr;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState & getGlobalState()
+{
+  GEOSX_ERROR_IF( currentGlobalState == nullptr,
+                  "The state has not been created." );
+
+  return *currentGlobalState;
+}
+
 
 /**
  * @class Timer
@@ -73,14 +98,46 @@ std::ostream & operator<<( std::ostream & os, State const state )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-GeosxState::GeosxState():
-  m_startTime( initialize() ),
-  m_initTime(),
-  m_runTime(),
+GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOptions ):
   m_state( State::UNINITIALIZED ),
-  m_problemManager( "Problem", nullptr )
+  m_commandLineOptions( std::move( commandLineOptions ) ),
+  m_rootNode( std::make_unique< conduit::Node >() ),
+  m_problemManager( nullptr ),
+  m_commTools( std::make_unique< CommunicationTools >() ),
+#if defined( GEOSX_USE_CALIPER )
+  m_caliperManager( std::make_unique< cali::ConfigManager >() ),
+#endif
+  m_initTime(),
+  m_runTime()
 {
-  m_initTime = std::chrono::system_clock::now() - m_startTime;
+  Timer timer( m_initTime );
+
+#if defined( GEOSX_USE_CALIPER )
+  setupCaliper( *m_caliperManager, getCommandLineOptions() );
+#endif
+
+  std::string restartFileName;
+  if( ProblemManager::ParseRestart( restartFileName, getCommandLineOptions() ) )
+  {
+    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
+    dataRepository::loadTree( restartFileName, getRootConduitNode() );
+  }
+
+  m_problemManager = std::make_unique< ProblemManager >( "Problem", getRootConduitNode() );
+
+  GEOSX_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
+  currentGlobalState = this;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState::~GeosxState()
+{
+#if defined( GEOSX_USE_CALIPER )
+  m_caliperManager->flush();
+#endif
+
+  GEOSX_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
+  currentGlobalState = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,17 +148,17 @@ bool GeosxState::initializeDataRepository()
 
   GEOSX_ERROR_IF_NE( m_state, State::UNINITIALIZED );
 
-  m_problemManager.ParseCommandLineInput();
+  getProblemManager().ParseCommandLineInput();
 
-  if( !m_problemManager.getSchemaFileName().empty() )
+  if( !getProblemManager().getSchemaFileName().empty() )
   {
-    m_problemManager.GenerateDocumentation();
+    getProblemManager().GenerateDocumentation();
     m_state = State::INITIALIZED;
     return false;
   }
 
-  m_problemManager.ParseInputFile();
-  m_problemManager.ProblemSetup();
+  getProblemManager().ParseInputFile();
+  getProblemManager().ProblemSetup();
 
   m_state = State::INITIALIZED;
 
@@ -116,10 +173,10 @@ void GeosxState::applyInitialConditions()
   
   GEOSX_ERROR_IF_NE( m_state, State::INITIALIZED );
 
-  m_problemManager.ApplyInitialConditions();
+  getProblemManager().ApplyInitialConditions();
 
   if ( getCommandLineOptions().beginFromRestart )
-  { m_problemManager.ReadRestartOverwrite(); }
+  { getProblemManager().ReadRestartOverwrite(); }
 
   m_state = State::READY_TO_RUN;
   MpiWrapper::Barrier( MPI_COMM_GEOSX );
@@ -133,27 +190,23 @@ void GeosxState::run()
 
   GEOSX_ERROR_IF_NE( m_state, State::READY_TO_RUN );
 
-  if ( !m_problemManager.RunSimulation() )
+  if ( !getProblemManager().RunSimulation() )
   {
     m_state = State::COMPLETED;
   }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::chrono::system_clock::time_point GeosxState::initialize()
-{
-  GEOSX_MARK_FUNCTION;
-  std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
+dataRepository::Group & GeosxState::getProblemManagerAsGroup()
+{ return getProblemManager(); }
 
-  std::string restartFileName;
-  if( ProblemManager::ParseRestart( restartFileName ) )
-  {
-    GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName );
-  }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
+{ return getProblemManager().getFieldSpecificationManager(); }
 
-  return startTime;
-}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+FunctionManager & GeosxState::getFunctionManager()
+{ return getProblemManager().getFunctionManager(); }
 
 } // namespace geosx
 

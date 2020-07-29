@@ -35,7 +35,6 @@
 #include "LvArray/src/ArrayOfSets.hpp"
 #include "LvArray/src/SparsityPattern.hpp"
 #include "LvArray/src/CRSMatrix.hpp"
-#include "LvArray/src/Macros.hpp"
 #include "LvArray/src/SortedArray.hpp"
 #include "LvArray/src/StackBuffer.hpp"
 #include "LvArray/src/ChaiBuffer.hpp"
