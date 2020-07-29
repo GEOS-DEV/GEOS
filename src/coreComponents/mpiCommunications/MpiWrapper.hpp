@@ -273,6 +273,42 @@ public:
 #endif
 
   /**
+   * @brief Wrapper for MPI_Send
+   * @tparam T_SEND The pointer type for \p sendbuf
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[in] sendcount The number of values to send.
+   * @param[in] dest the destinattion rank
+   * @param[in] tag tag associated with the mpi communication
+   * @param[in] comm The MPI_Comm over which the send operates.
+   */
+  template< typename T_SEND >
+  static int Send( T_SEND const * sendbuf,
+                   int sendcount,
+                   int dest,
+                   int tag,
+                   MPI_Comm com );
+
+  /**
+   * @brief Wrapper for MPI_Recv
+   * @tparam T_RECV The pointer type for \p recvbuf
+   * @param[in] recvbuf The pointer to the receiving buffer.
+   * @param[in] recvcount The number of values to send.
+   * @param[in] source the source rank
+   * @param[in] tag tag associated with the mpi communication
+   * @param[in] comm The MPI_Comm over which the send operates.
+   * @param[out] request Pointer to the MPI_Request associated with this request.
+   */
+  template< typename T_RECV >
+  static int Recv( T_RECV * recvbuf,
+                   int recvcount,
+                   int source,
+                   int tag,
+                   MPI_Comm com,
+                   MPI_Status * MPI_PARAM( request ) );
+
+
+
+  /**
    * @brief Strongly typed wrapper around MPI_Allgather.
    * @tparam T_SEND The pointer type for \p sendbuf
    * @tparam T_RECV The pointer type for \p recvbuf
@@ -534,6 +570,31 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
       GEOSX_ERROR( "Unsupported reduction operation" );
       return MPI_NO_OP;
   }
+}
+
+template< typename T_SEND >
+int MpiWrapper::Send( T_SEND const * sendbuf,
+                      int sendcount,
+                      int dest,
+                      int tag,
+                      MPI_Comm comm )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Send( sendbuf, sendcount, getMpiType< T_SEND >(), dest, tag, comm );
+#endif
+}
+
+template< typename T_RECV >
+int MpiWrapper::Recv( T_RECV * recvbuf,
+                      int recvcount,
+                      int source,
+                      int tag,
+                      MPI_Comm comm,
+                      MPI_Status * MPI_PARAM( request ) )
+{
+#ifdef GEOSX_USE_MPI
+  return MPI_Recv( recvbuf, recvcount, getMpiType< T_RECV >(), source, tag, comm, request );
+#endif
 }
 
 template< typename T_SEND, typename T_RECV >
