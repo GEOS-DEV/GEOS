@@ -2,18 +2,18 @@
 .. _advanced_xml_features:
 
 ###############################################################################
-Advanced XML Features (pygeos)
+Advanced XML Features (geosx_xml_tools)
 ###############################################################################
 
-Pygeos is a python module that enables advanced .xml features in GEOSX.
+geosx_xml_tools is a python module that enables advanced .xml features in GEOSX.
 It allows users to include child files, parameters, units, and symbolic math. 
 
 
 Setup
 =================================
-The source of the pygeos module is located in the GEOSX repository: `src/coreComponents/python/modules/pygeos_package`.
-It can be installed within the GEOSX build directory via the `make pygeos` command.
-The pygeos executable will be located in the bin directory.
+The source of the geosx_xml_tools module is located in the GEOSX repository: `src/coreComponents/python/modules/geosx_xml_tools_package`.
+It can be installed within the GEOSX build directory via the `make geosx_xml_tools` command.
+The geosx_xml_tools executable will be located in the bin directory.
 
 Notes: The above command creates a virtual python environment derived from the version of python used with cmake.
 To build the environment, the `virtualenv` package must be installed.
@@ -24,17 +24,17 @@ The environment can also be constructed by calling `scripts/setupVirtualPythonEn
 Usage
 =================================
 
-Pygeos can be used either as a command-line tool or be imported into a python script.  Note: pygeos will be on your path if you are in a virtual environment.  Otherwise, it can be called directly from the bin directory of your python distribution.
+geosx_xml_tools can be used either as a command-line tool or be imported into a python script.  Note: geosx_xml_tools will be on your path if you are in a virtual environment.  Otherwise, it can be called directly from the bin directory of your python distribution.
 
 
 
 Command-line Example
 ------------------------------
 
-Pygeos can be called from the command line to process .xml files via the script.
+geosx_xml_tools can be called from the command line to process .xml files via the script.
 The following will read a raw .xml file, generate a processed version, and return the new file name:
 
-``pygeos input_file.xml``
+``geosx_xml_tools input_file.xml``
 
 Optional arguments include:
 
@@ -44,20 +44,20 @@ Optional arguments include:
 
 For convenience, this script can be embedded within GEOSX arguments:
 
-``srun -n 16 geosx -i `pygeos input_file.xml```
+``srun -n 16 geosx -i `geosx_xml_tools input_file.xml```
 
 
 Script-based Example
 ------------------------------
 
-The pygeos module can also be called from within a python script.  For example:
+The geosx_xml_tools module can also be called from within a python script.  For example:
 
 .. code-block:: python
 
   import sys
-  import pygeos
+  import geosx_xml_tools
 
-  new_filename = pygeos.preprocessGEOSXML(sys.argv[1])
+  new_filename = geosx_xml_tools.preprocessGEOSXML(sys.argv[1])
   print(new_filename)
 
 
@@ -65,7 +65,7 @@ The pygeos module can also be called from within a python script.  For example:
 Advanced XML Features
 =================================
 
-The xml preprocessor in pygeos is designed to take a raw input file, and generate a new file that can be directly read by GEOSX.
+The xml preprocessor in geosx_xml_tools is designed to take a raw input file, and generate a new file that can be directly read by GEOSX.
 The syntax for the advanced XML format is given below.
 During the processing the order of operations are:
 

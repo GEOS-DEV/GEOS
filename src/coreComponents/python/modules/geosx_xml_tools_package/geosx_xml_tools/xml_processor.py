@@ -4,7 +4,7 @@ from lxml import etree as ElementTree
 from lxml.etree import XMLSyntaxError
 import re
 import os
-from pygeos import regex_tools, unit_manager
+from geosx_xml_tools import regex_tools, unit_manager
 
 
 # Create an instance of the unit, parameter regex handlers
