@@ -30,6 +30,8 @@
 #include "constitutive/solid/PoreVolumeCompressibleSolid.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mpiCommunications/MpiWrapper.hpp"
 
@@ -249,6 +251,7 @@ SiloFile::SiloFile():
   m_driver( DB_HDF5 ),
   m_plotFileRoot( "plot" ),
   m_restartFileRoot( "restart" ),
+  m_siloDirectory( getGlobalState().getCommandLineOptions().outputDirectory + "/siloFiles" ),
   m_fileName(),
   m_baseFileName(),
   m_emptyMeshes(),
@@ -281,19 +284,7 @@ void SiloFile::makeSiloDirectories()
 
   if( rank==0 )
   {
-    struct stat sb;
-
-    if( !( stat( m_siloDirectory.c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir( m_siloDirectory.c_str(), nMode );
-    }
-
-    if( !( stat( (m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), &sb ) == 0 && S_ISDIR( sb.st_mode ) ) )
-    {
-      mode_t nMode = 0733;
-      mkdir((m_siloDirectory +"/"+ m_siloDataSubDirectory).c_str(), nMode );
-    }
+    makeDirsForPath( m_siloDirectory + "/" + m_siloDataSubDirectory );
   }
 }
 
@@ -1260,10 +1251,11 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                        real64 const problemTime,
                                        bool const isRestart )
 {
-
+  // TODO: This is a hack.
+  conduit::Node conduitNode;
+  dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
+  
   localIndex numElems = 0;
-  dataRepository::Group fakeGroup( elemRegion.getName(), nullptr );
-  fakeGroup.setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );

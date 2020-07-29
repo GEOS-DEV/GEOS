@@ -1310,7 +1310,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaMixtureConnRateString ) );
-  CommunicationTools::synchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );

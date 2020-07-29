@@ -12,25 +12,26 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
-#include "gtest/gtest.h"
-
+// Source includes
 #include "managers/ProblemManager.hpp"
 #include "managers/initialization.hpp"
+#include "managers/GeosxState.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
+#include <conduit.hpp>
 
 TEST( testXML, testXML )
 {
-  geosx::ProblemManager problemManager( "Problem", nullptr );
-
-  problemManager.parseCommandLineInput();
-  problemManager.parseInputFile();
+  geosx::getGlobalState().getProblemManager().parseCommandLineInput();
+  geosx::getGlobalState().getProblemManager().parseInputFile();
 }
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv, true );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv, true ) );
 
   int const result = RUN_ALL_TESTS();
 

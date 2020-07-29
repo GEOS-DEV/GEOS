@@ -28,7 +28,7 @@
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "managers/DomainPartition.hpp"
-#include "managers/FieldSpecification/FieldSpecificationManager.hpp"
+#include "managers/GeosxState.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
@@ -237,7 +237,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
-        CommunicationTools::synchronizeFields( fieldNames,
+        getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
                                                domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                                domain.getNeighbors() );
 

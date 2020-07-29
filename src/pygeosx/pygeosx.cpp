@@ -35,11 +35,7 @@
 namespace geosx
 {
 
-std::unique_ptr< GeosxState > & getState()
-{
-  static std::unique_ptr< GeosxState > s_state;
-  return s_state;
-};
+std::unique_ptr< GeosxState > g_state;
 
 static constexpr char const * initializeDocString =
 "initialize(rank, args)\n"
@@ -61,7 +57,8 @@ static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
-  if ( getState() != nullptr ){
+  if ( g_state != nullptr )
+  {
     PyErr_SetString( PyExc_RuntimeError, "state already initialized" );
     return nullptr;
   }
@@ -96,17 +93,66 @@ static PyObject * initialize( PyObject * self, PyObject * args )
   for ( std::size_t i = 0; i < stringArgs.size(); ++i )
   { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
 
-  basicSetup( argv.size() - 1, argv.data(), true );
+  g_state = std::make_unique< GeosxState >( basicSetup( argv.size() - 1, argv.data(), true ) );
 
-  if ( pythonMPIRank != MpiWrapper::Comm_rank() ){
+  if ( pythonMPIRank != MpiWrapper::Comm_rank() )
+  {
     PyErr_SetString( PyExc_ValueError, "Python MPI rank does not align with GEOSX MPI rank" );
     return nullptr;
   }
 
-  getState() = std::make_unique< GeosxState >();
-  getState()->initializeDataRepository();
+  g_state->initializeDataRepository();
 
-  return python::createNewPyGroup( getState()->getProblemManager() );
+  return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
+}
+
+static constexpr char const * reinitDocString = "";
+static PyObject * reinit( PyObject * self, PyObject * args )
+{
+  GEOSX_UNUSED_VAR( self );
+
+  if ( g_state == nullptr || g_state->getState() != State::COMPLETED )
+  {
+    PyErr_SetString( PyExc_RuntimeError, "State must be COMPLETED" );
+    return nullptr;
+  }
+
+  PyObject * list;
+  if ( !PyArg_ParseTuple( args, "O", &list ) )
+  { return nullptr; }
+
+  PyObjectRef iterator{ PyObject_GetIter( list ) };
+  if ( iterator == nullptr )
+  { return nullptr; }
+
+  std::vector< std::string > stringArgs;
+  for( PyObjectRef item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
+  {
+    PyObjectRef ascii { PyUnicode_AsASCIIString( item ) };
+    if ( ascii == nullptr )
+    { return nullptr; }
+
+    char const * const stringValue = PyBytes_AsString( ascii );
+    if ( stringValue == nullptr )
+    { return nullptr; }
+
+    stringArgs.push_back( stringValue );
+  }
+
+  if ( PyErr_Occurred() )
+  { return nullptr; }
+
+  std::vector< char * > argv( stringArgs.size() + 1 );
+  for ( std::size_t i = 0; i < stringArgs.size(); ++i )
+  { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
+
+  // Must first delete the existing state.
+  g_state = nullptr;
+  g_state = std::make_unique< GeosxState >( parseCommandLineOptions( argv.size() - 1, argv.data() ) );
+
+  g_state->initializeDataRepository();
+
+  return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
 }
 
 static constexpr char const * applyInitialConditionsDocString =
@@ -121,11 +167,11 @@ static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( getState() == nullptr ){
+  if ( g_state == nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
     return nullptr;
   }
-  getState()->applyInitialConditions();
+  g_state->applyInitialConditions();
   Py_RETURN_NONE;
 }
 
@@ -143,12 +189,12 @@ static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( getState() == nullptr ){
+  if ( g_state == nullptr ){
     PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
     return nullptr;
   }
-  getState()->run();
-  return PyLong_FromLong( static_cast< int >( getState()->getState() ) );
+  g_state->run();
+  return PyLong_FromLong( static_cast< int >( g_state->getState() ) );
 }
 
 static constexpr char const * finalizeDocString =
@@ -163,13 +209,13 @@ static PyObject * finalize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( getState() == nullptr )
+  if ( g_state == nullptr )
   {
     PyErr_SetString( PyExc_RuntimeError, "State either not initialized or already finalized." );
     return nullptr;
   }
 
-  getState() = nullptr;
+  g_state = nullptr;
   basicCleanup();
 
   Py_RETURN_NONE;
@@ -229,14 +275,22 @@ static bool addExitHandler( PyObject * module ){
 }
 
 // Allow mixing designated and non-designated initializers in the same initializer list.
+// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
+// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc99-designator"
+#if defined( __clang_version__ )
+  #pragma GCC diagnostic ignored "-Wc99-designator"
+#else
+  #pragma GCC diagnostic ignored "-Wpedantic"
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 /**
  *
  */
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
+  { "reinit", geosx::reinit, METH_VARARGS, geosx::reinitDocString },
   { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
   { "finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
@@ -256,6 +310,8 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   .m_size = -1,
   .m_methods = pygeosxFuncs
 };
+
+#pragma GCC diagnostic pop
 
 /**
  * Initialize the module with functions, constants, and exit handler
@@ -303,5 +359,3 @@ PyInit_pygeosx(void)
   // Since we return module we don't want to decrease the reference count.
   return module.release();
 }
-
-#pragma GCC diagnostic pop

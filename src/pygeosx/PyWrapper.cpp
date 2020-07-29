@@ -81,7 +81,7 @@ static PyObject * PyWrapper_repr( PyObject * const obj )
   { return nullptr; }
 
   std::string const path = wrapper->getPath();
-  std::string const type = LvArray::demangle( typeid( *wrapper ).name() );
+  std::string const type = LvArray::system::demangle( typeid( *wrapper ).name() );
   std::string const repr = path + " ( " + type + " )";
   return PyUnicode_FromString( repr.c_str() );
 }
@@ -135,8 +135,15 @@ static PyObject * PyWrapper_value( PyWrapper * const self, PyObject * const args
 
 
 // Allow mixing designated and non-designated initializers in the same initializer list.
+// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
+// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc99-designator"
+#if defined( __clang_version__ )
+  #pragma GCC diagnostic ignored "-Wc99-designator"
+#else
+  #pragma GCC diagnostic ignored "-Wpedantic"
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 static PyMethodDef PyWrapperMethods[] = {
   { "value", (PyCFunction) PyWrapper_value, METH_VARARGS, PyWrapper_valueDocString },

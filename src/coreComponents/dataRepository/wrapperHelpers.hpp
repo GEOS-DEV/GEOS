@@ -660,7 +660,8 @@ template< bool DO_PACKING, typename T >
 inline std::enable_if_t< !bufferOps::is_container< T > && !bufferOps::can_memcpy< T >, localIndex >
 PackDevice( buffer_unit_type * &, T const & )
 {
-  GEOSX_ERROR( "Cannot pack " << LvArray::system::demangleType< T >() << " on device." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
+               ") on device but type is not packable on device." );
   return 0;
 }
 
@@ -673,7 +674,7 @@ template< bool DO_PACKING, typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 PackByIndexDevice( buffer_unit_type * &, T const &, IDX & )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::demangleType< T >() <<
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() <<
                ") on device but type is not packable by index." );
   return 0;
 }
@@ -741,7 +742,10 @@ UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
 createPythonObject( T & object, bool const modify )
-{ return LvArray::python::create( object, modify ); }
+{ 
+  GEOSX_UNUSED_VAR( modify );
+  return LvArray::python::create( object );
+}
 
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >

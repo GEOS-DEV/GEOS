@@ -39,12 +39,12 @@ int main( int argc, char *argv[] )
 {
   std::chrono::system_clock::time_point const startTime = std::chrono::system_clock::now();
 
-  basicSetup( argc, argv, true );
+  std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
   std::chrono::system_clock::duration initTime;
   std::chrono::system_clock::duration runTime;
   {
-    GeosxState state;
+    GeosxState state( std::move( commandLineOptions ) );
 
     bool const problemToRun = state.initializeDataRepository();
     if ( problemToRun )

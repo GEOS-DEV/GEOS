@@ -520,7 +520,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   fieldNames["face"].emplace_back( string( viewKeyStruct::deltaFacePressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
-  CommunicationTools::synchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
                                          &mesh,
                                          domain.getNeighbors(),
                                          true );
