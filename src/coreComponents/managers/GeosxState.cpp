@@ -28,6 +28,9 @@
 // System includes
 #include <ostream>
 
+// TPL includes
+#include <conduit.hpp>
+
 namespace geosx
 {
 
@@ -217,5 +220,9 @@ FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FunctionManager & GeosxState::getFunctionManager()
 { return getProblemManager().getFunctionManager(); }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setGlobalStateAccessor( std::function< GeosxState * () > const & accessor )
+{ s_stateAccessor = accessor; }
 
 } // namespace geosx

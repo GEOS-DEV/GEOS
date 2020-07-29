@@ -42,6 +42,12 @@ class ConfigManager;
 #endif
 
 
+// Forward declaration of conduit::Node
+namespace conduit
+{
+  class Node;
+}
+
 namespace geosx
 {
 
@@ -80,6 +86,11 @@ public:
    *   `std::unique_ptr` with forward declared types won't work.
    */
   ~GeosxState();
+
+  GeosxState( GeosxState const & ) = delete;
+  GeosxState( GeosxState && ) = delete;
+  GeosxState & operator=( GeosxState const & ) = delete;
+  GeosxState & operator=( GeosxState && ) = delete;
 
   GeosxState( GeosxState const & ) = delete;
   GeosxState( GeosxState && ) = delete;
