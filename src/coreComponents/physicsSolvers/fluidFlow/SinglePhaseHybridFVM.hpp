@@ -147,7 +147,6 @@ public:
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
   {
     // primary face-based field
-    static constexpr auto facePressureString      = "facePressure";
     static constexpr auto deltaFacePressureString = "deltaFacePressure";
 
   } viewKeysSinglePhaseHybridFVM;

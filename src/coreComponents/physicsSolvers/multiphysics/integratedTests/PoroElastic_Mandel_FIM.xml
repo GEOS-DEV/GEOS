@@ -161,7 +161,6 @@
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
         fieldName="pressure"
-        boundaryFieldName="boundaryFacePressure"
         coefficientName="permeability"/>
     </FiniteVolume>
   </NumericalMethods>
@@ -328,7 +327,7 @@
     <FieldSpecification
       name="boundaryPressure"
       objectPath="faceManager"
-      fieldName="boundaryFacePressure"
+      fieldName="pressure"
       scale="0.000e0"
       setNames="{ xpos }"
       functionName="timeFunction"/>

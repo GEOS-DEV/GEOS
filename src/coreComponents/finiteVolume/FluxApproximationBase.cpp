@@ -29,19 +29,13 @@ using namespace dataRepository;
 
 FluxApproximationBase::FluxApproximationBase( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_fieldName(),
-  m_boundaryFieldName(),
-  m_coeffName()
+  m_lengthScale( 1.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::fieldNameString, &m_fieldName )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Name of primary solution field" );
-
-  registerWrapper( viewKeyStruct::boundaryFieldNameString, &m_boundaryFieldName )->
-    setInputFlag( InputFlags::OPTIONAL )->
-    setDescription( "Name of boundary (face) field" );
 
   registerWrapper( viewKeyStruct::coeffNameString, &m_coeffName )->
     setInputFlag( InputFlags::REQUIRED )->
@@ -55,8 +49,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL )->
     setApplyDefaultValue( 1.0e-8 )->
     setDescription( "Relative tolerance for area calculations." );
-
-
 }
 
 FluxApproximationBase::CatalogInterface::CatalogType &
@@ -66,28 +58,72 @@ FluxApproximationBase::GetCatalog()
   return catalog;
 }
 
+void FluxApproximationBase::RegisterDataOnMesh( Group * const meshBodies )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  meshBodies->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  {
+    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    {
+      // Group structure: mesh1/finiteVolumeStencils/myTPFA
+
+      Group & stencilParentGroup = mesh.hasGroup( groupKeyStruct::stencilMeshGroupString ) ?
+                                   mesh.getGroupReference( groupKeyStruct::stencilMeshGroupString ) :
+                                   *mesh.RegisterGroup( groupKeyStruct::stencilMeshGroupString );
+
+      Group & stencilGroup = stencilParentGroup.hasGroup( getName() ) ?
+                             stencilParentGroup.getGroupReference( getName() ) :
+                             *stencilParentGroup.RegisterGroup( getName() );
+
+      registerCellStencil( stencilGroup );
+      registerFractureStencil( stencilGroup );
+      // For each face-based boundary condition on target field, create a boundary stencil
+      fsManager.Apply( 0.0,
+                       meshBodies->getParent(), // TODO: Apply() should take a MeshLevel directly
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const *,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const &,
+                             Group const *,
+                             string const & )
+      {
+        registerBoundaryStencil( stencilGroup, setName );
+      } );
+    } );
+  } );
+}
+
 void FluxApproximationBase::InitializePostInitialConditions_PreSubGroups( Group * const rootGroup )
 {
   GEOSX_MARK_FUNCTION;
 
   DomainPartition & domain = *rootGroup->GetGroup< DomainPartition >( keys::domain );
-
-  // Compute the main cell-based stencil
-  computeCellStencil( domain );
-
-  // For each boundary condition on target field, create a boundary stencil
   FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( 0.0,
-                   &domain,
-                   "faceManager",
-                   m_boundaryFieldName,
-                   [&] ( FieldSpecificationBase const *,
-                         string const & setName,
-                         SortedArrayView< localIndex const > const & faceSet,
-                         Group const *,
-                         string const & )
+
+  domain.getMeshBodies()->forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
-    computeBoundaryStencil( domain, setName, faceSet );
+    m_lengthScale = meshBody.getGlobalLengthScale();
+
+    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    {
+      // Compute the main cell-based stencil
+      computeCellStencil( mesh );
+
+      // For each face-based boundary condition on target field, create a boundary stencil
+      fsManager.Apply( 0.0,
+                       &domain,
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const *,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const & faceSet,
+                             Group const *,
+                             string const & )
+      {
+        computeBoundaryStencil( mesh, setName, faceSet );
+      } );
+    } );
   } );
 }
 

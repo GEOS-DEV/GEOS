@@ -432,7 +432,7 @@ void SurfaceGenerator::postRestartInitialization( Group * const domain0 )
       FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
       if( fluxApprox!=nullptr )
       {
-        fluxApprox->addToFractureStencil( *domain,
+        fluxApprox->addToFractureStencil( *meshLevel,
                                           this->m_fractureRegionName,
                                           false );
         edgeManager->m_recalculateFractureConnectorEdges.clear();
@@ -485,7 +485,7 @@ real64 SurfaceGenerator::SolverStep( real64 const & time_n,
         FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
         if( fluxApprox!=nullptr )
         {
-          fluxApprox->addToFractureStencil( domain,
+          fluxApprox->addToFractureStencil( *meshLevel,
                                             this->m_fractureRegionName,
                                             true );
           edgeManager->m_recalculateFractureConnectorEdges.clear();
@@ -1166,20 +1166,8 @@ bool SurfaceGenerator::FindFracturePlanes( const localIndex nodeID,
 
           std::cout<<"  NodeID, ParentID = "<<nodeID<<", "<<parentNodeIndex<<std::endl;
           std::cout<<"  Starting Edge/Face = "<<startingEdge<<", "<<startingFace<<std::endl;
-          std::cout<<"  Face Separation Path = ";
-          for( localIndex_array::const_iterator kf=facePath.begin(); kf!=facePath.end(); ++kf )
-          {
-            std::cout<<*kf<<", ";
-          }
-          std::cout<<std::endl;
-
-          std::cout<<"  Edge Separation Path = ";
-          for( localIndex_array::const_iterator kf=edgePath.begin(); kf!=edgePath.end(); ++kf )
-          {
-            std::cout<<*kf<<", ";
-          }
-          std::cout<<std::endl;
-
+          std::cout<<"  Face Separation Path = " << facePath << std::endl;
+          std::cout<<"  Edge Separation Path = " << facePath << std::endl;
 
           GEOSX_ERROR( "crap" );
         }
