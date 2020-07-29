@@ -23,14 +23,14 @@ blt_register_library( NAME python_interp
 
 
 set(GEOSX_XML_TOOLS_BINS
-  "${CMAKE_BINARY_DIR}/bin/pygeos"
+  "${CMAKE_BINARY_DIR}/bin/preprocess_xml"
   "${CMAKE_BINARY_DIR}/bin/format_xml"
 )
 
 
 add_custom_command( OUTPUT ${GEOSX_XML_TOOLS_BINS}
                     COMMAND bash ${CMAKE_SOURCE_DIR}/../scripts/setupVirtualPythonEnvironment.bash -p ${PYTHON_POST_EXECUTABLE} -o ${CMAKE_BINARY_DIR}/python
-                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/pygeos ${CMAKE_BINARY_DIR}/bin/pygeos
+                    COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/preprocess_xml ${CMAKE_BINARY_DIR}/bin/preprocess_xml
                     COMMAND ln -s ${CMAKE_BINARY_DIR}/python/geosx/bin/format_xml ${CMAKE_BINARY_DIR}/bin/format_xml
                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
                     )
@@ -40,8 +40,8 @@ add_custom_target( geosx_xml_tools
                    )
 
 add_custom_target( geosx_xml_tools_test
-                   COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_pygeos
-                   COMMAND rm -r ${CMAKE_BINARY_DIR}/python/pygeos_tests*
+                   COMMAND ${CMAKE_BINARY_DIR}/python/geosx/bin/test_geosx_xml_tools
+                   COMMAND rm -r ${CMAKE_BINARY_DIR}/python/geosx_xml_tools_tests*
                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/python
                    DEPENDS ${GEOSX_XML_TOOLS_BINS}
                    )

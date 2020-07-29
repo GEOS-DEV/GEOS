@@ -5,46 +5,60 @@
 Advanced XML Features (geosx_xml_tools)
 ###############################################################################
 
-geosx_xml_tools is a python module that enables advanced .xml features in GEOSX.
-It allows users to include child files, parameters, units, and symbolic math. 
+geosx_xml_tools is a python module that enables advanced xml features in GEOSX (parameters, units, symbolic math, etc.), and is used to format xml files.
 
 
 Setup
 =================================
-The source of the geosx_xml_tools module is located in the GEOSX repository: `src/coreComponents/python/modules/geosx_xml_tools_package`.
-It can be installed within the GEOSX build directory via the `make geosx_xml_tools` command.
-The geosx_xml_tools executable will be located in the bin directory.
 
-Notes: The above command creates a virtual python environment derived from the version of python used with cmake.
-To build the environment, the `virtualenv` package must be installed.
-The environment can also be constructed by calling `scripts/setupVirtualPythonEnvironment.bash`.
+The `geosx_xml_tools` package can be installed using the following command within the GEOSX build directory:
 
+`make geosx_xml_tools`
+
+During the installation step, two console scripts will be created: `preprocess_xml` and `format_xml`.
+These will be located within the GEOSX build/bin directory.
+Additional things to consider: 
+
+- The above make command will create a new virtual python environment to install the package.  By default, the source python environment will be the the version used to run the `config-build.py` command.  The version of python can be changed by specifying the `PYTHON_POST_EXECUTABLE` variable.  To build the environment, the `virtualenv` package must be installed in the source distribution.
+- The `geosx_xml_tools` package depends on the `lxml` package. If `lxml` is missing from the parent environment, the install script will attempt to fetch an appropriate version from the internet.
+- The package may also be manually installed within an existing python distribution (this required administrative priviliges) via pip: `pip install src/coreComponents/python/modules/geosx_xml_tools_package`.  In this case, the console scripts will be located in the python/bin directory
 
 
 Usage
 =================================
 
-geosx_xml_tools can be used either as a command-line tool or be imported into a python script.  Note: geosx_xml_tools will be on your path if you are in a virtual environment.  Otherwise, it can be called directly from the bin directory of your python distribution.
+geosx_xml_tools can be used via the command-line or can be imported into a python script.
 
 
-
-Command-line Example
+Command-line xml formatting
 ------------------------------
 
-geosx_xml_tools can be called from the command line to process .xml files via the script.
-The following will read a raw .xml file, generate a processed version, and return the new file name:
+The following command will update the formatting of an existing xml file in-place:
 
-``geosx_xml_tools input_file.xml``
+`format_xml input_file.xml`
 
-Optional arguments include:
+To update the formatting for all xml files located within the GEOSX repository, you can run the following command within the GEOSX build directory:
 
-- ``-o/--output``: The desired name for the output file (otherwise, it is randomly generated)
-- ``-s/--schema``: The location of a schema to validate the final .xml file
-- ``-v/--verbose``: Increase module verbosity
+`make geosx_format_all_xml_files`
 
-For convenience, this script can be embedded within GEOSX arguments:
 
-``srun -n 16 geosx -i `geosx_xml_tools input_file.xml```
+Command-line xml preprocessing
+------------------------------
+
+The following command will read an xml file, process any advanced xml features located within it, and write a new file that can be read by GEOSX:
+
+`preprocess_xml input_file.xml`
+
+The script returns the (randomly generated) name of the new xml file.
+Optional arguments for this script include:
+
+- `-o/--output`: The desired name for the output file (otherwise, it is randomly generated)
+- `-s/--schema`: The location of a schema to validate the final .xml file
+- `-v/--verbose`: Increase module verbosity
+
+For convenience, this script can be embedded within a call to GEOSX:
+
+`srun -n 16 geosx -i \`preprocess_xml input_file.xml\` -x 4 -z 4`
 
 
 Script-based Example
@@ -54,11 +68,10 @@ The geosx_xml_tools module can also be called from within a python script.  For 
 
 .. code-block:: python
 
-  import sys
   import geosx_xml_tools
 
-  new_filename = geosx_xml_tools.preprocessGEOSXML(sys.argv[1])
-  print(new_filename)
+  initial_filename = 'input.xml'
+  new_filename = output_name = xml_processor.process(initial_filename)
 
 
 
@@ -114,9 +127,9 @@ Parameters may have any value:
 
 They can be used in any field within in the XML file (except in Includes) as follows:
 
+- $x_par$  (preferred)
 - $x_par
 - $:x_par
-- $x_par$ 
 - $:x_par$
 
 
@@ -125,12 +138,35 @@ For Example:
 .. code-block:: xml
 
   <Parameters>
-    <Parameter name='x' value='5'/>
-    <Parameter name='y' value='5'/>
+    <Parameter
+      name="mu"
+      value="0.005"/>
+    <Parameter
+      name="table_root"
+      value="/path/to/table/root"/>
   </Parameters>
-  <Partition>
-    <SpatialPartition xPar='$x$' yPar='$y$' zPar='1'/>
-  </Partition>
+  
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="$mu$"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="5e-10"
+      referenceViscosity="$mu$"
+      viscosibility="0.0"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="flow_rate"
+      inputVarNames="{time}"
+      coordinateFiles="{$table_root$/time_flow.geos}"
+      voxelFile="$table_root$/flow.geos"
+      interpolation="linear"/>
+  </Functions>
+
 
 
 Units
@@ -161,7 +197,8 @@ Symbolic Math
 Input XML files can also include symbolic mathematical expressions.
 These are placed within pairs of backticks (\`), and use a python syntax.
 Parameters and units are evaluated before symbolic expressions.
-Note: symbolic expressions are sanitized by removing any residual alpha characters, but this can be relaxed if more complicated function are needed.
+Note: symbolic expressions are sanitized before by removing any residual alpha characters, but this can be relaxed if more complicated function are needed.
+Also, while symbolic expressions are allowed within parameters, errors may occur if these are used in a way that leads to nested symbolic expressions.
 
 
 Examples:
@@ -174,9 +211,12 @@ Examples:
     <Parameter name='c' value='1.23e4 [bbl/day]'/>
     <Parameter name='d' value='1.23E-4 [km**2]'/>
   </Parameters>
-  <Nodesets>
-    <Nodeset name='perf' xmin='`$a$ - 0.2*$b$` -1e6 -1e6' xmax='`$c$**2 / $d$` 1e6 1e6' />
-  </Nodesets>
+  <Geometry>
+    <Box
+      name='perf'
+      xMin='`$a$ - 0.2*$b$`, -1e6, -1e6'
+      xMax='`$c$**2 / $d$`, 1e6, 1e6' />
+  </Geometry>
 
 
 Validation

@@ -96,8 +96,8 @@ echo "Installing packages..."
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 source $STARTUP_SCRIPT
-pip install h5py lxml pyevtk
-pip install $DIR/../src/coreComponents/python/modules/pygeos_package
+pip install h5py lxml
+pip install $DIR/../src/coreComponents/python/modules/geosx_xml_tools_package
 
 
 # Print user-info
