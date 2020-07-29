@@ -9,12 +9,13 @@ using namespace geosx;
 
 TEST( testHDFIO_parallel, SingleValueHistory )
 {
+  GEOSX_MARK_FUNCTION;
   string filename( "single_value_parallel" );
   HistoryMetadata spec( "Time History", 1, std::type_index( typeid(real64)));
 
   int rank = MpiWrapper::Comm_rank( );
 
-  HDFSerialHistIO io( filename, spec );
+  HDFHistIO io( filename, spec );
   io.init( true );
   real64 val = 0.0;
   for( localIndex tidx = 0; tidx < 100; ++tidx )

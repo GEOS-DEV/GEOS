@@ -72,7 +72,7 @@ void TimeHistoryOutput::initCollectorParallel( ProblemManager & pm, HistoryColle
     HistoryMetadata time_metadata = collector->getTimeMetadata( );
     time_metadata.setName( metadata.getName( ) + " " + time_metadata.getName( ) );
     m_io.emplace_back( std::make_pair( std::make_unique< HDFHistIO >( m_filename, metadata, m_recordCount ),
-                                       std::make_unique< HDFHistIO >( m_filename, time_metadata, m_recordCount ) ) );
+                                       std::make_unique< HDFHistIO >( m_filename, time_metadata, m_recordCount, 4, MPI_COMM_SELF ) ) );
     collector->registerTimeBufferCall( [this]() { return this->m_io.back().second->getBufferHead( ); } );
     m_io.back().second->init( ( m_recordCount > 0 ) );
   }
@@ -108,8 +108,8 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    HDFFile( m_filename, (m_recordCount == 0), false, MPI_COMM_GEOSX );
-    //HDFFile( m_filename, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    //HDFFile( m_filename, (m_recordCount == 0), false, MPI_COMM_GEOSX );
+    HDFFile( m_filename, (m_recordCount == 0), true, MPI_COMM_GEOSX );
   }
   ProblemManager & pm = dynamicCast< ProblemManager & >( *group );
   for( auto collector_path : m_collectorPaths )
@@ -117,8 +117,8 @@ void TimeHistoryOutput::InitializePostSubGroups( Group * const group )
     Group * tmp = this->GetGroupByPath( collector_path );
     HistoryCollection * collector = Group::group_cast< HistoryCollection * >( tmp );
     GEOSX_ERROR_IF( collector == nullptr, "The target of a time history output event must be a collector! " << collector_path );
-    initCollectorSerial( pm, collector );
-    //initCollectorParallel( pm, collector );
+    //initCollectorSerial( pm, collector );
+    initCollectorParallel( pm, collector );
   }
 }
 
