@@ -163,12 +163,12 @@ struct TPFACellInnerProductKernel
 
           // 2) assemble full coefficient tensor from principal axis/components
           HybridFVMInnerProductHelper::MakeFullTensor( elemPerm, permTensor );
-          LvArray::tensorOps::elementWiseMultiplication< 3 >( faceConormal, elemPerm, faceNormal );
+          LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, elemPerm, faceNormal );
 
           // 3) compute the one-sided face transmissibility
           transMatrix[ifaceLoc][jfaceLoc]  = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
           transMatrix[ifaceLoc][jfaceLoc] *= faceArea / c2fDistance;
-          transMatrix[ifaceLoc][jfaceLoc]  = LvArray::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
+          transMatrix[ifaceLoc][jfaceLoc]  = LvArray::math::max( transMatrix[ifaceLoc][jfaceLoc], weightTolerance );
         }
         else
         {

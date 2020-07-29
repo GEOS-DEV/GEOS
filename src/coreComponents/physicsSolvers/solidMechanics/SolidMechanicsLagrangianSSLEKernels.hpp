@@ -297,7 +297,7 @@ struct ImplicitKernel
         real64 stress0[ 6 ] = LVARRAY_TENSOROPS_INIT_LOCAL_6( DETJ * stress[ k ][ q ] );
         if( !fluidPressure.empty() )
         {
-          LvArray::tensorOps::addIdentityToSymmetric< 3 >( stress0, -DETJ * biotCoefficient * (fluidPressure[ k ] + deltaFluidPressure[ k ]) );
+          LvArray::tensorOps::symAddIdentity< 3 >( stress0, -DETJ * biotCoefficient * (fluidPressure[ k ] + deltaFluidPressure[ k ]) );
         }
 
         for( integer a = 0; a < NUM_NODES_PER_ELEM; ++a )

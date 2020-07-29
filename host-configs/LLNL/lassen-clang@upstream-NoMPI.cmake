@@ -6,6 +6,8 @@ set(GEOSX_TPL_DIR ${GEOSX_TPL_ROOT_DIR}/2020-07-08/install-${CONFIG_NAME}-releas
 
 set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
 
+set(DOXYGEN_EXECUTABLE /usr/bin/doxygen CACHE PATH "")
+
 set(ENABLE_MPI OFF CACHE BOOL "" FORCE)
 unset(MPI_ROOT CACHE )
 unset(MPI_C_COMPILER     CACHE )

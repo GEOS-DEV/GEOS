@@ -655,7 +655,7 @@ void CompositionalMultiphaseFlow::SetupDofs( DomainPartition const & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   dofManager.addCoupling( viewKeyStruct::dofFieldString, fluxApprox );
 }
@@ -813,14 +813,14 @@ void CompositionalMultiphaseFlow::AssembleFluxTerms( real64 const dt,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_discretizationName );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::dofFieldString );
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
   elemDofNumber = mesh.getElemManager()->ConstructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( getName() + "/accessors/" + dofKey );
 
-  fluxApprox.forAllStencils( [&] ( auto const & stencil )
+  fluxApprox.forAllStencils( mesh, [&] ( auto const & stencil )
   {
     KernelLaunchSelector1< FluxKernel >( m_numComponents,
                                          m_numPhases,

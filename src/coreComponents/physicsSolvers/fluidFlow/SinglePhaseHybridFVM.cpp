@@ -58,12 +58,7 @@ void SinglePhaseHybridFVM::RegisterDataOnMesh( Group * const MeshBodies )
     MeshLevel * const meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
     FaceManager * const faceManager = meshLevel->getFaceManager();
 
-    // primary variables: face pressures
-    faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::facePressureString )->
-      setPlotLevel( PlotLevel::LEVEL_0 )->
-      setRegisteringObjects( this->getName())->
-      setDescription( "An array that holds the pressures at the faces." );
-
+    // primary variables: face pressures changes
     faceManager->registerWrapper< array1d< real64 > >( viewKeyStruct::deltaFacePressureString )->
       setPlotLevel( PlotLevel::LEVEL_0 )->
       setRegisteringObjects( this->getName())->

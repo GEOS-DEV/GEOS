@@ -199,7 +199,7 @@ public:
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     // used for face-based BC
-    static constexpr auto boundaryFacePressureString = "boundaryFacePressure";
+    static constexpr auto facePressureString = "facePressure";
 
     // intermediate fields
     static constexpr auto mobilityString = "mobility";

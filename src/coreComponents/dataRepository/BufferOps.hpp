@@ -21,7 +21,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 
 #include <type_traits>
 
