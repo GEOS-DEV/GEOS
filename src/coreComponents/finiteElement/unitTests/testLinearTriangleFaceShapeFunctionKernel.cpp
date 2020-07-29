@@ -13,7 +13,7 @@
  */
 
 /**
- * @file testLinearTriangleFaceShapeFunctionKernel.hpp
+ * @file testLinearTriangleFaceShapeFunctionKernel.cpp
  */
 
 #include "managers/initialization.hpp"

@@ -8,7 +8,7 @@ set( finiteElement_headers
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      elementFormulations/FiniteElementBase.hpp
-     elementFormulations/LinearTetrahedronShapeFunctionKernel.hpp
+     elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
      elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp
      elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
