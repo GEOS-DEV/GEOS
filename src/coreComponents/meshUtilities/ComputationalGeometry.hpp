@@ -21,7 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "LvArray/src/streamIO.hpp"
+#include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geosx

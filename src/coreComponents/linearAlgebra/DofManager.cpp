@@ -566,7 +566,7 @@ void DofManager::setSparsityPatternFromStencil( MATRIX & pattern,
 
   // 2. Assemble diagonal and off-diagonal blocks for elements in stencil
   MATRIX * const pattern_ptr = &pattern;
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
@@ -752,7 +752,7 @@ void DofManager::setSparsityPatternFromStencil( SparsityPattern< globalIndex > &
   array1d< globalIndex > colDofIndices( NC );
 
   // 1. Assemble diagonal and off-diagonal blocks for elements in stencil
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
@@ -1100,7 +1100,7 @@ void DofManager::countRowLengthsFromStencil( arrayView1d< localIndex > const & r
   array1d< globalIndex > colDofIndices( NC );
 
   // 1. Count row contributions from stencil
-  coupling.stencils->forAllStencils( [&]( auto const & stencil )
+  coupling.stencils->forAllStencils( *m_mesh, [&]( auto const & stencil )
   {
     using StenciType = typename std::decay< decltype( stencil ) >::type;
     typename StenciType::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();

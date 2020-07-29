@@ -87,10 +87,14 @@ public:
   {
     /// Fracture set string
     static constexpr auto fractureSetString = "fractureSet";
+    /// Default fracture aperture
+    static constexpr auto defaultApertureString = "defaultAperture";
   };
 
 
 private:
+
+  real64 m_defaultAperture;
 
 };
 

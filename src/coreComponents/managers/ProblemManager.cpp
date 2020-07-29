@@ -38,11 +38,11 @@
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 
-
-
 // System includes
 #include <vector>
 #include <regex>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace geosx
 {

@@ -96,13 +96,13 @@ int WrapperBase::setTotalviewDisplay() const
 {
   //std::cout<<"exectuing WrapperBase::setTotalviewDisplay()"<<std::endl;
 //  TV_ttf_add_row("TYPE", TV_ttf_type_ascii_string, type.c_str() );
-  TV_ttf_add_row( "m_name", LvArray::demangle< string >().c_str(), &m_name );
-  TV_ttf_add_row( "m_parent", LvArray::demangle< Group >().c_str(), m_parent );
+  TV_ttf_add_row( "m_name", LvArray::system::demangle< string >().c_str(), &m_name );
+  TV_ttf_add_row( "m_parent", LvArray::system::demangle< Group >().c_str(), m_parent );
   TV_ttf_add_row( "m_sizedFromParent", "int", &m_sizedFromParent );
-  TV_ttf_add_row( "m_restart_flags", LvArray::demangle< RestartFlags >().c_str(), &m_restart_flags );
-  TV_ttf_add_row( "m_plotLevel", LvArray::demangle< PlotLevel >().c_str(), &m_plotLevel );
-  TV_ttf_add_row( "m_inputFlag", LvArray::demangle< InputFlags >().c_str(), &m_inputFlag );
-  TV_ttf_add_row( "m_description", LvArray::demangle< string >().c_str(), &m_description );
+  TV_ttf_add_row( "m_restart_flags", LvArray::system::demangle< RestartFlags >().c_str(), &m_restart_flags );
+  TV_ttf_add_row( "m_plotLevel", LvArray::system::demangle< PlotLevel >().c_str(), &m_plotLevel );
+  TV_ttf_add_row( "m_inputFlag", LvArray::system::demangle< InputFlags >().c_str(), &m_inputFlag );
+  TV_ttf_add_row( "m_description", LvArray::system::demangle< string >().c_str(), &m_description );
   size_t junk = m_registeringObjects.size();
   TV_ttf_add_row( "m_registeringObjects",
                   totalview::format< string, size_t >( 1, &junk ).c_str(),
