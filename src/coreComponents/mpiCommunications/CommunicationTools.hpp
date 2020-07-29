@@ -79,6 +79,8 @@ private:
   int m_id = -1;
 };
 
+  constexpr operator int()
+  { return m_id; }
 
 class CommunicationTools
 {

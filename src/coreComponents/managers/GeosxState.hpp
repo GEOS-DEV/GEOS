@@ -92,6 +92,13 @@ public:
   GeosxState & operator=( GeosxState const & ) = delete;
   GeosxState & operator=( GeosxState && ) = delete;
 
+  /**
+   * @brief Destructor.
+   * @note This is the default constructor but it must be specified in the `cpp`, otherwise the use of
+   *   `std::unique_ptr` with forward declared types won't work.
+   */
+  ~GeosxState();
+
   GeosxState( GeosxState const & ) = delete;
   GeosxState( GeosxState && ) = delete;
   GeosxState & operator=( GeosxState const & ) = delete;

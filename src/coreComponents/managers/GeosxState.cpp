@@ -31,6 +31,9 @@
 // TPL includes
 #include <conduit.hpp>
 
+// System includes
+#include <ostream>
+
 namespace geosx
 {
 
@@ -150,6 +153,9 @@ GeosxState::~GeosxState()
   GEOSX_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
   currentGlobalState = nullptr;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState::~GeosxState() = default;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
