@@ -46,22 +46,28 @@ public:
    */
   DelftEggUpdates( arrayView1d< real64 const > const & bulkModulus,
                         arrayView1d< real64 const > const & shearModulus,
-                        arrayView1d< real64 const > const & RecompressionIndex,
-                        arrayView1d< real64 const > const & VirginCompressionIndex,
-                        arrayView1d< real64 const > const & CSLSlope,
+                        arrayView2d< real64 const > const & refPressure,
+                        arrayView2d< real64 const > const & refStrainVol,
+                        arrayView1d< real64 const > const & recompressionIndex,
+                        arrayView1d< real64 const > const & virginCompressionIndex,
+                        arrayView1d< real64 const > const & cslSlope,
+                        arrayView1d< real64 const > const & shapeParameter,
                         arrayView2d< real64 > const & newPreConsolidationPressure,
-                        arrayView2d< real64 > const & oldPreConsolidationPresure,
+                        arrayView2d< real64 > const & oldPreConsolidationPressure,
                         arrayView3d< real64, solid::STRESS_USD > const & newStress,
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & stress ):
+                        arrayView3d< real64, solid::STRESS_USD > const & stress):
     SolidBaseUpdates( stress ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
-    m_tanFrictionAngle( tanFrictionAngle ),
-    m_tanDilationAngle( tanDilationAngle ),
-    m_hardeningRate( hardeningRate ),
-    m_newCohesion( newCohesion ),
-    m_oldCohesion( oldCohesion ),
+    m_refPressure( refPressure ),
+    m_refStrainVol( refStrainVol ),
+    m_recompressionIndex( recompressionIndex ),
+    m_virginCompressionIndex( virginCompressionIndex ),
+    m_cslSlope( cslSlope ),
+    m_shapeParameter( shapeParameter ),
+    m_newPreConsolidationPressure( newPreConsolidationPressure ),
+    m_oldPreConsolidationPresure( oldPreConsolidationPressure ),
     m_newStress( newStress ),
     m_oldStress( oldStress )
   {}
@@ -99,20 +105,29 @@ private:
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
   
-  /// A reference to the ArrayView holding the friction angle for each element.
-  arrayView1d< real64 const > const m_tanFrictionAngle;
+  /// A reference to the ArrayView holding the reference pressure (p0) for each element.
+  arrayView2d< real64 const > const m_refPressure;
+
+    /// A reference to the ArrayView holding the shear modulus for each element.
+  arrayView2d< real64 const > const m_refStrainVol;
+
+  /// A reference to the ArrayView holding the recompression index for each element.
+  arrayView1d< real64 const > const m_recompressionIndex;
   
-  /// A reference to the ArrayView holding the dilation angle for each element.
-  arrayView1d< real64 const > const m_tanDilationAngle;
+  /// A reference to the ArrayView holding the virgin compression index for each element.
+  arrayView1d< real64 const > const m_virginCompressionIndex;
   
-  /// A reference to the ArrayView holding the hardening rate for each element.
-  arrayView1d< real64 const > const m_hardeningRate;
+  /// A reference to the ArrayView holding the slope of the critical state line for each element.
+  arrayView1d< real64 const > const m_cslSlope;
   
-  /// A reference to the ArrayView holding the new cohesion for each integration point
-  arrayView2d< real64 > const m_newCohesion;
-  
-  /// A reference to the ArrayView holding the old cohesion for each integration point
-  arrayView2d< real64 > const m_oldCohesion;
+  /// A reference to the ArrayView holding the shape parameter for each integration point
+  arrayView2d< real64 const > const m_shapeParameter;
+
+  /// A reference to the ArrayView holding the old preconsolidation pressure for each integration point
+  arrayView2d< real64 > const m_oldPreConsolidationPressure;
+
+  /// A reference to the ArrayView holding the new preconsolidation pressure for each integration point
+  arrayView2d< real64 > const m_newPreConsolidationPressure;
   
   /// A reference to the ArrayView holding the new stress for each integration point
   arrayView3d< real64, solid::STRESS_USD > const m_newStress;
@@ -131,46 +146,64 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
                                               arraySlice1d< real64 > const & stress,
                                               arraySlice2d< real64 > const & stiffness )
 {
-  real64 const shear = m_shearModulus[k];
-  real64 const bulk  = m_bulkModulus[k];
-  real64 const lame  = bulk - 2.0/3.0*shear;
+  real64 const pc     = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
+  real64 const mu     = m_shearModulus[k];
+  real64 const p0     = m_refPressure[k][q];
+  real64 const eps_v0 = m_refStrainVol[k][q];
   
-  real64 const friction    = m_tanFrictionAngle[k];
-  real64 const dilation    = m_tanDilationAngle[k];
-  real64 const hardening   = m_hardeningRate[k];
-  real64 const oldCohesion = m_oldCohesion[k][q];
-  
-  real64 cohesion = oldCohesion;
-  
-  // set stiffness to elastic predictor
-  
+  real64 const M      = m_cslSlope[k];
+  real64 const Cr     = m_recompressionIndex[k];
+  real64 const Cc     = m_virginCompressionIndex[k];
+  real64 const alpha  = m_shapeParameter[k];
+
+  // two-invariant decomposition of strain increment
+
+  real64 strainIncrementVol = 0; //volumetric part of strain increment 
+  for(localIndex i=0; i<3; ++i)
+  {
+    strainIncrementVol += strainIncrement[i];
+  }
+
+  real64 temp = strainIncrementVol/3
+  array1d< real64 > deviator(6);  // array allocation
+  for(localIndex i=0; i<3; ++i)
+  {
+    deviator[i] = strainIncrement[i]-temp;
+    deviator[i+3] = strainIncrement[i+3];
+  }
+
+  real64 strainIncrementDev = 0; //deviatoric part of strain increment
+  for(localIndex i=0; i<3; ++i)
+  {
+    strainIncrementDev += deviator[i]*deviator[i];
+    strainIncrementDev += deviator[i+3]*deviator[i+3]/2; //because of Voigt form of strain increment vector
+  }
+  strainIncrementDev = strainIncrementDev + 1e-15; // (NOT needed for now?) perturbed to avoid divide by zero when strainIncrementDev=0;
+
+  strainIncrementDev *= std::sqrt(2./3.);
+
+  // two-invariant decomposition of old stress in P-Q space (mean & deviatoric stress)
+
+  real64 oldP = 0;
+  real64 oldQ = 0;
   for(localIndex i=0; i<6; ++i)
   {
-    for(localIndex j=0; j<6; ++j)
-    {
-      stiffness[i][j] = 0;
-    }
+    stress[i] = m_oldStress[k][q][i];
+    
   }
+
+  // Recover elastic strains from the previous step, based on stress from the previous step
+  // [Note: in order to minimize data transfer, we are not storing and passing elastic strains] 
+
+  real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1) + eps_v0 ;
+  real64 oldElasticStrainDev = oldQ/3/mu;  
   
-  stiffness[0][0] = lame + 2*shear;
-  stiffness[0][1] = lame;
-  stiffness[0][2] = lame;
 
-  stiffness[1][0] = lame;
-  stiffness[1][1] = lame + 2*shear;
-  stiffness[1][2] = lame;
-
-  stiffness[2][0] = lame;
-  stiffness[2][1] = lame;
-  stiffness[2][2] = lame + 2*shear;
-
-  stiffness[3][3] = shear;
-  stiffness[4][4] = shear;
-  stiffness[5][5] = shear;
 
   // elastic predictor
-  // newStress = oldStress + stiffness*strainIncrement
   
+  // newP= oldP * exp(-1/Cr* strainIncrementVol)
+  // newQ = oldQ + 3 * mu * strainIncrementDev
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = m_oldStress[k][q][i];
@@ -182,8 +215,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   }
 
   // two-invariant decomposition in P-Q space (mean & deviatoric stress)
-  
-  real64 trialP = 0;
+ real64 trialP = 0;
   for(localIndex i=0; i<3; ++i)
   {
     trialP += stress[i];
@@ -201,7 +233,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   for(localIndex i=0; i<3; ++i)
   {
     trialQ += deviator[i]*deviator[i];
-    trialQ += 2* deviator[i+3]*deviator[i+3];
+    trialQ += deviator[i+3]*deviator[i+3];
   }
   trialQ = std::sqrt(trialQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
   
@@ -210,7 +242,6 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     deviator[i] /= trialQ; // normalized deviatoric direction, "nhat"
   }
   trialQ *= std::sqrt(3./2.);
-  
   // check yield function F <= 0
   
   real64 yield = trialQ + friction*trialP - cohesion;
