@@ -527,7 +527,7 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
   fieldNames["face"].emplace_back( string( extrinsicMeshData::RuptureState::key ) );
   fieldNames["node"].emplace_back( string( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   elementManager.forElementSubRegions< CellElementSubRegion >( [] ( auto & elemSubRegion )
   {
@@ -608,10 +608,10 @@ int SurfaceGenerator::SeparationDriver( DomainPartition & domain,
     modifiedObjects.clearNewFromModified();
 
     // 1) Assign new global indices to the new objects
-    CommunicationTools::AssignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    CommunicationTools::AssignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    CommunicationTools::AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-//    CommunicationTools::AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
+    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+//    getGlobalState().getCommunicationTools().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;
 

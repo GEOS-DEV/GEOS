@@ -226,7 +226,7 @@ void SinglePhaseBase::InitializePostInitialConditions_PreSubGroups( Group * cons
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames, &mesh, domain->getNeighbors() );
 
   ResetViews( mesh );
 

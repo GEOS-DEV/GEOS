@@ -249,7 +249,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString ) );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
-        CommunicationTools::SynchronizeFields( fieldNames,
+        getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                                domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                                domain.getNeighbors() );
 

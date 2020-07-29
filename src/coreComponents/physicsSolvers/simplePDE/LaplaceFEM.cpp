@@ -273,7 +273,7 @@ void LaplaceFEM::ApplySystemSolution( DofManager const & dofManager,
   std::map< string, string_array > fieldNames;
   fieldNames["node"].emplace_back( m_fieldName );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );

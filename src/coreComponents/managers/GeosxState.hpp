@@ -20,15 +20,12 @@
 #define GEOSX_MANAGERS_GEOSXSTATE_HPP_
 
 // Source includes
-#include "ProblemManager.hpp"
-
-// TPL includes
-#include <conduit.hpp>
+#include "common/DataTypes.hpp"
 
 // System includes
 #include <functional>
 #include <chrono>
-#include <ostream>
+#include <memory>
 
 // Forward declaration of conduit::Node
 namespace conduit
@@ -38,6 +35,12 @@ namespace conduit
 
 namespace geosx
 {
+
+// Forward declarations.
+class ProblemManager;
+class FieldSpecificationManager;
+class FunctionManager;
+class CommunicationTools;
 
 std::string durationToString( std::chrono::system_clock::duration const duration );
 
@@ -55,6 +58,13 @@ class GeosxState
 {
 public:
   GeosxState();
+
+  /**
+   * @brief Destructor.
+   * @note This is the default constructor but it must be specified in the `cpp`, otherwise the use of
+   *   `std::unique_ptr` with forward declared types won't work.
+   */
+  ~GeosxState();
 
   GeosxState( GeosxState const & ) = delete;
   GeosxState( GeosxState && ) = delete;
@@ -86,6 +96,12 @@ public:
 
   FunctionManager & getFunctionManager();
 
+  CommunicationTools & getCommunicationTools()
+  { 
+    GEOSX_ERROR_IF( m_commTools == nullptr, "Not initialized." );
+    return *m_commTools; 
+  }
+
   std::chrono::system_clock::duration getInitTime() const
   { return m_initTime; }
 
@@ -93,9 +109,10 @@ public:
   { return m_runTime; }
 
 private:
+  State m_state;
   std::unique_ptr< conduit::Node > m_rootNode;
   std::unique_ptr< ProblemManager > m_problemManager;
-  State m_state;
+  std::unique_ptr< CommunicationTools > m_commTools;
   std::chrono::system_clock::duration m_initTime;
   std::chrono::system_clock::duration m_runTime;
 };

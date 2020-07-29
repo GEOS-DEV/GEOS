@@ -212,7 +212,7 @@ void LagrangianContactSolver::ImplicitStepComplete( real64 const & time_n,
   // Need a synchronization of deltaTraction as will be used in AssembleStabilization
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString ) );
-  CommunicationTools::SynchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );
@@ -1710,7 +1710,7 @@ void LagrangianContactSolver::ApplySystemSolution( DofManager const & dofManager
   // fractureStateString is synchronized in UpdateFractureState
   // previousFractureStateString and previousLocalJumpString used locally only
 
-  CommunicationTools::SynchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );
@@ -1870,7 +1870,7 @@ void LagrangianContactSolver::SynchronizeFractureState( DomainPartition & domain
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );

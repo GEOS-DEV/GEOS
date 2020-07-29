@@ -543,7 +543,7 @@ void CompositionalMultiphaseFlow::InitializePostInitialConditions_PreSubGroups( 
   fieldNames["elems"].emplace_back( string( viewKeyStruct::pressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::globalCompDensityString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames, &mesh, domain.getNeighbors() );
 
   // set mass fraction flag on fluid models
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
@@ -1270,7 +1270,7 @@ void CompositionalMultiphaseFlow::ApplySystemSolution( DofManager const & dofMan
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaGlobalCompDensityString ) );
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {

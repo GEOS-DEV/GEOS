@@ -555,7 +555,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Velocity );
   fieldNames["node"].emplace_back( keys::Acceleration );
 
-  CommunicationTools::SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().SynchronizePackSendRecvSizes( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Acceleration );
 
@@ -608,7 +608,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::SynchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().SynchronizePackSendRecv( fieldNames, &mesh, domain.getNeighbors(), m_iComm, true );
 
   explicitKernelDispatch( mesh,
                           targetRegionNames(),
@@ -622,7 +622,7 @@ real64 SolidMechanicsLagrangianFEM::ExplicitStep( real64 const & time_n,
 
   fsManager.ApplyFieldValue< parallelDevicePolicy< 1024 > >( time_n, &domain, "nodeManager", keys::Velocity );
 
-  CommunicationTools::SynchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
+  getGlobalState().getCommunicationTools().SynchronizeUnpack( &mesh, domain.getNeighbors(), m_iComm, true );
 
   return dt;
 }
@@ -1191,7 +1191,7 @@ SolidMechanicsLagrangianFEM::ApplySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
                                          domain.getMeshBody( 0 )->getMeshLevel( 0 ),
                                          domain.getNeighbors(),
                                          true );

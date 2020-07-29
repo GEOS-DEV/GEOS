@@ -246,17 +246,17 @@ void DomainPartition::SetupCommunications( bool use_nonblocking )
 
   nodeManager->SetMaxGlobalIndex();
 
-  CommunicationTools::AssignGlobalIndices( *faceManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().AssignGlobalIndices( *faceManager, *nodeManager, m_neighbors );
 
-  CommunicationTools::AssignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
+  getGlobalState().getCommunicationTools().AssignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
 
-  CommunicationTools::FindMatchedPartitionBoundaryObjects( faceManager,
+  getGlobalState().getCommunicationTools().FindMatchedPartitionBoundaryObjects( faceManager,
                                                            m_neighbors );
 
-  CommunicationTools::FindMatchedPartitionBoundaryObjects( nodeManager,
+  getGlobalState().getCommunicationTools().FindMatchedPartitionBoundaryObjects( nodeManager,
                                                            m_neighbors );
 
-  CommunicationTools::FindGhosts( meshLevel, m_neighbors, use_nonblocking );
+  getGlobalState().getCommunicationTools().FindGhosts( meshLevel, m_neighbors, use_nonblocking );
 
   faceManager->SortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
   faceManager->computeGeometry( nodeManager );

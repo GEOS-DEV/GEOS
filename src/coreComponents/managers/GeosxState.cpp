@@ -14,10 +14,15 @@
 
 // Source includes
 #include "GeosxState.hpp"
+#include "managers/ProblemManager.hpp"
 #include "managers/initialization.hpp"
+#include "mpiCommunications/CommunicationTools.hpp"
 
 // TPL includes
 #include <conduit.hpp>
+
+// System includes
+#include <ostream>
 
 namespace geosx
 {
@@ -78,9 +83,10 @@ std::ostream & operator<<( std::ostream & os, State const state )
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 GeosxState::GeosxState():
+  m_state( State::UNINITIALIZED ),
   m_rootNode( new conduit::Node ),
   m_problemManager( nullptr ),
-  m_state( State::UNINITIALIZED ),
+  m_commTools( std::make_unique< CommunicationTools >() ),
   m_initTime(),
   m_runTime()
 {
@@ -96,6 +102,9 @@ GeosxState::GeosxState():
   m_problemManager = std::make_unique< ProblemManager >( "Problem", *m_rootNode );
   GEOSX_LOG_VAR( m_problemManager->getPath() );
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState::~GeosxState() = default;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
