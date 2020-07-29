@@ -48,6 +48,15 @@ namespace conduit
   class Node;
 }
 
+#if defined( GEOSX_USE_CALIPER )
+  //Forward declaration of cali::ConfigManager.
+  namespace cali
+  {
+    class ConfigManager;
+  }
+#endif
+
+
 namespace geosx
 {
 

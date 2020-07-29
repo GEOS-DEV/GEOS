@@ -155,7 +155,15 @@ GeosxState::~GeosxState()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-GeosxState::~GeosxState() = default;
+GeosxState::~GeosxState()
+{
+#if defined( GEOSX_USE_CALIPER )
+  m_caliperManager->flush();
+#endif
+
+  GEOSX_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
+  currentGlobalState = nullptr;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()

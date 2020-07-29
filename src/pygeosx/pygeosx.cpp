@@ -367,8 +367,15 @@ static bool addExitHandler( PyObject * module ){
 }
 
 // Allow mixing designated and non-designated initializers in the same initializer list.
+// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
+// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wc99-designator"
+#if defined( __clang_version__ )
+  #pragma GCC diagnostic ignored "-Wc99-designator"
+#else
+  #pragma GCC diagnostic ignored "-Wpedantic"
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 
 /**
  *
@@ -444,5 +451,3 @@ PyInit_pygeosx()
   // Since we return module we don't want to decrease the reference count.
   return module.release();
 }
-
-#pragma GCC diagnostic pop
