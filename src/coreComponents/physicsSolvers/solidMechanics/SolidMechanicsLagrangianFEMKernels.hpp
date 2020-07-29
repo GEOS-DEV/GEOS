@@ -18,11 +18,11 @@
 
 #pragma once
 
+#include "../../finiteElement/elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 //#include "finiteElement/ElementLibrary/FiniteElementBase.h"
-#include "finiteElement/elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"

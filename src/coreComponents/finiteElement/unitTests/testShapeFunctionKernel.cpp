@@ -22,9 +22,11 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
+
+#include "../elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
 
 using namespace geosx;
+using namespace finiteElement;
 
 static real64 inverse( real64 (& J)[3][3] )
 {
@@ -84,7 +86,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      TrilinearHexahedronShapeFunctionKernel::shapeFunctionValues( q, N );
+      Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -99,7 +101,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( q,
+      viewDetJ[q] = Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( q,
                                                                                       xCoords,
                                                                                       dNdX );
 

@@ -19,10 +19,13 @@
 #ifndef GEOSX_CORE_FINITEELEMENT_TRILINEARHEXAHEDRON
 #define GEOSX_CORE_FINITEELEMENT_TRILINEARHEXAHEDRON
 
-#include "FiniteElementShapeFunctionKernelBase.hpp"
+#include "FiniteElementBase.hpp"
+#include "LagrangeBasis1.hpp"
 
 
 namespace geosx
+{
+namespace finiteElement
 {
 
 /**
@@ -52,17 +55,18 @@ namespace geosx
  *                            0                   1             |/____ xi0
  *
  */
-class TrilinearHexahedronShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
+
+class Hexahedron_Lagrange1_GaussLegendre2 : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 8;
+  constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 8;
 
 
-  virtual ~TrilinearHexahedronShapeFunctionKernel() override final
+  virtual ~Hexahedron_Lagrange1_GaussLegendre2() override final
   {}
 
   virtual localIndex getNumQuadraturePoints() const override final
@@ -87,44 +91,14 @@ public:
   static void shapeFunctionValues( localIndex const q,
                                    real64 (&N)[numNodes] )
   {
-    for( localIndex a=0; a<numNodes; ++a )
-    {
-      N[a] = 0.125 *
-             ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-             ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
-             ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-    }
-  }
+    int qa, qb, qc;
+    LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
+    real64 const qCoords[3] = { quadratureFactor*LagrangeBasis1::parentSupportCoord( qa ),
+                                quadratureFactor*LagrangeBasis1::parentSupportCoord( qb ),
+                                quadratureFactor*LagrangeBasis1::parentSupportCoord( qc ) };
 
-  /**
-   * @brief Calculate the parent shape function derivatives at a quadrature
-   *   point for a given support point.
-   * @param q Index of the quadrature point.
-   * @param a Index of the support point.
-   * @param dNdXi An array to store the parent shape function derivatives for
-   *  support point @p a at the quadrature point @p q.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static void
-  parentShapeFunctionDerivatives( localIndex const q,
-                                  localIndex const a,
-                                  real64 (& dNdXi)[3] )
-  {
-    dNdXi[0] = 0.125 *
-               parentCoords0( a ) *
-               ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
-               ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-    dNdXi[1] = 0.125 *
-               ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-               parentCoords1( a ) *
-               ( 1 + quadratureFactor*parentCoords2( q )*parentCoords2( a ) );
-    dNdXi[2] = 0.125 *
-               ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
-               ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) ) *
-               parentCoords2( a );
+    LagrangeBasis1::TensorProduct3D::value( qCoords, N );
   }
-
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -154,8 +128,10 @@ public:
 
 
 private:
+  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord(1) - LagrangeBasis1::parentSupportCoord(0);
+
   /// The volume of the element in the parent configuration.
-  constexpr static real64 parentVolume = 8.0;
+  constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
 
   /// The weight of each quadrature point.
   constexpr static real64 weight = parentVolume / numQuadraturePoints;
@@ -164,100 +140,6 @@ private:
   /// relative to the origin and the outer extent of the element in the
   /// parent space.
   constexpr static real64 quadratureFactor = 1.0 / 1.732050807568877293528;
-
-  /**
-   * @brief Calculates the linear index for support/quadrature points from ijk
-   *   coordinates.
-   * @param i The index in the xi0 direction (0,1)
-   * @param j The index in the xi1 direction (0,1)
-   * @param k The index in the xi2 direction (0,1)
-   * @return The linear index of the support/quadrature point (0-7)
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static int linearMap( int const i, int const j, int const k )
-  {
-    return i + 2 * j + 4 * k;
-  }
-
-  /**
-   * @brief Calculate the Cartesian index for xi0 given the linear index of a
-   *   support point.
-   * @param a The linear index of support point
-   * @return The Cartesian index of the support point in the xi0 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static int basisIndex0( localIndex const a )
-  {
-    return (a & 1);
-  }
-
-  /**
-   * @brief Calculate the Cartesian index for xi1 given the linear index of a
-   *   support point.
-   * @param a The linear index of support point
-   * @return The Cartesian index of the support point in the xi1 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static int basisIndex1( localIndex const a )
-  {
-    return ( a & 2 ) >> 1;
-  }
-
-  /**
-   * @brief Calculate the Cartesian index for xi2 given the linear index of a
-   *   support point.
-   * @param a The linear index of support point
-   * @return The Cartesian index of the support point in the xi2 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static int basisIndex2( localIndex const a )
-  {
-    return ( a & 4 ) >> 2;
-  }
-
-
-  /**
-   * @brief Calculate the parent coordinates for the xi0 direction, given the
-   *   linear index of a support point.
-   * @param a The linear index of support point
-   * @return parent coordinate in the xi0 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords0( localIndex const a )
-  {
-    return -1.0 + 2.0 * (a & 1);
-  }
-
-  /**
-   * @brief Calculate the parent coordinates for the xi1 direction, given the
-   *   linear index of a support point.
-   * @param a The linear index of support point
-   * @return parent coordinate in the xi1 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords1( localIndex const a )
-  {
-    return -1.0 + ( a & 2 );
-  }
-
-  /**
-   * @brief Calculate the parent coordinates for the xi2 direction, given the
-   *   linear index of a support point.
-   * @param a The linear index of support point
-   * @return parent coordinate in the xi2 direction.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  constexpr static real64 parentCoords2( localIndex const a )
-  {
-    return -1.0 + 0.5 * ( a & 4 );
-  }
 
 
   /**
@@ -275,6 +157,7 @@ private:
                                       int const qc,
                                       real64 const (&X)[numNodes][3],
                                       real64 ( &J )[3][3] );
+
 
   /**
    * @brief Apply a Jacobian transformation matrix from the parent space to the
@@ -298,19 +181,20 @@ private:
 
 };
 
+#if 1
 //*************************************************************************************************
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
+Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
                                                                   real64 const (&X)[numNodes][3],
                                                                   real64 (& dNdX)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-  int const qa = basisIndex0( q );
-  int const qb = basisIndex1( q );
-  int const qc = basisIndex2( q );
+
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   jacobianTransformation( qa, qb, qc, X, J );
 
@@ -321,18 +205,95 @@ TrilinearHexahedronShapeFunctionKernel::shapeFunctionDerivatives( localIndex con
   return detJ * weight;
 }
 
+#else
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
+                                        real64 const (&X)[numNodes][3],
+                                        real64 (& dNdX)[numNodes][3] )
+{
+  real64 J[3][3] = {{0}};
+
+  real64 const quadratureCoords[3] = { quadratureFactor * LagrangeBasis1::TensorProduct3D::parentCoords0( q ),
+                                       quadratureFactor * LagrangeBasis1::TensorProduct3D::parentCoords1( q ),
+                                       quadratureFactor * LagrangeBasis1::TensorProduct3D::parentCoords2( q ) };
+
+  real64 const psi0[2] = { 0.5 - 0.5 * quadratureCoords[0],
+                           0.5 + 0.5 * quadratureCoords[0] };
+  real64 const psi1[2] = { 0.5 - 0.5 * quadratureCoords[1],
+                           0.5 + 0.5 * quadratureCoords[1] };
+  real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
+                           0.5 + 0.5 * quadratureCoords[2] };
+  constexpr real64 dpsi[2] = { -0.5, 0.5 };
+
+
+
+  for( localIndex a=0; a<2; ++a )
+  {
+    for( localIndex b=0; b<2; ++b )
+    {
+      for( localIndex c=0; c<2; ++c )
+      {
+        real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+                                  psi0[a] * dpsi[b] * psi2[c],
+                                  psi0[a] * psi1[b] * dpsi[c] };
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+
+        for( int i = 0; i < 3; ++i )
+        {
+          for( int j = 0; j < 3; ++j )
+          {
+            J[i][j] = J[i][j] + dNdXi[ j ] * X[nodeIndex][i];
+          }
+        }
+      }
+    }
+  }
+
+  real64 const detJ = inverse( J );
+
+
+  for( localIndex a=0; a<2; ++a )
+  {
+    for( localIndex b=0; b<2; ++b )
+    {
+      for( localIndex c=0; c<2; ++c )
+      {
+        real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
+                                  psi0[a] * dpsi[b] * psi2[c],
+                                  psi0[a] * psi1[b] * dpsi[c] };
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
+        for( int i = 0; i < 3; ++i )
+        {
+          dNdX[nodeIndex][i] = 0.0;
+          for( int j = 0; j < 3; ++j )
+          {
+            dNdX[nodeIndex][i] = dNdX[nodeIndex][i] + dNdXi[ j ] * J[j][i];
+          }
+        }
+      }
+    }
+  }
+
+  return detJ;
+}
+
+
+
+#endif
+
 //*************************************************************************************************
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-TrilinearHexahedronShapeFunctionKernel::
+Hexahedron_Lagrange1_GaussLegendre2::
 jacobianTransformation( int const qa,
                         int const qb,
                         int const qc,
                         real64 const (&X)[numNodes][3],
                         real64 ( &J )[3][3] )
 {
-
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
                                                          0.5 - 0.5 * quadratureFactor };
   constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
@@ -342,18 +303,18 @@ jacobianTransformation( int const qa,
 
   for( int a=0; a<2; ++a )
   {
-    int const qaa = abs( a-qa );
+    int const qaa = ( a ^ qa );
     for( int b=0; b<2; ++b )
     {
-      int const qbb = abs( b-qb );
+      int const qbb = ( b^qb );
       for( int c=0; c<2; ++c )
       {
-        int const qcc = abs( c-qc );
+        int const qcc = ( c^qc );
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                   dpsi[b] * psiProduct[ qaa + qcc ],
                                   dpsi[c] * psiProduct[ qaa + qbb ] };
 
-        localIndex const nodeIndex = linearMap( a, b, c );
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
         for( int i = 0; i < 3; ++i )
         {
@@ -372,13 +333,14 @@ jacobianTransformation( int const qa,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-TrilinearHexahedronShapeFunctionKernel::
+Hexahedron_Lagrange1_GaussLegendre2::
 applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
                                                         int const qb,
                                                         int const qc,
                                                         real64 const ( &invJ )[3][3],
                                                         real64 (& dNdX)[numNodes][3] )
 {
+
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
                                                          0.5 - 0.5 * quadratureFactor };
   constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
@@ -388,17 +350,17 @@ applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
 
   for( int a=0; a<2; ++a )
   {
-    int const qaa = abs( a-qa );
+    int const qaa = ( a^qa );
     for( int b=0; b<2; ++b )
     {
-      int const qbb = abs( b-qb );
+      int const qbb = ( b^qb );
       for( int c=0; c<2; ++c )
       {
-        int const qcc = abs( c-qc );
+        int const qcc = ( c^qc );
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                   dpsi[b] * psiProduct[ qaa + qcc ],
                                   dpsi[c] * psiProduct[ qaa + qbb ] };
-        localIndex const nodeIndex = linearMap( a, b, c );
+        localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
         for( int i = 0; i < 3; ++i )
         {
           dNdX[nodeIndex][i] = 0.0;
@@ -413,26 +375,24 @@ applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
 }
 
 
-
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-TrilinearHexahedronShapeFunctionKernel::
+Hexahedron_Lagrange1_GaussLegendre2::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-  int const qa = basisIndex0( q );
-  int const qb = basisIndex1( q );
-  int const qc = basisIndex2( q );
+  int qa, qb, qc;
+  LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   jacobianTransformation( qa, qb, qc, X, J );
 
   return detJ(J);
 }
 
-
+}
 }
 
 #endif //FINITE_ELEMENT_SHAPE_KERNEL
