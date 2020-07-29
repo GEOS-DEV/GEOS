@@ -21,6 +21,7 @@
 #include "managers/DomainPartition.hpp"
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
+#include "managers/GeosxState.hpp"
 
 namespace geosx
 {
@@ -40,21 +41,20 @@ bool RestartOutput::Execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                              integer const cycleNumber,
                              integer const GEOSX_UNUSED_PARAM( eventCounter ),
                              real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                             Group * domain )
+                             Group * GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition * domainPartition = Group::group_cast< DomainPartition * >( domain );
-  ProblemManager * problemManager = Group::group_cast< ProblemManager * >( domainPartition->getParent());
+  ProblemManager & problemManager = getGlobalState().getProblemManager();
 
   // Ignoring the eventProgress indicator for now to be compliant with the integrated test repo
   // integer const eventProgressPercent = static_cast<integer const>(eventProgress * 100.0);
   char fileName[200] = {0};
-  sprintf( fileName, "%s_%s_%09d", problemManager->getProblemName().c_str(), "restart", cycleNumber );
+  sprintf( fileName, "%s_%s_%09d", problemManager.getProblemName().c_str(), "restart", cycleNumber );
 
-  problemManager->prepareToWrite();
-  writeTree( fileName );
-  problemManager->finishWriting();
+  problemManager.prepareToWrite();
+  writeTree( fileName, getGlobalState().getRootConduitNode() );
+  problemManager.finishWriting();
 
   return false;
 }

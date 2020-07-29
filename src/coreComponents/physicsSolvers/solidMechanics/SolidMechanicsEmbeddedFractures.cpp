@@ -947,10 +947,10 @@ void SolidMechanicsEmbeddedFractures::ApplySystemSolution( DofManager const & do
   fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString ) );
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString ) );
 
-  CommunicationTools::SynchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+  getGlobalState().getCommunicationTools().SynchronizeFields( fieldNames,
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 
 }
 

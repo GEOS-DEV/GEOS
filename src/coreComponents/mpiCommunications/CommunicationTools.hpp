@@ -44,7 +44,7 @@ public:
     m_freeIDs( freeIDs ),
     m_id(-1)
   {
-    GEOSX_ERROR_IF_GE( freeIDs.size(), 0 );
+    GEOSX_ERROR_IF_EQ( freeIDs.size(), 0 );
     m_id = *freeIDs.begin();
     freeIDs.erase( freeIDs.begin() );
   }

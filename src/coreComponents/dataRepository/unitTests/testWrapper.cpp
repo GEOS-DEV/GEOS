@@ -12,9 +12,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
+// Source includes
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
+#include <conduit.hpp>
 
 using namespace geosx;
 using namespace dataRepository;
@@ -24,7 +28,8 @@ class WrapperSetGet : public ::testing::Test
 {
 public:
   WrapperSetGet():
-    m_group( "root", nullptr ),
+    m_node(),
+    m_group( "root", m_node ),
     m_wrapper( "wrapper", &m_group ),
     m_wrapperBase( m_wrapper )
   {}
@@ -105,6 +110,7 @@ public:
   }
 
 private:
+  conduit::Node m_node;
   Group m_group;
   Wrapper< T > m_wrapper;
   WrapperBase & m_wrapperBase;

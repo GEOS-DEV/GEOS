@@ -21,11 +21,27 @@
 // TPL includes
 #include <conduit.hpp>
 
+#if defined( GEOSX_USE_CALIPER )
+  #include <caliper/cali-manager.h>
+#endif
+
 // System includes
 #include <ostream>
 
 namespace geosx
 {
+
+GeosxState * currentGlobalState = nullptr;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GeosxState & getGlobalState()
+{
+  GEOSX_ERROR_IF( currentGlobalState == nullptr,
+                  "The state has not been created." );
+
+  return *currentGlobalState;
+}
+
 
 /**
  * @class Timer
@@ -82,29 +98,48 @@ std::ostream & operator<<( std::ostream & os, State const state )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-GeosxState::GeosxState():
+GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOptions ):
   m_state( State::UNINITIALIZED ),
-  m_rootNode( new conduit::Node ),
+  m_commandLineOptions( std::move( commandLineOptions ) ),
+  m_rootNode( std::make_unique< conduit::Node >() ),
   m_problemManager( nullptr ),
   m_commTools( std::make_unique< CommunicationTools >() ),
+#if defined( GEOSX_USE_CALIPER )
+  m_caliperManager( std::make_unique< cali::ConfigManager >() ),
+#endif
   m_initTime(),
   m_runTime()
 {
   Timer timer( m_initTime );
 
+#if defined( GEOSX_USE_CALIPER )
+  setupCaliper( *m_caliperManager, getCommandLineOptions() );
+#endif
+
   std::string restartFileName;
-  if( ProblemManager::ParseRestart( restartFileName ) )
+  if( ProblemManager::ParseRestart( restartFileName, getCommandLineOptions() ) )
   {
     GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
-    dataRepository::loadTree( restartFileName, *m_rootNode );
+    dataRepository::loadTree( restartFileName, getRootConduitNode() );
   }
 
-  m_problemManager = std::make_unique< ProblemManager >( "Problem", *m_rootNode );
-  GEOSX_LOG_VAR( m_problemManager->getPath() );
+  m_problemManager = std::make_unique< ProblemManager >( "Problem", getRootConduitNode() );
+  GEOSX_LOG_VAR( getProblemManager().getPath() );
+
+  GEOSX_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
+  currentGlobalState = this;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-GeosxState::~GeosxState() = default;
+GeosxState::~GeosxState()
+{
+#if defined( GEOSX_USE_CALIPER )
+  m_caliperManager->flush();
+#endif
+
+  GEOSX_ERROR_IF( currentGlobalState != this, "This shouldn't be possible." );
+  currentGlobalState = nullptr;
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool GeosxState::initializeDataRepository()
@@ -163,32 +198,16 @@ void GeosxState::run()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+dataRepository::Group & GeosxState::getProblemManagerAsGroup()
+{ return getProblemManager(); }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FieldSpecificationManager & GeosxState::getFieldSpecificationManager()
 { return getProblemManager().getFieldSpecificationManager(); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 FunctionManager & GeosxState::getFunctionManager()
 { return getProblemManager().getFunctionManager(); }
-
-
-static std::function< GeosxState * () > s_stateAccessor;
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-GeosxState & getGlobalState()
-{
-  GEOSX_ERROR_IF( s_stateAccessor == nullptr,
-                  "A state accessor has not been set, set one with setGlobalStateAccessor." );
-
-  GeosxState * const state = s_stateAccessor();
-  GEOSX_ERROR_IF( state == nullptr,
-                  "The state has not been created." );
-
-  return *state;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void setGlobalStateAccessor( std::function< GeosxState * () > const & accessor )
-{ s_stateAccessor = accessor; }
 
 } // namespace geosx
 

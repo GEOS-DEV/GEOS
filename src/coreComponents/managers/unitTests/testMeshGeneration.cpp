@@ -18,6 +18,7 @@
 
 #include "managers/ProblemManager.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
 #include "meshUtilities/MeshManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/FaceManager.hpp"
@@ -61,11 +62,11 @@ protected:
 
   void SetUp() override
   {
-    m_nodeManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
-    m_faceManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
-    m_edgeManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getEdgeManager();
+    m_nodeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getNodeManager();
+    m_faceManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getFaceManager();
+    m_edgeManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getEdgeManager();
 
-    ElementRegionManager * const elemManager = problemManager->getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
+    ElementRegionManager * const elemManager = getGlobalState().getProblemManager().getDomainPartition()->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
     GEOSX_ERROR_IF_NE_MSG( elemManager->GetRegions().size(), 1, "Only one region should exist." );
 
     ElementRegionBase * const elemRegion = elemManager->GetRegion( 0 );
@@ -81,8 +82,6 @@ protected:
 
   static void SetUpTestCase()
   {
-    problemManager = new ProblemManager( "Problem", nullptr );
-
     string const inputStream =
       "<Problem>"
       "  <Mesh>"
@@ -115,11 +114,11 @@ protected:
     }
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager->ProcessInputFileRecursive( xmlProblemNode );
+    getGlobalState().getProblemManager().ProcessInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition * domain  = problemManager->getDomainPartition();
-    MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
+    DomainPartition * domain  = getGlobalState().getProblemManager().getDomainPartition();
+    MeshManager * meshManager = getGlobalState().getProblemManager().GetGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
     meshManager->GenerateMeshLevels( domain );
 
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
@@ -127,24 +126,10 @@ protected:
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
-    problemManager->ProblemSetup();
-    problemManager->ApplyInitialConditions();
+    getGlobalState().getProblemManager().ProblemSetup();
+    getGlobalState().getProblemManager().ApplyInitialConditions();
   }
-
-  /**
-   * @brief Destructor.
-   */
-  static void TearDownTestCase()
-  {
-    delete problemManager;
-    problemManager = nullptr;
-  }
-
-  static ProblemManager * problemManager;
 };
-
-ProblemManager * MeshGenerationTest::problemManager = nullptr; //!< the main problemManager.
-
 
 TEST_F( MeshGenerationTest, sizes )
 {
@@ -543,7 +528,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 

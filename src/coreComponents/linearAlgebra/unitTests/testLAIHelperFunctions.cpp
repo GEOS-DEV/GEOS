@@ -16,8 +16,7 @@
  * @file testLAIHelperFunctions.cpp
  */
 
-#include "gtest/gtest.h"
-
+// Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
@@ -28,6 +27,10 @@
 #include "meshUtilities/MeshManager.hpp"
 #include "mpiCommunications/CommunicationTools.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
+#include <conduit.hpp>
 
 using namespace geosx;
 
@@ -43,8 +46,6 @@ protected:
    */
   static void SetUpTestCase()
   {
-    problemManager = new ProblemManager( "Problem", nullptr );
-
     string const inputStream =
       "<Problem>"
       "  <Mesh>"
@@ -72,18 +73,19 @@ protected:
       GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
     }
 
+    ProblemManager & problemManager = getGlobalState().getProblemManager();
     int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
     dataRepository::Group * commandLine =
-      problemManager->GetGroup< dataRepository::Group >( problemManager->groupKeys.commandLine );
-    commandLine->registerWrapper< integer >( problemManager->viewKeys.xPartitionsOverride.Key() )->
+      problemManager.GetGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
+    commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
       setApplyDefaultValue( mpiSize );
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    problemManager->ProcessInputFileRecursive( xmlProblemNode );
+    problemManager.ProcessInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition * domain  = problemManager->getDomainPartition();
-    MeshManager * meshManager = problemManager->GetGroup< MeshManager >( problemManager->groupKeys.meshManager );
+    DomainPartition * domain  = problemManager.getDomainPartition();
+    MeshManager * meshManager = problemManager.GetGroup< MeshManager >( problemManager.groupKeys.meshManager );
     meshManager->GenerateMeshLevels( domain );
 
     ElementRegionManager * elementManager = domain->getMeshBody( 0 )->getMeshLevel( 0 )->getElemManager();
@@ -91,27 +93,14 @@ protected:
     elementManager->ProcessInputFileRecursive( topLevelNode );
     elementManager->PostProcessInputRecursive();
 
-    problemManager->ProblemSetup();
-    problemManager->ApplyInitialConditions();
+    problemManager.ProblemSetup();
+    problemManager.ApplyInitialConditions();
   }
-
-  /**
-   * @brief Destructor.
-   */
-  static void TearDownTestCase()
-  {
-    delete problemManager;
-    problemManager = nullptr;
-  }
-
-  static ProblemManager * problemManager;
 };
-
-ProblemManager * LAIHelperFunctionsTest::problemManager = nullptr; //!< the main problemManager.
 
 TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager * const nodeManager = meshLevel->getNodeManager();
 
@@ -178,7 +167,7 @@ TEST_F( LAIHelperFunctionsTest, Test_NodalVectorPermutation )
 
 TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 {
-  DomainPartition * const domain = problemManager->getDomainPartition();
+  DomainPartition * const domain = getGlobalState().getProblemManager().getDomainPartition();
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();;
 
@@ -254,7 +243,7 @@ TEST_F( LAIHelperFunctionsTest, Test_CellCenteredVectorPermutation )
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
-  geosx::basicSetup( argc, argv );
+  GeosxState state( geosx::basicSetup( argc, argv ) );
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;

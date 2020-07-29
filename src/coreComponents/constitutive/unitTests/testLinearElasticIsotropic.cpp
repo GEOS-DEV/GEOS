@@ -12,25 +12,28 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
-
-#include "gtest/gtest.h"
-
+// Source includes
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
-
 #include "dataRepository/xmlWrapper.hpp"
+
+// TPL includes
+#include <gtest/gtest.h>
+#include <conduit.hpp>
+
 using namespace geosx;
 using namespace ::geosx::constitutive;
 
 TEST( LinearElasticIsotropicTests, testAllocation )
 {
-  LinearElasticIsotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticIsotropic cm( "model", &rootGroup );
 
   localIndex constexpr numElems = 2;
   localIndex constexpr numQuadraturePoints = 3;
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElems );
   cm.AllocateConstitutiveData( &disc, numQuadraturePoints );
 
@@ -50,13 +53,15 @@ TEST( LinearElasticIsotropicTests, testAllocation )
 
 TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 {
-  LinearElasticIsotropic cm( "model", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  LinearElasticIsotropic cm( "model", &rootGroup );
   real64 constexpr K = 2e10;
   real64 constexpr G = 1e10;
   cm.setDefaultBulkModulus( K );
   cm.setDefaultShearModulus( G );
 
-  dataRepository::Group disc( "discretization", nullptr );
+  dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( 2 );
   cm.AllocateConstitutiveData( &disc, 2 );
   LinearElasticIsotropic::KernelWrapper cmw = cm.createKernelUpdates();
@@ -186,7 +191,9 @@ TEST( LinearElasticIsotropicTests, testStateUpdatePoint )
 
 TEST( LinearElasticIsotropicTests, testXML )
 {
-  ConstitutiveManager constitutiveManager( "constitutive", nullptr );
+  conduit::Node node;
+  dataRepository::Group rootGroup( "root", node );
+  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
   LinearElasticIsotropic cm( "model", &constitutiveManager );
 
   string const inputStream =
@@ -209,5 +216,4 @@ TEST( LinearElasticIsotropicTests, testXML )
   xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.child( "Constitutive" );
   constitutiveManager.ProcessInputFileRecursive( xmlConstitutiveNode );
   constitutiveManager.PostProcessInputRecursive();
-
 }

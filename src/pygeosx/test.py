@@ -44,11 +44,11 @@ printAndFlush( "In python after applyInitialConditions: current time = {}".forma
 while pygeosx.run() != pygeosx.COMPLETED:
     currentTime = problem.getWrapper( "Events/time" ).value( True )
     printAndFlush( "In python: current time = {}".format( currentTime[ 0 ] ) )
-    currentTime[ 0 ] += 1e-6
+    # currentTime[ 0 ] += 1e-6
 
 currentTime = problem.getWrapper( "Events/time" ).value( False )
 printAndFlush( "In python after after the simulation has ended: current time = {}".format( currentTime[ 0 ] ) )
 
-printGroup( problem.getGroup( "domain/MeshBodies/mesh1/Level0/nodeManager" ) )
+# printGroup( problem.getGroup( "domain/MeshBodies/mesh1/Level0/nodeManager" ) )
 
 

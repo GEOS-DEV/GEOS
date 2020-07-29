@@ -84,7 +84,7 @@ using conduitTypeInfo = internal::conduitTypeInfo< std::remove_const_t< std::rem
 
 std::string writeRootFile( conduit::Node & root, std::string const & rootPath );
 
-void writeTree( std::string const & path );
+void writeTree( std::string const & path, conduit::Node & root );
 
 void loadTree( std::string const & path, conduit::Node & root );
 

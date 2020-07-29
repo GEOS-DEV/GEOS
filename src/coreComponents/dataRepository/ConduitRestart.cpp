@@ -88,14 +88,14 @@ std::string readRootNode( std::string const & rootPath )
 }
 
 /* Write out a restart file. */
-void writeTree( std::string const & path )
+void writeTree( std::string const & path, conduit::Node & root )
 {
   GEOSX_MARK_FUNCTION;
 
-  conduit::Node root;
-  std::string const filePathForRank = writeRootFile( root, path );
+  conduit::Node rootFileNode;
+  std::string const filePathForRank = writeRootFile( rootFileNode, path );
   GEOSX_LOG_RANK( "Writing out restart file at " << filePathForRank );
-  conduit::relay::io::save( getGlobalState().getRootConduitNode(), filePathForRank, "hdf5" );
+  conduit::relay::io::save( root, filePathForRank, "hdf5" );
 }
 
 

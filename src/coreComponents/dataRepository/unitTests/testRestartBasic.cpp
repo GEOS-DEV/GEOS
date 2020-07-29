@@ -15,6 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
+#include "managers/GeosxState.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "dataRepository/ConduitRestart.hpp"
@@ -41,7 +42,8 @@ public:
 
   virtual void SetUp() override
   {
-    m_group = new Group( m_groupName, nullptr );
+    m_node = std::make_unique< conduit::Node >();
+    m_group = std::make_unique< Group >( m_groupName, *m_node );
     m_groupSize = rand( 0, 100 );
     m_group->resize( m_groupSize );
 
@@ -51,9 +53,7 @@ public:
   }
 
   virtual void TearDown() override
-  {
-    delete m_group;
-  }
+  {}
 
   void test()
   {
@@ -65,16 +65,16 @@ public:
 
     // Write out the tree
     m_group->prepareToWrite();
-    writeTree( m_fileName );
+    writeTree( m_fileName, *m_node );
     m_group->finishWriting();
 
     // Delete geosx tree and reset the conduit tree.
-    delete m_group;
-    rootConduitNode.reset();
+    m_group = nullptr;
+    m_node = std::make_unique< conduit::Node >();
 
     // Load in the tree
-    loadTree( m_fileName );
-    m_group = new Group( m_groupName, nullptr );
+    loadTree( m_fileName, *m_node );
+    m_group = std::make_unique< Group >( m_groupName, *m_node );
     m_wrapper = m_group->registerWrapper< T >( m_wrapperName );
     m_group->loadFromConduit();
 
@@ -91,7 +91,8 @@ private:
   std::string const m_wrapperName = "wrapper";
   std::string const m_fileName = "testRestartBasic_SingleWrapperTest";
 
-  Group * m_group;
+  std::unique_ptr< conduit::Node > m_node;
+  std::unique_ptr< Group > m_group;
   int m_groupSize;
   Wrapper< T > * m_wrapper;
   int m_wrapperSizedFromParent;
