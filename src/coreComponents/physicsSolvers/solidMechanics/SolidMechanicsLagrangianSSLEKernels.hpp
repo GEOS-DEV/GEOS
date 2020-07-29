@@ -21,7 +21,6 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "finiteElement/elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
 #include "finiteElement/Kinematics.h"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 

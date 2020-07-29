@@ -664,10 +664,6 @@ void ProblemManager::ApplyNumericalMethods()
     FiniteElementDiscretization const * const
     feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( discretizationName );
 
-//    FiniteVolumeManager const &
-//    finiteVolumeManager = numericalMethodManager->getFiniteVolumeManager();
-//
-//    FluxApproximationBase const * const fvFluxApprox = finiteVolumeManager.getFluxApproximation( discretizationName );
 
     for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
     {
@@ -689,17 +685,17 @@ void ProblemManager::ApplyNumericalMethods()
             {
               string const elementTypeString = subRegion.GetElementTypeString();
 
-              std::unique_ptr<FiniteElementShapeFunctionKernelBase> newFE = feDiscretization->factory( elementTypeString );
+              std::unique_ptr<FiniteElementBase> newFE = feDiscretization->factory( elementTypeString );
               finiteElement::dispatch3D( *newFE,
                                        [ &, newFE=std::move(newFE)  ] ( auto finiteElement ) mutable
               {
                 using FE_TYPE = TYPEOFREF( finiteElement );
-                subRegion.template registerWrapper< FiniteElementShapeFunctionKernelBase>( discretizationName,
-                                                                                           std::move(newFE) )->
+                subRegion.template registerWrapper< FiniteElementBase >( discretizationName,
+                                                                         std::move(newFE) )->
                   setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 
                 FE_TYPE &
-                fe = dynamic_cast<FE_TYPE&>(subRegion.template getReference< FiniteElementShapeFunctionKernelBase >( discretizationName ));
+                fe = dynamic_cast<FE_TYPE&>(subRegion.template getReference< FiniteElementBase >( discretizationName ));
 
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 

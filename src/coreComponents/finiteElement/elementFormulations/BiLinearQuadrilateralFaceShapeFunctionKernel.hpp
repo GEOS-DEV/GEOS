@@ -19,13 +19,13 @@
 #ifndef GEOSX_CORE_FINITEELEMENT_BILINEARQUADRILATERALFACE
 #define GEOSX_CORE_FINITEELEMENT_BILINEARQUADRILATERALFACE
 
-#include "FiniteElementShapeFunctionKernelBase.hpp"
+#include "FiniteElementBase.hpp"
 
 
 namespace geosx
 {
 
-class BiLinearQuadrilateralFaceShapeFunctionKernel : public FiniteElementShapeFunctionKernelBase
+class BiLinearQuadrilateralFaceShapeFunctionKernel : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
