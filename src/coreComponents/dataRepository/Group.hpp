@@ -927,18 +927,18 @@ public:
 
   /**
    * @brief Calls RegisterDataOnMesh() recursively.
-   * @param[in,out] MeshBodies the group of MeshBody objects to register data on.
+   * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    */
-  virtual void RegisterDataOnMeshRecursive( Group * const MeshBodies );
+  virtual void RegisterDataOnMeshRecursive( Group * const meshBodies );
 
   /**
    * @brief Register data on mesh entities.
-   * @param[in,out] MeshBody the group of MeshBody objects to register data on.
+   * @param[in,out] meshBodies the group of MeshBody objects to register data on.
    *
    * This function is used to register data on mesh entities such as the NodeManager,
    * FaceManager...etc.
    */
-  virtual void RegisterDataOnMesh( Group * const MeshBody );
+  virtual void RegisterDataOnMesh( Group * const meshBodies );
 
   ///@}
 

@@ -446,7 +446,7 @@ void LagrangianContactSolver::UpdateDeformationForCoupling( DomainPartition & do
   FaceManager & faceManager = *meshLevel.getFaceManager();
   ElementRegionManager & elemManager = *meshLevel.getElemManager();
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
 
@@ -1049,7 +1049,7 @@ void LagrangianContactSolver::
   NodeManager & nodeManager = *mesh.getNodeManager();
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 > const &
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternal );
@@ -1146,7 +1146,7 @@ void LagrangianContactSolver::
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
   ContactRelationBase const * const contactRelation = constitutiveManager->GetGroup< ContactRelationBase const >( m_contactRelationName );
 
-  FaceManager::NodeMapType::ViewTypeConst const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
 
   string const tracDofKey = dofManager.getKey( viewKeyStruct::tractionString );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
@@ -1372,7 +1372,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
   // Get the finite volume method used to compute the stabilization
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const * const stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
+  FluxApproximationBase const & stabilizationMethod = fvManager.getFluxApproximation( m_stabilizationName );
 
   // Get the "face to element" map (valid for the entire mesh)
   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
@@ -1428,7 +1428,7 @@ void LagrangianContactSolver::AssembleStabilization( DomainPartition const & dom
 
   arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion->getReference< globalIndex_array >( tracDofKey );
 
-  stabilizationMethod->forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  stabilizationMethod.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
     typename FaceElementStencil::IndexContainerViewConstType const & sei = stencil.getElementIndices();
 

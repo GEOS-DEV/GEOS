@@ -598,10 +598,10 @@ void HydrofractureSolver::SetupSystem( DomainPartition & domain,
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  FluxApproximationBase const & fluxApprox = *fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_flowSolver->getDiscretization() );
 
 
-  fluxApprox.forStencils< FaceElementStencil >( [&]( FaceElementStencil const & stencil )
+  fluxApprox.forStencils< FaceElementStencil >( mesh, [&]( FaceElementStencil const & stencil )
   {
     for( localIndex iconn=0; iconn<stencil.size(); ++iconn )
     {
