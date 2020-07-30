@@ -1,5 +1,4 @@
 #include "PackCollection.hpp"
-#include "SetIndexCollection.hpp"
 
 namespace geosx
 {
@@ -70,7 +69,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
       if( set_wrapper != nullptr )
       {
         SortedArrayView< localIndex const > const & set = set_wrapper->reference();
-	m_setsIndices[ set_idx ].resize( 0 );
+        m_setsIndices[ set_idx ].resize( 0 );
         if( set.size() > 0 )
         {
           m_setsIndices[ set_idx ].insert( 0, set.begin(), set.end() );
@@ -84,7 +83,7 @@ void PackCollection::updateSetsIndices( ProblemManager & pm )
 void PackCollection::collect( Group * domain_group,
                               real64 const GEOSX_UNUSED_PARAM( time_n ),
                               real64 const GEOSX_UNUSED_PARAM( dt ),
-			      localIndex collectionIdx,
+                              localIndex collectionIdx,
                               buffer_unit_type * & buffer )
 {
   GEOSX_MARK_FUNCTION;
@@ -103,9 +102,9 @@ void PackCollection::collect( Group * domain_group,
       localIndex sz = set.size( );
       if( sz > 0 )
       {
-	// if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the
-	// indices internally
-	target->PackByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
+        // if we could directly transfer a sorted array to an array1d including on device this wouldn't require storing a copy of the
+        // indices internally
+        target->PackByIndex( buffer, m_setsIndices[ collectionIdx ], false, true );
       }
     }
   }

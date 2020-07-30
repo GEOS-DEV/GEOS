@@ -49,6 +49,7 @@ public:
   /// @copydoc geosx::HistoryCollection::getMetadata
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
 
+  /// @copydoc geosx::HistoryCollection::getTargetName
   virtual const string & getTargetName( ) const override
   {
     return m_fieldName;
@@ -81,7 +82,7 @@ protected:
   virtual void collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
-			localIndex const collectionIdx,
+                        localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) override;
 
 private:

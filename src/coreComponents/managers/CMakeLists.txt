@@ -17,7 +17,6 @@ set(managers_headers
     Tasks/TaskBase.hpp
     TimeHistory/TimeHistoryCollection.hpp
     TimeHistory/PackCollection.hpp
-    TimeHistory/SetIndexCollection.hpp
     TimeHistory/HistoryIO.hpp
     TimeHistory/HistoryDataSpec.hpp
     Outputs/BlueprintOutput.hpp
@@ -58,7 +57,6 @@ set(managers_sources
     Tasks/TaskBase.cpp
     Tasks/TasksManager.cpp
     TimeHistory/PackCollection.cpp
-    TimeHistory/SetIndexCollection.cpp
     Functions/FunctionBase.cpp
     Functions/SymbolicFunction.cpp
     Functions/TableFunction.cpp

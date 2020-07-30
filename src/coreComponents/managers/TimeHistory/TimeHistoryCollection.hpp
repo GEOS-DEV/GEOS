@@ -42,7 +42,7 @@ public:
   /// @copydoc geosx::dataRepository::Group::Group(std::string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent ),
-    m_collectionCount(1),
+    m_collectionCount( 1 ),
     m_timeBufferCall(),
     m_bufferCalls()
   {   }
@@ -66,6 +66,7 @@ public:
   /**
    * @brief Get the metadata for what this collector collects.
    * @param problemManager The problem manager.
+   * @param collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
   virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx )
@@ -78,7 +79,7 @@ public:
   /**
    * @brief Get the name of the object being targeted for collection.
    * @return The collection target's name
-   */ 
+   */
   virtual const string & getTargetName( ) const = 0;
 
   /**
@@ -100,7 +101,7 @@ public:
       // std::function defines the == and =! comparable against nullptr_t to check the
       //  function pointer is actually assigned (an error would be thrown on the call attempt even so)
       GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
-		      "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
+                      "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
       // using GEOSX_ERROR_IF_EQ causes type issues since the values are used in iostreams
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
       collect( domain, time_n, dt, collectionIdx, buffer );
@@ -115,13 +116,14 @@ public:
 
   /**s
    * @brief Register a callback that gives the current head of the time history data buffer.
+   * @param collectionIdx Which collection item to register the buffer callback for.
    * @param bufferCall A functional that when invoked returns a pointer to the head of a buffer at least large enough to
    *                    serialize one timestep of history data into.
    * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
    */
   void registerBufferCall( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall )
   {
-    GEOSX_ERROR_IF( collectionIdx >= this->getCollectionCount( ), "Invalid collection index specified.");
+    GEOSX_ERROR_IF( collectionIdx >= this->getCollectionCount( ), "Invalid collection index specified." );
     m_bufferCalls[collectionIdx] = bufferCall;
   }
 
@@ -151,7 +153,7 @@ public:
    */
   virtual localIndex getNumMetaCollectors( ) const
   {
-    return 0; 
+    return 0;
   }
 
   /**
@@ -162,7 +164,7 @@ public:
    * immediately
    *         after being used to perform output during simulation initialization.
    */
-  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx ) 
+  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx )
   {
     GEOSX_UNUSED_VAR( problemManager );
     GEOSX_UNUSED_VAR( metaIdx );
@@ -179,7 +181,7 @@ protected:
    * @param collectionIdx The index of the collection operation to collect from the targeted collection event.
    * @param buffer A properly-sized buffer to serialize history data into.
    */
-  virtual void collect( Group * domain, real64 const time_n, real64 const dt, localIndex const collecitonIdx, buffer_unit_type * & buffer ) = 0;
+  virtual void collect( Group * domain, real64 const time_n, real64 const dt, localIndex const collectionIdx, buffer_unit_type * & buffer ) = 0;
 
 protected:
   /// The number of discrete collection operations described by metadata this collection collects.
