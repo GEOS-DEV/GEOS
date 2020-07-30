@@ -24,6 +24,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 
 class PyramidShapeFunctionKernel : public FiniteElementBase
@@ -213,5 +215,5 @@ real64 PyramidShapeFunctionKernel::shapeFunctionDerivatives( localIndex const q,
 
 
 }
-
+}
 #endif //GEOSX_CORE_FINITEELEMENT_PYRAMIDSHAPEFUNCTIONKERNEL

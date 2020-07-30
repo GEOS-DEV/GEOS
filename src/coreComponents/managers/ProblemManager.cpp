@@ -685,17 +685,17 @@ void ProblemManager::ApplyNumericalMethods()
             {
               string const elementTypeString = subRegion.GetElementTypeString();
 
-              std::unique_ptr<FiniteElementBase> newFE = feDiscretization->factory( elementTypeString );
+              std::unique_ptr<finiteElement::FiniteElementBase> newFE = feDiscretization->factory( elementTypeString );
               finiteElement::dispatch3D( *newFE,
                                        [ &, newFE=std::move(newFE)  ] ( auto finiteElement ) mutable
               {
                 using FE_TYPE = TYPEOFREF( finiteElement );
-                subRegion.template registerWrapper< FiniteElementBase >( discretizationName,
-                                                                         std::move(newFE) )->
+                subRegion.template registerWrapper<finiteElement::FiniteElementBase>( discretizationName,
+                                                                                      std::move(newFE) )->
                   setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 
                 FE_TYPE &
-                fe = dynamic_cast<FE_TYPE&>(subRegion.template getReference< FiniteElementBase >( discretizationName ));
+                fe = dynamic_cast<FE_TYPE&>(subRegion.template getReference< finiteElement::FiniteElementBase >( discretizationName ));
 
                 localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 

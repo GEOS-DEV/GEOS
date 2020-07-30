@@ -25,6 +25,7 @@
 #include "finiteElement/elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 
 using namespace geosx;
+using namespace finiteElement;
 
 template< typename POLICY >
 void testKernelDriver()

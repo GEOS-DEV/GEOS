@@ -24,6 +24,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 
 class BiLinearWedgeShapeFunctionKernel : public FiniteElementBase
@@ -197,6 +199,7 @@ real64 BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( localIndex co
   return detJ * weight;
 }
 
+}
 }
 
 #endif //GEOSX_CORE_FINITEELEMENT_BILINEARWEDGESHAPEFUNCTIONKERNEL

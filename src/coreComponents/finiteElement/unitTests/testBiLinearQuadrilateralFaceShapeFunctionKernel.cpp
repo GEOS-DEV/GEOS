@@ -25,6 +25,7 @@
 #include "finiteElement/elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
 
 using namespace geosx;
+using namespace finiteElement;
 
 template< typename POLICY >
 void testKernelDriver()

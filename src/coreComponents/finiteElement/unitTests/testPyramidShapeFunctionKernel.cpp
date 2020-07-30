@@ -25,6 +25,7 @@
 #include <chrono>
 
 using namespace geosx;
+using namespace finiteElement;
 
 static real64 inverse( real64 (& J)[3][3] )
 {

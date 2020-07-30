@@ -344,9 +344,10 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           CellBlock::NodeMapType const & elemsToNodes = elementSubRegion->nodeList();
           // Get the number of nodes per element
           localIndex const numNodesPerElement = elemsToNodes.size( 1 );
+
           // Get finite element discretization info
-          std::unique_ptr< FiniteElementBase >
-          fe = feDiscretization->getFiniteElement( elementSubRegion->GetElementTypeString() );
+          finiteElement::FiniteElementBase const &
+          fe = elementSubRegion->getReference<finiteElement::FiniteElementBase>( m_solidSolver->getDiscretizationName() );
 
           // Resize based on number of dof of the subregion
           int nUdof = numNodesPerElement * 3;

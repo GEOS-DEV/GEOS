@@ -9,6 +9,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 /**
  * @class FiniteElementShapeFunctionKernelBase
@@ -89,6 +91,7 @@ public:
 
 };
 
+}
 }
 
 #endif //GEOSX_CORE_FINITEELEMENT_FINITEELEMENTSHAPEFUNCTIONKERNELBASE
