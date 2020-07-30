@@ -20,13 +20,12 @@
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 
-#include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
-#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
-#include "elementFormulations/TrilinearHexahedronShapeFunctionKernel.hpp"
-#include "elementFormulations/PyramidShapeFunctionKernel.hpp"
 #include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
-#include "elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
+#include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
+#include "elementFormulations/PyramidShapeFunctionKernel.hpp"
 
 
 
@@ -52,9 +51,9 @@ void
 dispatch3D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<Hexahedron_Lagrange1_GaussLegendre2 const *>(&input) )
+  if( dynamic_cast<H1_Hexahedron_Lagrange1_GaussLegendre2 const *>(&input) )
   {
-    lambda( static_cast<Hexahedron_Lagrange1_GaussLegendre2 const &>(input) );
+    lambda( static_cast<H1_Hexahedron_Lagrange1_GaussLegendre2 const &>(input) );
   }
   else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel const *>(&input) )
   {

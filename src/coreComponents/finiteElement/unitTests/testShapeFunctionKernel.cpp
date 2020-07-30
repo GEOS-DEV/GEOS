@@ -23,7 +23,7 @@
 
 #include <chrono>
 
-#include "../elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 
 using namespace geosx;
 using namespace finiteElement;
@@ -86,7 +86,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
+      H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -101,7 +101,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( q,
+      viewDetJ[q] = H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( q,
                                                                                       xCoords,
                                                                                       dNdX );
 

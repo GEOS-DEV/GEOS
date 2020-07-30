@@ -24,6 +24,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 class LinearTriangleFaceShapeFunctionKernel : public FiniteElementBase
 {
@@ -77,5 +79,6 @@ private:
 
 };
 
+}
 }
 #endif //GEOSX_CORE_FINITEELEMENT_LINEARTRIANGLEFACE

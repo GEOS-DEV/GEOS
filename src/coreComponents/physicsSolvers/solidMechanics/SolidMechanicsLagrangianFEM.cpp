@@ -319,9 +319,8 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-#if 1
-      FiniteElementBase const &
-      fe = elementSubRegion.getReference<FiniteElementBase>( this->getDiscretizationName() );
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference<finiteElement::FiniteElementBase>( this->getDiscretizationName() );
       finiteElement::dispatch3D( fe,
                                [&] ( auto const finiteElement )
       {
@@ -358,39 +357,7 @@ void SolidMechanicsLagrangianFEM::updateIntrinsicNodalData( DomainPartition * co
             }
           }
         }
-      });
-#else
-      std::unique_ptr< FiniteElementBase >
-      fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
-
-      for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
-      {
-
-        // TODO this integration needs to be be carried out properly.
-        real64 elemMass = 0;
-        for( localIndex q=0; q<fe->n_quadrature_points(); ++q )
-        {
-          elemMass += rho[er][esr][k][q] * detJ[k][q];
-        }
-        for( localIndex a=0; a< elemsToNodes.size( 1 ); ++a )
-        {
-          mass[elemsToNodes[k][a]] += elemMass/elemsToNodes.size( 1 );
-        }
-
-        for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
-        {
-          if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
-          {
-            m_sendOrReceiveNodes.insert( elemsToNodes[k][a] );
-          }
-          else
-          {
-            m_nonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
-          }
-        }
-      }
-
-#endif
+      } );
     } );
   } );
 }
@@ -434,8 +401,8 @@ void SolidMechanicsLagrangianFEM::InitializePostInitialConditions_PreSubGroups( 
       arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      FiniteElementBase const &
-      fe = elementSubRegion.getReference<FiniteElementBase>( getDiscretizationName() );
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference<finiteElement::FiniteElementBase>( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
                                [&] ( auto const finiteElement )
       {

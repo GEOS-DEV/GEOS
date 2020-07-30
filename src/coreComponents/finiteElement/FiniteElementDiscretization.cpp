@@ -65,7 +65,7 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
   {
     if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedron )
     {
-      rval = std::make_unique<Hexahedron_Lagrange1_GaussLegendre2>();
+      rval = std::make_unique<H1_Hexahedron_Lagrange1_GaussLegendre2>();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
     {
