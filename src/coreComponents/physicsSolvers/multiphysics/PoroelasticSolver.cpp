@@ -302,7 +302,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
     finiteElement::FiniteElementBase const &
-    fe = elementSubRegion.getReference<finiteElement::FiniteElementBase>( m_solidSolver->getDiscretizationName() );
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
     localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     // TODO: remove use of R1Tensor and use device policy
@@ -410,7 +410,7 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
     finiteElement::FiniteElementBase const &
-    fe = elementSubRegion.getReference<finiteElement::FiniteElementBase>( m_solidSolver->getDiscretizationName() );
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
     localIndex const numQuadraturePoints = fe.getNumQuadraturePoints();
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );

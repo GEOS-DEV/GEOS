@@ -4,7 +4,7 @@
 
 set(testSources
     testBiLinearQuadrilateralFaceShapeFunctionKernel.cpp
-    testBiLinearWedgeShapeFunctionKernel.cpp
+    testH1_Wedge_Lagrange1_Gauss6.cpp
     testH1_Tetrahedron_Lagrange1_Gauss1.cpp
     testLinearTriangleFaceShapeFunctionKernel.cpp
     testPyramidShapeFunctionKernel.cpp

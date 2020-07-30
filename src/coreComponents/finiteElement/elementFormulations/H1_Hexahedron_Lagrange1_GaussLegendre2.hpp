@@ -39,20 +39,20 @@ namespace finiteElement
  * to simplify the mapping to the parent coordinates and tensor product
  * indices.
  *
-   *                              6                   7
-   *                               o-----------------o
-   *                              /.                /|
-   *                             / .               / |
-   *                          4 o-----------------o 5|
-   *                            |  .              |  |
-   *                            |  .              |  |
-   *                            |  .              |  |
-   *                            |  .              |  |
-   *                            |2 o..............|..o 3       xi2
-   *                            | ,               | /          |
-   *                            |,                |/           | / xi1
-   *                            o-----------------o            |/
-   *                           0                   1           ------ xi0
+ *                              6                   7
+ *                               o-----------------o
+ *                              /.                /|
+ *                             / .               / |
+ *                          4 o-----------------o 5|
+ *                            |  .              |  |
+ *                            |  .              |  |
+ *                            |  .              |  |
+ *                            |  .              |  |
+ *                            |2 o..............|..o 3       xi2
+ *                            | ,               | /          |
+ *                            |,                |/           | / xi1
+ *                            o-----------------o            |/
+ *                           0                   1           ------ xi0
  *
  */
 
@@ -93,9 +93,9 @@ public:
   {
     int qa, qb, qc;
     LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { quadratureFactor*LagrangeBasis1::parentSupportCoord( qa ),
-                                quadratureFactor*LagrangeBasis1::parentSupportCoord( qb ),
-                                quadratureFactor*LagrangeBasis1::parentSupportCoord( qc ) };
+    real64 const qCoords[3] = { quadratureFactor *LagrangeBasis1::parentSupportCoord( qa ),
+                                quadratureFactor *LagrangeBasis1::parentSupportCoord( qb ),
+                                quadratureFactor *LagrangeBasis1::parentSupportCoord( qc ) };
 
     LagrangeBasis1::TensorProduct3D::value( qCoords, N );
   }
@@ -128,7 +128,7 @@ public:
 
 
 private:
-  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord(1) - LagrangeBasis1::parentSupportCoord(0);
+  constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord( 1 ) - LagrangeBasis1::parentSupportCoord( 0 );
 
   /// The volume of the element in the parent configuration.
   constexpr static real64 parentVolume = parentLength*parentLength*parentLength;
@@ -171,12 +171,12 @@ private:
    *   support points at the coordinates of the quadrature point @p q.
    */
   GEOSX_HOST_DEVICE
-  static void 
-  applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
-                                                          int const qb,
-                                                          int const qc,
-                                                          real64 const ( &invJ )[3][3],
-                                                          real64 (& dNdX)[numNodes][3] );
+  static void
+    applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
+                                                            int const qb,
+                                                            int const qc,
+                                                            real64 const ( &invJ )[3][3],
+                                                            real64 ( &dNdX )[numNodes][3] );
 
 
 };
@@ -210,8 +210,8 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex con
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
-                                        real64 const (&X)[numNodes][3],
-                                        real64 (& dNdX)[numNodes][3] )
+                                                                         real64 const (&X)[numNodes][3],
+                                                                         real64 (& dNdX)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -288,11 +288,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-jacobianTransformation( int const qa,
-                        int const qb,
-                        int const qc,
-                        real64 const (&X)[numNodes][3],
-                        real64 ( &J )[3][3] )
+  jacobianTransformation( int const qa,
+                          int const qb,
+                          int const qc,
+                          real64 const (&X)[numNodes][3],
+                          real64 ( & J )[3][3] )
 {
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
                                                          0.5 - 0.5 * quadratureFactor };
@@ -334,11 +334,11 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
-                                                        int const qb,
-                                                        int const qc,
-                                                        real64 const ( &invJ )[3][3],
-                                                        real64 (& dNdX)[numNodes][3] )
+  applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
+                                                          int const qb,
+                                                          int const qc,
+                                                          real64 const ( &invJ )[3][3],
+                                                          real64 (& dNdX)[numNodes][3] )
 {
 
   constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
@@ -379,8 +379,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2::
-transformedQuadratureWeight( localIndex const q,
-                             real64 const (&X)[numNodes][3] )
+  transformedQuadratureWeight( localIndex const q,
+                               real64 const (&X)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -389,7 +389,7 @@ transformedQuadratureWeight( localIndex const q,
 
   jacobianTransformation( qa, qb, qc, X, J );
 
-  return detJ(J);
+  return detJ( J );
 }
 
 }

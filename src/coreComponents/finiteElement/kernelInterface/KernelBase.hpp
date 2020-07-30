@@ -590,7 +590,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
       string const elementTypeString = elementSubRegion.GetElementTypeString();
 
       FiniteElementBase &
-      subRegionFE = elementSubRegion.template getReference<FiniteElementBase>( finiteElementName );
+      subRegionFE = elementSubRegion.template getReference< FiniteElementBase >( finiteElementName );
 
       finiteElement::dispatch3D( subRegionFE,
                                  [&] ( auto const finiteElement )
