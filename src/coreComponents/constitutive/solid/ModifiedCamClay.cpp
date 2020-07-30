@@ -24,7 +24,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent ):
+  ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_defaultRefPInvariant(),
   m_defaultRefElasticStrainVolumetric(),
@@ -45,8 +45,6 @@ ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent
   m_associativity(),
   m_newPreconsolidationPressure(),
   m_oldPreconsolidationPressure(),
-//  m_newPlasticStrain(),
-//  m_oldPlasticStrain(),
   m_newElasticStrain(),
   m_oldElasticStrain()
 {
@@ -146,14 +144,6 @@ ModifiedCamClay::ModifiedCamClay( std::string const & name, Group * const parent
   registerWrapper( viewKeyStruct::oldElasticStrainString, &m_oldElasticStrain )->
     setApplyDefaultValue( -1 )->
     setDescription( "Old elastic strain field" );
-    
-//  registerWrapper( viewKeyStruct::newPlasticStrainString, &m_newPlasticStrain )->
-//    setApplyDefaultValue( -1 )->
-//    setDescription( "New plastic strain field" );
-//
-//  registerWrapper( viewKeyStruct::oldPlasticStrainString, &m_oldPlasticStrain )->
-//    setApplyDefaultValue( -1 )->
-//    setDescription( "Old plastic strain field" );
 }
 
 
@@ -195,8 +185,6 @@ ModifiedCamClay::DeliverClone( string const & name,
   newConstitutiveRelation->m_oldPreconsolidationPressure = m_oldPreconsolidationPressure;
   newConstitutiveRelation->m_newElasticStrain = m_newElasticStrain;
   newConstitutiveRelation->m_oldElasticStrain = m_oldElasticStrain;
-//  newConstitutiveRelation->m_newPlasticStrain = m_newPlasticStrain;
-//  newConstitutiveRelation->m_oldPlasticStrain = m_oldPlasticStrain;
 }
 
 void ModifiedCamClay::AllocateConstitutiveData( dataRepository::Group * const parent,
@@ -220,9 +208,6 @@ void ModifiedCamClay::AllocateConstitutiveData( dataRepository::Group * const pa
   
   m_newElasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
   m_oldElasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );// TODO: figure out how to set initial strain
-    
-//  m_newPlasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
-//  m_oldPlasticStrain.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
   
   // set arrays to default values
   m_referencePInvariant = m_defaultRefPInvariant;

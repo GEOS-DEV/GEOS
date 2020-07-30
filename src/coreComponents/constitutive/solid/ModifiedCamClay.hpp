@@ -66,8 +66,6 @@ public:
     m_associativity( associativity ),
     m_newPreconsolidationPressure( newPreconsPressure ),
     m_oldPreconsolidationPressure( oldPreconsPressure ),
-//    m_newPlasticStrain( newPlasticStrain ),
-//    m_oldPlasticStrain( oldPlasticStrain ),
     m_newElasticStrain( newElasticStrain ),
     m_oldElasticStrain( oldElasticStrain ) 
   {}
@@ -97,6 +95,9 @@ public:
   GEOSX_HOST_DEVICE
   virtual void SaveConvergedState( localIndex const k,
                                    localIndex const q ) override final;
+  GEOSX_HOST_DEVICE
+  virtual void DeleteElasticStrain( localIndex const k,
+                                    localIndex const q );
 
 private:
   /// A reference to the ArrayView holding the reference p invariant for each integration point.
@@ -140,12 +141,6 @@ private:
 
   /// A reference to the ArrayView holding the old strain for each integration point
   arrayView3d< real64, solid::STRESS_USD > const m_oldElasticStrain;
-    
-//  /// A reference to the ArrayView holding the new plastic strain for each integration point
-//  arrayView3d< real64, solid::STRESS_USD > const m_newPlasticStrain;
-//
-//  /// A reference to the ArrayView holding the old plastic strain for each integration point
-//  arrayView3d< real64, solid::STRESS_USD > const m_oldPlasticStrain;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -174,11 +169,12 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
   // elastic predictor
   // newStrainElastic = oldStrain + strainIncrement
   array1d< real64 > strainElastic(6);
-    
+  
   for (localIndex i = 0; i < 6; ++i) 
   {
     strainElastic[i] = m_oldElasticStrain[k][q][i] + strainIncrement[i];
   }
+  
   // Decompose the strain tensor into the elastic strain invariants strainVol and strainDev
   real64 strainVol = 0;
   for (localIndex i = 0; i < 3; ++i) 
@@ -229,9 +225,6 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
     stress[i] += P;
   }
 
-  // Q: set stiffness to elastic predictor at the beggining, even if the step
-  // might be plastic?
-
   // set stiffness to elastic predictor
   // stiffness = c1*I + c2*eye_dyad_eye + c3*(eye_dyad_nhat+nhat_dyad_eye)
 
@@ -274,7 +267,6 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
   if (yield > 1e-9) // plasticity branch
   {
-//    std::cout << "plastic step" << std::endl;
     array1d<real64> solution(3), residual(3), delta(3);
     array2d<real64> jacobian(3, 3), jacobianInv(3, 3), hessianHyper(2, 2), hessiansMult(2, 2);
     real64 yieldDerivP, yieldDerivQ, plasticPotDerivP, plasticPotDerivQ, preconsPressureDeriv;
@@ -367,7 +359,6 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
 
       // Q: should we assert for negative Poisson?
       // real64 poissonRatio = ( 3 * bulk - 2 * shear) / ( 2 * ( 3 * bulk + shear ) );
-      //std::cout << "poisson ratio: " << poissonRatio << std::endl;
       // GEOSX_ASSERT_MSG(poissonRatio >=0, "Negative poisson ratio produced");
     }
 
@@ -388,9 +379,7 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
     for (localIndex i = 0; i < 3; ++i) 
     {
       strainElastic[i] -= solution[2] * plasticPotDerivStress[i];
-//      strainPlastic[i] += solution[2] * plasticPotDerivStress[i];
       strainElastic[i+3] -= solution[2] * plasticPotDerivStress[i+3];
-//      strainPlastic[i+3] += solution[2] * plasticPotDerivStress[i+3];
     }
       
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
@@ -473,13 +462,10 @@ void ModifiedCamClayUpdates::SmallStrainUpdate( localIndex const k,
   } // end plastic branch
 
   // remember history variables before returning
-  // Q: which variables to update?
-
   m_newPreconsolidationPressure[k][q] = preconsPressure;
   for (localIndex i = 0; i < 6; ++i) 
   {
     m_newElasticStrain[k][q][i] = strainElastic[i];
-//    m_newPlasticStrain[k][q][i] = strainPlastic[i];
   }
 }
 
@@ -492,7 +478,16 @@ void ModifiedCamClayUpdates::SaveConvergedState( localIndex const k, localIndex 
   for (localIndex i = 0; i < 6; ++i) 
   {
     m_oldElasticStrain[k][q][i] = m_newElasticStrain[k][q][i];
-//    m_oldPlasticStrain[k][q][i] = m_newPlasticStrain[k][q][i];
+  }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void ModifiedCamClayUpdates::DeleteElasticStrain( localIndex const k, localIndex const q )
+{
+  for (localIndex i = 0; i < 6; ++i)
+  {
+    m_oldElasticStrain[k][q][i] = 0.0;
   }
 }
 
@@ -612,12 +607,6 @@ public:
 
     /// string/key for the previous elastic strain
     static constexpr auto oldElasticStrainString = "OldElasticStrain";
-      
-//    /// string/key for the current plastic strain
-//    static constexpr auto newPlasticStrainString = "NewPlasticStrain";
-//
-//    /// string/key for the previous plastic strain
-//    static constexpr auto oldPlasticStrainString = "OldPlasticStrain";
   };
 
   /**
@@ -638,8 +627,6 @@ public:
                                    m_oldPreconsolidationPressure,
                                    m_newElasticStrain, 
                                    m_oldElasticStrain,
-//                                   m_newPlasticStrain,
-//                                   m_oldPlasticStrain,
                                    m_stress);
                                   // m_strainElastic );
   }
@@ -712,12 +699,6 @@ private:
 
   /// History variable: The previous elastic strain for each quadrature point.
   array3d<real64, solid::STRESS_PERMUTATION> m_oldElasticStrain;
-    
-//  /// History variable: The current plastic strain for each quadrature point
-//  array3d<real64, solid::STRESS_PERMUTATION> m_newPlasticStrain;
-//
-//  /// History variable: The previous plastic strain for each quadrature point.
-//  array3d<real64, solid::STRESS_PERMUTATION> m_oldPlasticStrain;
 };
 
 } /* namespace constitutive */
