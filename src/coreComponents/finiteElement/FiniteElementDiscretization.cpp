@@ -53,39 +53,39 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::PostProcessInput()
 {
-  GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported.");
-  GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported.");
+  GEOSX_ERROR_IF( m_order!=1, "Higher order finite element spaces are currently not supported." );
+  GEOSX_ERROR_IF( m_formulation!="default", "Only standard element formulations are currently supported." );
 }
 
-std::unique_ptr<FiniteElementBase>
+std::unique_ptr< FiniteElementBase >
 FiniteElementDiscretization::factory( string const & parentElementShape ) const
 {
-  std::unique_ptr<FiniteElementBase> rval;
+  std::unique_ptr< FiniteElementBase > rval;
   if( m_order==1 )
   {
     if( parentElementShape ==  finiteElement::ParentElementTypeStrings::Hexahedron )
     {
-      rval = std::make_unique<H1_Hexahedron_Lagrange1_GaussLegendre2>();
+      rval = std::make_unique< H1_Hexahedron_Lagrange1_GaussLegendre2 >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Tetrahedon )
     {
-      rval = std::make_unique<H1_Tetrahedron_Lagrange1_Gauss1>();
+      rval = std::make_unique< H1_Tetrahedron_Lagrange1_Gauss1 >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Prism )
     {
-      rval = std::make_unique<BiLinearWedgeShapeFunctionKernel>();
+      rval = std::make_unique< H1_Wedge_Lagrange1_Gauss6 >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
     {
-      rval = std::make_unique<PyramidShapeFunctionKernel>();
+      rval = std::make_unique< PyramidShapeFunctionKernel >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
     {
-      rval = std::make_unique<BiLinearQuadrilateralFaceShapeFunctionKernel>();
+      rval = std::make_unique< BiLinearQuadrilateralFaceShapeFunctionKernel >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Triangle )
     {
-      rval = std::make_unique<LinearTriangleFaceShapeFunctionKernel>();
+      rval = std::make_unique< LinearTriangleFaceShapeFunctionKernel >();
     }
     else
     {

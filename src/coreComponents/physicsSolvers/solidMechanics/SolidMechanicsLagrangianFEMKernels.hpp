@@ -102,7 +102,8 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 //  ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
 //                                              [&]( auto * const constitutive )
 //  {
-//    rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >( params )... );
+//    rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >(
+// params )... );
 //  } );
 //  return rval;
 //}

@@ -347,7 +347,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
 
           // Get finite element discretization info
           finiteElement::FiniteElementBase const &
-          fe = elementSubRegion->getReference<finiteElement::FiniteElementBase>( m_solidSolver->getDiscretizationName() );
+          fe = elementSubRegion->getReference< finiteElement::FiniteElementBase >( m_solidSolver->getDiscretizationName() );
 
           // Resize based on number of dof of the subregion
           int nUdof = numNodesPerElement * 3;

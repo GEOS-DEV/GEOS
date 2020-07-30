@@ -1567,7 +1567,7 @@ Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
 {
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, this, std::move(newObj) ),
+                     new Wrapper< TBASE >( name, this, std::move( newObj ) ),
                      true );
 
   if( rkey != nullptr )
@@ -1600,7 +1600,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, std::move(newObject) ),
+                     new Wrapper< T >( name, this, std::move( newObject ) ),
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );
