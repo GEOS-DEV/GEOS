@@ -24,10 +24,19 @@
 namespace geosx
 {
 
+/**
+ * @class PythonOutput
+ * @brief Performs no actual output but returns control to the Python interpreter.
+ */
 class PythonOutput : public OutputBase
 {
 public:
 
+  /**
+   * @brief Constructor.
+   * @param name The name of this PythonOutput in the data repository.
+   * @param parent The parent group.
+   */
   PythonOutput( std::string const & name,
                 Group * const parent ):
     OutputBase( name, parent )
@@ -41,15 +50,16 @@ public:
 
   /**
    * @brief Get the name used to register this object in an XML file.
-   * @return The string "PythonOutput".
+   * @return The string "Python".
    */
-  static string CatalogName() { return "Python"; }
+  static string catalogName() { return "Python"; }
 
   /**
-   * @brief Writes out a Blueprint plot file.
-   * @copydetails EventBase::Execute()
+   * @brief Signals the EventManager to exit the loop early, and return to Python.
+   * @note It is an error to use this event when not running through pygeosx.
+   * @copydetails EventBase::execute()
    */
-  virtual bool Execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

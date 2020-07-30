@@ -45,8 +45,9 @@ class ProblemManager : public dataRepository::Group
 public:
 
   /**
-   * @param name the name of this object manager
-   * @param parent the parent Group
+   * @brief Create a new ProblemManager, it must be created from the root conduit node.
+   * @param name The name of the ProblemManager.
+   * @param root The root conduit node.
    */
   explicit ProblemManager( const std::string & name,
                            conduit::Node & root );
@@ -86,9 +87,10 @@ public:
   void parseCommandLineInput();
 
   /**
-   * @brief Parses a restart file
-   * @param restartFileName the name of the restart file
-   * @return flag indicating beginFromRestart status
+   * @brief Parses a restart file.
+   * @param restartFileName The name of the restart file.
+   * @param options The command line options.
+   * @return Flag indicating beginFromRestart status
    */
   static bool parseRestart( std::string & restartFileName, CommandLineOptions const & options );
 
@@ -132,8 +134,9 @@ public:
 
   /**
    * @brief Run the events in the scheduler.
+   * @return True iff the simulation exited early, and needs to be run again to completion.
    */
-  bool RunSimulation();
+  bool runSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file
@@ -252,28 +255,44 @@ public:
     return *m_physicsSolverManager;
   }
 
+  /**
+   * @brief Returns the FunctionManager.
+   * @return The FunctionManager.
+   */
   FunctionManager & getFunctionManager()
   {
     GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager; 
+    return *m_functionManager;
   }
 
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
   FunctionManager const & getFunctionManager() const
   {
     GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager; 
+    return *m_functionManager;
   }
 
+  /**
+   * @brief Returns the FieldSpecificationManager.
+   * @return The FieldSpecificationManager.
+   */
   FieldSpecificationManager & getFieldSpecificationManager()
   {
     GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager; 
+    return *m_fieldSpecificationManager;
   }
 
+  /**
+   * @brief Returns the const FunctionManager.
+   * @return The const FunctionManager.
+   */
   FieldSpecificationManager const & getFieldSpecificationManager() const
   {
     GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager; 
+    return *m_fieldSpecificationManager;
   }
 
 protected:

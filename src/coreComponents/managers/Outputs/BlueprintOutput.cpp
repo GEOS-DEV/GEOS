@@ -102,7 +102,7 @@ BlueprintOutput::BlueprintOutput( string const & name,
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void BlueprintOutput::execute( real64 const time,
+bool BlueprintOutput::execute( real64 const time,
                                real64 const,
                                integer const cycle,
                                integer const,

@@ -210,7 +210,7 @@ void EventBase::signalToPrepareForExecution( real64 const time,
 }
 
 
-void EventBase::execute( real64 const time_n,
+bool EventBase::execute( real64 const time_n,
                          real64 const dt,
                          const integer cycleNumber,
                          integer const,
@@ -225,7 +225,7 @@ void EventBase::execute( real64 const time_n,
   {
     m_targetExecFlag = 1;
     earlyReturn = earlyReturn ||
-      m_target->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+                  m_target->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
   }
 
   // Iterate through the sub-event list using the managed integer m_currentSubEvent
@@ -242,7 +242,7 @@ void EventBase::execute( real64 const time_n,
     if( subEvent->isReadyForExec() )
     {
       earlyReturn = earlyReturn ||
-        subEvent->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
+                    subEvent->execute( time_n, dt, cycleNumber, m_eventCount, m_eventProgress, domain );
     }
   }
 

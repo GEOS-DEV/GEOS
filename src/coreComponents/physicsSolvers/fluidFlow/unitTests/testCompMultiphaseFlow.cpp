@@ -630,7 +630,7 @@ class CompositionalMultiphaseFlowTest : public ::testing::Test
 {
 public:
 
-  CompositionalMultiphaseFlowTest() :
+  CompositionalMultiphaseFlowTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 

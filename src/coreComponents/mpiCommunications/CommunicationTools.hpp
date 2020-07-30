@@ -42,7 +42,7 @@ class CommID
 public:
   CommID( std::set< int > & freeIDs ):
     m_freeIDs( freeIDs ),
-    m_id(-1)
+    m_id( -1 )
   {
     GEOSX_ERROR_IF_EQ( freeIDs.size(), 0 );
     m_id = *freeIDs.begin();
@@ -58,7 +58,7 @@ public:
 
   ~CommID()
   {
-    if ( m_id < 0 )
+    if( m_id < 0 )
     { return; }
 
     GEOSX_ERROR_IF( m_freeIDs.count( m_id ) > 0, "Attempting to release commID that is already free: " << m_id );
@@ -97,36 +97,36 @@ public:
                                std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void findGhosts( MeshLevel & meshLevel,
-                          std::vector< NeighborCommunicator > & neighbors,
-                          bool use_nonblocking );
+                   std::vector< NeighborCommunicator > & neighbors,
+                   bool use_nonblocking );
 
   CommID getCommID()
   { return CommID( m_freeCommIDs ); }
 
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase * const group,
-                                                   std::vector< NeighborCommunicator > & allNeighbors );
+                                            std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                                 MeshLevel * const mesh,
-                                 std::vector< NeighborCommunicator > & allNeighbors,
-                                 bool on_device = false );
+                          MeshLevel * const mesh,
+                          std::vector< NeighborCommunicator > & allNeighbors,
+                          bool on_device = false );
 
   void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                            MeshLevel * const mesh,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            MPI_iCommData & icomm,
-                                            bool on_device = false );
+                                     MeshLevel * const mesh,
+                                     std::vector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool on_device = false );
 
   void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                       MeshLevel * const mesh,
-                                       std::vector< NeighborCommunicator > & allNeighbors,
-                                       MPI_iCommData & icomm,
-                                       bool on_device = false );
+                                MeshLevel * const mesh,
+                                std::vector< NeighborCommunicator > & allNeighbors,
+                                MPI_iCommData & icomm,
+                                bool on_device = false );
 
   void synchronizeUnpack( MeshLevel * const mesh,
-                                 std::vector< NeighborCommunicator > & neighbors,
-                                 MPI_iCommData & icomm,
-                                 bool on_device = false );
+                          std::vector< NeighborCommunicator > & neighbors,
+                          MPI_iCommData & icomm,
+                          bool on_device = false );
 
 private:
   std::set< int > m_freeCommIDs;

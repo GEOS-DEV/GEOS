@@ -521,9 +521,9 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaPressureString ) );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         &mesh,
-                                         domain.getNeighbors(),
-                                         true );
+                                                              &mesh,
+                                                              domain.getNeighbors(),
+                                                              true );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )

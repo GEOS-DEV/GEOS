@@ -55,7 +55,7 @@ endif()
 
 set( dependencyList ${dependencyList} common conduit )
 
-if( ENABLE_PYTHON )
+if( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} pylvarray )
 endif()
 

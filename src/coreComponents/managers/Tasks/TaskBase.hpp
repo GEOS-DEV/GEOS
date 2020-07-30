@@ -53,7 +53,7 @@ public:
    */
   static CatalogInterface::CatalogType & getCatalog();
 
-  /// @copydoc geosx::ExecutableGroup::Execute
+  /// @copydoc geosx::ExecutableGroup::execute
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,

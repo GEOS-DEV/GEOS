@@ -522,7 +522,7 @@ endif()
 ################################
 # Python
 ################################
-if(ENABLE_PYTHON)
+if(ENABLE_PYGEOSX)
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     find_package(Python3 REQUIRED
                  COMPONENTS Development NumPy)
@@ -531,14 +531,15 @@ if(ENABLE_PYTHON)
     message(STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}")
     message(STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}")
 
-    # Write out a wrapper script around python. There's gotta be a better way to do this...
-    file(WRITE ${CMAKE_BINARY_DIR}/python "#!/usr/bin/env bash\n")
-    file(APPEND ${CMAKE_BINARY_DIR}/python "PYTHONPATH=${CMAKE_BINARY_DIR}/lib ${Python3_EXECUTABLE} \${@}\n")
-    file(COPY ${CMAKE_BINARY_DIR}/python
-         DESTINATION ${CMAKE_BINARY_DIR}/bin/
-         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
-    file(REMOVE ${CMAKE_BINARY_DIR}/python)
+    if(DEFINED ENABLE_PYLVARRAY AND NOT ENABLE_PYLVARRAY)
+        message(FATAL_ERROR "Cannot build pygeosx without pylvarray")
+    else()
+        set(ENABLE_PYLVARRAY ON CACHE BOOL "" FORCE)
+    endif()
+
     set(thirdPartyLibs ${thirdPartyLibs} Python3::Python Python3::NumPy)
+else()
+    message(STATUS "Not building pygeosx.")
 endif()
 
 ################################

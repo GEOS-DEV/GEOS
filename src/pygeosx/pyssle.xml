@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
   <Solvers>
     <SolidMechanicsLagrangianSSLE
       name="lagsolve"
@@ -31,7 +32,7 @@
       name="solverApplications"
       forceDt="1.0e-5"
       target="/Solvers/lagsolve"/>
-
+    
     <PeriodicEvent
       name="python"
       cycleFrequency="10"
@@ -40,24 +41,10 @@
   </Events>
 
   <NumericalMethods>
-    <BasisFunctions>
-      <LagrangeBasis3
-        name="linearBasis"
-        degree="1"/>
-    </BasisFunctions>
-
-    <QuadratureRules>
-      <GaussQuadrature3
-        name="gaussian"
-        degree="2"/>
-    </QuadratureRules>
-
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        parentSpace="C3D8"
-        basis="linearBasis"
-        quadrature="gaussian"/>
+        order="1"/>
     </FiniteElements>
   </NumericalMethods>
 

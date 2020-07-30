@@ -23,11 +23,11 @@
 #ifdef GEOSX_USE_CALIPER
   #include <adiak.hpp>
 
-  //Forward declaration of cali::ConfigManager.
-  namespace cali
-  {
-    class ConfigManager;
-  }
+//Forward declaration of cali::ConfigManager.
+namespace cali
+{
+class ConfigManager;
+}
 #endif
 
 namespace geosx
@@ -88,14 +88,17 @@ struct CommandLineOptions
  * @brief Parse the command line options and populate @p commandLineOptions with the results.
  * @param argc The number of command line arguments.
  * @param argv The command line arguments.
+ * @return The command line options.
  */
-std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char ** argv );
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv );
 
 /**
  * @brief Perform the basic GEOSX initialization and optionally parse the command line input.
  * @param [in] argc The number of command line arguments.
  * @param [in,out] argv The command line arguments.
  * @param [in] parseCommandLine True iff the command line options should be parsed.
+ * @return The command line options, if @c parseCommandLine is @c false then the returned value
+ *   is default constructed (empty).
  */
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine=false );
 
@@ -142,9 +145,22 @@ void setupMPI( int argc, char * argv[] );
  */
 void finalizeMPI();
 
-void setupCaliper( cali::ConfigManager &, CommandLineOptions const & commandLineOptions );
+#if defined( GEOSX_USE_CALIPER )
 
+/**
+ * @brief Setup Caliper and Adiak.
+ * @param caliperManager The Caliper ConfigManager to initialize.
+ * @param commandLineOptions The command line options.
+ */
+void setupCaliper( cali::ConfigManager & caliperManager,
+                   CommandLineOptions const & commandLineOptions );
+
+/**
+ * @brief Finalize Caliper and Adiak.
+ */
 void finalizeCaliper();
+
+#endif
 
 /**
  * @brief Compute the sum, mean, min, and max of @p value across ranks and push
@@ -156,7 +172,8 @@ void finalizeCaliper();
 template< typename T >
 void pushStatsIntoAdiak( string const & name, T const value )
 {
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOSX_USE_CALIPER ) && !defined(__APPLE__)
+  // Apple clang doesn't like adiak.
   T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );
   adiak::value( name + " mean", double( total ) / MpiWrapper::commSize() );

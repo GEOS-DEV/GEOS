@@ -1254,7 +1254,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   // TODO: This is a hack.
   conduit::Node conduitNode;
   dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
-  
+
   localIndex numElems = 0;
   std::vector< std::map< string, WrapperBase const * > > viewPointers;
 

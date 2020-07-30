@@ -393,6 +393,13 @@ Element: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator.rst
 
 
+.. _XML_PackCollection:
+
+Element: PackCollection
+=======================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection.rst
+
+
 .. _XML_Parameter:
 
 Element: Parameter
@@ -629,6 +636,13 @@ Element: SymbolicFunction
 Element: TableFunction
 ======================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction.rst
+
+
+.. _XML_Tasks:
+
+Element: Tasks
+==============
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks.rst
 
 
 .. _XML_ThickPlane:
@@ -1118,6 +1132,13 @@ Datastructure: PAMELAMeshGenerator
 .. include:: ../../coreComponents/fileIO/schema/docs/PAMELAMeshGenerator_other.rst
 
 
+.. _DATASTRUCTURE_PackCollection:
+
+Datastructure: PackCollection
+=============================
+.. include:: ../../coreComponents/fileIO/schema/docs/PackCollection_other.rst
+
+
 .. _DATASTRUCTURE_Parameter:
 
 Datastructure: Parameter
@@ -1354,6 +1375,13 @@ Datastructure: SymbolicFunction
 Datastructure: TableFunction
 ============================
 .. include:: ../../coreComponents/fileIO/schema/docs/TableFunction_other.rst
+
+
+.. _DATASTRUCTURE_Tasks:
+
+Datastructure: Tasks
+====================
+.. include:: ../../coreComponents/fileIO/schema/docs/Tasks_other.rst
 
 
 .. _DATASTRUCTURE_ThickPlane:

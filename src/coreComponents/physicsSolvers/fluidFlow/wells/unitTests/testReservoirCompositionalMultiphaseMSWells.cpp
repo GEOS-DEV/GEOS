@@ -480,7 +480,7 @@ class CompositionalMultiphaseReservoirSolverTest : public ::testing::Test
 {
 public:
 
-  CompositionalMultiphaseReservoirSolverTest() :
+  CompositionalMultiphaseReservoirSolverTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 

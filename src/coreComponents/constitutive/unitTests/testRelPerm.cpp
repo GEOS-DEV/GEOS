@@ -179,16 +179,16 @@ public:
                               tol,
                               "phaseRelPerm",
                               [&phaseRelPerm] ( RelativePermeabilityBase & relPerm )
-                              {
-                                phaseRelPerm = relPerm.phaseRelPerm();
-                                return phaseRelPerm[ 0 ][ 0 ];
-                              },
+    {
+      phaseRelPerm = relPerm.phaseRelPerm();
+      return phaseRelPerm[ 0 ][ 0 ];
+    },
                               [&dPhaseRelPerm_dPhaseVolFraction] ( RelativePermeabilityBase & relPerm )
-                              {
-                                dPhaseRelPerm_dPhaseVolFraction = relPerm.dPhaseRelPerm_dPhaseVolFraction();
-                                return dPhaseRelPerm_dPhaseVolFraction[ 0 ][ 0 ];
-                              }
-                             );
+    {
+      dPhaseRelPerm_dPhaseVolFraction = relPerm.dPhaseRelPerm_dPhaseVolFraction();
+      return dPhaseRelPerm_dPhaseVolFraction[ 0 ][ 0 ];
+    }
+                              );
   }
 };
 

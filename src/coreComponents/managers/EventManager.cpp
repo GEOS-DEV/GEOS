@@ -95,7 +95,7 @@ void EventManager::expandObjectCatalogs()
 }
 
 
-void EventManager::run( dataRepository::Group * domain )
+bool EventManager::run( dataRepository::Group * domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -178,7 +178,7 @@ void EventManager::run( dataRepository::Group * domain )
       //       If it starts being used elsewhere it may need to be synchronized
       exitFlag += subEvent->getExitFlag();
 
-      if ( earlyReturn )
+      if( earlyReturn )
       {
         ++m_currentSubEvent;
         return true;

@@ -364,7 +364,7 @@ class SinglePhaseReservoirSolverTest : public ::testing::Test
 {
 public:
 
-  SinglePhaseReservoirSolverTest() :
+  SinglePhaseReservoirSolverTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 

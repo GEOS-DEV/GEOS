@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-LiCense-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
@@ -160,7 +160,7 @@ struct Arg : public option::Arg
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char ** argv )
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv )
 {
   std::unique_ptr< CommandLineOptions > commandLineOptions = std::make_unique< CommandLineOptions >();
 
@@ -434,10 +434,9 @@ void finalizeMPI()
 
 #if defined( GEOSX_USE_CALIPER )
 
-/**
- * @brief Setup Caliper and Adiak.
- */
-void setupCaliper( cali::ConfigManager & caliperManager, CommandLineOptions const & commandLineOptions )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCaliper( cali::ConfigManager & caliperManager,
+                   CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
   GEOSX_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
@@ -465,7 +464,7 @@ void setupCaliper( cali::ConfigManager & caliperManager, CommandLineOptions cons
   // MPI info
 #if defined( GEOSX_USE_MPI )
   adiak::value( "MPI", "On" );
-  adiak::value( "mpi ranks", MpiWrapper::Comm_size() );
+  adiak::value( "mpi ranks", MpiWrapper::commSize() );
 #else
   adiak::value( "MPI", "Off" );
   adiak::value( "mpi ranks", 1 );
@@ -513,10 +512,7 @@ void setupCaliper( cali::ConfigManager & caliperManager, CommandLineOptions cons
   adiak::value( "CUDA driver version", cudaDriverVersion );
 }
 
-/**
- * @brief Finalize Caliper and Adiak if @p mgr is not a nullptr.
- * @param mgr the Caliper manager to finalize.
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeCaliper()
 {
   adiak::fini();

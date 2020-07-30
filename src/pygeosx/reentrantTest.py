@@ -1,4 +1,5 @@
 import sys
+import os
 
 from mpi4py import MPI
 
@@ -11,21 +12,21 @@ def main():
     rank = comm.Get_rank()
 
     if rank == 0:
-        print("In python")
+        print('In python')
         sys.stdout.flush()
 
     # If not a restart run then we'll run the SSLE-sedov problem first.
-    if "-r" not in sys.argv:
+    if '-r' not in sys.argv:
         arg_copy = list(sys.argv)
 
-        xml_index = arg_copy.index("-i") + 1
+        xml_index = arg_copy.index('-i') + 1
         arg_copy[xml_index] = os.path.join(
-            os.path.abspath(__file__).rsplit(os.sep, 2)[0],
-            "integratedTests", "update", "run", "solidMechanicsSSLE", "SSLE-sedov.xml"
+            os.path.dirname(__file__), '..', '..',
+            'integratedTests', 'update', 'run', 'solidMechanicsSSLE', 'SSLE-sedov.xml'
         )
 
-        output_index = arg_copy.index("-o") + 1
-        arg_copy[output_index] = sys.argv[output_index] + "_ssle_dummy"
+        output_index = arg_copy.index('-o') + 1
+        arg_copy[output_index] = sys.argv[output_index] + '_ssle_dummy'
 
         problem = pygeosx.initialize(rank, arg_copy)
         pygeosx.apply_initial_conditions()
@@ -35,7 +36,7 @@ def main():
             pass
 
         if rank == 0:
-            print("\n\nIn python second time around")
+            print('\n\nIn python second time around')
             sys.stdout.flush()
 
         problem = pygeosx.reinit(sys.argv)
@@ -48,5 +49,5 @@ def main():
         pass
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

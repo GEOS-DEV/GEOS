@@ -23,7 +23,7 @@ using namespace geosx::dataRepository;
 
 CapillaryPressureBase * makeBrooksCoreyCapPressureTwoPhase( string const & name, Group & parent )
 {
-  auto capPressure = parent.RegisterGroup< BrooksCoreyCapillaryPressure >( name );
+  auto capPressure = parent.registerGroup< BrooksCoreyCapillaryPressure >( name );
 
   auto & phaseNames = capPressure->getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString );
   phaseNames.resize( 2 );
@@ -152,16 +152,16 @@ public:
                               tol,
                               "phaseRelPerm",
                               [&phaseCapPressure] ( CapillaryPressureBase & relPerm )
-                              {
-                                phaseCapPressure = relPerm.phaseCapPressure();
-                                return phaseCapPressure[ 0 ][ 0 ];
-                              },
+    {
+      phaseCapPressure = relPerm.phaseCapPressure();
+      return phaseCapPressure[ 0 ][ 0 ];
+    },
                               [&dPhaseCapPressure_dPhaseVolFraction] ( CapillaryPressureBase & relPerm )
-                              { 
-                                dPhaseCapPressure_dPhaseVolFraction = relPerm.dPhaseCapPressure_dPhaseVolFraction();
-                                return dPhaseCapPressure_dPhaseVolFraction[ 0 ][ 0 ];
-                              }
-                             );
+    {
+      dPhaseCapPressure_dPhaseVolFraction = relPerm.dPhaseCapPressure_dPhaseVolFraction();
+      return dPhaseCapPressure_dPhaseVolFraction[ 0 ][ 0 ];
+    }
+                              );
   }
 };
 

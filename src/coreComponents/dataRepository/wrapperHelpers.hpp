@@ -32,7 +32,7 @@
 #include "common/GeosxMacros.hpp"
 #include "codingUtilities/traits.hpp"
 
-#if defined(GEOSX_USE_PYTHON)
+#if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
 #endif
 
@@ -737,19 +737,16 @@ template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
 UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX & )
 { return 0; }
-#if defined(GEOSX_USE_PYTHON)
+#if defined(GEOSX_USE_PYGEOSX)
 
 template< typename T >
 inline std::enable_if_t< LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T & object, bool const modify )
-{ 
-  GEOSX_UNUSED_VAR( modify );
-  return LvArray::python::create( object );
-}
+createPythonObject( T & object )
+{ return LvArray::python::create( object ); }
 
 template< typename T >
 inline std::enable_if_t< !LvArray::python::CanCreate< T >, PyObject * >
-createPythonObject( T &, bool )
+createPythonObject( T & )
 { return nullptr; }
 
 #endif

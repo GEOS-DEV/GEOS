@@ -27,7 +27,7 @@
 // System includes
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
-#define NPY_NO_DEPRECATED_API NPY_1_15_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #pragma GCC diagnostic pop
 #include <chrono>
@@ -38,113 +38,143 @@ namespace geosx
 std::unique_ptr< GeosxState > g_state;
 
 static constexpr char const * initializeDocString =
-"initialize(rank, args)\n"
-"--\n\n"
-"Initialize GEOSX, this must be the first module call.\n"
-"\n"
-"Parameters\n"
-"__________\n"
-"rank : int\n"
-"    The MPI rank of the process.\n"
-"args : list of strings\n"
-"    The list of command line arguments to pass to GEOSX.\n"
-"\n"
-"Returns\n"
-"_______\n"
-"Group\n"
-"    The ProblemManager.";
+  "initialize(rank, args)\n"
+  "--\n\n"
+  "Initialize GEOSX, this must be the first module call.\n\n"
+  "Should only be called once. All calls after the first will\n"
+  "raise a `RuntimeError`. To reinitialize GEOSX for a new problem,\n"
+  "use the `reinit` function.\n"
+  "\n"
+  "Parameters\n"
+  "__________\n"
+  "rank : int\n"
+  "    The MPI rank of the process.\n"
+  "args : list of strings\n"
+  "    The list of command line arguments to pass to GEOSX.\n"
+  "\n"
+  "Returns\n"
+  "_______\n"
+  "Group\n"
+  "    The ProblemManager.";
 static PyObject * initialize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
-  if ( g_state != nullptr )
-  {
-    PyErr_SetString( PyExc_RuntimeError, "state already initialized" );
-    return nullptr;
-  }
+  PYTHON_ERROR_IF( g_state != nullptr, PyExc_RuntimeError, "State already initialized.", nullptr );
 
   long pythonMPIRank;
   PyObject * list;
-  if ( !PyArg_ParseTuple( args, "lO", &pythonMPIRank, &list ) )
-  { return nullptr; }
+  if( !PyArg_ParseTuple( args, "lO", &pythonMPIRank, &list ) )
+  {
+    return nullptr;
+  }
 
-  PyObjectRef iterator{ PyObject_GetIter( list ) };
-  if ( iterator == nullptr )
-  { return nullptr; }
+  LvArray::python::PyObjectRef<> iterator{ PyObject_GetIter( list ) };
+  if( iterator == nullptr )
+  {
+    return nullptr;
+  }
 
   std::vector< std::string > stringArgs;
-  for( PyObjectRef item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
+  for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
   {
-    PyObjectRef ascii { PyUnicode_AsASCIIString( item ) };
-    if ( ascii == nullptr )
-    { return nullptr; }
+    LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
+    if( ascii == nullptr )
+    {
+      return nullptr;
+    }
 
     char const * const stringValue = PyBytes_AsString( ascii );
-    if ( stringValue == nullptr )
-    { return nullptr; }
+    if( stringValue == nullptr )
+    {
+      return nullptr;
+    }
 
     stringArgs.push_back( stringValue );
   }
 
-  if ( PyErr_Occurred() )
-  { return nullptr; }
+  if( PyErr_Occurred() )
+  {
+    return nullptr;
+  }
 
   std::vector< char * > argv( stringArgs.size() + 1 );
-  for ( std::size_t i = 0; i < stringArgs.size(); ++i )
-  { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
+  for( std::size_t i = 0; i < stringArgs.size(); ++i )
+  {
+    argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );
+  }
 
   g_state = std::make_unique< GeosxState >( basicSetup( argv.size() - 1, argv.data(), true ) );
 
-  if ( pythonMPIRank != MpiWrapper::Comm_rank() )
-  {
-    PyErr_SetString( PyExc_ValueError, "Python MPI rank does not align with GEOSX MPI rank" );
-    return nullptr;
-  }
+  PYTHON_ERROR_IF( pythonMPIRank != MpiWrapper::commRank(), PyExc_ValueError,
+                   "Python MPI rank does not match the GEOSX MPI rank.", nullptr );
 
   g_state->initializeDataRepository();
 
   return python::createNewPyGroup( g_state->getProblemManagerAsGroup() );
 }
 
-static constexpr char const * reinitDocString = "";
+static constexpr char const * reinitDocString =
+  "reinit(args)\n"
+  "--\n\n"
+  "Reinitialize GEOSX with a new set of command-line arguments.\n"
+  "\n"
+  "Parameters\n"
+  "__________\n"
+  "args : list of strings\n"
+  "    The list of command line arguments to pass to GEOSX.\n"
+  "\n"
+  "Returns\n"
+  "_______\n"
+  "Group\n"
+  "    The ProblemManager.";
 static PyObject * reinit( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self );
 
-  if ( g_state == nullptr || g_state->getState() != State::COMPLETED )
+  PYTHON_ERROR_IF( g_state == nullptr || g_state->getState() != State::COMPLETED,
+                   PyExc_RuntimeError, "State must be COMPLETED", nullptr );
+
+  PyObject * list;
+  if( !PyArg_ParseTuple( args, "O", &list ) )
   {
-    PyErr_SetString( PyExc_RuntimeError, "State must be COMPLETED" );
     return nullptr;
   }
 
-  PyObject * list;
-  if ( !PyArg_ParseTuple( args, "O", &list ) )
-  { return nullptr; }
-
-  PyObjectRef iterator{ PyObject_GetIter( list ) };
-  if ( iterator == nullptr )
-  { return nullptr; }
+  LvArray::python::PyObjectRef<> iterator{ PyObject_GetIter( list ) };
+  if( iterator == nullptr )
+  {
+    return nullptr;
+  }
 
   std::vector< std::string > stringArgs;
-  for( PyObjectRef item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
+  for( LvArray::python::PyObjectRef<> item{ PyIter_Next( iterator ) }; item != nullptr; item = PyIter_Next( iterator ) )
   {
-    PyObjectRef ascii { PyUnicode_AsASCIIString( item ) };
-    if ( ascii == nullptr )
-    { return nullptr; }
+    LvArray::python::PyObjectRef<> ascii { PyUnicode_AsASCIIString( item ) };
+    if( ascii == nullptr )
+    {
+      return nullptr;
+    }
 
     char const * const stringValue = PyBytes_AsString( ascii );
-    if ( stringValue == nullptr )
-    { return nullptr; }
+    if( stringValue == nullptr )
+    {
+      return nullptr;
+    }
 
     stringArgs.push_back( stringValue );
   }
 
-  if ( PyErr_Occurred() )
-  { return nullptr; }
+  if( PyErr_Occurred() )
+  {
+    return nullptr;
+  }
 
   std::vector< char * > argv( stringArgs.size() + 1 );
-  for ( std::size_t i = 0; i < stringArgs.size(); ++i )
-  { argv[ i ] = const_cast< char * >( stringArgs[ i ].data() ); }
+  for( std::size_t i = 0; i < stringArgs.size(); ++i )
+  {
+    argv[ i ] = const_cast< char * >( stringArgs[ i ].data() );
+  }
 
   // Must first delete the existing state.
   g_state = nullptr;
@@ -156,63 +186,65 @@ static PyObject * reinit( PyObject * self, PyObject * args )
 }
 
 static constexpr char const * applyInitialConditionsDocString =
-"applyInitialConditions()\n"
-"--\n\n"
-"Apply the initial conditions.\n"
-"\n"
-"Returns\n"
-"_______\n"
-"None\n";
+  "apply_initial_conditions()\n"
+  "--\n\n"
+  "Apply the initial conditions.\n"
+  "\n"
+  "Returns\n"
+  "_______\n"
+  "None\n";
 static PyObject * applyInitialConditions( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( g_state == nullptr ){
-    PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
-    return nullptr;
-  }
+  PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
+
   g_state->applyInitialConditions();
   Py_RETURN_NONE;
 }
 
 static constexpr char const * runDocString =
-"run()\n"
-"--\n\n"
-"Enter the event loop.\n"
-"\n"
-"Returns\n"
-"_______\n"
-"int\n"
-"    The state of the simulation. If the simulation has ended the value is `COMPLETED`. If the "
-"simulation still has steps left to run the value is `READY_TO_RUN`.";
+  "run()\n"
+  "--\n\n"
+  "Enter the event loop.\n"
+  "\n"
+  "Returns\n"
+  "_______\n"
+  "int\n"
+  "    The state of the simulation. If the simulation has ended the value is ``COMPLETED``. If the "
+  "simulation still has steps left to run the value is ``READY_TO_RUN``.";
 static PyObject * run( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( g_state == nullptr ){
-    PyErr_SetString( PyExc_RuntimeError, "state must be initialized" );
+  PYTHON_ERROR_IF( g_state == nullptr, PyExc_RuntimeError, "state must be initialized", nullptr );
+
+  // check for python errors raised before returning
+  try
+  {
+    g_state->run();
+  } catch( const LvArray::python::PythonError & )
+  {
     return nullptr;
   }
-  g_state->run();
   return PyLong_FromLong( static_cast< int >( g_state->getState() ) );
 }
 
 static constexpr char const * finalizeDocString =
-"finalize()\n"
-"--\n\n"
-"Finalize GEOSX. After this no calls into pygeosx or to MPI are allowed.\n"
-"\n"
-"Returns\n"
-"_______\n"
-"None\n";
+  "_finalize()\n"
+  "--\n\n"
+  "Finalize GEOSX. After this no calls into pygeosx or to MPI are allowed.\n"
+  "\n"
+  "Returns\n"
+  "_______\n"
+  "None\n";
 static PyObject * finalize( PyObject * self, PyObject * args )
 {
   GEOSX_UNUSED_VAR( self, args );
 
-  if ( g_state == nullptr )
+  if( g_state == nullptr )
   {
-    PyErr_SetString( PyExc_RuntimeError, "State either not initialized or already finalized." );
-    return nullptr;
+    Py_RETURN_NONE;
   }
 
   g_state = nullptr;
@@ -236,13 +268,10 @@ static bool addConstants( PyObject * module )
     { static_cast< long >( geosx::State::READY_TO_RUN ), "READY_TO_RUN" }
   } };
 
-  for ( std::pair< long, char const * > const & pair : constants )
+  for( std::pair< long, char const * > const & pair : constants )
   {
-    if ( PyModule_AddIntConstant( module, pair.second, pair.first ) )
-    {
-      PyErr_SetString( PyExc_RuntimeError, "couldn't add constant" );
-      return false;
-    }
+    PYTHON_ERROR_IF( PyModule_AddIntConstant( module, pair.second, pair.first ), PyExc_RuntimeError,
+                     "couldn't add constant", false );
   }
 
   return true;
@@ -252,38 +281,38 @@ static bool addConstants( PyObject * module )
  * Add exit handler to a module. Register the module's 'finalize' function,
  * which should take no arguments, with the `atexit` standard library module.
  */
-static bool addExitHandler( PyObject * module ){
-  geosx::PyObjectRef atexit_module { PyImport_ImportModule( "atexit" ) };
-  
-  if ( atexit_module == nullptr )
-  { return 0; }
+static bool addExitHandler( PyObject * module )
+{
+  LvArray::python::PyObjectRef<> atexit_module { PyImport_ImportModule( "atexit" ) };
 
-  geosx::PyObjectRef atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
-  if ( atexit_register_pyfunc == nullptr )
-  { return 0; }
+  if( atexit_module == nullptr )
+  {
+    return false;
+  }
 
-  geosx::PyObjectRef finalize_pyfunc { PyObject_GetAttrString( module, "finalize" ) };
-  if ( finalize_pyfunc == nullptr )
-  { return 0; }
+  LvArray::python::PyObjectRef<> atexit_register_pyfunc { PyObject_GetAttrString( atexit_module, "register" ) };
+  if( atexit_register_pyfunc == nullptr )
+  {
+    return false;
+  }
 
-  if ( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
-  { return 0; }
+  LvArray::python::PyObjectRef<> finalize_pyfunc { PyObject_GetAttrString( module, "_finalize" ) };
+  if( finalize_pyfunc == nullptr )
+  {
+    return false;
+  }
 
-  geosx::PyObjectRef returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
-  
+  if( !PyCallable_Check( atexit_register_pyfunc ) || !PyCallable_Check( finalize_pyfunc ) )
+  {
+    return false;
+  }
+
+  LvArray::python::PyObjectRef<> returnval { PyObject_CallFunctionObjArgs( atexit_register_pyfunc, finalize_pyfunc.get(), nullptr ) };
+
   return returnval != nullptr;
 }
 
-// Allow mixing designated and non-designated initializers in the same initializer list.
-// I don't like the pragmas but the designated initializers is the only sane way to do this stuff.
-// The other option is to put this in a `.c` file and compile with the C compiler, but that seems like more work.
-#pragma GCC diagnostic push
-#if defined( __clang_version__ )
-  #pragma GCC diagnostic ignored "-Wc99-designator"
-#else
-  #pragma GCC diagnostic ignored "-Wpedantic"
-  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
+BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
  *
@@ -291,14 +320,14 @@ static bool addExitHandler( PyObject * module ){
 static PyMethodDef pygeosxFuncs[] = {
   { "initialize", geosx::initialize, METH_VARARGS, geosx::initializeDocString },
   { "reinit", geosx::reinit, METH_VARARGS, geosx::reinitDocString },
-  { "applyInitialConditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
+  { "apply_initial_conditions", geosx::applyInitialConditions, METH_NOARGS, geosx::applyInitialConditionsDocString },
   { "run", geosx::run, METH_NOARGS, geosx::runDocString },
-  { "finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
+  { "_finalize", geosx::finalize, METH_NOARGS, geosx::finalizeDocString },
   { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
 static constexpr char const * pygeosxDocString =
-"Python driver for GEOSX.";
+  "Python driver for GEOSX.";
 
 /**
  * Initialize the module object for Python with the exported functions
@@ -311,48 +340,48 @@ static struct PyModuleDef pygeosxModuleFunctions = {
   .m_methods = pygeosxFuncs
 };
 
-#pragma GCC diagnostic pop
+END_ALLOW_DESIGNATED_INITIALIZERS
 
 /**
- * Initialize the module with functions, constants, and exit handler
+ * @brief Initialize the module with functions, constants, and exit handler
  */
 PyMODINIT_FUNC
-PyInit_pygeosx(void)
+PyInit_pygeosx()
 {
   import_array();
 
-  if( PyType_Ready( geosx::python::getPyGroupType() ) < 0 )
-  { return nullptr; }
-
-  if( PyType_Ready( geosx::python::getPyWrapperType() ) < 0 )
-  { return nullptr; }
-
-  geosx::PyObjectRef module{ PyModule_Create( &pygeosxModuleFunctions ) };
-  if ( module == nullptr )
-  { return nullptr; }
-
-  if ( !addExitHandler( module ) )
+  LvArray::python::PyObjectRef<> module{ PyModule_Create( &pygeosxModuleFunctions ) };
+  if( module == nullptr )
   {
-    if ( PyErr_Occurred() == nullptr )
-    { PyErr_SetString( PyExc_RuntimeError, "couldn't add exit handler" ); }
+    return nullptr;
+  }
+
+  if( !addExitHandler( module ) )
+  {
+    PYTHON_ERROR_IF( PyErr_Occurred() == nullptr, PyExc_RuntimeError,
+                     "couldn't add exit handler", nullptr );
 
     return nullptr;
   }
 
   if( !addConstants( module ) )
-  { return nullptr; }
-
-  Py_INCREF( geosx::python::getPyGroupType() );
-  if ( PyModule_AddObject( module, "Group", reinterpret_cast< PyObject * >( geosx::python::getPyGroupType() ) ) < 0 )
   {
-    Py_DECREF( geosx::python::getPyGroupType() );
     return nullptr;
   }
 
-  Py_INCREF( geosx::python::getPyWrapperType() );
-  if ( PyModule_AddObject( module, "Wrapper", reinterpret_cast< PyObject * >( geosx::python::getPyWrapperType() ) ) < 0 )
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyGroupType(), "Group" ) )
   {
-    Py_DECREF( geosx::python::getPyWrapperType() );
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
+  {
+    return nullptr;
+  }
+
+  // Add the LvArray submodule.
+  if( !LvArray::python::addPyLvArrayModule( module ) )
+  {
     return nullptr;
   }
 

@@ -34,8 +34,10 @@ using namespace dataRepository;
 
 CommunicationTools::CommunicationTools()
 {
-  for ( int i = 0; i < NeighborCommunicator::maxComm; ++i )
-  { m_freeCommIDs.insert( i ); }
+  for( int i = 0; i < NeighborCommunicator::maxComm; ++i )
+  {
+    m_freeCommIDs.insert( i );
+  }
 }
 
 CommunicationTools::~CommunicationTools()

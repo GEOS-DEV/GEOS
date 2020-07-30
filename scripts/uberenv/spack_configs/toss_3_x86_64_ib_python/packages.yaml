@@ -113,7 +113,7 @@ packages:
     buildable: False
     externals:
     - spec: openssl@1.0.2
-      prefix: /usr/bin/
+      prefix: /usr/
 
   libffi:
     buildable: False

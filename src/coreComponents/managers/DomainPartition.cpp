@@ -250,10 +250,10 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   getGlobalState().getCommunicationTools().assignGlobalIndices( *edgeManager, *nodeManager, m_neighbors );
 
   getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( faceManager,
-                                                           m_neighbors );
+                                                                                m_neighbors );
 
   getGlobalState().getCommunicationTools().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                           m_neighbors );
+                                                                                m_neighbors );
 
   getGlobalState().getCommunicationTools().findGhosts( meshLevel, m_neighbors, use_nonblocking );
 

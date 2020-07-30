@@ -74,10 +74,10 @@ protected:
     }
 
     ProblemManager & problemManager = getGlobalState().getProblemManager();
-    int mpiSize = MpiWrapper::Comm_size( MPI_COMM_GEOSX );
+    int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
     dataRepository::Group * commandLine =
       problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
-    commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.Key() )->
+    commandLine->registerWrapper< integer >( problemManager.viewKeys.xPartitionsOverride.key() )->
       setApplyDefaultValue( mpiSize );
 
     xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
