@@ -189,21 +189,60 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = m_oldStress[k][q][i];
-    
   }
+
+  for(localIndex i=0; i<3; ++i)
+  {
+    oldP += stress[i];
+  }
+  oldP /= 3;
+  
+  array1d< real64 > oldDeviator(6);  // array allocation
+  for(localIndex i=0; i<3; ++i)
+  {
+    oldDeviator[i] = stress[i]-oldP;
+    oldDeviator[i+3] = stress[i+3];
+  }
+  
+  for(localIndex i=0; i<3; ++i)
+  {
+    oldQ += oldDeviator[i]*oldDeviator[i];
+    oldQ += 2*oldDeviator[i+3]*oldDeviator[i+3];
+  }
+
+
+  oldQ = std::sqrt(oldQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
+
+    for(localIndex i=0; i<6; ++i)
+  {
+    oldDeviator[i] /= oldQ; // normalized deviatoric direction, "nhat" from previous step
+  }
+
+  oldQ *= std::sqrt(3./2.);
 
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains] 
 
   real64 oldElasticStrainVol = std::log(oldP/p0) * Cr * (-1) + eps_v0 ;
   real64 oldElasticStrainDev = oldQ/3/mu;  
+
+  // Now recover the old strain tensor from the strain invariants. 
+  // Note that we need the deviatoric direction (n-hat) from the previous step.
+
   
-
-
+  
   // elastic predictor
-  
   // newP= oldP * exp(-1/Cr* strainIncrementVol)
   // newQ = oldQ + 3 * mu * strainIncrementDev
+
+  real64 eps_v_trial = oldElasticStrainVol + strainIncrementVol; 
+  real64 eps_s_trial = oldElasticStrainDev + strainIncrementDev;
+
+  real64 trialP = oldP * std::exp(-1/Cr* strainIncrementVol);
+  real64 trialQ = oldQ + 3 * mu * strainIncrementDev;
+
+  // Calculate the normalized deviatoric direction, "nhat"
+
   for(localIndex i=0; i<6; ++i)
   {
     stress[i] = m_oldStress[k][q][i];
@@ -215,7 +254,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   }
 
   // two-invariant decomposition in P-Q space (mean & deviatoric stress)
- real64 trialP = 0;
+  real64 trialP = 0;
   for(localIndex i=0; i<3; ++i)
   {
     trialP += stress[i];
@@ -246,6 +285,32 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   
   real64 yield = trialQ + friction*trialP - cohesion;
   
+    // set stiffness to elastic predictor
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    for(localIndex j=0; j<6; ++j)
+    {
+      stiffness[i][j] = 0;
+    }
+  }
+  
+  stiffness[0][0] = lame + 2*shear;
+  stiffness[0][1] = lame;
+  stiffness[0][2] = lame;
+
+  stiffness[1][0] = lame;
+  stiffness[1][1] = lame + 2*shear;
+  stiffness[1][2] = lame;
+
+  stiffness[2][0] = lame;
+  stiffness[2][1] = lame;
+  stiffness[2][2] = lame + 2*shear;
+
+  stiffness[3][3] = shear;
+  stiffness[4][4] = shear;
+  stiffness[5][5] = shear;
+
   if(yield > 1e-9) // plasticity branch
   {
     // the return mapping can in general be written as a newton iteration.
