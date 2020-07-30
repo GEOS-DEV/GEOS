@@ -21,7 +21,7 @@
 
 // Source includes
 #include "common/DataTypes.hpp"
-#include "LvArray/src/templateHelpers.hpp"
+#include "LvArray/src/typeManipulation.hpp"
 #include "LvArray/src/bufferManipulation.hpp"
 #include "SFINAE_Macros.hpp"
 
@@ -90,7 +90,7 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( reserve, localIndex( 55 ) );
  * @tparam CLASS The type to test.
  */
 template< typename CLASS >
-static constexpr bool HasMemberFunction_toView = LvArray::HasMemberFunction_toView< CLASS >;
+static constexpr bool HasMemberFunction_toView = LvArray::typeManipulation::HasMemberFunction_toView< CLASS >;
 
 /**
  * @brief Defines a static constexpr bool with two template parameter CanStreamInto
@@ -136,11 +136,11 @@ using ConstPointer = typename internal::GetPointerType< T >::ConstPointer;
 
 /// Type aliased to whatever T::toView() returns or T & if that method doesn't exist.
 template< typename T >
-using ViewType = typename LvArray::GetViewType< T >::type &;
+using ViewType = LvArray::typeManipulation::ViewType< T > &;
 
 /// Type aliased to whatever T::toViewConst() returns or T const & if that method doesn't exist.
 template< typename T >
-using ViewTypeConst = typename LvArray::GetViewTypeConst< T >::type &;
+using ViewTypeConst = LvArray::typeManipulation::ViewTypeConst< T > &;
 
 /// True if T is or inherits from std::string.
 template< typename T >

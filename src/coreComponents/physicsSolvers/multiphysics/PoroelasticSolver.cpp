@@ -62,6 +62,11 @@ PoroelasticSolver::PoroelasticSolver( const std::string & name,
   registerWrapper( viewKeyStruct::couplingTypeOptionStringString, &m_couplingTypeOptionString )->
     setInputFlag( InputFlags::REQUIRED )->
     setDescription( "Coupling option: (FIM, SIM_FixedStress)" );
+
+  m_linearSolverParameters.get().mgr.strategy = "Poroelastic";
+  m_linearSolverParameters.get().mgr.separateComponents = true;
+  m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
+  m_linearSolverParameters.get().dofsPerNode = 3;
 }
 
 void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBodies )
@@ -80,7 +85,7 @@ void PoroelasticSolver::RegisterDataOnMesh( dataRepository::Group * const MeshBo
   }
 }
 
-void PoroelasticSolver::SetupDofs( DomainPartition const * const domain,
+void PoroelasticSolver::SetupDofs( DomainPartition const & domain,
                                    DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -92,32 +97,21 @@ void PoroelasticSolver::SetupDofs( DomainPartition const * const domain,
                           DofManager::Connector::Elem );
 }
 
-void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
+void PoroelasticSolver::SetupSystem( DomainPartition & domain,
                                      DofManager & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution,
+                                     CRSMatrix< real64, globalIndex > & localMatrix,
+                                     array1d< real64 > & localRhs,
+                                     array1d< real64 > & localSolution,
                                      bool const setSparsity )
 {
-  // setup monolithic coupled system
-  dofManager.setMesh( domain, 0, 0 );
-  SetupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
   if( m_precond )
   {
     m_precond->clear();
   }
 
-  localIndex const numLocalDof = dofManager.numLocalDofs();
-  matrix.createWithLocalSize( numLocalDof, numLocalDof, 30, MPI_COMM_GEOSX );
-  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
+  // setup monolithic coupled system
+  SolverBase::SetupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 
-  if( setSparsity )
-  {
-    dofManager.setSparsityPattern( m_matrix, true );
-  }
   if( !m_precond && m_linearSolverParameters.get().solverType != "direct" )
   {
     CreatePreconditioner();
@@ -126,56 +120,36 @@ void PoroelasticSolver::SetupSystem( DomainPartition * const domain,
 
 void PoroelasticSolver::ImplicitStepSetup( real64 const & time_n,
                                            real64 const & dt,
-                                           DomainPartition * const domain,
-                                           DofManager & dofManager,
-                                           ParallelMatrix & matrix,
-                                           ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           DomainPartition & domain )
 {
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_solidSolver->ImplicitStepSetup( time_n, dt, domain );
+
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
-    MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-    ElementRegionManager * const elemManager = mesh->getElemManager();
+    MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-      elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-      elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
-
-    //***** loop over all elements and initialize the derivative arrays *****
-    forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                  localIndex const esr,
-                                  localIndex const k )->void
+    forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
     {
-      oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
+      arrayView1d< real64 const > const & totalMeanStress =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
+      arrayView1d< real64 > const & oldTotalMeanStress =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        oldTotalMeanStress[ei] = totalMeanStress[ei];
+      } );
     } );
-  }
-  else if( m_couplingTypeOption == couplingTypeOption::FIM )
-  {
-    m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
-                                     dofManager,
-                                     matrix,
-                                     rhs,
-                                     solution );
-    m_solidSolver->ImplicitStepSetup( time_n, dt, domain,
-                                      dofManager,
-                                      matrix,
-                                      rhs,
-                                      solution );
   }
 }
 
 void PoroelasticSolver::ImplicitStepComplete( real64 const & time_n,
                                               real64 const & dt,
-                                              DomainPartition * const domain )
+                                              DomainPartition & domain )
 {
-  if( m_couplingTypeOption == couplingTypeOption::FIM )
-  {
-//    m_solidSolver->updateStress( domain ); // TODO: to be moved in m_solidSolver->ImplicitStepComplete
-    m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
-    m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
-  }
+  m_solidSolver->ImplicitStepComplete( time_n, dt, domain );
+  m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
 }
 
 void PoroelasticSolver::PostProcessInput()
@@ -216,9 +190,9 @@ void PoroelasticSolver::InitializePostInitialConditions_PreSubGroups( Group * co
 {
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
-    this->getParent()->GetGroup( m_flowSolverName )->group_cast< SinglePhaseBase * >()->setPoroElasticCoupling();
+    m_flowSolver->setPoroElasticCoupling();
     // Calculate initial total mean stress
-    this->UpdateDeformationForCoupling( problemManager->GetGroup< DomainPartition >( keys::domain ));
+    UpdateDeformationForCoupling( *problemManager->GetGroup< DomainPartition >( keys::domain ) );
   }
 }
 
@@ -227,72 +201,61 @@ PoroelasticSolver::~PoroelasticSolver()
   // TODO Auto-generated destructor stub
 }
 
-void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void PoroelasticSolver::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel * const mesh = domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  ElementRegionManager * const elemManager = mesh->getElemManager();
+  m_flowSolver->ResetStateToBeginningOfStep( domain );
+  m_solidSolver->ResetStateToBeginningOfStep( domain );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-    elemManager->ConstructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
-
-  //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [&]( localIndex const er,
-                                localIndex const esr,
-                                localIndex const k )->void
+  forTargetSubRegions( mesh, [&] ( localIndex const, ElementSubRegionBase & subRegion )
   {
-    totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+    arrayView1d< real64 const > const & oldTotalMeanStress =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::oldTotalMeanStressString );
+    arrayView1d< real64 > const & totalMeanStress =
+      subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalMeanStressString );
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      totalMeanStress[ei] = oldTotalMeanStress[ei];
+    } );
   } );
 }
 
 real64 PoroelasticSolver::SolverStep( real64 const & time_n,
                                       real64 const & dt,
                                       int const cycleNumber,
-                                      DomainPartition * const domain )
+                                      DomainPartition & domain )
 {
   real64 dt_return = dt;
   if( m_couplingTypeOption == couplingTypeOption::SIM_FixedStress )
   {
-    dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain->group_cast< DomainPartition * >() );
+    dt_return = SplitOperatorStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == couplingTypeOption::FIM )
   {
     SetupSystem( domain,
                  m_dofManager,
-                 m_matrix,
-                 m_rhs,
-                 m_solution );
+                 m_localMatrix,
+                 m_localRhs,
+                 m_localSolution );
 
-    ImplicitStepSetup( time_n,
-                       dt,
-                       domain,
-                       m_dofManager,
-                       m_matrix,
-                       m_rhs,
-                       m_solution );
+    ImplicitStepSetup( time_n, dt, domain );
 
-    dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain,
-                                             m_dofManager,
-                                             m_matrix,
-                                             m_rhs,
-                                             m_solution );
+    dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-    ImplicitStepComplete( time_n,
-                          dt_return,
-                          domain );
+    ImplicitStepComplete( time_n, dt_return, domain );
   }
   return dt_return;
 }
 
-void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const domain )
+void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition & domain )
 {
 
-  MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
+  MeshLevel & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   NodeManager & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
@@ -348,18 +311,9 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
     localIndex const numQuadraturePoints = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() )->n_quadrature_points();
 
-    forAll< parallelHostPolicy >( elementSubRegion.size(), [=] ( localIndex const ei )
+    // TODO: remove use of R1Tensor and use device policy
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-
-
-      R1Tensor u_local[10];
-
-      for( localIndex i = 0; i < numNodesPerElement; ++i )
-      {
-        localIndex const nodeIndex = elemsToNodes( ei, i );
-        u_local[ i ] = u[ nodeIndex ];
-      }
-
       real64 effectiveMeanStress = 0.0;
       for( localIndex q=0; q<numQuadraturePoints; ++q )
       {
@@ -374,7 +328,7 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
       // update element volume
       R1Tensor Xlocal[ElementRegionManager::maxNumNodesPerElem];
-      for( localIndex a = 0; a < elemsToNodes.size( 1 ); ++a )
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
       {
         Xlocal[a] = X[elemsToNodes[ei][a]];
         Xlocal[a] += u[elemsToNodes[ei][a]];
@@ -387,62 +341,65 @@ void PoroelasticSolver::UpdateDeformationForCoupling( DomainPartition * const do
 
 void PoroelasticSolver::AssembleSystem( real64 const time_n,
                                         real64 const dt,
-                                        DomainPartition * const domain,
+                                        DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        ParallelMatrix & matrix,
-                                        ParallelVector & rhs )
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs )
 {
 
   // assemble J_SS
-//  m_solidSolver->AssembleSystem( time_n, dt, domain,
+//  m_solidSolver->AssembleSystem( time_n, dt,
+//                                 domain,
 //                                 dofManager,
-//                                 matrix,
-//                                 rhs );
+//                                 localMatrix,
+//                                 localRhs );
 
   m_solidSolver->AssemblyLaunch< constitutive::PoroElasticBase,
-                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( *domain, dofManager, matrix, rhs );
+                                 SolidMechanicsLagrangianFEMKernels::QuasiStaticPoroElastic >( domain,
+                                                                                               dofManager,
+                                                                                               localMatrix,
+                                                                                               localRhs );
 
   // assemble J_FF
-  m_flowSolver->AssembleSystem( time_n, dt, domain,
+  m_flowSolver->AssembleSystem( time_n, dt,
+                                domain,
                                 dofManager,
-                                matrix,
-                                rhs );
+                                localMatrix,
+                                localRhs );
 
   // assemble J_SF
   AssembleCouplingTerms( domain,
                          dofManager,
-                         &matrix,
-                         &rhs );
+                         localMatrix,
+                         localRhs );
 
 }
 
-void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
+void PoroelasticSolver::AssembleCouplingTerms( DomainPartition const & domain,
                                                DofManager const & dofManager,
-                                               ParallelMatrix * const matrix,
-                                               ParallelVector * const rhs )
+                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = *domain->getMeshBodies()->GetGroup< MeshBody >( 0 )->getMeshLevel( 0 );
-  NodeManager const * const nodeManager = mesh.getNodeManager();
+  MeshLevel const & mesh = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  NodeManager const & nodeManager = *mesh.getNodeManager();
 
-  NumericalMethodsManager const & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteElementDiscretizationManager const &
   feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   string const uDofKey = dofManager.getKey( keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & uDofNumber = nodeManager->getReference< globalIndex_array >( uDofKey );
+  arrayView1d< globalIndex const > const & uDofNumber = nodeManager.getReference< globalIndex_array >( uDofKey );
 
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incr_disp = nodeManager->incrementalDisplacement();
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & incr_disp = nodeManager.incrementalDisplacement();
 
+  globalIndex const rankOffset = dofManager.rankOffset();
   string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString );
 
-  FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
-  matrix->open();
-  rhs->open();
+  FiniteElementDiscretization const & feDiscretization =
+    *feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
 
   // begin subregion loop
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [&]( localIndex const,
@@ -459,8 +416,6 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
 
     arrayView4d< real64 const > const & dNdX = elementSubRegion.dNdX();
 
-    arrayView1d< integer const > const & ghostRank = elementSubRegion.ghostRank();
-
     arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
 
     arrayView1d< globalIndex const > const & pDofNumber = elementSubRegion.getReference< globalIndex_array >( pDofKey );
@@ -469,110 +424,131 @@ void PoroelasticSolver::AssembleCouplingTerms( DomainPartition * const domain,
     localIndex const numNodesPerElement = elemsToNodes.size( 1 );
 
     std::unique_ptr< FiniteElementBase >
-    fe = feDiscretization->getFiniteElement( elementSubRegion.GetElementTypeString() );
+    fe = feDiscretization.getFiniteElement( elementSubRegion.GetElementTypeString() );
 
     real64 const biotCoefficient = solid.getReference< real64 >( "BiotCoefficient" );
 
     arrayView2d< real64 const > const & density = fluid.density();
 
     int dim = 3;
-    static constexpr int maxNumUDof = 24; // TODO: assuming linear HEX at most for the moment
-    static constexpr int maxNumPDof = 1; // TODO: assuming piecewise constant (P0) only for the moment
-    int nUDof = dim * numNodesPerElement;
-    int nPDof = m_flowSolver->numDofPerCell();
+    localIndex constexpr maxNumUDof = 24; // TODO: assuming linear HEX at most for the moment
+    localIndex constexpr maxNumPDof = 1; // TODO: assuming piecewise constant (P0) only for the moment
+    localIndex const nUDof = dim * numNodesPerElement;
+    localIndex const nPDof = m_flowSolver->numDofPerCell();
+    GEOSX_ERROR_IF_GT( nPDof, maxNumPDof );
     int numQuadraturePoints = fe->n_quadrature_points();
 
-    forAll< serialPolicy >( elementSubRegion.size(), [=]( localIndex k )
+    // TODO: remove use of R1Tensor and use device policy
+    forAll< parallelDevicePolicy< 32 > >( elementSubRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
-      globalIndex elementPLocalDOfIndex;
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRsdP( nUDof, nPDof );
       stackArray2d< real64, maxNumUDof * maxNumPDof > dRfdU( nPDof, nUDof );
-      real64 Rf;
+      stackArray1d< real64, maxNumPDof > Rf( nPDof );
 
-      dRsdP = 0.0;
-      dRfdU = 0.0;
-      Rf = 0.0;
-
-      if( ghostRank[k] < 0 )
+      for( integer q = 0; q < numQuadraturePoints; ++q )
       {
-        // Get dof local to global mapping
-        for( localIndex a = 0; a < numNodesPerElement; ++a )
+        const real64 detJq = detJ[k][q];
+
+        for( integer a = 0; a < numNodesPerElement; ++a )
         {
+
+          dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdX[k][q][a][2] * detJq;
+          dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][0] * detJq;
+          dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][1] * detJq;
+          dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdX[k][q][a][2] * detJq;
+
           localIndex localNodeIndex = elemsToNodes[k][a];
-          for( int i = 0; i < dim; ++i )
-          {
-            elementULocalDofIndex[static_cast< int >(a) * dim + i] = uDofNumber[localNodeIndex] + i;
-          }
-        }
-        elementPLocalDOfIndex = pDofNumber[k];
 
-        for( integer q = 0; q < numQuadraturePoints; ++q )
+          real64 Rf_tmp = dNdX[k][q][a][0] * incr_disp[localNodeIndex][0]
+                          + dNdX[k][q][a][1] * incr_disp[localNodeIndex][1]
+                          + dNdX[k][q][a][2] * incr_disp[localNodeIndex][2];
+          Rf_tmp *= density[k][0] * biotCoefficient * detJq;
+          Rf[0] += Rf_tmp;
+        }
+      }
+
+      stackArray1d< globalIndex, maxNumUDof > elementULocalDofIndex( nUDof );
+      stackArray1d< globalIndex, maxNumPDof > elementPLocalDofIndex( nPDof );
+
+      // Get dof local to global mapping
+      for( localIndex a = 0; a < numNodesPerElement; ++a )
+      {
+        for( int i = 0; i < dim; ++i )
         {
-          const realT detJq = detJ[k][q];
-
-          for( integer a = 0; a < numNodesPerElement; ++a )
-          {
-            R1Tensor const dNdXa = dNdX[k][q][a];
-
-            dRsdP( a * dim + 0, 0 ) += biotCoefficient * dNdXa[0] * detJq;
-            dRsdP( a * dim + 1, 0 ) += biotCoefficient * dNdXa[1] * detJq;
-            dRsdP( a * dim + 2, 0 ) += biotCoefficient * dNdXa[2] * detJq;
-            dRfdU( 0, a * dim + 0 ) += density[k][0] * biotCoefficient * dNdXa[0] * detJq;
-            dRfdU( 0, a * dim + 1 ) += density[k][0] * biotCoefficient * dNdXa[1] * detJq;
-            dRfdU( 0, a * dim + 2 ) += density[k][0] * biotCoefficient * dNdXa[2] * detJq;
-
-            localIndex localNodeIndex = elemsToNodes[k][a];
-
-            real64 Rf_tmp = dNdXa[0] * incr_disp[localNodeIndex][0]
-                            + dNdXa[1] * incr_disp[localNodeIndex][1]
-                            + dNdXa[2] * incr_disp[localNodeIndex][2];
-            Rf_tmp *= density[k][0] * biotCoefficient * detJq;
-            Rf += Rf_tmp;
-          }
+          elementULocalDofIndex[a * dim + i] = uDofNumber[elemsToNodes[k][a]] + i;
         }
+      }
+      for( localIndex i = 0; i < nPDof; ++i )
+      {
+        elementPLocalDofIndex[i] = pDofNumber[k] + i;
+      }
 
-        matrix->add( elementULocalDofIndex.data(), &elementPLocalDOfIndex, dRsdP.data(), nUDof, nPDof );
-        matrix->add( &elementPLocalDOfIndex, elementULocalDofIndex.data(), dRfdU.data(), nPDof, nUDof );
-        rhs->add( &elementPLocalDOfIndex, &Rf, 1 );
+      for( localIndex i = 0; i < nUDof; ++i )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( elementULocalDofIndex[ i ] - rankOffset );
+        if( dof < 0 || dof >= localMatrix.numRows() )
+          continue;
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                          elementPLocalDofIndex.data(),
+                                                                          dRsdP[i].dataIfContiguous(),
+                                                                          nPDof );
+      }
+      for( localIndex i = 0; i < nPDof; ++i )
+      {
+        localIndex const dof = LvArray::integerConversion< localIndex >( elementPLocalDofIndex[ i ] - rankOffset );
+        if( dof < 0 || dof >= localMatrix.numRows() )
+          continue;
+        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                          elementULocalDofIndex.data(),
+                                                                          dRfdU[i].dataIfContiguous(),
+                                                                          nUDof );
+
+        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[ dof ], Rf[i] );
       }
     } );
   } );
-
-  matrix->close();
-  rhs->close();
 }
 
 void PoroelasticSolver::ApplyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
-                                                 DomainPartition * const domain,
+                                                 DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs )
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs )
 {
-  m_solidSolver->ApplyBoundaryConditions( time_n, dt, domain,
+  m_solidSolver->ApplyBoundaryConditions( time_n, dt,
+                                          domain,
                                           dofManager,
-                                          matrix,
-                                          rhs );
+                                          localMatrix,
+                                          localRhs );
 
-  m_flowSolver->ApplyBoundaryConditions( time_n, dt, domain,
+  m_flowSolver->ApplyBoundaryConditions( time_n, dt,
+                                         domain,
                                          dofManager,
-                                         matrix,
-                                         rhs );
+                                         localMatrix,
+                                         localRhs );
 }
 
-real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const * const domain,
+real64 PoroelasticSolver::CalculateResidualNorm( DomainPartition const & domain,
                                                  DofManager const & dofManager,
-                                                 ParallelVector const & rhs )
+                                                 arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
-  real64 const momementumResidualNorm = m_solidSolver->CalculateResidualNorm( domain, dofManager, rhs );
+  real64 const momementumResidualNorm = m_solidSolver->CalculateResidualNorm( domain, dofManager, localRhs );
 
   // compute norm of mass balance residual equations
-  real64 const massResidualNorm = m_flowSolver->CalculateResidualNorm( domain, dofManager, rhs );
+  real64 const massResidualNorm = m_flowSolver->CalculateResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( momementumResidualNorm*momementumResidualNorm
-               + massResidualNorm*massResidualNorm );
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    char output[200] = {0};
+    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
+    std::cout << output << std::endl;
+  }
+
+  return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
 
 void PoroelasticSolver::CreatePreconditioner()
@@ -597,7 +573,8 @@ void PoroelasticSolver::CreatePreconditioner()
   }
   else
   {
-    m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+    //TODO: Revisit this part such that is coherent across physics solver
+    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
   }
 }
 
@@ -607,60 +584,41 @@ void PoroelasticSolver::SolveSystem( DofManager const & dofManager,
                                      ParallelVector & solution )
 {
   solution.zero();
-
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
 void PoroelasticSolver::ApplySystemSolution( DofManager const & dofManager,
-                                             ParallelVector const & solution,
+                                             arrayView1d< real64 const > const & localSolution,
                                              real64 const scalingFactor,
-                                             DomainPartition * const domain )
+                                             DomainPartition & domain )
 {
   // update displacement field
-  m_solidSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
+  m_solidSolver->ApplySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update pressure field
-  m_flowSolver->ApplySystemSolution( dofManager, solution, -scalingFactor, domain );
+  m_flowSolver->ApplySystemSolution( dofManager, localSolution, -scalingFactor, domain );
 }
 
 real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
                                              real64 const & dt,
                                              integer const cycleNumber,
-                                             DomainPartition * const domain )
+                                             DomainPartition & domain )
 {
   real64 dtReturn = dt;
   real64 dtReturnTemporary;
 
-  SolidMechanicsLagrangianFEM &
-  solidSolver = *(this->getParent()->GetGroup( m_solidSolverName )->group_cast< SolidMechanicsLagrangianFEM * >());
+  m_flowSolver->SetupSystem( domain,
+                             m_flowSolver->getDofManager(),
+                             m_flowSolver->getLocalMatrix(),
+                             m_flowSolver->getLocalRhs(),
+                             m_flowSolver->getLocalSolution() );
 
-  SinglePhaseBase &
-  fluidSolver = *(this->getParent()->GetGroup( m_flowSolverName )->group_cast< SinglePhaseBase * >());
+  m_solidSolver->SetupSystem( domain,
+                              m_solidSolver->getDofManager(),
+                              m_solidSolver->getLocalMatrix(),
+                              m_solidSolver->getLocalRhs(),
+                              m_solidSolver->getLocalSolution() );
 
-  fluidSolver.SetupSystem( domain,
-                           fluidSolver.getDofManager(),
-                           fluidSolver.getSystemMatrix(),
-                           fluidSolver.getSystemRhs(),
-                           fluidSolver.getSystemSolution() );
-
-  solidSolver.SetupSystem( domain,
-                           solidSolver.getDofManager(),
-                           solidSolver.getSystemMatrix(),
-                           solidSolver.getSystemRhs(),
-                           solidSolver.getSystemSolution() );
-
-  fluidSolver.ImplicitStepSetup( time_n, dt, domain,
-                                 fluidSolver.getDofManager(),
-                                 fluidSolver.getSystemMatrix(),
-                                 fluidSolver.getSystemRhs(),
-                                 fluidSolver.getSystemSolution() );
-
-  solidSolver.ImplicitStepSetup( time_n, dt, domain,
-                                 solidSolver.getDofManager(),
-                                 solidSolver.getSystemMatrix(),
-                                 solidSolver.getSystemRhs(),
-                                 solidSolver.getSystemSolution() );
-
-  this->ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  ImplicitStepSetup( time_n, dt, domain );
 
   int iter = 0;
   while( iter < m_nonlinearSolverParameters.m_maxIterNewton )
@@ -668,21 +626,12 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
     if( iter == 0 )
     {
       // reset the states of all child solvers if any of them has been reset
-      fluidSolver.ResetStateToBeginningOfStep( domain );
-      solidSolver.ResetStateToBeginningOfStep( domain );
       ResetStateToBeginningOfStep( domain );
     }
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", FlowSolver: " );
 
-    dtReturnTemporary = fluidSolver.NonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain,
-                                                           fluidSolver.getDofManager(),
-                                                           fluidSolver.getSystemMatrix(),
-                                                           fluidSolver.getSystemRhs(),
-                                                           fluidSolver.getSystemSolution() );
+    dtReturnTemporary = m_flowSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -691,7 +640,7 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
       continue;
     }
 
-    if( fluidSolver.getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
+    if( m_flowSolver->getNonlinearSolverParameters().m_numNewtonIterations == 0 && iter > 0 )
     {
       GEOSX_LOG_LEVEL_RANK_0( 1, "***** The iterative coupling has converged in " << iter  << " iterations! *****\n" );
       break;
@@ -699,17 +648,8 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
 
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1  << ", MechanicsSolver: " );
 
-    solidSolver.ResetStressToBeginningOfStep( domain );
-    dtReturnTemporary = solidSolver.NonlinearImplicitStep( time_n,
-                                                           dtReturn,
-                                                           cycleNumber,
-                                                           domain,
-                                                           solidSolver.getDofManager(),
-                                                           solidSolver.getSystemMatrix(),
-                                                           solidSolver.getSystemRhs(),
-                                                           solidSolver.getSystemSolution() );
-
-//    solidSolver.updateStress( domain );
+    m_solidSolver->ResetStressToBeginningOfStep( domain );
+    dtReturnTemporary = m_solidSolver->NonlinearImplicitStep( time_n, dtReturn, cycleNumber, domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -717,16 +657,14 @@ real64 PoroelasticSolver::SplitOperatorStep( real64 const & time_n,
       dtReturn = dtReturnTemporary;
       continue;
     }
-    if( solidSolver.getNonlinearSolverParameters().m_numNewtonIterations > 0 )
+    if( m_solidSolver->getNonlinearSolverParameters().m_numNewtonIterations > 0 )
     {
-      this->UpdateDeformationForCoupling( domain );
+      UpdateDeformationForCoupling( domain );
     }
     ++iter;
   }
 
-  fluidSolver.ImplicitStepComplete( time_n, dt, domain );
-  solidSolver.ImplicitStepComplete( time_n, dt, domain );
-  this->ImplicitStepComplete( time_n, dt, domain );
+  ImplicitStepComplete( time_n, dt, domain );
 
   return dtReturn;
 }

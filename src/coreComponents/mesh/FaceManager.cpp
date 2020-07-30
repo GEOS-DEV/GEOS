@@ -16,6 +16,7 @@
  * @file FaceManager.cpp
  */
 
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "FaceManager.hpp"
 #include "NodeManager.hpp"
 #include "BufferOps.hpp"
@@ -619,7 +620,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   // Set value of domainBounaryIndicator to one if it is found to have only one elements that it
   // is connected to.
   integer_array & faceDomainBoundaryIndicator = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
-  faceDomainBoundaryIndicator = 0;
+  faceDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
   arrayView2d< localIndex const > const & elemRegionList = this->elementRegionList();
 
@@ -632,7 +633,7 @@ void FaceManager::SetDomainBoundaryObjects( NodeManager * const nodeManager )
   } );
 
   integer_array & nodeDomainBoundaryIndicator = nodeManager->getReference< integer_array >( nodeManager->viewKeys.domainBoundaryIndicator );
-  nodeDomainBoundaryIndicator = 0;
+  nodeDomainBoundaryIndicator.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToNodesMap = this->nodeList().toViewConst();
 
@@ -655,7 +656,7 @@ void FaceManager::SetIsExternal()
   integer_array const &
   isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
 
-  m_isExternal = 0;
+  m_isExternal.setValues< serialPolicy >( 0 );
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k]==1 )
@@ -958,8 +959,7 @@ void FaceManager::compressRelationMaps()
 
 void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< localIndex > const & targetIndices )
 {
-  arrayView1d< localIndex const > const &
-  childFaceIndices = getReference< array1d< localIndex > >( ObjectManagerBase::viewKeyStruct::childIndexString );
+  arrayView1d< localIndex const > const & childFaceIndices = getExtrinsicData< extrinsicMeshData::ChildIndex >();
 
   ObjectManagerBase::enforceStateFieldConsistencyPostTopologyChange ( targetIndices );
 

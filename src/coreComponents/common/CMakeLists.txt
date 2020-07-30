@@ -21,6 +21,7 @@ set(common_sources
     BufferAllocator.cpp
     DataTypes.cpp
     Logger.cpp
+    Path.cpp
    )
 
 set( dependencyList lvarray pugixml )

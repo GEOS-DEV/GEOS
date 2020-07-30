@@ -596,6 +596,13 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SolidMechanicsEmbeddedFractures:
+
+Element: SolidMechanicsEmbeddedFractures
+========================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures.rst
+
+
 .. _XML_SolidMechanicsLagrangianSSLE:
 
 Element: SolidMechanicsLagrangianSSLE
@@ -1349,6 +1356,13 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/fileIO/schema/docs/SinglePhaseWell_other.rst
 
 
+.. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
+
+Datastructure: SolidMechanicsEmbeddedFractures
+==============================================
+.. include:: ../../coreComponents/fileIO/schema/docs/SolidMechanicsEmbeddedFractures_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsLagrangianSSLE:
 
 Datastructure: SolidMechanicsLagrangianSSLE
@@ -1529,6 +1543,13 @@ Datastructure: elementRegionsGroup
 Datastructure: elementSubRegions
 ================================
 .. include:: ../../coreComponents/fileIO/schema/docs/elementSubRegions_other.rst
+
+
+.. _DATASTRUCTURE_finiteVolumeStencils:
+
+Datastructure: finiteVolumeStencils
+===================================
+.. include:: ../../coreComponents/fileIO/schema/docs/finiteVolumeStencils_other.rst
 
 
 .. _DATASTRUCTURE_lassen:

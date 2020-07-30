@@ -16,8 +16,8 @@
 #include "managers/initialization.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
-#include "constitutive/fluid/CompositionalMultiphaseFluid.hpp"
-#include "constitutive/fluid/BlackOilFluid.hpp"
+#include "constitutive/fluid/multiFluidSelector.hpp"
+#include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "physicsSolvers/fluidFlow/unitTests/testCompFlowUtils.hpp"
 
 // TPL includes
@@ -108,31 +108,31 @@ static const char * pvdo_str = "#P[Pa]\tBo[m3/sm3]\tVisc(Pa.s)\n"
 static const char * pvdw_str = "#\tPref[bar]\tBw[m3/sm3]\tCp[1/bar]\t    Visc[cP]\n"
                                "\t30600000.1\t1.03\t\t0.00000000041\t0.0003";
 
-void testNumericalDerivatives( MultiFluidBase * fluid,
-                               real64 P,
-                               real64 T,
+void testNumericalDerivatives( MultiFluidBase & fluid,
+                               real64 const P,
+                               real64 const T,
                                arraySlice1d< real64 > const & composition,
-                               real64 perturbParameter,
-                               real64 relTol,
-                               real64 absTol = std::numeric_limits< real64 >::max() )
+                               real64 const perturbParameter,
+                               real64 const relTol,
+                               real64 const absTol = std::numeric_limits< real64 >::max() )
 {
-  localIndex const NC = fluid->numFluidComponents();
-  localIndex const NP = fluid->numFluidPhases();
+  localIndex const NC = fluid.numFluidComponents();
+  localIndex const NP = fluid.numFluidPhases();
 
-  auto const & components = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
-  auto const & phases     = fluid->getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
+  auto const & components = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString );
+  auto const & phases     = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString );
 
   // create a clone of the fluid to run updates on
   std::unique_ptr< ConstitutiveBase > fluidCopyPtr;
-  fluid->DeliverClone( "fluidCopy", nullptr, fluidCopyPtr );
-  auto fluidCopy = fluidCopyPtr->group_cast< MultiFluidBase * >();
+  fluid.DeliverClone( "fluidCopy", nullptr, fluidCopyPtr );
+  MultiFluidBase & fluidCopy = *fluidCopyPtr->group_cast< MultiFluidBase * >();
 
-  fluid->AllocateConstitutiveData( fluid->getParent(), 1 );
-  fluidCopy->AllocateConstitutiveData( fluid->getParent(), 1 );
+  fluid.AllocateConstitutiveData( fluid.getParent(), 1 );
+  fluidCopy.AllocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
   #define GET_FLUID_DATA( FLUID, DIM, KEY ) \
-    FLUID->getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY )[0][0]
+    FLUID.getReference< Array< real64, DIM > >( MultiFluidBase::viewKeyStruct::KEY )[0][0]
 
   CompositionalVarContainer< 1 > phaseFrac {
     GET_FLUID_DATA( fluid, 3, phaseFractionString ),
@@ -177,90 +177,100 @@ void testNumericalDerivatives( MultiFluidBase * fluid,
 
 #undef GET_FLUID_DATA
 
-  // set the fluid state to current
-  fluid->PointUpdate( P, T, composition, 0, 0 );
-
-  // update pressure and check derivatives
+  // set the original fluid state to current
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
-    real64 const dP = perturbParameter * (P + perturbParameter);
-    fluidCopy->PointUpdate( P + dP, T, composition, 0, 0 );
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    fluidWrapper.Update( 0, 0, P, T, composition );
+  } );
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, absTol, "phaseVisc", "Pres", phases );
-    checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, absTol, "totalDens", "Pres" );
-    checkDerivative( phaseCompFracCopy.toSliceConst(),
-                     phaseCompFrac.value.toSliceConst(),
-                     phaseCompFrac.dPres.toSliceConst(),
-                     dP,
-                     relTol,
-                     absTol,
-                     "phaseCompFrac",
-                     "Pres",
-                     phases,
-                     components );
-  }
-
-  // update temperature and check derivatives
+  // now perturb variables and update the copied fluid's state
+  constitutive::constitutiveUpdatePassThru( fluidCopy, [&] ( auto & castedFluid )
   {
-    real64 const dT = perturbParameter * (T + perturbParameter);
-    fluidCopy->PointUpdate( P, T + dT, composition, 0, 0 );
+    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, absTol, "phaseVisc", "Temp", phases );
-    checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, absTol, "totalDens", "Temp" );
-    checkDerivative( phaseCompFracCopy.toSliceConst(),
-                     phaseCompFrac.value.toSliceConst(),
-                     phaseCompFrac.dTemp.toSliceConst(),
-                     dT,
-                     relTol,
-                     absTol,
-                     "phaseCompFrac",
-                     "Temp",
-                     phases,
-                     components );
-  }
-
-  // update composition and check derivatives
-  auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp, NP, NC );
-  auto dPhaseDens_dC     = invertLayout( phaseDens.dComp, NP, NC );
-  auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp, NP, NC );
-  auto dTotalDens_dC     = invertLayout( totalDens.dComp, NC );
-  auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp, NP, NC, NC );
-
-  array1d< real64 > compNew( NC );
-  for( localIndex jc = 0; jc < NC; ++jc )
-  {
-    real64 const dC = perturbParameter * (composition[jc] + perturbParameter);
-    for( localIndex ic = 0; ic < NC; ++ic )
+    // update pressure and check derivatives
     {
-      compNew[ic] = composition[ic];
+      real64 const dP = perturbParameter * (P + perturbParameter);
+      fluidWrapper.Update( 0, 0, P + dP, T, composition );
+
+      checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dPres, dP, relTol, absTol, "phaseFrac", "Pres", phases );
+      checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dPres, dP, relTol, absTol, "phaseDens", "Pres", phases );
+      checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dPres, dP, relTol, absTol, "phaseVisc", "Pres", phases );
+      checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres, dP, relTol, absTol, "totalDens", "Pres" );
+      checkDerivative( phaseCompFracCopy.toSliceConst(),
+                       phaseCompFrac.value.toSliceConst(),
+                       phaseCompFrac.dPres.toSliceConst(),
+                       dP,
+                       relTol,
+                       absTol,
+                       "phaseCompFrac",
+                       "Pres",
+                       phases,
+                       components );
     }
-    compNew[jc] += dC;
 
-    // renormalize
-    real64 sum = 0.0;
-    for( localIndex ic = 0; ic < NC; ++ic )
-      sum += compNew[ic];
-    for( localIndex ic = 0; ic < NC; ++ic )
-      compNew[ic] /= sum;
+    // update temperature and check derivatives
+    {
+      real64 const dT = perturbParameter * (T + perturbParameter);
+      fluidWrapper.Update( 0, 0, P, T + dT, composition );
 
-    fluidCopy->PointUpdate( P, T, compNew, 0, 0 );
-    string var = "compFrac[" + components[jc] + "]";
+      checkDerivative( phaseFracCopy, phaseFrac.value, phaseFrac.dTemp, dT, relTol, absTol, "phaseFrac", "Temp", phases );
+      checkDerivative( phaseDensCopy, phaseDens.value, phaseDens.dTemp, dT, relTol, absTol, "phaseDens", "Temp", phases );
+      checkDerivative( phaseViscCopy, phaseVisc.value, phaseVisc.dTemp, dT, relTol, absTol, "phaseVisc", "Temp", phases );
+      checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp, dT, relTol, absTol, "totalDens", "Temp" );
+      checkDerivative( phaseCompFracCopy.toSliceConst(),
+                       phaseCompFrac.value.toSliceConst(),
+                       phaseCompFrac.dTemp.toSliceConst(),
+                       dT,
+                       relTol,
+                       absTol,
+                       "phaseCompFrac",
+                       "Temp",
+                       phases,
+                       components );
+    }
 
-    checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
-    checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
-    checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
-    checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, absTol, "totalDens", var );
-    checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(), dC, relTol, absTol,
-                     "phaseCompFrac", var, phases, components );
-  }
+    // update composition and check derivatives
+    auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp, NP, NC );
+    auto dPhaseDens_dC     = invertLayout( phaseDens.dComp, NP, NC );
+    auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp, NP, NC );
+    auto dTotalDens_dC     = invertLayout( totalDens.dComp, NC );
+    auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp, NP, NC, NC );
+
+    array1d< real64 > compNew( NC );
+    for( localIndex jc = 0; jc < NC; ++jc )
+    {
+      real64 const dC = perturbParameter * ( composition[jc] + perturbParameter );
+      for( localIndex ic = 0; ic < NC; ++ic )
+      {
+        compNew[ic] = composition[ic];
+      }
+      compNew[jc] += dC;
+
+      // renormalize
+      real64 sum = 0.0;
+      for( localIndex ic = 0; ic < NC; ++ic )
+        sum += compNew[ic];
+      for( localIndex ic = 0; ic < NC; ++ic )
+        compNew[ic] /= sum;
+
+      fluidWrapper.Update( 0, 0, P, T, compNew );
+
+      string const var = "compFrac[" + components[jc] + "]";
+      checkDerivative( phaseFracCopy, phaseFrac.value, dPhaseFrac_dC[jc], dC, relTol, absTol, "phaseFrac", var, phases );
+      checkDerivative( phaseDensCopy, phaseDens.value, dPhaseDens_dC[jc], dC, relTol, absTol, "phaseDens", var, phases );
+      checkDerivative( phaseViscCopy, phaseVisc.value, dPhaseVisc_dC[jc], dC, relTol, absTol, "phaseVisc", var, phases );
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc], dC, relTol, absTol, "totalDens", var );
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(), dC, relTol, absTol,
+                       "phaseCompFrac", var, phases, components );
+    }
+  } );
 }
 
-MultiFluidBase * makeCompositionalFluid( string const & name, Group * parent )
+MultiFluidBase * makeCompositionalFluid( string const & name, Group & parent )
 {
-  auto fluid = parent->RegisterGroup< CompositionalMultiphaseFluid >( name );
+  auto fluid = parent.RegisterGroup< CompositionalMultiphaseFluid >( name );
 
   // TODO we should actually create a fake XML node with data, but this seemed easier...
 
@@ -300,26 +310,20 @@ class CompositionalFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     parent = std::make_unique< Group >( "parent", nullptr );
     parent->resize( 1 );
 
-    fluid = makeCompositionalFluid( "fluid", parent.get() );
+    fluid = makeCompositionalFluid( "fluid", *parent );
 
     parent->Initialize( parent.get() );
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
-  {}
-
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > CompositionalFluidTest::parent( nullptr );
-MultiFluidBase * CompositionalFluidTest::fluid( nullptr );
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
 {
@@ -334,7 +338,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
 }
 
 TEST_F( CompositionalFluidTest, numericalDerivativesMass )
@@ -350,7 +354,7 @@ TEST_F( CompositionalFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-2;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
 }
 
 MultiFluidBase * makeLiveOilFluid( string const & name, Group * parent )
@@ -437,7 +441,7 @@ class LiveOilFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     writeTableToFile( "pvto.txt", pvto_str );
     writeTableToFile( "pvtg.txt", pvtg_str );
@@ -451,19 +455,16 @@ protected:
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
+  virtual void TearDown() override
   {
     removeFile( "pvto.txt" );
     removeFile( "pvtg.txt" );
     removeFile( "pvtw.txt" );
   }
 
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > LiveOilFluidTest::parent( nullptr );
-MultiFluidBase * LiveOilFluidTest::fluid( nullptr );
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
 {
@@ -478,7 +479,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
 }
 
 TEST_F( LiveOilFluidTest, numericalDerivativesMass )
@@ -495,14 +496,14 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
 }
 
 class DeadOilFluidTest : public ::testing::Test
 {
 protected:
 
-  static void SetUpTestCase()
+  virtual void SetUp() override
   {
     writeTableToFile( "pvdo.txt", pvdo_str );
     writeTableToFile( "pvdg.txt", pvdg_str );
@@ -516,19 +517,16 @@ protected:
     parent->InitializePostInitialConditions( parent.get() );
   }
 
-  static void TearDownTestCase()
+  virtual void TearDown() override
   {
     removeFile( "pvdo.txt" );
     removeFile( "pvdg.txt" );
     removeFile( "pvdw.txt" );
   }
 
-  static std::unique_ptr< Group > parent;
-  static MultiFluidBase * fluid;
+  std::unique_ptr< Group > parent;
+  MultiFluidBase * fluid;
 };
-
-std::unique_ptr< Group > DeadOilFluidTest::parent( nullptr );
-MultiFluidBase * DeadOilFluidTest::fluid( nullptr );
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
 {
@@ -543,7 +541,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol );
 }
 
 TEST_F( DeadOilFluidTest, numericalDerivativesMass )
@@ -560,7 +558,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-2;
   real64 const absTol = 1e-14;
 
-  testNumericalDerivatives( fluid, P, T, comp, eps, relTol, absTol );
+  testNumericalDerivatives( *fluid, P, T, comp, eps, relTol, absTol );
 }
 
 int main( int argc, char * * argv )

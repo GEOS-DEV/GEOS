@@ -19,7 +19,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/static_if.hpp"
 #include "codingUtilities/traits.hpp"
-#include "LvArray/src/IntegerConversion.hpp"
+#include "LvArray/src/limits.hpp"
 #include "BufferOps.hpp"
 
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
@@ -61,7 +61,7 @@ localIndex
 PackDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
             T const & GEOSX_UNUSED_PARAM( var ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -79,7 +79,7 @@ PackByIndexDevice( buffer_unit_type * & GEOSX_UNUSED_PARAM( buffer ),
                    T const & GEOSX_UNUSED_PARAM( var ),
                    T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
-  GEOSX_ERROR( "Trying to pack data type (" << LvArray::demangleType< T >() << ") on device but type is not packable by index." );
+  GEOSX_ERROR( "Trying to pack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable by index." );
   return 0;
 }
 
@@ -95,7 +95,7 @@ localIndex
 UnpackDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
               T & GEOSX_UNUSED_PARAM( var ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::demangleType< T >() << ") on device but type is not packable." );
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") on device but type is not packable." );
   return 0;
 }
 
@@ -113,7 +113,7 @@ UnpackByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
                      T & GEOSX_UNUSED_PARAM( var ),
                      T_INDICES const & GEOSX_UNUSED_PARAM( indices ) )
 {
-  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::demangleType< T >() << ") but type is not packable by index." );
+  GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
 }
 

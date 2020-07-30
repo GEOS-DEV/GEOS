@@ -21,12 +21,11 @@
  *
  */
 
-
 #include "ReservoirSolverBase.hpp"
 
 #include "common/TimingMacros.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 namespace geosx
 {
@@ -99,22 +98,20 @@ void ReservoirSolverBase::InitializePostInitialConditions_PreSubGroups( Group * 
 real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
                                         real64 const & dt,
                                         int const cycleNumber,
-                                        DomainPartition * domain )
+                                        DomainPartition & domain )
 {
+  GEOSX_MARK_FUNCTION;
+
   real64 dt_return = dt;
 
   // setup the coupled linear system
-  SetupSystem( domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  SetupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
 
   // setup reservoir and well systems
-  ImplicitStepSetup( time_n, dt, domain, m_dofManager, m_matrix, m_rhs, m_solution );
+  ImplicitStepSetup( time_n, dt, domain );
 
   // currently the only method is implicit time integration
-  dt_return = this->NonlinearImplicitStep( time_n, dt, cycleNumber, domain,
-                                           m_dofManager,
-                                           m_matrix,
-                                           m_rhs,
-                                           m_solution );
+  dt_return = NonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // complete time step in reservoir and well systems
   ImplicitStepComplete( time_n, dt_return, domain );
@@ -122,7 +119,7 @@ real64 ReservoirSolverBase::SolverStep( real64 const & time_n,
   return dt_return;
 }
 
-void ReservoirSolverBase::SetupDofs( DomainPartition const * const domain,
+void ReservoirSolverBase::SetupDofs( DomainPartition const & domain,
                                      DofManager & dofManager ) const
 {
   m_flowSolver->SetupDofs( domain, dofManager );
@@ -130,143 +127,215 @@ void ReservoirSolverBase::SetupDofs( DomainPartition const * const domain,
   // TODO: add coupling when dofManager can support perforation connectors
 }
 
-void ReservoirSolverBase::SetupSystem( DomainPartition * const domain,
+void ReservoirSolverBase::AddCouplingNumNonzeros( DomainPartition & domain,
+                                                  DofManager & dofManager,
+                                                  arrayView1d< localIndex > const & rowLengths ) const
+{
+  localIndex const resNDOF = m_wellSolver->NumDofPerResElement();
+  localIndex const wellNDOF = m_wellSolver->NumDofPerWellElement();
+
+  MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
+  ElementRegionManager const & elemManager = *meshLevel.getElemManager();
+
+  string const wellDofKey = dofManager.getKey( m_wellSolver->WellElementDofName() );
+  string const resDofKey = dofManager.getKey( m_wellSolver->ResElementDofName() );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resElemDofNumber =
+    elemManager.ConstructArrayViewAccessor< globalIndex, 1 >( resDofKey );
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & resElemGhostRank =
+    elemManager.ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
+  {
+    PerforationData const * const perforationData = subRegion.GetPerforationData();
+
+    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+    // get the well degrees of freedom and ghosting info
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+    // get the well element indices corresponding to each perforation
+    arrayView1d< localIndex const > const & perfWellElemIndex =
+      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString );
+
+    // get the element region, subregion, index
+    arrayView1d< localIndex const > const & resElementRegion = perforationData->GetMeshElements().m_toElementRegion;
+    arrayView1d< localIndex const > const & resElementSubRegion = perforationData->GetMeshElements().m_toElementSubRegion;
+    arrayView1d< localIndex const > const & resElementIndex = perforationData->GetMeshElements().m_toElementIndex;
+
+    // Loop over perforations and increase row lengths for reservoir and well elements accordingly
+    forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
+    {
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
+      localIndex const iwelem = perfWellElemIndex[iperf];
+
+      if( resElemGhostRank[er][esr][ei] < 0 )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+        GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNDOF );
+
+        for( localIndex idof = 0; idof < resNDOF; ++idof )
+        {
+          rowLengths[localRow + idof] += wellNDOF;
+        }
+      }
+
+      if( wellElemGhostRank[iwelem] < 0 )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+        GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNDOF );
+
+        for( localIndex idof = 0; idof < wellNDOF; ++idof )
+        {
+          rowLengths[localRow + idof] += resNDOF;
+        }
+      }
+    } );
+  } );
+}
+
+void ReservoirSolverBase::SetupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution,
-                                       bool const setSparsity )
+                                       CRSMatrix< real64, globalIndex > & localMatrix,
+                                       array1d< real64 > & localRhs,
+                                       array1d< real64 > & localSolution,
+                                       bool const )
 {
   GEOSX_MARK_FUNCTION;
 
   dofManager.setMesh( domain, 0, 0 );
+
   SetupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  localIndex const numLocalDof = dofManager.numLocalDofs();
+  // Set the sparsity pattern without reservoir-well coupling
+  SparsityPattern< globalIndex > patternDiag;
+  dofManager.setSparsityPattern( patternDiag );
 
-  matrix.createWithLocalSize( numLocalDof, numLocalDof, 8, MPI_COMM_GEOSX );
-  rhs.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-  solution.createWithLocalSize( numLocalDof, MPI_COMM_GEOSX );
-
-  if( setSparsity )
+  // Get the original row lengths (diagonal blocks only)
+  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
-    dofManager.setSparsityPattern( matrix, false ); // don't close the matrix
-
-    // by hand, add sparsity pattern induced by well perforations
-    AddCouplingSparsityPattern( domain,
-                                dofManager,
-                                matrix );
+    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
+
+  // Add the number of nonzeros induced by coupling on perforations
+  AddCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+
+  // Create a new pattern with enough capacity for coupled matrix
+  SparsityPattern< globalIndex > pattern;
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+
+  // Copy the original nonzeros
+  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  {
+    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+  }
+
+  // Add the nonzeros from coupling
+  AddCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+  // Finally, steal the pattern into a CRS matrix
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  localRhs.resize( localMatrix.numRows() );
+  localSolution.resize( localMatrix.numRows() );
+
+  localMatrix.setName( this->getName() + "/localMatrix" );
+  localRhs.setName( this->getName() + "/localRhs" );
+  localSolution.setName( this->getName() + "/localSolution" );
 }
 
 
 void ReservoirSolverBase::ImplicitStepSetup( real64 const & time_n,
                                              real64 const & dt,
-                                             DomainPartition * const domain,
-                                             DofManager & dofManager,
-                                             ParallelMatrix & matrix,
-                                             ParallelVector & rhs,
-                                             ParallelVector & solution )
+                                             DomainPartition & domain )
 {
   // setup the individual solvers
-  m_flowSolver->ImplicitStepSetup( time_n, dt, domain,
-                                   dofManager,
-                                   matrix,
-                                   rhs,
-                                   solution );
-  m_wellSolver->ImplicitStepSetup( time_n, dt, domain,
-                                   dofManager,
-                                   matrix,
-                                   rhs,
-                                   solution );
-
+  m_flowSolver->ImplicitStepSetup( time_n, dt, domain );
+  m_wellSolver->ImplicitStepSetup( time_n, dt, domain );
 }
 
 
 void ReservoirSolverBase::AssembleSystem( real64 const time_n,
                                           real64 const dt,
-                                          DomainPartition * const domain,
+                                          DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          ParallelMatrix & matrix,
-                                          ParallelVector & rhs )
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs )
 {
-
   // assemble J_RR (excluding perforation rates)
-  m_flowSolver->AssembleSystem( time_n, dt, domain,
+  m_flowSolver->AssembleSystem( time_n, dt,
+                                domain,
                                 dofManager,
-                                matrix,
-                                rhs );
+                                localMatrix,
+                                localRhs );
+
+  /*
+   * This redundant call to UpdateStateAll is here to make sure that we compute the
+   * perforation rates AFTER the reservoir phase compositions have been moved to device.
+   *
+   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
+   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
+   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
+   * Here we force the move by launching a dummy kernel.
+   *
+   * If the perforation rates are computed BEFORE the reservoir phase compositions have been
+   * moved to device, the calculation is wrong. the problem should go away when fluid updates
+   * are executed on device.
+   */
+  m_wellSolver->UpdateStateAll( domain );
 
   // assemble J_WW (excluding perforation rates)
-  m_wellSolver->AssembleSystem( time_n, dt, domain,
+  m_wellSolver->AssembleSystem( time_n, dt,
+                                domain,
                                 dofManager,
-                                matrix,
-                                rhs );
-
-  matrix.open();
-  rhs.open();
+                                localMatrix,
+                                localRhs );
 
   // assemble perforation rates in J_WR, J_RW, J_RR and J_WW
-  AssembleCouplingTerms( time_n, dt, domain,
-                         &dofManager,
-                         &matrix,
-                         &rhs );
-
-  matrix.close();
-  rhs.close();
-
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    std::cout << matrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout << rhs;
-  }
-
-  if( getLogLevel() >= 3 )
-  {
-    integer newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-
-    string filename_mat = "matrix_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    matrix.write( filename_mat, LAIOutputFormat::MATRIX_MARKET );
-
-    string filename_rhs = "rhs_" + std::to_string( time_n ) + "_" + std::to_string( newtonIter ) + ".mtx";
-    rhs.write( filename_rhs, LAIOutputFormat::MATRIX_MARKET );
-
-    GEOSX_LOG_RANK_0( "After ReservoirSolverBase::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "Jacobian: written to " << filename_mat );
-    GEOSX_LOG_RANK_0( "Residual: written to " << filename_rhs );
-  }
+  AssembleCouplingTerms( time_n, dt,
+                         domain,
+                         dofManager,
+                         localMatrix,
+                         localRhs );
 }
 
 
 void ReservoirSolverBase::ApplyBoundaryConditions( real64 const time_n,
                                                    real64 const dt,
-                                                   DomainPartition * const domain,
+                                                   DomainPartition & domain,
                                                    DofManager const & dofManager,
-                                                   ParallelMatrix & matrix,
-                                                   ParallelVector & rhs )
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
 {
-  m_flowSolver->ApplyBoundaryConditions( time_n, dt, domain,
+  m_flowSolver->ApplyBoundaryConditions( time_n,
+                                         dt,
+                                         domain,
                                          dofManager,
-                                         matrix,
-                                         rhs );
+                                         localMatrix,
+                                         localRhs );
   // no boundary conditions for wells
 }
 
-real64 ReservoirSolverBase::CalculateResidualNorm( DomainPartition const * const domain,
+real64 ReservoirSolverBase::CalculateResidualNorm( DomainPartition const & domain,
                                                    DofManager const & dofManager,
-                                                   ParallelVector const & rhs )
+                                                   arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of reservoir equations residuals
-  real64 const reservoirResidualNorm = m_flowSolver->CalculateResidualNorm( domain, dofManager, rhs );
+  real64 const reservoirResidualNorm = m_flowSolver->CalculateResidualNorm( domain, dofManager, localRhs );
   // compute norm of well equations residuals
-  real64 const wellResidualNorm      = m_wellSolver->CalculateResidualNorm( domain, dofManager, rhs );
+  real64 const wellResidualNorm      = m_wellSolver->CalculateResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( reservoirResidualNorm*reservoirResidualNorm
-               + wellResidualNorm*wellResidualNorm );
+  return sqrt( reservoirResidualNorm * reservoirResidualNorm + wellResidualNorm * wellResidualNorm );
 }
 
 void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
@@ -281,29 +350,29 @@ void ReservoirSolverBase::SolveSystem( DofManager const & dofManager,
   SolverBase::SolveSystem( dofManager, matrix, rhs, solution );
 }
 
-bool ReservoirSolverBase::CheckSystemSolution( DomainPartition const * const domain,
+bool ReservoirSolverBase::CheckSystemSolution( DomainPartition const & domain,
                                                DofManager const & dofManager,
-                                               ParallelVector const & solution,
+                                               arrayView1d< real64 const > const & localSolution,
                                                real64 const scalingFactor )
 {
-  bool const validReservoirSolution = m_flowSolver->CheckSystemSolution( domain, dofManager, solution, scalingFactor );
-  bool const validWellSolution      = m_wellSolver->CheckSystemSolution( domain, dofManager, solution, scalingFactor );
+  bool const validReservoirSolution = m_flowSolver->CheckSystemSolution( domain, dofManager, localSolution, scalingFactor );
+  bool const validWellSolution      = m_wellSolver->CheckSystemSolution( domain, dofManager, localSolution, scalingFactor );
 
   return ( validReservoirSolution && validWellSolution );
 }
 
 void ReservoirSolverBase::ApplySystemSolution( DofManager const & dofManager,
-                                               ParallelVector const & solution,
+                                               arrayView1d< real64 const > const & localSolution,
                                                real64 const scalingFactor,
-                                               DomainPartition * const domain )
+                                               DomainPartition & domain )
 {
   // update the reservoir variables
-  m_flowSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
+  m_flowSolver->ApplySystemSolution( dofManager, localSolution, scalingFactor, domain );
   // update the well variables
-  m_wellSolver->ApplySystemSolution( dofManager, solution, scalingFactor, domain );
+  m_wellSolver->ApplySystemSolution( dofManager, localSolution, scalingFactor, domain );
 }
 
-void ReservoirSolverBase::ResetStateToBeginningOfStep( DomainPartition * const domain )
+void ReservoirSolverBase::ResetStateToBeginningOfStep( DomainPartition & domain )
 {
   // reset reservoir variables
   m_flowSolver->ResetStateToBeginningOfStep( domain );
@@ -313,7 +382,7 @@ void ReservoirSolverBase::ResetStateToBeginningOfStep( DomainPartition * const d
 
 void ReservoirSolverBase::ImplicitStepComplete( real64 const & time_n,
                                                 real64 const & dt,
-                                                DomainPartition * const domain )
+                                                DomainPartition & domain )
 {
   m_flowSolver->ImplicitStepComplete( time_n, dt, domain );
   m_wellSolver->ImplicitStepComplete( time_n, dt, domain );

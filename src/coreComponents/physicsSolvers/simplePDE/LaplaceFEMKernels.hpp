@@ -12,7 +12,86 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
+///*
+// * @file SolidMechanicsLagrangianFEMKernels.hpp
+// */
+//
+//#pragma once
+//
+//#include "common/DataTypes.hpp"
+//#include "common/TimingMacros.hpp"
+//#include "finiteElement/FiniteElementShapeFunctionKernel.hpp"
+//#include "rajaInterface/GEOS_RAJA_Interface.hpp"
+//
+//namespace geosx
+//{
+//namespace LaplaceFEMKernels
+//{
+//
+//struct ImplicitKernel
+//{
+//
+//  template< localIndex NUM_NODES_PER_ELEM, localIndex NUM_QUADRATURE_POINTS >
+//  static real64 Launch( arrayView4d< real64 const > const & dNdX,
+//                        arrayView2d< real64 const > const & detJ,
+//                        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemNodes,
+//                        arrayView1d< globalIndex const > const & dofIndex,
+//                        globalIndex const dofRankOffset,
+//                        CRSMatrixView< real64, globalIndex const > const & matrix )
+//  {
+//    localIndex const numElems = dNdX.size( 0 );
+//    GEOSX_ERROR_IF_NE( dNdX.size( 0 ), numElems );
+//    GEOSX_ERROR_IF_NE( dNdX.size( 1 ), NUM_QUADRATURE_POINTS );
+//    GEOSX_ERROR_IF_NE( dNdX.size( 2 ), NUM_NODES_PER_ELEM );
+//
+//    GEOSX_ERROR_IF_NE( detJ.size( 0 ), numElems );
+//    GEOSX_ERROR_IF_NE( detJ.size( 1 ), NUM_QUADRATURE_POINTS );
+//
+//    GEOSX_ERROR_IF_NE( elemNodes.size( 0 ), numElems );
+//    GEOSX_ERROR_IF_NE( elemNodes.size( 1 ), NUM_NODES_PER_ELEM );
+//
+//    // begin element loop, skipping ghost elements
+//    forAll< parallelDevicePolicy< 32 > >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+//    {
+//      globalIndex dofIndices[ NUM_NODES_PER_ELEM ];
+//      real64 elementMatrix[ NUM_NODES_PER_ELEM ][ NUM_NODES_PER_ELEM ] = { { 0 } };
+//
+//      for( localIndex q = 0; q < NUM_QUADRATURE_POINTS; ++q )
+//      {
+//        for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+//        {
+//          dofIndices[ a ] = dofIndex[ elemNodes( k, a ) ];
+//
+//          real64 diffusion = 1.0;
+//          for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
+//          {
+//            elementMatrix[ a ][ b ] += detJ( k, q ) *
+//                                       diffusion *
+//                                       + LvArray::tensorOps::AiBi< 3 >( dNdX[ k ][ q ][ a ], dNdX[ k ][ q ][ b ] );
+//          }
+//
+//        }
+//      }
+//
+//      for( localIndex i = 0; i < NUM_NODES_PER_ELEM; ++i )
+//      {
+//        globalIndex const dof = dofIndices[ i ] - dofRankOffset;
+//        if( dof < 0 || dof >= matrix.numRows() ) continue;
+//        matrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+//                                                                     dofIndices,
+//                                                                     elementMatrix[ i ],
+//                                                                     NUM_NODES_PER_ELEM );
+//      }
+//    } );
+//
+//    return 0;
+//  }
+//};
+//
+//} // namespace LaplaceFEMKernels
+//} // namespace geosx
+//=======
+/*
  * @file LaplaceFEMKernels.hpp
  */
 
@@ -68,7 +147,10 @@ public:
                                                   1,
                                                   1 >;
 
+  using Base::numDofPerTestSupportPoint;
+  using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
+  using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
@@ -86,8 +168,9 @@ public:
                     FiniteElementBase const * const finiteElementSpace,
                     CONSTITUTIVE_TYPE * const inputConstitutiveType,
                     arrayView1d< globalIndex const > const & inputDofNumber,
-                    ParallelMatrix & inputMatrix,
-                    ParallelVector & inputRhs,
+                    globalIndex const rankOffset,
+                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                    arrayView1d< real64 > const & inputRhs,
                     string const & fieldName ):
     Base( nodeManager,
           edgeManager,
@@ -96,6 +179,7 @@ public:
           finiteElementSpace,
           inputConstitutiveType,
           inputDofNumber,
+          rankOffset,
           inputMatrix,
           inputRhs ),
     m_primaryField( nodeManager.template getReference< array1d< real64 > >( fieldName )),
@@ -176,12 +260,14 @@ public:
    * the primary field and map the element local Jacobian/Residual to the
    * global matrix/vector.
    */
-  //GEOSX_HOST_DEVICE
+  GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
     GEOSX_UNUSED_VAR( k );
+    real64 maxForce = 0;
+
     for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
     {
       for( localIndex b = 0; b < NUM_NODES_PER_ELEM; ++b )
@@ -190,17 +276,20 @@ public:
       }
     }
 
-    m_matrix.add( stack.localRowDofIndex,
-                  stack.localColDofIndex,
-                  &(stack.localJacobian[0][0]),
-                  stack.numRows,
-                  stack.numCols );
+    for( int a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    {
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
+      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
+                                                                              stack.localColDofIndex,
+                                                                              stack.localJacobian[ a ],
+                                                                              NUM_NODES_PER_ELEM );
 
-    m_rhs.add( stack.localRowDofIndex,
-               stack.localResidual,
-               stack.numRows );
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
+    }
 
-    return 1.0;
+    return maxForce;
   }
 
 
