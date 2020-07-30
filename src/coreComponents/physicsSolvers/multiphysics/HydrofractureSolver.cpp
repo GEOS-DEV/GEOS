@@ -264,6 +264,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     //    at the beginning of each solverIter.
     int globalSolverIterFlag = 0;
 
+    //TJ: This if-else condition makes it always use the two-level iterations
+    //    except for when the KGD problem only has one fractured element
+    if (m_convergedTipLoc <= meshSize)
+      globalSolverIterFlag = 0;
+    else
+      globalSolverIterFlag = 1;
+
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
       int locallyFractured = 0;
@@ -1428,7 +1435,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    //    the tip location through fixed-point iteration
             //TJ: since we have globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
 //	    m_tipIterationFlag = true;
-	    localSolverIterFlag = 0;
+	    localSolverIterFlag = 1;
 /*
 	    std::cout << "Rank " << rank << ": End of disp manipulation" << std::endl;
 */
@@ -1453,6 +1460,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       }
       else
       {
+        //TJ: if no NEW surface element is generated in this MPI process, clear
+        //    the node constraints. This step is necessary when the tip propagates
+        //    from one MPI process to another
+	if (locallyFractured == 0)
+	{
+	  SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+	    SortedArray< localIndex > & nodesWithAssignedDisp =
+		mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
+	  nodesWithAssignedDisp.clear();
+	}
+
         std::map< string, string_array > fieldNames;
         fieldNames["node"].push_back( keys::IncrementalDisplacement );
         fieldNames["node"].push_back( keys::TotalDisplacement );
