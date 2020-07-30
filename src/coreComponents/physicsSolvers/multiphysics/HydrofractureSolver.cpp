@@ -271,6 +271,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     else
       globalSolverIterFlag = 1;
 
+    //TJ: use tip volume to get openning gap at the newly split nodes
+    bool useTipVolumeFlag = true;
+
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
       int locallyFractured = 0;
@@ -1074,6 +1077,15 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
 	      // based on symmetry
 	      refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
+
+	      if (useTipVolumeFlag)
+	      {
+		real64 tipVolume;
+		//TJ: half of the tip volume
+		tipVolume = 0.5 * 2.0/3.0 * Kprime/Eprime * pow(relativeDist, 1.5);
+                refValue = tipVolume / meshSize;
+                refValue = 2.0 * refValue;
+	      }
 	    }
 	    else // Viscosity-dominated case
 	    {
@@ -1091,6 +1103,16 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 	      refValue = 0.5 * Betam
 			     * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
+
+	      if (useTipVolumeFlag)
+	      {
+		real64 tipVolume;
+		tipVolume = 0.5* 3.0/5.0 * Betam * pow( mup*velocity/Eprime, 1.0/3.0 )
+		                                 * pow( relativeDist, 5.0/3.0 );
+		refValue = tipVolume/meshSize;
+		refValue = 2.0*refValue;
+	      }
+
 	    }
 
 	    for(auto node : nodesWithAssignedDisp)
@@ -1322,6 +1344,15 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		// 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
 		// based on symmetry
 		refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
+
+		if (useTipVolumeFlag)
+		{
+		  real64 tipVolume;
+		  //TJ: half of the tip volume
+		  tipVolume = 0.5 * 2.0/3.0 * Kprime/Eprime * pow(relativeDist, 1.5);
+		  refValue = tipVolume / meshSize;
+		  refValue = 2.0 * refValue;
+		}
 	      }
 	      else // Viscosity-dominated case
 	      {
@@ -1339,6 +1370,15 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 		refValue = 0.5 * Betam
 		               * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
+
+		if (useTipVolumeFlag)
+		{
+		  real64 tipVolume;
+		  tipVolume = 0.5* 3.0/5.0 * Betam * pow( mup*velocity/Eprime, 1.0/3.0 )
+						   * pow( relativeDist, 5.0/3.0 );
+		  refValue = tipVolume/meshSize;
+		  refValue = 2.0*refValue;
+		}
 	      }
 	      //TJ: We can try to give different magnitude of refValue as initial guess
 	      //    to test whether different initial guess will lead to different converged
