@@ -8,12 +8,12 @@ set( finiteElement_headers
      kernelInterface/ImplicitKernelBase.hpp
      FiniteElementDiscretizationManager.hpp
      elementFormulations/FiniteElementBase.hpp
+     elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
      elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp
      elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
      elementFormulations/PyramidShapeFunctionKernel.hpp
-     elementFormulations/Hexahedron_Lagrange1_GaussLegendre2.hpp
    )
 #
 # Specify all sources

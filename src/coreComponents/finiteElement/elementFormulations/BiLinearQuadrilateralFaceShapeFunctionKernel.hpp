@@ -24,6 +24,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 class BiLinearQuadrilateralFaceShapeFunctionKernel : public FiniteElementBase
 {
@@ -150,5 +152,5 @@ real64 BiLinearQuadrilateralFaceShapeFunctionKernel::JxW( localIndex const q,
 }
 
 }
-
+}
 #endif //GEOSX_CORE_FINITEELEMENT_BILINEARQUADRILATERALFACE

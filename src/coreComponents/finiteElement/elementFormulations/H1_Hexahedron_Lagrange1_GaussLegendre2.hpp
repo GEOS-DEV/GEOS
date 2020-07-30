@@ -29,7 +29,7 @@ namespace finiteElement
 {
 
 /**
- * @class TrilinearHexahedronShapeFunctionKernel
+ * @class H1_Hexahedron_Lagrange1_GaussLegendre2
  *
  * Contains the kernel accessible functions specific to the standard Trilinear
  * Hexahedron finite element with a Gaussian quadrature rule. It is assumed
@@ -39,24 +39,24 @@ namespace finiteElement
  * to simplify the mapping to the parent coordinates and tensor product
  * indices.
  *
- *                               6___________________ 7
- *                               /.                  /|
- *                              / .                 / |
- *                             /  .                /  |
- *                           4/__________________5/   |
- *                            |   .               |   |
- *                            |   .               |   |
- *                            |   .               |   |
- *                            |   .               |   |
- *                            |   2...............|.../3        xi2
- *                            |  .                |  /          |   xi1
- *                            | .                 | /           |  /
- *                            |.__________________|/            | /
- *                            0                   1             |/____ xi0
+   *                              6                   7
+   *                               o-----------------o
+   *                              /.                /|
+   *                             / .               / |
+   *                          4 o-----------------o 5|
+   *                            |  .              |  |
+   *                            |  .              |  |
+   *                            |  .              |  |
+   *                            |  .              |  |
+   *                            |2 o..............|..o 3       xi2
+   *                            | ,               | /          |
+   *                            |,                |/           | / xi1
+   *                            o-----------------o            |/
+   *                           0                   1           ------ xi0
  *
  */
 
-class Hexahedron_Lagrange1_GaussLegendre2 : public FiniteElementBase
+class H1_Hexahedron_Lagrange1_GaussLegendre2 : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
@@ -66,7 +66,7 @@ public:
   constexpr static localIndex numQuadraturePoints = 8;
 
 
-  virtual ~Hexahedron_Lagrange1_GaussLegendre2() override final
+  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override final
   {}
 
   virtual localIndex getNumQuadraturePoints() const override final
@@ -143,8 +143,8 @@ private:
 
 
   /**
-   * @brief Calculates the "Jacobian" transformation matrix/mapping from the
-   *   physical space to the parent space.
+   * @brief Calculates the isoparametric "Jacobian" transformation
+   *   matrix/mapping from the parent space to the physical space.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
    * @param qb The 1d quadrature point index in xi1 direction (0,1)
    * @param qc The 1d quadrature point index in xi2 direction (0,1)
@@ -186,7 +186,7 @@ private:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
+H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
                                                                   real64 const (&X)[numNodes][3],
                                                                   real64 (& dNdX)[numNodes][3] )
 {
@@ -209,7 +209,7 @@ Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const 
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
+real64 H1_Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex const q,
                                         real64 const (&X)[numNodes][3],
                                         real64 (& dNdX)[numNodes][3] )
 {
@@ -287,7 +287,7 @@ real64 Hexahedron_Lagrange1_GaussLegendre2::shapeFunctionDerivatives( localIndex
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2::
 jacobianTransformation( int const qa,
                         int const qb,
                         int const qc,
@@ -303,13 +303,13 @@ jacobianTransformation( int const qa,
 
   for( int a=0; a<2; ++a )
   {
-    int const qaa = ( a ^ qa );
+    int const qaa = a^qa;
     for( int b=0; b<2; ++b )
     {
-      int const qbb = ( b^qb );
+      int const qbb = b^qb;
       for( int c=0; c<2; ++c )
       {
-        int const qcc = ( c^qc );
+        int const qcc = c^qc;
         real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                   dpsi[b] * psiProduct[ qaa + qcc ],
                                   dpsi[c] * psiProduct[ qaa + qbb ] };
@@ -333,7 +333,7 @@ jacobianTransformation( int const qa,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2::
 applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
                                                         int const qb,
                                                         int const qc,
@@ -378,7 +378,7 @@ applyJacobianTransformationToShapeFunctionsDerivatives( int const qa,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {

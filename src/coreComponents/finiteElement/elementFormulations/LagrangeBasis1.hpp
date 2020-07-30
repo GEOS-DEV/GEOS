@@ -112,7 +112,7 @@ public:
    *                            | ,               | /          |
    *                            |,                |/           | / xi1
    *                            o-----------------o            |/
-   *                           0                   1           o----- xi0
+   *                           0                   1           ------ xi0
    *
    */
   struct TensorProduct3D
