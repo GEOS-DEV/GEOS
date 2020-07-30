@@ -133,7 +133,7 @@ public:
   /**
    * @brief Run the events in the scheduler.
    */
-  bool RunSimulation();
+  bool runSimulation();
 
   /**
    * @brief After initialization, overwrites data using a restart file
@@ -255,25 +255,25 @@ public:
   FunctionManager & getFunctionManager()
   {
     GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager; 
+    return *m_functionManager;
   }
 
   FunctionManager const & getFunctionManager() const
   {
     GEOSX_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
-    return *m_functionManager; 
+    return *m_functionManager;
   }
 
   FieldSpecificationManager & getFieldSpecificationManager()
   {
     GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager; 
+    return *m_fieldSpecificationManager;
   }
 
   FieldSpecificationManager const & getFieldSpecificationManager() const
   {
     GEOSX_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
-    return *m_fieldSpecificationManager; 
+    return *m_fieldSpecificationManager;
   }
 
 protected:

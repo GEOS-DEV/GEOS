@@ -1240,9 +1240,9 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 }
 
 void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
@@ -1430,7 +1430,7 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition const & d
   GEOSX_UNUSED_VAR( dofManager )
   GEOSX_UNUSED_VAR( localSolution )
 
-//  MeshLevel const * const mesh = domain->getMeshBodies()->GetGroup<MeshBody>(0)->getMeshLevel(0);
+//  MeshLevel const * const mesh = domain->getMeshBodies()->getGroup<MeshBody>(0)->getMeshLevel(0);
 //  FaceManager const * const faceManager = mesh->getFaceManager();
 //  NodeManager const * const nodeManager = mesh->getNodeManager();
 //  ElementRegionManager const * const elemManager = mesh->getElemManager();

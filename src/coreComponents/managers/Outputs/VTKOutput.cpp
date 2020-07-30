@@ -57,7 +57,7 @@ VTKOutput::~VTKOutput()
 
 
 
-virtual bool VTKOutput::execute( real64 const time_n,
+bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM( dt ),
                          integer const cycleNumber,
                          integer const GEOSX_UNUSED_PARAM( eventCounter ),

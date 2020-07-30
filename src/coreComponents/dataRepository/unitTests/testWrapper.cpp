@@ -116,7 +116,7 @@ private:
   WrapperBase & m_wrapperBase;
 };
 
-using WrapperSetGetTypes = ::testing::Types< int, array1d< real64 > >;
+using WrapperSetGetTypes = ::testing::Types< int, array1d< real64 >, void *, std::function< void (void) > >;
 
 TYPED_TEST_SUITE( WrapperSetGet, WrapperSetGetTypes, );
 

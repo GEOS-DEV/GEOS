@@ -74,7 +74,7 @@ public:
    *   - Advance time, cycle, etc.
    * @param[in] domain the current DomainPartition on which the Event will be ran
    */
-  void run( dataRepository::Group * domain );
+  bool run( dataRepository::Group * domain );
 
   /**
    * @name viewKeyStruct/groupKeyStruct

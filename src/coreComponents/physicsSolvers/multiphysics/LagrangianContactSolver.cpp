@@ -260,9 +260,9 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaTractionString ) );
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 
   GEOSX_LOG_LEVEL_RANK_0( 1, " ***** ImplicitStepComplete *****" );
 }
@@ -2110,9 +2110,9 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   // previousFractureStateString and previousLocalJumpString used locally only
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 
   computeFaceDisplacementJump( domain );
 }
@@ -2270,9 +2270,9 @@ void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString ) );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 }
 
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const
@@ -2403,7 +2403,7 @@ void LagrangianContactSolver::solveSystem( DofManager const & dofManager,
     solution.write( "sol.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
-  // int rank = MpiWrapper::Comm_rank( MPI_COMM_GEOSX );
+  // int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   // if( rank == 0 )
   // {
   //   string str;

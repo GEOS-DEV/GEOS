@@ -81,7 +81,7 @@ ProblemManager::ProblemManager( std::string const & name, conduit::Node & root )
   m_physicsSolverManager = registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
   registerGroup< TasksManager >( groupKeys.tasksManager );
   m_functionManager = registerGroup< FunctionManager >( groupKeys.functionManager );
-    
+
   // Command line entries
   commandLine->registerWrapper< string >( viewKeys.inputFileName.key() )->
     setRestartFlags( RestartFlags::WRITE )->
@@ -694,10 +694,10 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
 }
 
 
-void ProblemManager::runSimulation()
+bool ProblemManager::runSimulation()
 {
   DomainPartition * domain = getDomainPartition();
-  m_eventManager->run( domain );
+  return m_eventManager->run( domain );
 }
 
 DomainPartition * ProblemManager::getDomainPartition()

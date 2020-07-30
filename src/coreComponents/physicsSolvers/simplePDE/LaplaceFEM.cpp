@@ -297,9 +297,9 @@ void LaplaceFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( m_fieldName );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                         domain.getMeshBody( 0 )->getMeshLevel( 0 ),
-                                         domain.getNeighbors(),
-                                         true );
+                                                              domain.getMeshBody( 0 )->getMeshLevel( 0 ),
+                                                              domain.getNeighbors(),
+                                                              true );
 }
 
 /*

@@ -30,15 +30,15 @@
 // Forward declaration of conduit::Node.
 namespace conduit
 {
-  class Node;
+class Node;
 }
 
 #if defined( GEOSX_USE_CALIPER )
-  //Forward declaration of cali::ConfigManager.
-  namespace cali
-  {
-    class ConfigManager;
-  }
+//Forward declaration of cali::ConfigManager.
+namespace cali
+{
+class ConfigManager;
+}
 #endif
 
 
@@ -48,7 +48,7 @@ namespace geosx
 // Forward declarations.
 namespace dataRepository
 {
-  class Group;
+class Group;
 }
 
 class ProblemManager;
@@ -126,7 +126,7 @@ public:
   FunctionManager & getFunctionManager();
 
   CommunicationTools & getCommunicationTools()
-  { 
+  {
     GEOSX_ERROR_IF( m_commTools == nullptr, "Not initialized." );
     return *m_commTools;
   }

@@ -84,14 +84,22 @@ std::string durationToString( std::chrono::system_clock::duration const duration
 
 std::ostream & operator<<( std::ostream & os, State const state )
 {
-  if ( state == State::UNINITIALIZED )
-  { return os << "State::UNINITIALIZED"; }
-  if ( state == State::INITIALIZED )
-  { return os << "State::INITIALIZED"; }
-  if ( state == State::READY_TO_RUN )
-  { return os << "State::READY_TO_RUN"; }
-  if ( state == State::COMPLETED )
-  { return os << "State::COMPLETED"; }
+  if( state == State::UNINITIALIZED )
+  {
+    return os << "State::UNINITIALIZED";
+  }
+  if( state == State::INITIALIZED )
+  {
+    return os << "State::INITIALIZED";
+  }
+  if( state == State::READY_TO_RUN )
+  {
+    return os << "State::READY_TO_RUN";
+  }
+  if( state == State::COMPLETED )
+  {
+    return os << "State::COMPLETED";
+  }
 
   GEOSX_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
   return os;
@@ -117,7 +125,7 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
 #endif
 
   std::string restartFileName;
-  if( ProblemManager::ParseRestart( restartFileName, getCommandLineOptions() ) )
+  if( ProblemManager::parseRestart( restartFileName, getCommandLineOptions() ) )
   {
     GEOSX_LOG_RANK_0( "Loading restart file " << restartFileName );
     dataRepository::loadTree( restartFileName, getRootConduitNode() );
@@ -148,17 +156,17 @@ bool GeosxState::initializeDataRepository()
 
   GEOSX_ERROR_IF_NE( m_state, State::UNINITIALIZED );
 
-  getProblemManager().ParseCommandLineInput();
+  getProblemManager().parseCommandLineInput();
 
   if( !getProblemManager().getSchemaFileName().empty() )
   {
-    getProblemManager().GenerateDocumentation();
+    getProblemManager().generateDocumentation();
     m_state = State::INITIALIZED;
     return false;
   }
 
-  getProblemManager().ParseInputFile();
-  getProblemManager().ProblemSetup();
+  getProblemManager().parseInputFile();
+  getProblemManager().problemSetup();
 
   m_state = State::INITIALIZED;
 
@@ -170,16 +178,18 @@ void GeosxState::applyInitialConditions()
 {
   GEOSX_MARK_FUNCTION;
   Timer timer( m_initTime );
-  
+
   GEOSX_ERROR_IF_NE( m_state, State::INITIALIZED );
 
-  getProblemManager().ApplyInitialConditions();
+  getProblemManager().applyInitialConditions();
 
-  if ( getCommandLineOptions().beginFromRestart )
-  { getProblemManager().ReadRestartOverwrite(); }
+  if( getCommandLineOptions().beginFromRestart )
+  {
+    getProblemManager().readRestartOverwrite();
+  }
 
   m_state = State::READY_TO_RUN;
-  MpiWrapper::Barrier( MPI_COMM_GEOSX );
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +200,7 @@ void GeosxState::run()
 
   GEOSX_ERROR_IF_NE( m_state, State::READY_TO_RUN );
 
-  if ( !getProblemManager().RunSimulation() )
+  if( !getProblemManager().runSimulation() )
   {
     m_state = State::COMPLETED;
   }
@@ -209,4 +219,3 @@ FunctionManager & GeosxState::getFunctionManager()
 { return getProblemManager().getFunctionManager(); }
 
 } // namespace geosx
-

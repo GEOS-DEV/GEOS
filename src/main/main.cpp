@@ -47,11 +47,11 @@ int main( int argc, char *argv[] )
     GeosxState state( std::move( commandLineOptions ) );
 
     bool const problemToRun = state.initializeDataRepository();
-    if ( problemToRun )
+    if( problemToRun )
     {
       state.applyInitialConditions();
       state.run();
-      LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." ); 
+      LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
     }
 
     initTime = state.getInitTime();

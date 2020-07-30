@@ -137,6 +137,6 @@ install( DIRECTORY ../scripts/
      DESTINATION scripts
      )
 
-if( ENABLE_PYTHON )
+if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
 endif()

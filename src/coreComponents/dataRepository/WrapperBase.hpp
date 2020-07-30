@@ -24,7 +24,7 @@
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "managers/TimeHistory/HistoryDataSpec.hpp"
 
-#if defined(GEOSX_USE_PYTHON)
+#if defined(GEOSX_USE_PYGEOSX)
 #include "LvArray/src/python/python.hpp"
 #endif
 
@@ -527,12 +527,12 @@ public:
 //  static int TV_ttf_display_type( const WrapperBase * wrapper);
 #endif
 
-#if defined(GEOSX_USE_PYTHON)
+#if defined(GEOSX_USE_PYGEOSX)
   /**
    * @brief Return a Python object representing the wrapped object.
    * @return A Python object representing the wrapped object.
    */
-  virtual PyObject * createPythonObject( bool const modify ) = 0;
+  virtual PyObject * createPythonObject( ) = 0;
 #endif
 
 protected:

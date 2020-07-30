@@ -261,7 +261,7 @@ void Group::initialize( Group * const group )
 
   for( auto const & groupName : initOrder )
   {
-    this->GetGroup( groupName )->Initialize( group );
+    this->getGroup( groupName )->initialize( group );
   }
 
   initializePostSubGroups( group );

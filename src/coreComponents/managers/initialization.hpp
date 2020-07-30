@@ -23,11 +23,11 @@
 #ifdef GEOSX_USE_CALIPER
   #include <adiak.hpp>
 
-  //Forward declaration of cali::ConfigManager.
-  namespace cali
-  {
-    class ConfigManager;
-  }
+//Forward declaration of cali::ConfigManager.
+namespace cali
+{
+class ConfigManager;
+}
 #endif
 
 namespace geosx
@@ -89,7 +89,7 @@ struct CommandLineOptions
  * @param argc The number of command line arguments.
  * @param argv The command line arguments.
  */
-std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char ** argv );
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv );
 
 /**
  * @brief Perform the basic GEOSX initialization and optionally parse the command line input.

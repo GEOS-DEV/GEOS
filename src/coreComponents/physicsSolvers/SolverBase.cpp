@@ -132,7 +132,7 @@ real64 SolverBase::solverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   return 0;
 }
 
-virtual bool SolverBase::execute( real64 const time_n,
+bool SolverBase::execute( real64 const time_n,
                           real64 const dt,
                           integer const cycleNumber,
                           integer const GEOSX_UNUSED_PARAM( eventCounter ),
@@ -462,6 +462,11 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                m_dofManager,
                                m_localMatrix.toViewConstSizes(),
                                m_localRhs.toView() );
+
+      if( m_assemblyCallback )
+      {
+        m_assemblyCallback( m_localMatrix, m_localRhs );
+      }
 
       // TODO: maybe add scale function here?
       // Scale()

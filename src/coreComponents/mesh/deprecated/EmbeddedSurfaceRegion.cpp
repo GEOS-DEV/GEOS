@@ -27,7 +27,7 @@ using namespace dataRepository;
 EmbeddedSurfaceRegion::EmbeddedSurfaceRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  this->GetGroup( viewKeyStruct::elementSubRegions )->registerGroup< EmbeddedSurfaceSubRegion >( "default" );
+  this->getGroup( viewKeyStruct::elementSubRegions )->registerGroup< EmbeddedSurfaceSubRegion >( "default" );
 
   registerWrapper( viewKeyStruct::defaultApertureString, &m_defaultAperture )->
     setInputFlag( InputFlags::REQUIRED )->

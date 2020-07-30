@@ -31,14 +31,14 @@ endif()
 list( APPEND coreLibs lvarray)
 add_subdirectory(LvArray)
 
-if( ENABLE_PYTHON )
+if( ENABLE_PYGEOSX )
   list( APPEND coreLibs pylvarray )
 endif()
 
 foreach( lib ${subdirs} )
-    if( NOT ${lib} STREQUAL "math" )
-      list( APPEND coreLibs ${lib})
-    endif()
+  if( NOT ( ${lib} STREQUAL "math" OR ${lib} STREQUAL "python" ) )
+    list( APPEND coreLibs ${lib})
+  endif()
 endforeach()
 
 if( NOT GEOSX_BUILD_SHARED_LIBS )

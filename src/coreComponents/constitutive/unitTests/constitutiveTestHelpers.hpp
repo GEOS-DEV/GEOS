@@ -45,7 +45,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
 
   // create a clone of the rel perm to run updates on
   std::unique_ptr< constitutive::ConstitutiveBase > modelCopyPtr = model.deliverClone( "fluidCopy", &parent );
-  MODEL & modelCopy = *modelCopyPtr->group_cast< MODEL * >();
+  MODEL & modelCopy = *modelCopyPtr->groupCast< MODEL * >();
 
   model.allocateConstitutiveData( model.getParent(), 1 );
   modelCopy.allocateConstitutiveData( model.getParent(), 1 );
@@ -58,7 +58,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
   constitutive::constitutiveUpdatePassThru( model, [&] ( auto & castedModel )
   {
     typename TYPEOFREF( castedModel ) ::KernelWrapper relPermWrapper = castedModel.createKernelWrapper();
-    relPermWrapper.Update( 0, 0, saturation );
+    relPermWrapper.update( 0, 0, saturation );
   } );
 
   // update saturation and check derivatives
@@ -77,7 +77,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
     constitutive::constitutiveUpdatePassThru( modelCopy, [&] ( auto & castedRelPerm )
     {
       typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
-      relPermWrapper.Update( 0, 0, satNew );
+      relPermWrapper.update( 0, 0, satNew );
     } );
 
     checkDerivative( varCopy.toSliceConst(),
@@ -105,8 +105,8 @@ public:
   void initialize( BASE * model )
   {
     m_model = model;
-    m_parent.Initialize( &m_parent );
-    m_parent.InitializePostInitialConditions( &m_parent );
+    m_parent.initialize( &m_parent );
+    m_parent.initializePostInitialConditions( &m_parent );
   }
 
 protected:

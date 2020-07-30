@@ -50,7 +50,7 @@ public:
    * If the start criteria are satisfied, then the event manager
    * will call this method.
    */
-  virtual void execute( real64 const time_n,
+  virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
                         integer const eventCounter,

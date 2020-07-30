@@ -160,7 +160,7 @@ struct Arg : public option::Arg
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char ** argv )
+std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * * argv )
 {
   std::unique_ptr< CommandLineOptions > commandLineOptions = std::make_unique< CommandLineOptions >();
 
@@ -465,7 +465,7 @@ void setupCaliper( cali::ConfigManager & caliperManager, CommandLineOptions cons
   // MPI info
 #if defined( GEOSX_USE_MPI )
   adiak::value( "MPI", "On" );
-  adiak::value( "mpi ranks", MpiWrapper::Comm_size() );
+  adiak::value( "mpi ranks", MpiWrapper::commSize() );
 #else
   adiak::value( "MPI", "Off" );
   adiak::value( "mpi ranks", 1 );

@@ -40,7 +40,6 @@ namespace conduit
 class Node;
 }
 
-
 /**
  * namespace to encapsulate GEOSX
  */
@@ -414,28 +413,44 @@ public:
    */
   template< typename T = Group >
   T & getGroupReference( string const & key )
-  { return dynamicCast< T & >( *m_subGroups[ key ] ); }
+  {
+    Group * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T const & getGroupReference( string const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[ key ] ); }
+  {
+    Group const * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T const & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T & getGroupReference( subGroupMap::KeyIndex const & key )
-  { return dynamicCast< T & >( *m_subGroups[key] ); }
+  {
+    Group * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T & >( *child );
+  }
 
   /**
    * @copydoc getGroupReference( string const & )
    */
   template< typename T = Group >
   T const & getGroupReference( subGroupMap::KeyIndex const & key ) const
-  { return dynamicCast< T const & >( *m_subGroups[key] ); }
+  {
+    Group const * const child = m_subGroups[ key ];
+    GEOSX_ERROR_IF( child == nullptr, "Group " << getPath() << " doesn't have a child " << key );
+    return dynamicCast< T const & >( *child );
+  }
 
   /**
    * @brief Retrieve a sub-group from the current Group using a KeyIndexT.
@@ -1397,6 +1412,19 @@ public:
   ///@}
 
   /**
+   * @brief Register a callback function on the group
+   * @param func the function to register
+   * @param funcType the type of the function to register
+   * @return true if successful, false else
+   */
+  virtual bool registerCallback( void * func, const std::type_info & funcType )
+  {
+    GEOSX_UNUSED_VAR( func );
+    GEOSX_UNUSED_VAR( funcType );
+    return false;
+  }
+
+  /**
    * @name Restart output methods
    */
   ///@{
@@ -1652,8 +1680,8 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
 template< typename T >
 T const * Group::getGroupByPath( string const & path ) const
 {
-  // needed for getting root correctly with GetGroupByPath("/");
-  if( path.empty())
+  // needed for getting root correctly with getGroupByPath("/");
+  if( path.empty() || path == "." )
   {
     return groupCast< T const * >( this );
   }
