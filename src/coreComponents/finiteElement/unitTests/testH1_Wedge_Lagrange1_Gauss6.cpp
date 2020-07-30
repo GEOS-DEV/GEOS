@@ -13,10 +13,10 @@
  */
 
 /**
- * @file testBiLinearWedgeShapeFunctionKernel.hpp
+ * @file H1_Wedge_Lagrange1_Gauss6.cpp
  */
 
-#include "finiteElement/elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -86,7 +86,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      BiLinearWedgeShapeFunctionKernel::shapeFunctionValues( q, N );
+      H1_Wedge_Lagrange1_Gauss6::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -101,9 +101,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJxW[q] = BiLinearWedgeShapeFunctionKernel::shapeFunctionDerivatives( q,
-                                                                                  xCoords,
-                                                                                  dNdX );
+      viewDetJxW[q] = H1_Wedge_Lagrange1_Gauss6::shapeFunctionDerivatives( q,
+                                                                           xCoords,
+                                                                           dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )

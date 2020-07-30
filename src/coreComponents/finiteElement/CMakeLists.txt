@@ -11,7 +11,7 @@ set( finiteElement_headers
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
-     elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp
+     elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
      elementFormulations/PyramidShapeFunctionKernel.hpp
    )

@@ -21,9 +21,9 @@
 
 
 #include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
-#include "elementFormulations/BiLinearWedgeShapeFunctionKernel.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 #include "elementFormulations/PyramidShapeFunctionKernel.hpp"
 
@@ -51,21 +51,21 @@ void
 dispatch3D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<H1_Hexahedron_Lagrange1_GaussLegendre2 const *>(&input) )
+  if( dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
   {
-    lambda( static_cast<H1_Hexahedron_Lagrange1_GaussLegendre2 const &>(input) );
+    lambda( static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const & >(input) );
   }
-  else if( dynamic_cast<BiLinearWedgeShapeFunctionKernel const *>(&input) )
+  else if( dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
   {
-    lambda( static_cast<BiLinearWedgeShapeFunctionKernel const &>(input) );
+    lambda( static_cast< H1_Wedge_Lagrange1_Gauss6 const & >(input) );
   }
-  else if( dynamic_cast<H1_Tetrahedron_Lagrange1_Gauss1 const *>(&input) )
+  else if( dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
   {
-    lambda( static_cast<H1_Tetrahedron_Lagrange1_Gauss1 const &>(input) );
+    lambda( static_cast< H1_Tetrahedron_Lagrange1_Gauss1 const & >(input) );
   }
-  else if( dynamic_cast<PyramidShapeFunctionKernel const *>(&input) )
+  else if( dynamic_cast< PyramidShapeFunctionKernel const * >(&input) )
   {
-    lambda( static_cast<PyramidShapeFunctionKernel const &>(input) );
+    lambda( static_cast< PyramidShapeFunctionKernel const & >(input) );
   }
   else
   {
@@ -78,13 +78,13 @@ void
 dispatch2D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
-  if( dynamic_cast<BiLinearQuadrilateralFaceShapeFunctionKernel const *>(&input) )
+  if( dynamic_cast< BiLinearQuadrilateralFaceShapeFunctionKernel const * >(&input) )
   {
-    lambda( static_cast<BiLinearQuadrilateralFaceShapeFunctionKernel const &>(input) );
+    lambda( static_cast< BiLinearQuadrilateralFaceShapeFunctionKernel const & >(input) );
   }
-  else if( dynamic_cast<LinearTriangleFaceShapeFunctionKernel const *>(&input) )
+  else if( dynamic_cast< LinearTriangleFaceShapeFunctionKernel const * >(&input) )
   {
-    lambda( static_cast<LinearTriangleFaceShapeFunctionKernel const &>(input) );
+    lambda( static_cast< LinearTriangleFaceShapeFunctionKernel const & >(input) );
   }
   else
   {
