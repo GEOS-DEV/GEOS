@@ -35,15 +35,13 @@ class LagrangeBasis2
 
 
 
-
-
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 value0( constexpr real64 xi )
   {
     GEOSX_ASSERT( xi>=-1 && xi<=1 );
     constexpr real64 xi_div2 = 0.5 * xi;
-    return  -xi_div2 + xi_div2 * xi;
+    return -xi_div2 + xi_div2 * xi;
   }
 
   GEOSX_HOST_DEVICE
@@ -51,7 +49,7 @@ class LagrangeBasis2
   constexpr static real64 value1( constexpr real64 xi )
   {
     GEOSX_ASSERT( xi>=-1 && xi<=1 );
-    return 1.0 - xi * xi ;
+    return 1.0 - xi * xi;
   }
 
   GEOSX_HOST_DEVICE
@@ -60,7 +58,7 @@ class LagrangeBasis2
   {
     GEOSX_ASSERT( xi>=-1 && xi<=1 );
     constexpr real64 xi_div2 = 0.5 * xi;
-    return  xi_div2 + xi_div2 * xi;
+    return xi_div2 + xi_div2 * xi;
   }
 
   GEOSX_HOST_DEVICE
@@ -76,7 +74,7 @@ class LagrangeBasis2
   constexpr static real64 gradient1( constexpr real64 xi )
   {
     GEOSX_ASSERT( xi>=-1 && xi<=1 );
-    return - 2 * xi;
+    return -2 * xi;
   }
 
   GEOSX_HOST_DEVICE
@@ -151,15 +149,15 @@ class LagrangeBasis2
                                         localIndex & i0,
                                         localIndex & i1,
                                         localIndex & i2 )
-   {
-     i2 = ( linearIndex * 29 ) >> 8 ;
-     //i2 = a/9;
+    {
+      i2 = ( linearIndex * 29 ) >> 8;
+      //i2 = a/9;
 
-     i1 = ( ( linearIndex * 22 ) >> 6 ) - i2 * 3;
-     //i1 = a/3 - i2 * 3;
+      i1 = ( ( linearIndex * 22 ) >> 6 ) - i2 * 3;
+      //i1 = a/3 - i2 * 3;
 
-     i0 = linearIndex - i1 * 3 - i2 * 9;
-   }
+      i0 = linearIndex - i1 * 3 - i2 * 9;
+    }
   };
 
 

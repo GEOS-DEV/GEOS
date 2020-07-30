@@ -52,7 +52,6 @@ public:
 
 
 
-
   FiniteElementDiscretization() = delete;
 
   explicit FiniteElementDiscretization( std::string const & name, Group * const parent );
@@ -74,7 +73,7 @@ public:
                                         FE_TYPE & fe ) const;
 
 
-  std::unique_ptr<finiteElement::FiniteElementBase>
+  std::unique_ptr< finiteElement::FiniteElementBase >
   factory( string const & parentElementShape ) const;
 
   struct viewKeyStruct
@@ -96,9 +95,9 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE >
 void
 FiniteElementDiscretization::
-CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
-                                 SUBREGION_TYPE * const elementSubRegion,
-                                 FE_TYPE & finiteElement ) const
+  CalculateShapeFunctionGradients( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X,
+                                   SUBREGION_TYPE * const elementSubRegion,
+                                   FE_TYPE & finiteElement ) const
 {
   GEOSX_MARK_FUNCTION;
 

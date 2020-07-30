@@ -56,7 +56,7 @@ public:
   constexpr static real64 value0( real64 const xi )
   {
 //    GEOSX_ASSERT( xi>=-1 && xi<=1 );
-    return 0.5 - 0.5 * xi ;
+    return 0.5 - 0.5 * xi;
   }
 
   GEOSX_HOST_DEVICE
@@ -64,7 +64,7 @@ public:
   constexpr static real64 value1( real64 const xi )
   {
 //    GEOSX_ASSERT( xi>=-1 && xi<=1 );
-    return 0.5 + 0.5 * xi ;
+    return 0.5 + 0.5 * xi;
   }
 
 
@@ -170,7 +170,7 @@ public:
         {
           for( int c=0; c<2; ++c )
           {
-            int const lindex = LagrangeBasis1::TensorProduct3D::linearIndex(a,b,c);
+            int const lindex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
             N[ lindex ] = LagrangeBasis1::value( a, coords[0] ) *
                           LagrangeBasis1::value( b, coords[1] ) *
                           LagrangeBasis1::value( c, coords[2] );
