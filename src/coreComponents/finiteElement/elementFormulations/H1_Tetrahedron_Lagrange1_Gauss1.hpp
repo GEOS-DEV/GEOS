@@ -24,6 +24,8 @@
 
 namespace geosx
 {
+namespace finiteElement
+{
 
 /**
  * @class H1_Tetrahedron_Lagrange1_Gauss1
@@ -207,6 +209,7 @@ transformedQuadratureWeight( localIndex const q,
   return detJ * weight;
 }
 
+}
 }
 
 #endif //GEOSX_CORE_FINITEELEMENT_H1TETRAHEDRONLAGRANGE1GAUSS1
