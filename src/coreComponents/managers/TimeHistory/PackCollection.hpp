@@ -47,7 +47,12 @@ public:
   void InitializePostSubGroups( Group * const group ) override;
 
   /// @copydoc geosx::HistoryCollection::getMetadata
-  virtual HistoryMetadata getMetadata( ProblemManager & problemManager ) override;
+  virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex collectionIdx ) override;
+
+  virtual const string & getTargetName( ) const override
+  {
+    return m_fieldName;
+  }
 
   /**
    * @brief Update the indices related to the sets being collected.
@@ -60,28 +65,6 @@ public:
    *       duplication.
    */
   void updateSetsIndices( ProblemManager & problemManager );
-
-  /**
-   * @brief Count the total number of indices being collected by this process with this collector.
-   * @param problemManager The ProblemManager.
-   * @return The number of local indices being collected.
-   */
-  inline localIndex countLocalSetIndices( ProblemManager & problemManager );
-
-  /**
-   * @brief Count the number of indices being collected by this process for all sets up to and
-   *        excluding the specified set index (see HistoryCollection::GetNumMetaCollectors).
-   * @param problemManager The ProblemManager.
-   * @param lastSetIdx The index of the Set to count all other local indices prior to.
-   * @return The number of indices associate with all Sets locally prior to the specified Set.
-   */
-  localIndex countLocalSetIndicesExclusive( ProblemManager & problemManager, localIndex lastSetIdx = 0 );
-
-  /// @copydoc geosx::HistoryCollection::getNumMetaCollectors
-  virtual localIndex getNumMetaCollectors( ) const override;
-
-  /// @copydoc geosx::HistoryCollection::getMetaCollector
-  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) override;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -98,6 +81,7 @@ protected:
   virtual void collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
+			localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) override;
 
 private:

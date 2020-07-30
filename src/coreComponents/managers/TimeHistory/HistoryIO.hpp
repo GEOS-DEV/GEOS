@@ -76,12 +76,6 @@ public:
   virtual void compressInFile( ) = 0;
 
   /**
-   * @brief Get the offset for this history data across the communicator.
-   * @return The first index in a theoretical contiguous parallel array being collected on this process.
-   */
-  virtual globalIndex getRankOffset( ) = 0;
-
-  /**
    * @brief Query the number of history states currently stored in the internal buffer.
    * @return The number of discrete time history records buffered to be written.
    */

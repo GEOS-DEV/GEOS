@@ -222,9 +222,8 @@ void HDFHistIO::init( bool exists_okay )
     dimChunks[1] = minIdxCount;
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
-    // why is this killing things, only in this context, only on lassen?
-    HDFFile target( m_filename, false, true, m_comm );
-    //
+    HDFFile target( m_filename, false, true, m_subcomm );
+
     bool inTarget = target.CheckInTarget( m_name );
     if( !inTarget )
     {
@@ -255,11 +254,11 @@ void HDFHistIO::write( )
   if( m_subcomm != MPI_COMM_NULL )
   {
     localIndex maxBuffered = 0;
-    MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_comm );
+    MpiWrapper::allReduce( &m_bufferedCount, &maxBuffered, 1, MPI_MAX, m_subcomm );
     if( maxBuffered > 0 )
     {
       resizeFileIfNeeded( maxBuffered );
-      HDFFile target( m_filename, false, true, m_comm );
+      HDFFile target( m_filename, false, true, m_subcomm );
 
       hid_t dataset = H5Dopen( target, m_name.c_str(), H5P_DEFAULT );
       hid_t filespace = H5Dget_space( dataset );
@@ -301,7 +300,7 @@ void HDFHistIO::compressInFile( )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
-    HDFFile target( m_filename, false, true, m_comm );
+    HDFFile target( m_filename, false, true, m_subcomm );
     std::vector< hsize_t > maxFileDims( m_rank+1 );
     maxFileDims[0] = LvArray::integerConversion< hsize_t >( m_writeHead );
     maxFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
@@ -320,7 +319,7 @@ inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
-    HDFFile target( m_filename, false, true, m_comm );
+    HDFFile target( m_filename, false, true, m_subcomm );
     if( m_writeHead + buffered_count > m_writeLimit )
     {
       while( m_writeHead + buffered_count > m_writeLimit )
@@ -339,11 +338,6 @@ inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
       H5Dclose( dataset );
     }
   }
-}
-
-globalIndex HDFHistIO::getRankOffset( )
-{
-  return m_globalIdxOffset;
 }
 
 void HDFHistIO::resizeBuffer( )
@@ -519,11 +513,6 @@ inline void HDFSerialHistIO::resizeFileIfNeeded( localIndex buffered_count )
       H5Dclose( dataset );
     }
   }
-}
-
-globalIndex HDFSerialHistIO::getRankOffset( )
-{
-  return 0;
 }
 
 void HDFSerialHistIO::resizeBuffer( )

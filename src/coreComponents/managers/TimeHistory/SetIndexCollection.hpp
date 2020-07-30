@@ -43,33 +43,12 @@ public:
   SetIndexCollection( string const & objectPath, string const & setName, globalIndex setIndexOffset );
 
   /// @copydoc geosx::HistoryCollection::getMetadata
-  virtual HistoryMetadata getMetadata( ProblemManager & problemManager ) override;
+  virtual HistoryMetadata getMetadata( ProblemManager & problemManager, localIndex const collectionIdx ) override;
 
-  /**
-   * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
-   * @return The number of collectors of meta-information for this collector.
-   */
-  virtual localIndex getNumMetaCollectors( ) const override
+  /// @copydoc geosx::HistoryCollection::getTargetName
+  virtual const string & getTargetName( ) const override
   {
-    return 0;
-  }
-
-  /**
-   * @brief Get a pointer to a collector of meta-information for this collector.
-   * @param problemManager The ProblemManager.
-   * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::GetNumMetaCollectors( ) ).
-   * @param metaRankOffset The offset for this rank for the meta-info collector, used to number index metadata consistently across the
-   * simulation.
-   * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
-   * immediately
-   *         after being used to perform output during simulation initialization.
-   */
-  virtual std::unique_ptr< HistoryCollection > getMetaCollector( ProblemManager & problemManager, localIndex metaIdx, globalIndex metaRankOffset ) override
-  {
-    GEOSX_UNUSED_VAR( problemManager );
-    GEOSX_UNUSED_VAR( metaIdx );
-    GEOSX_UNUSED_VAR( metaRankOffset );
-    return std::unique_ptr< HistoryCollection >( nullptr );
+    return m_setName;
   }
 
 protected:
@@ -78,6 +57,7 @@ protected:
   virtual void collect( Group * domain,
                         real64 const time_n,
                         real64 const dt,
+			localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) override;
 
 

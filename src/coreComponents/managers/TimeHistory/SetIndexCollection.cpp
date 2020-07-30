@@ -9,8 +9,9 @@ SetIndexCollection::SetIndexCollection( string const & object_path, string const
   m_setIndexOffset( set_index_offset )
 { }
 
-HistoryMetadata SetIndexCollection::getMetadata( ProblemManager & pm )
+  HistoryMetadata SetIndexCollection::getMetadata( ProblemManager & pm, localIndex const collectionIdx )
 {
+  GEOSX_UNUSED_VAR( collectionIdx );
   DomainPartition const & domain = *(pm.getDomainPartition( ));
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );
@@ -26,8 +27,10 @@ HistoryMetadata SetIndexCollection::getMetadata( ProblemManager & pm )
 void SetIndexCollection::collect( Group * domain_group,
                                   real64 const GEOSX_UNUSED_PARAM( time_n ),
                                   real64 const GEOSX_UNUSED_PARAM( dt ),
+				  localIndex const collectionIdx,
                                   buffer_unit_type * & buffer )
 {
+  GEOSX_UNUSED_VAR( collectionIdx );
   DomainPartition const & domain = dynamicCast< DomainPartition const & >( *domain_group );
   MeshLevel const & meshLevel = *domain.getMeshBody( 0 )->getMeshLevel( 0 );
   Group const * target_object = meshLevel.GetGroupByPath( m_objectPath );

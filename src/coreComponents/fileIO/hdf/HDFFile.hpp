@@ -156,9 +156,6 @@ public:
    */
   inline void resizeFileIfNeeded( localIndex bufferedCount );
 
-  /// @copydoc geosx::BufferedHistoryIO::getRankOffset
-  virtual globalIndex getRankOffset( ) override;
-
 protected:
   virtual void resizeBuffer( ) override;
 
@@ -253,9 +250,6 @@ public:
    * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
   inline void resizeFileIfNeeded( localIndex bufferedCount );
-
-  /// @copydoc geosx::BufferedHistoryIO::getRankOffset
-  virtual globalIndex getRankOffset( ) override;
 
 protected:
   virtual void resizeBuffer( ) override;

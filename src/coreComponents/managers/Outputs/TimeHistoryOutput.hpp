@@ -94,13 +94,6 @@ public:
 private:
 
   /**
-   * @brief Initialize a time history collector to write to an MPI rank-specific file serially.
-   * @param group The ProblemManager.
-   * @param collector The HistoryCollector to intialize
-   */
-  void initCollectorSerial( ProblemManager & problemManager, HistoryCollection * collector );
-
-  /**
    * @brief Initialize a time history collector to write to an MPI comm-specific file collectively.
    * @param group The ProblemManager cast to a Group
    * @param collector The HistoryCollector to intialize
@@ -116,7 +109,7 @@ private:
   /// The discrete number of time history states expected to be written to the file
   integer m_recordCount;
   /// The buffered time history output objects for each collector to collect data into and to use to configure/write to file.
-  std::vector< std::pair< std::unique_ptr< BufferedHistoryIO >, std::unique_ptr< BufferedHistoryIO > > > m_io;
+  std::vector< std::unique_ptr< BufferedHistoryIO > > m_io;
 };
 }
 
