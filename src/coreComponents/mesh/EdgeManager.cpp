@@ -539,11 +539,10 @@ void EdgeManager::SetDomainBoundaryObjects( ObjectManagerBase const * const refe
 
   // get the "isDomainBoundary" field from the faceManager. This should have
   // been set already!
-  arrayView1d< integer const > const & isFaceOnDomainBoundary =
-    faceManager->getReference< array1d< integer > >( faceManager->viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager->getDomainBoundaryIndicator();
 
   // get the "isDomainBoundary" field from for *this, and set it to zero
-  array1d< integer > & isEdgeOnDomainBoundary = this->getReference< array1d< integer > >( viewKeys.domainBoundaryIndicatorString );
+  arrayView1d< integer > const & isEdgeOnDomainBoundary = this->getDomainBoundaryIndicator();
   isEdgeOnDomainBoundary.setValues< serialPolicy >( 0 );
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager->edgeList().toViewConst();
@@ -624,7 +623,7 @@ void EdgeManager::ExtractMapFromObjectForAssignGlobalIndexNumbers( ObjectManager
   localIndex const numEdges = size();
 
   arrayView2d< localIndex const > const & edgeNodes = this->nodeList();
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( viewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
 
   globalEdgeNodes.resize( numEdges );
 

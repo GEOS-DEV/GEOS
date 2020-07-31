@@ -718,13 +718,11 @@ public:
     /// String key to the local->global map
     static constexpr auto localToGlobalMapString = "localToGlobalMap";
 
-    /// View key to domain boundary indicator
-    dataRepository::ViewKey domainBoundaryIndicator = { domainBoundaryIndicatorString };
     /// View key to external set
     dataRepository::ViewKey externalSet = { externalSetString };
     /// View key to ghost ranks
     dataRepository::ViewKey ghostRank = { ghostRankString };
-    /// View key to global->local mao
+    /// View key to global->local map
     dataRepository::ViewKey globalToLocalMap = { globalToLocalMapString };
     /// View key to the local->global map
     dataRepository::ViewKey localToGlobalMap = { localToGlobalMapString };
@@ -909,6 +907,22 @@ public:
    */
   globalIndex maxGlobalIndex() const
   { return m_maxGlobalIndex; }
+
+  /**
+   * @brief Get the domain boundary indicator
+   * @return The information in an array of integers, mainly treated as booleans
+   *         (1 meaning the "index" is on the boundary).
+   */
+  arrayView1d< integer > const & getDomainBoundaryIndicator()
+  {
+    return getReference< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString ).toView();
+  }
+
+  /// @copydoc getDomainBoundaryIndicator()
+  arrayView1d< integer const > const & getDomainBoundaryIndicator() const
+  {
+    return getReference< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString ).toViewConst();
+  }
 
 protected:
   /// Group that holds object sets.

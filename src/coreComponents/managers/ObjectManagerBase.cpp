@@ -171,7 +171,7 @@ void ObjectManagerBase::ConstructSetFromSetAndMap( SortedArrayView< localIndex c
 
 void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
@@ -183,7 +183,7 @@ void ObjectManagerBase::ConstructLocalListOfBoundaryObjects( localIndex_array & 
 
 void ObjectManagerBase::ConstructGlobalListOfBoundaryObjects( globalIndex_array & objectList ) const
 {
-  arrayView1d< integer const > const & isDomainBoundary = this->getReference< integer_array >( m_ObjectManagerBaseViewKeys.domainBoundaryIndicator );
+  arrayView1d< integer const > const & isDomainBoundary = this->getDomainBoundaryIndicator();
   for( localIndex k=0; k<size(); ++k )
   {
     if( isDomainBoundary[k] == 1 )
