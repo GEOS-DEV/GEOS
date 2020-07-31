@@ -263,9 +263,7 @@ std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & r
 
   localIndex const regionIndex = this->targetRegionIndex( regionName );
 
-  std::vector< string > rval;
-  rval.push_back( m_solidModelNames[regionIndex] );
-  rval.push_back( m_fluidModelNames[regionIndex] );
+  std::vector< string > rval{ m_solidModelNames[regionIndex], m_fluidModelNames[regionIndex] };
 
   return rval;
 }
