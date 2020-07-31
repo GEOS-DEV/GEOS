@@ -124,7 +124,6 @@ GeosxState::GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOpti
   }
 
   m_problemManager = std::make_unique< ProblemManager >( "Problem", getRootConduitNode() );
-  GEOSX_LOG_VAR( getProblemManager().getPath() );
 
   GEOSX_ERROR_IF( currentGlobalState != nullptr, "Only one state can exist at a time." );
   currentGlobalState = this;

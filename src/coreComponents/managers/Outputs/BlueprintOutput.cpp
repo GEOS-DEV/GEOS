@@ -21,6 +21,8 @@
 
 #include "common/TimingMacros.hpp"
 #include "managers/DomainPartition.hpp"
+#include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 

@@ -22,6 +22,7 @@
 #include "managers/Functions/FunctionManager.hpp"
 #include "managers/ProblemManager.hpp"
 #include "managers/GeosxState.hpp"
+#include "managers/initialization.hpp"
 
 namespace geosx
 {

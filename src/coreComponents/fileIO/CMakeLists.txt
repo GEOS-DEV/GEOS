@@ -52,6 +52,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if( ENABLE_CALIPER )
+  set( dependencyList ${dependencyList} caliper adiak )
+endif()
+
 blt_add_library( NAME                  fileIO
                  SOURCES               ${fileIO_sources}
                  HEADERS               ${fileIO_headers}
