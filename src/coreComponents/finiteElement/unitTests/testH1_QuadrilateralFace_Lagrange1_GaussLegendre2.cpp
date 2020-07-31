@@ -13,7 +13,7 @@
  */
 
 /**
- * @file testBiLinearQuadrilateralFaceShapeFunctionKernel.hpp
+ * @file testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
  */
 
 #include "managers/initialization.hpp"
@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 
 using namespace geosx;
 using namespace finiteElement;
@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      BiLinearQuadrilateralFaceShapeFunctionKernel::shapeFunctionValues( q, N );
+      H1_QuadrilateralFace_Lagrange1_GaussLegendre2::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -67,8 +67,9 @@ void testKernelDriver()
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      viewDetJ[q] = BiLinearQuadrilateralFaceShapeFunctionKernel::JxW( q,
-                                                                       xCoords );
+      viewDetJ[q] = H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+                      transformedQuadratureWeight( q,
+                                                   xCoords );
     }
   } );
 

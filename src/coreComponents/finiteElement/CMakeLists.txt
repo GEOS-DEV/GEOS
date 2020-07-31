@@ -10,9 +10,9 @@ set( finiteElement_headers
      elementFormulations/FiniteElementBase.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
-     elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
-     elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
+     elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
+     elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
    )
 #
