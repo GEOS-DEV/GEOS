@@ -13,10 +13,10 @@
  */
 
 /**
- * @file testPyramidShapeFunctionKernel.hpp
+ * @file H1_Pyramid_Lagrange1_Gauss5.hpp
  */
 
-#include <finiteElement/elementFormulations/PyramidShapeFunctionKernel.hpp>
+#include <finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp>
 #include "managers/initialization.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
 
@@ -87,7 +87,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      PyramidShapeFunctionKernel::shapeFunctionValues( q, N );
+      H1_Pyramid_Lagrange1_Gauss5::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -102,9 +102,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = PyramidShapeFunctionKernel::shapeFunctionDerivatives( q,
-                                                                          xCoords,
-                                                                          dNdX );
+      viewDetJ[q] = H1_Pyramid_Lagrange1_Gauss5::shapeFunctionDerivatives( q,
+                                                                           xCoords,
+                                                                           dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )

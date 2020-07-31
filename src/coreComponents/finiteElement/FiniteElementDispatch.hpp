@@ -25,7 +25,7 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
-#include "elementFormulations/PyramidShapeFunctionKernel.hpp"
+#include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
 
 
 
@@ -63,9 +63,9 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr3 );
   }
-  else if( auto const * const ptr4 = dynamic_cast< PyramidShapeFunctionKernel const * >(&input) )
+  else if( dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
   {
-    lambda( *ptr4 );
+    lambda( static_cast< H1_Pyramid_Lagrange1_Gauss5 const & >(input) );
   }
   else
   {
