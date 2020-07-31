@@ -230,33 +230,53 @@ public:
   real64  GetCurrentEventDtRequest() const { return m_currentEventDtRequest; }
 
   /**
-   * @brief Forecasts accessors
+   * @brief Get the forecast of the current event.
    * @return The forecast.
    *
    * The `getForecast` getter only exists for debugging purpose.
-   * Prefer the predicate functions below.
+   * Prefer the predicate versions instead (isReadyForExec(), hasToPrepareForExec(), isIdle()).
    */
-  ///@{
   integer getForecast() const
   { return m_eventForecast; }
 
+  /**
+   * @brief Check if the event is ready for execution.
+   * @return @p true if ready, @p false otherwise.
+   */
   bool isReadyForExec() const
   { return m_eventForecast <= 0; }
 
-  bool isPreparingForExec() const
+  /**
+   * @brief Check if the event must be preparing for execution.
+   * @return @p true if it must prepare, @p false otherwise.
+   */
+  bool hasToPrepareForExec() const
   { return m_eventForecast == 1; }
 
+  /**
+   * @brief Check if the event is idle.
+   * @return @p true if it is idle, @p false otherwise.
+   */
   bool isIdle() const
   { return m_eventForecast > 1; }
 
 protected:
 
+  /**
+   * @brief Define the event as ready for execution.
+   */
   void setReadyForExec()
   { m_eventForecast = 0; }
 
-  void setPreparingForExec()
+  /**
+   * @brief Define that the event should prepare for execution.
+   */
+  void setPrepareForExec()
   { m_eventForecast = 1; }
 
+  /**
+   * @brief Define the event as idle.
+   */
   void setIdle()
   { m_eventForecast = std::numeric_limits< decltype( m_eventForecast ) >::max(); }
 
@@ -266,15 +286,15 @@ protected:
    *
    * If the forecast is 0 or below, the event is considered being "ready for exec".
    * If it equals 1, it is in "prepare for exec" status. Above, the event is "idle".
+   * If you can, you may prefer the dedicated setters (setReadyForExec(), setPrepareForExec(), setIdle()).
    */
   void setForecast( integer forecast )
   { m_eventForecast = forecast; }
-  ///@}
 
   /**
    * @brief Is the event active?
    * @param time The time at which we want to check if the event is active.
-   * @return True if acrive, false otherwise.
+   * @return @p true if active, @p false otherwise.
    */
   bool isActive( real64 const time ) const
   { return ( time >= m_beginTime ) && ( time < m_endTime ); }

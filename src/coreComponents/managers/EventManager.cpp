@@ -163,7 +163,7 @@ void EventManager::Run( dataRepository::Group * domain )
                               subEvent->getForecast() );
 
       // Execute, signal events
-      if( subEvent->isPreparingForExec() )
+      if( subEvent->hasToPrepareForExec() )
       {
         subEvent->SignalToPrepareForExecution( m_time, m_dt, m_cycle, domain );
       }

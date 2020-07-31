@@ -199,7 +199,7 @@ void EventBase::SignalToPrepareForExecution( real64 const time,
 
   this->forSubGroups< EventBase >( [&]( EventBase & subEvent )
   {
-    if( subEvent.isPreparingForExec() )
+    if( subEvent.hasToPrepareForExec() )
     {
       subEvent.SignalToPrepareForExecution( time, dt, cycle, domain );
     }
@@ -271,7 +271,7 @@ real64 EventBase::GetTimestepRequest( real64 const time )
       m_currentEventDtRequest = std::min( m_currentEventDtRequest, GetEventTypeDtRequest( time ));
 
       // Get the target's dt request if the event has the potential to execute this cycle
-      if( ( not this->isIdle() ) and ( m_target != nullptr ) )
+      if( ( !this->isIdle() ) && ( m_target != nullptr ) )
       {
         m_currentEventDtRequest = std::min( m_currentEventDtRequest, m_target->GetTimestepRequest( time ));
       }

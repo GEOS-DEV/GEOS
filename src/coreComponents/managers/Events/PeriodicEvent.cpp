@@ -110,7 +110,7 @@ void PeriodicEvent::EstimateEventTiming( real64 const time,
     setForecast( m_cycleFrequency - ( cycle - m_lastCycle ) );
   }
 
-  if( this->isReadyForExec() and ( not m_functionName.empty() ) )
+  if( this->isReadyForExec() && ( !m_functionName.empty() ) )
   {
     CheckOptionalFunctionThreshold( time, dt, cycle, domain );
   }
