@@ -86,11 +86,11 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
     {
-      rval = std::make_unique< BiLinearQuadrilateralFaceShapeFunctionKernel >();
+      rval = std::make_unique< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Triangle )
     {
-      rval = std::make_unique< LinearTriangleFaceShapeFunctionKernel >();
+      rval = std::make_unique< H1_TriangleFace_Lagrange1_Gauss1 >();
     }
     else
     {
