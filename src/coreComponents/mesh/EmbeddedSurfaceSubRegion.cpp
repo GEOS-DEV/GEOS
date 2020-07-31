@@ -41,7 +41,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_elementAperture(),
   m_elementArea(),
   m_numNodesPerSurface(),
-  m_numOfJumpEnrichments( 3 )
+  m_numOfJumpEnrichments( 3 ),
+  m_connectivityIndex()
 {
   registerWrapper( viewKeyStruct::regionListString, &m_embeddedSurfaceToRegion )->
     setDescription( "Map to the region cut by each EmbeddedSurface." );
@@ -50,7 +51,7 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription( "Map to the subregion cut by each EmbeddedSurface." );
 
   registerWrapper( viewKeyStruct::nodeListString, &m_toNodesRelation )->
-		  setDescription( "Map to the nodes attached to each EmbeddedSurface." );
+    setDescription( "Map to the nodes attached to each EmbeddedSurface." );
 //
 //  registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation, false )->
 //    setDescription( "Map to the edges." );
@@ -79,8 +80,12 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setDescription( "The volume of each EmbeddedSurface element." );
 
   registerWrapper( viewKeyStruct::numNodesString, &m_numNodesPerSurface )->
-      setApplyDefaultValue( 0 )->
-	    setDescription( "Number of nodes of each EmbeddedSurface." );
+    setApplyDefaultValue( 0 )->
+    setDescription( "Number of nodes of each EmbeddedSurface." );
+
+  registerWrapper( viewKeyStruct::connectivityIndexString, &m_connectivityIndex )->
+      setApplyDefaultValue( 1 )->
+      setDescription( "Connectivity index of each EmbeddedSurface." );
 }
 
 
@@ -117,7 +122,7 @@ void EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellIndex,
                                                        localIndex const regionIndex,
                                                        localIndex const subRegionIndex,
-                                                       NodeManager  & nodeManager,
+                                                       NodeManager & nodeManager,
                                                        EdgeManager const & edgeManager,
                                                        FixedOneToManyRelation const & cellToEdges,
                                                        BoundedPlane const * fracture )
@@ -185,52 +190,50 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
 
   if( addEmbeddedElem )
   {
-	// resize
-	localIndex surfaceIndex = this->size();
-	this->resize( surfaceIndex + 1 );
-	m_numNodesPerSurface[surfaceIndex] = intersectionPoints.size();
+    // resize
+    localIndex surfaceIndex = this->size();
+    this->resize( surfaceIndex + 1 );
+    m_numNodesPerSurface[surfaceIndex] = intersectionPoints.size();
 
-	// Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
-	intersectionPoints = computationalGeometry::orderPointsCCW( intersectionPoints, intersectionPoints.size(), normalVector );
-	array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
+    // Reorder the points CCW and then add the point to the list in the nodeManager if it is a new one.
+    intersectionPoints = computationalGeometry::orderPointsCCW( intersectionPoints, intersectionPoints.size(), normalVector );
+    array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos = nodeManager.embSurfNodesPosition();
 
-	bool isNew;
-	localIndex NodeIndex;
-	array1d< localIndex > elemNodes;
-	elemNodes.size(m_numNodesPerSurface[surfaceIndex]);
+    bool isNew;
+    localIndex NodeIndex;
+    array1d< localIndex > elemNodes;
+    elemNodes.size( m_numNodesPerSurface[surfaceIndex] );
 
-	for( localIndex j=0; j < m_numNodesPerSurface[surfaceIndex]; j++ )
-	{
-		isNew = true;
-		for( localIndex h=0; h < embSurfNodesPos.size(); h++ )
-		{
-			distance  = intersectionPoints[j];
-			distance -= embSurfNodesPos.toViewConst()[h];
-			if( distance.L2_Norm() < 1e-9 )
-			{
-				isNew = false;
-				NodeIndex = h;
-				break;
-			}
-		}
-		if ( isNew )
-		{
-			// Add the point to the
-			NodeIndex = embSurfNodesPos.size();
-			embSurfNodesPos.resize(NodeIndex + 1);
-			embSurfNodesPos( NodeIndex, 0 ) = intersectionPoints[ j ][ 0 ];
-			embSurfNodesPos( NodeIndex, 1 ) = intersectionPoints[ j ][ 1 ];
-			embSurfNodesPos( NodeIndex, 2 ) = intersectionPoints[ j ][ 2 ];
-		}
-		elemNodes.push_back( NodeIndex );
-	}
+    for( localIndex j=0; j < m_numNodesPerSurface[surfaceIndex]; j++ )
+    {
+      isNew = true;
+      for( localIndex h=0; h < embSurfNodesPos.size(); h++ )
+      {
+        distance  = intersectionPoints[j];
+        distance -= embSurfNodesPos.toViewConst()[h];
+        if( distance.L2_Norm() < 1e-9 )
+        {
+          isNew = false;
+          NodeIndex = h;
+          break;
+        }
+      }
+      if( isNew )
+      {
+        // Add the point to the
+        NodeIndex = embSurfNodesPos.size();
+        embSurfNodesPos.resize( NodeIndex + 1 );
+        LvArray::tensorOps::copy< 3 >( embSurfNodesPos[NodeIndex], intersectionPoints[j] );
+      }
+      elemNodes.emplace_back( NodeIndex );
+    }
 
-	m_toNodesRelation.appendArray( elemNodes, m_numNodesPerSurface[surfaceIndex] );
+    m_toNodesRelation.appendArray( elemNodes.begin(), elemNodes.end() );
 
     m_embeddedSurfaceToCell[ surfaceIndex ]      = cellIndex;
     m_embeddedSurfaceToRegion[ surfaceIndex ]    =  regionIndex;
-    m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex ;
-    m_normalVector[ surfaceIndex ]   =  normalVector ;
+    m_embeddedSurfaceToSubRegion[ surfaceIndex ] =  subRegionIndex;
+    m_normalVector[ surfaceIndex ]   =  normalVector;
     m_tangentVector1[ surfaceIndex ] = fracture->getWidthVector();
     m_tangentVector2[ surfaceIndex ] =  fracture->getLengthVector();
     this->CalculateElementGeometricQuantities( intersectionPoints, this->size()-1 );
@@ -252,10 +255,7 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( array1d< R1T
 {
   for( localIndex p = 0; p < intersectionPoints.size(); p++ )
   {
-    // TODO change to LvArray::tensorOps::add
-    m_elementCenter( k, 0 ) += intersectionPoints[ p ][ 0 ];
-    m_elementCenter( k, 1 ) += intersectionPoints[ p ][ 1 ];
-    m_elementCenter( k, 2 ) += intersectionPoints[ p ][ 2 ];
+    LvArray::tensorOps::add< 3 >( m_elementCenter[k], intersectionPoints[ p ] );
   }
 
   m_elementArea[ k ] = computationalGeometry::ComputeSurfaceArea( intersectionPoints, intersectionPoints.size(), m_normalVector[k] );
@@ -271,12 +271,12 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const *
 
 int EmbeddedSurfaceSubRegion::totalNumberOfNodes()
 {
-	int totalNumNodes = 0;
-	for (localIndex esi=0; esi<size(); esi++)
-	{
-		totalNumNodes += m_numNodesPerSurface[esi];
-	}
-	return totalNumNodes;
+  int totalNumNodes = 0;
+  for( localIndex esi=0; esi<size(); esi++ )
+  {
+    totalNumNodes += m_numNodesPerSurface[esi];
+  }
+  return totalNumNodes;
 }
 
 real64 EmbeddedSurfaceSubRegion::ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,

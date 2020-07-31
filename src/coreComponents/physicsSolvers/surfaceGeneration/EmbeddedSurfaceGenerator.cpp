@@ -59,9 +59,7 @@ EmbeddedSurfaceGenerator::~EmbeddedSurfaceGenerator()
 {}
 
 void EmbeddedSurfaceGenerator::RegisterDataOnMesh( Group * const GEOSX_UNUSED_PARAM( MeshBodies ) )
-{
-
-}
+{}
 
 void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemManager )
 {
@@ -162,41 +160,41 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
   // Populate EdgeManager for embedded surfaces.
   EdgeManager * const embSurfEdgeManager = meshLevel->getEmbdSurfEdgeManager();
 
-  // resize embSurfToEdgeMap
-  embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size());
+  ArrayOfArrays< localIndex > embSurfToEdgeMap;
+  embSurfToEdgeMap.resize( embeddedSurfaceSubRegion->size() );
 
-  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
+  EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
 
   embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
   //Usefull for debugging
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
-  EdgeManager::NodeMapType const & edgeToNodesMap = embSurfEdgeManager->nodeList();
+  EdgeManager::NodeMapType const & edgeToNodesMap       = embSurfEdgeManager->nodeList();
 
-  for (localIndex a=0; a < embeddedSurfaceSubRegion->size(); a++)
+  for( localIndex a=0; a < embeddedSurfaceSubRegion->size(); a++ )
   {
     std::cout << "embSurface " << a << std::endl;
-    for (localIndex akn = 0; akn < embSurfToNodeMap.sizeOfArray(a); akn++)
+    for( localIndex akn = 0; akn < embSurfToNodeMap.sizeOfArray( a ); akn++ )
     {
       std::cout << "node " << embSurfToNodeMap[a][akn] << std::endl;
     }
   }
 
-  for (localIndex ke=0; ke < embSurfEdgeManager->size(); ++ke)
+  for( localIndex ke=0; ke < embSurfEdgeManager->size(); ++ke )
   {
-    std::cout << "edge: " << ke << " which is connected to " << edgeToEmbSurfacesMap.sizeOfSet(ke) <<  " embedded surfaces " << std::endl;
-    for (localIndex kes=0; kes < edgeToEmbSurfacesMap.sizeOfSet(ke); ++kes)
+    std::cout << "edge: " << ke << " which is connected to " << edgeToEmbSurfacesMap.sizeOfSet( ke ) <<  " embedded surfaces " << std::endl;
+    for( localIndex kes=0; kes < edgeToEmbSurfacesMap.sizeOfSet( ke ); ++kes )
     {
       std::cout << "emb. surf. " << edgeToEmbSurfacesMap[ke][kes] <<  std::endl;
     }
-    for (localIndex kn=0; kn < 2; kn++)
+    for( localIndex kn=0; kn < 2; kn++ )
     {
       std::cout << "node " << edgeToNodesMap[ke][kn] <<  std::endl;
     }
   }
 
   // Add the embedded elements to the fracture stencil.
-  addToFractureStencil(domain);
+  addToFractureStencil( domain );
 
 }
 
@@ -225,22 +223,25 @@ real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( 
   return rval;
 }
 
-void EmbeddedSurfaceGenerator::addToFractureStencil(DomainPartition * const domain)
+void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition * const domain )
 {
   // Add embedded elements to the fracture Stencil
-  NumericalMethodsManager * const
-  numericalMethodManager = domain->getParent()->GetGroup< NumericalMethodsManager >( dataRepository::keys::numericalMethodsManager );
+  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
 
-  FiniteVolumeManager * const
-  fvManager = numericalMethodManager->GetGroup< FiniteVolumeManager >( dataRepository::keys::finiteVolumeManager );
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( localIndex a=0; a<fvManager->numSubGroups(); ++a )
+  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
   {
-    FluxApproximationBase * const fluxApprox = fvManager->GetGroup< FluxApproximationBase >( a );
-    if( fluxApprox!=nullptr )
+    MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
+
+    for( localIndex a=0; a<fvManager.numSubGroups(); ++a )
     {
-      fluxApprox->addEDFracToFractureStencil( *domain,
-                                              this->m_fractureRegionName );
+      FluxApproximationBase * const fluxApprox = fvManager.GetGroup< FluxApproximationBase >( a );
+      if( fluxApprox!=nullptr )
+      {
+        fluxApprox->addEDFracToFractureStencil( *meshLevel,
+                                                this->m_fractureRegionName );
+      }
     }
   }
 

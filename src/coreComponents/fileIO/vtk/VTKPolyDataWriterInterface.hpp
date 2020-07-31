@@ -207,9 +207,7 @@ private:
    * and a VTKCellArray (with the cell connectivities).
    */
   std::pair< vtkSmartPointer< vtkPoints >, vtkSmartPointer< vtkCellArray > >GetEmbeddedSurface( EmbeddedSurfaceSubRegion const & esr,
-                                                                                                ElementRegionManager const & elemManager,
-                                                                                                NodeManager const & nodeManager,
-                                                                                                EdgeManager const & edgeManager ) const;
+                                                                                                NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes the files containing the faces elements
@@ -221,8 +219,7 @@ private:
    */
   void WriteEmbeddedSurfaceElementRegions( real64 time,
                                            ElementRegionManager const & elemManager,
-                                           NodeManager const & nodeManager,
-                                           EdgeManager const & edgeManager ) const;
+                                           NodeManager const & nodeManager ) const;
 
   /*!
    * @brief Writes a VTM file for the time-step \p time.

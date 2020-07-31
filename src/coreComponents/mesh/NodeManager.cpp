@@ -42,7 +42,7 @@ NodeManager::NodeManager( std::string const & name,
 {
   registerWrapper( viewKeyStruct::referencePositionString, &m_referencePosition );
   //END_SPHINX_REFPOS_REG
-  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString, &m_embeddedSurfNodesPosition )->setSizedFromParent(0);
+  registerWrapper( viewKeyStruct::EmbSurfNodesPositionString, &m_embeddedSurfNodesPosition )->setSizedFromParent( 0 );
   this->registerWrapper( viewKeyStruct::edgeListString, &m_toEdgesRelation );
   this->registerWrapper( viewKeyStruct::faceListString, &m_toFacesRelation );
   this->registerWrapper( viewKeyStruct::elementRegionListString, &elementRegionList() );

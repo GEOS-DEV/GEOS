@@ -153,59 +153,9 @@ public:
   real64 ComputeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
-  /**
-   * @brief Get list of intersection points (nodes of the embedded plane), offset and connectivity list
-   * @param nodeManager the node manager
-   * @param edgeManager the edged manager
-   * @param elemManager the element region manager
-   * @param intersectionPoints coordinates of the intersection points
-   * @param connectivityList connectivity list
-   * @param offSet offset
-   */
-  void getIntersectionPoints( NodeManager const & nodeManager,
-                              EdgeManager const & edgeManager,
-                              ElementRegionManager const & elemManager,
-                              array1d< R1Tensor > & intersectionPoints,
-                              array1d< localIndex > & connectivityList,
-                              array1d< int > & offSet ) const;
-  /**
-   * @brief Compute intersection points (nodes of the embedded plane), offset and connectivity list
-   * @param nodeManager the node manager
-   * @param edgeManager the edged manager
-   * @param elemManager the element region manager
-   * @param intersectionPoints coordinates of the intersection points
-   * @param connectivityList connectivity list
-   * @param offSet offset
-   * @param k embedded surface cell index
-   */
-  void ComputeIntersectionPoints( NodeManager const & nodeManager,
-                                  EdgeManager const & edgeManager,
-                                  ElementRegionManager const & elemManager,
-                                  array1d< R1Tensor > & intersectionPoints,
-                                  array1d< localIndex > & connectivityList,
-                                  array1d< int > & offSet,
-                                  localIndex const k ) const;
+
+
   ///@}
-
-  void getIntersectionPoints( NodeManager const & nodeManager,
-                              EdgeManager const & edgeManager,
-                              ElementRegionManager const & elemManager,
-                              array1d< R1Tensor > & intersectionPoints,
-                              array1d< localIndex > & connectivityList,
-                              array1d< int > & offSet ) const;
-
-  void ComputeIntersectionPoints( NodeManager const & nodeManager,
-                                  EdgeManager const & edgeManager,
-                                  ElementRegionManager const & elemManager,
-                                  array1d< R1Tensor > & intersectionPoints,
-                                  array1d< localIndex > & connectivityList,
-                                  array1d< int > & offSet,
-                                  localIndex const k ) const;
-
-  void populateToFracturesNodesMap( NodeManager const & nodeManager,
-                                    EdgeManager const & edgeManager,
-                                    ElementRegionManager const & elemManager);
-
 
   /**
    * @brief Struct containing the keys to all embedded surface element views.
@@ -232,6 +182,8 @@ public:
     static constexpr auto normalVectorString           = "normalVector";
 
     static constexpr auto numNodesString               = "numNodes";
+
+    static constexpr auto connectivityIndexString     = "connectivityIndex";
   };
 
   virtual void setupRelatedObjectsInRelations( MeshLevel const * const mesh ) override;
@@ -260,6 +212,19 @@ public:
   {
     return m_toNodesRelation;
   }
+
+  /**
+   * @brief Get the local index of the a-th node of the k-th element.
+   * @param[in] k the index of the element
+   * @param[in] a the index of the node in the element
+   * @return a reference to the local index of the node
+   */
+  localIndex & nodeList( localIndex const k, localIndex a ) { return m_toNodesRelation( k, a ); }
+
+  /**
+   * @copydoc nodeList( localIndex const k, localIndex a )
+   */
+  localIndex const & nodeList( localIndex const k, localIndex a ) const { return m_toNodesRelation( k, a ); }
 
   /**
    * @brief Get the embedded surface element to region map (background grid nodes).
@@ -404,7 +369,24 @@ public:
    * @copydoc getTangentVector2( localIndex k )
    */
   R1Tensor const & getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
+
+
+  /**
+   * @brief Get the connectivity index of the  embedded surface element.
+   * @return the connectivity index
+   */
+  array1d< real64 > & getConnectivityIndex()   { return m_connectivityIndex;}
+
+  /**
+   * @copydoc getConnectivityIndex()
+   */
+  array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
+
   ///@}
+
+  array1d< int > & numNodesPerSurface() {return m_numNodesPerSurface;}
+
+  array1d< int > const & numNodesPerSurface() const {return m_numNodesPerSurface;}
 
   int totalNumberOfNodes();
 
@@ -442,6 +424,9 @@ private:
 
   /// The number of jump enrichments
   localIndex m_numOfJumpEnrichments;
+
+  /// The CI of the cells
+  array1d< real64 > m_connectivityIndex;
 };
 
 
