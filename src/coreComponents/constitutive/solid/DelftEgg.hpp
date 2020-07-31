@@ -408,11 +408,10 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
 
-     array1d< real64 > deviator2(3)   
+     //array1d< real64 > deviator2(3)   [no need to construct elastic strain?]
     for(localIndex i=0; i<6; ++i)
     {
       stress[i] = trialP * identity[i] + trialQ * sqrt23 *deviator[i];
-      deviator2[i]
     }
 
 
@@ -430,21 +429,35 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
         stiffness[i][j] = 0;
       }
     }
+    array2d< real64 > BB(2,2);
+    BB=0;
+
+    real64 a1= 1; //check
+    real64 a2 = trialP;  //check
+
+    bulkModulus = -trialP/Cr; 
+
+    BB[0][0] = bulkModulus*(a1*jacobianInv[0][0]]+a2*jacobianInv[0][2]);
+    BB[0][1] =bulkModulus*jacobianInv[0][1];
+    BB[1][0] =3*mu*(a1*jacobianInv[1][0]+a2*jacobianInv[1][2]
+    BB[1][1] = 3*mu*jacobianInv[1][1];
+
+    real64 c1 = 2*trialQ/(3*eps_s_trial); 
     
-    real64 c1 = 2*shear*solution(1)/trialQ; // TODO: confirm trialQ != 0 for linear DP
-    real64 c2 = jacobianInv(0,0)*bulk - c1/3;
-    real64 c3 = sqrt(2./3)*3*shear*jacobianInv(0,1);
-    real64 c4 = sqrt(2./3)*bulk*jacobianInv(1,0);
-    real64 c5 = 2*jacobianInv(1,1)*shear - c1;
-    
-    array1d< real64 > identity(6);
+    if(eps_s_trial<1e-10) // confirm eps_s_trial != 0
+    {
+      c1 = 2*mu;
+    }
+
+    real64 c2 = BB[0][0] - c1/3;
+    real64 c3 = sqrt23 * BB[0][1];
+    real64 c4 = sqrt23 * BB[1][0];
+    real64 c5 = 2/3 * BB[1][1] - c1;
     
     for(localIndex i=0; i<3; ++i)
     {
       stiffness[i][i] = c1;
       stiffness[i+3][i+3] = 0.5*c1;
-      identity[i] = 1.0;
-      identity[i+3] = 0.0;
     }
     
     for(localIndex i=0; i<6; ++i)
