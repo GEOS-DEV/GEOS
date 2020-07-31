@@ -37,7 +37,10 @@ namespace geosx
 
 class PhysicsSolverManager;
 class DomainPartition;
-
+namespace constitutive
+{
+class ConstitutiveManager;
+}
 /**
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOSX
@@ -273,6 +276,12 @@ protected:
   virtual void PostProcessInput() override final;
 
 private:
+
+  map< std::pair< string, string >, localIndex > calculateRegionQuadrature( Group * const meshBodies );
+
+  void setRegionQuadrature( Group * const meshBodies,
+                            constitutive::ConstitutiveManager const & constitutiveManager,
+                            map< std::pair< string, string >, localIndex > const & regionQuadrature );
 
   /// The PhysicsSolverManager
   PhysicsSolverManager * m_physicsSolverManager;

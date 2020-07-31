@@ -4,11 +4,11 @@
 
 set(testSources
     testBiLinearQuadrilateralFaceShapeFunctionKernel.cpp
-    testH1_Wedge_Lagrange1_Gauss6.cpp
+    testH1_Hexahedron_Lagrange1_GaussLegendre.cpp
     testH1_Tetrahedron_Lagrange1_Gauss1.cpp
+    testH1_Wedge_Lagrange1_Gauss6.cpp
     testLinearTriangleFaceShapeFunctionKernel.cpp
     testPyramidShapeFunctionKernel.cpp
-    testShapeFunctionKernel.cpp
    )
 
 set( dependencyList gtest )
