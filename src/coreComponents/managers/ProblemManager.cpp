@@ -642,89 +642,111 @@ void ProblemManager::GenerateMesh()
 
 void ProblemManager::ApplyNumericalMethods()
 {
-  NumericalMethodsManager const * const
-  numericalMethodManager = GetGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.Key() );
 
   DomainPartition * domain  = getDomainPartition();
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group * const meshBodies = domain->getMeshBodies();
 
-  map< std::pair<string,string>, localIndex > regionQuadrature;
+  map< std::pair< string, string >, localIndex > regionQuadrature = calculateRegionQuadrature( meshBodies );
+
+  setRegionQuadrature( meshBodies,
+                       *constitutiveManager,
+                       regionQuadrature );
+
+}
+
+map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group * const meshBodies )
+{
+
+  NumericalMethodsManager const * const
+  numericalMethodManager = GetGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.Key() );
+
+  map< std::pair< string, string >, localIndex > regionQuadrature;
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
     SolverBase const * const solver = m_physicsSolverManager->GetGroup< SolverBase >( solverIndex );
 
-    string const discretizationName = solver->getDiscretization();
-    arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
-
-    FiniteElementDiscretizationManager const &
-    feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
-
-    FiniteElementDiscretization const * const
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( discretizationName );
-
-
-    for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
+    if( solver!=nullptr )
     {
-      MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
-      for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
+      string const discretizationName = solver->getDiscretization();
+      arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
+
+      FiniteElementDiscretizationManager const &
+      feDiscretizationManager = numericalMethodManager->getFiniteElementDiscretizationManager();
+
+      FiniteElementDiscretization const * const
+      feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( discretizationName );
+
+
+      for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
       {
-        MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( b );
-        NodeManager * const nodeManager = meshLevel->getNodeManager();
-        ElementRegionManager * const elemManager = meshLevel->getElemManager();
-        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
-
-        for( auto const & regionName : targetRegions )
+        MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
+        for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
         {
-          ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
+          MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( b );
+          NodeManager * const nodeManager = meshLevel->getNodeManager();
+          ElementRegionManager * const elemManager = meshLevel->getElemManager();
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager->referencePosition();
 
-          if( feDiscretization != nullptr )
+          for( auto const & regionName : targetRegions )
           {
-            elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+            ElementRegionBase * const elemRegion = elemManager->GetRegion( regionName );
+
+            if( feDiscretization != nullptr )
             {
-              string const elementTypeString = subRegion.GetElementTypeString();
-
-              std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
-              finiteElement::dispatch3D( *newFE,
-                                         [ &, newFE=std::move( newFE )  ] ( auto finiteElement ) mutable
+              elemRegion->forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
-                using FE_TYPE = TYPEOFREF( finiteElement );
-                subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName,
-                                                                                        std::move( newFE ) )->
-                  setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
+                string const elementTypeString = subRegion.GetElementTypeString();
 
-                FE_TYPE &
-                fe = dynamic_cast< FE_TYPE & >(subRegion.template getReference< finiteElement::FiniteElementBase >( discretizationName ));
+                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( elementTypeString );
+                finiteElement::dispatch3D( *newFE,
+                                           [ &, newFE=std::move( newFE )  ] ( auto finiteElement ) mutable
+                {
+                  using FE_TYPE = TYPEOFREF( finiteElement );
 
-                localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+                  subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName,
+                                                                                          std::move( newFE ) )->
+                    setRestartFlags( dataRepository::RestartFlags::NO_WRITE );
 
-                feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, fe );
+                  FE_TYPE &
+                  fe = dynamic_cast< FE_TYPE & >(subRegion.template getReference< finiteElement::FiniteElementBase >( discretizationName ));
 
+                  localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+
+                  feDiscretization->CalculateShapeFunctionGradients( X, &subRegion, fe );
+
+                  localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
+                                                                                             subRegion.getName() ) ];
+
+                  numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+                } );
+              } );
+            }
+            else //if( fvFluxApprox != nullptr )
+            {
+              elemRegion->forElementSubRegions( [&]( auto & subRegion )
+              {
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
                                                                                            subRegion.getName() ) ];
-
+                localIndex const numQuadraturePoints = 1;
                 numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-              });
-            });
+              } );
+            }
           }
-          else //if( fvFluxApprox != nullptr )
-          {
-            elemRegion->forElementSubRegions( [&]( auto & subRegion )
-            {
-              localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_pair( regionName,
-                                                                                         subRegion.getName() ) ];
-              localIndex const numQuadraturePoints = 1;
-              numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-            });
-          }
-
         }
       }
     }
   }
 
+  return regionQuadrature;
+}
 
+
+void ProblemManager::setRegionQuadrature( Group * const meshBodies,
+                                          ConstitutiveManager const & constitutiveManager,
+                                          map< std::pair< string, string >, localIndex > const & regionQuadrature )
+{
   for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
   {
     MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
@@ -741,13 +763,13 @@ void ProblemManager::ApplyNumericalMethods()
         string const regionName = elemRegion.getName();
         string const subRegionName = elemSubRegion.getName();
         string_array const & materialList = elemRegion.getMaterialList();
-        decltype(regionQuadrature)::const_iterator rqIter = regionQuadrature.find( std::make_pair( regionName, subRegionName ) );
+        TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_pair( regionName, subRegionName ) );
         if( rqIter != regionQuadrature.end() )
         {
           localIndex const quadratureSize = rqIter->second;
           for( auto & materialName : materialList )
           {
-            constitutiveManager->HangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
+            constitutiveManager.HangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
             GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
           }
         }
@@ -759,6 +781,7 @@ void ProblemManager::ApplyNumericalMethods()
     }
   }
 }
+
 
 void ProblemManager::RunSimulation()
 {
