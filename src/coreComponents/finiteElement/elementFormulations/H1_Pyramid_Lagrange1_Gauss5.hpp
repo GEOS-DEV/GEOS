@@ -28,7 +28,7 @@ namespace finiteElement
 {
 
 /**
- * @class H1_Hexahedron_Lagrange1_GaussLegendre2
+ * @class H1_Pyramid_Lagrange1_Gauss5
  *
  * Contains the kernel accessible functions specific to the H1-conforming nodal
  * pyramid finite element with a 5-point Gaussian quadrature rule [1]. It is

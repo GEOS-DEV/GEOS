@@ -20,12 +20,12 @@
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 
-#include "elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
-#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
-#include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
+#include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
+#include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 
 
 
@@ -78,11 +78,11 @@ void
 dispatch2D( FiniteElementBase const & input,
             LAMBDA && lambda )
 {
-  if( auto const * const ptr1 = dynamic_cast< BiLinearQuadrilateralFaceShapeFunctionKernel const * >(&input) )
+  if( auto const * const ptr1 = dynamic_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2 const * >(&input) )
   {
     lambda( *ptr1 );
   }
-  else if( auto const * const ptr2 = dynamic_cast< LinearTriangleFaceShapeFunctionKernel const * >(&input) )
+  else if( auto const * const ptr2 = dynamic_cast< H1_TriangleFace_Lagrange1_Gauss1 const * >(&input) )
   {
     lambda( *ptr2 );
   }

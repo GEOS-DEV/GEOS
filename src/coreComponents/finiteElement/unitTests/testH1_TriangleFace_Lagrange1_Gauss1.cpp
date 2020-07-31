@@ -22,7 +22,7 @@
 #include "gtest/gtest.h"
 
 #include <chrono>
-#include "finiteElement/elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp"
+#include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 
 using namespace geosx;
 using namespace finiteElement;
@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      LinearTriangleFaceShapeFunctionKernel::shapeFunctionValues( q, N );
+      H1_TriangleFace_Lagrange1_Gauss1::shapeFunctionValues( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -67,8 +67,8 @@ void testKernelDriver()
 
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
-      viewDetJ[q] = LinearTriangleFaceShapeFunctionKernel::JxW( q,
-                                                                xCoords );
+      viewDetJ[q] = H1_TriangleFace_Lagrange1_Gauss1::transformedQuadratureWeight( q,
+                                                                                   xCoords );
     }
   } );
 
