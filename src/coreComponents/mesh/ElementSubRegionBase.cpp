@@ -54,7 +54,6 @@ ElementSubRegionBase::~ElementSubRegionBase()
 void ElementSubRegionBase::SetElementType( string const & elementType )
 {
   m_elementTypeString = elementType;
-//  m_elementType =FiniteElementBase::StringToElementType( elementType );
 }
 
 std::vector< int > ElementSubRegionBase::getVTKNodeOrdering() const
