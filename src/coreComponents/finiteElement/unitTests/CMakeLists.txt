@@ -8,7 +8,8 @@ set(testSources
     testH1_Tetrahedron_Lagrange1_Gauss1.cpp
     testH1_Wedge_Lagrange1_Gauss6.cpp
     testLinearTriangleFaceShapeFunctionKernel.cpp
-    testPyramidShapeFunctionKernel.cpp
+    testH1_Pyramid_Lagrange1_Gauss5.cpp
+    testH1_Hexahedron_Lagrange1_GaussLegendre2.cpp
    )
 
 set( dependencyList gtest )
