@@ -1,7 +1,7 @@
 
 
-#ifndef GEOSX_CORE_FINITEELEMENT_FINITEELEMENTSHAPEFUNCTIONKERNELBASE
-#define GEOSX_CORE_FINITEELEMENT_FINITEELEMENTSHAPEFUNCTIONKERNELBASE
+#ifndef GEOSX_CORE_FINITEELEMENT_FINITEELEMENTBASE
+#define GEOSX_CORE_FINITEELEMENT_FINITEELEMENTBASE
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
@@ -20,11 +20,22 @@ class FiniteElementBase
 {
 public:
 
+  /**
+   * @brief Virtual getter for the number of quadrature points per element.
+   * @return The number of quadrature points per element.
+   */
   virtual localIndex getNumQuadraturePoints() const = 0;
+
+  /**
+   * @brief Virtual getter for the number of support points per element.
+   * @return The number of support points per element.
+   */
   virtual localIndex getNumSupportPoints() const = 0;
 
-  virtual ~FiniteElementBase()
-  {}
+  /**
+   * @brief Destructor
+   */
+  virtual ~FiniteElementBase() = default;
 
   /**
    * @brief Computes the inverse of a 3x3 c-array.
@@ -70,20 +81,6 @@ public:
 
 //TODO we want to keep views and provide interfaces to this data here for cases
 //     where we pre-compute the shape function derivatives...maybe...tbd.
-//
-//  GEOSX_HOST_DEVICE
-//  GEOSX_FORCE_INLINE
-//  real64 shapeFunctionDerivatives( localIndex k, localIndex q, real const (&X)[numNodes][3] , real64 (& dNdX)[numNodes][3] )
-//  {
-//    for( int a=0 ; a<numNodes; ++a )
-//    {
-//      for( int i=0; i<3; ++a )
-//      {
-//        dNdX[a][i] = m_dNdX( k, q, a, i);
-//      }
-//    }
-//    return m_detJ( k, q );
-//  }
 //private:
 //  arrayView4d< real64 const > const m_dNdX;
 //  arrayView2d< real64 const > const m_detJ;
@@ -94,4 +91,4 @@ public:
 }
 }
 
-#endif //GEOSX_CORE_FINITEELEMENT_FINITEELEMENTSHAPEFUNCTIONKERNELBASE
+#endif //GEOSX_CORE_FINITEELEMENT_FINITEELEMENTBASE

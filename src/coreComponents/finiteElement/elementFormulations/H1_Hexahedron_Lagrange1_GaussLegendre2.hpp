@@ -39,20 +39,21 @@ namespace finiteElement
  * to simplify the mapping to the parent coordinates and tensor product
  * indices.
  *
- *                              6                   7
- *                               o-----------------o
- *                              /.                /|
- *                             / .               / |
- *                          4 o-----------------o 5|
- *                            |  .              |  |
- *                            |  .              |  |
- *                            |  .              |  |
- *                            |  .              |  |
- *                            |2 o..............|..o 3       xi2
- *                            | ,               | /          |
- *                            |,                |/           | / xi1
- *                            o-----------------o            |/
- *                           0                   1           ------ xi0
+ *                  6                   7                       ____________________
+ *                   o-----------------o                       |Node   xi0  xi1  xi2|
+ *                  /.                /|                       |=====  ===  ===  ===|
+ *                 / .               / |                       | 0     -1   -1   -1 |
+ *              4 o-----------------o 5|                       | 1      1   -1   -1 |
+ *                |  .              |  |                       | 2     -1    1   -1 |
+ *                |  .              |  |                       | 3      1    1   -1 |
+ *                |  .              |  |                       | 4     -1   -1    1 |
+ *                |  .              |  |                       | 5      1   -1    1 |
+ *                |2 o..............|..o 3       xi2           | 6     -1    1    1 |
+ *                | ,               | /          |             | 7      1    1    1 |
+ *                |,                |/           | / xi1       |____________________|
+ *                o-----------------o            |/
+ *               0                   1           ------ xi0
+ *
  *
  */
 
@@ -93,9 +94,9 @@ public:
   {
     int qa, qb, qc;
     LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
-    real64 const qCoords[3] = { quadratureFactor *LagrangeBasis1::parentSupportCoord( qa ),
-                                quadratureFactor *LagrangeBasis1::parentSupportCoord( qb ),
-                                quadratureFactor *LagrangeBasis1::parentSupportCoord( qc ) };
+    real64 const qCoords[3] = { quadratureFactor * LagrangeBasis1::parentSupportCoord( qa ),
+                                quadratureFactor * LagrangeBasis1::parentSupportCoord( qb ),
+                                quadratureFactor * LagrangeBasis1::parentSupportCoord( qc ) };
 
     LagrangeBasis1::TensorProduct3D::value( qCoords, N );
   }
@@ -128,6 +129,7 @@ public:
 
 
 private:
+  /// The length of one dimension of the parent element.
   constexpr static real64 parentLength = LagrangeBasis1::parentSupportCoord( 1 ) - LagrangeBasis1::parentSupportCoord( 0 );
 
   /// The volume of the element in the parent configuration.

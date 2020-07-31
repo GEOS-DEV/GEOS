@@ -16,8 +16,8 @@
  * @file FiniteElementSpace.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTSPACE_HPP_
+#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
+#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
@@ -34,13 +34,14 @@ class NodeManager;
 class CellBlockManager;
 class ElementSubRegionBase;
 
+// TODO remove when these quantities are placed inside the FiniteElementBase
+// class.
 namespace dataRepository
 {
 namespace keys
 {
 string const dNdX = "dNdX";
 string const detJ = "detJ";
-//string const parentSpace="parentSpace";
 }
 }
 
@@ -73,17 +74,26 @@ public:
                                         FE_TYPE & fe ) const;
 
 
+  /**
+   * @brief Factory method to instantiate a type of finite element formulation.
+   * @param parentElementShape String key that indicates the type of
+   *   element/basis/formulation that should be instantiated.
+   * @return A unique_ptr< FinteElementBase > which contains the new
+   *   instantiation.
+   */
   std::unique_ptr< finiteElement::FiniteElementBase >
   factory( string const & parentElementShape ) const;
 
   struct viewKeyStruct
   {
-    /// String key to adjacency list
     static constexpr auto orderString = "order";
     static constexpr auto formulationString = "formulation";
   };
 
+  /// The order of the finite element basis
   int m_order;
+
+  /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
 protected:
@@ -143,4 +153,4 @@ FiniteElementDiscretization::
 
 } /* namespace geosx */
 
-#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */
+#endif /* SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */
