@@ -13,7 +13,7 @@ set( finiteElement_headers
      elementFormulations/LinearTriangleFaceShapeFunctionKernel.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
      elementFormulations/BiLinearQuadrilateralFaceShapeFunctionKernel.hpp
-     elementFormulations/PyramidShapeFunctionKernel.hpp
+     elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
    )
 #
 # Specify all sources

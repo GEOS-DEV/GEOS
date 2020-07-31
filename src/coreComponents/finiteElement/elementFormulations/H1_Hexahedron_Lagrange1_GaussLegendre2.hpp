@@ -13,7 +13,7 @@
  */
 
 /**
- * @file TriLinearHexahedronShapeFunctionKernel.hpp
+ * @file H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
  */
 
 #ifndef GEOSX_CORE_FINITEELEMENT_TRILINEARHEXAHEDRON
