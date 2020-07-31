@@ -44,8 +44,7 @@ public:
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
    */
-  DelftEggUpdates( arrayView1d< real64 const > const & bulkModulus,
-                        arrayView1d< real64 const > const & shearModulus,
+  DelftEggUpdates( arrayView1d< real64 const > const & shearModulus,
                         arrayView2d< real64 const > const & refPressure,
                         arrayView2d< real64 const > const & refStrainVol,
                         arrayView1d< real64 const > const & recompressionIndex,
@@ -58,7 +57,6 @@ public:
                         arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                         arrayView3d< real64, solid::STRESS_USD > const & stress):
     SolidBaseUpdates( stress ),
-    m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus ),
     m_refPressure( refPressure ),
     m_refStrainVol( refStrainVol ),
@@ -99,8 +97,6 @@ public:
                                    localIndex const q ) override final;
     
 private:
-  /// A reference to the ArrayView holding the bulk modulus for each element.
-  arrayView1d< real64 const > const m_bulkModulus;
 
   /// A reference to the ArrayView holding the shear modulus for each element.
   arrayView1d< real64 const > const m_shearModulus;
@@ -146,16 +142,18 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
                                               arraySlice1d< real64 > const & stress,
                                               arraySlice2d< real64 > const & stiffness )
 {
-  real64 const pc     = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
+  real64 const oldPc     = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
+  real64 pc = oldPc; 
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure[k][q];
+
   real64 const eps_v0 = m_refStrainVol[k][q];
-  
   real64 const M      = m_cslSlope[k];
   real64 const Cr     = m_recompressionIndex[k];
   real64 const Cc     = m_virginCompressionIndex[k];
   real64 const alpha  = m_shapeParameter[k];
 
+  real64 bulkModulus = -p0/Cr;
   // two-invariant decomposition of strain increment
 
   real64 strainIncrementVol = 0; //volumetric part of strain increment 
@@ -229,7 +227,31 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   // Now recover the old strain tensor from the strain invariants. 
   // Note that we need the deviatoric direction (n-hat) from the previous step.
 
+    array1d< real64 > identity(6);
+    
+    for(localIndex i=0; i<3; ++i)
+    {
+      identity[i] = 1.0;
+      identity[i+3] = 0.0;
+    }
+
+  array1d< real64 > strainElasticTrial(6);
+  array1d< real64 > oldStrainElastic(6);
+  real64 strainElasticTrialVol=0;
+  real64 sqrt23 = std::sqrt(2/3);
   
+   for(localIndex i=0; i<6; ++i)
+  {
+    oldStrainElastic[i] = oldDeviator[i] * sqrt23 * oldElasticStrainDev + 1/3 * oldElasticStrainVol * identity[i];
+    strainElasticTrial[i] = oldStrainElastic[i] + strainIncrement[i];
+  }
+
+     for(localIndex i=0; i<3; ++i)
+  {
+    oldStrainElastic[i+3] *= 2; // Voigt form
+    strainElasticTrialVol += strainElasticTrial[i];
+  }
+
   
   // elastic predictor
   // newP= oldP * exp(-1/Cr* strainIncrementVol)
@@ -241,52 +263,11 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   real64 trialP = oldP * std::exp(-1/Cr* strainIncrementVol);
   real64 trialQ = oldQ + 3 * mu * strainIncrementDev;
 
-  // Calculate the normalized deviatoric direction, "nhat"
+   // set stiffness to elastic predictor
+  
+  real64 bulkModulus = -trialP/Cr ; 
+  real64 lame = bulkModulus - 2/3 * mu;
 
-  for(localIndex i=0; i<6; ++i)
-  {
-    stress[i] = m_oldStress[k][q][i];
-    
-    for(localIndex j=0; j<6; ++j)
-    {
-      stress[i] += stiffness[i][j]*strainIncrement[j];
-    }
-  }
-
-  // two-invariant decomposition in P-Q space (mean & deviatoric stress)
-  real64 trialP = 0;
-  for(localIndex i=0; i<3; ++i)
-  {
-    trialP += stress[i];
-  }
-  trialP /= 3;
-  
-  array1d< real64 > deviator(6);  // array allocation
-  for(localIndex i=0; i<3; ++i)
-  {
-    deviator[i] = stress[i]-trialP;
-    deviator[i+3] = stress[i+3];
-  }
-  
-  real64 trialQ = 0;
-  for(localIndex i=0; i<3; ++i)
-  {
-    trialQ += deviator[i]*deviator[i];
-    trialQ += deviator[i+3]*deviator[i+3];
-  }
-  trialQ = std::sqrt(trialQ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
-  
-  for(localIndex i=0; i<6; ++i)
-  {
-    deviator[i] /= trialQ; // normalized deviatoric direction, "nhat"
-  }
-  trialQ *= std::sqrt(3./2.);
-  // check yield function F <= 0
-  
-  real64 yield = trialQ + friction*trialP - cohesion;
-  
-    // set stiffness to elastic predictor
-  
   for(localIndex i=0; i<6; ++i)
   {
     for(localIndex j=0; j<6; ++j)
@@ -311,6 +292,38 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   stiffness[4][4] = shear;
   stiffness[5][5] = shear;
 
+  // Calculate the normalized deviatoric direction, "nhat"
+
+  
+  array1d< real64 > deviator(6);  // array allocation
+  for(localIndex i=0; i<3; ++i)
+  {
+    deviator[i] = strainElasticTrial[i]- strainElasticTrialVol/3;
+    deviator[i+3] = strainElasticTrial[i+3];
+  }
+  
+  real64 deviator_norm = 0;
+  for(localIndex i=0; i<3; ++i)
+  {
+    deviator_norm  += deviator[i]*deviator[i];
+    deviator_norm  += deviator[i+3]*deviator[i+3]/2; //because of Voigt form
+  }
+  deviator_norm  = std::sqrt(deviator_norm ) + 1e-15; // perturbed to avoid divide by zero when Q=0;
+  
+  for(localIndex i=0; i<6; ++i)
+  {
+    deviator[i] /= deviator_norm; // normalized deviatoric direction, "nhat"
+  }
+  
+    for(localIndex i=0; i<3; ++i)
+  {
+    deviator[i+3] /= 2; // because of Voigt form 
+  }
+
+  // check yield function F <= 0
+  
+  real64 yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
+  
   if(yield > 1e-9) // plasticity branch
   {
     // the return mapping can in general be written as a newton iteration.
@@ -324,8 +337,8 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     array1d< real64 > solution(3), residual(3), delta(3);
     array2d< real64 > jacobian(3,3), jacobianInv(3,3);
     
-    solution[0] = trialP; // initial guess for newP
-    solution[1] = trialQ; // initial guess for newQ
+    solution[0] = eps_v_trial; // initial guess for elastic volumetric strain
+    solution[1] = eps_s_trial; // initial guess for elastic deviatoric strain
     solution[2] = 0;      // initial guess for plastic multiplier
     
     real64 norm,normZero = 1e30;
@@ -333,29 +346,36 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {
-      // apply a linear cohesion decay model.  this requires an if() check for negative cohesion.
-      // a log decay model would avoid this, at the price of nonlinearity
+
+      trialP = p0 * std::exp(-1/Cr* (solution[0] - refStrainVol));
+      trialQ = 3 * mu * solution[1];
+      bulkModulus = -trialP/Cr;
+      pc = oldPc * std::exp(-1/(Cc-Cr)*(eps_v_trial-solution[0]))
+
+      yield = trialQ*trialQ/(M*M)- alpha*alpha*trialP *(2*alpha/(alpha+1)*pc-trialP)+alpha*alpha*(alpha-1)/(alpha+1)* pc*pc;
       
-      cohesion = oldCohesion-solution[2]*hardening;
-      real64 cohesionDeriv = -hardening;
-      
-      if(cohesion < 0)  // branch
-      {
-        cohesion = 0;
-        cohesionDeriv = 0;
-      }
-      
+      // derivatives of yield surface
+      real64 alphaTerm = 2*alpha*alpha*alpha / (alpha+1); 
+      real64 df_dp = -alphaTerm * pc + 2 * alpha * trialP;
+      real64 df_dq = 2*trialQ /(M*M); 
+      real64 df_dpc = 2*alpha*alpha*(alpha-1) /(alpha+1) * pc - alphaTerm * trialP ;
+      real64 dpc_dve = -1/(Cc-Cr) * pc
+
+      real64 df_dp_dve = 2* alpha * alpha * bulkModulus - alphaTerm * dpc_dve;
+      real64 df_dq_dse = 2/(M*M) * 3 * mu; 
+      real64 df_dpc_dve = -alphaTerm * bulkModulus + 2*alpha*alpha*(alpha-1) /(alpha+1) * dpc_dve;
+
       // assemble residual system
       
-      residual[0] = solution[0] - trialP + solution[2]*bulk*dilation; // P - trialP + lambda*dG/dP = 0
-      residual[1] = solution[1] - trialQ + solution[2]*3*shear;       // Q - trialQ + lambda*dG/dQ = 0
-      residual[2] = solution[1] + friction*solution[0] - cohesion;    // F = 0
+      residual[0] = solution[0] - eps_v_trial + solution[2]*df_dp; // strainElasticDev - strainElasticTrialDev + dlambda*dG/dPQ = 0
+      residual[1] = solution[1] - eps_s_trial + solution[2]*df_dq;       // strainElasticVol - strainElasticTrialVol + dlambda*dG/dQ = 0
+      residual[2] = yield;    // F = 0
       
       // check for convergence (can be avoided for linear model)
       
       norm = LvArray::tensorOps::l2Norm<3>(residual);
       
-      //residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
+      residual.L2_Norm();  //std::cout << iter << " " << norm << std::endl;
       
       if(iter==0)
       {
@@ -369,13 +389,13 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       
       // solve Newton system
       
-      jacobian(0,0) = 1;
-      jacobian(0,2) = bulk*dilation;
-      jacobian(1,1) = 1;
-      jacobian(1,2) = 3*shear;
-      jacobian(2,0) = friction;
-      jacobian(2,1) = 1;
-      jacobian(2,2) = cohesionDeriv;
+      jacobian(0,0) = 1+solution[2]*df_dp_dve;
+      jacobian(0,2) = df_dp;
+      jacobian(1,1) = 1+solution[2]*df_dq_dse;
+      jacobian(1,2) = df_dq;
+      jacobian(2,0) = bulkModulus * df_dp - dpc_dve * df_dpc;
+      jacobian(2,1) = 3*mu*df_dq;
+      jacobian(2,2) = 0;
       
       LvArray::tensorOps::invert<3>(jacobianInv,jacobian);
       LvArray::tensorOps::AijBj<3,3>(delta,jacobianInv,residual);
@@ -384,14 +404,18 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       {
         solution[i] -= delta[i];
       }
-    }
+    } //end of iteration
     
     // construct stress = P*eye + sqrt(2/3)*Q*nhat
-    
+
+     array1d< real64 > deviator2(3)   
     for(localIndex i=0; i<6; ++i)
     {
-      stress[i] = sqrt(2./3.)*solution[1]*deviator[i];
+      stress[i] = trialP * identity[i] + trialQ * sqrt23 *deviator[i];
+      deviator2[i]
     }
+
+
     for(localIndex i=0; i<3; ++i)
     {
       stress[i] += solution[0];
@@ -438,7 +462,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   
   // remember history variables before returning
   
-  m_newCohesion[k][q] = cohesion;
+  m_newPreConsolidationPressure[k][q] = pc;
   
   for(localIndex i=0; i<6; ++i)
   {
@@ -452,7 +476,7 @@ GEOSX_FORCE_INLINE
 void DelftEggUpdates::SaveConvergedState( localIndex const k,
                                                localIndex const q )
 {
-  m_oldCohesion[k][q] = m_newCohesion[k][q];
+  m_oldPreConsolidationPressure[k][q] = m_newPreConsolidationPressure[k][q];
   
   for(localIndex i=0; i<6; ++i)
   {
@@ -515,49 +539,62 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for default bulk modulus
-    static constexpr auto defaultBulkModulusString  = "defaultBulkModulus";
 
-    /// string/key for default shear modulus
+    /// string/key for default shear modulus (mu)
     static constexpr auto defaultShearModulusString = "defaultShearModulus";
 
-    /// string/key for default friction angle
-    static constexpr auto defaultTanFrictionAngleString = "defaultTanFrictionAngle";
+    /// string/key for default reference pressure (p0)
+    static constexpr auto defaultRefPressureString = "defaultRefPressure";
     
-    /// string/key for default dilation angle
-    static constexpr auto defaultTanDilationAngleString = "defaultTanDilationAngle";
+    /// string/key for default reference volumetric strain (eps_v0)
+    static constexpr auto defaultRefStrainVolString = "defaultRefStrainVol";
     
-    /// string/key for default hardening rate
-    static constexpr auto defaultHardeningRateString = "defaultHardeningRate";
+    /// string/key for default recompression index (Cr)
+    static constexpr auto defaultRecompressionIndexString = "defaultRecompressionIndex";
     
-    /// string/key for default cohesion
-    static constexpr auto defaultCohesionString = "defaultCohesion";
-    
-    /// string/key for bulk modulus
-    static constexpr auto bulkModulusString  = "BulkModulus";
-    
-    /// string/key for poisson ratio
+    /// string/key for default virgin compression index (Cc)
+    static constexpr auto defaultVirginCompressionIndexString = "defaultVirginCompressionIndex";
+
+    /// string/key for default slope of the critical state line (M)
+    static constexpr auto defaultCslSlopeString = "defaultCslSlope";
+
+    /// string/key for default shape parameter for yield surface (alpha)
+    static constexpr auto defaultShapeParameterString = "defaultShapeParameter";
+
+    /// string/key for default preconsolidation pressure (pc)
+    static constexpr auto defaultPreConsolidationPressureString = "defaultPreConsolidationPressure";
+        
+    /// string/key for shear modulus
     static constexpr auto shearModulusString = "ShearModulus";
     
-    /// string/key for friction angle
-    static constexpr auto tanFrictionAngleString  = "TanFrictionAngle";
+    /// string/key for reference pressure
+    static constexpr auto refPressureString  = "RefPressure";
     
-    /// string/key for dilation angle
-    static constexpr auto tanDilationAngleString  = "TanDilationAngle";
+    /// string/key for reference volumetric strain
+    static constexpr auto refStrainVolString  = "RefStrainVol";
     
-    /// string/key for cohesion
-    static constexpr auto hardeningRateString  = "HardeningRate";
+    /// string/key for recompression index
+    static constexpr auto recompressionIndexString  = "RecompressionIndex";
     
-    /// string/key for cohesion
-    static constexpr auto newCohesionString  = "NewCohesion";
+    /// string/key for virgin compression index
+    static constexpr auto virginCompressionIndexString  = "VirginCompressionIndex";
     
-        /// string/key for cohesion
-    static constexpr auto oldCohesionString  = "OldCohesion";
+    /// string/key for slope of the critical state line
+    static constexpr auto cslSlopeString  = "CslSlope";
     
-        /// string/key for cohesion
+    /// string/key for shape parameter for the yield surface 
+    static constexpr auto shapeParameterString  = "ShapeParameter";
+
+    /// string/key for new preconsolidation pressure
+    static constexpr auto newPreConsolidationPressureString  = "NewPreConsolidationPressure";
+
+     /// string/key for old preconsolidation pressure
+    static constexpr auto oldPreConsolidationPressureString  = "OldPreConsolidationPressure";
+
+    /// string/key for new stress
     static constexpr auto newStressString  = "NewStress";
     
-        /// string/key for cohesion
+    /// string/key for old stress
     static constexpr auto oldStressString  = "OldStress";
   };
 
@@ -567,13 +604,15 @@ public:
    */
   DelftEggUpdates createKernelWrapper()
   {
-    return DelftEggUpdates( m_bulkModulus,
-                                 m_shearModulus,
-                                 m_tanFrictionAngle,
-                                 m_tanDilationAngle,
-                                 m_hardeningRate,
-                                 m_newCohesion,
-                                 m_oldCohesion,
+    return DelftEggUpdates( m_shearModulus,
+                                 m_refPressure,
+                                 m_refStrainVol,
+                                 m_recompressionIndex,
+                                 m_virginCompressionIndex,
+                                 m_cslSlope,
+                                 m_shapeParameter,
+                                 m_newPreConsolidationPressure,
+                                 m_oldPreConsolidationPresure,
                                  m_newStress,
                                  m_oldStress,
                                  m_stress ); // TODO: m_stress is redundant with m_newStress
@@ -585,44 +624,56 @@ protected:
 private:
   //TODO: maybe define some helper structs for defaults, arrays, arrayViews, etc.
   
-  /// Material parameter: The default value of the bulk modulus
-  real64 m_defaultBulkModulus;
-
   /// Material parameter: The default value of the shear modulus
   real64 m_defaultShearModulus;
   
-  /// Material parameter: The default value of yield surface slope
-  real64 m_defaultTanFrictionAngle;
+  /// Material parameter: The default value of reference pressure
+  real64 m_defaultRefPressure;
   
-    /// Material parameter: The default value of plastic potential slope
-  real64 m_defaultTanDilationAngle;
+  /// Material parameter: The default value of reference volumetric strain
+  real64 m_defaultRefStrainVol;
   
-  /// Material parameter: The default value of the initial cohesion
-  real64 m_defaultCohesion;
+  /// Material parameter: The default value of the recompression index
+  real64 m_defaultRecompressionIndex;
   
-  /// Material parameter: The default value of the hardening rate
-  real64 m_defaultHardeningRate;
-  
-  /// Material parameter: The bulk modulus for each element
-  array1d< real64 > m_bulkModulus;
+  /// Material parameter: The default value of the virgin compresion index
+  real64 m_defaultVirginCompressionIndex;
+
+  /// Material parameter: The default value of slope of the critical state line
+  real64 m_defaultCslSlope;
+
+  /// Material parameter: The default value of the shape parameter of yield surface
+  real64 m_defaultShapeParameter;
+
+  /// Material parameter: The default value of preconsolidation pressure
+  real64 m_defaultPreConsolidationPressure;
 
   /// Material parameter: The shear modulus for each element
   array1d< real64 > m_shearModulus;
   
-  /// Material parameter: The yield surface slope for each element
-  array1d< real64 > m_tanFrictionAngle;
+  /// Material parameter: The reference pressure for each quadrature point
+  array2d< real64 > m_refPressure;
   
-  /// Material parameter: The plastic potential slope for each element
-  array1d< real64 > m_tanDilationAngle;
+  /// Material parameter: The reference volumetric strain for each quadrature point
+  array2d< real64 > m_refStrainVol;
   
-  /// Material parameter: The hardening rate each element
-  array1d< real64 > m_hardeningRate;
+  /// Material parameter: The compression index for each element
+  array1d< real64 > m_recompressionIndex;
   
-  /// History variable: The current cohesion value for each quadrature point
-  array2d< real64 > m_newCohesion;
+  /// History variable: The virgin compresion index for each element
+  array1d< real64 > m_virginCompressionIndex;
+
+    /// History variable: The slope of the critical state line for each element
+  array1d< real64 > m_cslSlope;
+
+    /// History variable: The shape parameter of yield surface for each element
+  array1d< real64 > m_shapeParameter;
+
+    /// History variable: The current preconsolidation pressure for each quadrature point
+  array2d< real64 > m_newPreConsolidationPressure;
   
-  /// History variable: The previous cohesion value for each quadrature point
-  array2d< real64 > m_oldCohesion;
+  /// History variable: The previous preconsolidation pressure for each quadrature point
+  array2d< real64 > m_oldPreConsolidationPressure;
   
   /// History variable: The current stress for each quadrature point
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress; //TODO: redundant storage with base m_stress
