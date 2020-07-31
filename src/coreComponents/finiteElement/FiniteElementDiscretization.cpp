@@ -77,7 +77,7 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Pyramid )
     {
-      rval = std::make_unique< PyramidShapeFunctionKernel >();
+      rval = std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
     }
     else if( parentElementShape == finiteElement::ParentElementTypeStrings::Quadralateral )
     {

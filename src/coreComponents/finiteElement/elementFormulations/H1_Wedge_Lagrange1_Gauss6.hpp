@@ -46,7 +46,7 @@ namespace finiteElement
  *             |   .   |                            0      1   0    1
  *             |   .   |                            0      0   1   -1
  *             |   4   |        xi                  0      0   1    1
- *             |  . .  |          |   s
+ *             |  . .  |          |   s             =====  ==  ==  ===
  *             | .   . |          |  /
  *             |.____ .|          | /
  *             0       2          |/____ r
@@ -118,9 +118,8 @@ private:
   /// The weight of each quadrature point.
   constexpr static real64 weight = parentVolume / numQuadraturePoints;
 
-  /// The scaling factor specifying the location of the quadrature points
-  /// relative to the origin and the outer extent of the element in the
-  /// parent space.
+  /// The factor specifying the location of the quadrature points
+  /// relative to the origin of the element in the parent space.
   constexpr static real64 quadratureCrossSectionCoord = 1.0 / 6.0;
 
   /// The scaling factor specifying the location of the quadrature points
