@@ -647,15 +647,15 @@ void ProblemManager::ApplyNumericalMethods()
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group * const meshBodies = domain->getMeshBodies();
 
-  map< std::pair< string, string >, localIndex > regionQuadrature = calculateRegionQuadrature( meshBodies );
+  map< std::pair< string, string >, localIndex > regionQuadrature = calculateRegionQuadrature( *meshBodies );
 
-  setRegionQuadrature( meshBodies,
+  setRegionQuadrature( *meshBodies,
                        *constitutiveManager,
                        regionQuadrature );
 
 }
 
-map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group * const meshBodies )
+map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
   NumericalMethodsManager const * const
@@ -679,9 +679,9 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
       feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( discretizationName );
 
 
-      for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
+      for( localIndex a=0; a<meshBodies.GetSubGroups().size(); ++a )
       {
-        MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
+        MeshBody * const meshBody = meshBodies.GetGroup< MeshBody >( a );
         for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
         {
           MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( b );
@@ -743,13 +743,13 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 }
 
 
-void ProblemManager::setRegionQuadrature( Group * const meshBodies,
+void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
                                           map< std::pair< string, string >, localIndex > const & regionQuadrature )
 {
-  for( localIndex a=0; a<meshBodies->GetSubGroups().size(); ++a )
+  for( localIndex a=0; a<meshBodies.GetSubGroups().size(); ++a )
   {
-    MeshBody * const meshBody = meshBodies->GetGroup< MeshBody >( a );
+    MeshBody * const meshBody = meshBodies.GetGroup< MeshBody >( a );
     for( localIndex b=0; b<meshBody->numSubGroups(); ++b )
     {
       MeshLevel * const meshLevel = meshBody->GetGroup< MeshLevel >( b );
