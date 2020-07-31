@@ -20,7 +20,6 @@
 #define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
 
 #include "managers/ObjectManagerBase.hpp"
-//#include "finiteElement/ElementLibrary/FiniteElementBase.h"
 namespace geosx
 {
 
@@ -311,7 +310,6 @@ protected:
   string m_elementTypeString;
 
   /// Type of element in this subregion.
-//  FiniteElementBase::ElementType m_elementType;
 };
 
 

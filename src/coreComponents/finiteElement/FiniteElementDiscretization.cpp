@@ -40,11 +40,16 @@ FiniteElementDiscretization::FiniteElementDiscretization( std::string const & na
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::orderString, &m_order )->
-    setInputFlag( InputFlags::REQUIRED );
+    setInputFlag( InputFlags::REQUIRED )->
+    setDescription( "The order of the finite element basis." );
 
   registerWrapper( viewKeyStruct::formulationString, &m_formulation )->
     setInputFlag( InputFlags::OPTIONAL )->
-    setApplyDefaultValue( "default" );
+    setApplyDefaultValue( "default" )->
+    setDescription( "Specifier to indicate any specialized formuations. "
+                    "For instance, one of the many enhanced assumed strain "
+                    "methods of the Hexahedron parent shape would be indicated "
+                    "here" );
 }
 
 FiniteElementDiscretization::~FiniteElementDiscretization()

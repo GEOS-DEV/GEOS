@@ -13,7 +13,7 @@
  */
 
 /**
- * @file testShapeFunctionKernel.hpp
+ * @file testH1_Hexahedron_Lagrange1_GaussLegendre2
  */
 
 #include "managers/initialization.hpp"

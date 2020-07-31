@@ -562,9 +562,9 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType">
-		<!--formulation => (no description available)-->
+		<!--formulation => Specifier to indicate any specialized formuations. For instance, one of the many enhanced assumed strain methods of the Hexahedron parent shape would be indicated here-->
 		<xsd:attribute name="formulation" type="string" default="default" />
-		<!--order => (no description available)-->
+		<!--order => The order of the finite element basis.-->
 		<xsd:attribute name="order" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
