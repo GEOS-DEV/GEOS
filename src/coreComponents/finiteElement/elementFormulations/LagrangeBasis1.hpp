@@ -12,11 +12,11 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
-#define SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_
 
 /**
- * @file LagrangeBasis1
+ * @file LagrangeBasis1.hpp
  */
 
 #include "common/DataTypes.hpp"
@@ -27,10 +27,8 @@ namespace finiteElement
 {
 
 /**
- * @class LagrangeBasis1
- *
- * Implementation for a first order (linear) Lagrange polynomial basis. the
- * Parent space is defined by:
+ * This class contains the implementation for a first order (linear) Lagrange
+ * polynomial basis. The parent space is defined by:
  *
  *                 o-------------o  ---> xi
  *  Index:         0             1
@@ -53,7 +51,6 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 parentSupportCoord( const localIndex supportPointIndex )
   {
-//    GEOSX_ASSERT( supportPointIndex==0 || supportPointIndex==1 );
     return -1.0 + 2.0 * (supportPointIndex & 1);
   }
 
@@ -69,7 +66,6 @@ public:
   constexpr static real64 value( const int index,
                                  const real64 xi )
   {
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return 0.5 + 0.5 * xi * parentSupportCoord( index );
   }
 
@@ -83,7 +79,6 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 value0( const real64 xi )
   {
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return 0.5 - 0.5 * xi;
   }
 
@@ -96,7 +91,6 @@ public:
   GEOSX_FORCE_INLINE
   constexpr static real64 value1( const real64 xi )
   {
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return 0.5 + 0.5 * xi;
   }
 
@@ -115,7 +109,6 @@ public:
                                     const real64 xi )
   {
     GEOSX_UNUSED_VAR( xi );
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return 0.5 * parentSupportCoord( index );
   }
 
@@ -130,7 +123,6 @@ public:
   constexpr static real64 gradient0( const real64 xi )
   {
     GEOSX_UNUSED_VAR( xi );
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return -0.5;
   }
 
@@ -145,7 +137,6 @@ public:
   constexpr static real64 gradient1( const real64 xi )
   {
     GEOSX_UNUSED_VAR( xi );
-//    GEOSX_ASSERT( xi>=-1 && xi<=1 );
     return 0.5;
   }
 
@@ -285,4 +276,4 @@ public:
 }
 
 
-#endif /* SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS1_HPP_ */

@@ -146,13 +146,14 @@ public:
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
-
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
+
+  /// The number of nodes per element.
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
 
   /**
    * @brief Constructor

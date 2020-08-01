@@ -51,7 +51,6 @@ set( physicsSolvers_headers
      surfaceGeneration/SurfaceGenerator.hpp
      surfaceGeneration/EmbeddedSurfaceGenerator.hpp
      )
-     #solidMechanics/SolidMechanicsEmbeddedFractures.hpp
 
 #
 # Specify solver sources

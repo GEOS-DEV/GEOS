@@ -647,7 +647,7 @@ void ProblemManager::ApplyNumericalMethods()
   ConstitutiveManager const * constitutiveManager = domain->GetGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group * const meshBodies = domain->getMeshBodies();
 
-  map< std::pair< string, string >, localIndex > regionQuadrature = calculateRegionQuadrature( *meshBodies );
+  map< std::pair< string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( *meshBodies );
 
   setRegionQuadrature( *meshBodies,
                        *constitutiveManager,
@@ -736,7 +736,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
           }
         }
       }
-    }
+    } // if( solver!=nullptr )
   }
 
   return regionQuadrature;

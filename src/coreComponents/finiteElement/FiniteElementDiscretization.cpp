@@ -94,8 +94,12 @@ FiniteElementDiscretization::factory( string const & parentElementShape ) const
     }
     else
     {
-      GEOSX_ERROR( "" );
+      GEOSX_ERROR( "Key value of "<<parentElementShape<<" does not have an associated element formulation." );
     }
+  }
+  else
+  {
+    GEOSX_ERROR( "Elements with m_order>1 are not currently supported." );
   }
   return rval;
 }

@@ -28,13 +28,11 @@ namespace finiteElement
 {
 
 /**
- * @class H1_Wedge_Lagrange1_Gauss6
- *
- * Contains the kernel accessible functions specific to the H1-conforming nodal
- * bilinear wedge finite element with a 6-point Gaussian quadrature rule. It is
- * assumed that the indexing for the quadrature points mirrors that of the nodes.
- * Also note that the assumed node ordering is not the standard right-hand-rule
- * used in the literature.
+ * This class contains the kernel accessible functions specific to the
+ * H1-conforming nodal bilinear wedge finite element with a 6-point Gaussian
+ * quadrature rule. It is assumed that the indexing for the quadrature points
+ * mirrors that of the nodes. Also note that the assumed node ordering is not
+ * the standard right-hand-rule used in the literature.
  *
  *                5
  *                /\                                =====  ==  ==  ===
@@ -52,7 +50,7 @@ namespace finiteElement
  *             0       2          |/____ r
  *
  */
-class H1_Wedge_Lagrange1_Gauss6 : public FiniteElementBase
+class H1_Wedge_Lagrange1_Gauss6 final : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
@@ -61,15 +59,15 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 6;
 
-  virtual ~H1_Wedge_Lagrange1_Gauss6() override final
+  virtual ~H1_Wedge_Lagrange1_Gauss6() override
   {}
 
-  virtual localIndex getNumQuadraturePoints() const override final
+  virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  virtual localIndex getNumSupportPoints() const override final
+  virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }

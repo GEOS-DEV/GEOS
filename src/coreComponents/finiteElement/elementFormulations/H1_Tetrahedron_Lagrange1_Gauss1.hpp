@@ -28,11 +28,9 @@ namespace finiteElement
 {
 
 /**
- * @class H1_Tetrahedron_Lagrange1_Gauss1
- *
- * Contains the kernel accessible functions specific to the H1-conforming nodal
- * linear tetrahedron finite element with a 1-point Gaussian quadrature rule.
- *
+ * This class contains the kernel accessible functions specific to the
+ * H1-conforming nodal linear tetrahedron finite element with a 1-point
+ * Gaussian quadrature rule.
  *
  *          3                                =====  ==  ==  ==
  *           +                               Node   r   s   t
@@ -46,7 +44,7 @@ namespace finiteElement
  *          0              1
  *
  */
-class H1_Tetrahedron_Lagrange1_Gauss1 : public FiniteElementBase
+class H1_Tetrahedron_Lagrange1_Gauss1 final : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
@@ -55,15 +53,15 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 1;
 
-  virtual ~H1_Tetrahedron_Lagrange1_Gauss1() override final
+  virtual ~H1_Tetrahedron_Lagrange1_Gauss1() override
   {}
 
-  virtual localIndex getNumQuadraturePoints() const override final
+  virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  virtual localIndex getNumSupportPoints() const override final
+  virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
