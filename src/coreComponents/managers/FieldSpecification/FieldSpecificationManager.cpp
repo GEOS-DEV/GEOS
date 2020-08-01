@@ -14,17 +14,8 @@
 
 #include "FieldSpecificationManager.hpp"
 
-#include "FieldSpecificationBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-
-#include "mesh/MeshBody.hpp"
-
-#include "managers/NumericalMethodsManager.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
-//#include "finiteElement/ElementLibrary/FiniteElement.h"
 #include "codingUtilities/StringUtilities.hpp"
-
-#include "managers/DomainPartition.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {

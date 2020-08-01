@@ -12,20 +12,18 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
-#define SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
+#ifndef GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
+#define GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_
 /**
- * @file LagrangeBasis2
+ * @file LagrangeBasis2.hpp
  */
 
 #include "common/DataTypes.hpp"
 
 
 /**
- * @class LagrangeBasis1
- *
- * Implementation for a second order (quadratic) Lagrange polynomial basis.
- * The Parent space is defined by:
+ * This class contains the implementation for a second order (quadratic) Lagrange
+ * polynomial basis. The parent space is defined by:
  *
  *                 o-------------o-------------o  ---> xi
  *  Index:         0             1             2
@@ -200,4 +198,4 @@ class LagrangeBasis2
 };
 
 
-#endif /* SRC_CORECOMPONENTS_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_ELEMENTFORMULATIONS_LAGRANGEBASIS2_HPP_ */

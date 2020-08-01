@@ -13,7 +13,7 @@
  */
 
 /**
- * @file FiniteElementDispatch
+ * @file FiniteElementDispatch.hpp
  */
 
 #ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_

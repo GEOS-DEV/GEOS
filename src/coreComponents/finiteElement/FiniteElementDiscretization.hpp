@@ -16,14 +16,13 @@
  * @file FiniteElementSpace.hpp
  */
 
-#ifndef SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
-#define SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
+#ifndef GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
+#define GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_
 
 #include "common/TimingMacros.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/Wrapper.hpp"
 #include "LvArray/src/tensorOps.hpp"
-//#include "ElementLibrary/FiniteElement.h"
 #include "FiniteElementDispatch.hpp"
 
 
@@ -84,6 +83,8 @@ public:
   std::unique_ptr< finiteElement::FiniteElementBase >
   factory( string const & parentElementShape ) const;
 
+private:
+
   struct viewKeyStruct
   {
     static constexpr auto orderString = "order";
@@ -96,7 +97,6 @@ public:
   /// Optional string indicating any specialized formulation type.
   string m_formulation;
 
-protected:
   void PostProcessInput() override final;
 
 };
@@ -153,4 +153,4 @@ FiniteElementDiscretization::
 
 } /* namespace geosx */
 
-#endif /* SRC_COMPONENTS_CORE_SRC_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */
+#endif /* GEOSX_FINITEELEMENT_FINITEELEMENTDISCRETIZATION_HPP_ */
