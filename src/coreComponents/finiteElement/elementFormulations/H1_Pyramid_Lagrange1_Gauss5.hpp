@@ -28,13 +28,11 @@ namespace finiteElement
 {
 
 /**
- * @class H1_Pyramid_Lagrange1_Gauss5
- *
- * Contains the kernel accessible functions specific to the H1-conforming nodal
- * pyramid finite element with a 5-point Gaussian quadrature rule [1]. It is
- * assumed that the indexing for the quadrature points mirrors that of the nodes.
- * Also note that the assumed node ordering is not the standard right-hand-rule
- * used in the literature.
+ * This class contains the kernel accessible functions specific to the
+ * H1-conforming nodal pyramid finite element with a 5-point Gaussian
+ * quadrature rule [1]. It is assumed that the indexing for the quadrature
+ * points mirrors that of the nodes. Also note that the assumed node ordering
+ * is not the standard right-hand-rule used in the literature.
  *
  *               4                                  =====  ===  ===  ===
  *              /\.                                 Node   xi0  xi1  xi2
@@ -55,7 +53,7 @@ namespace finiteElement
  *
  *
  */
-class H1_Pyramid_Lagrange1_Gauss5 : public FiniteElementBase
+class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
@@ -64,15 +62,15 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 5;
 
-  virtual ~H1_Pyramid_Lagrange1_Gauss5() override final
+  virtual ~H1_Pyramid_Lagrange1_Gauss5() override
   {}
 
-  virtual localIndex getNumQuadraturePoints() const override final
+  virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
-  virtual localIndex getNumSupportPoints() const override final
+  virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
@@ -134,19 +132,18 @@ private:
   constexpr static real64 quadratureLongitudinalCoordDelta = 16.0 / 15.0;
 
   /**
-   * @brief Calculates the linear index for support/quadrature points from ijk
-   *   coordinates.
+   * @brief Calculates the linear index for support/quadrature points paired
+   *        with base nodes from ij coordinates.
    * @param i The index in the xi0 direction (0,1)
    * @param j The index in the xi1 direction (0,1)
-   * @param k The index in the xi2 direction (0,1)
-   * @return The linear index of the support/quadrature point (0-7)
+   * @return The linear index of the support/quadrature point (0-3)
    */
   template< typename T >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  constexpr static T linearMap( T const i, T const j, T const k )
+  constexpr static T linearMap( T const i, T const j )
   {
-    return i + 2 * j + 4 * k;
+    return i + 2 * j;
   }
 
   /**
@@ -279,13 +276,14 @@ H1_Pyramid_Lagrange1_Gauss5::
                                        quadratureParentCoords1( q ),
                                        quadratureParentCoords2( q ) };
 
-  real64 const psi0[2] = { 0.5*( 1.0 - quadratureCoords[0] ),
-                           0.5*( 1.0 + quadratureCoords[0] ) };
-  real64 const psi1[2] = { 0.5*( 1.0 - quadratureCoords[1] ),
-                           0.5*( 1.0 + quadratureCoords[1] ) };
-  real64 const psi2 = 0.5*( 1.0 - quadratureCoords[2]);
+  real64 const psi0[2] = { 0.5 - 0.5*quadratureCoords[0],
+                           0.5 + 0.5*quadratureCoords[0] };
+  real64 const psi1[2] = { 0.5 - 0.5*quadratureCoords[1],
+                           0.5 + 0.5*quadratureCoords[1] };
+  real64 const psi2 = 0.5 - 0.5*quadratureCoords[2];
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
+  // Contributions from basis functions paired with base nodes
   for( localIndex a=0; a<2; ++a )
   {
     for( localIndex b=0; b<2; ++b )
@@ -293,7 +291,7 @@ H1_Pyramid_Lagrange1_Gauss5::
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
                                 psi0[a] * psi1[b] * dpsi[0] };
-      localIndex const nodeIndex = linearMap( a, b, LvArray::integerConversion< localIndex >( 0 ) );
+      localIndex const nodeIndex = linearMap( a, b );
       for( int i = 0; i < 3; ++i )
       {
         for( int j = 0; j < 3; ++j )
@@ -304,13 +302,10 @@ H1_Pyramid_Lagrange1_Gauss5::
     }
   }
 
+  // Contribution from the basis function paired with the apex nodes
+  for( int i = 0; i < 3; ++i )
   {
-    localIndex const nodeIndex = 4;
-
-    for( int i = 0; i < 3; ++i )
-    {
-      J[i][2] = J[i][2] + dpsi[1] * X[nodeIndex][i];
-    }
+    J[i][2] = J[i][2] + dpsi[1] * X[4][i];
   }
 }
 
@@ -335,6 +330,7 @@ H1_Pyramid_Lagrange1_Gauss5::
   real64 const psi2 = 0.5*( 1.0 - quadratureCoords[2]);
   constexpr real64 dpsi[2] = { -0.5, 0.5 };
 
+  // Contributions from basis functions paired with base nodes
   for( localIndex a=0; a<2; ++a )
   {
     for( localIndex b=0; b<2; ++b )
@@ -342,7 +338,7 @@ H1_Pyramid_Lagrange1_Gauss5::
       real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2,
                                 psi0[a] * dpsi[b] * psi2,
                                 psi0[a] * psi1[b] * dpsi[0] };
-      localIndex const nodeIndex = linearMap( a, b, LvArray::integerConversion< localIndex >( 0 ) );
+      localIndex const nodeIndex = linearMap( a, b );
       for( int i = 0; i < 3; ++i )
       {
         dNdX[nodeIndex][i] = 0.0;
@@ -354,15 +350,10 @@ H1_Pyramid_Lagrange1_Gauss5::
     }
   }
 
+  // Contribution from the basis function paired with the apex nodes
+  for( int i = 0; i < 3; ++i )
   {
-    real64 const dNdXi[3] = { 0.0,
-                              0.0,
-                              dpsi[1] };
-    localIndex const nodeIndex = 4;
-    for( int i = 0; i < 3; ++i )
-    {
-      dNdX[nodeIndex][i] = dNdXi[2] * invJ[2][i];
-    }
+    dNdX[4][i] = dpsi[1] * invJ[2][i];
   }
 }
 

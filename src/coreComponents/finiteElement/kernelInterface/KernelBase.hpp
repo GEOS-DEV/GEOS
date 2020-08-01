@@ -213,6 +213,7 @@ public:
   /// function support point.
   static constexpr int numDofPerTrialSupportPoint   = NUM_DOF_PER_TRIAL_SP;
 
+  /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
   /**
@@ -401,7 +402,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -449,7 +450,7 @@ public:
 
       kernelComponent.setup( k, stack );
 
-      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 
@@ -511,10 +512,9 @@ protected:
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
  *                      to apply the @p KERNEL_TEMPLATE.
+ * @param finiteElementName The name of the finite element.
  * @param constitutiveNames The names of the constitutive models present in the
  *                          Region.
- * @param feDiscretization A pointer to the finite element discretization/space
- *                         object.
  * @param kernelConstructorParams The parameter list for corresponding to the
  *                                parameter @p KERNEL_CONSTRUCTOR_PARAMS that
  *                                are passed to the @p KERNEL_TEMPLATE
@@ -628,7 +628,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
                                             edgeManager,
                                             faceManager,
                                             elementSubRegion,
-                                            finiteElementSpace,
+                                            finiteElement,
                                             castedConstitutiveRelation );
         auto fullKernelComponentConstructorArgs = camp::tuple_cat_pair_forward( temp,
                                                                                 kernelConstructorParamsTuple );
