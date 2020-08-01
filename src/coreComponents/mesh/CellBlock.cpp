@@ -278,9 +278,6 @@ void CellBlock::SetElementType( string const & elementType )
   else if( !m_elementTypeString.compare( 0, 4, "C3D6" ))
   {
     // Triangular prism
-
-    // This element type uses the HEX shape functions, so numNodesPerElement needs to be 8 until we have a proper
-    // element type for this
     this->setNumNodesPerElement( 6 );
     this->setNumIndependentNodesPerElement( 6 );
     this->setNumEdgesPerElement( 9 );

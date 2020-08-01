@@ -183,8 +183,7 @@ struct SparsityHelper
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p REGION_TYPE)
  *                      to apply the @p KERNEL_TEMPLATE.
- * @param feDiscretization A pointer to the finite element discretization/space
- *                         object.
+ * @param discretizationName The name of the finite element discretization.
  * @param inputDofNumber The global degree of freedom numbers.
  * @param rankOffset Offset of dof indices on curren rank.
  * @param inputSparsityPattern The local sparsity pattern to fill.
