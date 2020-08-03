@@ -49,7 +49,7 @@ CompositionalMultiphaseFlow::CompositionalMultiphaseFlow( const string & name,
   m_numComponents( 0 ),
   m_capPressureFlag( 0 ),
   m_maxCompFracChange( 1.0 ),
-  m_minScalingFactor( 0.1 ),
+  m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
 //START_SPHINX_INCLUDE_00
@@ -1332,8 +1332,9 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
           check.min( newPres >= 0.0 );
         }
 
-        // if component density is not allowed, the time step fails if a component density is negative
-        // otherwise, negative component densities will be chopped (i.e., set to zero in ApplySystemSolution)
+        // if component density chopping is not allowed, the time step fails if a component density is negative
+        // otherwise, we just check that the total density is positive, and negative component densities
+        // will be chopped (i.e., set to zero) in ApplySystemSolution)
         if( !allowCompDensChopping )
         {
           for( localIndex ic = 0; ic < NC; ++ic )
@@ -1341,6 +1342,16 @@ bool CompositionalMultiphaseFlow::CheckSystemSolution( DomainPartition const & d
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             check.min( newDens >= 0.0 );
           }
+        }
+        else
+        {
+          real64 totalDens = 0.0;
+          for( localIndex ic = 0; ic < NC; ++ic )
+          {
+            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            totalDens += (newDens > 0.0) ? newDens : 0.0;
+          }
+          check.min( totalDens >= 1e-6 );
         }
       }
     } );

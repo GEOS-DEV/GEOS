@@ -1302,7 +1302,8 @@ struct SolutionCheckKernel
         }
 
         // if component density is not allowed, the time step fails if a component density is negative
-        // otherwise, negative component densities will be chopped (i.e., set to zero in ApplySystemSolution)
+        // otherwise, we just check that the total density is positive, and negative component densities
+        // will be chopped (i.e., set to zero) in ApplySystemSolution
         if( !allowCompDensChopping )
         {
           for( localIndex ic = 0; ic < numComponents; ++ic )
@@ -1315,6 +1316,21 @@ struct SolutionCheckKernel
             {
               minVal.min( 0 );
             }
+          }
+        }
+        else
+        {
+          real64 totalDens = 0.0;
+          for( localIndex ic = 0; ic < numComponents; ++ic )
+          {
+            lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
+            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
+                                   + scalingFactor * localSolution[lid];
+            totalDens += (newDens > 0.0) ? newDens : 0.0;
+          }
+          if( totalDens < 1e-6 )
+          {
+            minVal.min( 0 );
           }
         }
       }

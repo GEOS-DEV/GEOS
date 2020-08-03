@@ -335,7 +335,6 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
   solubility = m_CO2SolubilityTable->Value( P, T );
 
   real64 const waterMW = m_componentMolarWeight[m_waterIndex];
-  //  real64 CO2MW = m_componentMolarWeight[m_CO2Index];
 
   solubility *= waterMW;
 
@@ -346,7 +345,14 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
 
   //Y = C/W = z/(1-z)
 
-  Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
+  if( compFraction[m_CO2Index].m_var > 1.0 - 1e-10 )
+  {
+    Y = compFraction[m_CO2Index] * 1e10;
+  }
+  else
+  {
+    Y = compFraction[m_CO2Index] / (1.0 - compFraction[m_CO2Index]);
+  }
 
   if( Y < X )
   {
@@ -356,7 +362,9 @@ void CO2SolubilityFunction::Partition( EvalVarArgs const & pressure, EvalVarArgs
     phaseFraction[m_phaseGasIndex] = 0.0;
 
     for( localIndex c = 0; c < m_componentNames.size(); ++c )
+    {
       phaseCompFraction[m_phaseLiquidIndex][c] = compFraction[c];
+    }
 
   }
   else
