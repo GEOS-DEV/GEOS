@@ -700,7 +700,7 @@ CompositionalMultiphaseWell::ScalingForSystemSolution( DomainPartition const & d
     }
   } );
 
-  return LvArray::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
+  return LvArray::math::max( MpiWrapper::Min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
 bool
