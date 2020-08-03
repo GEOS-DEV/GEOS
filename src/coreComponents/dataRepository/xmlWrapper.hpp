@@ -22,8 +22,10 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "dataRepository/DefaultValue.hpp"
-#include "LvArray/src/streamIO.hpp"
 #include "rajaInterface/GEOS_RAJA_Interface.hpp"
+#include "LvArray/src/output.hpp"
+#include "LvArray/src/input.hpp"
+
 // TPL includes
 #include <pugixml.hpp>
 
@@ -142,7 +144,7 @@ public:
   template< typename T, int NDIM, typename PERMUTATION >
   static std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
   StringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & value )
-  { LvArray::stringToArray( array, value ); }
+  { LvArray::input::stringToArray( array, value ); }
 
   ///@}
 
@@ -255,7 +257,7 @@ public:
   static std::enable_if_t< !canParseVariable< T >, bool >
   ReadAttributeAsType( T &, string const &, xmlNode const &, U const & )
   {
-    GEOSX_ERROR( "Cannot parse the given type " << LvArray::demangleType< T >() );
+    GEOSX_ERROR( "Cannot parse the given type " << LvArray::system::demangleType< T >() );
     return false;
   }
 

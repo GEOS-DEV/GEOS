@@ -160,6 +160,11 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
     } );// end loop over subregions
   } );// end loop over thick planes
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & cellElemGhostRank =
+    elemManager->ConstructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString );
+
+  embeddedSurfaceSubRegion->inheritGhostRank( cellElemGhostRank );
+
   GEOSX_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << embeddedSurfaceSubRegion->size() );
 }
 
