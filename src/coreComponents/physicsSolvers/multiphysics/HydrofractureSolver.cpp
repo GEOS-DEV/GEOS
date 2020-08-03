@@ -272,7 +272,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
       globalSolverIterFlag = 1;
 
     //TJ: use tip volume to get openning gap at the newly split nodes
-    bool useTipVolumeFlag = true;
+    bool useTipVolumeFlag = false;
 
     for( solveIter=0; solveIter<maxIter; ++solveIter )
     {
@@ -695,27 +695,30 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	int localTipIterConverged = 0;
 	int globalTipIterConverged = 0;
 	real64 localConvergedTipLoc = -1.0;
-/*
+
         std::cout << "Rank " << rank << ": I am in tip iteration solver." << std::endl;
         std::cout << "Solve with tip iteration, ";
-*/
+
         integer const maxTipIteration = 50;
 /*
         std::cout << "maximum " << maxTipIteration << " allowed."
                   << std::endl;
 */
-	m_solidSolver->ResetStressToBeginningOfStep( domain );
+	if( solveIter>0 )
+	{
+	  m_solidSolver->ResetStressToBeginningOfStep( domain );
+	}
 
         SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
         SortedArray< localIndex > const & nodesWithAssignedDisp =
   	    mySurface->getReference< SortedArray< localIndex > >("nodesWithAssignedDisp");
-/*
+
         std::cout << "Rank " << rank << ": size of nodesWithAssignedDisp: "
     	      << nodesWithAssignedDisp.size() << std::endl;
         for(auto & item : nodesWithAssignedDisp)
           std::cout << item << ", ";
         std::cout << std::endl;
-*/
+
         MeshLevel & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
         NodeManager & nodeManager = *mesh.getNodeManager();
         array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & disp = nodeManager.totalDisplacement();
@@ -800,9 +803,14 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
           GEOSX_LOG_RANK_0( "Tip iteration = " << tipIterCount+1);
 
+	  if( tipIterCount > 0 )
+	  {
+	    m_solidSolver->ResetStressToBeginningOfStep( domain );
+	  }
+
           //TJ: print out surface aperture before newton solve
 	  {
-/*
+
 	    std::cout << "Rank " << rank << ": Inside tip iteration, "
 			 "before newton solve: "
 		      << std::endl;
@@ -819,13 +827,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		  std::cout << nodeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
-	      for(localIndex i=0; i<edgeMap.size(); i++)
+	     /* for(localIndex i=0; i<edgeMap.size(); i++)
 	      {
 		std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 		for(localIndex j=0; j<edgeMap[i].size(); j++)
 		  std::cout << edgeMap[i][j] << " ";
 		std::cout << "\n";
-	      }
+	      } */
 	      for(localIndex i=0; i<faceMap.size(0); i++)
 	      {
 		std::cout << "Rank " << rank << ": Face (face) " << i << ": ";
@@ -847,7 +855,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			  << std::endl;
 	      }
 	    }
-*/
+
 	  } // print statements
 
           //TJ: nonlinear solver
@@ -861,7 +869,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 						  m_solution );
 	  //TJ: print out surface aperture after newton solve
 	  {
-/*
+
 	    std::cout << "Rank " << rank << ": Inside tip iteration, "
 			 "after newton solve: "
 		      << std::endl;
@@ -878,13 +886,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		  std::cout << nodeMap[i][j] << " ";
 		std::cout << "\n";
 	      }
-	      for(localIndex i=0; i<edgeMap.size(); i++)
+	    /*  for(localIndex i=0; i<edgeMap.size(); i++)
 	      {
 		std::cout << "Rank " << rank << ": Face (edge) " << i << ": ";
 		for(localIndex j=0; j<edgeMap[i].size(); j++)
 		  std::cout << edgeMap[i][j] << " ";
 		std::cout << "\n";
-	      }
+	      } */
 	      for(localIndex i=0; i<subRegion->getElementCenter().size(); i++)
 	      {
 		std::cout << "Rank " << rank << ": Face (center) " << i << ": ";
@@ -899,20 +907,20 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			  << std::endl;
 	      }
 	    }
-*/
+
 	  } // print statements
 
 	  if (!nodesWithAssignedDisp.empty())
 	  {
 
 	    //TJ: obtain new tip location
-/*
+
 	    std::cout << "Rank " << rank << ": the face element on the boundary of the channel is "
 		      << m_channelElement << std::endl;
 	    real64 const refAper = subRegion->getElementAperture()[m_channelElement];
 	    std::cout << "Rank " << rank << ": the aperture of the face element at the channel boundary is "
 		      << refAper << std::endl;
-*/
+
 	    //TJ: find the upper bound of the tip location inside the partially opened element
 	    //    the upper bound is obtained at the first tip iteration, since the gap at the
 	    //    newly split node pair is almost zero
@@ -935,13 +943,15 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    //TJ: use the displacement gap at the node pair other than the newly split one
 	    //    on the face element at the channel boundary for the tip asymptotic relation
 	    real64 refDisp = std::abs( disp(refNodeIndex,0) - disp(myChildIndex[refNodeIndex],0) );
-/*
+	    real64 tipX = 0.0;
+
+
 	    std::cout << "Rank " << rank << ": refNodeIndex = " << refNodeIndex
 		      << ", disp "         << disp(refNodeIndex,0)
 		      << ", childIndex = " << myChildIndex[refNodeIndex]
 		      << ", disp "         << disp(myChildIndex[refNodeIndex],0)
 		      << std::endl;
-*/
+
 
   //        GEOSX_ASSERT_MSG( disp(refNodeIndex,0) < 0.0,
   //			  "Node crosses the symmetric plane." );
@@ -960,7 +970,6 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	    else
 	    {
-	      real64 tipX = 0.0;
 	      if (viscosity < 2.0e-3) // Toughness-dominated case
 	      {
 		//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
@@ -1008,10 +1017,31 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   //          GEOSX_ASSERT_MSG( maxTipLocation > minTipLocation,
   //               "maxTipLocation < minTipLocation" );
 
+
+	    if (tipX > 2.0*meshSize)
+	    {
+	      std::cout << "Rank " << rank << ": during the middle of tip level iteration"
+		                           << ", tip enters into new element."
+					   << std::endl;
+	      m_tipLocationHistory.insert(tipIterCount+1, m_newTipLocation);
+	      m_convergedTipLoc = m_newTipLocation;
+	      localConvergedTipLoc = m_convergedTipLoc;
+	      m_oldTipLocation = m_newTipLocation;
+
+	      for(localIndex i=0; i<m_tipLocationHistory.size(); i++)
+		std::cout << "Rank " << rank << ": Tip location (iter " << i << ") = " << m_tipLocationHistory(i) << std::endl;
+	      std::cout << "Rank " << rank << ": tipLoc = " << m_convergedTipLoc << ", "
+			<< "Tip crosses into new element at " << tipIterCount+1 << " steps."
+			<< std::endl;
+
+	      localTipIterConverged = 1;
+	    }
+
 	    m_newTipLocation = 0.5 * (minTipLocation + maxTipLocation);
 
 	    //TJ: compare old tip location with the new one
-	    if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0)
+	    if ( std::abs(m_newTipLocation - m_oldTipLocation) < tipTol && tipIterCount > 0
+		&& tipX <= 2.0*meshSize)
 	    {
 	      //TJ: change the flag to false to switch to the initial guess based method
 	      //TJ: since we have the globalSolverIterFlag now, we don't need m_tipIterationFlag anymore.
@@ -1120,9 +1150,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      // the sign of the displacement at the newly split nodes are always the same
 	      disp(node, 0) = disp(node,0) > 0 ? refValue : -refValue;
 	      dispIncre(node, 0) = disp(node, 0) - 0.0;
-/*
+
 	      std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
-*/
+
 	    }
 	  } // if (!nodesWithAssignedDisp.empty())
 
@@ -1319,9 +1349,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      } // for localIndex i
 	      GEOSX_ASSERT_MSG( found == true,
 			    "Trailing face is not found among the fracture face elements" );
-/*
+
 	      std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
-*/
+
 	      real64 const tipElmtArea = subRegion->getElementArea()[m_tipElement];
 	      real64 tipElmtSize = sqrt(tipElmtArea);
 	      tipElmtSize = meshSize;  // hard coded
@@ -1403,9 +1433,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 			disp(node, 0) = faceNormal(face)[0] > 0 ? -refValue : refValue;
 			dispIncre(node,0) = disp(node,0) - 0.0;
-/*
+
 			std::cout << "Rank " << rank << ": Node " << node << ": " << disp(node,0) << std::endl;
-*/
+
 		      }
 		    } // for localIndex j
 		  } // for localIndex i
@@ -1435,9 +1465,9 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    }
 	    GEOSX_ASSERT_MSG( m_channelElement != -1,
 		  "Face elmt on the channel boundary is not found!" );
-/*
+
 	    std::cout << "Rank " << rank << ": m_channelElement = " << m_channelElement << std::endl;
-*/
+
 
 
 	    //TJ: assume that the tip location overlap with the tip element boundary
@@ -1522,9 +1552,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
                                                domain->getNeighbors() );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
-/*
+
         {
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank " << rank
 	            << ": Face element info (after manipulating disp, before "
 		       "UpdateDeformationForCoupling): " << std::endl;
@@ -1549,14 +1578,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
-*/
+
         //TJ: 5. update the elmt aperture due to the change of disp field at the newly splitted nodes
         this->UpdateDeformationForCoupling( domain );
 
         //TJ: check the face elmt aperture due to the nodal displacement change
-/*
+
         {
-	  int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 	  std::cout << "Rank "<< rank
 	            << " Face element info (after manipulating disp, after "
 		       "UpdateDeformationForCoupling): " << std::endl;
@@ -1581,7 +1609,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		      << std::endl;
 	  }
         }
-*/
+
 
         if( getLogLevel() >= 1 )
         {
@@ -2108,7 +2136,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
 
   //TJ: test whether m_nodesWithAssignedDisp is passed here correctly
   {
-/*
+
     int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
     SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
     SortedArray< localIndex > const & nodesWithAssignedDisp =
@@ -2118,7 +2146,7 @@ void HydrofractureSolver::ApplyBoundaryConditions( real64 const time,
     for(auto & item : nodesWithAssignedDisp)
       std::cout << item << ", ";
     std::cout << std::endl;
-*/
+
   }
 
   //TJ: test whether the displacement field at newly splitted nodes are passed correctly
