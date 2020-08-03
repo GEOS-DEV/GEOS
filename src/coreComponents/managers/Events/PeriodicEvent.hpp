@@ -93,7 +93,6 @@ public:
    */
   virtual real64 GetEventTypeDtRequest( real64 const time ) override;
 
-
   /**
    * @copydoc ExecutableGroup::Cleanup()
    */
@@ -119,7 +118,6 @@ public:
     static constexpr auto functionSetNamesString = "setNames";
     static constexpr auto functionStatOptionString = "stat";
     static constexpr auto eventThresholdString = "threshold";
-
 
     dataRepository::ViewKey timeFrequency = { "timeFrequency" };
     dataRepository::ViewKey cycleFrequency = { "cycleFrequency" };
