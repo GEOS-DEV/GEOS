@@ -224,7 +224,7 @@ getHistoryMetadata( string const & name, SortedArrayView< T const > const & arr,
  */
 template< typename ARRAY_T >
 inline
-typename std::enable_if< ( is_array_type< ARRAY_T >) && (ARRAY_T::ndim > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
+typename std::enable_if< ( is_array_type< ARRAY_T >) && (ARRAY_T::NDIM > 1) && can_history_io< typename ARRAY_T::value_type >, HistoryMetadata >::type
 getHistoryMetadata( string const & name, ARRAY_T const & arr, localIndex sizeOverride = -1 )
 {
   localIndex perIndexSize = arr[ 0 ].size( );
