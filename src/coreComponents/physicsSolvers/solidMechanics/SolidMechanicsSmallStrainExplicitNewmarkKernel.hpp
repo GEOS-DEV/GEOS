@@ -46,10 +46,7 @@ namespace SolidMechanicsLagrangianFEMKernels
  * @brief Implements kernels for solving the equations of motion using the
  *   explicit Newmark method under the small strain assumption.
  * @copydoc geosx::finiteElement::KernelBase
- * @tparam NUM_NODES_PER_ELEM The number of nodes per element for the
- *   @p SUBREGION_TYPE.
- * @tparam UNUSED An unused parameter since we are assuming that the test and
- *   trial space have the same number of support points.
+ * @tparam SUBREGION_TYPE The type of subregion that the kernel will act on.
  *
  * ### Explicit Small Strain Description
  * Implements the KernelBase interface functions required for explicit time
@@ -65,12 +62,10 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int UNUSED >
+          typename FE_TYPE >
 class ExplicitSmallStrain : public finiteElement::KernelBase< SUBREGION_TYPE,
                                                               CONSTITUTIVE_TYPE,
-                                                              NUM_NODES_PER_ELEM,
-                                                              NUM_NODES_PER_ELEM,
+                                                              FE_TYPE,
                                                               3,
                                                               3 >
 {
@@ -79,14 +74,13 @@ public:
   /// Alias for the base class;
   using Base = finiteElement::KernelBase< SUBREGION_TYPE,
                                           CONSTITUTIVE_TYPE,
-                                          NUM_NODES_PER_ELEM,
-                                          NUM_NODES_PER_ELEM,
+                                          FE_TYPE,
                                           3,
                                           3 >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = NUM_NODES_PER_ELEM;
+  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -110,7 +104,7 @@ public:
                        EdgeManager const & edgeManager,
                        FaceManager const & faceManager,
                        SUBREGION_TYPE const & elementSubRegion,
-                       FiniteElementBase const * const finiteElementSpace,
+                       FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE * const inputConstitutiveType,
                        real64 const dt,
                        string const & elementListName ):
@@ -160,14 +154,11 @@ public:
     /// C-array stack storage for element local primary variable values.
     real64 varLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
   #if defined(CALCFEMSHAPE)
-// This needs to be returned to service when the FEM kernels are expanded properly
-//    real64 xLocal[ numNodesPerElem ][ numTestDofPerSP ];
-//    real64 dNdX[ numNodesPerElem ][ numTestDofPerSP ];
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ 8 ][ numDofPerTestSupportPoint ];
+    real64 xLocal[ numNodesPerElem ][ numDofPerTestSupportPoint ];
 
     /// C-array stack storage for shape function derivatives at a point.
-    real64 dNdX[ 8 ][ numDofPerTestSupportPoint ];
+    real64 dNdX[ numNodesPerElem ][ numDofPerTestSupportPoint ];
 
     /// C-array stack storage for the jacobian of the parent space mapping.
     real64 detJ;
@@ -186,7 +177,7 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a< numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int i=0; i<numDofPerTrialSupportPoint; ++i )
@@ -221,8 +212,8 @@ public:
   {
 
 #if defined(CALCFEMSHAPE)
-    real64 dNdX[ 8 ][ 3 ];
-    real64 const detJ = FiniteElementShapeKernel::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
+    real64 dNdX[ numNodesPerElem ][ 3 ];
+    real64 const detJ = FE_TYPE::shapeFunctionDerivatives( q, stack.xLocal, dNdX );
 
     /// Macro to substitute in the shape function derivatives.
     #define DNDX dNdX
@@ -238,7 +229,7 @@ public:
 
     real64 stressLocal[ 6 ] = {0};
     real64 strain[6] = {0};
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       strain[0] = strain[0] + DNDX[ a ][0] * stack.varLocal[ a ][0];
       strain[1] = strain[1] + DNDX[ a ][1] * stack.varLocal[ a ][1];
@@ -265,7 +256,7 @@ public:
 #endif
     }
 
-    for( localIndex a=0; a< NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a=0; a< numNodesPerElem; ++a )
     {
       stack.fLocal[ a ][ 0 ] = stack.fLocal[ a ][ 0 ] + stressLocal[ 0 ] * DNDX[ a ][ 0 ] + stressLocal[ 5 ] * DNDX[ a ][ 1 ] + stressLocal[ 4 ] * DNDX[ a ][ 2 ];
       stack.fLocal[ a ][ 1 ] = stack.fLocal[ a ][ 1 ] + stressLocal[ 5 ] * DNDX[ a ][ 0 ] + stressLocal[ 1 ] * DNDX[ a ][ 1 ] + stressLocal[ 3 ] * DNDX[ a ][ 2 ];
@@ -284,7 +275,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables const & stack ) const
   {
-    for( localIndex a = 0; a < NUM_NODES_PER_ELEM; ++a )
+    for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       localIndex const nodeIndex = m_elemsToNodes( k, a );
       for( int b = 0; b < numDofPerTestSupportPoint; ++b )
@@ -303,7 +294,6 @@ public:
    * elements.
    */
   template< typename POLICY,
-            int NUM_QUADRATURE_POINTS,
             typename KERNEL_TYPE >
   static real64
   kernelLaunch( localIndex const numElems,
@@ -322,7 +312,7 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( k, stack );
-      for( integer q=0; q<NUM_QUADRATURE_POINTS; ++q )
+      for( integer q=0; q<KERNEL_TYPE::numQuadraturePointsPerElem; ++q )
       {
         kernelComponent.quadraturePointStateUpdate( k, q, stack );
 

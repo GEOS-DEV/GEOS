@@ -1565,8 +1565,9 @@ template< typename T, typename TBASE >
 Wrapper< TBASE > * Group::registerWrapper( std::string const & name,
                                            ViewKey::index_type * const rkey )
 {
+  std::unique_ptr< TBASE > newObj = std::make_unique< T >();
   m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, this, std::make_unique< T >() ),
+                     new Wrapper< TBASE >( name, this, std::move( newObj ) ),
                      true );
 
   if( rkey != nullptr )
@@ -1599,7 +1600,7 @@ Wrapper< T > * Group::registerWrapper( std::string const & name,
                                        std::unique_ptr< T > newObject )
 {
   m_wrappers.insert( name,
-                     new Wrapper< T >( name, this, newObject.release(), true ),
+                     new Wrapper< T >( name, this, std::move( newObject ) ),
                      true );
 
   Wrapper< T > * const rval = getWrapper< T >( name );

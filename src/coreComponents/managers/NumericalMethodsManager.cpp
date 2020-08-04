@@ -25,15 +25,11 @@ using namespace dataRepository;
 
 NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * const parent ):
   Group( name, parent ),
-  m_basisFunctions( groupKeysStruct::basisFunctions, this ),
-  m_quadratureRules( groupKeysStruct::quadratureRules, this ),
   m_finiteElementDiscretizationManager( groupKeysStruct::finiteElementDiscretizations, this ),
   m_finiteVolumeManager( groupKeysStruct::finiteVolumeManager, this )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  this->RegisterGroup( groupKeysStruct::basisFunctions, &m_basisFunctions );
-  this->RegisterGroup( groupKeysStruct::quadratureRules, &m_quadratureRules );
   this->RegisterGroup( groupKeysStruct::finiteElementDiscretizations, &m_finiteElementDiscretizationManager );
   this->RegisterGroup( groupKeysStruct::finiteVolumeManager, &m_finiteVolumeManager );
 }
