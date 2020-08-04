@@ -587,10 +587,10 @@ public:
 
   virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
   {
-    GEOSX_UNUSED_VAR(regionName);
+    GEOSX_UNUSED_VAR( regionName );
     GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
-                 "be overridden the solver contains a discretization specification.");
-    return std::vector<string>();
+                 "be overridden the solver contains a discretization specification." );
+    return std::vector< string >();
   }
 
   /**
