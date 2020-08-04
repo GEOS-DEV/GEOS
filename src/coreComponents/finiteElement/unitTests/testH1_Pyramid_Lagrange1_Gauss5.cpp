@@ -27,31 +27,6 @@
 using namespace geosx;
 using namespace finiteElement;
 
-static real64 inverse( real64 (& J)[3][3] )
-{
-  real64 scratch[3][3];
-  scratch[0][0] = J[1][1]*J[2][2] - J[1][2]*J[2][1];
-  scratch[1][0] = J[0][2]*J[2][1] - J[0][1]*J[2][2];
-  scratch[2][0] = J[0][1]*J[1][2] - J[0][2]*J[1][1];
-  scratch[0][1] = J[1][2]*J[2][0] - J[1][0]*J[2][2];
-  scratch[1][1] = J[0][0]*J[2][2] - J[0][2]*J[2][0];
-  scratch[2][1] = J[0][2]*J[1][0] - J[0][0]*J[1][2];
-  scratch[0][2] = J[1][0]*J[2][1] - J[1][1]*J[2][0];
-  scratch[1][2] = J[0][1]*J[2][0] - J[0][0]*J[2][1];
-  scratch[2][2] = J[0][0]*J[1][1] - J[0][1]*J[1][0];
-  real64 invDet = 1 / ( J[0][0] * scratch[0][0] + J[1][0] * scratch[1][0] + J[2][0] * scratch[2][0] );
-
-  for( int i=0; i<3; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      J[i][j] = scratch[j][i] * invDet;
-    }
-  }
-
-  return invDet;
-}
-
 
 template< typename POLICY >
 void testKernelDriver()
@@ -162,7 +137,7 @@ void testKernelDriver()
           }
         }
       }
-      real64 const detJ = 1/inverse( J );
+      real64 const detJ = FiniteElementBase::inverse( J );
       EXPECT_FLOAT_EQ( detJ*( weight + 0.25 * ( q & 4 ) * weightDelta ), viewDetJ[q] );
 
       for( localIndex a=0; a<numNodes; ++a )
