@@ -11,14 +11,14 @@ set( finiteElement_headers
      FiniteElementDiscretizationManager.hpp
      FiniteElementDispatch.hpp
      elementFormulations/FiniteElementBase.hpp
-     elementFormulations/LagrangeBasis1.hpp
-     elementFormulations/LagrangeBasis2.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
+     elementFormulations/LagrangeBasis1.hpp
+     elementFormulations/LagrangeBasis2.hpp
    )
 #
 # Specify all sources
