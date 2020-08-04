@@ -55,7 +55,7 @@ namespace finiteElement
  *
  */
 
-class H1_Hexahedron_Lagrange1_GaussLegendre2 final: public FiniteElementBase
+class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public FiniteElementBase
 {
 public:
   /// The number of nodes/support points per element.
