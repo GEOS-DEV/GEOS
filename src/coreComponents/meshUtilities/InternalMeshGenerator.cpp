@@ -660,7 +660,7 @@ void InternalMeshGenerator::GenerateMesh( DomainPartition * const domain )
 
           CellBlock * elemRegion =  elementManager->GetRegion( m_regionNames[ regionOffset ] );
           int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion->numNodesPerElement());
-          integer_array nodeIDInBox( numNodesPerElem );
+          integer_array nodeIDInBox( 8 );
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion->nodeList();
           arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion->localToGlobalMap();

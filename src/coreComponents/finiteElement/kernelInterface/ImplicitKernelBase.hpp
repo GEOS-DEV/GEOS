@@ -44,14 +44,12 @@ namespace finiteElement
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-          int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+          typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
-                                              NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                                              NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                                              FE_TYPE,
                                               NUM_DOF_PER_TEST_SP,
                                               NUM_DOF_PER_TRIAL_SP >
 {
@@ -59,8 +57,7 @@ public:
   /// Alias for the base class. (i.e. #geosx::finiteElement::KernelBase)
   using Base = KernelBase< SUBREGION_TYPE,
                            CONSTITUTIVE_TYPE,
-                           NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                           NUM_TRIAL_SUPPORT_POINTS_PER_ELEM,
+                           FE_TYPE,
                            NUM_DOF_PER_TEST_SP,
                            NUM_DOF_PER_TRIAL_SP >;
 
@@ -86,7 +83,7 @@ public:
                       EdgeManager const & edgeManager,
                       FaceManager const & faceManager,
                       SUBREGION_TYPE const & elementSubRegion,
-                      FiniteElementBase const * const finiteElementSpace,
+                      FE_TYPE const & finiteElementSpace,
                       CONSTITUTIVE_TYPE * const inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
