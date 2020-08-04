@@ -112,7 +112,7 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void ResetViews( DomainPartition * const domain );
+  virtual void ResetViews( MeshLevel & mesh );
 
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
@@ -140,7 +140,7 @@ private:
 
 protected:
 
-  void PrecomputeData( DomainPartition * const domain );
+  void PrecomputeData( MeshLevel & mesh );
 
   virtual void PostProcessInput() override;
 
@@ -170,15 +170,15 @@ protected:
   real64 m_meanPermCoeff;
 
   /// views into constant data fields
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_volume;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_gravCoef;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_porosityRef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_porosityRef;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementArea;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementAperture0;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementAperture;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_effectiveAperture;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementArea;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture0;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_elementAperture;
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_effectiveAperture;
 
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;

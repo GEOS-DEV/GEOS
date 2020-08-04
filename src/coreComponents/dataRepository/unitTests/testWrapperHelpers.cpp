@@ -199,7 +199,7 @@ public:
   static_assert( traits::is_array< ARRAY >, "T must be an LvArray::Array!" );
   using T = typename ARRAY::value_type;
 
-  static constexpr int NDIM = ARRAY::ndim;
+  static constexpr int NDIM = ARRAY::NDIM;
   static_assert( NDIM >= 2, "Cannot average over a 1D array!" );
 
   void test()

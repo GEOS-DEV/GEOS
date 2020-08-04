@@ -18,6 +18,7 @@
 
 #include "TrilinosSolver.hpp"
 #include "common/Stopwatch.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraMatrix.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraVector.hpp"
 #include "linearAlgebra/interfaces/trilinos/TrilinosPreconditioner.hpp"
@@ -44,11 +45,14 @@ TrilinosSolver::~TrilinosSolver() = default;
 
 void TrilinosSolver::solve( EpetraMatrix & mat,
                             EpetraVector & sol,
-                            EpetraVector & rhs )
+                            EpetraVector & rhs,
+                            DofManager const * const dofManager )
 {
   GEOSX_LAI_ASSERT( mat.ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
+
+  GEOSX_UNUSED_VAR( dofManager );
 
   if( m_parameters.scaling.useRowScaling )
   {

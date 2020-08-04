@@ -72,6 +72,8 @@ public:
    * the correct dimension
    */
   R1TensorT( realT x, realT y );  //2D only
+
+  GEOSX_HOST_DEVICE
   R1TensorT( realT x, realT y, realT z ); //3D only
 
   //***** ASSIGNMENT OPERATORS *************************************************
@@ -164,6 +166,7 @@ public:
 
   //****** TENSOR OPERATIONS **************************************************
   /// take the L2 norm of the tensor
+  GEOSX_HOST_DEVICE
   realT L2_Norm( void ) const;
 
   /// get the unit vector
@@ -171,6 +174,7 @@ public:
   { realT n = this->L2_Norm(); return (n>0.0) ? (*this/n) : *this; }
 
   /// Normalize the vector
+  GEOSX_HOST_DEVICE
   realT Normalize( void )
   { realT n = this->L2_Norm(); if( n>0.0 ) *this /= n; return n; }
 
@@ -272,6 +276,7 @@ inline R1TensorT< T_dim > & R1TensorT< T_dim >::operator=( const realT & rhs )
  * @return L2 norm of tensor
  */
 template< int T_dim >
+GEOSX_HOST_DEVICE
 inline realT R1TensorT< T_dim >::L2_Norm( void ) const
 {
   realT norm = 0.0;

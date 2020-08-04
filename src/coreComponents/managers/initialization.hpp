@@ -73,6 +73,9 @@ struct CommandLineOptions
 
   /// The string used to initialize caliper.
   std::string timerOutput = "";
+
+  /// Suppress logging of host-device data migration.
+  integer suppressMoveLogging = false;
 };
 
 /**

@@ -200,10 +200,10 @@ regions.
 
 We associate a **CellElementRegion** named ``reservoir`` to the reservoir mesh.
 Since we have imported a mesh with one region consisting of hexahedral cells, we
-must set the attribute ``cellBlocks`` to ``0_HEX``.
+must set the attribute ``cellBlocks`` to ``DEFAULT_HEX``.
 
 .. note::
-        If you use a name that is not ``0_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
+        If you use a name that is not ``DEFAULT_HEX`` for this attribute, GEOSX will throw an error at the beginning of the simulation.
 
 We also associate a **WellElementRegion** to each well. As the **CellElementRegion**,
 it contains a ``materialList`` that must point (by name) to the constitutive models

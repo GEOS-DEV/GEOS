@@ -50,15 +50,22 @@ public:
 
 protected:
 
-  virtual void computeCellStencil( DomainPartition const & domain ) override;
+  virtual void registerCellStencil( Group & stencilGroup ) const override;
 
-  virtual void addToFractureStencil( DomainPartition & domain,
+  virtual void computeCellStencil( MeshLevel & mesh ) const override;
+
+  virtual void registerFractureStencil( Group & stencilGroup ) const override;
+
+  virtual void addToFractureStencil( MeshLevel & mesh,
                                      string const & faceElementRegionName,
-                                     bool const initFlag ) override;
+                                     bool const initFlag ) const override;
 
-  virtual void computeBoundaryStencil( DomainPartition const & domain,
-                                       SortedArrayView< localIndex const > const & faceSet,
-                                       BoundaryStencil & stencil ) override;
+  virtual void registerBoundaryStencil( Group & stencilGroup,
+                                        string const & setName ) const override;
+
+  virtual void computeBoundaryStencil( MeshLevel & mesh,
+                                       string const & setName,
+                                       SortedArrayView< localIndex const > const & faceSet ) const override;
 
 };
 
