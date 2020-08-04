@@ -63,9 +63,9 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr3 );
   }
-  else if( dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
+  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
   {
-    lambda( static_cast< H1_Pyramid_Lagrange1_Gauss5 const & >(input) );
+    lambda( *ptr4 );
   }
   else
   {
