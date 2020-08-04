@@ -585,6 +585,14 @@ public:
 
   arrayView1d< string const > const & targetRegionNames() const { return m_targetRegionNames; }
 
+  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const
+  {
+    GEOSX_UNUSED_VAR( regionName );
+    GEOSX_ERROR( "SolverBase::getConstitutiveRelations( string const &) should "
+                 "be overridden the solver contains a discretization specification." );
+    return std::vector< string >();
+  }
+
   /**
    * @brief Get position of a given region within solver's target region list
    * @param regionName the region name to find
@@ -648,13 +656,14 @@ public:
       template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
   }
 
+  string getDiscretizationName() const {return m_discretizationName;}
+
 protected:
 
   static real64 EisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
-  string getDiscretizationName() const {return m_discretizationName;}
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & GetConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );

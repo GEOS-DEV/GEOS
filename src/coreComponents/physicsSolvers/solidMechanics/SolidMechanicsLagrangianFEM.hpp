@@ -160,8 +160,7 @@ public:
   template< typename CONSTITUTIVE_BASE,
             template< typename SUBREGION_TYPE,
                       typename CONSTITUTIVE_TYPE,
-                      int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                      int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                      typename FE_TYPE > class KERNEL_TEMPLATE,
             typename ... PARAMS >
   void AssemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
@@ -302,8 +301,7 @@ protected:
 template< typename CONSTITUTIVE_BASE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    int NUM_TEST_SUPPORT_POINTS_PER_ELEM,
-                    int NUM_TRIAL_SUPPORT_POINTS_PER_ELEM > class KERNEL_TEMPLATE,
+                    typename FE_TYPE > class KERNEL_TEMPLATE,
           typename ... PARAMS >
 void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                   DofManager const & dofManager,
@@ -316,19 +314,10 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
 
   NodeManager const & nodeManager = *(mesh.getNodeManager());
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-
-  FiniteElementDiscretizationManager const &
-  feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
-
-  FiniteElementDiscretization const * const
-  feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_discretizationName );
-
   string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
   arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
   ResetStressToBeginningOfStep( domain );
-
 
   real64 const gravityVectorData[3] = { gravityVector().Data()[0],
                                         gravityVector().Data()[1],
@@ -340,8 +329,8 @@ void SolidMechanicsLagrangianFEM::AssemblyLaunch( DomainPartition & domain,
                                                CellElementSubRegion,
                                                KERNEL_TEMPLATE >( mesh,
                                                                   targetRegionNames(),
+                                                                  this->getDiscretizationName(),
                                                                   m_solidMaterialNames,
-                                                                  feDiscretization,
                                                                   dofNumber,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,

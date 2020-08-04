@@ -42,19 +42,16 @@ namespace SolidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          int NUM_NODES_PER_ELEM,
-          int >
+          typename FE_TYPE >
 class ImplicitNewmark : public QuasiStatic< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
-                                            NUM_NODES_PER_ELEM,
-                                            NUM_NODES_PER_ELEM >
+                                            FE_TYPE >
 {
 public:
   /// Alias for the base class;
   using Base = QuasiStatic< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,
-                            NUM_NODES_PER_ELEM,
-                            NUM_NODES_PER_ELEM >;
+                            FE_TYPE >;
 
   using Base::numNodesPerElem;
   using Base::numTestSupportPointsPerElem;
@@ -84,7 +81,7 @@ public:
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
                    SUBREGION_TYPE const & elementSubRegion,
-                   FiniteElementBase const * const finiteElementSpace,
+                   FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE * const inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
                    globalIndex const rankOffset,
@@ -190,7 +187,7 @@ public:
   {
 
     real64 N[numNodesPerElem];
-    FiniteElementShapeKernel::shapeFunctionValues( q, N );
+    FE_TYPE::shapeFunctionValues( q, N );
 
     Base::quadraturePointJacobianContribution( k, q, stack, [&] GEOSX_DEVICE ( localIndex const a,
                                                                                localIndex const b ) mutable
