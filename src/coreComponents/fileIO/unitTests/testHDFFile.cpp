@@ -1,5 +1,5 @@
 #include "managers/Outputs/TimeHistoryOutput.hpp"
-#include "fileIO/hdf/HDFFile.hpp"
+#include "fileIO/timeHistory/TimeHistHDF.hpp"
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "managers/initialization.hpp"
 

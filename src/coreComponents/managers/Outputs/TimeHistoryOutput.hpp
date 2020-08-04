@@ -22,7 +22,7 @@
 #include "OutputBase.hpp"
 #include "managers/TimeHistory/TimeHistoryCollection.hpp"
 #include "managers/TimeHistory/HistoryIO.hpp"
-#include "fileIO/hdf/HDFFile.hpp"
+#include "fileIO/timeHistory/TimeHistHDF.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
