@@ -58,6 +58,9 @@ public:
   using BASE::m_matrix;
   using BASE::m_rhs;
   using BASE::m_solution;
+  using BASE::m_localMatrix;
+  using BASE::m_localRhs;
+  using BASE::m_localSolution;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
 
@@ -85,22 +88,12 @@ public:
   using BASE::m_pressure;
   using BASE::m_deltaPressure;
   using BASE::m_deltaVolume;
-  using BASE::m_porosity;
   using BASE::m_mobility;
   using BASE::m_dMobility_dPres;
-  using BASE::m_porosityOld;
-  using BASE::m_densityOld;
-  using BASE::m_pvMult;
-  using BASE::m_dPvMult_dPres;
   using BASE::m_density;
   using BASE::m_dDens_dPres;
   using BASE::m_viscosity;
   using BASE::m_dVisc_dPres;
-  using BASE::m_totalMeanStressOld;
-  using BASE::m_totalMeanStress;
-  using BASE::m_bulkModulus;
-  using BASE::m_biotCoefficient;
-  using BASE::m_poroMultiplier;
   using BASE::m_transTMultiplier;
 
   /**
@@ -160,35 +153,35 @@ public:
   /**@{*/
 
   virtual void
-  SetupDofs( DomainPartition const * const domain,
+  SetupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
   virtual void
-  SetupSystem( DomainPartition * const domain,
+  SetupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
+               CRSMatrix< real64, globalIndex > & localMatrix,
+               array1d< real64 > & localRhs,
+               array1d< real64 > & localSolution,
                bool const setSparsity = true ) override;
 
   virtual void
   ApplyBoundaryConditions( real64 const time_n,
                            real64 const dt,
-                           DomainPartition * const domain,
+                           DomainPartition & domain,
                            DofManager const & dofManager,
-                           ParallelMatrix & matrix,
-                           ParallelVector & rhs ) override;
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  CalculateResidualNorm( DomainPartition const * const domain,
+  CalculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
-                         ParallelVector const & rhs ) override;
+                         arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
   ApplySystemSolution( DofManager const & dofManager,
-                       ParallelVector const & solution,
+                       arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
-                       DomainPartition * const domain ) override;
+                       DomainPartition & domain ) override;
 
   /**
    * @brief assembles the flux terms for all cells
@@ -196,16 +189,16 @@ public:
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
    */
   virtual void
   AssembleFluxTerms( real64 const time_n,
                      real64 const dt,
-                     DomainPartition const * const domain,
-                     DofManager const * const dofManager,
-                     ParallelMatrix * const matrix,
-                     ParallelVector * const rhs ) override;
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) override;
 
   /**@}*/
 
@@ -233,17 +226,17 @@ private:
    * @brief Function to perform the application of Dirichlet BCs on faces
    * @param time_n current time
    * @param dt time step
-   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param faceSet degree-of-freedom manager associated with the linear system
    * @param domain the domain
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  void ApplyFaceDirichletBC_implicit( real64 const time_n,
-                                      real64 const dt,
-                                      DofManager const * const dofManager,
-                                      DomainPartition * const domain,
-                                      ParallelMatrix * const matrix,
-                                      ParallelVector * const rhs );
+  void ApplyFaceDirichletBC( real64 const time_n,
+                             real64 const dt,
+                             DofManager const & faceSet,
+                             DomainPartition & domain,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs );
 
   // no data needed here, see SinglePhaseBase
 

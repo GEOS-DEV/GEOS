@@ -71,8 +71,9 @@ void SolidBase::AllocateConstitutiveData( dataRepository::Group * const parent,
   this->resize( parent->size() );
   
   m_density.resize( parent->size(), numConstitutivePointsPerParentIndex );
+
   m_density = m_defaultDensity;
-  
+
   m_stress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 );
 }
 

@@ -1,38 +1,41 @@
 <?xml version="1.0" ?>
-<Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="geos_v0.0.xsd">  
+
+<Problem>
   <Solvers>
     <!-- SolidMechanics_LagrangianFEM name="lagsolve" 
                                   cflFactor="0.25"
                                   discretization="FE1"
                                   targetRegions="{Region2}"
                                   solidMaterialName="shale"/-->
-                                  
-    <SolidMechanicsLagrangianSSLE name="lagsolve" 
-                                  cflFactor="0.25"
-                                  discretization="FE1"
-                                  targetRegions="{Region2}"
-                                  solidMaterialNames="{shale}"/>
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"
+      solidMaterialNames="{ shale }"/>
   </Solvers>
 
   <Mesh>
-    <InternalMesh name="mesh1"
-                  elementTypes="{C3D8}" 
-                  xCoords="{ 0, 10 }"
-                  yCoords="{ 0, 10 }"
-                  zCoords="{ 0, 10 }"
-                  nx="{200}"
-                  ny="{200}"
-                  nz="{200}"
-                  cellBlockNames="{cb1}"/>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 10 }"
+      nx="{ 200 }"
+      ny="{ 200 }"
+      nz="{ 200 }"
+      cellBlockNames="{ cb1 }"/>
   </Mesh>
 
-
-  <Events maxTime="1.0e-2">
+  <Events
+    maxTime="1.0e-2">
     <!-- This event is applied every cycle, and overrides the
     solver time-step request -->
-    <PeriodicEvent name="solverApplications"
-                   forceDt="1.0e-5"
-                   target="/Solvers/lagsolve" />
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-5"
+      target="/Solvers/lagsolve"/>
 
     <!-- This event is applied every 5e-4s.  The targetExactTimestep
     flag allows this event to request a dt modification to match an
@@ -41,12 +44,10 @@
                    timeFrequency="1e-6"
                    targetExactTimestep="0"
                    target="/Outputs/siloOutput" /-->
-
     <!-- PeriodicEvent name="restarts"
                    timeFrequency="5.0e-4"
                    targetExactTimestep="0"
                    target="/Outputs/sidreRestart"/-->
-                   
     <!-- SoloEvent
       name="restart"
       target="/Outputs/sidreRestart"
@@ -57,43 +58,54 @@
       /-->
   </Events>
 
-
   <NumericalMethods>
-
     <BasisFunctions>
-        <LagrangeBasis3 name="linearBasis"  degree = "1"  />
+      <LagrangeBasis3
+        name="linearBasis"
+        degree="1"/>
     </BasisFunctions>
-    
+
     <QuadratureRules>
-        <GaussQuadrature3 name="gaussian"   degree="2"  />
+      <GaussQuadrature3
+        name="gaussian"
+        degree="2"/>
     </QuadratureRules>
-    
+
     <FiniteElements>
-        <FiniteElementSpace name="FE1" parentSpace="C3D8" basis="linearBasis" quadrature="gaussian" />
+      <FiniteElementSpace
+        name="FE1"
+        parentSpace="C3D8"
+        basis="linearBasis"
+        quadrature="gaussian"/>
     </FiniteElements>
   </NumericalMethods>
 
   <ElementRegions>
-    <CellElementRegion name="Region2" cellBlocks="{cb1}" materialList="{shale}" />
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
   </ElementRegions>
 
   <Constitutive>
-      <LinearElasticIsotropic name="granite"
-                              defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
+    <LinearElasticIsotropic
+      name="granite"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
 
-      <LinearElasticIsotropic name="shale"
-                              defaultDensity="2700"
-                              defaultBulkModulus="5.5556e9"
-                              defaultShearModulus="4.16667e9"/>
+    <LinearElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
 
-      <LinearElasticIsotropic name="water"
-                              defaultDensity="1000"
-                              defaultBulkModulus="2.0e9"
-                              defaultShearModulus="1.0e-9"/>
+    <LinearElasticIsotropic
+      name="water"
+      defaultDensity="1000"
+      defaultBulkModulus="2.0e9"
+      defaultShearModulus="1.0e-9"/>
   </Constitutive>
-
 
   <FieldSpecifications>
     <!-- FieldSpecification name="source"  
@@ -103,41 +115,46 @@
                fieldName="shale_MeanStress"
                component="-1"
                scale="-1.0e6"/-->
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="0"
+      scale="1.0"
+      setNames="{ xneg }"/>
 
-    <FieldSpecification name="xconstraint" 
-               objectPath="nodeManager"
-               fieldName="Velocity"
-               component="0"  
-               scale="1.0" 
-               setNames="{xneg}"/>
-               
-    <FieldSpecification name="yconstraint" 
-               objectPath="nodeManager"
-               fieldName="Velocity"
-               component="1"  
-               scale="0.0" 
-               setNames="{yneg}"/>
-               
-    <FieldSpecification name="zconstraint" 
-               objectPath="nodeManager"
-               fieldName="Velocity"
-               component="2"  
-               scale="0.0" 
-               setNames="{zneg}"/>
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg }"/>
 
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
   </FieldSpecifications>
-  
+
   <Outputs>
-    <Silo name="siloOutput" 
-          parallelThreads="32"
-          plotFileRoot="plot" 
-          childDirectory="sub"
-          />
-    <Restart name="sidreRestart"/>
+    <Silo
+      name="siloOutput"
+      parallelThreads="32"
+      plotFileRoot="plot"
+      childDirectory="sub"/>
+
+    <Restart
+      name="sidreRestart"/>
   </Outputs>
 
   <Geometry>
-    <Box name="source" xMin="-1, -1, -1" xMax="1.1, 1.1, 1.1"/>
+    <Box
+      name="source"
+      xMin="-1, -1, -1"
+      xMax="1.1, 1.1, 1.1"/>
   </Geometry>
 </Problem>
-  

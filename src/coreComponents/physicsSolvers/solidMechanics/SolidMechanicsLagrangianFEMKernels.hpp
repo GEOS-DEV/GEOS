@@ -80,7 +80,6 @@ inline void displacementUpdate( arrayView2d< real64 const, nodes::VELOCITY_USD >
 }
 
 
-
 /**
  * @brief Function to select which templated kernel function to call.
  * @tparam KERNELWRAPPER A struct or class that contains the following method
@@ -105,18 +104,7 @@ ElementKernelLaunchSelector( localIndex NUM_NODES_PER_ELEM,
   ConstitutivePassThru< SolidBase >::Execute( constitutiveRelation,
                                               [&]( auto * const constitutive )
   {
-    using CONSTITUTIVE_TYPE = TYPEOFPTR( constitutive );
-    if( NUM_NODES_PER_ELEM==8 && NUM_QUADRATURE_POINTS==8 )
-    {
-      rval = KERNELWRAPPER::template Launch< 8, 8, CONSTITUTIVE_TYPE >( constitutive,
-                                                                        std::forward< PARAMS >( params )... );
-    }
-    else if( NUM_NODES_PER_ELEM==4 && NUM_QUADRATURE_POINTS==1 )
-    {
-      GEOSX_ERROR( "Not implemented!" );
-//      rval = KERNELWRAPPER::template Launch< 4, 1, CONSTITUTIVE_TYPE >( constitutive,
-//                                                                        std::forward< PARAMS >( params )... );
-    }
+    rval = finiteElementLaunchDispatch< KERNELWRAPPER >( NUM_NODES_PER_ELEM, NUM_QUADRATURE_POINTS, &constitutive, std::forward< PARAMS >( params )... );
   } );
   return rval;
 }
@@ -324,9 +312,6 @@ struct ExplicitKernel
 
 };
 
-/**
- * @struct Structure to wrap templated function that implements the implicit time integration kernel.
- */
 struct ImplicitKernel
 {
 
@@ -373,6 +358,8 @@ struct ImplicitKernel
           arrayView1d< integer const > const & GEOSX_UNUSED_PARAM( elemGhostRank ),
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & GEOSX_UNUSED_PARAM( elemsToNodes ),
           arrayView1d< globalIndex const > const & GEOSX_UNUSED_PARAM( globalDofNumber ),
+          globalIndex const GEOSX_UNUSED_PARAM( dofRankOffset ),
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & GEOSX_UNUSED_PARAM( X ),
           arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( disp ),
           arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const & GEOSX_UNUSED_PARAM( uhat ),
           arrayView1d< R1Tensor const > const & GEOSX_UNUSED_PARAM( vtilde ),
@@ -387,14 +374,12 @@ struct ImplicitKernel
           real64 const GEOSX_UNUSED_PARAM( newmarkBeta ),
           real64 const GEOSX_UNUSED_PARAM( newmarkGamma ),
           R1Tensor const & GEOSX_UNUSED_PARAM( gravityVector ),
-          DofManager const * const GEOSX_UNUSED_PARAM( dofManager ),
-          ParallelMatrix * const GEOSX_UNUSED_PARAM( matrix ),
-          ParallelVector * const GEOSX_UNUSED_PARAM( rhs ) )
+          CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( matrix ),
+          arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( rhs ) )
   {
-    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::ImplicitElementKernelWrapper::Launch() not implemented" );
+    GEOSX_ERROR( "SolidMechanicsLagrangianFEM::CRSImplicitKernel::Launch() not implemented" );
     return 0;
   }
-
 };
 
 

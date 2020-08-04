@@ -20,7 +20,7 @@
 #define SRC_CODINGUTILITIES_SFINAE_HPP_
 
 #include "LvArray/src/Macros.hpp"
-#include "LvArray/src/templateHelpers.hpp"
+#include "LvArray/src/typeManipulation.hpp"
 
 /**
  * @brief Macro that expands to a static constexpr bool templated on two types that is only true when

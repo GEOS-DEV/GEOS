@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "managers/initialization.hpp"
-
+#include "rajaInterface/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/BlasLapackLA.hpp"
 
 using namespace geosx;
@@ -122,7 +122,7 @@ void determinant_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d = 0.0;
+    Laplacian1d.setValues< serialPolicy >( 0.0 );
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )
@@ -194,7 +194,7 @@ void matrix_norm1_test()
 
   // Compute norm1
   array1d< real64 > tmp( N );
-  tmp = 0;
+  tmp.setValues< serialPolicy >( 0 );
   for( INDEX_TYPE i = 0; i < M; ++i )
   {
     for( INDEX_TYPE j = 0; j < N; ++j )
@@ -816,7 +816,7 @@ void matrix_inverse_test()
     // Construct 1d discrete Laplacian with Dirichlet boundary conditions
     // at both ends
     Laplacian1d.resize( N, N );
-    Laplacian1d = 0;
+    Laplacian1d.setValues< serialPolicy >( 0 );
     for( INDEX_TYPE i = 0; i < N; ++i )
     {
       for( INDEX_TYPE j = 0; j < N; ++j )

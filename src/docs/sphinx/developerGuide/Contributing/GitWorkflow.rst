@@ -11,7 +11,7 @@ Consider consulting `https://try.github.io/ <https://try.github.io/> `_ for prac
 Git credentials
 =======================================
 
-Those who want to contribute to geosx should setup SSH keys for authentication, and connect
+Those who want to contribute to GEOSX should setup SSH keys for authentication, and connect
 to github through SSH as discussed `in this article <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_.
 Before going further, you should `test your ssh connection <https://help.github.com/en/github/authenticating-to-github/testing-your-ssh-connection>`_.
 If it fails (perhaps because of your institution's proxy),
@@ -39,7 +39,7 @@ their authentication settings.
 Working on the main code
 =======================================
 
-Once you have cloned the geosx repository, you can start developing by creating your
+Once you have cloned the GEOSX repository, you can start developing by creating your
 own branch.
 
 .. code-block:: sh
@@ -47,7 +47,7 @@ own branch.
   git checkout -b <new-branch-name>
 
 You can now perform work on the newly created branch, ``add`` it and ``commit`` your
-work. One you have done so you can push your changes to the geosx repository and
+work. Once you have done so you can push your changes to the geosx repository and
 set up an upstream branch to be tracked.
 
 .. code-block:: sh

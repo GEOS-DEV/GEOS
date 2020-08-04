@@ -66,7 +66,6 @@ void ParticleFluidBase::AllocateConstitutiveData( Group * const parent,
 
   this->resize( parent->size() );
   m_dSettlingFactor_dComponentConcentration.resize( parent->size(), MAX_NUM_COMPONENTS );
-
 }
 
 
@@ -78,23 +77,21 @@ ParticleFluidBase::DeliverClone( string const & name,
   GEOSX_ERROR_IF( !clone, "clone not allocated" );
 
   ConstitutiveBase::DeliverClone( name, parent, clone );
-  ParticleFluidBase * const newConstitutiveRelation = dynamic_cast< ParticleFluidBase * >(clone.get());
+  ParticleFluidBase & fluid = dynamicCast< ParticleFluidBase & >( *clone );
 
-  newConstitutiveRelation->m_settlingFactor = m_settlingFactor;
-  newConstitutiveRelation->m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
-  newConstitutiveRelation->m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
-  newConstitutiveRelation->m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;
+  fluid.m_settlingFactor = m_settlingFactor;
+  fluid.m_dSettlingFactor_dPressure = m_dSettlingFactor_dPressure;
+  fluid.m_dSettlingFactor_dProppantConcentration = m_dSettlingFactor_dProppantConcentration;
+  fluid.m_dSettlingFactor_dComponentConcentration = m_dSettlingFactor_dComponentConcentration;
 
-  newConstitutiveRelation->m_collisionFactor = m_collisionFactor;
-  newConstitutiveRelation->m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;
+  fluid.m_collisionFactor = m_collisionFactor;
+  fluid.m_dCollisionFactor_dProppantConcentration = m_dCollisionFactor_dProppantConcentration;
 
-  newConstitutiveRelation->m_maxProppantConcentration = this->m_maxProppantConcentration;
-
-  newConstitutiveRelation->m_isCollisionalSlip = this->m_isCollisionalSlip;
-
-  newConstitutiveRelation->m_proppantPackPermeability = this->m_proppantPackPermeability;
-
+  fluid.m_maxProppantConcentration = m_maxProppantConcentration;
+  fluid.m_isCollisionalSlip = m_isCollisionalSlip;
+  fluid.m_proppantPackPermeability = m_proppantPackPermeability;
 }
+
 } //namespace constitutive
 
 } //namespace geosx

@@ -37,12 +37,12 @@
 #include "mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/SolverBase.hpp"
-#include "wells/InternalWellGenerator.hpp"
-#include "wells/WellElementRegion.hpp"
 
 // System includes
 #include <vector>
 #include <regex>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace geosx
 {
@@ -214,6 +214,11 @@ void ProblemManager::ParseCommandLineInput()
         GEOSX_ERROR( "Could not change to the ouput directory: " + outputDirectory );
       }
     }
+  }
+
+  if( opts.suppressMoveLogging )
+  {
+    chai::ArrayManager::getInstance()->disableCallbacks();
   }
 }
 

@@ -13,7 +13,6 @@ set( subdirs
      meshUtilities
      mpiCommunications
      physicsSolvers
-     wells
      python
      )
 
@@ -125,10 +124,10 @@ target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents
 geosx_add_code_checks( PREFIX coreComponents 
                        EXCLUDES cmake )
 
-
-add_test( NAME testUncrustifyCheck
-          COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check 2>&1 >/dev/null"
-          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        )
+if( ENABLE_UNCRUSTIFY )
+  add_test( NAME testUncrustifyCheck
+            COMMAND sh -c "${CMAKE_MAKE_PROGRAM} coreComponents_uncrustify_check main_uncrustify_check 2>&1 >/dev/null"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
+endif()
 
 add_subdirectory( unitTests )
