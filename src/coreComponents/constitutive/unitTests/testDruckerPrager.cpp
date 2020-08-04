@@ -73,7 +73,7 @@ TEST( DruckerPragerTests, testModel )
   real64 total = 0;
   
   array2d< real64 > strainIncrement(1,6);
-                    strainIncrement = 0;
+                    strainIncrement.setValues< serialPolicy >( 0 );
                     strainIncrement[0][0] = inc;
   
   array2d< real64 > stress(1,6);

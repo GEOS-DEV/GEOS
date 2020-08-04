@@ -142,8 +142,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
                                               arraySlice1d< real64 > const & stress,
                                               arraySlice2d< real64 > const & stiffness )
 {
-  real64 const oldPc     = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
-  real64 pc = oldPc; 
+  real64 const oldPc  = m_oldPreConsolidationPressure[k][q]; //pre-consolidation pressure
   real64 const mu     = m_shearModulus[k];
   real64 const p0     = m_refPressure[k][q];
 
@@ -153,7 +152,8 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
   real64 const Cc     = m_virginCompressionIndex[k];
   real64 const alpha  = m_shapeParameter[k];
 
-  real64 bulkModulus = -p0/Cr;
+  real64        pc    = oldPc; 
+  real64 bulkModulus  = -p0/Cr;
   // two-invariant decomposition of strain increment
 
   real64 strainIncrementVol = 0; //volumetric part of strain increment 
@@ -342,8 +342,8 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
     solution[2] = 0;      // initial guess for plastic multiplier
     
     real64 norm,normZero = 1e30;
-    jacobian = 0;
-    
+    jacobian.setValues< serialPolicy >( 0 );    
+
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {
 
@@ -430,7 +430,7 @@ void DelftEggUpdates::SmallStrainUpdate( localIndex const k,
       }
     }
     array2d< real64 > BB(2,2);
-    BB=0;
+    BB.setValues< serialPolicy >( 0 );
 
     real64 a1= 1; //check
     real64 a2 = trialP;  //check
@@ -700,5 +700,3 @@ private:
 } /* namespace geosx */
 
 #endif /* GEOSX_CONSTITUTIVE_SOLID_DELFTEGG_HPP_ */
-
-

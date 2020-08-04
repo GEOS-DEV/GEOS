@@ -192,15 +192,15 @@ void DelftEgg::AllocateConstitutiveData( dataRepository::Group * const parent,
   m_oldStress.resize( parent->size(), numConstitutivePointsPerParentIndex, 6 ); // TODO: figure out how to set initial stress
   
   // set arrays to default values
-  m_shearModulus = m_defaultShearModulus;
-  m_refPressure = m_defaultRefPressure;
-  m_refStrainVol = m_defaultRefStrainVol;
-  m_recompressionIndex = m_defaultRecompressionIndex;
-  m_virginCompressionIndex = m_defaultVirginCompressionIndex;
-  m_cslSlope = m_defaultCslSlope;
-  m_shapeParameter = m_defaultShapeParameter;
-  m_newPreConsolidationPressure = m_defaultPreConsolidationPressure;
-  m_oldPreConsolidationPressure = m_defaultPreConsolidationPressure;
+  m_shearModulus.setValues< serialPolicy >( m_defaultShearModulus )
+  m_refPressure.setValues< serialPolicy >( m_defaultRefPressure );
+  m_refStrainVol.setValues< serialPolicy >( m_defaultRefStrainVol );
+  m_recompressionIndex.setValues< serialPolicy >( m_defaultRecompressionIndex );
+  m_virginCompressionIndex.setValues< serialPolicy >( = m_defaultVirginCompressionIndex;
+  m_cslSlope.setValues< serialPolicy >( m_defaultCslSlope );
+  m_shapeParameter.setValues< serialPolicy >( m_defaultShapeParameter );
+  m_newPreConsolidationPressure.setValues< serialPolicy >( m_defaultPreConsolidationPressure );
+  m_oldPreConsolidationPressure.setValues< serialPolicy >( m_defaultPreConsolidationPressure );
 }
 
 void DelftEgg::PostProcessInput()
