@@ -8,7 +8,7 @@ Tutorial 1: First steps
 
 In this tutorial, we use a single-phase flow solver (see :ref:`SinglePhaseFlow`)
 from GEOSX to solve for pressure propagation on a simple 10x10x10 cube mesh
-with a anisotropic permeability.
+with an anisotropic permeability.
 A pressure source term will be set in one corner of the cube, and
 a sink term will be set in the opposite corner of the cube.
 
