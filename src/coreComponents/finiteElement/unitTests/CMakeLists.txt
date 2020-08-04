@@ -3,6 +3,7 @@
 #
 
 set(testSources
+    testFiniteElementBase.cpp
     testH1_QuadrilateralFace_Lagrange1_GaussLegendre2.cpp
     testH1_Hexahedron_Lagrange1_GaussLegendre2.cpp
     testH1_Tetrahedron_Lagrange1_Gauss1.cpp
