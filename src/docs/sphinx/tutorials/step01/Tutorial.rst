@@ -377,7 +377,7 @@ We also specify a constant pressure boundary condition
 on the regions identified as ``source`` and ``sink`` (notice the absence of ``initialCondition``
 flag for this constant boundary condition).
 
-All units again are S.I. units; the x- and y-permeability set to 1.0e-12 m\ :sup:`2` corresponds approximately to 1 Darcy.
+All units again are S.I. units.  The x- and y-permeability are set to 1.0e-12 m\ :sup:`2` (corresponding to approximately to 1 Darcy).
 It is important to notice that the permeability is anisotropic, and z-permeability is two orders of magnitude smaller.
 
 
