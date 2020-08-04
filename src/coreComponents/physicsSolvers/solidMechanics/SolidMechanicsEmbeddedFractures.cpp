@@ -22,6 +22,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactRelationBase.hpp"
 #include "constitutive/solid/LinearElasticIsotropic.hpp"
+#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "managers/DomainPartition.hpp"
 #include "managers/NumericalMethodsManager.hpp"
 #include "mesh/NodeManager.hpp"
@@ -245,8 +246,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   ElementRegionManager const & elemManager = *mesh.getElemManager();
 
   ConstitutiveManager const * const constitutiveManager = domain.getConstitutiveManager();
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteElementDiscretizationManager const & feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();
 
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & disp  = nodeManager.totalDisplacement();
   arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const & dDisp = nodeManager.incrementalDisplacement();
@@ -311,8 +310,6 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
   // begin region loop
   elemManager.forElementRegions< EmbeddedSurfaceRegion >( [&]( EmbeddedSurfaceRegion const & embeddedRegion )->void
   {
-    FiniteElementDiscretization const *
-    feDiscretization = feDiscretizationManager.GetGroup< FiniteElementDiscretization >( m_solidSolver->getDiscretization());
     // loop of embeddeSubregions
     embeddedRegion.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion )->void
     {
@@ -437,7 +434,7 @@ void SolidMechanicsEmbeddedFractures::AssembleSystem( real64 const time,
           // Compute traction
           ComputeTraction( constitutiveManager, w, tractionVec, dTdw );
 
-          for( integer q=0; q<fe->n_quadrature_points(); ++q )
+          for( integer q=0; q<fe.getNumQuadraturePoints(); ++q )
           {
             const realT detJq = detJ[embeddedSurfaceToCell[k]][q];
             AssembleCompatibilityOperator( compMatrix,
