@@ -113,7 +113,7 @@ protected:
 
 private:
 
-  void addToFractureStencil( DomainPartition * const domain );
+  void addToFractureStencil( DomainPartition & domain );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup

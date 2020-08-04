@@ -227,13 +227,14 @@ bool EmbeddedSurfaceSubRegion::AddNewEmbeddedSurface ( localIndex const cellInde
       if( isNew )
       {
         // Add the point to the
-        NodeIndex = embSurfNodesPos.size();
+        NodeIndex = embSurfNodesPos.size(0);
         embSurfNodesPos.resize( NodeIndex + 1 );
         LvArray::tensorOps::copy< 3 >( embSurfNodesPos[NodeIndex], intersectionPoints[j] );
       }
-      elemNodes.emplace_back( NodeIndex );
+      elemNodes[j] =  NodeIndex;
     }
 
+    m_toNodesRelation.resizeArray(surfaceIndex, m_numNodesPerSurface[surfaceIndex]);
     for (localIndex inode = 0; inode < m_numNodesPerSurface[surfaceIndex]; inode++ )
     {
     	m_toNodesRelation( surfaceIndex, inode ) = elemNodes[inode];

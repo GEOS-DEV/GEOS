@@ -701,7 +701,7 @@ void TwoPointFluxApproximation::addEDFracToFractureStencil( MeshLevel & mesh,
   {
     //if( ghostRank[kes] < 0 )
     {
-      localIndex const numElems = 1;   // there is a 1 to 1 relation
+      localIndex const numElems = 2;   // there is a 1 to 1 relation
 
       GEOSX_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kes );
 

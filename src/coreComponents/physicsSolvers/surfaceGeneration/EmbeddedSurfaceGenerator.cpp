@@ -166,10 +166,9 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion->nodeList();
 
-  std::cout << "face to nodes size: " << embSurfToNodeMap.size() << std::endl;
-
   embSurfEdgeManager->BuildEdges( embeddedSurfaceSubRegion->totalNumberOfNodes(), embSurfToNodeMap.toViewConst(), embSurfToEdgeMap );
 
+  /*
   //Usefull for debugging
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager->faceList();
   EdgeManager::NodeMapType const & edgeToNodesMap       = embSurfEdgeManager->nodeList();
@@ -195,9 +194,7 @@ void EmbeddedSurfaceGenerator::InitializePostSubGroups( Group * const problemMan
       std::cout << "node " << edgeToNodesMap[ke][kn] <<  std::endl;
     }
   }
-
-  // Add the embedded elements to the fracture stencil.
-  addToFractureStencil( domain );
+  */
 
 }
 
@@ -217,23 +214,27 @@ void EmbeddedSurfaceGenerator::postRestartInitialization( Group * const GEOSX_UN
 real64 EmbeddedSurfaceGenerator::SolverStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                             DomainPartition &  domain  )
 {
   real64 rval = 0;
   /*
    * This should be the method that generates new fracture elements based on the propagation criterion of choice.
    */
+
+  // Add the embedded elements to the fracture stencil.
+  addToFractureStencil( domain );
+
   return rval;
 }
 
-void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition * const domain )
+void EmbeddedSurfaceGenerator::addToFractureStencil( DomainPartition & domain )
 {
   // Add embedded elements to the fracture Stencil
-  NumericalMethodsManager & numericalMethodManager = domain->getNumericalMethodManager();
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  for( auto & mesh : domain->getMeshBodies()->GetSubGroups() )
+  for( auto & mesh : domain.getMeshBodies()->GetSubGroups() )
   {
     MeshLevel * meshLevel = Group::group_cast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
 
