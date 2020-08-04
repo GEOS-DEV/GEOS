@@ -233,7 +233,7 @@ void DruckerPragerUpdates::SmallStrainUpdate( localIndex const k,
     solution[2] = 0;      // initial guess for plastic multiplier
     
     real64 norm,normZero = 1e30;
-    jacobian = 0;
+    jacobian.setValues< serialPolicy >( 0 );
     
     for(localIndex iter=0; iter<10; ++iter) // could be fixed at one iter
     {
